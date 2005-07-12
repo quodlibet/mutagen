@@ -111,7 +111,8 @@ def TestReadTags():
     'TFLT': {'[]':'\x00MPG/3', 'encoding':0, '':'MPG/3'},
     'TIME': {'[]':'\x001205', 'encoding':0, '':'1205'},
     'TIT1': {'[]':'\x00a/b', 'encoding':0, '':'a/b'},
-    'TIT2': {'[]':'\x00a/b', 'encoding':0, '':'a/b'},
+    # TIT2 checks misaligned terminator '\x00\x00' across crosses utf16 chars
+    'TIT2': {'[]':'\x01\xff\xfe\x38\x00\x00\x38', 'encoding':1, '':u'8\u3800'},
     'TIT3': {'[]':'\x00a/b', 'encoding':0, '':'a/b'},
     'TKEY': {'[]':'\x00A#m', 'encoding':0, '':'A#m'},
     'TLAN': {'[]':'\x006241', 'encoding':0, '':'6241', '{}+':6241},
@@ -183,6 +184,11 @@ def TestReadTags():
                         self.assertEquals(value, pos(tag))
                     else:
                         self.assertEquals(value, getattr(tag, attr))
+            tag2 = eval(repr(tag), {TAG.__name__:TAG})
+            self.assertEquals(type(tag), type(tag2))
+            for spec in TAG._framespec:
+                attr = spec.name
+                self.assertEquals(getattr(tag, attr), getattr(tag2, attr))
         tests['test_' + tag + '_23'] = test_tag
     testcase = type('TestReadTags_23', (TestCase,), tests)
     registerCase(testcase)

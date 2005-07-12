@@ -333,6 +333,12 @@ class Frame(object):
             validated = checker.validate(self, kwargs.get(checker.name, None))
             setattr(self, checker.name, validated)
 
+    def __repr__(self):
+        kw = []
+        for attr in self._framespec:
+            kw.append('%s=%r' % (attr.name, getattr(self, attr.name)))
+        return '%s(%s)' % (type(self).__name__, ', '.join(kw))
+
     def _readData(self, data):
         odata = data
         for reader in self._framespec:
