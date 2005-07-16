@@ -488,9 +488,47 @@ class UrlFrame(Frame):
 class TALB(TextFrame): "Album"
 class TBPM(NumericTextFrame): "Beats per minute"
 class TCOM(MultiTextFrame): "Composer"
-class TCON(MultiTextFrame): "Content type (Genre)"
+
+class TCON(MultiTextFrame):
+    "Content type (Genre)"
+
+    from mutagen._constants import GENRES
+
+    def genres(self):
+        genres = []
+        import re
+        genre_re = re.compile(r"((?:\((?P<id>[0-9]+|RX|CR)\))*)(?P<str>.+)?")
+        for value in self.text:
+            if value.isdigit():
+                try: genres.append(self.GENRES[int(value)])
+                except IndexError: genres.append("Unknown")
+            elif value == "CR": genres.append("Cover")
+            elif value == "RX": genres.append("Remix")
+            elif value:
+                newgenres = []
+                genreid, dummy, genrename = genre_re.match(value).groups()
+
+                if genreid:
+                    for gid in genreid[1:-1].split(")("):
+                        if gid.isdigit() and int(gid) < len(self.GENRES):
+                            gid = unicode(self.GENRES[int(gid)])
+                            newgenres.append(gid)
+                        elif gid == "CR": newgenres.append("Cover")
+                        elif gid == "RX": newgenres.append("Remix")
+                        else: newgenres.append("Unknown")
+
+                if genrename:
+                    # "Unescaping" the first parenthesis
+                    if genrename.startswith("(("): genrename = genrename[1:]
+                    if genrename not in newgenres: newgenres.append(genrename)
+
+                genres.extend(newgenres)
+
+        return genres
+
 class TCOP(MultiTextFrame): "Copyright"
 class TDAT(MultiTextFrame): "Date of recording (DDMM)"
+
 class TDLY(NumericTextFrame): "Audio Delay (ms)"
 class TENC(MultiTextFrame): "Encoder"
 class TEXT(MultiTextFrame): "Lyricist"

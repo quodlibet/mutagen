@@ -405,6 +405,61 @@ class FrameSanityChecks(TestCase):
 
         print total-failcount, '/', total, 'success (%d unsynch)' % unsynch
 
+class Genres(TestCase):
+    from mutagen.id3 import TCON
+    from mutagen._constants import GENRES
+
+    def _g(self, s): return self.TCON(text=s).genres()
+
+    def test_empty(self): self.assertEquals(self._g(""), [])
+
+    def test_num(self):
+        for i in range(len(self.GENRES)):
+            self.assertEquals(self._g("%02d" % i), [self.GENRES[i]])
+
+    def test_parened_num(self):
+        for i in range(len(self.GENRES)):
+            self.assertEquals(self._g("(%02d)" % i), [self.GENRES[i]])
+
+    def test_unknown(self):
+        self.assertEquals(self._g("(255)"), ["Unknown"])
+        self.assertEquals(self._g("199"), ["Unknown"])
+
+    def test_parened_multi(self):
+        self.assertEquals(self._g("(00)(02)"), ["Blues", "Country"])
+
+    def test_coverremix(self):
+        self.assertEquals(self._g("CR"), ["Cover"])
+        self.assertEquals(self._g("(CR)"), ["Cover"])
+        self.assertEquals(self._g("RX"), ["Remix"])
+        self.assertEquals(self._g("(RX)"), ["Remix"])
+
+    def test_parened_text(self):
+        self.assertEquals(
+            self._g("(00)(02)Real Folk Blues"),
+            ["Blues", "Country", "Real Folk Blues"])
+
+    def test_escape(self):
+        self.assertEquals(self._g("(0)((A genre)"), ["Blues", "(A genre)"])
+        self.assertEquals(self._g("(10)((20)"), ["New Age", "(20)"])
+
+    def test_nullsep(self):
+        self.assertEquals(self._g("0\x00A genre"), ["Blues", "A genre"])
+
+    def test_nullsep_empty(self):
+        self.assertEquals(self._g("\x000\x00A genre"), ["Blues", "A genre"])
+
+    def test_crazy(self):
+        self.assertEquals(
+            self._g("(20)(CR)\x0030\x00\x00Another\x00(51)Hooray"),
+             ['Alternative', 'Cover', 'Fusion', 'Another',
+              'Techno-Industrial', 'Hooray'])
+
+    def test_repeat(self):
+        self.assertEquals(self._g("(20)Alternative"), ["Alternative"])
+        self.assertEquals(
+            self._g("(20)\x00Alternative"), ["Alternative", "Alternative"])
+
 class BrokenButParsed(TestCase):
     def test_missing_encoding(self):
         from mutagen.id3 import TIT2
@@ -434,3 +489,4 @@ registerCase(ID3Tags)
 registerCase(ID3v1Tags)
 registerCase(BrokenButParsed)
 registerCase(FrameSanityChecks)
+registerCase(Genres)
