@@ -126,8 +126,9 @@ class ID3(mutagen.Metadata):
         data = self.fullread(10)
         name, size, flags = unpack('>4s4sH', data)
         size = BitPaddedInt(size)
-        framedata = self.fullread(size)
         if name == '\x00\x00\x00\x00': return name, None
+        if size == 0: return name, data
+        framedata = self.fullread(size)
         try: tag = frames[name]
         except KeyError:
             return name, data + framedata
@@ -538,11 +539,11 @@ def ParseID3v1(string):
     except StructError: return None
 
     if tag != "TAG": return None
-    title = title.strip("\x00").strip()
-    artist = artist.strip("\x00").strip()
-    album = album.strip("\x00").strip()
-    year = year.strip("\x00").strip()
-    comment = comment.strip("\x00").strip()
+    title = title.strip("\x00").strip().decode('latin1')
+    artist = artist.strip("\x00").strip().decode('latin1')
+    album = album.strip("\x00").strip().decode('latin1')
+    year = year.strip("\x00").strip().decode('latin1')
+    comment = comment.strip("\x00").strip().decode('latin1')
 
     if title: frames["TIT2"] = TIT2(encoding=0, text=title)
     if artist: frames["TPE1"] = TPE1(encoding=0, text=[artist])

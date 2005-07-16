@@ -106,6 +106,19 @@ class ID3v1Tags(TestCase):
         self.assertEquals('2004', self.id3['TYER'])
         self.assertEquals(2004, +self.id3['TYER'])
 
+    def test_nonascii(self):
+        from mutagen.id3 import ParseID3v1
+        s = 'TAG%(title)30s%(artist)30s%(album)30s%(year)4s%(cmt)29s\x01\x01'
+        s = s % dict(artist='abcd\xe9fg', title='hijklmn\xf3p',
+                    album='qrst\xfcv', cmt='wxyz', year='1234')
+        tags = ParseID3v1(s)
+        self.assertEquals(['abcd\xe9fg'.decode('latin1')], tags['TPE1'].text)
+        self.assertEquals('hijklmn\xf3p'.decode('latin1'), tags['TIT2'].text)
+        self.assertEquals('qrst\xfcv'.decode('latin1'), tags['TALB'].text)
+        self.assertEquals('wxyz', tags['COMM'].text)
+        self.assertEquals(1234, +tags['TYER'])
+
+
 def TestReadTags():
     ID3_tags = {
     'TALB': {'[]':'\x00a/b', 'encoding':0, '':'a/b'},
@@ -360,6 +373,20 @@ class BrokenButParsed(TestCase):
         tag = TIT2.fromData(_23, 0x00, 'a test')
         self.assertEquals(tag.encoding, 0)
         self.assertEquals(tag.text, 'a test')
+
+    def test_zerolength_framedata(self):
+        from mutagen.id3 import Frames
+        id3 = ID3()
+        from cStringIO import StringIO
+        tail = '\x00' * 6
+        for head in 'WOAR TENC TCOP TOPE WXXX'.split():
+            data = head + tail
+            sio = StringIO(data)
+            id3._ID3__fileobj = sio
+            name, tag = id3.load_frame(Frames)
+            self.assertEquals(name, head)
+            self.assertEquals(tag, data)
+
 
 registerCase(ID3Loading)
 registerCase(BitPaddedIntTest)
