@@ -75,10 +75,10 @@ class ID3(mutagen.Metadata):
                     except EOFError: break
 
                     if name != '\x00\x00\x00\x00':
-                        if isinstance(tag, str):
-                            self.unknown_frames.append([name, tag])
-                        else:
+                        if isinstance(tag, Frame):
                             self.loaded_frame(name, tag)
+                        else:
+                            self.unknown_frames.append([name, tag])
         finally:
             self.__fileobj.close()
             del self.__fileobj
@@ -92,35 +92,26 @@ class ID3(mutagen.Metadata):
         fn = self.__filename
         data = self.fullread(10)
         id3, vmaj, vrev, flags, size = unpack('>3sBBB4s', data)
+        self.__flags = flags
+        self.__size = BitPaddedInt(size)
+        self.version = (2, vmaj, vrev)
+
         if id3 != 'ID3':
             raise ID3NoHeaderError("'%s' doesn't start with an ID3 tag" % fn)
         if vmaj not in [3, 4]:
             raise ID3UnsupportedVersionError("'%s' ID3v2.%d not supported"
                     % (fn, vmaj))
-        if self.PEDANTIC and vmaj == 3 and (flags & 0x1f):
-            raise ValueError("'%s' has invalid flags %#02x" % (fn, flags))
-        if self.PEDANTIC and vmaj == 4 and (flags & 0x0f):
-            raise ValueError("'%s' has invalid flags %#02x" % (fn, flags))
 
-        self.version = (2, vmaj, vrev)
-        self.__flags = flags
-        self.__size = BitPaddedInt(size)
+        if self.PEDANTIC:
+            if (2,4,0) <= self.version and (flags & 0x0f):
+                raise ValueError("'%s' has invalid flags %#02x" % (fn, flags))
+            elif (2,3,0) <= self.version and (flags & 0x1f):
+                raise ValueError("'%s' has invalid flags %#02x" % (fn, flags))
+
 
         if self.f_extended:
-            data = self.fullread(10)
-            extsize, extflags, padding = unpack('>4sH4s', data)
-            extsize = BitPaddedInt(extsize)
-            if extsize not in [6, 10]:
-                raise ValueError("'%s': invalid extended header size: %d"
-                        % (fn, extsize))
-            self.__extflags = extflags
-            if self.PEDANTIC and (self.__extflags & 0x7fff):
-                raise ValueError("'%s': invalid extended flags %#04x"
-                        % (fn, extflags))
-            self.__padding = BitPaddedInt(padding)
-            if self.f_crc:
-                data = self.fullread(4)
-                self.__crc = BitPaddedInt(unpack('>L', data))
+            self.__extsize = BitPaddedInt(self.fullread(4))
+            self.__extdata = self.fullread(self.__extsize - 4)
 
     def load_frame(self, frames):
         data = self.fullread(10)
@@ -133,16 +124,17 @@ class ID3(mutagen.Metadata):
         except KeyError:
             return name, data + framedata
         else:
-            if self.f_unsync: framedata = unsynch.decode(framedata)
+            if self.f_unsynch or flags & 0x40:
+                framedata = unsynch.decode(framedata)
             tag = tag.fromData(self, flags, framedata)
         return name, tag
 
-    f_unsync = property(lambda s: bool(s.__flags & 0x80))
+    f_unsynch = property(lambda s: bool(s.__flags & 0x80))
     f_extended = property(lambda s: bool(s.__flags & 0x40))
     f_experimental = property(lambda s: bool(s.__flags & 0x20))
     f_footer = property(lambda s: bool(s.__flags & 0x10))
 
-    f_crc = property(lambda s: bool(s.__extflags & 0x8000))
+    #f_crc = property(lambda s: bool(s.__extflags & 0x8000))
 
 class BitPaddedInt(int):
     def __new__(cls, value, bits=7, bigendian=True):
@@ -266,23 +258,29 @@ class EncodedTextSpec(Spec):
 
         return data.decode(enc), ret
 
-
     def write(self, frame, value):
         enc, term = self.encodings[frame.encoding]
         return value.encode(enc) + term
 
     def validate(self, frame, value): return unicode(value)
 
-class EncodedSlashTextSpec(EncodedTextSpec):
+class EncodedMultiTextSpec(EncodedTextSpec):
     def read(self, frame, data):
-        value, data = super(EncodedSlashTextSpec, self).read(frame, data)
-        return value.split('/'), data
+        values = []
+        while 1:
+            value, data = super(EncodedMultiTextSpec, self).read(frame, data)
+            values.append(value)
+            if not data: break
+        return values, data
 
     def write(self, frame, value):
-        return super(EncodedSlashTextSpec, self).write(frame, '/'.join(value))
+        return super(EncodedMultiTextSpec, self).write(frame, u'\u0000'.join(value))
     def validate(self, frame, value):
+        enc, term = self.encodings[frame.encoding or 0]
         if value is None: return []
         if isinstance(value, list): return value
+        if isinstance(value, str): return value.decode(enc).split(u'\u0000')
+        if isinstance(value, unicode): return value.split(u'\u0000')
         raise ValueError
 
 class MultiSpec(Spec):
@@ -332,12 +330,21 @@ class Latin1TextSpec(EncodedTextSpec):
     def validate(self, frame, value): return unicode(value)
 
 class Frame(object):
-    FLAG_ALTERTAG   = 0x8000
-    FLAG_ALTERFILE  = 0x4000
-    FLAG_READONLY   = 0x2000
-    FLAG_ZLIB       = 0x80
-    FLAG_ENCRYPT    = 0x40
-    FLAG_GROUP      = 0x20
+    FLAG23_ALTERTAG     = 0x8000
+    FLAG23_ALTERFILE    = 0x4000
+    FLAG23_READONLY     = 0x2000
+    FLAG23_COMPRESS     = 0x0080
+    FLAG23_ENCRYPT      = 0x0040
+    FLAG23_GROUP        = 0x0020
+
+    FLAG24_ALTERTAG     = 0x4000
+    FLAG24_ALTERFILE    = 0x2000
+    FLAG24_READONLY     = 0x1000
+    FLAG24_GROUPID      = 0x0040
+    FLAG24_COMPRESS     = 0x0008
+    FLAG24_ENCRYPT      = 0x0004
+    FLAG24_UNSYNC       = 0x0002
+    FLAG24_DATALEN      = 0x0001
 
     def __init__(self, *args, **kwargs):
         for checker, val in zip(self._framespec, args):
@@ -355,11 +362,7 @@ class Frame(object):
     def _readData(self, data):
         odata = data
         for reader in self._framespec:
-            try: value, data = reader.read(self, data)
-            except IndexError:
-                print 'IndexError: %s: %r (from %r)' % (
-                        type(self).__name__, data, odata)
-                raise
+            value, data = reader.read(self, data)
             setattr(self, reader.name, value)
         if data.strip('\x00'):
             if PRINT_ERRORS: print 'Leftover data: %s: %r (from %r)' % (
@@ -371,9 +374,24 @@ class Frame(object):
             data.append(writer.write(self, getattr(self, writer.name)))
 
     def fromData(cls, id3, tflags, data):
-        if tflags & Frame.FLAG_ZLIB: data = data.decode('zlib')
+
+        if (2,4,0) <= id3.version:
+            if tflags & Frame.FLAG24_UNSYNC and not id3.f_unsynch:
+                data = unsynch.decode(data)
+            if tflags & Frame.FLAG24_ENCRYPT:
+                raise ID3EncryptionUnsupportedError
+            if tflags & Frame.FLAG24_COMPRESS:
+                data = data.decode('zlib')
+
+        elif (2,3,0) <= id3.version:
+            if tflags & Frame.FLAG24_ENCRYPT:
+                raise ID3EncryptionUnsupportedError
+            if tflags & Frame.FLAG23_COMPRESS:
+                data = data.decode('zlib')
+
         frame = cls()
         frame._rawdata = data
+        frame._flags = tflags
         frame._readData(data)
         return frame
     fromData = classmethod(fromData)
@@ -395,12 +413,13 @@ class NumericPartTextFrame(TextFrame):
         t = self.text
         return int('/' in t and t[:t.find('/')] or t)
 
-class SlashTextFrame(TextFrame):
-    _framespec = [ EncodingSpec('encoding'), EncodedSlashTextSpec('text') ]
-    def __str__(self): return '/'.join(self.text).encode('utf-8')
-    def __unicode__(self): return '/'.join(self.text)
+class MultiTextFrame(TextFrame):
+    _framespec = [ EncodingSpec('encoding'), EncodedMultiTextSpec('text') ]
+    def __str__(self): return '\u0000'.join(self.text).encode('utf-8')
+    def __unicode__(self): return u'\u0000'.join(self.text)
     def __eq__(self, other):
-        if isinstance(other, basestring): return str(self) == other
+        if isinstance(other, str): return str(self) == other
+        elif isinstance(other, unicode): return u'\u0000'.join(self.text) == other
         return self.text == other
     def __getitem__(self, item): return self.text[item]
     def __iter__(self): return iter(self.text)
@@ -415,41 +434,41 @@ class UrlFrame(Frame):
 
 class TALB(TextFrame): "Album"
 class TBPM(NumericTextFrame): "Beats per minute"
-class TCOM(SlashTextFrame): "Composer"
-class TCON(TextFrame): "Content type (Genre)"
-class TCOP(TextFrame): "Copyright"
-class TDAT(TextFrame): "Date of recording (DDMM)"
+class TCOM(MultiTextFrame): "Composer"
+class TCON(MultiTextFrame): "Content type (Genre)"
+class TCOP(MultiTextFrame): "Copyright"
+class TDAT(MultiTextFrame): "Date of recording (DDMM)"
 class TDLY(NumericTextFrame): "Audio Delay (ms)"
-class TENC(TextFrame): "Encoder"
-class TEXT(SlashTextFrame): "Lyricist"
-class TFLT(TextFrame): "File type"
-class TIME(TextFrame): "Time of recording (HHMM)"
-class TIT1(TextFrame): "Content group description"
-class TIT2(TextFrame): "Title"
-class TIT3(TextFrame): "Subtitle/Description refinement"
-class TKEY(TextFrame): "Starting Key"
-class TLAN(TextFrame): "Audio Languages"
+class TENC(MultiTextFrame): "Encoder"
+class TEXT(MultiTextFrame): "Lyricist"
+class TFLT(MultiTextFrame): "File type"
+class TIME(MultiTextFrame): "Time of recording (HHMM)"
+class TIT1(MultiTextFrame): "Content group description"
+class TIT2(MultiTextFrame): "Title"
+class TIT3(MultiTextFrame): "Subtitle/Description refinement"
+class TKEY(MultiTextFrame): "Starting Key"
+class TLAN(MultiTextFrame): "Audio Languages"
 class TLEN(NumericTextFrame): "Audio Length (ms)"
-class TMED(TextFrame): "Original Media"
-class TOAL(TextFrame): "Original Album"
-class TOFN(TextFrame): "Original Filename"
-class TOLY(TextFrame): "Original Lyricist"
-class TOPE(TextFrame): "Original Artist/Performer"
+class TMED(MultiTextFrame): "Original Media"
+class TOAL(MultiTextFrame): "Original Album"
+class TOFN(MultiTextFrame): "Original Filename"
+class TOLY(MultiTextFrame): "Original Lyricist"
+class TOPE(MultiTextFrame): "Original Artist/Performer"
 class TORY(NumericTextFrame): "Original Release Year"
-class TOWN(TextFrame): "Owner/Licensee"
-class TPE1(SlashTextFrame): "Lead Artist/Performer/Soloist/Group"
-class TPE2(SlashTextFrame): "Band/Orchestra/Accompaniment"
-class TPE3(SlashTextFrame): "Conductor"
-class TPE4(SlashTextFrame): "Interpreter/Remixer/Modifier"
+class TOWN(MultiTextFrame): "Owner/Licensee"
+class TPE1(MultiTextFrame): "Lead Artist/Performer/Soloist/Group"
+class TPE2(MultiTextFrame): "Band/Orchestra/Accompaniment"
+class TPE3(MultiTextFrame): "Conductor"
+class TPE4(MultiTextFrame): "Interpreter/Remixer/Modifier"
 class TPOS(NumericPartTextFrame): "Track Number"
-class TPUB(TextFrame): "Publisher"
+class TPUB(MultiTextFrame): "Publisher"
 class TRCK(NumericPartTextFrame): "Track Number"
-class TRDA(TextFrame): "Recording Dates"
-class TRSN(TextFrame): "Internet Radio Station Name"
-class TRSO(TextFrame): "Internet Radio Station Owner"
+class TRDA(MultiTextFrame): "Recording Dates"
+class TRSN(MultiTextFrame): "Internet Radio Station Name"
+class TRSO(MultiTextFrame): "Internet Radio Station Owner"
 class TSIZ(NumericTextFrame): "Size of audio data (bytes)"
-class TSRC(TextFrame): "International Standard Recording Code (ISRC)"
-class TSSE(TextFrame): "Encoder settings"
+class TSRC(MultiTextFrame): "International Standard Recording Code (ISRC)"
+class TSSE(MultiTextFrame): "Encoder settings"
 class TYER(NumericTextFrame): "Year of recording"
 
 class TXXX(TextFrame):

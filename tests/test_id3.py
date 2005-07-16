@@ -112,9 +112,9 @@ class ID3v1Tags(TestCase):
         s = s % dict(artist='abcd\xe9fg', title='hijklmn\xf3p',
                     album='qrst\xfcv', cmt='wxyz', year='1234')
         tags = ParseID3v1(s)
-        self.assertEquals(['abcd\xe9fg'.decode('latin1')], tags['TPE1'].text)
-        self.assertEquals('hijklmn\xf3p'.decode('latin1'), tags['TIT2'].text)
-        self.assertEquals('qrst\xfcv'.decode('latin1'), tags['TALB'].text)
+        self.assertEquals('abcd\xe9fg'.decode('latin1'), tags['TPE1'])
+        self.assertEquals('hijklmn\xf3p'.decode('latin1'), tags['TIT2'])
+        self.assertEquals('qrst\xfcv'.decode('latin1'), tags['TALB'])
         self.assertEquals('wxyz', tags['COMM'].text)
         self.assertEquals(1234, +tags['TYER'])
 
@@ -123,13 +123,13 @@ def TestReadTags():
     ID3_tags = {
     'TALB': {'[]':'\x00a/b', 'encoding':0, '':'a/b'},
     'TBPM': {'[]':'\x00120', 'encoding':0, '':'120', '+':120},
-    'TCOM': {'[]':'\x00a/b', 'encoding':0, '':['a','b']},
+    'TCOM': {'[]':'\x00a/b', 'encoding':0, '':['a/b']},
     'TCON': {'[]':'\x00(21)Disco', 'encoding':0, '':'(21)Disco'},
     'TCOP': {'[]':'\x001900 c', 'encoding':0, '':'1900 c'},
     'TDAT': {'[]':'\x00a/b', 'encoding':0, '':'a/b'},
     'TDLY': {'[]':'\x001205', 'encoding':0, '':'1205'},
     'TENC': {'[]':'\x00a b/c d', 'encoding':0, '':'a b/c d'},
-    'TEXT': {'[]':'\x00a b/c d', 'encoding':0, '':['a b', 'c d']},
+    'TEXT': {'[]':'\x00a b\x00c d', 'encoding':0, '':['a b', 'c d']},
     'TFLT': {'[]':'\x00MPG/3', 'encoding':0, '':'MPG/3'},
     'TIME': {'[]':'\x001205', 'encoding':0, '':'1205'},
     'TIT1': {'[]':'\x00a/b', 'encoding':0, '':'a/b'},
@@ -147,9 +147,9 @@ def TestReadTags():
     'TORY': {'[]':'\x001923', 'encoding':0, '':'1923', '+':1923},
     'TOWN': {'[]':'\x00own/lic', 'encoding':0, '':'own/lic'},
     'TPE1': {'[]':'\x00ab', 'encoding':0, '':['ab']},
-    'TPE2': {'[]':'\x00ab/cd/ef', 'encoding':0, '':['ab','cd', 'ef']},
-    'TPE3': {'[]':'\x00ab/cd', 'encoding':0, '':['ab','cd']},
-    'TPE4': {'[]':'\x00ab/cd', 'encoding':0, '':['ab','cd']},
+    'TPE2': {'[]':'\x00ab\x00cd\x00ef', 'encoding':0, '':['ab','cd', 'ef']},
+    'TPE3': {'[]':'\x00ab\x00cd', 'encoding':0, '':['ab','cd']},
+    'TPE4': {'[]':'\x00ab\x00cd', 'encoding':0, '':['ab','cd']},
     'TPOS': {'[]':'\x0008/32', 'encoding':0, '':'08/32', '+':8},
     'TPUB': {'[]':'\x00pub', 'encoding':0, '':'pub'},
     'TRCK': {'[]':'\x004/9', 'encoding':0, '':'4/9', '+':4},
@@ -300,9 +300,9 @@ class FrameSanityChecks(TestCase):
         from mutagen.id3 import NumericPartTextFrame
         self.assert_(isinstance(NumericPartTextFrame(text='1/2'), NumericPartTextFrame))
 
-    def test_STF(self):
-        from mutagen.id3 import SlashTextFrame
-        self.assert_(isinstance(SlashTextFrame(texts=['a','b']), SlashTextFrame))
+    def test_MTF(self):
+        from mutagen.id3 import MultiTextFrame
+        self.assert_(isinstance(MultiTextFrame(texts=['a','b']), MultiTextFrame))
 
     def test_TXXX(self):
         from mutagen.id3 import TXXX
@@ -313,7 +313,7 @@ class FrameSanityChecks(TestCase):
         tag = TPE1.fromData(_23, 0x80,
                 'x\x9cc(\xc9\xc8,V\x00\xa2D\xfd\x92\xd4\xe2\x12\x00&\x7f\x05%')
         self.assertEquals(tag.encoding, 0)
-        self.assertEquals(tag, ['this is a', 'test'])
+        self.assertEquals(tag, ['this is a/test'])
 
     def test_utf8(self):
         from mutagen.id3 import TPE1
@@ -326,7 +326,7 @@ class FrameSanityChecks(TestCase):
         tag = TPE1.fromData(_23, 0x80, 'x\x9cc\xfc\xff\xaf\x84!\x83!\x93'
                 '\xa1\x98A\x01J&2\xe83\x940\xa4\x02\xd9%\x0c\x00\x87\xc6\x07#')
         self.assertEquals(tag.encoding, 1)
-        self.assertEquals(tag, ['this is a', 'test'])
+        self.assertEquals(tag, ['this is a/test'])
 
     def test_unsync_encode(self):
         from mutagen.id3 import unsynch as un
@@ -342,8 +342,10 @@ class FrameSanityChecks(TestCase):
     def skip_test_harsh(self):
         from os import walk
         from traceback import print_exc
+        from mutagen.id3 import ID3NoHeaderError, ID3UnsupportedVersionError
         total = 0
         failures = {}
+        missing = []
         for path, dirs, files in walk('/vault/music'):
             for fn in files:
                 if not fn.lower().endswith('.mp3'): continue
@@ -355,11 +357,17 @@ class FrameSanityChecks(TestCase):
                     id3 = ID3(ffn)
                     for frame, val in id3.iteritems():
                         pass #print frame, str(val)
+                except KeyboardInterrupt: raise
+                except ID3NoHeaderError:
+                    missing.append(ffn)
+                except ID3UnsupportedVersionError, err:
+                    failures.setdefault(err.__class__, []).append(fn)
                 except Exception, err:
                     if err.__class__ not in failures:
                         print_exc()
                     failures.setdefault(err.__class__, []).append(ffn)
 
+        #for ffn in missing: print ffn
         failcount = 0
         for fail, files in failures.iteritems():
             failcount += len(files)
@@ -371,8 +379,10 @@ class BrokenButParsed(TestCase):
     def test_missing_encoding(self):
         from mutagen.id3 import TIT2
         tag = TIT2.fromData(_23, 0x00, 'a test')
-        self.assertEquals(tag.encoding, 0)
-        self.assertEquals(tag.text, 'a test')
+        self.assertEquals(0, tag.encoding)
+        self.assertEquals('a test', tag)
+        self.assertEquals(['a test'], tag)
+        self.assertEquals(['a test'], tag.text)
 
     def test_zerolength_framedata(self):
         from mutagen.id3 import Frames
