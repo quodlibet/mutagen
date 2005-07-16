@@ -35,6 +35,7 @@ class ID3(mutagen.Metadata):
         self.__filename = None
         self.__flags = 0
         self.__size = 0
+        self.__readbytes = 0
         self.__padding = 0
         self.__crc = None
         self.__frames = {}
@@ -42,48 +43,47 @@ class ID3(mutagen.Metadata):
         if filename is not None:
             self.load(filename)
 
-    def open_mmap(name):
-        from os import stat
-        from stat import ST_SIZE
-        s = stat(name)[ST_SIZE]
-        f = file(name, 'rb+')
-        return mmap(f.fileno(), s), s
-    open_mmap = staticmethod(open_mmap)
+    def fullread(self, size):
+        data = self.__fileobj.read(size)
+        if len(data) != size: raise EOFError
+        self.__readbytes += size
+        return data
 
     def load(self, filename):
         self.__filename = filename
-        self.__map, filesize = ID3.open_mmap(filename)
+        self.__fileobj = file(filename, 'rb')
         try:
-            if filesize < 10: raise ID3NoHeaderError(
-                    "%s: too small (%d bytes)" % (filename,filesize))
-            self.load_header(self.__map, 0)
+            try:
+                self.load_header()
+            except EOFError:
+                from os import stat
+                from stat import ST_SIZE
+                s = stat(filename)[ST_SIZE]
+                raise ID3NoHeaderError("%s: too small (%d bytes)" %
+                        (filename,s))
 
-            offset = self.__frame_offset
-            while offset+self.__padding+10 < self.__size:
-                name, tag, size = self.load_frame(offset=offset,
-                        known_frames=self.__known_frames)
+            while self.__readbytes+self.__padding+10 < self.__size:
+                try: name, tag = self.load_frame(frames=self.__known_frames)
+                except EOFError: break
+
                 if name != '\x00\x00\x00\x00':
-                    if tag is None:
-                        self.unknown_frames.append([name, offset])
+                    if isinstance(tag, str):
+                        self.unknown_frames.append([name, tag])
                     else:
                         self.loaded_frame(name, tag)
-
-                offset += size
         finally:
-            self.__map.close()
-            del self.__map
+            self.__fileobj.close()
+            del self.__fileobj
 
     def loaded_frame(self, name, tag):
         if name == 'TXXX' or name == 'WXXX':
             name += ':' + tag.desc
         self[name] = tag
 
-    def load_header(self, mmapobj, offset=0):
+    def load_header(self):
         fn = self.__filename
-        o = offset
-        f = mmapobj
-        id3, vmaj, vrev, flags, size = unpack('>3sBBB4s', f[o:o+10])
-        o += 10
+        data = self.fullread(10)
+        id3, vmaj, vrev, flags, size = unpack('>3sBBB4s', data)
         if id3 != 'ID3':
             raise ID3NoHeaderError("'%s' doesn't start with an ID3 tag" % fn)
         if vmaj not in [3, 4]:
@@ -99,8 +99,8 @@ class ID3(mutagen.Metadata):
         self.__size = BitPaddedInt(size)
 
         if self.f_extended:
-            extsize, extflags, padding = unpack('>4sH4s', f[o:o+10])
-            o += 10
+            data = self.fullread(10)
+            extsize, extflags, padding = unpack('>4sH4s', data)
             extsize = BitPaddedInt(extsize)
             if extsize not in [6, 10]:
                 raise ValueError("'%s': invalid extended header size: %d"
@@ -111,24 +111,22 @@ class ID3(mutagen.Metadata):
                         % (fn, extflags))
             self.__padding = BitPaddedInt(padding)
             if self.f_crc:
-                self.__crc = BitPaddedInt(unpack('>L', f[o:o+4]))
-                o += 4
+                data = self.fullread(4)
+                self.__crc = BitPaddedInt(unpack('>L', data))
 
-        self.__frame_offset = o
-
-    def load_frame(self, offset, known_frames):
-        f = self.__map
-        name, size, flags = unpack('>4s4sH', f[offset:offset+10])
-        offset += 10
+    def load_frame(self, frames):
+        data = self.fullread(10)
+        name, size, flags = unpack('>4s4sH', data)
         size = BitPaddedInt(size)
-        if name == '\x00\x00\x00\x00': return name, None, size+10
-        try: tag = known_frames[name]
-        except KeyError: return name, None, size+10
+        framedata = self.fullread(size)
+        if name == '\x00\x00\x00\x00': return name, None
+        try: tag = frames[name]
+        except KeyError:
+            return name, data + framedata
         else:
-            data = f[offset:offset+size]
-            if self.f_unsync: data = unsynch.decode(data)
-            tag = tag.fromData(self, flags, data)
-        return name, tag, size+10
+            if self.f_unsync: framedata = unsynch.decode(framedata)
+            tag = tag.fromData(self, flags, framedata)
+        return name, tag
 
     f_unsync = property(lambda s: bool(s.__flags & 0x80))
     f_extended = property(lambda s: bool(s.__flags & 0x40))

@@ -2,7 +2,6 @@ from os.path import join
 from unittest import TestCase
 from tests import registerCase
 from mutagen.id3 import ID3, BitPaddedInt
-from mmap import mmap
 
 try: from sets import Set as set
 except ImportError: pass
@@ -31,24 +30,15 @@ class ID3Loading(TestCase):
 
     def test_header_empty(self):
         id3 = ID3()
-        f, s = ID3.open_mmap(self.empty)
-        self.assertRaises(ValueError, id3.load_header, f)
+        id3._ID3__fileobj = file(self.empty, 'rb')
+        self.assertRaises(EOFError, id3.load_header)
 
     def test_header_silence(self):
         id3 = ID3()
-        f, s = ID3.open_mmap(self.silence)
-        id3.load_header(f)
+        id3._ID3__fileobj = file(self.silence, 'rb')
+        id3.load_header()
         self.assertEquals(id3.version, (2,3,0))
         self.assertEquals(getattr(id3, '_ID3__size'), 1304)
-
-    def test_open_mmap(self):
-        name = self.silence
-        f = file(name, 'r')
-        first10 = f.read(10)
-        f.close()
-        mmap, filesize = ID3.open_mmap(name)
-        self.assertEquals(first10, mmap[0:10])
-        self.assertEquals(16384, filesize)
 
 class ID3Tags(TestCase):
     def setUp(self):
@@ -163,10 +153,13 @@ def TestReadTags():
     }
 
     tests = {}
+    repr_tests = {}
     for tag, info in ID3_tags.iteritems():
+
         info = info.copy()
         data = info.pop('[]')
         value = info.pop('')
+
         def test_tag(self, tag=tag, data=data, value=value, info=info):
             from operator import pos
             id3 = __import__('mutagen.id3', globals(), locals(), [tag])
@@ -184,13 +177,22 @@ def TestReadTags():
                         self.assertEquals(value, pos(tag))
                     else:
                         self.assertEquals(value, getattr(tag, attr))
+        tests['test_' + tag] = test_tag
+
+        def test_tag_repr(self, tag=tag, data=data):
+            id3 = __import__('mutagen.id3', globals(), locals(), [tag])
+            TAG = getattr(id3, tag)
+            tag = TAG.fromData(_23, 0, data)
             tag2 = eval(repr(tag), {TAG.__name__:TAG})
             self.assertEquals(type(tag), type(tag2))
             for spec in TAG._framespec:
                 attr = spec.name
                 self.assertEquals(getattr(tag, attr), getattr(tag2, attr))
-        tests['test_' + tag + '_23'] = test_tag
-    testcase = type('TestReadTags_23', (TestCase,), tests)
+        repr_tests['test_repr_' + tag] = test_tag_repr
+
+    testcase = type('TestReadTags', (TestCase,), tests)
+    registerCase(testcase)
+    testcase = type('TestReadReprTags', (TestCase,), repr_tests)
     registerCase(testcase)
 TestReadTags()
 del TestReadTags
