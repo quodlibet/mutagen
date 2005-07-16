@@ -38,7 +38,6 @@ class ID3(mutagen.Metadata):
         self.__readbytes = 0
         self.__padding = 0
         self.__crc = None
-        self.__frames = {}
 
         if filename is not None:
             self.load(filename)
@@ -56,21 +55,30 @@ class ID3(mutagen.Metadata):
             try:
                 self.load_header()
             except EOFError:
-                from os import stat
-                from stat import ST_SIZE
-                s = stat(filename)[ST_SIZE]
-                raise ID3NoHeaderError("%s: too small (%d bytes)" %
-                        (filename,s))
+                from os.path import getsize
+                raise ID3NoHeaderError("%s: too small (%d bytes)" %(
+                    filename, getsize(filename)))
+            except (ID3NoHeaderError, ID3UnsupportedVersionError), err:
+                import sys
+                stack = sys.exc_traceback
+                try: self.__fileobj.seek(-128, 2)
+                except EnvironmentError: raise err, None, stack
+                else:
+                    frames = ParseID3v1(self.__fileobj.read(128))
+                    if frames is not None:
+                        map(self.loaded_frame, frames.keys(), frames.values())
+                    else: raise err, None, stack
+            else:
+                while self.__readbytes+self.__padding+10 < self.__size:
+                    try:
+                        name, tag = self.load_frame(frames=self.__known_frames)
+                    except EOFError: break
 
-            while self.__readbytes+self.__padding+10 < self.__size:
-                try: name, tag = self.load_frame(frames=self.__known_frames)
-                except EOFError: break
-
-                if name != '\x00\x00\x00\x00':
-                    if isinstance(tag, str):
-                        self.unknown_frames.append([name, tag])
-                    else:
-                        self.loaded_frame(name, tag)
+                    if name != '\x00\x00\x00\x00':
+                        if isinstance(tag, str):
+                            self.unknown_frames.append([name, tag])
+                        else:
+                            self.loaded_frame(name, tag)
         finally:
             self.__fileobj.close()
             del self.__fileobj
@@ -519,3 +527,30 @@ Frames = dict([(k,v) for (k,v) in globals().items()
 
 # support open(filename) as interface
 Open = ID3
+
+# ID3v1.1 support.
+def ParseID3v1(string):
+    from struct import error as StructError
+    frames = {}
+    try:
+        tag, title, artist, album, year, comment, track, genre = unpack(
+            "3s30s30s30s4s29sbb", string)
+    except StructError: return None
+
+    if tag != "TAG": return None
+    title = title.strip("\x00").strip()
+    artist = artist.strip("\x00").strip()
+    album = album.strip("\x00").strip()
+    year = year.strip("\x00").strip()
+    comment = comment.strip("\x00").strip()
+
+    if title: frames["TIT2"] = TIT2(encoding=0, text=title)
+    if artist: frames["TPE1"] = TPE1(encoding=0, text=[artist])
+    if album: frames["TALB"] = TALB(encoding=0, text=album)
+    # FIXME: Needs to be TDAT if 2.4 was requested (if we have a way
+    # to request tag versions).
+    if year: frames["TYER"] = TYER(encoding=0, text=year)
+    if comment: frames["COMM"] = COMM(
+        encoding=0, lang="eng", desc="ID3v1 Comment", text=comment)
+    if track: frames["TRCK"] = TRCK(encoding=0, text=str(track))
+    return frames

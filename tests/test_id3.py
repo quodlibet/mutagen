@@ -87,6 +87,25 @@ class ID3Tags(TestCase):
         self.assertEquals('2004', id3['TYER'])
         self.assertEquals(2004, +id3['TYER'])
 
+class ID3v1Tags(TestCase):
+    silence = join('tests', 'data', 'silence-44-s-v1.mp3')
+    id3 = ID3(silence)
+
+    def test_album(self):
+        self.assertEquals('Quod Libet Test Data', self.id3['TALB'])
+    def test_genre(self):
+        self.assertEquals('Darkwave', str(self.id3['TCON']))
+    def test_title(self):
+        self.assertEquals('Silence', str(self.id3['TIT2']))
+    def test_artist(self):
+        self.assertEquals(['piman'], self.id3['TPE1'])
+    def test_track(self):
+        self.assertEquals('2', self.id3['TRCK'])
+        self.assertEquals(2, +self.id3['TRCK'])
+    def test_year(self):
+        self.assertEquals('2004', self.id3['TYER'])
+        self.assertEquals(2004, +self.id3['TYER'])
+
 def TestReadTags():
     ID3_tags = {
     'TALB': {'[]':'\x00a/b', 'encoding':0, '':'a/b'},
@@ -345,5 +364,6 @@ class BrokenButParsed(TestCase):
 registerCase(ID3Loading)
 registerCase(BitPaddedIntTest)
 registerCase(ID3Tags)
+registerCase(ID3v1Tags)
 registerCase(BrokenButParsed)
 registerCase(FrameSanityChecks)
