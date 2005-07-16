@@ -281,6 +281,12 @@ class FrameSanityChecks(TestCase):
         self.assertEquals(tag.encoding, 0)
         self.assertEquals(tag, ['this is a', 'test'])
 
+    def test_utf8(self):
+        from mutagen.id3 import TPE1
+        tag = TPE1.fromData(_23, 0x00, '\x03this is a test')
+        self.assertEquals(tag.encoding, 3)
+        self.assertEquals(tag, 'this is a test')
+
     def test_zlib_utf16(self):
         from mutagen.id3 import TPE1
         tag = TPE1.fromData(_23, 0x80, 'x\x9cc\xfc\xff\xaf\x84!\x83!\x93'
@@ -326,9 +332,16 @@ class FrameSanityChecks(TestCase):
             print fail, len(files)
 
         print total-failcount, '/', total, 'success'
-                    
+
+class BrokenButParsed(TestCase):
+    def test_missing_encoding(self):
+        from mutagen.id3 import TIT2
+        tag = TIT2.fromData(_23, 0x00, 'a test')
+        self.assertEquals(tag.encoding, 0)
+        self.assertEquals(tag.text, 'a test')
 
 registerCase(ID3Loading)
 registerCase(BitPaddedIntTest)
 registerCase(ID3Tags)
+registerCase(BrokenButParsed)
 registerCase(FrameSanityChecks)

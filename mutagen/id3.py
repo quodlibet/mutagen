@@ -215,8 +215,13 @@ class ByteSpec(Spec):
     def validate(self, frame, value): return value
 
 class EncodingSpec(ByteSpec):
+    def read(self, frame, data):
+        enc, data = super(EncodingSpec, self).read(frame, data)
+        if enc < 16: return enc, data
+        else: return 0, chr(enc)+data
+
     def validate(self, frame, value):
-        if 0 <= value <= 1: return value
+        if 0 <= value <= 3: return value
         if value is None: return None
         raise ValueError('%s: invalid encoding' % value)
 
@@ -234,7 +239,8 @@ class BinaryDataSpec(Spec):
     def validate(self, frame, value): return str(value)
 
 class EncodedTextSpec(Spec):
-    encodings = [ ('latin1', '\x00'), ('utf16', '\x00\x00') ]
+    encodings = [ ('latin1', '\x00'), ('utf16', '\x00\x00'),
+                  ('utf16be', '\x00\x00'), ('utf8', '\x00') ]
 
     def read(self, frame, data):
         enc, term = self.encodings[frame.encoding]
