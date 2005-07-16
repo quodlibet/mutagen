@@ -94,7 +94,7 @@ class ID3v1Tags(TestCase):
     def test_album(self):
         self.assertEquals('Quod Libet Test Data', self.id3['TALB'])
     def test_genre(self):
-        self.assertEquals('Darkwave', str(self.id3['TCON']))
+        self.assertEquals('(50)', str(self.id3['TCON']))
     def test_title(self):
         self.assertEquals('Silence', str(self.id3['TIT2']))
     def test_artist(self):
@@ -149,7 +149,7 @@ def TestReadTags():
     'TPE1': {'[]':'\x00ab', 'encoding':0, '':['ab']},
     'TPE2': {'[]':'\x00ab\x00cd\x00ef', 'encoding':0, '':['ab','cd', 'ef']},
     'TPE3': {'[]':'\x00ab\x00cd', 'encoding':0, '':['ab','cd']},
-    'TPE4': {'[]':'\x00ab\x00cd', 'encoding':0, '':['ab','cd']},
+    'TPE4': {'[]':'\x00ab\x00', 'encoding':0, '':['ab']},
     'TPOS': {'[]':'\x0008/32', 'encoding':0, '':'08/32', '+':8},
     'TPUB': {'[]':'\x00pub', 'encoding':0, '':'pub'},
     'TRCK': {'[]':'\x004/9', 'encoding':0, '':'4/9', '+':4},
@@ -186,6 +186,7 @@ def TestReadTags():
 
     tests = {}
     repr_tests = {}
+    write_tests = {}
     for tag, info in ID3_tags.iteritems():
 
         info = info.copy()
@@ -222,9 +223,22 @@ def TestReadTags():
                 self.assertEquals(getattr(tag, attr), getattr(tag2, attr))
         repr_tests['test_repr_' + tag] = test_tag_repr
 
+        def test_tag_write(self, tag=tag, data=data):
+            id3 = __import__('mutagen.id3', globals(), locals(), [tag])
+            TAG = getattr(id3, tag)
+            tag = TAG.fromData(_24, 0, data)
+            towrite = tag._writeData()
+            tag2 = TAG.fromData(_24, 0, towrite)
+            for spec in TAG._framespec:
+                attr = spec.name
+                self.assertEquals(getattr(tag, attr), getattr(tag2, attr))
+        write_tests['test_write_' + tag] = test_tag_write
+
     testcase = type('TestReadTags', (TestCase,), tests)
     registerCase(testcase)
     testcase = type('TestReadReprTags', (TestCase,), repr_tests)
+    registerCase(testcase)
+    testcase = type('TestReadWriteTags', (TestCase,), write_tests)
     registerCase(testcase)
 TestReadTags()
 del TestReadTags
@@ -339,11 +353,25 @@ class FrameSanityChecks(TestCase):
         self.assertRaises(ValueError, un.decode, '\xff\xff\xff\xff')
         self.assertRaises(ValueError, un.decode, '\xff\xf0\x0f\x00')
 
+    def test_load_write(self):
+        from mutagen.id3 import TPE1, Frames
+        from cStringIO import StringIO
+        artists= [s.decode('utf8') for s in ['\xc2\xb5', '\xe6\x97\xa5\xe6\x9c\xac']]
+        artist = TPE1(encoding=3, text=artists)
+        id3 = ID3()
+        id3.version = _24.version
+        id3._ID3__fileobj = StringIO(id3.save_frame(artist))
+        name, tag = id3.load_frame(Frames)
+        self.assertEquals('TPE1', name)
+        print repr(artist), repr(tag)
+        self.assertEquals(artist.text, tag.text)
+
     def skip_test_harsh(self):
         from os import walk
         from traceback import print_exc
         from mutagen.id3 import ID3NoHeaderError, ID3UnsupportedVersionError
         total = 0
+        unsynch = 0
         failures = {}
         missing = []
         for path, dirs, files in walk('/vault/music'):
@@ -366,6 +394,8 @@ class FrameSanityChecks(TestCase):
                     if err.__class__ not in failures:
                         print_exc()
                     failures.setdefault(err.__class__, []).append(ffn)
+                else:
+                    if id3.f_unsynch: unsynch += 1
 
         #for ffn in missing: print ffn
         failcount = 0
@@ -373,7 +403,7 @@ class FrameSanityChecks(TestCase):
             failcount += len(files)
             print fail, len(files)
 
-        print total-failcount, '/', total, 'success'
+        print total-failcount, '/', total, 'success (%d unsynch)' % unsynch
 
 class BrokenButParsed(TestCase):
     def test_missing_encoding(self):

@@ -12,7 +12,7 @@
 __all__ = ['ID3', 'Frames', 'Open']
 
 import mutagen
-from struct import unpack
+from struct import unpack, pack
 from mmap import mmap
 
 PRINT_ERRORS = True
@@ -36,7 +36,6 @@ class ID3(mutagen.Metadata):
         self.__flags = 0
         self.__size = 0
         self.__readbytes = 0
-        self.__padding = 0
         self.__crc = None
 
         if filename is not None:
@@ -69,7 +68,7 @@ class ID3(mutagen.Metadata):
                         map(self.loaded_frame, frames.keys(), frames.values())
                     else: raise err, None, stack
             else:
-                while self.__readbytes+self.__padding+10 < self.__size:
+                while self.__readbytes+10 < self.__size:
                     try:
                         name, tag = self.load_frame(frames=self.__known_frames)
                     except EOFError: break
@@ -135,6 +134,59 @@ class ID3(mutagen.Metadata):
     f_footer = property(lambda s: bool(s.__flags & 0x10))
 
     #f_crc = property(lambda s: bool(s.__extflags & 0x8000))
+
+    def save(self, filename=None):
+        # don't trust this code yet - it could corrupt your files
+        if filename is None: filename = self.__filename
+        f = open(filename, 'rb+')
+        try:
+            idata = f.read(10)
+            id3, ivmaj, ivrev, iflags, isize = unpack('>3sBBB4s', idata)
+            isize = BitPaddedInt(isize)
+            if id3 != 'ID3': isize = 0
+
+            framedata = map(self.save_frame, frame.values())
+            framedata.extend([data for (name, data) in self.unknown_frames
+                    if len(data) > 10])
+            framedata = ''.join(framedata)
+            framesize = len(framedata)
+
+            if isize >= framesize:
+                osize = isize
+                framedata += '\x00' * (osize - framesize)
+            else:
+                osize = (framesize + 1023) & ~0x3FF
+
+            framesize = BitPaddedInt.to_str(osize, width=4)
+            flags = 0
+            header = pack('>3sBBB4s', 'ID3', 4, 0, flags, framesize)
+            data = header + framedata
+
+            if (isize >= osize):
+                f.seek(0)
+                f.write(data)
+            else:
+                from os.path import getsize
+                filesize = getsize(filename)
+                m = mmap(f.fileno(), filesize)
+                try:
+                    m.resize(filesize + osize - isize)
+                    m.move(osize+10, isize+10, filesize - isize - 10)
+                    m[0:osize+10] = data
+                finally:
+                    m.close()
+        finally:
+            f.close()
+
+    def save_frame(self, frame):
+        flags = 0
+        framedata = frame._writeData()
+        if len(framedata) > 2048:
+            framedata = framedata.encode('zlib')
+            flags |= Frame.FLAG24_COMPRESS
+        datasize = BitPaddedInt.to_str(len(framedata), width=4)
+        header = pack('>4s4sH', type(frame).__name__, datasize, flags)
+        return header + framedata
 
 class BitPaddedInt(int):
     def __new__(cls, value, bits=7, bigendian=True):
@@ -343,7 +395,7 @@ class Frame(object):
     FLAG24_GROUPID      = 0x0040
     FLAG24_COMPRESS     = 0x0008
     FLAG24_ENCRYPT      = 0x0004
-    FLAG24_UNSYNC       = 0x0002
+    FLAG24_UNSYNCH      = 0x0002
     FLAG24_DATALEN      = 0x0001
 
     def __init__(self, *args, **kwargs):
@@ -372,11 +424,12 @@ class Frame(object):
         data = []
         for writer in self._framespec:
             data.append(writer.write(self, getattr(self, writer.name)))
+        return ''.join(data)
 
     def fromData(cls, id3, tflags, data):
 
         if (2,4,0) <= id3.version:
-            if tflags & Frame.FLAG24_UNSYNC and not id3.f_unsynch:
+            if tflags & Frame.FLAG24_UNSYNCH and not id3.f_unsynch:
                 data = unsynch.decode(data)
             if tflags & Frame.FLAG24_ENCRYPT:
                 raise ID3EncryptionUnsupportedError
@@ -573,4 +626,5 @@ def ParseID3v1(string):
     if comment: frames["COMM"] = COMM(
         encoding=0, lang="eng", desc="ID3v1 Comment", text=comment)
     if track: frames["TRCK"] = TRCK(encoding=0, text=str(track))
+    frames["TCON"] = TCON(encoding=0, text=u"(%d)" % genre)
     return frames

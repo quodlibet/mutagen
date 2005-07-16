@@ -34,8 +34,8 @@ class Metadata(dict):
         of bad data, a subclass of ValueError may be thrown."""
         raise NotImplementedError
 
-    def save(self):
-        """Save metadata to open file"""
+    def save(self, filename=None):
+        """Save metadata to previously referenced or newly specified file"""
         raise NotImplementedError
 
     def delete(self):
