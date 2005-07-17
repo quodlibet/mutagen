@@ -291,7 +291,7 @@ class BinaryDataSpec(Spec):
 
 class EncodedTextSpec(Spec):
     encodings = [ ('latin1', '\x00'), ('utf16', '\x00\x00'),
-                  ('utf16be', '\x00\x00'), ('utf8', '\x00') ]
+                  ('utf_16_be', '\x00\x00'), ('utf8', '\x00') ]
 
     def read(self, frame, data):
         enc, term = self.encodings[frame.encoding]
@@ -548,7 +548,7 @@ class TCON(MultiTextFrame):
 
     from mutagen._constants import GENRES
 
-    def genres(self):
+    def __get_genres(self):
         genres = []
         import re
         genre_re = re.compile(r"((?:\((?P<id>[0-9]+|RX|CR)\))*)(?P<str>.+)?")
@@ -579,6 +579,18 @@ class TCON(MultiTextFrame):
                 genres.extend(newgenres)
 
         return genres
+
+    def __set_genres(self, genres):
+        if isinstance(genres, basestring): genres = [genres]
+        self.text = map(self.__decode, genres)
+
+    def __decode(self, value):
+        if isinstance(value, str):
+            enc = EncodedTextSpec.encodings[self.encoding][0]
+            return value.decode(enc)
+        else: return value
+
+    genres = property(__get_genres, __set_genres)
 
 class TCOP(MultiTextFrame): "Copyright (c)"
 class TDAT(MultiTextFrame): "Date of recording (DDMM)"
@@ -729,5 +741,5 @@ def ParseID3v1(string):
     if comment: frames["COMM"] = COMM(
         encoding=0, lang="eng", desc="ID3v1 Comment", text=comment)
     if track: frames["TRCK"] = TRCK(encoding=0, text=str(track))
-    frames["TCON"] = TCON(encoding=0, text=u"(%d)" % genre)
+    frames["TCON"] = TCON(encoding=0, text=str(genre))
     return frames

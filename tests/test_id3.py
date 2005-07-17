@@ -94,7 +94,7 @@ class ID3v1Tags(TestCase):
     def test_album(self):
         self.assertEquals('Quod Libet Test Data', self.id3['TALB'])
     def test_genre(self):
-        self.assertEquals('(50)', str(self.id3['TCON']))
+        self.assertEquals('Darkwave', self.id3['TCON'].genres[0])
     def test_title(self):
         self.assertEquals('Silence', str(self.id3['TIT2']))
     def test_artist(self):
@@ -423,7 +423,7 @@ class Genres(TestCase):
     from mutagen.id3 import TCON
     from mutagen._constants import GENRES
 
-    def _g(self, s): return self.TCON(text=s).genres()
+    def _g(self, s): return self.TCON(text=s).genres
 
     def test_empty(self): self.assertEquals(self._g(""), [])
 
@@ -473,6 +473,12 @@ class Genres(TestCase):
         self.assertEquals(self._g("(20)Alternative"), ["Alternative"])
         self.assertEquals(
             self._g("(20)\x00Alternative"), ["Alternative", "Alternative"])
+
+    def test_set_genre(self):
+        gen = self.TCON(encoding=0, text="")
+        self.assertEquals(gen.genres, [])
+        gen.genres = ["a genre", "another"]
+        self.assertEquals(gen.genres, ["a genre", "another"])
 
 class BrokenButParsed(TestCase):
     def test_missing_encoding(self):
