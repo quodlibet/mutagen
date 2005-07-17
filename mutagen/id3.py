@@ -341,6 +341,7 @@ class EncodedTextSpec(Spec):
                     data, ret = data[0:offset], data[offset+2:]; break
             except ValueError: pass
 
+        if len(data) < len(term): return u'', ret
         return data.decode(enc), ret
 
     def write(self, frame, value):

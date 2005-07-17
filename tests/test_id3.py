@@ -594,6 +594,13 @@ class BrokenButParsed(TestCase):
             self.assertEquals(name, head)
             self.assertEquals(tag, data)
 
+    def test_lengthone_utf16(self):
+        from mutagen.id3 import TPE1
+        tpe1 = TPE1.fromData(_24, 0, '\x01\x00')
+        self.assertEquals(u'', tpe1)
+        tpe1 = TPE1.fromData(_24, 0, '\x01\x00\x00\x00\x00')
+        self.assertEquals([u'', u''], tpe1)
+
 class TimeStamp(TestCase):
     from mutagen.id3 import ID3TimeStamp as Stamp
 
