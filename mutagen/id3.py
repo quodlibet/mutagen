@@ -364,8 +364,14 @@ class MultiSpec(Spec):
 
     def validate(self, frame, value):
         if value is None: return []
-        if isinstance(value, list): return value
-        raise ValueError
+        if isinstance(value, list):
+            if len(self.specs) == 1:
+                return [self.specs[0].validate(frame, v) for v in value]
+            else:
+                return [ 
+                    [s.validate(frame, v) for (v,s) in zip(val, self.specs)]
+                    for val in value ]
+        raise ValueError, repr(value)
 
 class EncodedNumericTextSpec(EncodedTextSpec): pass
 class EncodedNumericPartTextSpec(EncodedTextSpec): pass
@@ -380,6 +386,48 @@ class Latin1TextSpec(EncodedTextSpec):
         return value.encode('latin1') + '\x00'
 
     def validate(self, frame, value): return unicode(value)
+
+class ID3TimeStamp(object):
+    import re
+    def __init__(self, text):
+        if isinstance(text, ID3TimeStamp): text = text.text
+        self.text = text
+
+    __formats = ['%04d'] + ['%02d'] * 5
+    __seps = ['-', '-', 'T', ':', ':', 'x']
+    def get_text(self):
+        parts = [self.year, self.month, self.day,
+                self.hour, self.minute, self.second]
+        pieces = []
+        for i, part in enumerate(iter(iter(parts).next, None)):
+            pieces.append(self.__formats[i]%part + self.__seps[i])
+        return ''.join(pieces)[:-1]
+
+    def set_text(self, text, splitre=re.compile('[-T:]')):
+        year, month, day, hour, minute, second = \
+                splitre.split(text + ':::::')[:6]
+        self.year = year and int(year) or None
+        self.month = month and int(month) or None
+        self.day = day and int(day) or None
+        self.hour = hour and int(hour) or None
+        self.minute = minute and int(minute) or None
+        self.second = second and int(second) or None
+
+    text = property(get_text, set_text, doc="ID3v2.4 datetime")
+
+    def __str__(self): return self.text
+    def __repr__(self): return repr(self.text)
+    def __cmp__(self, other): return cmp(self.text, other.text)
+    def encode(self, *args): return self.text.encode(*args)
+
+class TimeStampSpec(EncodedTextSpec):
+    def read(self, frame, data):
+        value, data = super(TimeStampSpec, self).read(frame, data)
+        return self.validate(frame, value), data
+
+    def validate(self, frame, value):
+        try: return ID3TimeStamp(value)
+        except TypeError: raise ValueError, repr(value)
 
 class Frame(object):
     FLAG23_ALTERTAG     = 0x8000
@@ -468,7 +516,7 @@ class NumericPartTextFrame(TextFrame):
 
 class MultiTextFrame(TextFrame):
     _framespec = [ EncodingSpec('encoding'), EncodedMultiTextSpec('text') ]
-    def __str__(self): return '\u0000'.join(self.text).encode('utf-8')
+    def __str__(self): return self.__unicode__().encode('utf-8')
     def __unicode__(self): return u'\u0000'.join(self.text)
     def __eq__(self, other):
         if isinstance(other, str): return str(self) == other
@@ -479,13 +527,19 @@ class MultiTextFrame(TextFrame):
     def append(self, value): return self.text.append(value)
     def extend(self, value): return self.text.extend(value)
 
+class TimeStampTextFrame(MultiTextFrame):
+    _framespec = [ EncodingSpec('encoding'), MultiSpec('text', TimeStampSpec('stamp')) ]
+    def __str__(self): return self.__unicode__().encode('utf-8')
+    def __unicode__(self): return ','.join([stamp.text for stamp in self.text])
+
+
 class UrlFrame(Frame):
     _framespec = [ Latin1TextSpec('url') ]
     def __str__(self): return self.url.encode('utf-8')
     def __unicode__(self): return self.url
     def __eq__(self, other): return self.url == other
 
-class TALB(TextFrame): "Album"
+class TALB(MultiTextFrame): "Album"
 class TBPM(NumericTextFrame): "Beats per minute"
 class TCOM(MultiTextFrame): "Composer"
 
@@ -526,14 +580,19 @@ class TCON(MultiTextFrame):
 
         return genres
 
-class TCOP(MultiTextFrame): "Copyright"
+class TCOP(MultiTextFrame): "Copyright (c)"
 class TDAT(MultiTextFrame): "Date of recording (DDMM)"
-
+class TDEN(TimeStampTextFrame): "Encoding Time"
+class TDOR(TimeStampTextFrame): "Original Release Time"
 class TDLY(NumericTextFrame): "Audio Delay (ms)"
+class TDRC(TimeStampTextFrame): "Recording Time"
+class TDRL(TimeStampTextFrame): "Release Time"
+class TDTG(TimeStampTextFrame): "Tagging Time"
 class TENC(MultiTextFrame): "Encoder"
 class TEXT(MultiTextFrame): "Lyricist"
 class TFLT(MultiTextFrame): "File type"
 class TIME(MultiTextFrame): "Time of recording (HHMM)"
+class TIPL(MultiTextFrame): "Involved People List"
 class TIT1(MultiTextFrame): "Content group description"
 class TIT2(MultiTextFrame): "Title"
 class TIT3(MultiTextFrame): "Subtitle/Description refinement"
@@ -541,6 +600,7 @@ class TKEY(MultiTextFrame): "Starting Key"
 class TLAN(MultiTextFrame): "Audio Languages"
 class TLEN(NumericTextFrame): "Audio Length (ms)"
 class TMED(MultiTextFrame): "Original Media"
+class TMOO(MultiTextFrame): "Mood"
 class TOAL(MultiTextFrame): "Original Album"
 class TOFN(MultiTextFrame): "Original Filename"
 class TOLY(MultiTextFrame): "Original Lyricist"
@@ -552,14 +612,19 @@ class TPE2(MultiTextFrame): "Band/Orchestra/Accompaniment"
 class TPE3(MultiTextFrame): "Conductor"
 class TPE4(MultiTextFrame): "Interpreter/Remixer/Modifier"
 class TPOS(NumericPartTextFrame): "Track Number"
+class TPRO(MultiTextFrame): "Produced (P)"
 class TPUB(MultiTextFrame): "Publisher"
 class TRCK(NumericPartTextFrame): "Track Number"
 class TRDA(MultiTextFrame): "Recording Dates"
 class TRSN(MultiTextFrame): "Internet Radio Station Name"
 class TRSO(MultiTextFrame): "Internet Radio Station Owner"
 class TSIZ(NumericTextFrame): "Size of audio data (bytes)"
+class TSOA(MultiTextFrame): "Album Sort Order key"
+class TSOP(MultiTextFrame): "Perfomer Sort Order key"
+class TSOT(MultiTextFrame): "Title Sort Order key"
 class TSRC(MultiTextFrame): "International Standard Recording Code (ISRC)"
 class TSSE(MultiTextFrame): "Encoder settings"
+class TSST(MultiTextFrame): "Set Subtitle"
 class TYER(NumericTextFrame): "Year of recording"
 
 class TXXX(TextFrame):

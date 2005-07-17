@@ -127,11 +127,17 @@ def TestReadTags():
     'TCON': {'[]':'\x00(21)Disco', 'encoding':0, '':'(21)Disco'},
     'TCOP': {'[]':'\x001900 c', 'encoding':0, '':'1900 c'},
     'TDAT': {'[]':'\x00a/b', 'encoding':0, '':'a/b'},
+    'TDEN': {'[]':'\x001987', 'encoding':0, '':'1987', 'year':[1987]},
+    'TDOR': {'[]':'\x001987-12', 'encoding':0, '':'1987-12', 'year':[1987]},
+    'TDRL': {'[]':'\x001987\x001988', 'encoding':0, '':'1987,1988',
+                'year':[1987, 1988]},
+    'TDTG': {'[]':'\x001987', 'encoding':0, '':'1987', 'year':[1987]},
     'TDLY': {'[]':'\x001205', 'encoding':0, '':'1205'},
     'TENC': {'[]':'\x00a b/c d', 'encoding':0, '':'a b/c d'},
     'TEXT': {'[]':'\x00a b\x00c d', 'encoding':0, '':['a b', 'c d']},
     'TFLT': {'[]':'\x00MPG/3', 'encoding':0, '':'MPG/3'},
     'TIME': {'[]':'\x001205', 'encoding':0, '':'1205'},
+    'TIPL': {'[]':'\x02\x00a\x00\x00\x00b', 'encoding':2, '':'a\x00b'},
     'TIT1': {'[]':'\x00a/b', 'encoding':0, '':'a/b'},
     # TIT2 checks misaligned terminator '\x00\x00' across crosses utf16 chars
     'TIT2': {'[]':'\x01\xff\xfe\x38\x00\x00\x38', 'encoding':1, '':u'8\u3800'},
@@ -140,6 +146,7 @@ def TestReadTags():
     'TLAN': {'[]':'\x006241', 'encoding':0, '':'6241', '{}+':6241},
     'TLEN': {'[]':'\x006241', 'encoding':0, '':'6241', '+':6241},
     'TMED': {'[]':'\x00med', 'encoding':0, '':'med'},
+    'TMOO': {'[]':'\x00moo', 'encoding':0, '':'moo'},
     'TOAL': {'[]':'\x00alb', 'encoding':0, '':'alb'},
     'TOFN': {'[]':'\x0012 : bar', 'encoding':0, '':'12 : bar'},
     'TOLY': {'[]':'\x00lyr', 'encoding':0, '':'lyr'},
@@ -151,14 +158,19 @@ def TestReadTags():
     'TPE3': {'[]':'\x00ab\x00cd', 'encoding':0, '':['ab','cd']},
     'TPE4': {'[]':'\x00ab\x00', 'encoding':0, '':['ab']},
     'TPOS': {'[]':'\x0008/32', 'encoding':0, '':'08/32', '+':8},
+    'TPRO': {'[]':'\x00pro', 'encoding':0, '':'pro'},
     'TPUB': {'[]':'\x00pub', 'encoding':0, '':'pub'},
     'TRCK': {'[]':'\x004/9', 'encoding':0, '':'4/9', '+':4},
     'TRDA': {'[]':'\x00Sun Jun 12', 'encoding':0, '':'Sun Jun 12'},
     'TRSN': {'[]':'\x00ab/cd', 'encoding':0, '':'ab/cd'},
     'TRSO': {'[]':'\x00ab', 'encoding':0, '':'ab'},
     'TSIZ': {'[]':'\x0012345', 'encoding':0, '':'12345', '+':12345},
-    'TSRC': {'[]':'\x0012345', 'encoding':0, '':'12345', '{}+':2004},
-    'TSSE': {'[]':'\x0012345', 'encoding':0, '':'12345', '{}+':2004},
+    'TSOA': {'[]':'\x00ab', 'encoding':0, '':'ab'},
+    'TSOP': {'[]':'\x00ab', 'encoding':0, '':'ab'},
+    'TSOT': {'[]':'\x00ab', 'encoding':0, '':'ab'},
+    'TSRC': {'[]':'\x0012345', 'encoding':0, '':'12345', '{}+':12345},
+    'TSSE': {'[]':'\x0012345', 'encoding':0, '':'12345', '{}+':12345},
+    'TSST': {'[]':'\x0012345', 'encoding':0, '':'12345', '{}+':12345},
     'TYER': {'[]':'\x002004', 'encoding':0, '':'2004', '+':2004},
 
     'TXXX': {'[]':'\x00usr\x00a/b', 'encoding':0, '':'a/b', 'desc':'usr'},
@@ -200,23 +212,26 @@ def TestReadTags():
             tag = TAG.fromData(_23, 0, data)
             self.assertEquals(value, tag)
             for attr, value in info.iteritems():
+                t = tag
                 if not isinstance(value, list):
                     value = [value]
-                    tag = [tag]
-                for value, tag in zip(value, iter(tag)):
+                    t = [t]
+                for value, t in zip(value, iter(t)):
                     if attr.startswith('{}'):
-                        self.assertRaises(AttributeError, getattr, tag, attr[2:])
+                        self.assertRaises(AttributeError, getattr, t, attr[2:])
                     elif attr == '+':
-                        self.assertEquals(value, pos(tag))
+                        self.assertEquals(value, pos(t))
                     else:
-                        self.assertEquals(value, getattr(tag, attr))
+                        self.assertEquals(value, getattr(t, attr))
         tests['test_' + tag] = test_tag
 
         def test_tag_repr(self, tag=tag, data=data):
+            from mutagen.id3 import ID3TimeStamp
             id3 = __import__('mutagen.id3', globals(), locals(), [tag])
             TAG = getattr(id3, tag)
             tag = TAG.fromData(_23, 0, data)
-            tag2 = eval(repr(tag), {TAG.__name__:TAG})
+            tag2 = eval(repr(tag), {TAG.__name__:TAG,
+                    'ID3TimeStamp':ID3TimeStamp})
             self.assertEquals(type(tag), type(tag2))
             for spec in TAG._framespec:
                 attr = spec.name
@@ -363,7 +378,6 @@ class FrameSanityChecks(TestCase):
         id3._ID3__fileobj = StringIO(id3.save_frame(artist))
         name, tag = id3.load_frame(Frames)
         self.assertEquals('TPE1', name)
-        print repr(artist), repr(tag)
         self.assertEquals(artist.text, tag.text)
 
     def skip_test_harsh(self):
@@ -482,6 +496,66 @@ class BrokenButParsed(TestCase):
             self.assertEquals(name, head)
             self.assertEquals(tag, data)
 
+class TimeStamp(TestCase):
+    from mutagen.id3 import ID3TimeStamp as Stamp
+
+    def test_Y(self):
+        s = self.Stamp('1234')
+        self.assertEquals(s.year, 1234)
+        self.assertEquals(s.text, '1234')
+
+    def test_yM(self):
+        s = self.Stamp('1234-56')
+        self.assertEquals(s.year, 1234)
+        self.assertEquals(s.month, 56)
+        self.assertEquals(s.text, '1234-56')
+
+    def test_ymD(self):
+        s = self.Stamp('1234-56-78')
+        self.assertEquals(s.year, 1234)
+        self.assertEquals(s.month, 56)
+        self.assertEquals(s.day, 78)
+        self.assertEquals(s.text, '1234-56-78')
+
+    def test_ymdH(self):
+        s = self.Stamp('1234-56-78T12')
+        self.assertEquals(s.year, 1234)
+        self.assertEquals(s.month, 56)
+        self.assertEquals(s.day, 78)
+        self.assertEquals(s.hour, 12)
+        self.assertEquals(s.text, '1234-56-78T12')
+
+    def test_ymdhM(self):
+        s = self.Stamp('1234-56-78T12:34')
+        self.assertEquals(s.year, 1234)
+        self.assertEquals(s.month, 56)
+        self.assertEquals(s.day, 78)
+        self.assertEquals(s.hour, 12)
+        self.assertEquals(s.minute, 34)
+        self.assertEquals(s.text, '1234-56-78T12:34')
+
+    def test_ymdhmS(self):
+        s = self.Stamp('1234-56-78T12:34:56')
+        self.assertEquals(s.year, 1234)
+        self.assertEquals(s.month, 56)
+        self.assertEquals(s.day, 78)
+        self.assertEquals(s.hour, 12)
+        self.assertEquals(s.minute, 34)
+        self.assertEquals(s.second, 56)
+        self.assertEquals(s.text, '1234-56-78T12:34:56')
+
+    def test_Ymdhms(self):
+        s = self.Stamp('1234-56-78T12:34:56')
+        s.month = None
+        self.assertEquals(s.text, '1234')
+
+    def test_order(self):
+        s = self.Stamp('1234')
+        t = self.Stamp('1233-12')
+        u = self.Stamp('1234-01')
+
+        self.assert_(t < s < u)
+        self.assert_(u > s > t)
 
 registerCase(ID3Loading)
 registerCase(BitPaddedIntTest)
@@ -490,3 +564,4 @@ registerCase(ID3v1Tags)
 registerCase(BrokenButParsed)
 registerCase(FrameSanityChecks)
 registerCase(Genres)
+registerCase(TimeStamp)
