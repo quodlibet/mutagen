@@ -56,21 +56,27 @@ class ID3(mutagen.Metadata):
             self.load(filename)
 
     def fullread(self, size):
+        try:
+            if size > self.__filesize or size < 0:
+                raise EOFError, 'requested %#x of %#x (%s)' % \
+                        (size, self.__filesize, self.__filename)
+        except AttributeError: pass
         data = self.__fileobj.read(size)
         if len(data) != size: raise EOFError
         self.__readbytes += size
         return data
 
     def load(self, filename):
+        from os.path import getsize
         self.__filename = filename
         self.__fileobj = file(filename, 'rb')
+        self.__filesize = getsize(filename)
         try:
             try:
                 self.load_header()
             except EOFError:
-                from os.path import getsize
                 raise ID3NoHeaderError("%s: too small (%d bytes)" %(
-                    filename, getsize(filename)))
+                    filename, self.__filesize))
             except (ID3NoHeaderError, ID3UnsupportedVersionError), err:
                 import sys
                 stack = sys.exc_traceback
@@ -99,6 +105,7 @@ class ID3(mutagen.Metadata):
         finally:
             self.__fileobj.close()
             del self.__fileobj
+            del self.__filesize
 
     def loaded_frame(self, name, tag):
         # turn 2.2 into 2.3/2.4 tags
