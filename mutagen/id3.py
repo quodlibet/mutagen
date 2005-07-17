@@ -19,6 +19,7 @@ PRINT_ERRORS = True
 
 class ID3NoHeaderError(ValueError): pass
 class ID3UnsupportedVersionError(NotImplementedError): pass
+class ID3EncryptionUnsupportedError(NotImplementedError): pass
 
 class ID3(mutagen.Metadata):
     """ID3 is the mutagen.ID3 metadata class.
@@ -119,13 +120,15 @@ class ID3(mutagen.Metadata):
         if name == '\x00\x00\x00\x00': return name, None
         if size == 0: return name, data
         framedata = self.fullread(size)
+        if self.f_unsynch or flags & 0x40:
+            framedata = unsynch.decode(framedata)
+            flags &= ~0x40
         try: tag = frames[name]
         except KeyError:
             return name, data + framedata
         else:
-            if self.f_unsynch or flags & 0x40:
-                framedata = unsynch.decode(framedata)
-            tag = tag.fromData(self, flags, framedata)
+            try: tag = tag.fromData(self, flags, framedata)
+            except NotImplementedError: return name, data + framedata
         return name, tag
 
     f_unsynch = property(lambda s: bool(s.__flags & 0x80))
@@ -145,7 +148,7 @@ class ID3(mutagen.Metadata):
             isize = BitPaddedInt(isize)
             if id3 != 'ID3': isize = 0
 
-            framedata = map(self.save_frame, frame.values())
+            framedata = map(self.save_frame, self.values())
             framedata.extend([data for (name, data) in self.unknown_frames
                     if len(data) > 10])
             framedata = ''.join(framedata)
@@ -204,7 +207,7 @@ class BitPaddedInt(int):
     def __init__(self, value, bits=7, bigendian=True):
         self.bits = bits
         self.bigendian = bigendian
-        return super(BitPaddedInt, self).__init__(value)
+        super(BitPaddedInt, self).__init__(value)
     
     def as_str(value, bits=7, bigendian=True, width=4):
         bits = getattr(value, 'bits', bits)
@@ -215,7 +218,7 @@ class BitPaddedInt(int):
         while value:
             bytes.append(value & mask)
             value = value >> bits
-        for i in range(len(bytes), width): bytes.append(0)
+        bytes.extend([0] * (width-len(bytes)))
         if len(bytes) != width:
             raise ValueError, 'Value too wide (%d bytes)' % len(bytes)
         if bigendian: bytes.reverse()
@@ -476,6 +479,7 @@ class Frame(object):
     FLAG24_UNSYNCH      = 0x0002
     FLAG24_DATALEN      = 0x0001
 
+    _framespec = []
     def __init__(self, *args, **kwargs):
         for checker, val in zip(self._framespec, args):
             setattr(self, checker.name, checker.validate(self, val))
