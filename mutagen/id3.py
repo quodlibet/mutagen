@@ -8,6 +8,16 @@
 #
 # $Id$
 #
+#
+# This is based off of the following references:
+#   http://www.id3.org/id3v2.4.0-structure.txt
+#   http://www.id3.org/id3v2.4.0-frames.txt
+#   http://www.id3.org/id3v2.3.0.html
+#   http://www.id3.org/id3v2-00.txt
+#
+# Its largest deviation from the above (versions 2.3 and 2.2) is that it will
+# not interpret the / characters as a separator, and will almost always accept
+# null separators to generate multi-valued text frames.
 
 __all__ = ['ID3', 'Frames', 'Open']
 
