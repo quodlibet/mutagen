@@ -88,6 +88,7 @@ class ID3(mutagen.Metadata):
                 else:
                     frames = ParseID3v1(self.__fileobj.read(128))
                     if frames is not None:
+                        self.version = (1, 1)
                         map(self.loaded_frame, frames.keys(), frames.values())
                     else: raise err, None, stack
             else:
