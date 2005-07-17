@@ -7,6 +7,7 @@ try: from sets import Set as set
 except ImportError: pass
 
 class _ID3(dict): pass
+_22 = _ID3(); _22.version = (2,2,0)
 _23 = _ID3(); _23.version = (2,3,0)
 _24 = _ID3(); _24.version = (2,4,0)
 
@@ -399,6 +400,17 @@ class FrameSanityChecks(TestCase):
     def test_TXXX(self):
         from mutagen.id3 import TXXX
         self.assert_(isinstance(TXXX(desc='d',text='text'), TXXX))
+
+    def test_22_uses_direct_ints(self):
+        from mutagen.id3 import TT1, Frames_2_2
+        from cStringIO import StringIO
+        data = 'TT1\x00\x00\x83\x00' + ('123456789abcdef' * 16)
+        id3 = ID3()
+        id3.version = _22.version
+        id3._ID3__fileobj = StringIO(data)
+        name, tag = id3.load_frame(Frames_2_2)
+        self.assertEquals(data[7:7+0x82].decode('latin1'), tag.text[0])
+
 
     def test_zlib_latin1(self):
         from mutagen.id3 import TPE1

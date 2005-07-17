@@ -135,11 +135,12 @@ class ID3(mutagen.Metadata):
         if (2,3,0) <= self.version:
             data = self.fullread(10)
             name, size, flags = unpack('>4s4sH', data)
+            size = BitPaddedInt(size)
         elif (2,2,0) <= self.version:
             data = self.fullread(6)
             name, size = unpack('>3s3s', data)
             flags = 0
-        size = BitPaddedInt(size)
+            size, = unpack('>L', '\x00'+size)
         if name.strip('\x00') == '': raise EOFError
         if size == 0: return name, data
 
@@ -303,7 +304,7 @@ class EncodingSpec(ByteSpec):
     def validate(self, frame, value):
         if 0 <= value <= 3: return value
         if value is None: return None
-        raise ValueError('%s: invalid encoding' % value)
+        raise ValueError, 'Invalid Encoding: %r' % value
 
 class StringSpec(Spec):
     def __init__(self, name, length):
@@ -314,7 +315,7 @@ class StringSpec(Spec):
     def validate(s, frame, value):
         if value is None: return None
         if isinstance(value, basestring) and len(value) == s.len: return value
-        raise ValueError('%s: invalid language' % value)
+        raise ValueError, 'Invalid StringSpec[%d] data: %r' % (s.len, value)
 
 class BinaryDataSpec(Spec):
     def read(self, frame, data): return data, ''
@@ -387,7 +388,7 @@ class MultiSpec(Spec):
                 return [ 
                     [s.validate(frame, v) for (v,s) in zip(val, self.specs)]
                     for val in value ]
-        raise ValueError, repr(value)
+        raise ValueError, 'Invalid MultiSpec data: %r' % value
 
 class EncodedNumericTextSpec(EncodedTextSpec): pass
 class EncodedNumericPartTextSpec(EncodedTextSpec): pass
@@ -443,7 +444,7 @@ class TimeStampSpec(EncodedTextSpec):
 
     def validate(self, frame, value):
         try: return ID3TimeStamp(value)
-        except TypeError: raise ValueError, repr(value)
+        except TypeError: raise ValueError, "Invalid ID3TimeStamp: %r" % value
 
 class ChannelSpec(ByteSpec):
     (OTHER, MASTER, FRONTRIGHT, FRONTLEFT, BACKRIGHT, BACKLEFT, FRONTCENTRE,
