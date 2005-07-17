@@ -6,10 +6,8 @@ from mutagen.id3 import ID3, BitPaddedInt
 try: from sets import Set as set
 except ImportError: pass
 
-class _ID3(dict): pass
-_22 = _ID3(); _22.version = (2,2,0)
-_23 = _ID3(); _23.version = (2,3,0)
-_24 = _ID3(); _24.version = (2,4,0)
+_23 = ID3(); _23.version = (2,3,0)
+_24 = ID3(); _24.version = (2,4,0)
 
 class ID3Loading(TestCase):
 
@@ -406,7 +404,7 @@ class FrameSanityChecks(TestCase):
         from cStringIO import StringIO
         data = 'TT1\x00\x00\x83\x00' + ('123456789abcdef' * 16)
         id3 = ID3()
-        id3.version = _22.version
+        id3.version = (2,2,0)
         id3._ID3__fileobj = StringIO(data)
         name, tag = id3.load_frame(Frames_2_2)
         self.assertEquals(data[7:7+0x82].decode('latin1'), tag.text[0])
@@ -452,7 +450,6 @@ class FrameSanityChecks(TestCase):
         artists= [s.decode('utf8') for s in ['\xc2\xb5', '\xe6\x97\xa5\xe6\x9c\xac']]
         artist = TPE1(encoding=3, text=artists)
         id3 = ID3()
-        id3.version = _24.version
         id3._ID3__fileobj = StringIO(id3.save_frame(artist))
         name, tag = id3.load_frame(Frames)
         self.assertEquals('TPE1', name)
@@ -461,7 +458,6 @@ class FrameSanityChecks(TestCase):
     def test_22_to_24(self):
         from mutagen.id3 import TT1, TIT1
         id3 = ID3()
-        id3.version = _23.version
         tt1 = TT1(encoding=0, text=u'whatcha staring at?')
         id3.loaded_frame('TT1', tt1)
         tit1 = id3['TIT1']
@@ -486,7 +482,9 @@ class FrameSanityChecks(TestCase):
                     total += 1
                     if not total & 0xFF: print total
                     #print ffn
-                    id3 = ID3(ffn)
+                    id3 = ID3()
+                    id3.PEDANTIC = False
+                    id3.load(ffn)
                     for frame, val in id3.iteritems():
                         pass #print frame, str(val)
                 except KeyboardInterrupt: raise
@@ -583,7 +581,6 @@ class BrokenButParsed(TestCase):
     def test_zerolength_framedata(self):
         from mutagen.id3 import Frames
         id3 = ID3()
-        id3.version = _23.version
         from cStringIO import StringIO
         tail = '\x00' * 6
         for head in 'WOAR TENC TCOP TOPE WXXX'.split():
@@ -600,6 +597,19 @@ class BrokenButParsed(TestCase):
         self.assertEquals(u'', tpe1)
         tpe1 = TPE1.fromData(_24, 0, '\x01\x00\x00\x00\x00')
         self.assertEquals([u'', u''], tpe1)
+
+    def test_fake_zlib_pedantic(self):
+        from mutagen.id3 import TPE1, Frame, ID3BadCompressedData
+        id3 = ID3()
+        id3.PEDANTIC = True
+        self.assertRaises(ID3BadCompressedData, TPE1.fromData, id3, Frame.FLAG24_COMPRESS, '\x03abcdefg')
+
+    def test_fake_zlib_nopedantic(self):
+        from mutagen.id3 import TPE1, Frame, ID3BadCompressedData
+        id3 = ID3()
+        id3.PEDANTIC = False
+        tpe1 = TPE1.fromData(id3, Frame.FLAG24_COMPRESS, '\x03abcdefg')
+        self.assertEquals(u'abcdefg', tpe1)
 
 class TimeStamp(TestCase):
     from mutagen.id3 import ID3TimeStamp as Stamp

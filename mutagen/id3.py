@@ -24,10 +24,13 @@ __all__ = ['ID3', 'Frames', 'Open']
 import mutagen
 from struct import unpack, pack
 from mmap import mmap
+from zlib import error as zlibError
 
 PRINT_ERRORS = True
 
 class ID3NoHeaderError(ValueError): pass
+class ID3BadUnsynchData(ValueError): pass
+class ID3BadCompressedData(ValueError): pass
 class ID3UnsupportedVersionError(NotImplementedError): pass
 class ID3EncryptionUnsupportedError(NotImplementedError): pass
 
@@ -38,6 +41,7 @@ class ID3(mutagen.Metadata):
     """
 
     PEDANTIC = True
+    version = (2,4,0)
 
     def __init__(self, filename=None, known_frames=None):
         self.unknown_frames = []
@@ -534,17 +538,25 @@ class Frame(object):
         if (2,4,0) <= id3.version:
             if tflags & Frame.FLAG24_UNSYNCH and not id3.f_unsynch:
                 try: data = unsynch.decode(data)
-                except ValueError: pass
+                except ValueError, err:
+                    if id3.PEDANTIC:
+                        raise ID3BadUnsynchData, '%s: %r' % (err, data)
             if tflags & Frame.FLAG24_ENCRYPT:
                 raise ID3EncryptionUnsupportedError
             if tflags & Frame.FLAG24_COMPRESS:
-                data = data.decode('zlib')
+                try: data = data.decode('zlib')
+                except zlibError, err:
+                    if id3.PEDANTIC:
+                        raise ID3BadCompressedData, '%s: %r' % (err, data)
 
         elif (2,3,0) <= id3.version:
-            if tflags & Frame.FLAG24_ENCRYPT:
+            if tflags & Frame.FLAG23_ENCRYPT:
                 raise ID3EncryptionUnsupportedError
             if tflags & Frame.FLAG23_COMPRESS:
-                data = data.decode('zlib')
+                try: data = data.decode('zlib')
+                except zlibError:
+                    if id3.PEDANTIC:
+                        raise ID3BadCompressedData, '%s: %r' % (err, data)
 
         frame = cls()
         frame._rawdata = data
