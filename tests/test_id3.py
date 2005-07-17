@@ -195,6 +195,11 @@ def TestReadTags():
     ['APIC', '\x00-->\x00\x03cover\x00cover.jpg', 'cover.jpg', '',
         dict(mime='-->', type=3, desc='cover', encoding=0)],
     ['USER', '\x00ENUCom', 'Com', '', dict(lang='ENU', encoding=0)],
+
+    ['RVA2', 'testdata\x00\x01\xfb\x8c\x00',
+     'Master volume: -2.226562 dB/0.000000', '',
+     dict(desc='testdata', channel=1, gain=-2.2265625, peak=0)],
+
     ]
 
     load_tests = {}

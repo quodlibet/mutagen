@@ -429,6 +429,36 @@ class TimeStampSpec(EncodedTextSpec):
         try: return ID3TimeStamp(value)
         except TypeError: raise ValueError, repr(value)
 
+class ChannelSpec(ByteSpec):
+    (OTHER, MASTER, FRONTRIGHT, FRONTLEFT, BACKRIGHT, BACKLEFT, FRONTCENTRE,
+     BACKCENTRE, SUBWOOFER) = range(9)
+
+class VolumeAdjustment(Spec):
+    def read(self, frame, data):
+        value = (ord(data[0]) << 8) + ord(data[1])
+        return ((value/512.0) - 128.0), data[2:]
+
+    def write(self, frame, value):
+        value = int((value + 128) * 512)
+        return chr(value >> 8) + chr(value & 0xFF)
+
+    def validate(self, frame, value): return value
+
+class VolumePeak(Spec):
+    def read(self, frame, data):
+        bits = ord(data[0])
+        bytes = min(4, (bits + 7) >> 3)
+        if bits and PRINT_ERRORS:
+            print "RVA2 peak reading unsupported (%r)" % data
+        return 0, data[1+bytes:]
+
+    def write(self, frame, value):
+        if value and PRINT_ERRORS:
+            print "RVA2 peak writing unsupported (%r)" % value
+        return "\x00"
+
+    def validate(self, frame, value): return value
+
 class Frame(object):
     FLAG23_ALTERTAG     = 0x8000
     FLAG23_ALTERFILE    = 0x4000
@@ -680,7 +710,26 @@ class COMM(TextFrame):
     "User comment"
     _framespec = [ EncodingSpec('encoding'), LanguageSpec('lang'),
         EncodedTextSpec('desc'), EncodedTextSpec('text') ]
-        
+
+class RVA2(Frame):
+    "Relative volume adjustment (2)"
+    _framespec = [ Latin1TextSpec('desc'), ChannelSpec('channel'),
+        VolumeAdjustment('gain'), VolumePeak('peak') ]
+    _channels = ["Other", "Master volume", "Front right", "Front left",
+                 "Back right", "Back left", "Front centre", "Back centre",
+                 "Subwoofer"]
+
+    def __eq__(self, other):
+        return ((str(self) == other) or
+                (self.desc == other.desc and
+                 self.channel == other.channel and
+                 self.gain == other.gain and
+                 self.peak == other.peak))
+
+    def __str__(self):
+        return "%s: %+f dB/%f" % (
+            self._channels[self.channel], self.gain, self.peak)
+
 # class RVAD: unsupported
 # class EQUA: unsupported
 # class RVRB: unsupported
