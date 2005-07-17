@@ -120,110 +120,111 @@ class ID3v1Tags(TestCase):
 
 
 def TestReadTags():
-    ID3_tags = {
-    'TALB': {'[]':'\x00a/b', 'encoding':0, '':'a/b'},
-    'TBPM': {'[]':'\x00120', 'encoding':0, '':'120', '+':120},
-    'TCOM': {'[]':'\x00a/b', 'encoding':0, '':['a/b']},
-    'TCON': {'[]':'\x00(21)Disco', 'encoding':0, '':'(21)Disco'},
-    'TCOP': {'[]':'\x001900 c', 'encoding':0, '':'1900 c'},
-    'TDAT': {'[]':'\x00a/b', 'encoding':0, '':'a/b'},
-    'TDEN': {'[]':'\x001987', 'encoding':0, '':'1987', 'year':[1987]},
-    'TDOR': {'[]':'\x001987-12', 'encoding':0, '':'1987-12', 'year':[1987]},
-    'TDRL': {'[]':'\x001987\x001988', 'encoding':0, '':'1987,1988',
-                'year':[1987, 1988]},
-    'TDTG': {'[]':'\x001987', 'encoding':0, '':'1987', 'year':[1987]},
-    'TDLY': {'[]':'\x001205', 'encoding':0, '':'1205'},
-    'TENC': {'[]':'\x00a b/c d', 'encoding':0, '':'a b/c d'},
-    'TEXT': {'[]':'\x00a b\x00c d', 'encoding':0, '':['a b', 'c d']},
-    'TFLT': {'[]':'\x00MPG/3', 'encoding':0, '':'MPG/3'},
-    'TIME': {'[]':'\x001205', 'encoding':0, '':'1205'},
-    'TIPL': {'[]':'\x02\x00a\x00\x00\x00b', 'encoding':2, '':'a\x00b'},
-    'TIT1': {'[]':'\x00a/b', 'encoding':0, '':'a/b'},
+    tests = [
+    ['TALB', '\x00a/b', 'a/b', '', dict(encoding=0)],
+    ['TBPM', '\x00120', '120', 120, dict(encoding=0)],
+    ['TCOM', '\x00a/b', 'a/b', '', dict(encoding=0)],
+    ['TCON', '\x00(21)Disco', '(21)Disco', '', dict(encoding=0)],
+    ['TCOP', '\x001900 c', '1900 c', '', dict(encoding=0)],
+    ['TDAT', '\x00a/b', 'a/b', '', dict(encoding=0)],
+    ['TDEN', '\x001987', '1987', '', dict(encoding=0, year=[1987])],
+    ['TDOR', '\x001987-12', '1987-12', '', dict(encoding=0, year=[1987], month=[12])],
+    ['TDRL', '\x001987\x001988', '1987,1988', '', dict(encoding=0, year=[1987,1988])],
+    ['TDTG', '\x001987', '1987', '', dict(encoding=0, year=[1987])],
+    ['TDLY', '\x001205', '1205', 1205, dict(encoding=0)],
+    ['TENC', '\x00a b/c d', 'a b/c d', '', dict(encoding=0)],
+    ['TEXT', '\x00a b\x00c d', ['a b', 'c d'], '', dict(encoding=0)],
+    ['TFLT', '\x00MPG/3', 'MPG/3', '', dict(encoding=0)],
+    ['TIME', '\x001205', '1205', '', dict(encoding=0)],
+    ['TIPL', '\x02\x00a\x00\x00\x00b', 'a\x00b', '', dict(encoding=2)],
+    ['TIT1', '\x00a/b', 'a/b', '', dict(encoding=0)],
     # TIT2 checks misaligned terminator '\x00\x00' across crosses utf16 chars
-    'TIT2': {'[]':'\x01\xff\xfe\x38\x00\x00\x38', 'encoding':1, '':u'8\u3800'},
-    'TIT3': {'[]':'\x00a/b', 'encoding':0, '':'a/b'},
-    'TKEY': {'[]':'\x00A#m', 'encoding':0, '':'A#m'},
-    'TLAN': {'[]':'\x006241', 'encoding':0, '':'6241', '{}+':6241},
-    'TLEN': {'[]':'\x006241', 'encoding':0, '':'6241', '+':6241},
-    'TMED': {'[]':'\x00med', 'encoding':0, '':'med'},
-    'TMOO': {'[]':'\x00moo', 'encoding':0, '':'moo'},
-    'TOAL': {'[]':'\x00alb', 'encoding':0, '':'alb'},
-    'TOFN': {'[]':'\x0012 : bar', 'encoding':0, '':'12 : bar'},
-    'TOLY': {'[]':'\x00lyr', 'encoding':0, '':'lyr'},
-    'TOPE': {'[]':'\x00own/lic', 'encoding':0, '':'own/lic'},
-    'TORY': {'[]':'\x001923', 'encoding':0, '':'1923', '+':1923},
-    'TOWN': {'[]':'\x00own/lic', 'encoding':0, '':'own/lic'},
-    'TPE1': {'[]':'\x00ab', 'encoding':0, '':['ab']},
-    'TPE2': {'[]':'\x00ab\x00cd\x00ef', 'encoding':0, '':['ab','cd', 'ef']},
-    'TPE3': {'[]':'\x00ab\x00cd', 'encoding':0, '':['ab','cd']},
-    'TPE4': {'[]':'\x00ab\x00', 'encoding':0, '':['ab']},
-    'TPOS': {'[]':'\x0008/32', 'encoding':0, '':'08/32', '+':8},
-    'TPRO': {'[]':'\x00pro', 'encoding':0, '':'pro'},
-    'TPUB': {'[]':'\x00pub', 'encoding':0, '':'pub'},
-    'TRCK': {'[]':'\x004/9', 'encoding':0, '':'4/9', '+':4},
-    'TRDA': {'[]':'\x00Sun Jun 12', 'encoding':0, '':'Sun Jun 12'},
-    'TRSN': {'[]':'\x00ab/cd', 'encoding':0, '':'ab/cd'},
-    'TRSO': {'[]':'\x00ab', 'encoding':0, '':'ab'},
-    'TSIZ': {'[]':'\x0012345', 'encoding':0, '':'12345', '+':12345},
-    'TSOA': {'[]':'\x00ab', 'encoding':0, '':'ab'},
-    'TSOP': {'[]':'\x00ab', 'encoding':0, '':'ab'},
-    'TSOT': {'[]':'\x00ab', 'encoding':0, '':'ab'},
-    'TSRC': {'[]':'\x0012345', 'encoding':0, '':'12345', '{}+':12345},
-    'TSSE': {'[]':'\x0012345', 'encoding':0, '':'12345', '{}+':12345},
-    'TSST': {'[]':'\x0012345', 'encoding':0, '':'12345', '{}+':12345},
-    'TYER': {'[]':'\x002004', 'encoding':0, '':'2004', '+':2004},
+    ['TIT2', '\x01\xff\xfe\x38\x00\x00\x38', u'8\u3800', '', dict(encoding=1)],
+    ['TIT3', '\x00a/b', 'a/b', '', dict(encoding=0)],
+    ['TKEY', '\x00A#m', 'A#m', '', dict(encoding=0)],
+    ['TLAN', '\x006241', '6241', '', dict(encoding=0)],
+    ['TLEN', '\x006241', '6241', 6241, dict(encoding=0)],
+    ['TMED', '\x00med', 'med', '', dict(encoding=0)],
+    ['TMOO', '\x00moo', 'moo', '', dict(encoding=0)],
+    ['TOAL', '\x00alb', 'alb', '', dict(encoding=0)],
+    ['TOFN', '\x0012 : bar', '12 : bar', '', dict(encoding=0)],
+    ['TOLY', '\x00lyr', 'lyr', '', dict(encoding=0)],
+    ['TOPE', '\x00own/lic', 'own/lic', '', dict(encoding=0)],
+    ['TORY', '\x001923', '1923', 1923, dict(encoding=0)],
+    ['TOWN', '\x00own/lic', 'own/lic', '', dict(encoding=0)],
+    ['TPE1', '\x00ab', ['ab'], '', dict(encoding=0)],
+    ['TPE2', '\x00ab\x00cd\x00ef', ['ab','cd','ef'], '', dict(encoding=0)],
+    ['TPE3', '\x00ab\x00cd', ['ab','cd'], '', dict(encoding=0)],
+    ['TPE4', '\x00ab\x00', ['ab'], '', dict(encoding=0)],
+    ['TPOS', '\x0008/32', '08/32', 8, dict(encoding=0)],
+    ['TPRO', '\x00pro', 'pro', '', dict(encoding=0)],
+    ['TPUB', '\x00pub', 'pub', '', dict(encoding=0)],
+    ['TRCK', '\x004/9', '4/9', 4, dict(encoding=0)],
+    ['TRDA', '\x00Sun Jun 12', 'Sun Jun 12', '', dict(encoding=0)],
+    ['TRSN', '\x00ab/cd', 'ab/cd', '', dict(encoding=0)],
+    ['TRSO', '\x00ab', 'ab', '', dict(encoding=0)],
+    ['TSIZ', '\x0012345', '12345', 12345, dict(encoding=0)],
+    ['TSOA', '\x00ab', 'ab', '', dict(encoding=0)],
+    ['TSOP', '\x00ab', 'ab', '', dict(encoding=0)],
+    ['TSOT', '\x00ab', 'ab', '', dict(encoding=0)],
+    ['TSRC', '\x0012345', '12345', '', dict(encoding=0)],
+    ['TSSE', '\x0012345', '12345', '', dict(encoding=0)],
+    ['TSST', '\x0012345', '12345', '', dict(encoding=0)],
+    ['TYER', '\x002004', '2004', 2004, dict(encoding=0)],
 
-    'TXXX': {'[]':'\x00usr\x00a/b', 'encoding':0, '':'a/b', 'desc':'usr'},
+    ['TXXX', '\x00usr\x00a/b', 'a/b', '', dict(encoding=0, desc='usr')],
 
-    'WCOM': {'[]':'http://foo', '{}encoding':0, '':'http://foo'},
-    'WCOP': {'[]':'http://bar', '':'http://bar'},
-    'WOAF': {'[]':'http://baz', '':'http://baz'},
-    'WOAS': {'[]':'http://bar', '':'http://bar'},
-    'WORS': {'[]':'http://bar', '':'http://bar'},
-    'WPAY': {'[]':'http://bar', '':'http://bar'},
-    'WPUB': {'[]':'http://bar', '':'http://bar'},
+    ['WCOM', 'http://foo', 'http://foo', '', {}],
+    ['WCOP', 'http://bar', 'http://bar', '', {}],
+    ['WOAF', 'http://baz', 'http://baz', '', {}],
+    ['WOAR', 'http://bar', 'http://bar', '', {}],
+    ['WOAS', 'http://bar', 'http://bar', '', {}],
+    ['WORS', 'http://bar', 'http://bar', '', {}],
+    ['WPAY', 'http://bar', 'http://bar', '', {}],
+    ['WPUB', 'http://bar', 'http://bar', '', {}],
 
-    'IPLS': {'[]':'\x00a\x00A\x00b\x00B\x00', '':[['a','A'],['b','B']]},
+    ['IPLS', '\x00a\x00A\x00b\x00B\x00', [['a','A'],['b','B']], '',
+        dict(encoding=0)],
 
-    'MCDI': {'[]':'\x01\x02\x03\x04', '':'\x01\x02\x03\x04'},
+    ['MCDI', '\x01\x02\x03\x04', '\x01\x02\x03\x04', '', {}],
     
-    #'ETCO': {'[]':'\x01\x12\x00\x00\x7f\xff', '':[(18,32767)], 'format':1},
+    #'ETCO', '\x01\x12\x00\x00\x7f\xff', [(18,32767)], '', dict(format=1)],
 
-    'COMM': {'[]':'\x00ENUT\x00Com', '':'Com', 'desc':'T', 'lang':'ENU',
-             'encoding':0},
-    'APIC': {'[]':'\x00-->\x00\x03cover\x00cover.jpg', '':'cover.jpg',
-             'mime':'-->', 'type':3, 'desc':'cover', 'encoding':0},
-    'USER': {'[]':'\x00ENUCom', '':'Com', 'lang':'ENU', 'encoding':0},
-    }
+    ['COMM', '\x00ENUT\x00Com', 'Com', '',
+        dict(desc='T', lang='ENU', encoding=0)],
+    ['APIC', '\x00-->\x00\x03cover\x00cover.jpg', 'cover.jpg', '',
+        dict(mime='-->', type=3, desc='cover', encoding=0)],
+    ['USER', '\x00ENUCom', 'Com', '', dict(lang='ENU', encoding=0)],
+    ]
 
-    tests = {}
+    load_tests = {}
     repr_tests = {}
     write_tests = {}
-    for tag, info in ID3_tags.iteritems():
-
+    for i, (tag, data, value, intval, info) in enumerate(tests):
         info = info.copy()
-        data = info.pop('[]')
-        value = info.pop('')
 
-        def test_tag(self, tag=tag, data=data, value=value, info=info):
+        def test_tag(self, tag=tag, data=data, value=value, intval=intval, info=info):
             from operator import pos
             id3 = __import__('mutagen.id3', globals(), locals(), [tag])
             TAG = getattr(id3, tag)
             tag = TAG.fromData(_23, 0, data)
             self.assertEquals(value, tag)
+            if 'encoding' not in info:
+                self.assertRaises(AttributeError, getattr, tag, 'encoding')
             for attr, value in info.iteritems():
                 t = tag
                 if not isinstance(value, list):
                     value = [value]
                     t = [t]
                 for value, t in zip(value, iter(t)):
-                    if attr.startswith('{}'):
-                        self.assertRaises(AttributeError, getattr, t, attr[2:])
-                    elif attr == '+':
-                        self.assertEquals(value, pos(t))
+                    self.assertEquals(value, getattr(t, attr))
+
+                    if isinstance(intval, (int,long)):
+                        self.assertEquals(intval, pos(t))
                     else:
-                        self.assertEquals(value, getattr(t, attr))
-        tests['test_' + tag] = test_tag
+                        self.assertRaises(TypeError, pos, t)
+
+        load_tests['test_%s_%d' % (tag, i)] = test_tag
 
         def test_tag_repr(self, tag=tag, data=data):
             from mutagen.id3 import ID3TimeStamp
@@ -236,7 +237,7 @@ def TestReadTags():
             for spec in TAG._framespec:
                 attr = spec.name
                 self.assertEquals(getattr(tag, attr), getattr(tag2, attr))
-        repr_tests['test_repr_' + tag] = test_tag_repr
+        repr_tests['test_repr_%s_%d' % (tag, i)] = test_tag_repr
 
         def test_tag_write(self, tag=tag, data=data):
             id3 = __import__('mutagen.id3', globals(), locals(), [tag])
@@ -247,9 +248,9 @@ def TestReadTags():
             for spec in TAG._framespec:
                 attr = spec.name
                 self.assertEquals(getattr(tag, attr), getattr(tag2, attr))
-        write_tests['test_write_' + tag] = test_tag_write
+        write_tests['test_write_%s_%d' % (tag, i)] = test_tag_write
 
-    testcase = type('TestReadTags', (TestCase,), tests)
+    testcase = type('TestReadTags', (TestCase,), load_tests)
     registerCase(testcase)
     testcase = type('TestReadReprTags', (TestCase,), repr_tests)
     registerCase(testcase)

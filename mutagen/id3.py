@@ -647,6 +647,7 @@ class TXXX(TextFrame):
 class WCOM(UrlFrame): "Commercial Information"
 class WCOP(UrlFrame): "Copyright Information"
 class WOAF(UrlFrame): "Official File Information"
+class WOAR(UrlFrame): "Official Artist/Performer Information"
 class WOAS(UrlFrame): "Official Source Information"
 class WORS(UrlFrame): "Official Internet Radio Information"
 class WPAY(UrlFrame): "Payment Information"
