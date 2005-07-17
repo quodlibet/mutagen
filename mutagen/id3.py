@@ -145,7 +145,8 @@ class ID3(mutagen.Metadata):
 
         framedata = self.fullread(size)
         if self.f_unsynch or flags & 0x40:
-            framedata = unsynch.decode(framedata)
+            try: framedata = unsynch.decode(framedata)
+            except ValueError: pass
             flags &= ~0x40
         try: tag = frames[name]
         except KeyError:
@@ -259,7 +260,8 @@ class unsynch(object):
                 append(val)
                 safe = val != '\xFF'
             else:
-                if val != '\x00': raise ValueError('invalid sync-safe string')
+                if val > '\xE0': raise ValueError('invalid sync-safe string')
+                elif val != '\x00': append(val)
                 safe = True
         if not safe: raise ValueError('string ended unsafe')
         return ''.join(output)
@@ -529,7 +531,8 @@ class Frame(object):
 
         if (2,4,0) <= id3.version:
             if tflags & Frame.FLAG24_UNSYNCH and not id3.f_unsynch:
-                data = unsynch.decode(data)
+                try: data = unsynch.decode(data)
+                except ValueError: pass
             if tflags & Frame.FLAG24_ENCRYPT:
                 raise ID3EncryptionUnsupportedError
             if tflags & Frame.FLAG24_COMPRESS:

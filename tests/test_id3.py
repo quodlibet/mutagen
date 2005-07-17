@@ -425,11 +425,14 @@ class FrameSanityChecks(TestCase):
         for d in ('\xff\xff\xff\xff', '\xff\xf0\x0f\x00', '\xff\x00\x0f\xf0'):
             self.assertEquals(d, un.decode(un.encode(d)))
             self.assertNotEqual(d, un.encode(d))
+        self.assertEquals('\xff\x44', un.encode('\xff\x44'))
+        self.assertEquals('\xff\x00\x00', un.encode('\xff\x00'))
 
     def test_unsync_decode(self):
         from mutagen.id3 import unsynch as un
         self.assertRaises(ValueError, un.decode, '\xff\xff\xff\xff')
         self.assertRaises(ValueError, un.decode, '\xff\xf0\x0f\x00')
+        self.assertEquals('\xff\x44', un.decode('\xff\x44'))
 
     def test_load_write(self):
         from mutagen.id3 import TPE1, Frames
@@ -492,7 +495,8 @@ class FrameSanityChecks(TestCase):
             failcount += len(files)
             print fail, len(files)
 
-        print total-failcount, '/', total, 'success (%d unsynch)' % unsynch
+        total -= len(missing)
+        print total-failcount, '/', total, 'success [%d missing] (%d unsynch)' % (len(missing), unsynch)
 
 class Genres(TestCase):
     from mutagen.id3 import TCON
