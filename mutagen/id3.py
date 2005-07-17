@@ -58,7 +58,10 @@ class ID3(mutagen.Metadata):
     def fullread(self, size):
         try:
             if size > self.__filesize or size < 0:
-                raise EOFError, 'requested %#x of %#x (%s)' % \
+                if PRINT_ERRORS and self.__filesize:
+                    print 'Requested %#x of %#x (%s)' % \
+                        (size, self.__filesize, self.__filename)
+                raise EOFError, 'Requested %#x of %#x (%s)' % \
                         (size, self.__filesize, self.__filename)
         except AttributeError: pass
         data = self.__fileobj.read(size)
