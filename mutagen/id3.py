@@ -319,29 +319,11 @@ class EncodedTextSpec(Spec):
 
     def validate(self, frame, value): return unicode(value)
 
-class EncodedMultiTextSpec(EncodedTextSpec):
-    def read(self, frame, data):
-        values = []
-        while 1:
-            value, data = super(EncodedMultiTextSpec, self).read(frame, data)
-            values.append(value)
-            if not data: break
-        return values, data
-
-    def write(self, frame, value):
-        return super(EncodedMultiTextSpec, self).write(frame, u'\u0000'.join(value))
-    def validate(self, frame, value):
-        enc, term = self.encodings[frame.encoding or 0]
-        if value is None: return []
-        if isinstance(value, list): return value
-        if isinstance(value, str): return value.decode(enc).split(u'\u0000')
-        if isinstance(value, unicode): return value.split(u'\u0000')
-        raise ValueError
-
 class MultiSpec(Spec):
-    def __init__(self, name, *specs):
+    def __init__(self, name, *specs, **kw):
         super(MultiSpec, self).__init__(name)
         self.specs = specs
+        self.sep = kw.get('sep')
 
     def read(self, frame, data):
         values = []
@@ -367,6 +349,8 @@ class MultiSpec(Spec):
 
     def validate(self, frame, value):
         if value is None: return []
+        if self.sep and isinstance(value, basestring):
+            value = value.split(self.sep)
         if isinstance(value, list):
             if len(self.specs) == 1:
                 return [self.specs[0].validate(frame, v) for v in value]
@@ -549,7 +533,7 @@ class NumericPartTextFrame(TextFrame):
         return int('/' in t and t[:t.find('/')] or t)
 
 class MultiTextFrame(TextFrame):
-    _framespec = [ EncodingSpec('encoding'), EncodedMultiTextSpec('text') ]
+    _framespec = [ EncodingSpec('encoding'), MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000') ]
     def __str__(self): return self.__unicode__().encode('utf-8')
     def __unicode__(self): return u'\u0000'.join(self.text)
     def __eq__(self, other):
@@ -562,7 +546,7 @@ class MultiTextFrame(TextFrame):
     def extend(self, value): return self.text.extend(value)
 
 class TimeStampTextFrame(MultiTextFrame):
-    _framespec = [ EncodingSpec('encoding'), MultiSpec('text', TimeStampSpec('stamp')) ]
+    _framespec = [ EncodingSpec('encoding'), MultiSpec('text', TimeStampSpec('stamp'), sep=u',') ]
     def __str__(self): return self.__unicode__().encode('utf-8')
     def __unicode__(self): return ','.join([stamp.text for stamp in self.text])
 
