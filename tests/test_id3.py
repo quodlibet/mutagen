@@ -183,6 +183,8 @@ def TestReadTags():
     ['WPAY', 'http://bar', 'http://bar', '', {}],
     ['WPUB', 'http://bar', 'http://bar', '', {}],
 
+    ['WXXX', '\x00usr\x00http', 'http', '', dict(encoding=0, desc='usr')],
+
     ['IPLS', '\x00a\x00A\x00b\x00B\x00', [['a','A'],['b','B']], '',
         dict(encoding=0)],
 
@@ -200,6 +202,61 @@ def TestReadTags():
      'Master volume: -2.226562 dB/0.000000', '',
      dict(desc='testdata', channel=1, gain=-2.2265625, peak=0)],
 
+    # 2.2 tags
+    ['UFI', 'own\x00data', 'data', '', dict(data='data', owner='own')],
+    ['TT1', '\x00ab\x00', 'ab', '', dict(encoding=0)],
+    ['TT2', '\x00ab', 'ab', '', dict(encoding=0)],
+    ['TT3', '\x00ab', 'ab', '', dict(encoding=0)],
+    ['TP1', '\x00ab\x00', 'ab', '', dict(encoding=0)],
+    ['TP2', '\x00ab', 'ab', '', dict(encoding=0)],
+    ['TP3', '\x00ab', 'ab', '', dict(encoding=0)],
+    ['TP4', '\x00ab', 'ab', '', dict(encoding=0)],
+    ['TCM', '\x00ab/cd', 'ab/cd', '', dict(encoding=0)],
+    ['TXT', '\x00lyr', 'lyr', '', dict(encoding=0)],
+    ['TLA', '\x00ENU', 'ENU', '', dict(encoding=0)],
+    ['TCO', '\x00gen', 'gen', '', dict(encoding=0)],
+    ['TAL', '\x00alb', 'alb', '', dict(encoding=0)],
+    ['TPA', '\x001/9', '1/9', 1, dict(encoding=0)],
+    ['TRK', '\x002/8', '2/8', 2, dict(encoding=0)],
+    ['TRC', '\x00isrc', 'isrc', '', dict(encoding=0)],
+    ['TYE', '\x001900', '1900', 1900, dict(encoding=0)],
+    ['TDA', '\x002512', '2512', '', dict(encoding=0)],
+    ['TIM', '\x001225', '1225', '', dict(encoding=0)],
+    ['TRD', '\x00Jul 17', 'Jul 17', '', dict(encoding=0)],
+    ['TMT', '\x00DIG/A', 'DIG/A', '', dict(encoding=0)],
+    ['TFT', '\x00MPG/3', 'MPG/3', '', dict(encoding=0)],
+    ['TBP', '\x00133', '133', 133, dict(encoding=0)],
+    ['TCR', '\x00Me', 'Me', '', dict(encoding=0)],
+    ['TPB', '\x00Him', 'Him', '', dict(encoding=0)],
+    ['TEN', '\x00Lamer', 'Lamer', '', dict(encoding=0)],
+    ['TSS', '\x00ab', 'ab', '', dict(encoding=0)],
+    ['TOF', '\x00ab:cd', 'ab:cd', '', dict(encoding=0)],
+    ['TLE', '\x0012', '12', 12, dict(encoding=0)],
+    ['TSI', '\x0012', '12', 12, dict(encoding=0)],
+    ['TDY', '\x0012', '12', 12, dict(encoding=0)],
+    ['TKE', '\x00A#m', 'A#m', '', dict(encoding=0)],
+    ['TOT', '\x00org', 'org', '', dict(encoding=0)],
+    ['TOA', '\x00org', 'org', '', dict(encoding=0)],
+    ['TOL', '\x00org', 'org', '', dict(encoding=0)],
+    ['TOR', '\x001877', '1877', 1877, dict(encoding=0)],
+    ['TXX', '\x00desc\x00val', 'val', '', dict(encoding=0, desc='desc')],
+
+    ['WAF', 'http://zzz', 'http://zzz', '', {}],
+    ['WAR', 'http://zzz', 'http://zzz', '', {}],
+    ['WAS', 'http://zzz', 'http://zzz', '', {}],
+    ['WCM', 'http://zzz', 'http://zzz', '', {}],
+    ['WCP', 'http://zzz', 'http://zzz', '', {}],
+    ['WPB', 'http://zzz', 'http://zzz', '', {}],
+    ['WXX', '\x00desc\x00http', 'http', '', dict(encoding=0, desc='desc')],
+
+    ['IPL', '\x00a\x00A\x00b\x00B\x00', [['a','A'],['b','B']], '',
+        dict(encoding=0)],
+    ['MCI', '\x01\x02\x03\x04', '\x01\x02\x03\x04', '', {}],
+
+    ['COM', '\x00ENUT\x00Com', 'Com', '',
+        dict(desc='T', lang='ENU', encoding=0)],
+    ['PIC', '\x00-->\x03cover\x00cover.jpg', 'cover.jpg', '',
+        dict(mime='-->', type=3, desc='cover', encoding=0)],
     ]
 
     load_tests = {}
@@ -386,6 +443,18 @@ class FrameSanityChecks(TestCase):
         self.assertEquals('TPE1', name)
         self.assertEquals(artist.text, tag.text)
 
+    def test_22_to_24(self):
+        from mutagen.id3 import TT1, TIT1
+        id3 = ID3()
+        id3.version = _23.version
+        tt1 = TT1(encoding=0, text=u'whatcha staring at?')
+        id3.loaded_frame('TT1', tt1)
+        tit1 = id3['TIT1']
+
+        self.assertEquals(tt1.encoding, tit1.encoding)
+        self.assertEquals(tt1.text, tit1.text)
+        self.assert_('TT1' not in id3)
+
     def skip_test_harsh(self):
         from os import walk
         from traceback import print_exc
@@ -498,6 +567,7 @@ class BrokenButParsed(TestCase):
     def test_zerolength_framedata(self):
         from mutagen.id3 import Frames
         id3 = ID3()
+        id3.version = _23.version
         from cStringIO import StringIO
         tail = '\x00' * 6
         for head in 'WOAR TENC TCOP TOPE WXXX'.split():

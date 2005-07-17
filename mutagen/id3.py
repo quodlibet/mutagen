@@ -30,7 +30,6 @@ class ID3(mutagen.Metadata):
     PEDANTIC = True
 
     def __init__(self, filename=None, known_frames=None):
-        if known_frames is None: known_frames = Frames
         self.unknown_frames = []
         self.__known_frames = known_frames
         self.__filename = None
@@ -69,21 +68,30 @@ class ID3(mutagen.Metadata):
                         map(self.loaded_frame, frames.keys(), frames.values())
                     else: raise err, None, stack
             else:
-                while self.__readbytes+10 < self.__size:
+                frames = self.__known_frames
+                if (2,3,0) <= self.version:
+                    perframe = 10
+                    if frames is None: frames = Frames
+                if (2,2,0) <= self.version < (2,3,0):
+                    perframe = 6
+                    if frames is None: frames = Frames_2_2
+                while self.__readbytes+perframe < self.__size:
                     try:
-                        name, tag = self.load_frame(frames=self.__known_frames)
+                        name, tag = self.load_frame(frames=frames)
                     except EOFError: break
 
-                    if name != '\x00\x00\x00\x00':
-                        if isinstance(tag, Frame):
-                            self.loaded_frame(name, tag)
-                        else:
-                            self.unknown_frames.append([name, tag])
+                    if isinstance(tag, Frame): self.loaded_frame(name, tag)
+                    else: self.unknown_frames.append([name, tag])
         finally:
             self.__fileobj.close()
             del self.__fileobj
 
     def loaded_frame(self, name, tag):
+        # turn 2.2 into 2.3/2.4 tags
+        if len(name) == 3:
+            name = type(tag).__base__.__name__
+            tag = type(tag).__base__(tag)
+
         if name == 'TXXX' or name == 'WXXX':
             name += ':' + tag.desc
         self[name] = tag
@@ -98,7 +106,7 @@ class ID3(mutagen.Metadata):
 
         if id3 != 'ID3':
             raise ID3NoHeaderError("'%s' doesn't start with an ID3 tag" % fn)
-        if vmaj not in [3, 4]:
+        if vmaj not in [2, 3, 4]:
             raise ID3UnsupportedVersionError("'%s' ID3v2.%d not supported"
                     % (fn, vmaj))
 
@@ -114,11 +122,17 @@ class ID3(mutagen.Metadata):
             self.__extdata = self.fullread(self.__extsize - 4)
 
     def load_frame(self, frames):
-        data = self.fullread(10)
-        name, size, flags = unpack('>4s4sH', data)
+        if (2,3,0) <= self.version:
+            data = self.fullread(10)
+            name, size, flags = unpack('>4s4sH', data)
+        elif (2,2,0) <= self.version:
+            data = self.fullread(6)
+            name, size = unpack('>3s3s', data)
+            flags = 0
         size = BitPaddedInt(size)
-        if name == '\x00\x00\x00\x00': return name, None
+        if name.strip('\x00') == '': raise EOFError
         if size == 0: return name, data
+
         framedata = self.fullread(size)
         if self.f_unsynch or flags & 0x40:
             framedata = unsynch.decode(framedata)
@@ -279,12 +293,15 @@ class EncodingSpec(ByteSpec):
         if value is None: return None
         raise ValueError('%s: invalid encoding' % value)
 
-class LanguageSpec(Spec):
-    def read(self, frame, data): return data[:3], data[3:]
-    def write(self, frame, value): return str(value)
-    def validate(self, frame, value):
+class StringSpec(Spec):
+    def __init__(self, name, length):
+        super(StringSpec, self).__init__(name)
+        self.len = length
+    def read(s, frame, data): return data[:s.len], data[s.len:]
+    def write(s, frame, value): return str(value)
+    def validate(s, frame, value):
         if value is None: return None
-        if isinstance(value, basestring) and len(value) == 3: return value
+        if isinstance(value, basestring) and len(value) == s.len: return value
         raise ValueError('%s: invalid language' % value)
 
 class BinaryDataSpec(Spec):
@@ -465,11 +482,17 @@ class Frame(object):
 
     _framespec = []
     def __init__(self, *args, **kwargs):
-        for checker, val in zip(self._framespec, args):
-            setattr(self, checker.name, checker.validate(self, val))
-        for checker in self._framespec[len(args):]:
-            validated = checker.validate(self, kwargs.get(checker.name, None))
-            setattr(self, checker.name, validated)
+        if len(args)==1 and len(kwargs)==0 and isinstance(args[0], type(self)):
+            other = args[0]
+            for checker in self._framespec:
+                val = checker.validate(self, getattr(other, checker.name))
+                setattr(self, checker.name, val)
+        else:
+            for checker, val in zip(self._framespec, args):
+                setattr(self, checker.name, checker.validate(self, val))
+            for checker in self._framespec[len(args):]:
+                validated = checker.validate(self, kwargs.get(checker.name, None))
+                setattr(self, checker.name, validated)
 
     def __repr__(self):
         kw = []
@@ -629,7 +652,7 @@ class TIT3(MultiTextFrame): "Subtitle/Description refinement"
 class TKEY(MultiTextFrame): "Starting Key"
 class TLAN(MultiTextFrame): "Audio Languages"
 class TLEN(NumericTextFrame): "Audio Length (ms)"
-class TMED(MultiTextFrame): "Original Media"
+class TMED(MultiTextFrame): "Source Media Type"
 class TMOO(MultiTextFrame): "Mood"
 class TOAL(MultiTextFrame): "Original Album"
 class TOFN(MultiTextFrame): "Original Filename"
@@ -641,7 +664,7 @@ class TPE1(MultiTextFrame): "Lead Artist/Performer/Soloist/Group"
 class TPE2(MultiTextFrame): "Band/Orchestra/Accompaniment"
 class TPE3(MultiTextFrame): "Conductor"
 class TPE4(MultiTextFrame): "Interpreter/Remixer/Modifier"
-class TPOS(NumericPartTextFrame): "Track Number"
+class TPOS(NumericPartTextFrame): "Part of set"
 class TPRO(MultiTextFrame): "Produced (P)"
 class TPUB(MultiTextFrame): "Publisher"
 class TRCK(NumericPartTextFrame): "Track Number"
@@ -696,7 +719,7 @@ class MCDI(Frame):
 
 class COMM(TextFrame):
     "User comment"
-    _framespec = [ EncodingSpec('encoding'), LanguageSpec('lang'),
+    _framespec = [ EncodingSpec('encoding'), StringSpec('lang', 3),
         EncodedTextSpec('desc'), EncodedTextSpec('text') ]
 
 class RVA2(Frame):
@@ -739,7 +762,7 @@ class APIC(Frame):
 
 class USER(TextFrame):
     "Terms of use"
-    _framespec = [ EncodingSpec('encoding'), LanguageSpec('lang'),
+    _framespec = [ EncodingSpec('encoding'), StringSpec('lang', 3),
         EncodedTextSpec('text') ]
 
 # class OWNE: unsupported
@@ -750,6 +773,87 @@ class USER(TextFrame):
 
 Frames = dict([(k,v) for (k,v) in globals().items()
         if len(k)==4 and isinstance(v, type) and issubclass(v, Frame)])
+
+# ID3v2.2 frames
+class UFI(Frame):
+    "Unique File Identifier"
+    _framespec = [ Latin1TextSpec('owner'), BinaryDataSpec('data') ]
+    def __eq__(s, o):
+        if isinstance(o, UFI): return s.owner == o.owner and s.data == o.data
+        else: return s.data == o
+
+class TT1(TIT1): "Content group description"
+class TT2(TIT2): "Title"
+class TT3(TIT3): "Subtitle/Description refinement"
+class TP1(TPE1): "Lead Artist/Performer/Soloist/Group"
+class TP2(TPE2): "Band/Orchestra/Accompaniment"
+class TP3(TPE3): "Conductor"
+class TP4(TPE4): "Interpreter/Remixer/Modifier"
+class TCM(TCOM): "Composer"
+class TXT(TEXT): "Lyricist"
+class TLA(TLAN): "Audio Language(s)"
+class TCO(TCON): "Content Type (Genre)"
+class TAL(TALB): "Album"
+class TPA(TPOS): "Part of set"
+class TRK(TRCK): "Track Number"
+class TRC(TSRC): "International Standard Recording Code (ISRC)"
+class TYE(TYER): "Year of recording"
+class TDA(TDAT): "Date of recording (DDMM)"
+class TIM(TIME): "Time of recording (HHMM)"
+class TRD(TRDA): "Recording Dates"
+class TMT(TMED): "Source Media Type"
+class TFT(TFLT): "File Type"
+class TBP(TBPM): "Beats per minute"
+class TCR(TCOP): "Copyright (C)"
+class TPB(TPUB): "Publisher"
+class TEN(TENC): "Encoder"
+class TSS(TSSE): "Encoder settings"
+class TOF(TOFN): "Original Filename"
+class TLE(TLEN): "Audio Length (ms)"
+class TSI(TSIZ): "Audio Data size (bytes)"
+class TDY(TDLY): "Audio Delay (ms)"
+class TKE(TKEY): "Starting Key"
+class TOT(TOAL): "Original Album"
+class TOA(TOPE): "Original Artist/Perfomer"
+class TOL(TOLY): "Original Lyricist"
+class TOR(TORY): "Original Release Year"
+
+class TXX(TXXX): "User-defined Text"
+
+class WAF(WOAF): "Official File Information"
+class WAR(WOAR): "Official Artist/Performer Information"
+class WAS(WOAS): "Official Source Information"
+class WCM(WCOM): "Commercial Information"
+class WCP(WCOP): "Copyright Information"
+class WPB(WPUB): "Official Publisher Information"
+
+class WXX(WXXX): "User-defined URL"
+
+class IPL(IPLS): "Involved people list"
+class MCI(MCDI): "Binary dump of CD's TOC"
+#class ETC(ETCO)
+#class MLL(MLLT)
+#class STC(SYTC)
+#class ULT(USLT)
+#class SLT(SYLT)
+class COM(COMM): "Comment"
+#class RVA(RVAD)
+#class EQU(EQUA)
+#class REV(RVRB)
+class PIC(APIC):
+    "Attached Picture"
+    _framespec = [ EncodingSpec('encoding'), StringSpec('mime', 3),
+        ByteSpec('type'), EncodedTextSpec('desc'), BinaryDataSpec('data') ]
+#class GEO(GEOB)
+#class CNT(PCNT)
+#class POP(POPM)
+#class BUF(RBUF)
+#class CRM(????)
+#class CRA(AENC)
+#class LNK(LINK)
+
+Frames_2_2 = dict([(k,v) for (k,v) in globals().items()
+        if len(k)==3 and isinstance(v, type) and issubclass(v, Frame)])
 
 # support open(filename) as interface
 Open = ID3
