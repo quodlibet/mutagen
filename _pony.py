@@ -51,13 +51,13 @@ class Report(object):
             strings.append("\nExceptions:")
             items = self.exceptions.items(); items.sort()
             for Ex, i in items:
-                strings.append("  %-20s\t%d" % Ex.__name__, i)
+                strings.append("  %-20s\t%d" % (Ex.__name__, i))
 
         if self.errors:
             strings.append("\nERRORS:\n")
             for filename, Ex, value, trace in self.errors:
-                strings.append("\n" + filename)
-                strings.append(traceback.format_exception(Ex, value, trace))
+                strings.append("\nReading %s:" % filename)
+                strings.append("".join(traceback.format_exception(Ex, value, trace)[1:]))
         else: strings.append("\nNo errors!")
 
         return "\n".join(strings)
