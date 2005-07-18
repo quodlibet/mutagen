@@ -201,6 +201,11 @@ def TestReadTags():
      'Master volume: -2.226562 dB/0.000000', '',
      dict(desc='testdata', channel=1, gain=-2.2265625, peak=0)],
 
+    ['PCNT', '\x00\x00\x00\x11', 17, 17, dict(count=17)],
+    ['POPM', 'foo@bar.org\x00\xde\x00\x00\x00\x11', 222, 222,
+     dict(email="foo@bar.org", rating=222, count=17)],
+
+
     # 2.2 tags
     ['UFI', 'own\x00data', 'data', '', dict(data='data', owner='own')],
     ['TT1', '\x00ab\x00', 'ab', '', dict(encoding=0)],
@@ -368,6 +373,11 @@ class BitPaddedIntTest(TestCase):
 
     def test_as_to(self):
         self.assertEquals(BitPaddedInt(238).as_str(), BitPaddedInt.to_str(238))
+
+    def test_varwidth(self):
+        self.assertEquals(len(BitPaddedInt.to_str(100)), 4)
+        self.assertEquals(len(BitPaddedInt.to_str(100, width=-1)), 4)
+        self.assertEquals(len(BitPaddedInt.to_str(2**32, width=-1)), 5)
 
 class FrameSanityChecks(TestCase):
 

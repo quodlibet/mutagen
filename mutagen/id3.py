@@ -259,9 +259,11 @@ class BitPaddedInt(int):
         while value:
             bytes.append(value & mask)
             value = value >> bits
-        bytes.extend([0] * (width-len(bytes)))
-        if len(bytes) != width:
+        # PCNT and POPM use growing integers of at least 4 bytes as counters.
+        if width == -1: width = max(4, len(bytes))
+        if len(bytes) > width:
             raise ValueError, 'Value too wide (%d bytes)' % len(bytes)
+        else: bytes.extend([0] * (width-len(bytes)))
         if bigendian: bytes.reverse()
         return ''.join(map(chr, bytes))
     to_str = staticmethod(as_str)
@@ -309,6 +311,14 @@ class ByteSpec(Spec):
     def read(self, frame, data): return ord(data[0]), data[1:]
     def write(self, frame, value): return chr(value)
     def validate(self, frame, value): return value
+
+class IntegerSpec(Spec):
+    def read(self, frame, data):
+        return int(BitPaddedInt(data, bits=8)), ''
+    def write(self, frame, value):
+        return BitPaddedInt.to_str(value, bits=8, width=-1)
+    def validate(self, frame, value):
+        return value
 
 class EncodingSpec(ByteSpec):
     def read(self, frame, data):
@@ -790,8 +800,22 @@ class APIC(Frame):
     def __eq__(self, other): return self.data == other
 
 # class GEOB: unsupported
-# class PCNT: unsupported
-# class POPM: unsupported
+
+class PCNT(Frame):
+    "Play counter"
+    _framespec = [ IntegerSpec('count') ]
+
+    def __eq__(self, other): return self.count == other
+    def __pos__(self): return self.count
+
+class POPM(Frame):
+    "Popularimeter"
+    _framespec = [ Latin1TextSpec('email'), ByteSpec('rating'),
+        IntegerSpec('count') ]
+
+    def __eq__(self, other): return self.rating == other
+    def __pos__(self): return self.rating
+
 # class GEOB: unsupported
 # class RBUF: unsupported
 # class AENC: unsupported
@@ -883,8 +907,8 @@ class PIC(APIC):
     _framespec = [ EncodingSpec('encoding'), StringSpec('mime', 3),
         ByteSpec('type'), EncodedTextSpec('desc'), BinaryDataSpec('data') ]
 #class GEO(GEOB)
-#class CNT(PCNT)
-#class POP(POPM)
+class CNT(PCNT): "Play counter"
+class POP(POPM): "Popularimeter"
 #class BUF(RBUF)
 #class CRM(????)
 #class CRA(AENC)
@@ -915,7 +939,7 @@ def ParseID3v1(string):
     if title: frames["TIT2"] = TIT2(encoding=0, text=title)
     if artist: frames["TPE1"] = TPE1(encoding=0, text=[artist])
     if album: frames["TALB"] = TALB(encoding=0, text=album)
-    # FIXME: Needs to be TDAT if 2.4 was requested (if we have a way
+    # FIXME: Needs to be TDRC if 2.4 was requested (if we have a way
     # to request tag versions).
     if year: frames["TYER"] = TYER(encoding=0, text=year)
     if comment: frames["COMM"] = COMM(
