@@ -1,5 +1,7 @@
 #!/usr/bin/python
+
 import os, sys
+import traceback
 from mutagen.id3 import ID3
 
 class Report(object):
@@ -53,7 +55,9 @@ class Report(object):
 
         if self.errors:
             strings.append("\nERRORS:\n")
-            # fill this stuff in...
+            for filename, Ex, value, trace in self.errors:
+                strings.append("\n" + filename)
+                strings.append(traceback.format_exception(Ex, value, trace))
         else: strings.append("\nNo errors!")
 
         return "\n".join(strings)
