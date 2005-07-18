@@ -102,8 +102,7 @@ class ID3v1Tags(TestCase):
         self.assertEquals('2', self.id3['TRCK'])
         self.assertEquals(2, +self.id3['TRCK'])
     def test_year(self):
-        self.assertEquals('2004', self.id3['TYER'])
-        self.assertEquals(2004, +self.id3['TYER'])
+        self.assertEquals('2004', self.id3['TDRC'])
 
     def test_nonascii(self):
         from mutagen.id3 import ParseID3v1
@@ -115,7 +114,7 @@ class ID3v1Tags(TestCase):
         self.assertEquals('hijklmn\xf3p'.decode('latin1'), tags['TIT2'])
         self.assertEquals('qrst\xfcv'.decode('latin1'), tags['TALB'])
         self.assertEquals('wxyz', tags['COMM'].text)
-        self.assertEquals(1234, +tags['TYER'])
+        self.assertEquals("1234", tags['TDRC'])
 
 
 def TestReadTags():

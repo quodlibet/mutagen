@@ -939,9 +939,7 @@ def ParseID3v1(string):
     if title: frames["TIT2"] = TIT2(encoding=0, text=title)
     if artist: frames["TPE1"] = TPE1(encoding=0, text=[artist])
     if album: frames["TALB"] = TALB(encoding=0, text=album)
-    # FIXME: Needs to be TDRC if 2.4 was requested (if we have a way
-    # to request tag versions).
-    if year: frames["TYER"] = TYER(encoding=0, text=year)
+    if year: frames["TDRC"] = TDRC(encoding=0, text=year)
     if comment: frames["COMM"] = COMM(
         encoding=0, lang="eng", desc="ID3v1 Comment", text=comment)
     if track: frames["TRCK"] = TRCK(encoding=0, text=str(track))
