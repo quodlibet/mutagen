@@ -149,8 +149,8 @@ class ID3(mutagen.Metadata):
     def load_frame(self, frames):
         if (2,3,0) <= self.version:
             data = self.fullread(10)
-            name, size, flags = unpack('>4s4sH', data)
-            size = BitPaddedInt(size)
+            name, size, flags = unpack('>4sLH', data)
+            if (2,4,0) <= self.version: size = BitPaddedInt(size)
         elif (2,2,0) <= self.version:
             data = self.fullread(6)
             name, size = unpack('>3s3s', data)

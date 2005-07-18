@@ -7,13 +7,13 @@ class Report(object):
         self.name = pathname
         self.files = 0
         self.unsync = 0
-        self.missing = 0
+        self.missings = 0
         self.errors = []
         self.exceptions = {}
         self.versions = {}
 
     def missing(self, filename):
-        self.missing += 1
+        self.missings += 1
         self.files += 1
 
     def error(self, filename):
@@ -38,7 +38,7 @@ class Report(object):
         strings.append("Loaded %d/%d files (%d%%)" % (
             good, self.files, (float(good)/self.files) * 100))
         strings.append("%d files with unsynchronized frames." % self.unsync)
-        strings.append("%d files without tags." % self.missing)
+        strings.append("%d files without tags." % self.missings)
 
         strings.append("\nID3 Versions:")
         items = self.versions.items(); items.sort()
