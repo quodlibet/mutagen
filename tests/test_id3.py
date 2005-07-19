@@ -9,6 +9,49 @@ except ImportError: pass
 _23 = ID3(); _23.version = (2,3,0)
 _24 = ID3(); _24.version = (2,4,0)
 
+class ID3GetSetDel(TestCase):
+    def setUp(self):
+        self.i = ID3()
+        self.i["BLAH"] = 1
+        self.i["QUUX"] = 2
+        self.i["FOOB:ar"] = 3
+        self.i["FOOB:az"] = 4
+
+    def test_getnormal(self):
+        self.assertEquals(self.i["BLAH"], 1)
+        self.assertEquals(self.i["QUUX"], 2)
+        self.assertEquals(self.i["FOOB:ar"], 3)
+        self.assertEquals(self.i["FOOB:az"], 4)
+
+    def test_getlist(self):
+        self.assert_(self.i["FOOB"] in [[3, 4], [4, 3]])
+
+    def test_includenormal(self):
+        self.assert_("BLAH" in self.i)
+        self.assert_("BLAR" not in self.i)
+
+    def test_includefake(self):
+        self.assert_("FOOB" in self.i)
+        self.assert_("FOOL" not in self.i)
+
+    def test_delnormal(self):
+        self.assert_("BLAH" in self.i)
+        del(self.i["BLAH"])
+        self.assert_("BLAH" not in self.i)
+
+    def test_delone(self):
+        del(self.i["FOOB:ar"])
+        self.assertEquals(self.i["FOOB"], [4])
+
+    def test_delall(self):
+        self.assert_("FOOB:ar" in self.i)
+        self.assert_("FOOB:az" in self.i)
+        self.assert_("FOOB" in self.i)
+        del(self.i["FOOB"])
+        self.assert_("FOOB:ar" not in self.i)
+        self.assert_("FOOB:az" not in self.i)
+        self.assert_("FOOB" not in self.i)
+
 class ID3Loading(TestCase):
 
     empty = join('tests', 'data', 'emptyfile.mp3')
@@ -751,6 +794,7 @@ class TimeStamp(TestCase):
         self.assert_(u > s > t)
 
 registerCase(ID3Loading)
+registerCase(ID3GetSetDel)
 registerCase(BitPaddedIntTest)
 registerCase(ID3Tags)
 registerCase(ID3v1Tags)
