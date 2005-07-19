@@ -111,31 +111,23 @@ class ID3(mutagen.Metadata):
             del self.__fileobj
             del self.__filesize
 
-    def __getitem__(self, key):
-        get = super(ID3, self).__getitem__
-        contains = super(ID3, self).__contains__
-        if contains(key): return get(key)
+    def getall(self, key):
+        if key in self: return [self[key]]
         else:
             key = key + ":"
-            return [get(s) for s in self.keys() if s.startswith(key)]
+            return [v for s,v in self.items() if s.startswith(key)]
 
-    def __delitem__(self, key):
-        del_ = super(ID3, self).__delitem__
-        contains = super(ID3, self).__contains__
-        if contains(key): return del_(key)
+    def delall(self, key):
+        if key in self: del(self[key])
         else:
             key = key + ":"
             for k in filter(lambda s: s.startswith(key), self.keys()):
-                del_(k)
+                del(self[k])
 
-    def __contains__(self, key):
-        contains = super(ID3, self).__contains__
-        if contains(key): return True
-        else:
-            key = key + ":"
-            for k in self.keys():
-                if k.startswith(key): return True
-            else: return False
+    def setall(self, key, values):
+        self.delall(key)
+        for tag in values:
+            self[tag.HashKey] = tag
 
     def loaded_frame(self, name, tag):
         # turn 2.2 into 2.3/2.4 tags

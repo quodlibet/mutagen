@@ -18,39 +18,45 @@ class ID3GetSetDel(TestCase):
         self.i["FOOB:az"] = 4
 
     def test_getnormal(self):
-        self.assertEquals(self.i["BLAH"], 1)
-        self.assertEquals(self.i["QUUX"], 2)
-        self.assertEquals(self.i["FOOB:ar"], 3)
-        self.assertEquals(self.i["FOOB:az"], 4)
+        self.assertEquals(self.i.getall("BLAH"), [1])
+        self.assertEquals(self.i.getall("QUUX"), [2])
+        self.assertEquals(self.i.getall("FOOB:ar"), [3])
+        self.assertEquals(self.i.getall("FOOB:az"), [4])
 
     def test_getlist(self):
-        self.assert_(self.i["FOOB"] in [[3, 4], [4, 3]])
-
-    def test_includenormal(self):
-        self.assert_("BLAH" in self.i)
-        self.assert_("BLAR" not in self.i)
-
-    def test_includefake(self):
-        self.assert_("FOOB" in self.i)
-        self.assert_("FOOL" not in self.i)
+        self.assert_(self.i.getall("FOOB") in [[3, 4], [4, 3]])
 
     def test_delnormal(self):
         self.assert_("BLAH" in self.i)
-        del(self.i["BLAH"])
+        self.i.delall("BLAH")
         self.assert_("BLAH" not in self.i)
 
     def test_delone(self):
-        del(self.i["FOOB:ar"])
-        self.assertEquals(self.i["FOOB"], [4])
+        self.i.delall("FOOB:ar")
+        self.assertEquals(self.i.getall("FOOB"), [4])
 
     def test_delall(self):
         self.assert_("FOOB:ar" in self.i)
         self.assert_("FOOB:az" in self.i)
-        self.assert_("FOOB" in self.i)
-        del(self.i["FOOB"])
+        self.i.delall("FOOB")
         self.assert_("FOOB:ar" not in self.i)
         self.assert_("FOOB:az" not in self.i)
-        self.assert_("FOOB" not in self.i)
+
+    def test_setone(self):
+        class TEST(object): HashKey = "FOOB:ar"
+        t = TEST()
+        self.i.setall("FOOB", [t])
+        self.assertEquals(self.i["FOOB:ar"], t)
+        self.assertEquals(self.i.getall("FOOB"), [t])
+
+    def test_settwo(self):
+        class TEST(object): HashKey = "FOOB:ar"
+        t = TEST()
+        t2 = TEST(); t2.HashKey = "FOOB:az"
+        self.i.setall("FOOB", [t, t2])
+        self.assertEquals(self.i["FOOB:ar"], t)
+        self.assertEquals(self.i["FOOB:az"], t2)
+        self.assert_(self.i.getall("FOOB") in [[t, t2], [t2, t]])
 
 class ID3Loading(TestCase):
 
