@@ -113,13 +113,8 @@ class ID3(mutagen.Metadata):
 
     def loaded_frame(self, name, tag):
         # turn 2.2 into 2.3/2.4 tags
-        if len(name) == 3:
-            name = type(tag).__base__.__name__
-            tag = type(tag).__base__(tag)
-
-        if name == 'TXXX' or name == 'WXXX':
-            name += ':' + tag.desc
-        self[name] = tag
+        if len(name) == 3: tag = type(tag).__base__(tag)
+        self[tag.HashKey] = tag
 
     def load_header(self):
         fn = self.__filename
@@ -151,6 +146,7 @@ class ID3(mutagen.Metadata):
             data = self.fullread(10)
             name, size, flags = unpack('>4sLH', data)
             if (2,4,0) <= self.version: size = BitPaddedInt(size)
+            #print '%#x' % (self.__fileobj.tell()-10), name, size
         elif (2,2,0) <= self.version:
             data = self.fullread(6)
             name, size = unpack('>3s3s', data)
@@ -533,6 +529,9 @@ class Frame(object):
                 validated = checker.validate(self, kwargs.get(checker.name, None))
                 setattr(self, checker.name, validated)
 
+    HashKey = property(lambda s: s.FrameID, doc="serves as a hash key")
+    FrameID = property(lambda s: type(s).__name__, doc="ID3 Frame ID")
+
     def __repr__(self):
         kw = []
         for attr in self._framespec:
@@ -628,6 +627,9 @@ class UrlFrame(Frame):
     def __unicode__(self): return self.url
     def __eq__(self, other): return self.url == other
 
+class UrlFrameU(UrlFrame):
+    HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.url))
+
 class TALB(MultiTextFrame): "Album"
 class TBPM(NumericTextFrame): "Beats per minute"
 class TCOM(MultiTextFrame): "Composer"
@@ -700,6 +702,7 @@ class TIT3(MultiTextFrame): "Subtitle/Description refinement"
 class TKEY(MultiTextFrame): "Starting Key"
 class TLAN(MultiTextFrame): "Audio Languages"
 class TLEN(NumericTextFrame): "Audio Length (ms)"
+class TMCL(MultiTextFrame): "Musician Credits List"
 class TMED(MultiTextFrame): "Source Media Type"
 class TMOO(MultiTextFrame): "Mood"
 class TOAL(MultiTextFrame): "Original Album"
@@ -732,11 +735,12 @@ class TXXX(TextFrame):
     "User-defined Text"
     _framespec = [ EncodingSpec('encoding'), EncodedTextSpec('desc'),
         EncodedTextSpec('text') ]
+    HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.desc))
 
-class WCOM(UrlFrame): "Commercial Information"
+class WCOM(UrlFrameU): "Commercial Information"
 class WCOP(UrlFrame): "Copyright Information"
 class WOAF(UrlFrame): "Official File Information"
-class WOAR(UrlFrame): "Official Artist/Performer Information"
+class WOAR(UrlFrameU): "Official Artist/Performer Information"
 class WOAS(UrlFrame): "Official Source Information"
 class WORS(UrlFrame): "Official Internet Radio Information"
 class WPAY(UrlFrame): "Payment Information"
@@ -746,6 +750,7 @@ class WXXX(UrlFrame):
     "User-defined URL"
     _framespec = [ EncodingSpec('encoding'), EncodedTextSpec('desc'),
         Latin1TextSpec('url') ]
+    HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.desc))
 
 class IPLS(Frame):
     "Involved People List"
@@ -764,11 +769,13 @@ class MCDI(Frame):
 # class SYTC: unsupported
 # class USLT: unsupported
 # class SYLT: unsupported
+#     HashKey = property(lambda s: '%s:%s:%s'%(s.FrameID, s.lang, s.desc))
 
 class COMM(TextFrame):
     "User comment"
     _framespec = [ EncodingSpec('encoding'), StringSpec('lang', 3),
         EncodedTextSpec('desc'), EncodedTextSpec('text') ]
+    HashKey = property(lambda s: '%s:%s:%s'%(s.FrameID, s.lang, s.desc))
 
 class RVA2(Frame):
     "Relative volume adjustment (2)"
@@ -777,6 +784,7 @@ class RVA2(Frame):
     _channels = ["Other", "Master volume", "Front right", "Front left",
                  "Back right", "Back left", "Front centre", "Back centre",
                  "Subwoofer"]
+    HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.desc))
 
     def __eq__(self, other):
         return ((str(self) == other) or
@@ -789,17 +797,19 @@ class RVA2(Frame):
         return "%s: %+f dB/%f" % (
             self._channels[self.channel], self.gain, self.peak)
 
+# class EQU2: unsupported
+#     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.desc))
 # class RVAD: unsupported
 # class EQUA: unsupported
 # class RVRB: unsupported
+
 
 class APIC(Frame):
     "Attached (or linked) Picture"
     _framespec = [ EncodingSpec('encoding'), Latin1TextSpec('mime'),
         ByteSpec('type'), EncodedTextSpec('desc'), BinaryDataSpec('data') ]
     def __eq__(self, other): return self.data == other
-
-# class GEOB: unsupported
+    HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.desc))
 
 class PCNT(Frame):
     "Play counter"
@@ -812,37 +822,58 @@ class POPM(Frame):
     "Popularimeter"
     _framespec = [ Latin1TextSpec('email'), ByteSpec('rating'),
         IntegerSpec('count') ]
+    HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.email))
 
     def __eq__(self, other): return self.rating == other
     def __pos__(self): return self.rating
 
-# class GEOB: unsupported
+class GEOB(Frame):
+    "General Encapsulated Object"
+    _framespec = [ EncodingSpec('encoding'), Latin1TextSpec('mime'),
+        EncodedTextSpec('filename'), EncodedTextSpec('desc'), 
+        BinaryDataSpec('data') ]
+    HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.desc))
+
+    def __eq__(self, other): return self.data == other
+
 # class RBUF: unsupported
 # class AENC: unsupported
+#     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.owner))
 # class LINK: unsupported
+#     HashKey = property(lambda s: '%s:%s:%s:%s'%(s.FrameID, s.frameid, s.url,    s.data))
 # class POSS: unsupported
+
+class UFID(Frame):
+    _framespec = [ Latin1TextSpec('owner'), BinaryDataSpec('data') ]
+    HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.owner))
+    def __eq__(s, o):
+        if isinstance(o, UFI): return s.owner == o.owner and s.data == o.data
+        else: return s.data == o
 
 class USER(TextFrame):
     "Terms of use"
     _framespec = [ EncodingSpec('encoding'), StringSpec('lang', 3),
         EncodedTextSpec('text') ]
+    HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.lang))
 
 # class OWNE: unsupported
 # class COMR: unsupported
+#     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s._writeData()))
 # class ENCR: unsupported
 # class GRID: unsupported
+#     HashKey = property(lambda s: '%s:%s:%s'%(s.FrameID, s.owner, s.group))
 # class PRIV: unsupported
+#     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s._writeData()))
+# class SIGN: unsupported
+#     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s._writeData()))
+# class SEEK: unsupported
+# class ASPI: unsupported
 
 Frames = dict([(k,v) for (k,v) in globals().items()
         if len(k)==4 and isinstance(v, type) and issubclass(v, Frame)])
 
 # ID3v2.2 frames
-class UFI(Frame):
-    "Unique File Identifier"
-    _framespec = [ Latin1TextSpec('owner'), BinaryDataSpec('data') ]
-    def __eq__(s, o):
-        if isinstance(o, UFI): return s.owner == o.owner and s.data == o.data
-        else: return s.data == o
+class UFI(UFID): "Unique File Identifier"
 
 class TT1(TIT1): "Content group description"
 class TT2(TIT2): "Title"
@@ -906,7 +937,7 @@ class PIC(APIC):
     "Attached Picture"
     _framespec = [ EncodingSpec('encoding'), StringSpec('mime', 3),
         ByteSpec('type'), EncodedTextSpec('desc'), BinaryDataSpec('data') ]
-#class GEO(GEOB)
+class GEO(GEOB): "General Encapsulated Object"
 class CNT(PCNT): "Play counter"
 class POP(POPM): "Popularimeter"
 #class BUF(RBUF)

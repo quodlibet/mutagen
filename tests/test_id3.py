@@ -67,10 +67,8 @@ class ID3Tags(TestCase):
         class ID3hack(ID3):
             "Override 'correct' behavior with desired behavior"
             def loaded_frame(self, name, tag):
-                if name == 'TXXX' or name == 'WXXX':
-                    name += ':' + tag.desc
-                if name in self: self[name].extend(tag[:])
-                else: self[name] = tag
+                if tag.HashKey in self: self[tag.HashKey].extend(tag[:])
+                else: self[tag.HashKey] = tag
 
         id3 = ID3hack(self.silence)
         self.assertEquals(8, len(id3.keys()))
@@ -127,6 +125,7 @@ def TestReadTags():
     ['TDAT', '\x00a/b', 'a/b', '', dict(encoding=0)],
     ['TDEN', '\x001987', '1987', '', dict(encoding=0, year=[1987])],
     ['TDOR', '\x001987-12', '1987-12', '', dict(encoding=0, year=[1987], month=[12])],
+    ['TDRC', '\x001987\x00', '1987', '', dict(encoding=0, year=[1987])],
     ['TDRL', '\x001987\x001988', '1987,1988', '', dict(encoding=0, year=[1987,1988])],
     ['TDTG', '\x001987', '1987', '', dict(encoding=0, year=[1987])],
     ['TDLY', '\x001205', '1205', 1205, dict(encoding=0)],
@@ -142,6 +141,7 @@ def TestReadTags():
     ['TKEY', '\x00A#m', 'A#m', '', dict(encoding=0)],
     ['TLAN', '\x006241', '6241', '', dict(encoding=0)],
     ['TLEN', '\x006241', '6241', 6241, dict(encoding=0)],
+    ['TMCL', '\x02\x00a\x00\x00\x00b', 'a\x00b', '', dict(encoding=2)],
     ['TMED', '\x00med', 'med', '', dict(encoding=0)],
     ['TMOO', '\x00moo', 'moo', '', dict(encoding=0)],
     ['TOAL', '\x00alb', 'alb', '', dict(encoding=0)],
@@ -197,13 +197,16 @@ def TestReadTags():
     ['USER', '\x00ENUCom', 'Com', '', dict(lang='ENU', encoding=0)],
 
     ['RVA2', 'testdata\x00\x01\xfb\x8c\x00',
-     'Master volume: -2.226562 dB/0.000000', '',
-     dict(desc='testdata', channel=1, gain=-2.2265625, peak=0)],
+        'Master volume: -2.226562 dB/0.000000', '',
+        dict(desc='testdata', channel=1, gain=-2.2265625, peak=0)],
 
     ['PCNT', '\x00\x00\x00\x11', 17, 17, dict(count=17)],
     ['POPM', 'foo@bar.org\x00\xde\x00\x00\x00\x11', 222, 222,
-     dict(email="foo@bar.org", rating=222, count=17)],
+        dict(email="foo@bar.org", rating=222, count=17)],
 
+    ['UFID', 'own\x00data', 'data', '', dict(data='data', owner='own')],
+    ['GEOB', '\x00mime\x00name\x00desc\x00data', 'data', '',
+        dict(encoding=0, mime='mime', filename='name', desc='desc')],
 
     # 2.2 tags
     ['UFI', 'own\x00data', 'data', '', dict(data='data', owner='own')],
@@ -260,6 +263,11 @@ def TestReadTags():
         dict(desc='T', lang='ENU', encoding=0)],
     ['PIC', '\x00-->\x03cover\x00cover.jpg', 'cover.jpg', '',
         dict(mime='-->', type=3, desc='cover', encoding=0)],
+    ['POP', 'foo@bar.org\x00\xde\x00\x00\x00\x11', 222, 222,
+        dict(email="foo@bar.org", rating=222, count=17)],
+    ['CNT', '\x00\x00\x00\x11', 17, 17, dict(count=17)],
+    ['GEO', '\x00mime\x00name\x00desc\x00data', 'data', '',
+        dict(encoding=0, mime='mime', filename='name', desc='desc')],
     ]
 
     load_tests = {}
@@ -321,6 +329,17 @@ def TestReadTags():
     registerCase(testcase)
     testcase = type('TestReadWriteTags', (TestCase,), write_tests)
     registerCase(testcase)
+
+    test_tests = {}
+    from mutagen.id3 import Frames, Frames_2_2
+    check = dict.fromkeys(Frames.keys() + Frames_2_2.keys())
+    tested_tags = dict.fromkeys([row[0] for row in tests])
+    for tag in check:
+        def check(self, tag=tag): self.assert_(tag in tested_tags)
+        tested_tags['test_' + tag + '_tested'] = check
+    testcase = type('TestTestedTags', (TestCase,), tested_tags)
+    registerCase(testcase)
+
 TestReadTags()
 del TestReadTags
 
@@ -474,6 +493,56 @@ class FrameSanityChecks(TestCase):
         self.assertEquals(tt1.encoding, tit1.encoding)
         self.assertEquals(tt1.text, tit1.text)
         self.assert_('TT1' not in id3)
+
+    def test_single_TXYZ(self):
+        from mutagen.id3 import TIT2
+        self.assertEquals(TIT2(text="a").HashKey, TIT2(text="b").HashKey)
+
+    def test_multi_TXXX(self):
+        from mutagen.id3 import TXXX
+        self.assertEquals(TXXX(text="a").HashKey, TXXX(text="b").HashKey)
+        self.assertNotEquals(TXXX(desc="a").HashKey, TXXX(desc="b").HashKey)
+
+    def test_multi_WXXX(self):
+        from mutagen.id3 import WXXX
+        self.assertEquals(WXXX(text="a").HashKey, WXXX(text="b").HashKey)
+        self.assertNotEquals(WXXX(desc="a").HashKey, WXXX(desc="b").HashKey)
+
+    def test_multi_COMM(self):
+        from mutagen.id3 import COMM
+        self.assertEquals(COMM(text="a").HashKey, COMM(text="b").HashKey)
+        self.assertNotEquals(COMM(desc="a").HashKey, COMM(desc="b").HashKey)
+        self.assertNotEquals(COMM(lang="abc").HashKey, COMM(lang="def").HashKey)
+
+    def test_multi_RVA2(self):
+        from mutagen.id3 import RVA2
+        self.assertEquals(RVA2(gain="1").HashKey, RVA2(gain="2").HashKey)
+        self.assertNotEquals(RVA2(desc="a").HashKey, RVA2(desc="b").HashKey)
+
+    def test_multi_APIC(self):
+        from mutagen.id3 import APIC
+        self.assertEquals(APIC(data="1").HashKey, APIC(data="2").HashKey)
+        self.assertNotEquals(APIC(desc="a").HashKey, APIC(desc="b").HashKey)
+
+    def test_multi_POPM(self):
+        from mutagen.id3 import POPM
+        self.assertEquals(POPM(count=1).HashKey, POPM(count=2).HashKey)
+        self.assertNotEquals(POPM(email="a").HashKey, POPM(email="b").HashKey)
+
+    def test_multi_GEOB(self):
+        from mutagen.id3 import GEOB
+        self.assertEquals(GEOB(data="1").HashKey, GEOB(data="2").HashKey)
+        self.assertNotEquals(GEOB(desc="a").HashKey, GEOB(desc="b").HashKey)
+
+    def test_multi_UFID(self):
+        from mutagen.id3 import UFID
+        self.assertEquals(UFID(data="1").HashKey, UFID(data="2").HashKey)
+        self.assertNotEquals(UFID(owner="a").HashKey, UFID(owner="b").HashKey)
+
+    def test_multi_USER(self):
+        from mutagen.id3 import USER
+        self.assertEquals(USER(text="a").HashKey, USER(text="b").HashKey)
+        self.assertNotEquals(USER(lang="abc").HashKey, USER(lang="def").HashKey)
 
     def skip_test_harsh(self):
         from os import walk
