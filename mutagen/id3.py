@@ -28,11 +28,12 @@ from zlib import error as zlibError
 
 PRINT_ERRORS = True
 
-class ID3NoHeaderError(ValueError): pass
-class ID3BadUnsynchData(ValueError): pass
-class ID3BadCompressedData(ValueError): pass
-class ID3UnsupportedVersionError(NotImplementedError): pass
-class ID3EncryptionUnsupportedError(NotImplementedError): pass
+class error(Exception): pass
+class ID3NoHeaderError(error, ValueError): pass
+class ID3BadUnsynchData(error, ValueError): pass
+class ID3BadCompressedData(error, ValueError): pass
+class ID3UnsupportedVersionError(error, NotImplementedError): pass
+class ID3EncryptionUnsupportedError(error, NotImplementedError): pass
 
 class ID3(mutagen.Metadata):
     """ID3 is the mutagen.ID3 metadata class.
