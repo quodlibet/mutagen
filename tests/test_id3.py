@@ -846,6 +846,52 @@ class WriteRoundtrip(TestCase):
     def tearDown(self):
         os.unlink(self.newsilence)
 
+class WriteForEyeD3(TestCase):
+    silence = join('tests', 'data', 'silence-44-s.mp3')
+    newsilence = join('tests', 'data', 'silence-written.mp3')
+    def setUp(self):
+        shutil.copy(self.silence, self.newsilence)
+        # remove ID3v1 tag
+        f = file(self.newsilence, "rb+")
+        f.seek(-128, 2)
+        f.truncate()
+        f.close()
+
+    def test_same(self):
+        ID3(self.newsilence).save()
+        id3 = eyeD3.tag.Tag(eyeD3.ID3_V2_4)
+        id3.link(self.newsilence)
+
+        self.assertEquals(id3.frames["TALB"][0].text, "Quod Libet Test Data")
+        self.assertEquals(id3.frames["TCON"][0].text, "Darkwave")
+        self.assertEquals(id3.frames["TIT2"][0].text, "Silence")
+        # "piman" should have been cleared
+        self.assertEquals(len(id3.frames["TPE1"]), 1)
+        self.assertEquals(id3.frames["TPE1"][0].text, "jzig")
+
+    def test_addframe(self):
+        from mutagen.id3 import TIT3
+        f = ID3(self.newsilence)
+        self.assert_("TIT3" not in f)
+        f["TIT3"] = TIT3(encoding=0, text="A subtitle!")
+        f.save()
+        id3 = eyeD3.tag.Tag(eyeD3.ID3_V2_4)
+        id3.link(self.newsilence)
+        self.assertEquals(id3.frames["TIT3"][0].text, "A subtitle!")
+
+    def test_changeframe(self):
+        from mutagen.id3 import TIT2
+        f = ID3(self.newsilence)
+        self.assertEquals(f["TIT2"], "Silence")
+        f["TIT2"].text = [u"The sound of silence."]
+        f.save()
+        id3 = eyeD3.tag.Tag(eyeD3.ID3_V2_4)
+        id3.link(self.newsilence)
+        self.assertEquals(id3.frames["TIT2"][0].text, "The sound of silence.")
+
+    def tearDown(self):
+        os.unlink(self.newsilence)
+
 registerCase(ID3Loading)
 registerCase(ID3GetSetDel)
 registerCase(BitPaddedIntTest)
@@ -856,3 +902,7 @@ registerCase(FrameSanityChecks)
 registerCase(Genres)
 registerCase(TimeStamp)
 registerCase(WriteRoundtrip)
+
+try: import eyeD3
+except ImportError: pass
+else: registerCase(WriteForEyeD3)
