@@ -1,0 +1,31 @@
+#!/usr/bin/python
+
+import os, sys
+import mutagen.id3
+
+def display(filename):
+    print "Tags in %s:" % filename
+    try: id3 = mutagen.id3.ID3(filename)
+    except mutagen.id3.error, err:
+        print "Error:", str(err)
+    else:
+        print "Version:", ".".join(map(str, id3.version))
+        strings = []
+        for frame in id3.values():
+            kw = []
+            for attr in frame._framespec:
+                if attr.name == "data":
+                    kw.append("%s=[%d bytes]" % (
+                        attr.name, len(getattr(frame, attr.name))))
+                else:
+                    kw.append('%s=%r' % (attr.name, getattr(frame, attr.name)))
+            strings.append('%s(%s)' % (type(frame).__name__, ', '.join(kw)))
+        strings.sort()
+        print "\n".join(strings)
+    print
+
+if __name__ == "__main__":
+    if len(sys.argv) == 1:
+        raise SystemExit("Usage: %s filename.mp3 ..." % sys.argv[0])
+    else:
+        for filename in sys.argv[1:]: display(filename)
