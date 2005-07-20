@@ -255,33 +255,30 @@ class ID3(mutagen.Metadata):
             date = str(self["TYER"])
             del(self["TYER"])
             if "TDAT" in self:
-                dat = str(self["TDAT"])
+                dat = str(self.pop("TDAT"))
                 date = "%s-%s-%s" % (date, dat[:2], dat[2:])
-                del(self["TDAT"])
                 if "TIME" in self:
-                    time = self["TIME"]
+                    time = str(self.pop("TIME"))
                     date += "T%s:%s:00" % (time[:2], time[2:])
-                    del(self["TIME"])
             if "TDRC" not in self:
                 self.loaded_frame("TDRC", TDRC(encoding=0, text=date))
 
         # TORY can be the first part of a TDOR.
         if "TORY" in self:
-            date = str(self["TORY"])
+            date = str(self.pop("TORY"))
             if "TDOR" not in self:
                 self.loaded_frame("TDOR", TDOR(encoding=0, text=date))
-            del(self["TORY"])
 
         # IPLS is now TIPL.
         if "IPLS" in self:
             if "TIPL" not in self:
-                f = self["IPLS"]
+                f = self.pop("IPLS")
                 self.loaded_frame(
                     "TIPL", TIPL(encoding=f.encoding, people=f.people))
-            del(self["IPLS"])
 
-        # These can't be trivially translated to any ID3v2.4 tags.
-        for key in ["RVAD", "EQUA", "TRDA", "TSIZ"]:
+        # These can't be trivially translated to any ID3v2.4 tags, or
+        # should have been removed already.
+        for key in ["RVAD", "EQUA", "TRDA", "TSIZ", "TDAT", "TIME"]:
             if key in self: del(self[key])
 
 class BitPaddedInt(int):
