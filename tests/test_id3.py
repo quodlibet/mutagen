@@ -110,8 +110,7 @@ class ID3Tags(TestCase):
         self.assertNotEquals(['piman','jzig'], id3['TPE1'])
         self.assertEquals('02/10', id3['TRCK'])
         self.assertEquals(2, +id3['TRCK'])
-        self.assertEquals('2004', id3['TYER'])
-        self.assertEquals(2004, +id3['TYER'])
+        self.assertEquals('2004', id3['TDRC'])
 
     def test_23_multiframe_hack(self):
         class ID3hack(ID3):
@@ -131,8 +130,7 @@ class ID3Tags(TestCase):
         self.assertEquals(['piman','jzig'], id3['TPE1'])
         self.assertEquals('02/10', id3['TRCK'])
         self.assertEquals(2, +id3['TRCK'])
-        self.assertEquals('2004', id3['TYER'])
-        self.assertEquals(2004, +id3['TYER'])
+        self.assertEquals('2004', id3['TDRC'])
 
 class ID3v1Tags(TestCase):
     silence = join('tests', 'data', 'silence-44-s-v1.mp3')
@@ -183,7 +181,7 @@ def TestReadTags():
     ['TEXT', '\x00a b\x00c d', ['a b', 'c d'], '', dict(encoding=0)],
     ['TFLT', '\x00MPG/3', 'MPG/3', '', dict(encoding=0)],
     ['TIME', '\x001205', '1205', '', dict(encoding=0)],
-    ['TIPL', '\x02\x00a\x00\x00\x00b', 'a\x00b', '', dict(encoding=2)],
+    ['TIPL', '\x02\x00a\x00\x00\x00b', [["a", "b"]], '', dict(encoding=2)],
     ['TIT1', '\x00a/b', 'a/b', '', dict(encoding=0)],
     # TIT2 checks misaligned terminator '\x00\x00' across crosses utf16 chars
     ['TIT2', '\x01\xff\xfe\x38\x00\x00\x38', u'8\u3800', '', dict(encoding=1)],
@@ -191,7 +189,7 @@ def TestReadTags():
     ['TKEY', '\x00A#m', 'A#m', '', dict(encoding=0)],
     ['TLAN', '\x006241', '6241', '', dict(encoding=0)],
     ['TLEN', '\x006241', '6241', 6241, dict(encoding=0)],
-    ['TMCL', '\x02\x00a\x00\x00\x00b', 'a\x00b', '', dict(encoding=2)],
+    ['TMCL', '\x02\x00a\x00\x00\x00b', [["a", "b"]], '', dict(encoding=2)],
     ['TMED', '\x00med', 'med', '', dict(encoding=0)],
     ['TMOO', '\x00moo', 'moo', '', dict(encoding=0)],
     ['TOAL', '\x00alb', 'alb', '', dict(encoding=0)],
@@ -863,7 +861,7 @@ class WriteForEyeD3(TestCase):
         id3.link(self.newsilence)
 
         self.assertEquals(id3.frames["TALB"][0].text, "Quod Libet Test Data")
-        self.assertEquals(id3.frames["TCON"][0].text, "Darkwave")
+        self.assertEquals(id3.frames["TCON"][0].text, "Silence")
         self.assertEquals(id3.frames["TIT2"][0].text, "Silence")
         # "piman" should have been cleared
         self.assertEquals(len(id3.frames["TPE1"]), 1)

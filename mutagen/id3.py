@@ -44,7 +44,7 @@ class ID3(mutagen.Metadata):
     PEDANTIC = True
     version = (2,4,0)
 
-    def __init__(self, filename=None, known_frames=None):
+    def __init__(self, filename=None, known_frames=None, translate=True):
         self.unknown_frames = []
         self.__known_frames = known_frames
         self.__filename = None
@@ -55,6 +55,8 @@ class ID3(mutagen.Metadata):
 
         if filename is not None:
             self.load(filename)
+        if translate:
+            self.update_to_v24()
 
     def fullread(self, size):
         try:
@@ -246,6 +248,41 @@ class ID3(mutagen.Metadata):
         datasize = BitPaddedInt.to_str(len(framedata), width=4)
         header = pack('>4s4sH', type(frame).__name__, datasize, flags)
         return header + framedata
+
+    def update_to_v24(self):
+        # TDAT, TYER, and TIME have been turned into TDRC.
+        if "TYER" in self:
+            date = str(self["TYER"])
+            del(self["TYER"])
+            if "TDAT" in self:
+                dat = str(self["TDAT"])
+                date = "%s-%s-%s" % (date, dat[:2], dat[2:])
+                del(self["TDAT"])
+                if "TIME" in self:
+                    time = self["TIME"]
+                    date += "T%s:%s:00" % (time[:2], time[2:])
+                    del(self["TIME"])
+            if "TDRC" not in self:
+                self.loaded_frame("TDRC", TDRC(encoding=0, text=date))
+
+        # TORY can be the first part of a TDOR.
+        if "TORY" in self:
+            date = str(self["TORY"])
+            if "TDOR" not in self:
+                self.loaded_frame("TDOR", TDOR(encoding=0, text=date))
+            del(self["TORY"])
+
+        # IPLS is now TIPL.
+        if "IPLS" in self:
+            if "TIPL" not in self:
+                f = self["IPLS"]
+                self.loaded_frame(
+                    "TIPL", TIPL(encoding=f.encoding, people=f.people))
+            del(self["IPLS"])
+
+        # These can't be trivially translated to any ID3v2.4 tags.
+        for key in ["RVAD", "EQUA", "TRDA", "TSIZ"]:
+            if key in self: del(self[key])
 
 class BitPaddedInt(int):
     def __new__(cls, value, bits=7, bigendian=True):
@@ -719,14 +756,12 @@ class TENC(MultiTextFrame): "Encoder"
 class TEXT(MultiTextFrame): "Lyricist"
 class TFLT(MultiTextFrame): "File type"
 class TIME(MultiTextFrame): "Time of recording (HHMM)"
-class TIPL(MultiTextFrame): "Involved People List"
 class TIT1(MultiTextFrame): "Content group description"
 class TIT2(MultiTextFrame): "Title"
 class TIT3(MultiTextFrame): "Subtitle/Description refinement"
 class TKEY(MultiTextFrame): "Starting Key"
 class TLAN(MultiTextFrame): "Audio Languages"
 class TLEN(NumericTextFrame): "Audio Length (ms)"
-class TMCL(MultiTextFrame): "Musician Credits List"
 class TMED(MultiTextFrame): "Source Media Type"
 class TMOO(MultiTextFrame): "Mood"
 class TOAL(MultiTextFrame): "Original Album"
@@ -776,12 +811,15 @@ class WXXX(UrlFrame):
         Latin1TextSpec('url') ]
     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.desc))
 
-class IPLS(Frame):
-    "Involved People List"
+class PairedTextFrame(Frame):
     _framespec = [ EncodingSpec('encoding'), MultiSpec('people',
-            EncodedTextSpec('involvement'), EncodedTextSpec('person')) ]
+        EncodedTextSpec('involvement'), EncodedTextSpec('person')) ]
     def __eq__(self, other):
         return self.people == other
+
+class TIPL(PairedTextFrame): "Involved People List"
+class TMCL(PairedTextFrame): "Musicians Credits List"
+class IPLS(TIPL): "Involved People List"
 
 class MCDI(Frame):
     "Binary dump of CD's TOC"
@@ -826,7 +864,6 @@ class RVA2(Frame):
 # class RVAD: unsupported
 # class EQUA: unsupported
 # class RVRB: unsupported
-
 
 class APIC(Frame):
     "Attached (or linked) Picture"
