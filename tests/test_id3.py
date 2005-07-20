@@ -438,8 +438,10 @@ class BitPaddedIntTest(TestCase):
     def test_wsmall(self):
         self.assertRaises(ValueError, BitPaddedInt.to_str, 129, width=1)
 
-    def test_as_to(self):
-        self.assertEquals(BitPaddedInt(238).as_str(), BitPaddedInt.to_str(238))
+    def test_str_int_init(self):
+        from struct import pack
+        self.assertEquals(BitPaddedInt(238).as_str(),
+                BitPaddedInt(pack('>L', 238)).as_str())
 
     def test_varwidth(self):
         self.assertEquals(len(BitPaddedInt.to_str(100)), 4)

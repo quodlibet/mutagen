@@ -249,18 +249,23 @@ class ID3(mutagen.Metadata):
 
 class BitPaddedInt(int):
     def __new__(cls, value, bits=7, bigendian=True):
+        "Strips 8-bits bits out of every byte"
         mask = (1<<(bits))-1
+        if isinstance(value, (int, long)):
+            bytes = []
+            while value:
+                bytes.append(value & ((1<<bits)-1))
+                value = value >> 8
         if isinstance(value, str):
             bytes = [ord(byte) & mask for byte in value]
             if bigendian: bytes.reverse()
-            numeric_value = 0
-            for shift, byte in zip(range(0, len(bytes)*bits, bits), bytes):
-                numeric_value += byte << shift
-            return super(BitPaddedInt, cls).__new__(cls, numeric_value)
-        else:
-            return super(BitPaddedInt, cls).__new__(cls, value)
+        numeric_value = 0
+        for shift, byte in zip(range(0, len(bytes)*bits, bits), bytes):
+            numeric_value += byte << shift
+        return super(BitPaddedInt, cls).__new__(cls, numeric_value)
 
     def __init__(self, value, bits=7, bigendian=True):
+        "Strips 8-bits bits out of every byte"
         self.bits = bits
         self.bigendian = bigendian
         super(BitPaddedInt, self).__init__(value)
