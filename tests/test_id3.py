@@ -1,4 +1,5 @@
-from os.path import join
+import os; from os.path import join
+import shutil
 from unittest import TestCase
 from tests import registerCase
 from mutagen.id3 import ID3, BitPaddedInt
@@ -801,6 +802,50 @@ class TimeStamp(TestCase):
         self.assert_(t < s < u)
         self.assert_(u > s > t)
 
+class WriteRoundtrip(TestCase):
+    silence = join('tests', 'data', 'silence-44-s.mp3')
+    newsilence = join('tests', 'data', 'silence-written.mp3')
+    def setUp(self):
+        shutil.copy(self.silence, self.newsilence)
+
+    def test_same(self):
+        ID3(self.newsilence).save()
+        id3 = ID3(self.newsilence)
+        self.assertEquals(id3["TALB"], "Quod Libet Test Data")
+        self.assertEquals(id3["TCON"], "Silence")
+        self.assertEquals(id3["TIT2"], "Silence")
+        self.assertEquals(id3["TPE1"], ["jzig"])
+
+    def test_addframe(self):
+        from mutagen.id3 import TIT3
+        f = ID3(self.newsilence)
+        self.assert_("TIT3" not in f)
+        f["TIT3"] = TIT3(encoding=0, text="A subtitle!")
+        f.save()
+        id3 = ID3(self.newsilence)
+        self.assertEquals(id3["TIT3"], "A subtitle!")
+
+    def test_changeframe(self):
+        from mutagen.id3 import TIT2
+        f = ID3(self.newsilence)
+        self.assertEquals(f["TIT2"], "Silence")
+        f["TIT2"].text = [u"The sound of silence."]
+        f.save()
+        id3 = ID3(self.newsilence)
+        self.assertEquals(id3["TIT2"], "The sound of silence.")
+
+    def test_replaceframe(self):
+        from mutagen.id3 import TPE1
+        f = ID3(self.newsilence)
+        self.assertEquals(f["TPE1"], "jzig")
+        f["TPE1"] = TPE1(encoding=0, text=u"jzig\x00piman")
+        f.save()
+        id3 = ID3(self.newsilence)
+        self.assertEquals(id3["TPE1"], ["jzig", "piman"])
+
+    def tearDown(self):
+        os.unlink(self.newsilence)
+
 registerCase(ID3Loading)
 registerCase(ID3GetSetDel)
 registerCase(BitPaddedIntTest)
@@ -810,3 +855,4 @@ registerCase(BrokenButParsed)
 registerCase(FrameSanityChecks)
 registerCase(Genres)
 registerCase(TimeStamp)
+registerCase(WriteRoundtrip)
