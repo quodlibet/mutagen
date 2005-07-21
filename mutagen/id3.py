@@ -212,11 +212,9 @@ class ID3(mutagen.Metadata):
             framedata = ''.join(framedata)
             framesize = len(framedata)
 
-            if isize >= framesize:
-                osize = isize
-                framedata += '\x00' * (osize - framesize)
-            else:
-                osize = (framesize + 1023) & ~0x3FF
+            if isize >= framesize: osize = isize
+            else: osize = (framesize + 1023) & ~0x3FF
+            framedata += '\x00' * (osize - framesize)
 
             framesize = BitPaddedInt.to_str(osize, width=4)
             flags = 0
