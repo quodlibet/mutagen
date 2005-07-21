@@ -515,15 +515,13 @@ class ID3TimeStamp(object):
             pieces.append(self.__formats[i]%part + self.__seps[i])
         return ''.join(pieces)[:-1]
 
-    def set_text(self, text, splitre=re.compile('[-T:]')):
+    def set_text(self, text, splitre=re.compile('[-T:/]')):
         year, month, day, hour, minute, second = \
                 splitre.split(text + ':::::')[:6]
-        self.year = year and int(year) or None
-        self.month = month and int(month) or None
-        self.day = day and int(day) or None
-        self.hour = hour and int(hour) or None
-        self.minute = minute and int(minute) or None
-        self.second = second and int(second) or None
+        for a in 'year month day hour minute second'.split():
+            try: v = int(locals()[a])
+            except ValueError: v = None
+            setattr(self, a, v)
 
     text = property(get_text, set_text, doc="ID3v2.4 datetime")
 
