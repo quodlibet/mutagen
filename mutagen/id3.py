@@ -275,6 +275,10 @@ class ID3(mutagen.Metadata):
                 self.loaded_frame(
                     "TIPL", TIPL(encoding=f.encoding, people=f.people))
 
+        if "TCON" in self:
+            # Get rid of "(xx)Foobr" format.
+            self["TCON"].genres = self["TCON"].genres
+
         # These can't be trivially translated to any ID3v2.4 tags, or
         # should have been removed already.
         for key in ["RVAD", "EQUA", "TRDA", "TSIZ", "TDAT", "TIME"]:
