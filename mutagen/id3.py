@@ -202,9 +202,10 @@ class ID3(mutagen.Metadata):
         f = open(filename, 'rb+')
         try:
             idata = f.read(10)
-            id3, ivmaj, ivrev, iflags, isize = unpack('>3sBBB4s', idata)
-            isize = BitPaddedInt(isize)
-            if id3 != 'ID3': isize = 0
+            try: id3, vmaj, vrev, flags, insize = unpack('>3sBBB4s', idata)
+            except struct.error: id3, insize = '', 0
+            insize = BitPaddedInt(insize)
+            if id3 != 'ID3': insize = -10
 
             framedata = map(self.save_frame, self.values())
             framedata.extend([data for (name, data) in self.unknown_frames
@@ -212,16 +213,16 @@ class ID3(mutagen.Metadata):
             framedata = ''.join(framedata)
             framesize = len(framedata)
 
-            if isize >= framesize: osize = isize
-            else: osize = (framesize + 1023) & ~0x3FF
-            framedata += '\x00' * (osize - framesize)
+            if insize >= framesize: outsize = insize
+            else: outsize = (framesize + 1023) & ~0x3FF
+            framedata += '\x00' * (outsize - framesize)
 
-            framesize = BitPaddedInt.to_str(osize, width=4)
+            framesize = BitPaddedInt.to_str(outsize, width=4)
             flags = 0
             header = pack('>3sBBB4s', 'ID3', 4, 0, flags, framesize)
             data = header + framedata
 
-            if (isize >= osize):
+            if (insize >= outsize):
                 f.seek(0)
                 f.write(data)
             else:
@@ -229,9 +230,9 @@ class ID3(mutagen.Metadata):
                 filesize = getsize(filename)
                 m = mmap(f.fileno(), filesize)
                 try:
-                    m.resize(filesize + osize - isize)
-                    m.move(osize+10, isize+10, filesize - isize - 10)
-                    m[0:osize+10] = data
+                    m.resize(filesize + outsize - insize)
+                    m.move(outsize+10, insize+10, filesize - insize - 10)
+                    m[0:outsize+10] = data
                 finally:
                     m.close()
         finally:
