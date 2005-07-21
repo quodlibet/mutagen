@@ -159,7 +159,7 @@ class ID3v1Tags(TestCase):
         self.assertEquals('abcd\xe9fg'.decode('latin1'), tags['TPE1'])
         self.assertEquals('hijklmn\xf3p'.decode('latin1'), tags['TIT2'])
         self.assertEquals('qrst\xfcv'.decode('latin1'), tags['TALB'])
-        self.assertEquals('wxyz', tags['COMM'].text)
+        self.assertEquals('wxyz', tags['COMM'])
         self.assertEquals("1234", tags['TDRC'])
 
 
@@ -470,8 +470,8 @@ class FrameSanityChecks(TestCase):
         self.assert_(isinstance(NumericPartTextFrame(text='1/2'), NumericPartTextFrame))
 
     def test_MTF(self):
-        from mutagen.id3 import MultiTextFrame
-        self.assert_(isinstance(MultiTextFrame(texts=['a','b']), MultiTextFrame))
+        from mutagen.id3 import TextFrame
+        self.assert_(isinstance(TextFrame(text=['a','b']), TextFrame))
 
     def test_TXXX(self):
         from mutagen.id3 import TXXX

@@ -659,23 +659,6 @@ class Frame(object):
     fromData = classmethod(fromData)
 
 class TextFrame(Frame):
-    _framespec = [ EncodingSpec('encoding'), EncodedTextSpec('text') ]
-    def __str__(self): return self.text.encode('utf-8')
-    def __unicode__(self): return self.text
-    def __eq__(self, other): return self.text == other
-
-class NumericTextFrame(TextFrame):
-    _framespec = [ EncodingSpec('encoding'), EncodedNumericTextSpec('text') ]
-    def __pos__(self): return int(self.text)
-
-class NumericPartTextFrame(TextFrame):
-    _framespec = [ EncodingSpec('encoding'),
-        EncodedNumericPartTextSpec('text') ]
-    def __pos__(self):
-        t = self.text
-        return int('/' in t and t[:t.find('/')] or t)
-
-class MultiTextFrame(TextFrame):
     _framespec = [ EncodingSpec('encoding'), MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000') ]
     def __str__(self): return self.__unicode__().encode('utf-8')
     def __unicode__(self): return u'\u0000'.join(self.text)
@@ -688,7 +671,19 @@ class MultiTextFrame(TextFrame):
     def append(self, value): return self.text.append(value)
     def extend(self, value): return self.text.extend(value)
 
-class TimeStampTextFrame(MultiTextFrame):
+class NumericTextFrame(TextFrame):
+    _framespec = [ EncodingSpec('encoding'),
+        MultiSpec('text', EncodedNumericTextSpec('text'), sep=u'\u0000') ]
+    def __pos__(self): return int(self.text[0])
+
+class NumericPartTextFrame(TextFrame):
+    _framespec = [ EncodingSpec('encoding'),
+        MultiSpec('text', EncodedNumericPartTextSpec('text'), sep=u'\u0000') ]
+    def __pos__(self):
+        t = self.text[0]
+        return int('/' in t and t[:t.find('/')] or t)
+
+class TimeStampTextFrame(TextFrame):
     _framespec = [ EncodingSpec('encoding'), MultiSpec('text', TimeStampSpec('stamp'), sep=u',') ]
     def __str__(self): return self.__unicode__().encode('utf-8')
     def __unicode__(self): return ','.join([stamp.text for stamp in self.text])
@@ -703,11 +698,11 @@ class UrlFrame(Frame):
 class UrlFrameU(UrlFrame):
     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.url))
 
-class TALB(MultiTextFrame): "Album"
+class TALB(TextFrame): "Album"
 class TBPM(NumericTextFrame): "Beats per minute"
-class TCOM(MultiTextFrame): "Composer"
+class TCOM(TextFrame): "Composer"
 
-class TCON(MultiTextFrame):
+class TCON(TextFrame):
     "Content type (Genre)"
 
     from mutagen._constants import GENRES
@@ -756,56 +751,56 @@ class TCON(MultiTextFrame):
 
     genres = property(__get_genres, __set_genres)
 
-class TCOP(MultiTextFrame): "Copyright (c)"
-class TDAT(MultiTextFrame): "Date of recording (DDMM)"
+class TCOP(TextFrame): "Copyright (c)"
+class TDAT(TextFrame): "Date of recording (DDMM)"
 class TDEN(TimeStampTextFrame): "Encoding Time"
 class TDOR(TimeStampTextFrame): "Original Release Time"
 class TDLY(NumericTextFrame): "Audio Delay (ms)"
 class TDRC(TimeStampTextFrame): "Recording Time"
 class TDRL(TimeStampTextFrame): "Release Time"
 class TDTG(TimeStampTextFrame): "Tagging Time"
-class TENC(MultiTextFrame): "Encoder"
-class TEXT(MultiTextFrame): "Lyricist"
-class TFLT(MultiTextFrame): "File type"
-class TIME(MultiTextFrame): "Time of recording (HHMM)"
-class TIT1(MultiTextFrame): "Content group description"
-class TIT2(MultiTextFrame): "Title"
-class TIT3(MultiTextFrame): "Subtitle/Description refinement"
-class TKEY(MultiTextFrame): "Starting Key"
-class TLAN(MultiTextFrame): "Audio Languages"
+class TENC(TextFrame): "Encoder"
+class TEXT(TextFrame): "Lyricist"
+class TFLT(TextFrame): "File type"
+class TIME(TextFrame): "Time of recording (HHMM)"
+class TIT1(TextFrame): "Content group description"
+class TIT2(TextFrame): "Title"
+class TIT3(TextFrame): "Subtitle/Description refinement"
+class TKEY(TextFrame): "Starting Key"
+class TLAN(TextFrame): "Audio Languages"
 class TLEN(NumericTextFrame): "Audio Length (ms)"
-class TMED(MultiTextFrame): "Source Media Type"
-class TMOO(MultiTextFrame): "Mood"
-class TOAL(MultiTextFrame): "Original Album"
-class TOFN(MultiTextFrame): "Original Filename"
-class TOLY(MultiTextFrame): "Original Lyricist"
-class TOPE(MultiTextFrame): "Original Artist/Performer"
+class TMED(TextFrame): "Source Media Type"
+class TMOO(TextFrame): "Mood"
+class TOAL(TextFrame): "Original Album"
+class TOFN(TextFrame): "Original Filename"
+class TOLY(TextFrame): "Original Lyricist"
+class TOPE(TextFrame): "Original Artist/Performer"
 class TORY(NumericTextFrame): "Original Release Year"
-class TOWN(MultiTextFrame): "Owner/Licensee"
-class TPE1(MultiTextFrame): "Lead Artist/Performer/Soloist/Group"
-class TPE2(MultiTextFrame): "Band/Orchestra/Accompaniment"
-class TPE3(MultiTextFrame): "Conductor"
-class TPE4(MultiTextFrame): "Interpreter/Remixer/Modifier"
+class TOWN(TextFrame): "Owner/Licensee"
+class TPE1(TextFrame): "Lead Artist/Performer/Soloist/Group"
+class TPE2(TextFrame): "Band/Orchestra/Accompaniment"
+class TPE3(TextFrame): "Conductor"
+class TPE4(TextFrame): "Interpreter/Remixer/Modifier"
 class TPOS(NumericPartTextFrame): "Part of set"
-class TPRO(MultiTextFrame): "Produced (P)"
-class TPUB(MultiTextFrame): "Publisher"
+class TPRO(TextFrame): "Produced (P)"
+class TPUB(TextFrame): "Publisher"
 class TRCK(NumericPartTextFrame): "Track Number"
-class TRDA(MultiTextFrame): "Recording Dates"
-class TRSN(MultiTextFrame): "Internet Radio Station Name"
-class TRSO(MultiTextFrame): "Internet Radio Station Owner"
+class TRDA(TextFrame): "Recording Dates"
+class TRSN(TextFrame): "Internet Radio Station Name"
+class TRSO(TextFrame): "Internet Radio Station Owner"
 class TSIZ(NumericTextFrame): "Size of audio data (bytes)"
-class TSOA(MultiTextFrame): "Album Sort Order key"
-class TSOP(MultiTextFrame): "Perfomer Sort Order key"
-class TSOT(MultiTextFrame): "Title Sort Order key"
-class TSRC(MultiTextFrame): "International Standard Recording Code (ISRC)"
-class TSSE(MultiTextFrame): "Encoder settings"
-class TSST(MultiTextFrame): "Set Subtitle"
+class TSOA(TextFrame): "Album Sort Order key"
+class TSOP(TextFrame): "Perfomer Sort Order key"
+class TSOT(TextFrame): "Title Sort Order key"
+class TSRC(TextFrame): "International Standard Recording Code (ISRC)"
+class TSSE(TextFrame): "Encoder settings"
+class TSST(TextFrame): "Set Subtitle"
 class TYER(NumericTextFrame): "Year of recording"
 
 class TXXX(TextFrame):
     "User-defined Text"
     _framespec = [ EncodingSpec('encoding'), EncodedTextSpec('desc'),
-        EncodedTextSpec('text') ]
+        MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000') ]
     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.desc))
 
 class WCOM(UrlFrameU): "Commercial Information"
@@ -848,7 +843,8 @@ class MCDI(Frame):
 class COMM(TextFrame):
     "User comment"
     _framespec = [ EncodingSpec('encoding'), StringSpec('lang', 3),
-        EncodedTextSpec('desc'), EncodedTextSpec('text') ]
+        EncodedTextSpec('desc'),
+        MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000') ]
     HashKey = property(lambda s: '%s:%r:%s'%(s.FrameID, s.lang, s.desc))
 
 class RVA2(Frame):
@@ -923,11 +919,15 @@ class UFID(Frame):
         if isinstance(o, UFI): return s.owner == o.owner and s.data == o.data
         else: return s.data == o
 
-class USER(TextFrame):
+class USER(Frame):
     "Terms of use"
     _framespec = [ EncodingSpec('encoding'), StringSpec('lang', 3),
         EncodedTextSpec('text') ]
     HashKey = property(lambda s: '%s:%r'%(s.FrameID, s.lang))
+
+    def __str__(self): return self.text.encode('utf-8')
+    def __unicode__(self): return self.text
+    def __eq__(self, other): return self.text == other
 
 # class OWNE: unsupported
 # class COMR: unsupported
