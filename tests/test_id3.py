@@ -918,6 +918,62 @@ class WriteForEyeD3(TestCase):
     def tearDown(self):
         os.unlink(self.newsilence)
 
+class FileHandling(TestCase):
+    from StringIO import StringIO
+    def setUp(self):
+        self.id3 = ID3()
+
+    def tearDown(self):
+        del self.id3
+
+    def test_insert_into_empty(self):
+        o = self.StringIO('')
+        self.id3.insert_space(o, 8, 0)
+        self.assertEquals('\x00' * 8, o.getvalue())
+
+    def test_insert_before_one(self):
+        o = self.StringIO('a')
+        self.id3.insert_space(o, 8, 0)
+        self.assertEquals('a' + '\x00' * 7 + 'a', o.getvalue())
+
+    def test_insert_after_one(self):
+        o = self.StringIO('a')
+        self.id3.insert_space(o, 8, 1)
+        self.assertEquals('a' + '\x00' * 8, o.getvalue())
+
+    def test_smaller_than_file_middle(self):
+        o = self.StringIO('abcdefghij')
+        self.id3.insert_space(o, 4, 4)
+        self.assertEquals('abcdefghefghij', o.getvalue())
+
+    def test_smaller_than_file_to_end(self):
+        o = self.StringIO('abcdefghij')
+        self.id3.insert_space(o, 4, 6)
+        self.assertEquals('abcdefghijghij', o.getvalue())
+
+    def test_smaller_than_file_across_end(self):
+        o = self.StringIO('abcdefghij')
+        self.id3.insert_space(o, 4, 8)
+        self.assertEquals('abcdefghij\x00\x00ij', o.getvalue())
+
+    def test_smaller_than_file_at_end(self):
+        o = self.StringIO('abcdefghij')
+        self.id3.insert_space(o, 3, 10)
+        self.assertEquals('abcdefghij\x00\x00\x00', o.getvalue())
+
+    def test_smaller_than_file_at_beginning(self):
+        o = self.StringIO('abcdefghij')
+        self.id3.insert_space(o, 3, 0)
+        self.assertEquals('abcabcdefghij', o.getvalue())
+
+    def test_zero(self):
+        o = self.StringIO('abcdefghij')
+        self.assertRaises((AssertionError, ValueError), self.id3.insert_space, o, 0, 1)
+
+    def test_negative(self):
+        o = self.StringIO('abcdefghij')
+        self.assertRaises((AssertionError, ValueError), self.id3.insert_space, o, 8, -1)
+
 registerCase(ID3Loading)
 registerCase(ID3GetSetDel)
 registerCase(BitPaddedIntTest)
@@ -929,6 +985,7 @@ registerCase(Genres)
 registerCase(TimeStamp)
 registerCase(WriteRoundtrip)
 registerCase(OddWrites)
+registerCase(FileHandling)
 
 try: import eyeD3
 except ImportError: pass
