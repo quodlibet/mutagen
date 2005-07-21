@@ -22,7 +22,7 @@
 __all__ = ['ID3', 'Frames', 'Open']
 
 import mutagen
-from struct import unpack, pack
+import struct; from struct import unpack, pack
 from mmap import mmap
 from zlib import error as zlibError
 
