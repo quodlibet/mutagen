@@ -199,7 +199,11 @@ class ID3(mutagen.Metadata):
     def save(self, filename=None):
         # don't trust this code yet - it could corrupt your files
         if filename is None: filename = self.__filename
-        f = open(filename, 'rb+')
+        try: f = open(filename, 'rb+')
+        except IOError, err:
+            from errno import ENOENT
+            if err.errno != ENOENT: raise
+            f = open(filename, 'ab+')
         try:
             idata = f.read(10)
             try: id3, vmaj, vrev, flags, insize = unpack('>3sBBB4s', idata)
@@ -222,21 +226,29 @@ class ID3(mutagen.Metadata):
             header = pack('>3sBBB4s', 'ID3', 4, 0, flags, framesize)
             data = header + framedata
 
-            if (insize >= outsize):
-                f.seek(0)
-                f.write(data)
-            else:
-                from os.path import getsize
-                filesize = getsize(filename)
-                m = mmap(f.fileno(), filesize)
-                try:
-                    m.resize(filesize + outsize - insize)
-                    m.move(outsize+10, insize+10, filesize - insize - 10)
-                    m[0:outsize+10] = data
-                finally:
-                    m.close()
+            if (insize < outsize):
+                self.insert_space(f, outsize-insize, insize+10)
+            f.seek(0)
+            f.write(data)
         finally:
             f.close()
+
+    def insert_space(self, fobj, size, offset):
+        """insert size bytes of empty space starting at offset. fobj must be
+        an open file object, open rb+ or equivalent."""
+        assert 0 < size
+        assert 0 <= offset
+
+        fobj.seek(offset)
+        backbuf = fobj.read(size)
+        if len(backbuf) < size:
+            fobj.write('\x00' * (size - len(backbuf)))
+        while len(backbuf) == size:
+            frontbuf = fobj.read(size)
+            fobj.seek(-len(frontbuf), 1)
+            fobj.write(backbuf)
+            backbuf = frontbuf
+        fobj.write(backbuf)
 
     def save_frame(self, frame):
         flags = 0
