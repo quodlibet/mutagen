@@ -800,6 +800,34 @@ class TimeStamp(TestCase):
         self.assert_(t < s < u)
         self.assert_(u > s > t)
 
+class OddWrites(TestCase):
+    silence = join('tests', 'data', 'silence-44-s.mp3')
+    newsilence = join('tests', 'data', 'silence-written.mp3')
+    def setUp(self):
+        shutil.copy(self.silence, self.newsilence)
+
+    def test_toemptyfile(self):
+        os.unlink(self.newsilence)
+        file(self.newsilence, "w").close()
+        ID3(self.silence).save(self.newsilence)
+
+    def test_tononfile(self):
+        os.unlink(self.newsilence)
+        ID3(self.silence).save(self.newsilence)
+
+    def test_1bfile(self):
+        os.unlink(self.newsilence)
+        f = file(self.newsilence, "w")
+        f.write("!")
+        f.close()
+        ID3(self.silence).save(self.newsilence)
+        self.assert_(os.path.getsize(self.newsilence) > 1)
+        self.assertEquals(file(self.newsilence).read()[-1], "!")
+
+    def tearDown(self):
+        try: os.unlink(self.newsilence)
+        except OSError: pass
+
 class WriteRoundtrip(TestCase):
     silence = join('tests', 'data', 'silence-44-s.mp3')
     newsilence = join('tests', 'data', 'silence-written.mp3')
@@ -900,6 +928,7 @@ registerCase(FrameSanityChecks)
 registerCase(Genres)
 registerCase(TimeStamp)
 registerCase(WriteRoundtrip)
+registerCase(OddWrites)
 
 try: import eyeD3
 except ImportError: pass
