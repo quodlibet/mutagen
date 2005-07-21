@@ -262,13 +262,12 @@ class ID3(mutagen.Metadata):
 
     def update_to_v24(self):
         # TDAT, TYER, and TIME have been turned into TDRC.
-        if "TYER" in self:
-            date = str(self["TYER"])
-            del(self["TYER"])
-            if "TDAT" in self:
+        if str(self.get("TYER", "")).strip("\x00"):
+            date = str(self.pop("TYER"))
+            if str(self.get("TDAT", "")).strip("\x00"):
                 dat = str(self.pop("TDAT"))
                 date = "%s-%s-%s" % (date, dat[:2], dat[2:])
-                if "TIME" in self:
+                if str(self.get("TIME", "")).strip("\x00"):
                     time = str(self.pop("TIME"))
                     date += "T%s:%s:00" % (time[:2], time[2:])
             if "TDRC" not in self:
