@@ -856,14 +856,14 @@ class MCDI(Frame):
 # class SYTC: unsupported
 # class USLT: unsupported
 # class SYLT: unsupported
-#     HashKey = property(lambda s: '%s:%r:%s'%(s.FrameID, s.lang, s.desc))
+#     HashKey = property(lambda s: '%s:%s:%r'%(s.FrameID, s.desc, s.lang))
 
 class COMM(TextFrame):
     "User comment"
     _framespec = [ EncodingSpec('encoding'), StringSpec('lang', 3),
         EncodedTextSpec('desc'),
         MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000') ]
-    HashKey = property(lambda s: '%s:%r:%s'%(s.FrameID, s.lang, s.desc))
+    HashKey = property(lambda s: '%s:%s:%r'%(s.FrameID, s.desc, s.lang))
 
 class RVA2(Frame):
     "Relative volume adjustment (2)"
