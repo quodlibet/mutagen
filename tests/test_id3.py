@@ -224,7 +224,7 @@ def TestReadTags():
     ['TSST', '\x0012345', '12345', '', dict(encoding=0)],
     ['TYER', '\x002004', '2004', 2004, dict(encoding=0)],
 
-    ['TXXX', '\x00usr\x00a/b', 'a/b', '', dict(encoding=0, desc='usr')],
+    ['TXXX', '\x00usr\x00a/b\x00c', ['a/b','c'], '', dict(encoding=0, desc='usr')],
 
     ['WCOM', 'http://foo', 'http://foo', '', {}],
     ['WCOP', 'http://bar', 'http://bar', '', {}],
@@ -452,6 +452,58 @@ class BitPaddedIntTest(TestCase):
         self.assertEquals(len(BitPaddedInt.to_str(100)), 4)
         self.assertEquals(len(BitPaddedInt.to_str(100, width=-1)), 4)
         self.assertEquals(len(BitPaddedInt.to_str(2**32, width=-1)), 5)
+
+class SpecSanityChecks(TestCase):
+
+    def test_bytespec(self):
+        from mutagen.id3 import ByteSpec
+        s = ByteSpec('name')
+        self.assertEquals((97, 'bcdefg'), s.read(None, 'abcdefg'))
+        self.assertEquals('a', s.write(None, 97))
+        self.assertRaises(TypeError, s.write, None, 'abc')
+        self.assertRaises(TypeError, s.write, None, None)
+
+    def test_encodingspec(self):
+        from mutagen.id3 import EncodingSpec
+        s = EncodingSpec('name')
+        self.assertEquals((0, 'abcdefg'), s.read(None, 'abcdefg'))
+        self.assertEquals((3, 'abcdefg'), s.read(None, '\x03abcdefg'))
+        self.assertEquals('\x00', s.write(None, 0))
+        self.assertRaises(TypeError, s.write, None, 'abc')
+        self.assertRaises(TypeError, s.write, None, None)
+
+    def test_stringspec(self):
+        from mutagen.id3 import StringSpec
+        s = StringSpec('name', 3)
+        self.assertEquals(('abc', 'defg'),  s.read(None, 'abcdefg'))
+        self.assertEquals('abc', s.write(None, 'abcdefg'))
+        self.assertEquals('\x00\x00\x00', s.write(None, None))
+        self.assertEquals('\x00\x00\x00', s.write(None, '\x00'))
+        self.assertEquals('a\x00\x00', s.write(None, 'a'))
+
+    def test_binarydataspec(self):
+        from mutagen.id3 import BinaryDataSpec
+        s = BinaryDataSpec('name')
+        self.assertEquals(('abcdefg', ''), s.read(None, 'abcdefg'))
+        self.assertEquals('None',  s.write(None, None))
+        self.assertEquals('43',  s.write(None, 43))
+
+    def test_encodedtextspec(self):
+        from mutagen.id3 import EncodedTextSpec, Frame
+        s = EncodedTextSpec('name')
+        f = Frame(); f.encoding = 0
+        self.assertEquals(('abcd', 'fg'), s.read(f, 'abcd\x00fg'))
+        self.assertEquals('abcdefg\x00', s.write(f, 'abcdefg'))
+        self.assertRaises(AttributeError, s.write, f, None)
+
+    def test_timestampspec(self):
+        from mutagen.id3 import TimeStampSpec, Frame, ID3TimeStamp
+        s = TimeStampSpec('name')
+        f = Frame(); f.encoding = 0
+        self.assertEquals((ID3TimeStamp('ab'), 'fg'), s.read(f, 'ab\x00fg'))
+        self.assertEquals((ID3TimeStamp('1234'), ''), s.read(f, '1234\x00'))
+        self.assertEquals('1234\x00', s.write(f, ID3TimeStamp('1234')))
+        self.assertRaises(AttributeError, s.write, f, None)
 
 class FrameSanityChecks(TestCase):
 
@@ -987,6 +1039,7 @@ registerCase(ID3Tags)
 registerCase(ID3v1Tags)
 registerCase(BrokenButParsed)
 registerCase(FrameSanityChecks)
+registerCase(SpecSanityChecks)
 registerCase(Genres)
 registerCase(TimeStamp)
 registerCase(WriteRoundtrip)
