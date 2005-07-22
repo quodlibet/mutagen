@@ -196,7 +196,18 @@ class ID3(mutagen.Metadata):
 
     #f_crc = property(lambda s: bool(s.__extflags & 0x8000))
 
-    def save(self, filename=None):
+    def save(self, filename=None, v1=1):
+        """Save changes to a file, overwriting an old ID3v2 tag but
+        preserving any other (e.g. MPEG) data. The default filename is
+        the one this tag was created with.
+
+        If v1 is 0, any ID3v1 tag will be removed. If it is 1, the ID3v1
+        will be updated if present but not created (this is the default).
+        If 2, an ID3v1 tag will be created or updated.
+
+        The lack of a way to neither update nor remove an ID3v1 tag is
+        intentional."""
+    
         # don't trust this code yet - it could corrupt your files
         if filename is None: filename = self.__filename
         try: f = open(filename, 'rb+')
@@ -230,6 +241,16 @@ class ID3(mutagen.Metadata):
                 self.insert_space(f, outsize-insize, insize+10)
             f.seek(0)
             f.write(data)
+
+            f.seek(-128, 2)
+            if f.read(3) == "TAG":
+                f.seek(-128, 2)
+                if v1 > 0: f.write(MakeID3v1(self))
+                else: f.truncate()
+            elif v1 == 2:
+                f.seek(0, 2)
+                f.write(MakeID3v1(self))
+
         finally:
             f.close()
 
@@ -1044,5 +1065,31 @@ def ParseID3v1(string):
     if comment: frames["COMM"] = COMM(
         encoding=0, lang="eng", desc="ID3v1 Comment", text=comment)
     if track: frames["TRCK"] = TRCK(encoding=0, text=str(track))
-    frames["TCON"] = TCON(encoding=0, text=str(genre))
+    if genre != -1: frames["TCON"] = TCON(encoding=0, text=str(genre))
     return frames
+
+def MakeID3v1(id3):
+    v1 = {}
+
+    for v2id, name in {"TIT2": "title", "TPE1": "artist",
+                       "TALB": "album", "COMM:": "comment"}.items():
+        if v2id in id3:
+            text = id3[v2id].text[0].encode('latin1', 'replace')[:30]
+        else: text = ""
+        v1[name] = text + ("\x00" * (30 - len(text)))
+
+    if "TRCK" in id3: v1["track"] = chr(+id3["TRCK"])
+    else: v1["track"] = "\x00"
+
+    if "TCON" in id3:
+        try: genre = id3["TCON"].genres[0]
+        except IndexError: pass
+        else:
+            if genre in TCON.GENRES:
+                v1["genre"] = chr(TCON.GENRES.index(genre))
+    if "genre" not in v1: v1["genre"] = "\xff"
+
+    if "TDRC" in id3: v1["year"] = str(id3["TDRC"])[:4]
+    else: v1["year"] = "\x00\x00\x00\x00"
+
+    return "TAG%(title)s%(artist)s%(album)s%(year)s%(comment)s%(genre)s" % v1 

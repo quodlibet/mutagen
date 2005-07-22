@@ -162,6 +162,12 @@ class ID3v1Tags(TestCase):
         self.assertEquals('wxyz', tags['COMM'])
         self.assertEquals("1234", tags['TDRC'])
 
+    def test_roundtrip(self):
+        from mutagen.id3 import ParseID3v1, MakeID3v1
+        frames = {}
+        for key in ["TIT2", "TALB", "TPE1", "TDRC"]:
+            frames[key] = self.id3[key]
+        self.assertEquals(ParseID3v1(MakeID3v1(frames)), frames)
 
 def TestReadTags():
     tests = [
