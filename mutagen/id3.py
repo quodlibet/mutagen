@@ -273,6 +273,8 @@ class ID3(mutagen.Metadata):
 
     def save_frame(self, frame):
         flags = 0
+        if self.PEDANTIC and isinstance(frame, TextFrame):
+            if len(str(frame)) == 0: return ''
         framedata = frame._writeData()
         if len(framedata) > 2048:
             framedata = framedata.encode('zlib')
