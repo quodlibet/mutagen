@@ -1078,7 +1078,9 @@ def MakeID3v1(id3):
         else: text = ""
         v1[name] = text + ("\x00" * (30 - len(text)))
 
-    if "TRCK" in id3: v1["track"] = chr(+id3["TRCK"])
+    if "TRCK" in id3:
+        try: v1["track"] = chr(+id3["TRCK"])
+        except ValueError: v1["track"] = "\x00"
     else: v1["track"] = "\x00"
 
     if "TCON" in id3:
