@@ -701,7 +701,7 @@ class Frame(object):
                 raise ID3EncryptionUnsupportedError
             if tflags & Frame.FLAG23_COMPRESS:
                 try: data = data.decode('zlib')
-                except zlibError:
+                except zlibError, err:
                     if id3.PEDANTIC:
                         raise ID3BadCompressedData, '%s: %r' % (err, data)
 
