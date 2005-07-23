@@ -756,7 +756,7 @@ class Genres(TestCase):
         self.assertEquals(gen.genres, ["a genre", "another"])
 
     def test_nodoubledecode(self):
-        gen = self.TCON(encoding=0, text=u"(255)genre")
+        gen = self.TCON(encoding=1, text=u"(255)genre")
         gen.genres = gen.genres
         self.assertEquals(gen.genres, [u"Unknown", u"genre"])
 
