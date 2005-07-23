@@ -1,6 +1,5 @@
 Mutagen is an ID3 reader and writer implemented in pure Python. It
-supports reading ID3v1.1, 2.2, 2.3, and 2.4. Writing is untested, but
-it will write ID3v2.4 (and ID3v1.1) tags.
+supports reading ID3v1.1, 2.2, 2.3, and 2.4, and writing 2.4 and 1.1.
 
 The goals are (in rough order of importance):
  * Read as many MP3 files as possible
@@ -11,8 +10,26 @@ The goals are (in rough order of importance):
  * Support all features of the ID3 format
  * Easily extensible to new frames
 
-Testing the Reader
+Testing the Module
 ------------------
-To test Mutagen, run
+To test Mutagen's reading support, run
  $ ./_pony.py <your top-level MP3 directory here>
 Mutagen will try to load all of them, and report any errors.
+
+To look at the tags in MP3s, run
+ $ ./id3inspect filename.mp3 ...
+
+To run our test suite,
+ $ ./_sanity.sh
+
+Compatibility
+-------------
+If you have eyeD3 installed, some cross-compatibility tests are done as
+part of the test suite (./_sanity.sh) to make sure eyeD3 can read tags
+written by Mutagen.
+
+Although not yet automated, we have tested our tags with TagLib and MAD's
+libid3tag, and they are both capable of reading tags written by Mutagen.
+
+As we write ID3v2.4 tags, id3lib cannot read them. However, if you enable
+ID3v1 tag saving (pass v1=2 to ID3.save), id3lib will read that.

@@ -10,6 +10,8 @@
 # $Id$
 #
 
+version = (0, 0, -1)
+
 """
 mutagen aims to be an all purpose tagging library.
 
@@ -41,7 +43,3 @@ class Metadata(dict):
     def delete(self):
         """Remove tags from the open file"""
         raise NotImplementedError
-
-class TagValue(unicode):
-    """Abstract string-like object used for most tags"""
-    pass

@@ -45,6 +45,13 @@ class ID3(mutagen.Metadata):
     version = (2,4,0)
 
     def __init__(self, filename=None, known_frames=None, translate=True):
+        """Create a dict-like ID3 tag. If a filename is given, load it.
+        known_frames contains a list of supported frames; it defaults
+        to mutagen.id3.Frames. By adding new frame types you can load
+        custom ('experimenta') frames.
+
+        translate is passed directly to the load function."""
+
         self.unknown_frames = []
         self.__known_frames = known_frames
         self.__filename = None
@@ -54,9 +61,7 @@ class ID3(mutagen.Metadata):
         self.__crc = None
 
         if filename is not None:
-            self.load(filename)
-        if translate:
-            self.update_to_v24()
+            self.load(filename, translate)
 
     def fullread(self, size):
         try:
@@ -72,7 +77,16 @@ class ID3(mutagen.Metadata):
         self.__readbytes += size
         return data
 
-    def load(self, filename):
+    def load(self, filename, translate=True):
+        """Load tags from the filename. If translate is true, all
+        tags are translated to ID3v2.4 internally (for example,
+        the 2.3 TYER and TDAT tags are combined to form TDRC). You must
+        do this if you intend to write the tag, or else other ID3
+        libraries may not load it.
+
+        ID3v2.2 tags are subclasses of the equivalent v2.3/4 tags, so
+        you can treat them either way."""
+
         from os.path import getsize
         self.__filename = filename
         self.__fileobj = file(filename, 'rb')
@@ -113,14 +127,26 @@ class ID3(mutagen.Metadata):
             self.__fileobj.close()
             del self.__fileobj
             del self.__filesize
+            if translate:
+                self.update_to_v24()
 
     def getall(self, key):
+        """Return all frames with a given name (the list may be empty). E.g.
+        id3.getall('TTTT') == []
+        id3.getall('TIT2') == [id3['TIT2']]
+        id3.getall('TXXX') == [TXXX(desc='woo', text='bar'),
+                               TXXX(desc='baz', text='quuuux'), ...]
+
+        Since this is based on the frame's HashKey, you can abuse it to do
+        things like getall('COMM:MusicMatch') or getall('TXXX:QuodLibet:')."""
+
         if key in self: return [self[key]]
         else:
             key = key + ":"
             return [v for s,v in self.items() if s.startswith(key)]
 
     def delall(self, key):
+        """Delete all tags of a given kind; see getall."""
         if key in self: del(self[key])
         else:
             key = key + ":"
@@ -128,11 +154,13 @@ class ID3(mutagen.Metadata):
                 del(self[k])
 
     def setall(self, key, values):
+        """Equivalent to delall(key) and adding each frame in 'values'."""
         self.delall(key)
         for tag in values:
             self[tag.HashKey] = tag
 
     def loaded_frame(self, name, tag):
+        # FIXME: we don't need name, it's just ugly/annoying.
         # turn 2.2 into 2.3/2.4 tags
         if len(name) == 3: tag = type(tag).__base__(tag)
         self[tag.HashKey] = tag
@@ -284,6 +312,8 @@ class ID3(mutagen.Metadata):
         return header + framedata
 
     def update_to_v24(self):
+        """Convert an ID3v2.3 tag into an ID3v2.4 tag, either replacing
+        or deleting obsolete frames."""
         # TDAT, TYER, and TIME have been turned into TDRC.
         if str(self.get("TYER", "")).strip("\x00"):
             date = str(self.pop("TYER"))
@@ -629,6 +659,7 @@ class Frame(object):
     FrameID = property(lambda s: type(s).__name__, doc="ID3 Frame ID")
 
     def __repr__(self):
+        """eval(repr(frame)) == frame, for all frames."""
         kw = []
         for attr in self._framespec:
             kw.append('%s=%r' % (attr.name, getattr(self, attr.name)))
@@ -682,12 +713,18 @@ class Frame(object):
     fromData = classmethod(fromData)
 
 class TextFrame(Frame):
-    _framespec = [ EncodingSpec('encoding'), MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000') ]
+    """Text frames support multiple values; it can be streated as a
+    single null-separated string, or a list of values (with append,
+    extend, and a [] accessor)."""
+
+    _framespec = [ EncodingSpec('encoding'),
+        MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000') ]
     def __str__(self): return self.__unicode__().encode('utf-8')
     def __unicode__(self): return u'\u0000'.join(self.text)
     def __eq__(self, other):
         if isinstance(other, str): return str(self) == other
-        elif isinstance(other, unicode): return u'\u0000'.join(self.text) == other
+        elif isinstance(other, unicode):
+            return u'\u0000'.join(self.text) == other
         return self.text == other
     def __getitem__(self, item): return self.text[item]
     def __iter__(self): return iter(self.text)
@@ -695,11 +732,16 @@ class TextFrame(Frame):
     def extend(self, value): return self.text.extend(value)
 
 class NumericTextFrame(TextFrame):
+    """In addition to the TextFrame methods, these frames support the
+    unary plus operation (+frame) to return the first number in the list."""
+
     _framespec = [ EncodingSpec('encoding'),
         MultiSpec('text', EncodedNumericTextSpec('text'), sep=u'\u0000') ]
     def __pos__(self): return int(self.text[0])
 
 class NumericPartTextFrame(TextFrame):
+    """In addition to the TextFrame methods, these frames support the
+    unary plus operation (+frame) to return the first number in the list."""
     _framespec = [ EncodingSpec('encoding'),
         MultiSpec('text', EncodedNumericPartTextSpec('text'), sep=u'\u0000') ]
     def __pos__(self):
@@ -707,10 +749,10 @@ class NumericPartTextFrame(TextFrame):
         return int('/' in t and t[:t.find('/')] or t)
 
 class TimeStampTextFrame(TextFrame):
-    _framespec = [ EncodingSpec('encoding'), MultiSpec('text', TimeStampSpec('stamp'), sep=u',') ]
+    _framespec = [ EncodingSpec('encoding'),
+        MultiSpec('text', TimeStampSpec('stamp'), sep=u',') ]
     def __str__(self): return self.__unicode__().encode('utf-8')
     def __unicode__(self): return ','.join([stamp.text for stamp in self.text])
-
 
 class UrlFrame(Frame):
     _framespec = [ Latin1TextSpec('url') ]
@@ -726,7 +768,11 @@ class TBPM(NumericTextFrame): "Beats per minute"
 class TCOM(TextFrame): "Composer"
 
 class TCON(TextFrame):
-    "Content type (Genre)"
+    """Content type (Genre)
+
+    The raw text data for a genre may be in one of several formats, either
+    string data or a numeric code. For friendly access, use the genres
+    property."""
 
     from mutagen._constants import GENRES
 
@@ -772,7 +818,8 @@ class TCON(TextFrame):
             return value.decode(enc)
         else: return value
 
-    genres = property(__get_genres, __set_genres)
+    genres = property(__get_genres, __set_genres, None,
+                      "A list of genres parsed from the raw text data.")
 
 class TCOP(TextFrame): "Copyright (c)"
 class TDAT(TextFrame): "Date of recording (DDMM)"
@@ -871,7 +918,10 @@ class COMM(TextFrame):
     HashKey = property(lambda s: '%s:%s:%r'%(s.FrameID, s.desc, s.lang))
 
 class RVA2(Frame):
-    "Relative volume adjustment (2)"
+    """Relative volume adjustment (2)
+
+    Peak levels are not supported because the ID3 standard does not
+    describe how they are stored."""
     _framespec = [ Latin1TextSpec('desc'), ChannelSpec('channel'),
         VolumeAdjustment('gain'), VolumePeak('peak') ]
     _channels = ["Other", "Master volume", "Front right", "Front left",
@@ -1049,6 +1099,8 @@ Open = ID3
 
 # ID3v1.1 support.
 def ParseID3v1(string):
+    """Parse a 128-byte string as an ID3v1.1 tag, returning a dict of
+    ID3v2.4 frames."""
     from struct import error as StructError
     frames = {}
     try:
@@ -1074,6 +1126,9 @@ def ParseID3v1(string):
     return frames
 
 def MakeID3v1(id3):
+    """Generate an ID3v1.1 tag string from a dictionary of ID3v2.4 frames
+    (like a mutagen.id3.ID3 instance)."""
+
     v1 = {}
 
     for v2id, name in {"TIT2": "title", "TPE1": "artist",
