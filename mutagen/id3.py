@@ -783,9 +783,9 @@ class TCON(TextFrame):
         for value in self.text:
             if value.isdigit():
                 try: genres.append(self.GENRES[int(value)])
-                except IndexError: genres.append("Unknown")
-            elif value == "CR": genres.append("Cover")
-            elif value == "RX": genres.append("Remix")
+                except IndexError: genres.append(u"Unknown")
+            elif value == "CR": genres.append(u"Cover")
+            elif value == "RX": genres.append(u"Remix")
             elif value:
                 newgenres = []
                 genreid, dummy, genrename = genre_re.match(value).groups()
@@ -795,9 +795,9 @@ class TCON(TextFrame):
                         if gid.isdigit() and int(gid) < len(self.GENRES):
                             gid = unicode(self.GENRES[int(gid)])
                             newgenres.append(gid)
-                        elif gid == "CR": newgenres.append("Cover")
-                        elif gid == "RX": newgenres.append("Remix")
-                        else: newgenres.append("Unknown")
+                        elif gid == "CR": newgenres.append(u"Cover")
+                        elif gid == "RX": newgenres.append(u"Remix")
+                        else: newgenres.append(u"Unknown")
 
                 if genrename:
                     # "Unescaping" the first parenthesis

@@ -755,6 +755,11 @@ class Genres(TestCase):
         gen.genres = ["a genre", "another"]
         self.assertEquals(gen.genres, ["a genre", "another"])
 
+    def test_nodoubledecode(self):
+        gen = self.TCON(encoding=0, text=u"(255)genre")
+        gen.genres = gen.genres
+        self.assertEquals(gen.genres, [u"Unknown", u"genre"])
+
 class BrokenButParsed(TestCase):
     def test_missing_encoding(self):
         from mutagen.id3 import TIT2
