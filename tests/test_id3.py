@@ -509,6 +509,16 @@ class SpecSanityChecks(TestCase):
         self.assertEquals('1234\x00', s.write(f, ID3TimeStamp('1234')))
         self.assertRaises(AttributeError, s.write, f, None)
 
+    def test_volumeadjustmentspec(self):
+        from mutagen.id3 import VolumeAdjustmentSpec
+        s = VolumeAdjustmentSpec('gain')
+        self.assertEquals((0.0, ''), s.read(None, '\x00\x00'))
+        self.assertEquals((2.0, ''), s.read(None, '\x04\x00'))
+        self.assertEquals((-2.0, ''), s.read(None, '\xfc\x00'))
+        self.assertEquals('\x00\x00', s.write(None, 0.0))
+        self.assertEquals('\x04\x00', s.write(None, 2.0))
+        self.assertEquals('\xfc\x00', s.write(None, -2.0))
+
 class FrameSanityChecks(TestCase):
 
     def test_TF(self):

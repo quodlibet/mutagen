@@ -598,19 +598,17 @@ class ChannelSpec(ByteSpec):
     (OTHER, MASTER, FRONTRIGHT, FRONTLEFT, BACKRIGHT, BACKLEFT, FRONTCENTRE,
      BACKCENTRE, SUBWOOFER) = range(9)
 
-class VolumeAdjustment(Spec):
+class VolumeAdjustmentSpec(Spec):
     def read(self, frame, data):
-        v1, v2 = struct.unpack("bB", data[:2])
-        v1 <<= 8
-        return ((v1+v2)/512.0), data[2:]
+        value, = unpack('>h', data[0:2])
+        return value/512.0, data[2:]
 
     def write(self, frame, value):
-        value = int(value * 512)
-        return struct.pack("bB", value >> 8, value & 0xFF)
+        return pack('>h', round(value * 512))
 
     def validate(self, frame, value): return value
 
-class VolumePeak(Spec):
+class VolumePeakSpec(Spec):
     def read(self, frame, data):
         bits = ord(data[0])
         bytes = min(4, (bits + 7) >> 3)
@@ -924,7 +922,7 @@ class RVA2(Frame):
     Peak levels are not supported because the ID3 standard does not
     describe how they are stored."""
     _framespec = [ Latin1TextSpec('desc'), ChannelSpec('channel'),
-        VolumeAdjustment('gain'), VolumePeak('peak') ]
+        VolumeAdjustmentSpec('gain'), VolumePeakSpec('peak') ]
     _channels = ["Other", "Master volume", "Front right", "Front left",
                  "Back right", "Back left", "Front centre", "Back centre",
                  "Subwoofer"]
