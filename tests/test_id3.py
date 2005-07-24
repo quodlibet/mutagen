@@ -843,7 +843,7 @@ class TimeStamp(TestCase):
         self.assertEquals(s.month, 56)
         self.assertEquals(s.day, 78)
         self.assertEquals(s.hour, 12)
-        self.assertEquals(s.text, '1234-56-78T12')
+        self.assertEquals(s.text, '1234-56-78 12')
 
     def test_ymdhM(self):
         s = self.Stamp('1234-56-78T12:34')
@@ -852,7 +852,7 @@ class TimeStamp(TestCase):
         self.assertEquals(s.day, 78)
         self.assertEquals(s.hour, 12)
         self.assertEquals(s.minute, 34)
-        self.assertEquals(s.text, '1234-56-78T12:34')
+        self.assertEquals(s.text, '1234-56-78 12:34')
 
     def test_ymdhmS(self):
         s = self.Stamp('1234-56-78T12:34:56')
@@ -862,12 +862,16 @@ class TimeStamp(TestCase):
         self.assertEquals(s.hour, 12)
         self.assertEquals(s.minute, 34)
         self.assertEquals(s.second, 56)
-        self.assertEquals(s.text, '1234-56-78T12:34:56')
+        self.assertEquals(s.text, '1234-56-78 12:34:56')
 
     def test_Ymdhms(self):
         s = self.Stamp('1234-56-78T12:34:56')
         s.month = None
         self.assertEquals(s.text, '1234')
+
+    def test_alternate_reprs(self):
+        s = self.Stamp('1234-56.78 12:34:56')
+        self.assertEquals(s.text, '1234-56-78 12:34:56')
 
     def test_order(self):
         s = self.Stamp('1234')

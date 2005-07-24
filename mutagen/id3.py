@@ -561,7 +561,7 @@ class ID3TimeStamp(object):
         self.text = text
 
     __formats = ['%04d'] + ['%02d'] * 5
-    __seps = ['-', '-', 'T', ':', ':', 'x']
+    __seps = ['-', '-', ' ', ':', ':', 'x']
     def get_text(self):
         parts = [self.year, self.month, self.day,
                 self.hour, self.minute, self.second]
@@ -570,7 +570,7 @@ class ID3TimeStamp(object):
             pieces.append(self.__formats[i]%part + self.__seps[i])
         return ''.join(pieces)[:-1]
 
-    def set_text(self, text, splitre=re.compile('[-T:/]')):
+    def set_text(self, text, splitre=re.compile('[-T:/.]|\s+')):
         year, month, day, hour, minute, second = \
                 splitre.split(text + ':::::')[:6]
         for a in 'year month day hour minute second'.split():
@@ -589,6 +589,10 @@ class TimeStampSpec(EncodedTextSpec):
     def read(self, frame, data):
         value, data = super(TimeStampSpec, self).read(frame, data)
         return self.validate(frame, value), data
+
+    def write(self, frame, data):
+        return super(TimeStampSpec, self).write(frame,
+                data.text.replace(' ', 'T'))
 
     def validate(self, frame, value):
         try: return ID3TimeStamp(value)
