@@ -254,6 +254,10 @@ def TestReadTags():
         'Master volume: -2.226562 dB/0.000000', '',
         dict(desc='testdata', channel=1, gain=-2.2265625, peak=0)],
 
+    ['RVA2', 'testdata2\x00\x01\x04\x01\x00',
+        'Master volume: +2.001953 dB/0.000000', '',
+        dict(desc='testdata2', channel=1, gain=2.001953125, peak=0)],
+
     ['PCNT', '\x00\x00\x00\x11', 17, 17, dict(count=17)],
     ['POPM', 'foo@bar.org\x00\xde\x00\x00\x00\x11', 222, 222,
         dict(email="foo@bar.org", rating=222, count=17)],

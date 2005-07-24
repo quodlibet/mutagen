@@ -600,12 +600,13 @@ class ChannelSpec(ByteSpec):
 
 class VolumeAdjustment(Spec):
     def read(self, frame, data):
-        value = (ord(data[0]) << 8) + ord(data[1])
-        return ((value/512.0) - 128.0), data[2:]
+        v1, v2 = struct.unpack("bB", data[:2])
+        v1 <<= 8
+        return ((v1+v2)/512.0), data[2:]
 
     def write(self, frame, value):
-        value = int((value + 128) * 512)
-        return chr(value >> 8) + chr(value & 0xFF)
+        value = int(value * 512)
+        return struct.pack("bB", value >> 8, value & 0xFF)
 
     def validate(self, frame, value): return value
 
