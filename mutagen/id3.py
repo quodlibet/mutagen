@@ -116,7 +116,7 @@ class ID3(mutagen.Metadata):
                 if (2,2,0) <= self.version < (2,3,0):
                     perframe = 6
                     if frames is None: frames = Frames_2_2
-                while self.__readbytes+perframe < self.__size:
+                while self.__readbytes+perframe < self.__size+10:
                     try:
                         name, tag = self.load_frame(frames=frames)
                     except EOFError: break
