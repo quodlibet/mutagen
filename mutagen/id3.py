@@ -106,7 +106,7 @@ class ID3(mutagen.Metadata):
                     frames = ParseID3v1(self.__fileobj.read(128))
                     if frames is not None:
                         self.version = (1, 1)
-                        map(self.loaded_frame, frames.keys(), frames.values())
+                        map(self.loaded_frame, frames.values())
                     else: raise err, None, stack
             else:
                 frames = self.__known_frames
@@ -116,7 +116,12 @@ class ID3(mutagen.Metadata):
                 if (2,2,0) <= self.version < (2,3,0):
                     perframe = 6
                     if frames is None: frames = Frames_2_2
-                while self.__readbytes+perframe < self.__size+10:
+                data = self.fullread(self.__size)
+                for frame in self.read_frames(data, frames=frames):
+                    if isinstance(frame, Frame): self.loaded_frame(frame)
+                    else: self.unknown_frames.append(frame)
+
+                while 0 and self.__readbytes+perframe < self.__size+10:
                     try:
                         name, tag = self.load_frame(frames=frames)
                     except EOFError: break
@@ -159,10 +164,9 @@ class ID3(mutagen.Metadata):
         for tag in values:
             self[tag.HashKey] = tag
 
-    def loaded_frame(self, name, tag):
-        # FIXME: we don't need name, it's just ugly/annoying.
+    def loaded_frame(self, tag):
         # turn 2.2 into 2.3/2.4 tags
-        if len(name) == 3: tag = type(tag).__base__(tag)
+        if len(type(tag).__name__) == 3: tag = type(tag).__base__(tag)
         self[tag.HashKey] = tag
 
     def load_header(self):
@@ -190,33 +194,77 @@ class ID3(mutagen.Metadata):
             self.__extsize = BitPaddedInt(self.fullread(4))
             self.__extdata = self.fullread(self.__extsize - 4)
 
-    def load_frame(self, frames):
-        if (2,3,0) <= self.version:
-            data = self.fullread(10)
-            name, size, flags = unpack('>4sLH', data)
-            if (2,4,0) <= self.version: size = BitPaddedInt(size)
-            #print '%#x' % (self.__fileobj.tell()-10), name, size
-        elif (2,2,0) <= self.version:
-            data = self.fullread(6)
-            name, size = unpack('>3s3s', data)
-            flags = 0
-            size, = unpack('>L', '\x00'+size)
-        if name.strip('\x00') == '': raise EOFError
-        if size == 0: return name, data
+    def __determine_bpi(self, data, frames):
+        if self.version < (2,4,0): return int
+        # have to special case whether to use bitpaddedints here
+        # spec says to use them, but iTunes has it wrong
 
-        framedata = self.fullread(size)
+        # count number of tags found as BitPaddedInt and how far past
+        o = 0
+        asbpi = 0
+        while o < len(data)-10:
+            name, size, flags = unpack('>4sLH', data[o:o+10])
+            size = BitPaddedInt(size)
+            o += 10+size
+            if name in frames: asbpi += 1
+        bpioff = o - len(data)
+
+        # count number of tags found as int and how far past
+        o = 0
+        asint = 0
+        while o < len(data)-10:
+            name, size, flags = unpack('>4sLH', data[o:o+10])
+            o += 10+size
+            if name in frames: asint += 1
+        intoff = o - len(data)
+
+        # if more tags as int, or equal and bpi is past and int is not
+        if asint > asbpi or (asint == asbpi and (bpioff >= 1 and intoff <= 1)):
+            return int
+        return BitPaddedInt
+
+    def read_frames(self, data, frames):
+        if (2,3,0) <= self.version:
+            bpi = self.__determine_bpi(data, frames)
+            while data:
+                header = data[:10]
+                try: name, size, flags = unpack('>4sLH', header)
+                except struct.error: return # not enough header
+                if name.strip('\x00') == '': return
+                size = bpi(size)
+                framedata = data[10:10+size]
+                data = data[10+size:]
+                if size == 0: continue # drop empty frames
+                try: tag = frames[name]
+                except KeyError: yield header + framedata
+                else:
+                    try: yield self.load_framedata(tag, flags, framedata)
+                    except NotImplementedError: yield header + framedata
+
+        elif (2,2,0) <= self.version:
+            while data:
+                header = data[0:6]
+                try: name, size = unpack('>3s3s', header)
+                except struct.error: return # not enough header
+                size, = struct.unpack('>L', '\x00'+size)
+                if name.strip('\x00') == '': return
+                frame = data[:6+size]
+                framedata = data[6:6+size]
+                data = data[6+size:]
+                if size == 0: continue # drop empty frames
+                try: tag = frames[name]
+                except KeyError: yield header + framedata
+                else:
+                    try: yield self.load_framedata(tag, 0, framedata)
+                    except NotImplementedError: yield header + framedata
+
+    def load_framedata(self, tag, flags, framedata):
         if self.f_unsynch or flags & 0x40:
             try: framedata = unsynch.decode(framedata)
             except ValueError: pass
             flags &= ~0x40
-        try: tag = frames[name]
-        except KeyError:
-            return name, data + framedata
-        else:
-            try: tag = tag.fromData(self, flags, framedata)
-            except NotImplementedError: return name, data + framedata
-        return name, tag
-
+        return tag.fromData(self, flags, framedata)
+            
     f_unsynch = property(lambda s: bool(s.__flags & 0x80))
     f_extended = property(lambda s: bool(s.__flags & 0x40))
     f_experimental = property(lambda s: bool(s.__flags & 0x20))
@@ -251,7 +299,7 @@ class ID3(mutagen.Metadata):
             if id3 != 'ID3': insize = -10
 
             framedata = map(self.save_frame, self.values())
-            framedata.extend([data for (name, data) in self.unknown_frames
+            framedata.extend([data for data in self.unknown_frames
                     if len(data) > 10])
             framedata = ''.join(framedata)
             framesize = len(framedata)
@@ -324,20 +372,19 @@ class ID3(mutagen.Metadata):
                     time = str(self.pop("TIME"))
                     date += "T%s:%s:00" % (time[:2], time[2:])
             if "TDRC" not in self:
-                self.loaded_frame("TDRC", TDRC(encoding=0, text=date))
+                self.loaded_frame(TDRC(encoding=0, text=date))
 
         # TORY can be the first part of a TDOR.
         if "TORY" in self:
             date = str(self.pop("TORY"))
             if "TDOR" not in self:
-                self.loaded_frame("TDOR", TDOR(encoding=0, text=date))
+                self.loaded_frame(TDOR(encoding=0, text=date))
 
         # IPLS is now TIPL.
         if "IPLS" in self:
             if "TIPL" not in self:
                 f = self.pop("IPLS")
-                self.loaded_frame(
-                    "TIPL", TIPL(encoding=f.encoding, people=f.people))
+                self.loaded_frame(TIPL(encoding=f.encoding, people=f.people))
 
         if "TCON" in self:
             # Get rid of "(xx)Foobr" format.
@@ -568,7 +615,7 @@ class ID3TimeStamp(object):
         pieces = []
         for i, part in enumerate(iter(iter(parts).next, None)):
             pieces.append(self.__formats[i]%part + self.__seps[i])
-        return ''.join(pieces)[:-1]
+        return u''.join(pieces)[:-1]
 
     def set_text(self, text, splitre=re.compile('[-T:/.]|\s+')):
         year, month, day, hour, minute, second = \

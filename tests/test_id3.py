@@ -115,7 +115,7 @@ class ID3Tags(TestCase):
     def test_23_multiframe_hack(self):
         class ID3hack(ID3):
             "Override 'correct' behavior with desired behavior"
-            def loaded_frame(self, name, tag):
+            def loaded_frame(self, tag):
                 if tag.HashKey in self: self[tag.HashKey].extend(tag[:])
                 else: self[tag.HashKey] = tag
 
@@ -551,12 +551,10 @@ class FrameSanityChecks(TestCase):
 
     def test_22_uses_direct_ints(self):
         from mutagen.id3 import TT1, Frames_2_2
-        from cStringIO import StringIO
         data = 'TT1\x00\x00\x83\x00' + ('123456789abcdef' * 16)
         id3 = ID3()
         id3.version = (2,2,0)
-        id3._ID3__fileobj = StringIO(data)
-        name, tag = id3.load_frame(Frames_2_2)
+        tag = list(id3.read_frames(data, Frames_2_2))[0]
         self.assertEquals(data[7:7+0x82].decode('latin1'), tag.text[0])
 
 
@@ -596,20 +594,18 @@ class FrameSanityChecks(TestCase):
 
     def test_load_write(self):
         from mutagen.id3 import TPE1, Frames
-        from cStringIO import StringIO
         artists= [s.decode('utf8') for s in ['\xc2\xb5', '\xe6\x97\xa5\xe6\x9c\xac']]
         artist = TPE1(encoding=3, text=artists)
         id3 = ID3()
-        id3._ID3__fileobj = StringIO(id3.save_frame(artist))
-        name, tag = id3.load_frame(Frames)
-        self.assertEquals('TPE1', name)
+        tag = list(id3.read_frames(id3.save_frame(artist), Frames))[0]
+        self.assertEquals('TPE1', type(tag).__name__)
         self.assertEquals(artist.text, tag.text)
 
     def test_22_to_24(self):
         from mutagen.id3 import TT1, TIT1
         id3 = ID3()
         tt1 = TT1(encoding=0, text=u'whatcha staring at?')
-        id3.loaded_frame('TT1', tt1)
+        id3.loaded_frame(tt1)
         tit1 = id3['TIT1']
 
         self.assertEquals(tt1.encoding, tit1.encoding)
@@ -786,15 +782,10 @@ class BrokenButParsed(TestCase):
     def test_zerolength_framedata(self):
         from mutagen.id3 import Frames
         id3 = ID3()
-        from cStringIO import StringIO
         tail = '\x00' * 6
         for head in 'WOAR TENC TCOP TOPE WXXX'.split():
             data = head + tail
-            sio = StringIO(data)
-            id3._ID3__fileobj = sio
-            name, tag = id3.load_frame(Frames)
-            self.assertEquals(name, head)
-            self.assertEquals(tag, data)
+            self.assertEquals(0, len(list(id3.read_frames(data, Frames))))
 
     def test_lengthone_utf16(self):
         from mutagen.id3 import TPE1
@@ -815,6 +806,28 @@ class BrokenButParsed(TestCase):
         id3.PEDANTIC = False
         tpe1 = TPE1.fromData(id3, Frame.FLAG24_COMPRESS, '\x03abcdefg')
         self.assertEquals(u'abcdefg', tpe1)
+
+    def test_detect_23_ints_in_24_frames(self):
+        from mutagen.id3 import Frames
+        head = 'TIT1\x00\x00\x01\x00\x00\x00\x00'
+        tail = 'TPE1\x00\x00\x00\x04\x00\x00Yay!'
+
+        tagsgood = list(_24.read_frames(head + 'a'*127 + tail, Frames))
+        tagsbad = list(_24.read_frames(head + 'a'*255 + tail, Frames))
+        self.assertEquals(2, len(tagsgood))
+        self.assertEquals(2, len(tagsbad))
+        self.assertEquals('a'*127, tagsgood[0])
+        self.assertEquals('a'*255, tagsbad[0])
+        self.assertEquals('Yay!', tagsgood[1])
+        self.assertEquals('Yay!', tagsbad[1])
+
+        tagsgood = list(_24.read_frames(head + 'a'*127, Frames))
+        tagsbad = list(_24.read_frames(head + 'a'*255, Frames))
+        self.assertEquals(1, len(tagsgood))
+        self.assertEquals(1, len(tagsbad))
+        self.assertEquals('a'*127, tagsgood[0])
+        self.assertEquals('a'*255, tagsbad[0])
+
 
 class TimeStamp(TestCase):
     from mutagen.id3 import ID3TimeStamp as Stamp
