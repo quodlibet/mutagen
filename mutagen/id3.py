@@ -110,12 +110,9 @@ class ID3(mutagen.Metadata):
                     else: raise err, None, stack
             else:
                 frames = self.__known_frames
-                if (2,3,0) <= self.version:
-                    perframe = 10
-                    if frames is None: frames = Frames
-                if (2,2,0) <= self.version < (2,3,0):
-                    perframe = 6
-                    if frames is None: frames = Frames_2_2
+                if frames is None:
+                    if (2,3,0) <= self.version: frames = Frames
+                    elif (2,2,0) <= self.version: frames = Frames_2_2
                 data = self.fullread(self.__size)
                 for frame in self.read_frames(data, frames=frames):
                     if isinstance(frame, Frame): self.loaded_frame(frame)
@@ -354,6 +351,10 @@ class ID3(mutagen.Metadata):
     def update_to_v24(self):
         """Convert an ID3v2.3 tag into an ID3v2.4 tag, either replacing
         or deleting obsolete frames."""
+
+        if self.version < (2,3,0):
+            del self.unknown_frames[:] # unsafe to write
+
         # TDAT, TYER, and TIME have been turned into TDRC.
         if str(self.get("TYER", "")).strip("\x00"):
             date = str(self.pop("TYER"))
