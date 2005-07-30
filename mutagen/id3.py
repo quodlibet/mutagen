@@ -120,14 +120,6 @@ class ID3(mutagen.Metadata):
                 for frame in self.read_frames(data, frames=frames):
                     if isinstance(frame, Frame): self.loaded_frame(frame)
                     else: self.unknown_frames.append(frame)
-
-                while 0 and self.__readbytes+perframe < self.__size+10:
-                    try:
-                        name, tag = self.load_frame(frames=frames)
-                    except EOFError: break
-
-                    if isinstance(tag, Frame): self.loaded_frame(name, tag)
-                    else: self.unknown_frames.append([name, tag])
         finally:
             self.__fileobj.close()
             del self.__fileobj
