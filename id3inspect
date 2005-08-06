@@ -14,11 +14,12 @@ def display(filename):
         for frame in id3.values():
             kw = []
             for attr in frame._framespec:
+                val = getattr(frame, attr.name)
                 if attr.name == "data":
-                    kw.append("%s=[%d bytes]" % (
-                        attr.name, len(getattr(frame, attr.name))))
+                    try: kw.append("%s=[%d bytes]" % ( attr.name, len(val)))
+                    except TypeError: kw.append("%s=%r" % (attr.name, val))
                 else:
-                    kw.append('%s=%r' % (attr.name, getattr(frame, attr.name)))
+                    kw.append('%s=%r' % (attr.name, val))
             strings.append('%s(%s)' % (type(frame).__name__, ', '.join(kw)))
         strings.sort()
         print "\n".join(strings)

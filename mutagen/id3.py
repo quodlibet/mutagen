@@ -34,6 +34,7 @@ class ID3BadUnsynchData(error, ValueError): pass
 class ID3BadCompressedData(error, ValueError): pass
 class ID3UnsupportedVersionError(error, NotImplementedError): pass
 class ID3EncryptionUnsupportedError(error, NotImplementedError): pass
+class ID3JunkFrameError(error, ValueError): pass
 
 class ID3(mutagen.Metadata):
     """ID3 is the mutagen.ID3 metadata class.
@@ -229,6 +230,7 @@ class ID3(mutagen.Metadata):
                 else:
                     try: yield self.load_framedata(tag, flags, framedata)
                     except NotImplementedError: yield header + framedata
+                    except ID3JunkFrameError: pass
 
         elif (2,2,0) <= self.version:
             while data:
@@ -246,6 +248,7 @@ class ID3(mutagen.Metadata):
                 else:
                     try: yield self.load_framedata(tag, 0, framedata)
                     except NotImplementedError: yield header + framedata
+                    except ID3JunkFrameError: pass
 
     def load_framedata(self, tag, flags, framedata):
         if self.f_unsynch or flags & 0x40:
@@ -711,7 +714,8 @@ class Frame(object):
     def _readData(self, data):
         odata = data
         for reader in self._framespec:
-            value, data = reader.read(self, data)
+            if len(data): value, data = reader.read(self, data)
+            else: raise ID3JunkFrameError
             setattr(self, reader.name, value)
         if data.strip('\x00'):
             if PRINT_ERRORS: print 'Leftover data: %s: %r (from %r)' % (

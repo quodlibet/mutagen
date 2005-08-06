@@ -68,6 +68,7 @@ def check_dir(path):
     rep = Report(path)
     print "Scanning", path
     for path, dirs, files in os.walk(path):
+        files.sort()
         for fn in files:
             if not fn.lower().endswith('.mp3'): continue
             ffn = os.path.join(path, fn)

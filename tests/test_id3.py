@@ -770,6 +770,24 @@ class Genres(TestCase):
         gen.genres = gen.genres
         self.assertEquals(gen.genres, [u"Unknown", u"genre"])
 
+class BrokenDiscarded(TestCase):
+    def test_empty(self):
+        from mutagen.id3 import TPE1, ID3JunkFrameError
+        self.assertRaises(ID3JunkFrameError, TPE1.fromData, _24, 0x00, '')
+
+    def test_wacky_truncated_RVA2(self):
+        from mutagen.id3 import RVA2, ID3JunkFrameError
+        data = '\x01{\xf0\x10\xff\xff\x00'
+        self.assertRaises(ID3JunkFrameError, RVA2.fromData, _24, 0x00, data)
+
+    def test_drops_truncated_frames(self):
+        from mutagen.id3 import Frames
+        id3 = ID3()
+        tail = '\x00\x00\x00\x03\x00\x00' '\x01\x02\x03'
+        for head in 'RVA2 TXXX APIC'.split():
+            data = head + tail
+            self.assertEquals(0, len(list(id3.read_frames(data, Frames))))
+
 class BrokenButParsed(TestCase):
     def test_missing_encoding(self):
         from mutagen.id3 import TIT2
@@ -1073,6 +1091,7 @@ registerCase(ID3GetSetDel)
 registerCase(BitPaddedIntTest)
 registerCase(ID3Tags)
 registerCase(ID3v1Tags)
+registerCase(BrokenDiscarded)
 registerCase(BrokenButParsed)
 registerCase(FrameSanityChecks)
 registerCase(SpecSanityChecks)
