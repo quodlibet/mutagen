@@ -49,7 +49,7 @@ class ID3(mutagen.Metadata):
         """Create a dict-like ID3 tag. If a filename is given, load it.
         known_frames contains a list of supported frames; it defaults
         to mutagen.id3.Frames. By adding new frame types you can load
-        custom ('experimenta') frames.
+        custom ('experimental') frames.
 
         translate is passed directly to the load function."""
 
