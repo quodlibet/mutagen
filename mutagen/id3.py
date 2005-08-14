@@ -344,8 +344,9 @@ class ID3(mutagen.Metadata):
         if self.PEDANTIC and isinstance(frame, TextFrame):
             if len(str(frame)) == 0: return ''
         framedata = frame._writeData()
-        if len(framedata) > 2048:
-            framedata = framedata.encode('zlib')
+        usize = len(framedata)
+        if usize > 2048:
+            framedata = pack('>L', usize) + framedata.encode('zlib')
             flags |= Frame.FLAG24_COMPRESS
         datasize = BitPaddedInt.to_str(len(framedata), width=4)
         header = pack('>4s4sH', type(frame).__name__, datasize, flags)
@@ -730,6 +731,9 @@ class Frame(object):
     def fromData(cls, id3, tflags, data):
 
         if (2,4,0) <= id3.version:
+            if tflags & Frame.FLAG24_COMPRESS:
+                usize, = unpack('>L', data[:4])
+                data = data[4:]
             if tflags & Frame.FLAG24_UNSYNCH and not id3.f_unsynch:
                 try: data = unsynch.decode(data)
                 except ValueError, err:
@@ -740,10 +744,18 @@ class Frame(object):
             if tflags & Frame.FLAG24_COMPRESS:
                 try: data = data.decode('zlib')
                 except zlibError, err:
-                    if id3.PEDANTIC:
-                        raise ID3BadCompressedData, '%s: %r' % (err, data)
+                    # the initial mutagen that went out with QL 0.12 did not
+                    # write the 4 bytes of uncompressed size. Compensate.
+                    data = pack('>L', usize) + data
+                    try: data = data.decode('zlib')
+                    except zlibError, err:
+                        if id3.PEDANTIC:
+                            raise ID3BadCompressedData, '%s: %r' % (err, data)
 
         elif (2,3,0) <= id3.version:
+            if tflags & Frame.FLAG23_COMPRESS:
+                usize, = unpack('>L', data[:4])
+                data = data[4:]
             if tflags & Frame.FLAG23_ENCRYPT:
                 raise ID3EncryptionUnsupportedError
             if tflags & Frame.FLAG23_COMPRESS:
