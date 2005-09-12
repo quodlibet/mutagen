@@ -793,6 +793,14 @@ class BrokenDiscarded(TestCase):
             data = head + tail
             self.assertEquals(0, len(list(id3.read_frames(data, Frames))))
 
+    def test_drops_nonalphanum_frames(self):
+        from mutagen.id3 import Frames
+        id3 = ID3()
+        tail = '\x00\x00\x00\x03\x00\x00' '\x01\x02\x03'
+        for head in ['\x06\xaf\xfe\x20', 'ABC\x00', 'A   ']:
+            data = head + tail
+            self.assertEquals(0, len(list(id3.read_frames(data, Frames))))
+
 class BrokenButParsed(TestCase):
     def test_missing_encoding(self):
         from mutagen.id3 import TIT2

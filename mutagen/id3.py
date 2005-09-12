@@ -226,7 +226,8 @@ class ID3(mutagen.Metadata):
                 data = data[10+size:]
                 if size == 0: continue # drop empty frames
                 try: tag = frames[name]
-                except KeyError: yield header + framedata
+                except KeyError: 
+                    if name.isalnum(): yield header + framedata
                 else:
                     try: yield self.load_framedata(tag, flags, framedata)
                     except NotImplementedError: yield header + framedata
@@ -244,7 +245,8 @@ class ID3(mutagen.Metadata):
                 data = data[6+size:]
                 if size == 0: continue # drop empty frames
                 try: tag = frames[name]
-                except KeyError: yield header + framedata
+                except KeyError:
+                    if name.isalnum(): yield header + framedata
                 else:
                     try: yield self.load_framedata(tag, 0, framedata)
                     except NotImplementedError: yield header + framedata
@@ -1164,7 +1166,7 @@ def ParseID3v1(string):
     frames = {}
     try:
         tag, title, artist, album, year, comment, track, genre = unpack(
-            "3s30s30s30s4s29sbb", string)
+            "3s30s30s30s4s29sBB", string)
     except StructError: return None
 
     if tag != "TAG": return None
@@ -1181,7 +1183,7 @@ def ParseID3v1(string):
     if comment: frames["COMM"] = COMM(
         encoding=0, lang="eng", desc="ID3v1 Comment", text=comment)
     if track: frames["TRCK"] = TRCK(encoding=0, text=str(track))
-    if genre != -1: frames["TCON"] = TCON(encoding=0, text=str(genre))
+    if genre != 255: frames["TCON"] = TCON(encoding=0, text=str(genre))
     return frames
 
 def MakeID3v1(id3):
