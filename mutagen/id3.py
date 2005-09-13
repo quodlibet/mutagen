@@ -967,7 +967,18 @@ class MCDI(Frame):
 # class ETCO: unsupported
 # class MLLT: unsupported
 # class SYTC: unsupported
-# class USLT: unsupported
+
+class USLT(Frame):
+    "Unsychronised lyrics/text transcription"
+
+    _framespec = [ EncodingSpec('encoding'), StringSpec('lang', 3),
+                   EncodedTextSpec('desc'), EncodedTextSpec('text') ]
+    HashKey = property(lambda s: '%s:%s:%r'%(s.FrameID, s.desc, s.lang))
+
+    def __str__(self): return self.text.encode('utf-8')
+    def __unicode__(self): return self.text
+    def __eq__(self, other): return self.text == other
+    
 # class SYLT: unsupported
 #     HashKey = property(lambda s: '%s:%s:%r'%(s.FrameID, s.desc, s.lang))
 
@@ -1134,7 +1145,7 @@ class MCI(MCDI): "Binary dump of CD's TOC"
 #class ETC(ETCO)
 #class MLL(MLLT)
 #class STC(SYTC)
-#class ULT(USLT)
+class ULT(USLT): "Unsychronised lyrics/text transcription"
 #class SLT(SYLT)
 class COM(COMM): "Comment"
 #class RVA(RVAD)

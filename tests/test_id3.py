@@ -266,6 +266,9 @@ def TestReadTags():
     ['GEOB', '\x00mime\x00name\x00desc\x00data', 'data', '',
         dict(encoding=0, mime='mime', filename='name', desc='desc')],
 
+    ['USLT', '\x00engsome lyrics\x00woo\nfun', 'woo\nfun', '',
+     dict(encoding=0, lang='eng', desc='some lyrics', text='woo\nfun')],
+
     # 2.2 tags
     ['UFI', 'own\x00data', 'data', '', dict(data='data', owner='own')],
     ['TT1', '\x00ab\x00', 'ab', '', dict(encoding=0)],
@@ -326,6 +329,8 @@ def TestReadTags():
     ['CNT', '\x00\x00\x00\x11', 17, 17, dict(count=17)],
     ['GEO', '\x00mime\x00name\x00desc\x00data', 'data', '',
         dict(encoding=0, mime='mime', filename='name', desc='desc')],
+    ['ULT', '\x00engsome lyrics\x00woo\nfun', 'woo\nfun', '',
+     dict(encoding=0, lang='eng', desc='some lyrics', text='woo\nfun')],
     ]
 
     load_tests = {}
