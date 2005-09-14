@@ -269,6 +269,10 @@ def TestReadTags():
     ['USLT', '\x00engsome lyrics\x00woo\nfun', 'woo\nfun', '',
      dict(encoding=0, lang='eng', desc='some lyrics', text='woo\nfun')],
 
+    ['POSS', '\x01\x0f', 15, 15, dict(format=1, position=15)],
+    ['OWNE', '\x00USD10.01\x0020041010CDBaby', 'CDBaby', 'CDBaby',
+     dict(encoding=0, price="USD10.01", date='20041010', seller='CDBaby')],
+
     # 2.2 tags
     ['UFI', 'own\x00data', 'data', '', dict(data='data', owner='own')],
     ['TT1', '\x00ab\x00', 'ab', '', dict(encoding=0)],

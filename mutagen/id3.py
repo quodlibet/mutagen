@@ -1053,9 +1053,16 @@ class GEOB(Frame):
 # class RBUF: unsupported
 # class AENC: unsupported
 #     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.owner))
-# class LINK: unsupported
-#     HashKey = property(lambda s: '%s:%s:%s:%s'%(s.FrameID, s.frameid, s.url,    s.data))
-# class POSS: unsupported
+# class LINK(Frame): unsupported
+#    HashKey = property(lambda s: '%s:%s:%s:%s'%(
+#        s.FrameID, s.frameid, s.url, s.data))
+
+class POSS(Frame):
+    "Position synchronisation frame"
+    _framespec = [ ByteSpec('format'), IntegerSpec('position') ]
+
+    def __pos__(self): return self.position
+    def __eq__(self, other): return self.position == other
 
 class UFID(Frame):
     _framespec = [ Latin1TextSpec('owner'), BinaryDataSpec('data') ]
@@ -1074,7 +1081,15 @@ class USER(Frame):
     def __unicode__(self): return self.text
     def __eq__(self, other): return self.text == other
 
-# class OWNE: unsupported
+class OWNE(Frame):
+    "Ownership frame"
+    _framespec = [ EncodingSpec('encoding'), Latin1TextSpec('price'),
+                   StringSpec('date', 8), EncodedTextSpec('seller') ]
+
+    def __str__(self): return self.seller.encode('utf-8')
+    def __unicode__(self): return self.seller
+    def __eq__(self, other): return self.seller == other
+
 # class COMR: unsupported
 #     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s._writeData()))
 # class ENCR: unsupported
