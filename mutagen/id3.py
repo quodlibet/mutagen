@@ -1110,14 +1110,16 @@ class ENCR(Frame):
 class PRIV(Frame):
     "Private frame"
     _framespec = [ Latin1TextSpec('owner'), BinaryDataSpec('data') ]
-    HashKey = property(lambda s: '%s:%s:%s' % (s.FrameID, s.owner, s.data))
+    HashKey = property(lambda s: '%s:%s:%s' % (
+        s.FrameID, s.owner, s.data.decode('latin1')))
     def __str__(self): return self.data
     def __eq__(self, other): return self.data == other
 
 class SIGN(Frame):
     "Signature frame"
     _framespec = [ ByteSpec('group'), BinaryDataSpec('sig') ]
-    HashKey = property(lambda s: '%s:%c:%s' % (s.FrameID, s.group, s.sig))
+    HashKey = property(lambda s: '%s:%c:%s' % (
+        s.FrameID, s.group, s.sig.decode('latin1')))
     def __str__(self): return self.sig
     def __eq__(self, other): return self.sig == other
 
