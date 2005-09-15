@@ -273,6 +273,14 @@ def TestReadTags():
     ['OWNE', '\x00USD10.01\x0020041010CDBaby', 'CDBaby', 'CDBaby',
      dict(encoding=0, price="USD10.01", date='20041010', seller='CDBaby')],
 
+    ['PRIV', 'a@b.org\x00random data', 'random data', 'random data',
+     dict(owner='a@b.org', data='random data')],
+    ['SIGN', '\x92huh?', 'huh?', 'huh?', dict(group=0x92, sig='huh?')],
+    ['ENCR', 'a@b.org\x00\x92Data!', 'Data!', 'Data!',
+     dict(owner='a@b.org', method=0x92, data='Data!')],
+    ['SEEK', '\x00\x12\x00\x56', 0x12*256*256+0x56, 0x12*256*256+0x56,
+     dict(offset=0x12*256*256+0x56)],
+
     # 2.2 tags
     ['UFI', 'own\x00data', 'data', '', dict(data='data', owner='own')],
     ['TT1', '\x00ab\x00', 'ab', '', dict(encoding=0)],

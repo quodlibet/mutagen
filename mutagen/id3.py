@@ -1091,15 +1091,42 @@ class OWNE(Frame):
     def __eq__(self, other): return self.seller == other
 
 # class COMR: unsupported
-#     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s._writeData()))
-# class ENCR: unsupported
+#    HashKey = property(lambda s: '%s:%s' % (s.FrameID, s._writeData()))
+
+class ENCR(Frame):
+    """Encryption method registration
+
+    The standard does not allow multiple ENCR frames with the same owner
+    or the same method. Mutagen only verifies that the owner is unique."""
+    _framespec = [ Latin1TextSpec('owner'), ByteSpec('method'),
+                   BinaryDataSpec('data') ]
+    HashKey = property(lambda s: "%s:%s" % (s.FrameID, s.owner))
+    def __str__(self): return self.data
+    def __eq__(self, other): return self.data == other
+
 # class GRID: unsupported
 #     HashKey = property(lambda s: '%s:%s:%s'%(s.FrameID, s.owner, s.group))
-# class PRIV: unsupported
-#     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s._writeData()))
-# class SIGN: unsupported
-#     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s._writeData()))
-# class SEEK: unsupported
+
+class PRIV(Frame):
+    "Private frame"
+    _framespec = [ Latin1TextSpec('owner'), BinaryDataSpec('data') ]
+    HashKey = property(lambda s: '%s:%s:%s' % (s.FrameID, s.owner, s.data))
+    def __str__(self): return self.data
+    def __eq__(self, other): return self.data == other
+
+class SIGN(Frame):
+    "Signature frame"
+    _framespec = [ ByteSpec('group'), BinaryDataSpec('sig') ]
+    HashKey = property(lambda s: '%s:%c:%s' % (s.FrameID, s.group, s.sig))
+    def __str__(self): return self.sig
+    def __eq__(self, other): return self.sig == other
+
+class SEEK(Frame):
+    "Seek frame"
+    _framespec = [ IntegerSpec('offset') ]
+    def __pos__(self): return self.offset
+    def __eq__(self, other): return self.offset == other
+
 # class ASPI: unsupported
 
 Frames = dict([(k,v) for (k,v) in globals().items()
