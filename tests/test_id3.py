@@ -280,10 +280,21 @@ def TestReadTags():
      dict(owner='a@b.org', method=0x92, data='Data!')],
     ['SEEK', '\x00\x12\x00\x56', 0x12*256*256+0x56, 0x12*256*256+0x56,
      dict(offset=0x12*256*256+0x56)],
+    
+    ['RBUF', '\x00\x12\x00', 0x12*256, 0x12*256, dict(size=0x12*256)],
+    ['RBUF', '\x00\x12\x00\x01', 0x12*256, 0x12*256,
+     dict(size=0x12*256, info=1)],
+    ['RBUF', '\x00\x12\x00\x01\x00\x00\x00\x23', 0x12*256, 0x12*256,
+     dict(size=0x12*256, info=1, offset=0x23)],
 
     ['RVRB', '\x12\x12\x23\x23\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11',
      (0x12*256+0x12, 0x23*256+0x23), '',
      dict(left=0x12*256+0x12, right=0x23*256+0x23) ],
+
+    ['AENC', 'a@b.org\x00\x00\x12\x00\x23', 'a@b.org', 'a@b.org',
+     dict(owner='a@b.org', preview_start=0x12, preview_length=0x23)],
+    ['AENC', 'a@b.org\x00\x00\x12\x00\x23!', 'a@b.org', 'a@b.org',
+     dict(owner='a@b.org', preview_start=0x12, preview_length=0x23, data='!')],
 
     # 2.2 tags
     ['UFI', 'own\x00data', 'data', '', dict(data='data', owner='own')],
@@ -347,7 +358,21 @@ def TestReadTags():
         dict(encoding=0, mime='mime', filename='name', desc='desc')],
     ['ULT', '\x00engsome lyrics\x00woo\nfun', 'woo\nfun', '',
      dict(encoding=0, lang='eng', desc='some lyrics', text='woo\nfun')],
+
+    ['BUF', '\x00\x12\x00', 0x12*256, 0x12*256, dict(size=0x12*256)],
+
+    ['CRA', 'a@b.org\x00\x00\x12\x00\x23', 'a@b.org', 'a@b.org',
+     dict(owner='a@b.org', preview_start=0x12, preview_length=0x23)],
+    ['CRA', 'a@b.org\x00\x00\x12\x00\x23!', 'a@b.org', 'a@b.org',
+     dict(owner='a@b.org', preview_start=0x12, preview_length=0x23, data='!')],
+
+    ['REV', '\x12\x12\x23\x23\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11',
+     (0x12*256+0x12, 0x23*256+0x23), '',
+     dict(left=0x12*256+0x12, right=0x23*256+0x23) ],
+
+
     ]
+
 
     load_tests = {}
     repr_tests = {}

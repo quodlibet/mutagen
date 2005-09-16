@@ -783,6 +783,33 @@ class Frame(object):
         return frame
     fromData = classmethod(fromData)
 
+class FrameOpt(Frame):
+    """A frame that supports a new attribute _optionalspec. These specs
+    contain parts of the frame that are not mandatory."""
+    def _readData(self, data):
+        odata = data
+        for reader in self._framespec:
+            if len(data): value, data = reader.read(self, data)
+            else: raise ID3JunkFrameError
+            setattr(self, reader.name, value)
+        if data:
+            for reader in self._optionalspec:
+                if len(data): value, data = reader.read(self, data)
+                else: break
+                setattr(self, reader.name, value)
+        if data.strip('\x00'):
+            if PRINT_ERRORS: print 'Leftover data: %s: %r (from %r)' % (
+                    type(self).__name__, data, odata)
+
+    def _writeData(self):
+        data = []
+        for writer in self._framespec:
+            data.append(writer.write(self, getattr(self, writer.name)))
+        for writer in self._optionalspec:
+            try: data.append(writer.write(self, getattr(self, writer.name)))
+            except AttributeError: break
+        return ''.join(data)
+
 class TextFrame(Frame):
     """Text frames support multiple values; it can be streated as a
     single null-separated string, or a list of values (with append,
@@ -1069,9 +1096,26 @@ class GEOB(Frame):
 
     def __eq__(self, other): return self.data == other
 
-# class RBUF: unsupported
-# class AENC: unsupported
-#     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.owner))
+class RBUF(FrameOpt):
+    "Recommended buffer size"
+    _framespec = [ SizedIntegerSpec('size', 3) ]
+    _optionalspec = [ ByteSpec('info'), SizedIntegerSpec('offset', 4) ]
+
+    def __eq__(self, other): return self.size == other
+    def __pos__(self): return self.size
+
+class AENC(FrameOpt):
+    "Audio encryption"
+    _framespec = [ Latin1TextSpec('owner'),
+                   SizedIntegerSpec('preview_start', 2),
+                   SizedIntegerSpec('preview_length', 2) ]
+    _optionalspec = [ BinaryDataSpec('data') ]
+    HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.owner))
+
+    def __str__(self): return self.owner.encode('utf-8')
+    def __unicode__(self): return self.owner
+    def __eq__(self, other): return self.owner == other
+
 # class LINK(Frame): unsupported
 #    HashKey = property(lambda s: '%s:%s:%s:%s'%(
 #        s.FrameID, s.frameid, s.url, s.data))
@@ -1213,7 +1257,7 @@ class ULT(USLT): "Unsychronised lyrics/text transcription"
 class COM(COMM): "Comment"
 #class RVA(RVAD)
 #class EQU(EQUA)
-#class REV(RVRB)
+class REV(RVRB): "Reverb"
 class PIC(APIC):
     "Attached Picture"
     _framespec = [ EncodingSpec('encoding'), StringSpec('mime', 3),
@@ -1221,9 +1265,9 @@ class PIC(APIC):
 class GEO(GEOB): "General Encapsulated Object"
 class CNT(PCNT): "Play counter"
 class POP(POPM): "Popularimeter"
-#class BUF(RBUF)
+class BUF(RBUF): "Recommended buffer size"
 #class CRM(????)
-#class CRA(AENC)
+class CRA(AENC): "Audio encryption"
 #class LNK(LINK)
 
 Frames_2_2 = dict([(k,v) for (k,v) in globals().items()
