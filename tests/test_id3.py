@@ -2,7 +2,7 @@ import os; from os.path import join
 import shutil
 from unittest import TestCase
 from tests import registerCase
-from mutagen.id3 import ID3, BitPaddedInt
+from mutagen.id3 import ID3, BitPaddedInt, COMR
 
 try: from sets import Set as set
 except ImportError: pass
@@ -295,6 +295,28 @@ def TestReadTags():
      dict(owner='a@b.org', preview_start=0x12, preview_length=0x23)],
     ['AENC', 'a@b.org\x00\x00\x12\x00\x23!', 'a@b.org', 'a@b.org',
      dict(owner='a@b.org', preview_start=0x12, preview_length=0x23, data='!')],
+
+    ['GRID', 'a@b.org\x00\x99', 'a@b.org', 0x99,
+     dict(owner='a@b.org', group=0x99)],
+    ['GRID', 'a@b.org\x00\x99data', 'a@b.org', 0x99,
+     dict(owner='a@b.org', group=0x99, data='data')],
+
+    ['COMR', '\x00USD10.00\x0020051010ql@sc.net\x00\x09Joe\x00A song\x00'
+     'x-image/fake\x00some data',
+     COMR(encoding=0, price="USD10.00", valid_until="20051010",
+          contact="ql@sc.net", format=9, seller="Joe", desc="A song",
+          mime='x-image/fake', logo='some data'), '',
+     dict(
+        encoding=0, price="USD10.00", valid_until="20051010",
+        contact="ql@sc.net", format=9, seller="Joe", desc="A song",
+        mime='x-image/fake', logo='some data')],
+
+    ['COMR', '\x00USD10.00\x0020051010ql@sc.net\x00\x09Joe\x00A song\x00',
+     COMR(encoding=0, price="USD10.00", valid_until="20051010",
+          contact="ql@sc.net", format=9, seller="Joe", desc="A song"), '',
+     dict(
+        encoding=0, price="USD10.00", valid_until="20051010",
+        contact="ql@sc.net", format=9, seller="Joe", desc="A song")],
 
     # 2.2 tags
     ['UFI', 'own\x00data', 'data', '', dict(data='data', owner='own')],

@@ -784,8 +784,18 @@ class Frame(object):
     fromData = classmethod(fromData)
 
 class FrameOpt(Frame):
-    """A frame that supports a new attribute _optionalspec. These specs
-    contain parts of the frame that are not mandatory."""
+    """A frame that supports an _optionalspec list. These specs contain
+    parts of the frame that are not mandatory."""
+    _optionalspec = []
+
+    def __init__(self, *args, **kwargs):
+        super(FrameOpt, self).__init__(*args, **kwargs)
+        for spec in self._optionalspec:
+            if spec.name in kwargs:
+                validated = spec.validate(self, kwargs[spec.name])
+                setattr(self, spec.name, validated)
+            else: break
+
     def _readData(self, data):
         odata = data
         for reader in self._framespec:
@@ -809,6 +819,17 @@ class FrameOpt(Frame):
             try: data.append(writer.write(self, getattr(self, writer.name)))
             except AttributeError: break
         return ''.join(data)
+
+    def __repr__(self):
+        """eval(repr(frame)) == frame, for all frames."""
+        kw = []
+        for attr in self._framespec:
+            kw.append('%s=%r' % (attr.name, getattr(self, attr.name)))
+        for attr in self._optionalspec:
+            if hasattr(self, attr.name):
+                kw.append('%s=%r' % (attr.name, getattr(self, attr.name)))
+        return '%s(%s)' % (type(self).__name__, ', '.join(kw))
+
 
 class TextFrame(Frame):
     """Text frames support multiple values; it can be streated as a
@@ -1153,8 +1174,15 @@ class OWNE(Frame):
     def __unicode__(self): return self.seller
     def __eq__(self, other): return self.seller == other
 
-# class COMR: unsupported
-#    HashKey = property(lambda s: '%s:%s' % (s.FrameID, s._writeData()))
+class COMR(FrameOpt):
+    "Commercial frame"
+    _framespec = [ EncodingSpec('encoding'), Latin1TextSpec('price'),
+                   StringSpec('valid_until', 8), Latin1TextSpec('contact'),
+                   ByteSpec('format'), EncodedTextSpec('seller'),
+                   EncodedTextSpec('desc')]
+    _optionalspec = [ Latin1TextSpec('mime'), BinaryDataSpec('logo') ]
+    HashKey = property(lambda s: '%s:%s' % (s.FrameID, s._writeData()))
+    def __eq__(self, other): return self._writeData() == other._writeData()
 
 class ENCR(Frame):
     """Encryption method registration
@@ -1167,8 +1195,16 @@ class ENCR(Frame):
     def __str__(self): return self.data
     def __eq__(self, other): return self.data == other
 
-# class GRID: unsupported
-#     HashKey = property(lambda s: '%s:%s:%s'%(s.FrameID, s.owner, s.group))
+class GRID(FrameOpt):
+    "Group identification registration"
+    _framespec = [ Latin1TextSpec('owner'), ByteSpec('group') ]
+    _optionalspec = [ BinaryDataSpec('data') ]
+    HashKey = property(lambda s: '%s:%s:%s' % (s.FrameID, s.group))
+    def __pos__(self): return self.group
+    def __str__(self): return self.owner.encode('utf-8')
+    def __unicode__(self): return self.owner
+    def __eq__(self, other): return self.owner == other or self.group == other
+    
 
 class PRIV(Frame):
     "Private frame"
@@ -1266,7 +1302,8 @@ class GEO(GEOB): "General Encapsulated Object"
 class CNT(PCNT): "Play counter"
 class POP(POPM): "Popularimeter"
 class BUF(RBUF): "Recommended buffer size"
-#class CRM(????)
+
+#class CRM(????): unsupported
 class CRA(AENC): "Audio encryption"
 #class LNK(LINK)
 
