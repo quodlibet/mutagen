@@ -487,6 +487,16 @@ class IntegerSpec(Spec):
     def validate(self, frame, value):
         return value
 
+class SizedIntegerSpec(Spec):
+    def __init__(self, name, size):
+        self.name, self.__sz = name, size
+    def read(self, frame, data):
+        return int(BitPaddedInt(data[:self.__sz], bits=8)), data[self.__sz:]
+    def write(self, frame, value):
+        return BitPaddedInt.to_str(value, bits=8, width=self.__sz)
+    def validate(self, frame, value):
+        return value
+
 class EncodingSpec(ByteSpec):
     def read(self, frame, data):
         enc, data = super(EncodingSpec, self).read(frame, data)
@@ -1016,7 +1026,16 @@ class RVA2(Frame):
 #     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.desc))
 # class RVAD: unsupported
 # class EQUA: unsupported
-# class RVRB: unsupported
+
+class RVRB(Frame):
+    "Reverb"
+    _framespec = [ SizedIntegerSpec('left', 2), SizedIntegerSpec('right', 2),
+                   ByteSpec('bounce_left'), ByteSpec('bounce_right'),
+                   ByteSpec('feedback_ltl'), ByteSpec('feedback_ltr'),
+                   ByteSpec('feedback_rtr'), ByteSpec('feedback_rtl'),
+                   ByteSpec('premix_ltr'), ByteSpec('premix_rtl') ]
+
+    def __eq__(self, other): return (self.left, self.right) == other
 
 class APIC(Frame):
     "Attached (or linked) Picture"

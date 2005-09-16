@@ -281,6 +281,10 @@ def TestReadTags():
     ['SEEK', '\x00\x12\x00\x56', 0x12*256*256+0x56, 0x12*256*256+0x56,
      dict(offset=0x12*256*256+0x56)],
 
+    ['RVRB', '\x12\x12\x23\x23\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11',
+     (0x12*256+0x12, 0x23*256+0x23), '',
+     dict(left=0x12*256+0x12, right=0x23*256+0x23) ],
+
     # 2.2 tags
     ['UFI', 'own\x00data', 'data', '', dict(data='data', owner='own')],
     ['TT1', '\x00ab\x00', 'ab', '', dict(encoding=0)],
