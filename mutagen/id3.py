@@ -23,7 +23,6 @@ __all__ = ['ID3', 'Frames', 'Open']
 
 import mutagen
 import struct; from struct import unpack, pack
-from mmap import mmap
 from zlib import error as zlibError
 
 PRINT_ERRORS = True
@@ -327,19 +326,16 @@ class ID3(mutagen.Metadata):
     def insert_space(self, fobj, size, offset):
         """insert size bytes of empty space starting at offset. fobj must be
         an open file object, open rb+ or equivalent."""
+        from mmap import mmap
         assert 0 < size
         assert 0 <= offset
-
-        fobj.seek(offset)
-        backbuf = fobj.read(size)
-        if len(backbuf) < size:
-            fobj.write('\x00' * (size - len(backbuf)))
-        while len(backbuf) == size:
-            frontbuf = fobj.read(size)
-            fobj.seek(-len(frontbuf), 1)
-            fobj.write(backbuf)
-            backbuf = frontbuf
-        fobj.write(backbuf)
+        fobj.seek(0, 2)
+        filesize = fobj.tell()
+        movesize = filesize - offset
+        fobj.write('\x00' * size)
+        fobj.flush()
+        map = mmap(fobj.fileno(), filesize + size)
+        map.move(offset+size, offset, movesize)
 
     def save_frame(self, frame):
         flags = 0

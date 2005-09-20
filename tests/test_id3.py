@@ -1119,59 +1119,70 @@ class WriteForEyeD3(TestCase):
         os.unlink(self.newsilence)
 
 class FileHandling(TestCase):
-    from StringIO import StringIO
     def setUp(self):
         self.id3 = ID3()
 
     def tearDown(self):
         del self.id3
 
+    def file(self, contents):
+        import tempfile
+        temp = tempfile.TemporaryFile()
+        temp.write(contents)
+        temp.flush()
+        temp.seek(0)
+        return temp
+
+    def read(self, fobj):
+        fobj.seek(0, 0)
+        return fobj.read()
+
     def test_insert_into_empty(self):
-        o = self.StringIO('')
+        o = self.file('')
         self.id3.insert_space(o, 8, 0)
-        self.assertEquals('\x00' * 8, o.getvalue())
+        self.assertEquals('\x00' * 8, self.read(o))
 
     def test_insert_before_one(self):
-        o = self.StringIO('a')
+        o = self.file('a')
         self.id3.insert_space(o, 8, 0)
-        self.assertEquals('a' + '\x00' * 7 + 'a', o.getvalue())
+        self.assertEquals('a' + '\x00' * 7 + 'a', self.read(o))
 
     def test_insert_after_one(self):
-        o = self.StringIO('a')
+        o = self.file('a')
         self.id3.insert_space(o, 8, 1)
-        self.assertEquals('a' + '\x00' * 8, o.getvalue())
+        self.assertEquals('a' + '\x00' * 8, self.read(o))
 
     def test_smaller_than_file_middle(self):
-        o = self.StringIO('abcdefghij')
+        o = self.file('abcdefghij')
         self.id3.insert_space(o, 4, 4)
-        self.assertEquals('abcdefghefghij', o.getvalue())
+        self.assertEquals('abcdefghefghij', self.read(o))
 
     def test_smaller_than_file_to_end(self):
-        o = self.StringIO('abcdefghij')
+        o = self.file('abcdefghij')
         self.id3.insert_space(o, 4, 6)
-        self.assertEquals('abcdefghijghij', o.getvalue())
+        self.assertEquals('abcdefghijghij', self.read(o))
 
     def test_smaller_than_file_across_end(self):
-        o = self.StringIO('abcdefghij')
+        o = self.file('abcdefghij')
         self.id3.insert_space(o, 4, 8)
-        self.assertEquals('abcdefghij\x00\x00ij', o.getvalue())
+        self.assertEquals('abcdefghij\x00\x00ij', self.read(o))
 
     def test_smaller_than_file_at_end(self):
-        o = self.StringIO('abcdefghij')
+        o = self.file('abcdefghij')
         self.id3.insert_space(o, 3, 10)
-        self.assertEquals('abcdefghij\x00\x00\x00', o.getvalue())
+        self.assertEquals('abcdefghij\x00\x00\x00', self.read(o))
 
     def test_smaller_than_file_at_beginning(self):
-        o = self.StringIO('abcdefghij')
+        o = self.file('abcdefghij')
         self.id3.insert_space(o, 3, 0)
-        self.assertEquals('abcabcdefghij', o.getvalue())
+        self.assertEquals('abcabcdefghij', self.read(o))
 
     def test_zero(self):
-        o = self.StringIO('abcdefghij')
+        o = self.file('abcdefghij')
         self.assertRaises((AssertionError, ValueError), self.id3.insert_space, o, 0, 1)
 
     def test_negative(self):
-        o = self.StringIO('abcdefghij')
+        o = self.file('abcdefghij')
         self.assertRaises((AssertionError, ValueError), self.id3.insert_space, o, 8, -1)
 
 registerCase(ID3Loading)
