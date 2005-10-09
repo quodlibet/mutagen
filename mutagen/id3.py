@@ -99,7 +99,7 @@ class ID3(mutagen.Metadata):
                     filename, self.__filesize))
             except (ID3NoHeaderError, ID3UnsupportedVersionError), err:
                 import sys
-                stack = sys.exc_traceback
+                stack = sys.exc_info()[2]
                 try: self.__fileobj.seek(-128, 2)
                 except EnvironmentError: raise err, None, stack
                 else:
@@ -239,7 +239,6 @@ class ID3(mutagen.Metadata):
                 except struct.error: return # not enough header
                 size, = struct.unpack('>L', '\x00'+size)
                 if name.strip('\x00') == '': return
-                frame = data[:6+size]
                 framedata = data[6:6+size]
                 data = data[6+size:]
                 if size == 0: continue # drop empty frames
