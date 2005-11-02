@@ -407,6 +407,7 @@ def TestReadTags():
             id3 = __import__('mutagen.id3', globals(), locals(), [tag])
             TAG = getattr(id3, tag)
             tag = TAG.fromData(_23, 0, data)
+            self.failUnless(tag.HashKey)
             self.assertEquals(value, tag)
             if 'encoding' not in info:
                 self.assertRaises(AttributeError, getattr, tag, 'encoding')

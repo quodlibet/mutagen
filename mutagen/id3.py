@@ -1194,7 +1194,7 @@ class GRID(FrameOpt):
     "Group identification registration"
     _framespec = [ Latin1TextSpec('owner'), ByteSpec('group') ]
     _optionalspec = [ BinaryDataSpec('data') ]
-    HashKey = property(lambda s: '%s:%s:%s' % (s.FrameID, s.group))
+    HashKey = property(lambda s: '%s:%s' % (s.FrameID, s.group))
     def __pos__(self): return self.group
     def __str__(self): return self.owner.encode('utf-8')
     def __unicode__(self): return self.owner
@@ -1212,8 +1212,7 @@ class PRIV(Frame):
 class SIGN(Frame):
     "Signature frame"
     _framespec = [ ByteSpec('group'), BinaryDataSpec('sig') ]
-    HashKey = property(lambda s: '%s:%c:%s' % (
-        s.FrameID, s.group, s.sig.decode('latin1')))
+    HashKey = property(lambda s: '%s:%c:%s' % (s.FrameID, s.group, s.sig))
     def __str__(self): return self.sig
     def __eq__(self, other): return self.sig == other
 
