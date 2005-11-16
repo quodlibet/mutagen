@@ -1342,11 +1342,16 @@ def MakeID3v1(id3):
     v1 = {}
 
     for v2id, name in {"TIT2": "title", "TPE1": "artist",
-                       "TALB": "album", "COMM:": "comment"}.items():
+                       "TALB": "album"}.items():
         if v2id in id3:
             text = id3[v2id].text[0].encode('latin1', 'replace')[:30]
         else: text = ""
         v1[name] = text + ("\x00" * (30 - len(text)))
+
+    if "COMM" in id3:
+        cmnt = id3["COMM"].text[0].encode('latin1', 'replace')[:28]
+    else: cmnt = ""
+    v1["comment"] = cmnt + ("\x00" * (29 - len(cmnt)))
 
     if "TRCK" in id3:
         try: v1["track"] = chr(+id3["TRCK"])
@@ -1364,4 +1369,4 @@ def MakeID3v1(id3):
     if "TDRC" in id3: v1["year"] = str(id3["TDRC"])[:4]
     else: v1["year"] = "\x00\x00\x00\x00"
 
-    return "TAG%(title)s%(artist)s%(album)s%(year)s%(comment)s%(genre)s" % v1 
+    return "TAG%(title)s%(artist)s%(album)s%(year)s%(comment)s%(track)s%(genre)s" % v1 

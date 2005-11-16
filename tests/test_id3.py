@@ -152,7 +152,7 @@ class ID3v1Tags(TestCase):
 
     def test_nonascii(self):
         from mutagen.id3 import ParseID3v1
-        s = 'TAG%(title)30s%(artist)30s%(album)30s%(year)4s%(cmt)29s\x01\x01'
+        s = 'TAG%(title)30s%(artist)30s%(album)30s%(year)4s%(cmt)29s\x03\x01'
         s = s % dict(artist='abcd\xe9fg', title='hijklmn\xf3p',
                     album='qrst\xfcv', cmt='wxyz', year='1234')
         tags = ParseID3v1(s)
@@ -160,6 +160,7 @@ class ID3v1Tags(TestCase):
         self.assertEquals('hijklmn\xf3p'.decode('latin1'), tags['TIT2'])
         self.assertEquals('qrst\xfcv'.decode('latin1'), tags['TALB'])
         self.assertEquals('wxyz', tags['COMM'])
+        self.assertEquals("3", tags['TRCK'])
         self.assertEquals("1234", tags['TDRC'])
 
     def test_roundtrip(self):
