@@ -306,7 +306,7 @@ class ID3(mutagen.Metadata):
             data = header + framedata
 
             if (insize < outsize):
-                self.insert_space(f, outsize-insize, insize+10)
+                self._insert_space(f, outsize-insize, insize+10)
             f.seek(0)
             f.write(data)
 
@@ -322,19 +322,13 @@ class ID3(mutagen.Metadata):
         finally:
             f.close()
 
-    def insert_space(self, fobj, size, offset):
-        """insert size bytes of empty space starting at offset. fobj must be
-        an open file object, open rb+ or equivalent."""
-        from mmap import mmap
-        assert 0 < size
-        assert 0 <= offset
-        fobj.seek(0, 2)
-        filesize = fobj.tell()
-        movesize = filesize - offset
-        fobj.write('\x00' * size)
-        fobj.flush()
-        map = mmap(fobj.fileno(), filesize + size)
-        map.move(offset+size, offset, movesize)
+    def delete(self, filename=None, delete_v1=True, delete_v2=True):
+        """Remove tags from a file, by default both v1 and v2 tags,
+        preserving any other (e.g. MPEG) data. The default filename is
+        the one this tag was created with."""
+        if filename is None:
+            filename = self.__filename
+        delete(filename, delete_v1, delete_v2)
 
     def save_frame(self, frame):
         flags = 0
@@ -388,6 +382,28 @@ class ID3(mutagen.Metadata):
         # should have been removed already.
         for key in ["RVAD", "EQUA", "TRDA", "TSIZ", "TDAT", "TIME"]:
             if key in self: del(self[key])
+
+def delete(filename, delete_v1=True, delete_v2=True):
+    """Remove tags from a file, by default both v1 and v2 tags,
+    preserving any other (e.g. MPEG) data."""
+    f = open(filename, 'rb+')
+
+    if delete_v1:
+        f.seek(-128, 2)
+        if f.read(3) == "TAG":
+            f.seek(-128, 2)
+            f.truncate()
+
+    if delete_v2:
+        f.seek(0, 0)
+        idata = f.read(10)
+        try: id3, vmaj, vrev, flags, insize = unpack('>3sBBB4s', idata)
+        except struct.error: id3, insize = '', 0
+        insize = BitPaddedInt(insize)
+        if id3 != 'ID3': insize = -10
+
+        if insize > 0:
+            ID3._delete_bytes(f, insize, 0)
 
 class BitPaddedInt(int):
     def __new__(cls, value, bits=7, bigendian=True):

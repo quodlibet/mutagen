@@ -1141,51 +1141,88 @@ class FileHandling(TestCase):
 
     def test_insert_into_empty(self):
         o = self.file('')
-        self.id3.insert_space(o, 8, 0)
+        self.id3._insert_space(o, 8, 0)
         self.assertEquals('\x00' * 8, self.read(o))
 
     def test_insert_before_one(self):
         o = self.file('a')
-        self.id3.insert_space(o, 8, 0)
+        self.id3._insert_space(o, 8, 0)
         self.assertEquals('a' + '\x00' * 7 + 'a', self.read(o))
 
     def test_insert_after_one(self):
         o = self.file('a')
-        self.id3.insert_space(o, 8, 1)
+        self.id3._insert_space(o, 8, 1)
         self.assertEquals('a' + '\x00' * 8, self.read(o))
 
     def test_smaller_than_file_middle(self):
         o = self.file('abcdefghij')
-        self.id3.insert_space(o, 4, 4)
+        self.id3._insert_space(o, 4, 4)
         self.assertEquals('abcdefghefghij', self.read(o))
 
     def test_smaller_than_file_to_end(self):
         o = self.file('abcdefghij')
-        self.id3.insert_space(o, 4, 6)
+        self.id3._insert_space(o, 4, 6)
         self.assertEquals('abcdefghijghij', self.read(o))
 
     def test_smaller_than_file_across_end(self):
         o = self.file('abcdefghij')
-        self.id3.insert_space(o, 4, 8)
+        self.id3._insert_space(o, 4, 8)
         self.assertEquals('abcdefghij\x00\x00ij', self.read(o))
 
     def test_smaller_than_file_at_end(self):
         o = self.file('abcdefghij')
-        self.id3.insert_space(o, 3, 10)
+        self.id3._insert_space(o, 3, 10)
         self.assertEquals('abcdefghij\x00\x00\x00', self.read(o))
 
     def test_smaller_than_file_at_beginning(self):
         o = self.file('abcdefghij')
-        self.id3.insert_space(o, 3, 0)
+        self.id3._insert_space(o, 3, 0)
         self.assertEquals('abcabcdefghij', self.read(o))
 
     def test_zero(self):
         o = self.file('abcdefghij')
-        self.assertRaises((AssertionError, ValueError), self.id3.insert_space, o, 0, 1)
+        self.assertRaises((AssertionError, ValueError), self.id3._insert_space, o, 0, 1)
 
     def test_negative(self):
         o = self.file('abcdefghij')
-        self.assertRaises((AssertionError, ValueError), self.id3.insert_space, o, 8, -1)
+        self.assertRaises((AssertionError, ValueError), self.id3._insert_space, o, 8, -1)
+
+    def test_delete_one(self):
+        o = self.file('a')
+        self.id3._delete_bytes(o, 1, 0)
+        self.assertEquals('', self.read(o))
+
+    def test_delete_first_of_two(self):
+        o = self.file('ab')
+        self.id3._delete_bytes(o, 1, 0)
+        self.assertEquals('b', self.read(o))
+
+    def test_delete_second_of_two(self):
+        o = self.file('ab')
+        self.id3._delete_bytes(o, 1, 1)
+        self.assertEquals('a', self.read(o))
+
+    def test_delete_third_of_two(self):
+        o = self.file('ab')
+        self.assertRaises(AssertionError, self.id3._delete_bytes, o, 1, 2)
+
+    def test_delete_middle(self):
+        o = self.file('abcdefg')
+        self.id3._delete_bytes(o, 3, 2)
+        self.assertEquals('abfg', self.read(o))
+
+    def test_delete_across_end(self):
+        o = self.file('abcdefg')
+        self.assertRaises(AssertionError, self.id3._delete_bytes, o, 4, 8)
+
+    def test_delete_zero(self):
+        o = self.file('abcdefg')
+        self.assertRaises(AssertionError, self.id3._delete_bytes, o, 0, 3)
+
+    def test_delete_negative(self):
+        o = self.file('abcdefg')
+        self.assertRaises(AssertionError, self.id3._delete_bytes, o, 4, -8)
+
 
 registerCase(ID3Loading)
 registerCase(ID3GetSetDel)
