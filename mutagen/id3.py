@@ -310,7 +310,13 @@ class ID3(mutagen.Metadata):
             f.seek(0)
             f.write(data)
 
-            f.seek(-128, 2)
+            try:
+                f.seek(-128, 2)
+            except IOError, err:
+                from errno import EINVAL
+                if err.errno != EINVAL: raise
+                f.seek(0, 2) # ensure read won't get "TAG"
+
             if f.read(3) == "TAG":
                 f.seek(-128, 2)
                 if v1 > 0: f.write(MakeID3v1(self))
@@ -389,10 +395,13 @@ def delete(filename, delete_v1=True, delete_v2=True):
     f = open(filename, 'rb+')
 
     if delete_v1:
-        f.seek(-128, 2)
-        if f.read(3) == "TAG":
+        try:
             f.seek(-128, 2)
-            f.truncate()
+        except IOError: pass
+        else:
+            if f.read(3) == "TAG":
+                f.seek(-128, 2)
+                f.truncate()
 
     if delete_v2:
         f.seek(0, 0)

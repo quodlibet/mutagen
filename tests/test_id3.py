@@ -1071,6 +1071,40 @@ class WriteRoundtrip(TestCase):
         id3 = ID3(self.newsilence)
         self.assertEquals(id3["TPE1"], ["jzig", "piman"])
 
+    def test_nofile_emptytag(self):
+        os.unlink(self.newsilence)
+        ID3().save(self.newsilence)
+        self.assertEquals('ID3', open(self.newsilence).read(3))
+        self.assertEquals(ID3(self.newsilence), {})
+
+    def test_emptyfile_emptytag(self):
+        open(self.newsilence, 'wb').truncate()
+        ID3().save(self.newsilence)
+        self.assertEquals('ID3', open(self.newsilence).read(3))
+        self.assertEquals(ID3(self.newsilence), {})
+
+    def test_nofile_silencetag(self):
+        id3 = ID3(self.newsilence)
+        os.unlink(self.newsilence)
+        id3.save(self.newsilence)
+        self.assertEquals('ID3', open(self.newsilence).read(3))
+        self.test_same()
+
+    def test_emptyfile_silencetag(self):
+        id3 = ID3(self.newsilence)
+        open(self.newsilence, 'wb').truncate()
+        id3.save(self.newsilence)
+        self.assertEquals('ID3', open(self.newsilence).read(3))
+        self.test_same()
+
+    def test_empty_plustag_minustag_empty(self):
+        id3 = ID3(self.newsilence)
+        #os.unlink(self.newsilence)
+        open(self.newsilence, 'wb').truncate()
+        id3.save(self.newsilence)
+        id3.delete(self.newsilence)
+        self.assertEquals(open(self.newsilence).read(10), '')
+
     def tearDown(self):
         os.unlink(self.newsilence)
 
