@@ -7,6 +7,7 @@ class Mock(object):
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
 import test_id3
+import test_apev2
 
 class Result(unittest.TestResult):
 
