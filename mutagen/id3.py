@@ -282,7 +282,8 @@ class ID3(mutagen.Metadata):
         except IOError, err:
             from errno import ENOENT
             if err.errno != ENOENT: raise
-            f = open(filename, 'ab+')
+            f = open(filename, 'ab') # create, then reopen
+            f = open(filename, 'rb+')
         try:
             idata = f.read(10)
             try: id3, vmaj, vrev, flags, insize = unpack('>3sBBB4s', idata)
