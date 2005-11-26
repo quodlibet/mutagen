@@ -1257,6 +1257,25 @@ class FileHandling(TestCase):
         o = self.file('abcdefg')
         self.assertRaises(AssertionError, self.id3._delete_bytes, o, 4, -8)
 
+class FileHandlingNoMMap(FileHandling):
+    # run the FileHandling tests with a broken mmap#move to simulate amd64
+    class MockMMap(object):
+        def __init__(self, *args, **kwargs): pass
+        def move(self, dest, src, count): raise ValueError
+        def close(self): pass
+
+    from mmap import mmap as __real_mmap_mmap
+
+    def setUp(self):
+        super(FileHandlingNoMMap, self).setUp()
+        import mmap
+        mmap.mmap = self.MockMMap
+
+    def tearDown(self):
+        super(FileHandlingNoMMap, self).tearDown()
+        import mmap
+        mmap.mmap = self.__real_mmap_mmap
+
 
 registerCase(ID3Loading)
 registerCase(ID3GetSetDel)
@@ -1272,6 +1291,7 @@ registerCase(TimeStamp)
 registerCase(WriteRoundtrip)
 registerCase(OddWrites)
 registerCase(FileHandling)
+registerCase(FileHandlingNoMMap)
 
 try: import eyeD3
 except ImportError: pass
