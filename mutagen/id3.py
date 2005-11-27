@@ -410,10 +410,8 @@ def delete(filename, delete_v1=True, delete_v2=True):
         try: id3, vmaj, vrev, flags, insize = unpack('>3sBBB4s', idata)
         except struct.error: id3, insize = '', 0
         insize = BitPaddedInt(insize)
-        if id3 != 'ID3': insize = -10
-
-        if insize > 0:
-            ID3._delete_bytes(f, insize, 0)
+        if id3 == 'ID3' and insize > 0:
+            ID3._delete_bytes(f, insize + 10, 0)
 
 class BitPaddedInt(int):
     def __new__(cls, value, bits=7, bigendian=True):
