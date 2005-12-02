@@ -205,7 +205,7 @@ class APEv2(Metadata):
     def delete(self, filename=None):
         filename = filename or self.filename
         f = file(filename, "ab+")
-        offset = self.__tag_start(f)
+        offset = self.__tag_start(f) - 24
         f.seek(offset, 0)
         f.truncate()
         f.close()

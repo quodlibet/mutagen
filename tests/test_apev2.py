@@ -30,6 +30,13 @@ class APEWriter(TestCase):
             os.path.getsize(SAMPLE + ".new"),
             os.path.getsize(SAMPLE) + os.path.getsize(SAMPLE + ".justtag"))
 
+    def test_delete(self):
+        mutagen.apev2.delete(SAMPLE + ".justtag")
+        mutagen.apev2.delete(SAMPLE + ".new")
+        self.failUnlessEqual(os.path.getsize(SAMPLE + ".justtag"), 0)
+        self.failUnlessEqual(os.path.getsize(SAMPLE),
+                             os.path.getsize(SAMPLE + ".new"))
+
     def tearDown(self):
         os.unlink(SAMPLE + ".new")
         os.unlink(SAMPLE + ".justtag")
