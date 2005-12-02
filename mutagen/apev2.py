@@ -202,6 +202,16 @@ class APEv2(Metadata):
         f.write(footer)
         f.close()
 
+    def delete(self, filename=None):
+        filename = filename or self.filename
+        f = file(filename, "ab+")
+        offset = self.__tag_start(f)
+        f.seek(offset, 0)
+        f.truncate()
+        f.close()
+
+def delete(filename): APEv2(filename).delete()
+
 class APEKey(str):
     """An APE key is an ASCII string of length 2 to 255. The specification's
     case rules are silly, so this object is case-preserving but not
