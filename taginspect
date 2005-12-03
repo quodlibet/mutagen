@@ -1,10 +1,10 @@
 #!/usr/bin/python
 
 import os, sys
-import mutagen.id3
+import mutagen.id3, mutagen.apev2
 
-def display(filename):
-    print "Tags in %s:" % filename
+def display_id3(filename):
+    print "-- ID3 --"
     try: id3 = mutagen.id3.ID3(filename)
     except mutagen.id3.error, err:
         print "Error:", str(err)
@@ -23,6 +23,33 @@ def display(filename):
             strings.append('%s(%s)' % (type(frame).__name__, ', '.join(kw)))
         strings.sort()
         print "\n".join(strings)
+
+def display_apev2(filename):
+    print "-- APEv2 --"
+    try: apev2 = mutagen.apev2.APEv2(filename)
+    except mutagen.apev2.error, err:
+        print "Error:", str(err)
+        return
+    items = apev2.items()
+    items.sort()
+    for key, value in items:
+        if value.kind == mutagen.apev2.TEXT:
+            if len(value) > 1:
+                print "%s (text): " % key
+                for v in value:
+                    print "\t%s" % v
+            else: print "%s (text): %s" % (key, value)
+        elif value.kind == mutagen.apev2.BINARY:
+            print "%s (binary): %d bytes" % (key, len(value))
+        elif value.kind == mutagen.apev2.EXTERNAL:
+            print "%s (external): %s" % (key, value)
+        else: print "%s (unknown): %s" % (key, value)
+
+def display(filename):
+    print "Tags in %s:" % filename
+    display_id3(filename)
+    print
+    display_apev2(filename)
     print
 
 if __name__ == "__main__":

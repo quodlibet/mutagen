@@ -1,23 +1,24 @@
-Mutagen is an ID3 reader and writer implemented in pure Python. It
-supports reading ID3v1.1, 2.2, 2.3, and 2.4, and writing 2.4 and 1.1.
+Mutagen is an audio metadata tag reader and writer implemented in pure
+Python. It currently supports reading ID3v1.1, ID3v2.2, ID3v2.3, ID3v2.4,
+APEv2, and writing ID3v1.1, ID3v2.4, and APEv2.
 
 The goals are (in rough order of importance):
- * Read as many MP3 files as possible
+ * Read as many files as possible
  * Compatibility with as many other tag readers and editors as possible 
- * Compliance with the ID3 spec
+ * Compliance with the relevant specifications
  * Written in Pythonic Python, with a Pythonic API
  * Unit and regression test suite
- * Support all features of the ID3 format
- * Easily extensible to new frames
+ * Provide access to all features of the supported formats
+ * Easily extensible
 
 Testing the Module
 ------------------
-To test Mutagen's reading support, run
+To test Mutagen's ID3 reading support, run
  $ ./_pony.py <your top-level MP3 directory here>
 Mutagen will try to load all of them, and report any errors.
 
-To look at the tags in MP3s, run
- $ ./id3inspect filename.mp3 ...
+To look at the tags in files, run
+ $ ./taginspect filename ...
 
 To run our test suite,
  $ ./_sanity.sh
