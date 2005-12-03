@@ -11,13 +11,13 @@ class APEWriter(TestCase):
     def setUp(self):
         import shutil
         shutil.copy(SAMPLE, SAMPLE + ".new")
-        tag = mutagen.apev2.APEv2(SAMPLE + ".new")
+        tag = mutagen.apev2.APEv2()
         self.values = {"artist": "Joe Wreschnig\0unittest",
                        "album": "Mutagen tests",
                        "title": "Not really a song"}
         for k, v in self.values.items():
             tag[k] = v
-        tag.save()
+        tag.save(SAMPLE + ".new")
         tag.save(SAMPLE + ".justtag")
         self.tag = mutagen.apev2.APEv2(SAMPLE + ".new")
 
@@ -46,7 +46,7 @@ class APEReader(TestCase):
         self.tag = mutagen.apev2.APEv2(OLD)
 
     def test_invalid(self):
-        self.failUnlessRaises(OSError, mutagen.apev2.APEv2, "dne")
+        self.failUnlessRaises(IOError, mutagen.apev2.APEv2, "dne")
 
     def test_cases(self):
         self.failUnlessEqual(self.tag["artist"], self.tag["ARTIST"])

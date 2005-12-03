@@ -54,7 +54,7 @@ class ID3(mutagen.Metadata):
 
         self.unknown_frames = []
         self.__known_frames = known_frames
-        self.__filename = None
+        self.filename = None
         self.__flags = 0
         self.__size = 0
         self.__readbytes = 0
@@ -68,9 +68,9 @@ class ID3(mutagen.Metadata):
             if size > self.__filesize or size < 0:
                 if PRINT_ERRORS and self.__filesize:
                     print 'Requested %#x of %#x (%s)' % \
-                        (size, self.__filesize, self.__filename)
+                        (size, self.__filesize, self.filename)
                 raise EOFError, 'Requested %#x of %#x (%s)' % \
-                        (size, self.__filesize, self.__filename)
+                        (size, self.__filesize, self.filename)
         except AttributeError: pass
         data = self.__fileobj.read(size)
         if len(data) != size: raise EOFError
@@ -88,7 +88,7 @@ class ID3(mutagen.Metadata):
         you can treat them either way."""
 
         from os.path import getsize
-        self.__filename = filename
+        self.filename = filename
         self.__fileobj = file(filename, 'rb')
         self.__filesize = getsize(filename)
         try:
@@ -159,7 +159,7 @@ class ID3(mutagen.Metadata):
         self[tag.HashKey] = tag
 
     def load_header(self):
-        fn = self.__filename
+        fn = self.filename
         data = self.fullread(10)
         id3, vmaj, vrev, flags, size = unpack('>3sBBB4s', data)
         self.__flags = flags
@@ -277,7 +277,7 @@ class ID3(mutagen.Metadata):
         intentional."""
     
         # don't trust this code yet - it could corrupt your files
-        if filename is None: filename = self.__filename
+        if filename is None: filename = self.filename
         try: f = open(filename, 'rb+')
         except IOError, err:
             from errno import ENOENT
@@ -334,7 +334,7 @@ class ID3(mutagen.Metadata):
         preserving any other (e.g. MPEG) data. The default filename is
         the one this tag was created with."""
         if filename is None:
-            filename = self.__filename
+            filename = self.filename
         delete(filename, delete_v1, delete_v2)
 
     def save_frame(self, frame):

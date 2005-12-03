@@ -34,8 +34,9 @@ HAS_FOOTER = 1 << 30
 IS_HEADER  = 1 << 29
 
 class error(IOError): pass
-class FileNotFoundError(error, OSError): pass
-class InvalidFormatError(error): pass
+class APENoHeaderError(error, ValueError): pass
+class APEUnsupportedVersionError(error, ValueError): pass
+class APEBadItemError(error, ValueError): pass
 
 from mutagen import Metadata
 
@@ -43,22 +44,24 @@ class APEv2(Metadata):
     """An APEv2 contains the tags in the file. It behaves much like a
     dictionary of key/value pairs, except that the keys must be strings,
     and the values a support APE tag value."""
-    def __init__(self, filename=None, fileobj=None):
-        if filename:
-            if not os.path.exists(filename):
-                raise FileNotFoundError("%s does not exist" % filename)
-            elif os.path.getsize(filename) < 32:
-                raise InvalidFormatError(
-                    "%s does not contain an APE tag" % filename)
-            self.filename = filename
-            fileobj = file(filename, "rb")
-        elif fileobj: self.filename = fileobj.name
-        else: raise ValueError("need either a filename or file object")
+    def __init__(self, filename=None):
+        self.filename = filename
+        if filename: self.load(filename)
 
-        tag, count = self.__find_tag(fileobj)
+    def load(self, filename):
+        """Load tags from the filename."""
+        self.filename = filename
+
+        fileobj = file(filename, "rb")
+        try:
+            tag, count = self.__find_tag(fileobj)
+        except EOFError:
+            raise APENoHeaderError("%s: too small (%d bytes)" %(
+                filename, os.path.getsize(filename)))
+
         fileobj.close()
-
         if tag: self.__parse_tag(tag, count)
+        else: raise APENoHeaderError("No APE tag found")
 
     def __parse_tag(self, tag, count):
         f = StringIO(tag)
@@ -71,7 +74,7 @@ class APEv2(Metadata):
             # Bit 0 is read/write flag, ignored
             kind = (flags & 6) >> 1
             if kind == 3:
-                raise InvalidFormatError("value type must be 0, 1, or 2")
+                raise APEBadItemError("value type must be 0, 1, or 2")
             key = ""
             while key[-1:] != '\0': key += f.read(1)
             key = key[:-1]
@@ -110,7 +113,7 @@ class APEv2(Metadata):
             # 4 byte version
             version = _read_int(data[8:12])
             if version < 2000 or version >= 3000:
-                raise InvalidFormatError(
+                raise APEUnsupportedVersionError(
                     "module only supports APEv2 (2000-2999), has %d" % version)
 
             # 4 byte tag size
@@ -122,7 +125,7 @@ class APEv2(Metadata):
             # 4 byte flags
             flags = _read_int(data[20:24])
             if flags & IS_HEADER:
-                raise InvalidFormatError("found header at end of file")
+                raise APENoHeaderError("Found header at end of file")
 
             f.seek(-tag_size, 2)
             # tag size includes footer
@@ -130,7 +133,8 @@ class APEv2(Metadata):
         else:
             f.seek(0, 0)
             if f.read(8) == "APETAGEX":
-                raise IOError("APEv2 at start of file is not (yet) supported")
+                raise APENoHeaderError(
+                    "APEv2 at start of file is not (yet) supported")
             return None, 0
 
     def __contains__(self, k):
@@ -203,6 +207,7 @@ class APEv2(Metadata):
         f.close()
 
     def delete(self, filename=None):
+        """Remove tags from a file."""
         filename = filename or self.filename
         f = file(filename, "ab+")
         offset = self.__tag_start(f) - 24
@@ -210,7 +215,10 @@ class APEv2(Metadata):
         f.truncate()
         f.close()
 
-def delete(filename): APEv2(filename).delete()
+def delete(filename):
+    """Remove tags from a file."""
+    try: APEv2(filename).delete()
+    except APENoHeaderError: pass
 
 class APEKey(str):
     """An APE key is an ASCII string of length 2 to 255. The specification's
