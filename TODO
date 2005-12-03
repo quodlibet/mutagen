@@ -1,6 +1,5 @@
 mutagen.id3 needs:
  * Specify all known frames
- * Implement delete to completely remove all trace of the ID3
  * Detect tags in non-beginning locations, particularly if multiple
    separate version tags exist at the beginning of the file
  * Perhaps implement tag merging - "intelligently" merge information
