@@ -230,7 +230,7 @@ class APEKey(str):
     def __hash__(self):
         return str.__hash__(self.lower())
 
-    def __repr__(self): return "<APEKey %s>" % str.__repr__(self)
+    def __repr__(self): return "%s(%r)" % (type(self), str(self))
 
 def APEValue(value, kind):
     """It is not recommended you construct APE values manually; instead
@@ -259,6 +259,9 @@ class _APEValue(object):
             struct.pack("<2I", len(self.value), self.kind << 1),
             key, self.value)
 
+    def __repr__(self):
+        return "%s(%r, %d)" % (type(self).__name__, self.value, self.kind)
+
 class APETextValue(_APEValue):
     """APE text values are Unicode/UTF-8 strings. They can be accessed
     like strings (with a null seperating the values), or arrays of strings."""
@@ -283,20 +286,13 @@ class APETextValue(_APEValue):
         l[i] = v.encode("utf-8")
         self.value = "\0".join(l).encode("utf-8")
 
-    def __repr__(self):
-        return "<APETextValue %r>" % list(self)
-
 class APEBinaryValue(_APEValue):
     """Binary values may be converted to a string of bytes. They are
     used for anything not intended to be human-readable."""
-    def __repr__(self):
-        return "<APEBinaryValue (%d bytes)>" % len(self)
 
 class APEExtValue(_APEValue):
     """An external value is a string containing a URI (http://..., file://...)
     that contains the actual value of the tag."""
-    def __repr__(self):
-        return "<APEExtValue ref=%s>" % len(self.value)
 
 # The standard doesn't say anything about the byte ordering, but
 # based on files tested, it's little-endian.
