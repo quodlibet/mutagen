@@ -689,16 +689,23 @@ class VolumeAdjustmentSpec(Spec):
 
 class VolumePeakSpec(Spec):
     def read(self, frame, data):
+        # http://bugs.xmms.org/attachment.cgi?id=113&action=view
+        peak = 0
         bits = ord(data[0])
         bytes = min(4, (bits + 7) >> 3)
-        if bits and PRINT_ERRORS:
-            print "RVA2 peak reading unsupported (%r)" % data
-        return 0, data[1+bytes:]
+        shift = ((8 - (bits & 7)) & 7) + (4 - bytes) * 8
+        for i in range(1, bytes+1):
+            peak *= 256
+            peak += ord(data[i])
+        peak *= 2**shift
+        if bits > 32:
+            bytes += 1
+            peak += ord(data[1+bytes]) >> (8 - shift);
+        return (float(peak) / (2**31-1)), data[1+bytes:]
 
     def write(self, frame, value):
-        if value and PRINT_ERRORS:
-            print "RVA2 peak writing unsupported (%r)" % value
-        return "\x00"
+        # always write as 16 bits for sanity.
+        return "\x10" + pack('>H', round(value * 32768))
 
     def validate(self, frame, value): return value
 

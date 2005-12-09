@@ -251,9 +251,11 @@ def TestReadTags():
         dict(mime='-->', type=3, desc='cover', encoding=0)],
     ['USER', '\x00ENUCom', 'Com', '', dict(lang='ENU', encoding=0)],
 
-    ['RVA2', 'testdata\x00\x01\xfb\x8c\x00',
-        'Master volume: -2.226562 dB/0.000000', '',
-        dict(desc='testdata', channel=1, gain=-2.2265625, peak=0)],
+    ['RVA2', 'testdata\x00\x01\xfb\x8c\x10\x12\x23',
+        'Master volume: -2.226562 dB/0.141693', '',
+        dict(desc='testdata', channel=1,
+             # FIXME: we need to use almost
+             gain=-2.22656, peak=0.14169)],
 
     ['RVA2', 'testdata2\x00\x01\x04\x01\x00',
         'Master volume: +2.001953 dB/0.000000', '',
@@ -418,7 +420,9 @@ def TestReadTags():
                     value = [value]
                     t = [t]
                 for value, t in zip(value, iter(t)):
-                    self.assertEquals(value, getattr(t, attr))
+                    if isinstance(value, float):
+                        self.failUnlessAlmostEqual(value, getattr(t, attr), 5)
+                    else: self.assertEquals(value, getattr(t, attr))
 
                     if isinstance(intval, (int,long)):
                         self.assertEquals(intval, pos(t))
