@@ -6,11 +6,13 @@ import mutagen.apev2
 DIR = os.path.dirname(__file__)
 SAMPLE = os.path.join(DIR, "data", "click.mpc")
 OLD = os.path.join(DIR, "data", "oldtag.apev2")
+BROKEN = os.path.join(DIR, "data", "brokentag.apev2")
 
 class APEWriter(TestCase):
     def setUp(self):
         import shutil
         shutil.copy(SAMPLE, SAMPLE + ".new")
+        shutil.copy(BROKEN, BROKEN + ".new")
         tag = mutagen.apev2.APEv2()
         self.values = {"artist": "Joe Wreschnig\0unittest",
                        "album": "Mutagen tests",
@@ -20,6 +22,20 @@ class APEWriter(TestCase):
         tag.save(SAMPLE + ".new")
         tag.save(SAMPLE + ".justtag")
         self.tag = mutagen.apev2.APEv2(SAMPLE + ".new")
+
+    def test_changed(self):
+        size = os.path.getsize(SAMPLE + ".new")
+        self.tag.save()
+        self.failUnlessEqual(os.path.getsize(SAMPLE + ".new"), size)
+
+    def test_fix_broken(self):
+        # Clean up garbage from a bug in pre-Mutagen APEv2.
+        self.failIfEqual(os.path.getsize(OLD), os.path.getsize(BROKEN))
+        tag = mutagen.apev2.APEv2(BROKEN)
+        tag.save(BROKEN + ".new")
+        self.failUnlessEqual(
+            os.path.getsize(OLD), os.path.getsize(BROKEN+".new"))
+
 
     def test_readback(self):
         for k, v in self.tag.items():
@@ -39,6 +55,7 @@ class APEWriter(TestCase):
 
     def tearDown(self):
         os.unlink(SAMPLE + ".new")
+        os.unlink(BROKEN + ".new")
         os.unlink(SAMPLE + ".justtag")
 
 class APEReader(TestCase):

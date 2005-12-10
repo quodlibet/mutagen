@@ -87,8 +87,20 @@ class APEv2(Metadata):
         if f.read(8) == "APETAGEX":
             f.read(4) # version
             tag_size = _read_int(f.read(4))
-            f.seek(-(tag_size + 8), 2) # start of header
-            return f.tell()
+            f.seek(-(tag_size + 32), 2) # start of header
+            value = f.tell()
+
+            while value > 0:
+                # Clean up broken writing from pre-Mutagen PyMusepack.
+                # It didn't remove the first 24 bytes of header.
+                try: f.seek(-24, 1)
+                except IOError: return value
+                else:
+                    if f.read(8) == "APETAGEX":
+                        value = f.tell() - 8
+                        f.seek(-8, 1)
+                    else: return value
+            else: return value
         else:
             f.seek(0, 2)
             return f.tell()
@@ -210,7 +222,7 @@ class APEv2(Metadata):
         """Remove tags from a file."""
         filename = filename or self.filename
         f = file(filename, "ab+")
-        offset = self.__tag_start(f) - 24
+        offset = self.__tag_start(f)
         f.seek(offset, 0)
         f.truncate()
         f.close()
