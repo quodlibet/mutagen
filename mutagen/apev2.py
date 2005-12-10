@@ -87,7 +87,11 @@ class APEv2(Metadata):
         if f.read(8) == "APETAGEX":
             f.read(4) # version
             tag_size = _read_int(f.read(4))
-            f.seek(-(tag_size + 32), 2) # start of header
+            items = _read_int(f.read(4))
+            flags = _read_int(f.read(4))
+            if flags & HAS_HEADER: offset = 32
+            else: offset = 0
+            f.seek(-(tag_size + offset), 2) # start of header *or* data
             value = f.tell()
 
             while value > 0:
