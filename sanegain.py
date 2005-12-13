@@ -23,7 +23,7 @@ def process_files(files):
         peak = float(amp) / 32768.
         db = float(db.split()[0])
         rva2 = RVA2(desc="track", channel=1, gain=db, peak=peak)
-        print "%s: %s" % (filename, albumrva2)
+        print "%s: %s" % (filename, rva2)
         tag = ID3(filename)
         tag.loaded_frame(albumrva2)
         tag.loaded_frame(rva2)
