@@ -165,6 +165,3 @@ class FLAC(object):
             size = to_int_be(fileobj.read(3))
             fileobj.read(size)
         return fileobj.tell()
-
-    def __metadata_write(self):
-        return "".join([b.write() for b in self.metadata_blocks])
