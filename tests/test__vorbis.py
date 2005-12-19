@@ -68,8 +68,10 @@ class TVComment(TestCase):
 add(TVComment)
 
 class TVCommentDict(TestCase):
+    Kind = VCommentDict
+
     def setUp(self):
-        self.c = VCommentDict()
+        self.c = self.Kind()
         self.c["artist"] = ["mu", "piman"]
         self.c["title"] = u"more fakes"
 
@@ -113,7 +115,7 @@ class TVCommentDict(TestCase):
         self.failUnlessRaises(KeyError, self.c.__delitem__, "woo")
 
     def test_roundtrip(self):
-        self.failUnlessEqual(self.c, VCommentDict(self.c.write()))
+        self.failUnlessEqual(self.c, self.Kind(self.c.write()))
 
     def test_roundtrip_vc(self):
         self.failUnlessEqual(self.c, VComment(self.c.write()))

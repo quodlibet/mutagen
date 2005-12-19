@@ -10,6 +10,7 @@ class Mock(object):
 import test_id3
 import test_apev2
 import test__vorbis
+import test_flac
 
 class Result(unittest.TestResult):
 
