@@ -58,6 +58,9 @@ class VComment(list):
                 except UnicodeEncodeError: pass
                 else:
                     if istag(tag): self.append((tag, value))
+                # "[framing_bit] = read a single bit as boolean". All Ogg
+            if not ord(data.read(1)) & 0x01:
+                raise IOError("framing bit was unset")
         except (struct.error, TypeError):
             raise IOError("data is not a valid Vorbis comment")
 
@@ -91,6 +94,7 @@ class VComment(list):
             comment = "%s=%s" % (tag, value.encode('utf-8'))
             f.write(struct.pack("<I", len(comment)))
             f.write(comment)
+        f.write("\x01")
         return f.getvalue()
 
 class VCommentDict(VComment):
