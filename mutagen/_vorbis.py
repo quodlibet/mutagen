@@ -58,11 +58,6 @@ class VComment(list):
                 except UnicodeEncodeError: pass
                 else:
                     if istag(tag): self.append((tag, value))
-                # "[framing_bit] = read a single bit as boolean". All Ogg
-                # Vorbis files I've checked use 0x01. All FLAC files use 0x81.
-                # So, what to do? Check both.
-            if not ord(data.read(1)) & 0x81:
-                raise IOError("framing bit was unset")
         except (struct.error, TypeError):
             raise IOError("data is not a valid Vorbis comment")
 
@@ -96,7 +91,6 @@ class VComment(list):
             comment = "%s=%s" % (tag, value.encode('utf-8'))
             f.write(struct.pack("<I", len(comment)))
             f.write(comment)
-        f.write("\x81")
         return f.getvalue()
 
 class VCommentDict(VComment):
