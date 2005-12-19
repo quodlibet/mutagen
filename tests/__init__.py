@@ -1,6 +1,7 @@
 import unittest, sys
 suites = []
-registerCase = suites.append
+add = registerCase = suites.append
+from unittest import TestCase
 
 class Mock(object):
     # A generic mocking object.
@@ -8,6 +9,7 @@ class Mock(object):
 
 import test_id3
 import test_apev2
+import test__vorbis
 
 class Result(unittest.TestResult):
 
