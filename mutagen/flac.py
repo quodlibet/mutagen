@@ -145,6 +145,7 @@ class FLAC(object):
         return (byte >> 7) ^ 1
 
     def load(self, filename):
+        self.filename = filename
         f = file(filename, "rb")
         if f.read(4) != "fLaC":
             raise IOError("%r is not a valid FLAC file" % filename)
@@ -154,3 +155,16 @@ class FLAC(object):
         except (AttributeError, IndexError):
             raise IOError("STREAMINFO block not found")
         else: self.info = self.metadata_blocks[0]
+
+    def __find_audio_offset(self, fileobj):
+        if fileobj.read(4) != "fLaC":
+            raise IOError("%r is not a valid FLAC file" % filename)
+        byte = 0xFF
+        while (byte >> 7) & 1:
+            byte = ord(fileobj.read(1))
+            size = to_int_be(fileobj.read(3))
+            fileobj.read(size)
+        return fileobj.tell()
+
+    def __metadata_write(self):
+        return "".join([b.write() for b in self.metadata_blocks])
