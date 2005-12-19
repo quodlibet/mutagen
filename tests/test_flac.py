@@ -55,6 +55,9 @@ class TStreamInfo(TestCase):
     def test_md5_signature(self):
         self.failUnlessEqual(self.i.md5_signature,
                              int("2890f9e129321301d4a7a9112138ab91", 16))
+    def test_eq(self): self.failUnlessEqual(self.i, self.i)
+    def test_roundtrip(self):
+        self.failUnlessEqual(StreamInfo(self.i.write()), self.i)
 add(TStreamInfo)
         
 class TPadding(TestCase):

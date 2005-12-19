@@ -47,6 +47,14 @@ class StreamInfo(MetadataBlock):
     """Parse a FLAC's stream information metadata block. This contains
     information about the block size and sample format."""
 
+    def __eq__(self, other):
+        return (self.min_blocksize == other.min_blocksize and
+                self.max_blocksize == other.max_blocksize and
+                self.sample_rate == other.sample_rate and
+                self.channels == other.channels and
+                self.bits_per_sample == other.bits_per_sample and
+                self.total_samples == other.total_samples)
+
     def load(self, data):
         self.min_blocksize = int(to_int_be(data.read(2)))
         self.max_blocksize = int(to_int_be(data.read(2)))
@@ -69,6 +77,33 @@ class StreamInfo(MetadataBlock):
         self.length = self.total_samples / float(self.sample_rate)
 
         self.md5_signature = to_int_be(data.read(16))
+
+    def write(self):
+        f = StringIO()
+        f.write(struct.pack(">I", self.min_blocksize)[-2:])
+        f.write(struct.pack(">I", self.max_blocksize)[-2:])
+        f.write(struct.pack(">I", self.min_framesize)[-3:])
+        f.write(struct.pack(">I", self.max_framesize)[-3:])
+
+        # first 16 bits of sample rate
+        f.write(struct.pack(">I", self.sample_rate >> 4)[-2:])
+        # 4 bits sample, 3 channel, 1 bps
+        byte = (self.sample_rate & 0xF) << 4
+        byte += ((self.channels - 1) & 3) << 1
+        byte += ((self.bits_per_sample - 1) >> 4) & 1
+        f.write(chr(byte))
+        # 4 bits of bps, 4 of sample count
+        byte = ((self.bits_per_sample - 1) & 0xF)  << 4
+        byte += (self.total_samples >> 32) & 0xF
+        f.write(chr(byte))
+        # last 32 of sample count
+        f.write(struct.pack(">I", self.total_samples & 0xFFFFFFFF))
+        # MD5 signature
+        sig = self.md5_signature
+        f.write(struct.pack(
+            ">4I", (sig >> 96) & 0xFFFFFFFFL, (sig >> 64) & 0xFFFFFFFFL,
+            (sig >> 32) & 0xFFFFFFFFL, sig & 0xFFFFFFFFL))
+        return f.getvalue()
 
 class VCFLACDict(VCommentDict):
     """FLACs don't use the framing bit at the end of the comment block.
