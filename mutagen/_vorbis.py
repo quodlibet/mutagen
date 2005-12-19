@@ -43,7 +43,7 @@ class VComment(list):
                 raise TypeError("VComment requires string data or a file-like")
             self.load(data, errors)
 
-    def load(self, data, errors='replace'):
+    def load(self, data, errors='replace', framing=True):
         """Load a file-like object."""
 
         try:
@@ -58,8 +58,7 @@ class VComment(list):
                 except UnicodeEncodeError: pass
                 else:
                     if istag(tag): self.append((tag, value))
-                # "[framing_bit] = read a single bit as boolean". All Ogg
-            if not ord(data.read(1)) & 0x01:
+            if framing and not ord(data.read(1)) & 0x01:
                 raise IOError("framing bit was unset")
         except (struct.error, TypeError):
             raise IOError("data is not a valid Vorbis comment")
