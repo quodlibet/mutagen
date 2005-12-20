@@ -5,3 +5,5 @@ mutagen.id3 needs:
  * Perhaps implement tag merging - "intelligently" merge information
    from all known tag formats
  * Polish padding - perhaps make it client selectable
+
+mutagen.oggvorbis, mutagen.oggflac needs: to exist.
