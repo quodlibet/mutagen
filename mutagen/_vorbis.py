@@ -5,8 +5,11 @@
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
 
+import sys
 import struct
 from cStringIO import StringIO
+
+if sys.version < (2, 4): from sets import Set as set
 
 """Read and write Vorbis comment data, used in Ogg Vorbis and FLAC
 files. Vorbis comments are Unicode values with a key that is
@@ -133,3 +136,7 @@ class VCommentDict(VComment):
         try: del(self[key])
         except KeyError: pass
         for value in values: self.append((key, value))
+
+    def keys(self): return list(set(zip(*self)[0]))
+    def values(self): return map(self.__getitem__, self.keys())
+    def items(self): return [(k, self[k]) for k in self.keys()]

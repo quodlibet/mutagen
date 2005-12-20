@@ -75,6 +75,18 @@ class TVCommentDict(TestCase):
         self.c["artist"] = ["mu", "piman"]
         self.c["title"] = u"more fakes"
 
+    def test_keys(self):
+        self.failUnless("artist" in self.c.keys())
+        self.failUnless("title" in self.c.keys())
+
+    def test_values(self):
+        self.failUnless(["mu", "piman"] in self.c.values())
+        self.failUnless(["more fakes"] in self.c.values())
+
+    def test_items(self):
+        self.failUnless(("artist", ["mu", "piman"]) in self.c.items())
+        self.failUnless(("title", ["more fakes"]) in self.c.items())
+
     def test_equal(self):
         self.failUnlessEqual(self.c, self.c)
 
