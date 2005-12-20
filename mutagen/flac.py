@@ -14,6 +14,7 @@
 import struct
 from cStringIO import StringIO
 from _vorbis import VCommentDict
+from mutagen import Metadata
 
 """Read metadata from a FLAC file.
 
@@ -51,7 +52,6 @@ class MetadataBlock(object):
             byte = chr(code)
             length = struct.pack(">I", len(datum))[-3:]
             data.append(byte + length + datum)
-        print repr("".join(data))
         return "".join(data)
     writeblocks = staticmethod(writeblocks)
 
@@ -190,8 +190,45 @@ class FLAC(object):
 
     info = property(lambda s: s.metadata_blocks[0])
 
-    def __expand_file(self, fileobj, needed):
-        pass
+    def save(self, filename=None):
+        if filename is None: filename = self.filename
+        try: f = open(filename, 'rb+')
+        except IOError, err:
+            from errno import ENOENT
+            if err.errno != ENOENT: raise
+            f = open(filename, 'ab') # create, then reopen
+            f = open(filename, 'rb+')
+
+        # Ensure we've got padding at the end, and only at the end.
+        # If adding makes it too large, we'll scale it down later.
+        self.metadata_blocks.append(Padding('\x00' * 1020))
+        MetadataBlocks.group_padding(self.metadata_blocks)
+
+        available = self.__find_audio_offset(f) - 4 # "fLaC"
+        data = MetadataBlocks.writeblocks(self.metadata_blocks)
+        if len(data) > available:
+            # If we have too much data, see if we can reduce padding.
+            padding = self.metadata_blocks[-1]
+            newlength = padding.length - (len(data) - available)
+            if newlength > 0:
+                padding.length = length
+                data = MetadataBlocks.writeblocks(self.metadata_blocks)
+                assert len(data) == available
+
+        elif len(data) < available:
+            # If we hve too little data, increase padding.
+            self.metadata_blocks[-1].length += (available - len(data))
+            data = MetadataBlocks.writeblocks(self.metadata_blocks)
+            assert len(data) == available
+
+        if len(data) != available:
+            # We couldn't reduce the padding enough.
+            print "Need to resize file"
+            diff = (data - available)
+            Metadata._insert_space(f, diff, 4)
+
+        f.seek(4)
+        f.write(data)
 
     def __find_audio_offset(self, fileobj):
         if fileobj.read(4) != "fLaC":
