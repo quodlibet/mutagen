@@ -24,6 +24,9 @@ def istag(key):
         if c < " " or c > "}" or c == "=": return False
     else: return bool(key)
 
+class error(IOError): pass
+class VorbisUnsetFrameError(error): pass
+
 class VComment(list):
     """Since Vorbis comments are always wrapped in something like an
     Ogg Vorbis bitstream or a FLAC metadata block, this takes
@@ -62,9 +65,9 @@ class VComment(list):
                 else:
                     if istag(tag): self.append((tag, value))
             if framing and not ord(data.read(1)) & 0x01:
-                raise IOError("framing bit was unset")
+                raise VorbisUnsetFrameError("framing bit was unset")
         except (struct.error, TypeError):
-            raise IOError("data is not a valid Vorbis comment")
+            raise error("data is not a valid Vorbis comment")
 
     def validate(self):
         """Validate keys and values, raising a ValueError if there

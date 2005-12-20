@@ -22,6 +22,10 @@ Based on the documentation at http://flac.sourceforge.net/format.html.
 
 Ogg FLAC is not supported."""
 
+class error(IOError): pass
+class FLACNoHeaderError(error): pass
+class FLACVorbisError(ValueError, error): pass
+
 def to_int_be(string):
     """Convert an arbitrarily-long string to a long using big-endian
     byte order."""
@@ -183,36 +187,31 @@ class FLAC(object):
             self.metadata_blocks.append(block)
             if block.code == VCFLACDict.code:
                 if self.vc is None: self.vc = block
-                else: raise IOError("> 1 Vorbis comment block found")
+                else: raise FLACVorbisError("> 1 Vorbis comment block found")
         return (byte >> 7) ^ 1
 
     def add_vorbiscomment(self):
         if self.vc is None:
             self.vc = VCFLACDict()
             self.metadata_blocks.append(self.vc)
-        else: raise ValueError("a Vorbis comment already exists")
+        else: raise FLACVorbisError("a Vorbis comment already exists")
 
     def load(self, filename):
         self.filename = filename
         f = file(filename, "rb")
         if f.read(4) != "fLaC":
-            raise IOError("%r is not a valid FLAC file" % filename)
+            raise FLACNoHeaderError("%r is not a valid FLAC file" % filename)
         while self.__read_metadata_block(f): pass
 
         try: self.metadata_blocks[0].length
         except (AttributeError, IndexError):
-            raise IOError("Stream info block not found")
+            raise FLACNoHeaderError("Stream info block not found")
 
     info = property(lambda s: s.metadata_blocks[0])
 
     def save(self, filename=None):
         if filename is None: filename = self.filename
-        try: f = open(filename, 'rb+')
-        except IOError, err:
-            from errno import ENOENT
-            if err.errno != ENOENT: raise
-            f = open(filename, 'ab') # create, then reopen
-            f = open(filename, 'rb+')
+        f = open(filename, 'rb+')
 
         # Ensure we've got padding at the end, and only at the end.
         # If adding makes it too large, we'll scale it down later.
@@ -247,7 +246,7 @@ class FLAC(object):
 
     def __find_audio_offset(self, fileobj):
         if fileobj.read(4) != "fLaC":
-            raise IOError("%r is not a valid FLAC file" % filename)
+            raise FLACNoHeaderError("%r is not a valid FLAC file" % filename)
         byte = 0x00
         while not (byte >> 7) & 1:
             byte = ord(fileobj.read(1))
