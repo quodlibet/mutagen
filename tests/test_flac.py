@@ -29,6 +29,20 @@ class TMetadataBlock(TestCase):
         b = MetadataBlock("foobar")
         b.data = "quux"
         self.failUnlessEqual(b.write(), "quux")
+
+    def test_writeblocks(self):
+        blocks = [Padding("\x00" * 20), Padding("\x00" * 30)]
+        self.failUnlessEqual(len(MetadataBlock.writeblocks(blocks)), 58)
+
+    def test_group_padding(self):
+        blocks = [Padding("\x00" * 20), Padding("\x00" * 30),
+                  MetadataBlock("foobar")]
+        blocks[-1].code = 0
+        length1 = len(MetadataBlock.writeblocks(blocks))
+        MetadataBlock.group_padding(blocks)
+        length2 = len(MetadataBlock.writeblocks(blocks))
+        self.failUnlessEqual(length1, length2)
+        self.failUnlessEqual(len(blocks), 2)
 add(TMetadataBlock)
 
 class TStreamInfo(TestCase):

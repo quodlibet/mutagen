@@ -43,9 +43,36 @@ class MetadataBlock(object):
     def load(self, data): self.data = data.read()
     def write(self): return self.data
 
+    def writeblocks(blocks):
+        data = []
+        codes = [[block.code, block.write()] for block in blocks]
+        codes[-1][0] |= 128
+        for code, datum in codes:
+            byte = chr(code)
+            length = struct.pack(">I", len(datum))[-3:]
+            data.append(byte + length + datum)
+        print repr("".join(data))
+        return "".join(data)
+    writeblocks = staticmethod(writeblocks)
+
+    def group_padding(blocks):
+        """Replace any padding metadata blocks with a single block
+        at the end, maintaining the same size as the old blocks."""
+        paddings = filter(lambda x: isinstance(x, Padding), blocks)
+        map(blocks.remove, paddings)
+        padding = Padding()
+        # total padding size is the sum of padding sizes plus 4 bytes
+        # per removed header.
+        size = sum([padding.length for padding in paddings])
+        padding.length = size + 4 * (len(paddings) - 1)
+        blocks.append(padding)
+    group_padding = staticmethod(group_padding)
+
 class StreamInfo(MetadataBlock):
     """Parse a FLAC's stream information metadata block. This contains
     information about the block size and sample format."""
+
+    code = 2
 
     def __eq__(self, other):
         return (self.min_blocksize == other.min_blocksize and
@@ -73,7 +100,7 @@ class StreamInfo(MetadataBlock):
         bps_tail = bps_total >> 36
         bps_head = (sample_channels_bps & 1) << 4
         self.bits_per_sample = int(bps_head + bps_tail + 1)
-        self.total_samples = bps_total & 0xFFFFFFFFF
+        self.total_samples = bps_total & 0xFFFFFFFFFL
         self.length = self.total_samples / float(self.sample_rate)
 
         self.md5_signature = to_int_be(data.read(16))
@@ -97,7 +124,7 @@ class StreamInfo(MetadataBlock):
         byte += (self.total_samples >> 32) & 0xF
         f.write(chr(byte))
         # last 32 of sample count
-        f.write(struct.pack(">I", self.total_samples & 0xFFFFFFFF))
+        f.write(struct.pack(">I", self.total_samples & 0xFFFFFFFFL))
         # MD5 signature
         sig = self.md5_signature
         f.write(struct.pack(
@@ -108,6 +135,8 @@ class StreamInfo(MetadataBlock):
 class VCFLACDict(VCommentDict):
     """FLACs don't use the framing bit at the end of the comment block.
     So don't expect it during reads, and chop it off during writes."""
+
+    code = 4
 
     def load(self, data, errors='replace'):
         super(VCFLACDict, self).load(data, errors, False)
@@ -121,6 +150,8 @@ class Padding(MetadataBlock):
 
     Usually this will follow a Vorbis comment, to avoid needing to
     resize the file when changing tags."""
+
+    code = 1
 
     def __init__(self, data=""): super(Padding, self).__init__(data)
     def load(self, data): self.length = len(data.read())
@@ -138,9 +169,11 @@ class FLAC(object):
         size = to_int_be(file.read(3))
         try:
             data = file.read(size)
-            block = self.METADATA_BLOCKS[byte & 0x7f](data)
+            block = self.METADATA_BLOCKS[byte & 0x7F](data)
         except (IndexError, TypeError):
-            self.metadata_blocks.append(MetadataBlock(data))
+            block = MetadataBlock(data)
+            block.code = byte & 0x7F
+            self.metadata_blocks.append(block)
         else: self.metadata_blocks.append(block)
         return (byte >> 7) ^ 1
 
@@ -154,7 +187,11 @@ class FLAC(object):
         try: self.metadata_blocks[0].length
         except (AttributeError, IndexError):
             raise IOError("STREAMINFO block not found")
-        else: self.info = self.metadata_blocks[0]
+
+    info = property(lambda s: s.metadata_blocks[0])
+
+    def __expand_file(self, fileobj, needed):
+        pass
 
     def __find_audio_offset(self, fileobj):
         if fileobj.read(4) != "fLaC":
