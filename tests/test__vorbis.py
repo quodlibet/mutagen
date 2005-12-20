@@ -131,4 +131,9 @@ class TVCommentDict(TestCase):
 
     def test_roundtrip_vc(self):
         self.failUnlessEqual(self.c, VComment(self.c.write()))
+
+    def test_case_items_426(self):
+        self.c.append(("WOO", "bar"))
+        self.failUnless(("woo", ["bar"]) in self.c.items())
+
 add(TVCommentDict)

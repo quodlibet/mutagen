@@ -115,20 +115,20 @@ class VCommentDict(VComment):
         comment['title'].append('a title') will not work."""
 
         key = key.lower()
-        values = [value for (k, value) in self if k == key]
+        values = [value for (k, value) in self if k.lower() == key]
         if not values: raise KeyError, key
         else: return values
 
     def __delitem__(self, key):
         key = key.lower()
-        to_delete = filter(lambda x: x[0] == key, self)
+        to_delete = filter(lambda x: x[0].lower() == key, self)
         if not to_delete: raise KeyError, key
         else: map(self.remove, to_delete)
 
     def __contains__(self, key):
         key = key.lower()
         for k, value in self:
-            if k == key: return True
+            if k.lower() == key: return True
         else: return False
 
     def __setitem__(self, key, values):
@@ -140,6 +140,6 @@ class VCommentDict(VComment):
         except KeyError: pass
         for value in values: self.append((key, value))
 
-    def keys(self): return list(set(zip(*self)[0]))
+    def keys(self): return map(str.lower, set(zip(*self)[0]))
     def values(self): return map(self.__getitem__, self.keys())
-    def items(self): return [(k, self[k]) for k in self.keys()]
+    def items(self): return [(k.lower(), self[k]) for k in self.keys()]
