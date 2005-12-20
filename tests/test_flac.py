@@ -114,7 +114,15 @@ class TFLAC(TestCase):
         f = FLAC(self.NEW)
         f.vc["faketag"] = ["a" * 1000] * 1000
         f.save()
+        f = FLAC(self.NEW)
         self.failUnlessEqual(f.vc["faketag"][0], "a" * 1000)
+
+    def test_add_vc(self):
+        f = FLAC()
+        self.failIf(f.vc)
+        f.add_vorbiscomment()
+        self.failUnless(f.vc == [])
+        self.failUnlessRaises(ValueError, f.add_vorbiscomment)
 
     def tearDown(self):
         os.unlink(self.NEW)

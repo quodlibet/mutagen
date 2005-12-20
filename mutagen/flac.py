@@ -186,6 +186,12 @@ class FLAC(object):
                 else: raise IOError("> 1 Vorbis comment block found")
         return (byte >> 7) ^ 1
 
+    def add_vorbiscomment(self):
+        if self.vc is None:
+            self.vc = VCFLACDict()
+            self.metadata_blocks.append(self.vc)
+        else: raise ValueError("a Vorbis comment already exists")
+
     def load(self, filename):
         self.filename = filename
         f = file(filename, "rb")
