@@ -112,9 +112,9 @@ class TFLAC(TestCase):
 
     def test_force_grow(self):
         f = FLAC(self.NEW)
-        f.vc["faketag"] = ["a" * 50] * 50
+        f.vc["faketag"] = ["a" * 1000] * 1000
         f.save()
-        self.failUnlessEqual(f.vc["faketag"][0], "a" * 50)
+        self.failUnlessEqual(f.vc["faketag"][0], "a" * 1000)
 
     def tearDown(self):
         os.unlink(self.NEW)
