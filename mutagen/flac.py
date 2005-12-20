@@ -163,6 +163,8 @@ class Padding(MetadataBlock):
 class FLAC(object):
     METADATA_BLOCKS = [StreamInfo, Padding, None, None, VCFLACDict]
 
+    vc = None
+
     def __init__(self, filename=None):
         self.metadata_blocks = []
         if filename is not None: self.load(filename)
@@ -177,7 +179,11 @@ class FLAC(object):
             block = MetadataBlock(data)
             block.code = byte & 0x7F
             self.metadata_blocks.append(block)
-        else: self.metadata_blocks.append(block)
+        else:
+            self.metadata_blocks.append(block)
+            if block.code == VCFLACDict.code:
+                if self.vc is None: self.vc = block
+                else: raise IOError("> 1 Vorbis comment block found")
         return (byte >> 7) ^ 1
 
     def load(self, filename):
@@ -189,7 +195,7 @@ class FLAC(object):
 
         try: self.metadata_blocks[0].length
         except (AttributeError, IndexError):
-            raise IOError("STREAMINFO block not found")
+            raise IOError("Stream info block not found")
 
     info = property(lambda s: s.metadata_blocks[0])
 
