@@ -1,6 +1,7 @@
+import shutil, os
 from tests import TestCase, add
 from mutagen.flac import to_int_be, Padding, VCFLACDict, MetadataBlock
-from mutagen.flac import StreamInfo
+from mutagen.flac import StreamInfo, FLAC
 from tests.test__vorbis import TVCommentDict, VComment
 
 class Tto_int_be(TestCase):
@@ -83,3 +84,39 @@ class TPadding(TestCase):
         self.b.length = 20
         self.failUnlessEqual(self.b.write(), "\x00" * 20)
 add(TPadding)
+
+class TFLAC(TestCase):
+    SAMPLE = "tests/data/silence-44-s.flac"
+    NEW = SAMPLE + ".new"
+    def setUp(self):
+        shutil.copy(self.SAMPLE, self.NEW)
+        self.failUnlessEqual(file(self.SAMPLE).read(), file(self.NEW).read())
+
+    def test_info(self):
+        self.failUnlessAlmostEqual(FLAC(self.NEW).info.length, 3.7, 1)
+
+    def test_vc(self):
+        self.failUnlessEqual(FLAC(self.NEW).vc['title'][0], 'Silence')
+
+    def test_write_nochange(self):
+        f = FLAC(self.NEW)
+        f.save()
+        self.failUnlessEqual(file(self.SAMPLE).read(), file(self.NEW).read())
+
+    def test_write_changetitle(self):
+        f = FLAC(self.NEW)
+        f.vc["title"] = "A New Title"
+        f.save()
+        f = FLAC(self.NEW)
+        self.failUnlessEqual(f.vc["title"][0], "A New Title")
+
+    def test_force_grow(self):
+        f = FLAC(self.NEW)
+        f.vc["faketag"] = ["a" * 50] * 50
+        f.save()
+        self.failUnlessEqual(f.vc["faketag"][0], "a" * 50)
+
+    def tearDown(self):
+        os.unlink(self.NEW)
+
+add(TFLAC)
