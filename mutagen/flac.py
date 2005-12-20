@@ -72,15 +72,16 @@ class StreamInfo(MetadataBlock):
     """Parse a FLAC's stream information metadata block. This contains
     information about the block size and sample format."""
 
-    code = 2
+    code = 0
 
     def __eq__(self, other):
-        return (self.min_blocksize == other.min_blocksize and
-                self.max_blocksize == other.max_blocksize and
-                self.sample_rate == other.sample_rate and
-                self.channels == other.channels and
-                self.bits_per_sample == other.bits_per_sample and
-                self.total_samples == other.total_samples)
+        try: return (self.min_blocksize == other.min_blocksize and
+                     self.max_blocksize == other.max_blocksize and
+                     self.sample_rate == other.sample_rate and
+                     self.channels == other.channels and
+                     self.bits_per_sample == other.bits_per_sample and
+                     self.total_samples == other.total_samples)
+        except: return False
 
     def load(self, data):
         self.min_blocksize = int(to_int_be(data.read(2)))
@@ -156,6 +157,8 @@ class Padding(MetadataBlock):
     def __init__(self, data=""): super(Padding, self).__init__(data)
     def load(self, data): self.length = len(data.read())
     def write(self): return "\x00" * self.length
+    def __repr__(self):
+        return "<%s (%d bytes)>" % (type(self).__name__, self.length)
 
 class FLAC(object):
     METADATA_BLOCKS = [StreamInfo, Padding, None, None, VCFLACDict]
@@ -202,29 +205,29 @@ class FLAC(object):
         # Ensure we've got padding at the end, and only at the end.
         # If adding makes it too large, we'll scale it down later.
         self.metadata_blocks.append(Padding('\x00' * 1020))
-        MetadataBlocks.group_padding(self.metadata_blocks)
+        MetadataBlock.group_padding(self.metadata_blocks)
 
         available = self.__find_audio_offset(f) - 4 # "fLaC"
-        data = MetadataBlocks.writeblocks(self.metadata_blocks)
+        data = MetadataBlock.writeblocks(self.metadata_blocks)
+
         if len(data) > available:
             # If we have too much data, see if we can reduce padding.
             padding = self.metadata_blocks[-1]
             newlength = padding.length - (len(data) - available)
             if newlength > 0:
-                padding.length = length
-                data = MetadataBlocks.writeblocks(self.metadata_blocks)
+                padding.length = newlength
+                data = MetadataBlock.writeblocks(self.metadata_blocks)
                 assert len(data) == available
 
         elif len(data) < available:
             # If we hve too little data, increase padding.
             self.metadata_blocks[-1].length += (available - len(data))
-            data = MetadataBlocks.writeblocks(self.metadata_blocks)
+            data = MetadataBlock.writeblocks(self.metadata_blocks)
             assert len(data) == available
 
         if len(data) != available:
             # We couldn't reduce the padding enough.
-            print "Need to resize file"
-            diff = (data - available)
+            diff = (len(data) - available)
             Metadata._insert_space(f, diff, 4)
 
         f.seek(4)
@@ -233,8 +236,8 @@ class FLAC(object):
     def __find_audio_offset(self, fileobj):
         if fileobj.read(4) != "fLaC":
             raise IOError("%r is not a valid FLAC file" % filename)
-        byte = 0xFF
-        while (byte >> 7) & 1:
+        byte = 0x00
+        while not (byte >> 7) & 1:
             byte = ord(fileobj.read(1))
             size = to_int_be(fileobj.read(3))
             fileobj.read(size)
