@@ -136,4 +136,10 @@ class TVCommentDict(TestCase):
         self.c.append(("WOO", "bar"))
         self.failUnless(("woo", ["bar"]) in self.c.items())
 
+    def test_empty(self):
+        self.c = VCommentDict()
+        self.failIf(self.c.keys())
+        self.failIf(self.c.values())
+        self.failIf(self.c.items())
+
 add(TVCommentDict)

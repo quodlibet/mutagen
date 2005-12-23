@@ -140,6 +140,6 @@ class VCommentDict(VComment):
         except KeyError: pass
         for value in values: self.append((key, value))
 
-    def keys(self): return map(str.lower, set(zip(*self)[0]))
+    def keys(self): return self and map(str.lower, set(zip(*self)[0]))
     def values(self): return map(self.__getitem__, self.keys())
     def items(self): return [(k.lower(), self[k]) for k in self.keys()]
