@@ -150,6 +150,16 @@ class ID3v1Tags(TestCase):
     def test_year(self):
         self.assertEquals('2004', self.id3['TDRC'])
 
+    def test_nulls(self):
+        from mutagen.id3 import ParseID3v1
+        s = 'TAG%(title)30s%(artist)30s%(album)30s%(year)4s%(cmt)29s\x03\x01'
+        s = s % dict(artist='abcd\00fg', title='hijklmn\x00p',
+                    album='qrst\x00v', cmt='wxyz', year='1224')
+        tags = ParseID3v1(s)
+        self.assertEquals('abcd'.decode('latin1'), tags['TPE1'])
+        self.assertEquals('hijklmn'.decode('latin1'), tags['TIT2'])
+        self.assertEquals('qrst'.decode('latin1'), tags['TALB'])
+
     def test_nonascii(self):
         from mutagen.id3 import ParseID3v1
         s = 'TAG%(title)30s%(artist)30s%(album)30s%(year)4s%(cmt)29s\x03\x01'

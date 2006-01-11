@@ -1350,11 +1350,10 @@ def ParseID3v1(string):
     except StructError: return None
 
     if tag != "TAG": return None
-    title = title.strip("\x00").strip().decode('latin1')
-    artist = artist.strip("\x00").strip().decode('latin1')
-    album = album.strip("\x00").strip().decode('latin1')
-    year = year.strip("\x00").strip().decode('latin1')
-    comment = comment.strip("\x00").strip().decode('latin1')
+    def fix(string):
+        return string.split("\x00")[0].strip().decode('latin1')
+    title, artist, album, year, comment = map(
+        fix, [title, artist, album, year, comment])
 
     if title: frames["TIT2"] = TIT2(encoding=0, text=title)
     if artist: frames["TPE1"] = TPE1(encoding=0, text=[artist])
