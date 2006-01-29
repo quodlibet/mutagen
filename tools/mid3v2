@@ -2,6 +2,7 @@
 
 import os
 import sys
+import locale
 
 from optparse import OptionParser, SUPPRESS_HELP
 
@@ -14,19 +15,18 @@ class ID3OptionParser(OptionParser):
         version = "mid3v2 %s\nUses Mutagen %s" % (my_version, mutagen_version)
         return OptionParser.__init__(
             self, version=version,
-            usage="%prog [OPTION]... [FILE]...",
+            usage="%prog [OPTION] [FILE]...",
             description="Replacement for id3lib's id3v2.")
 
     def format_help(self, *args, **kwargs):
         text = OptionParser.format_help(self, *args, **kwargs)
         return text + """\
-
-Any editing operation will cause the ID3 tag to be upgraded to ID3v2.4.
-
 You can set the value for any ID3v2 frame by using '--' and then a frame ID.
 For example:
         mid3v2 --TIT3 "Monkey!" file.mp3
 would set the "Subtitle/Description" frame to "Monkey!".
+
+Any editing operation will cause the ID3 tag to be upgraded to ID3v2.4.
 """
 
 def list_frames(option, opt, value, parser):
@@ -48,10 +48,28 @@ def list_genres(option, opt, value, parser):
         print "%3d: %s" % (i, genre)
     raise SystemExit
 
+def write_files(edits, filenames):
+    enc = locale.getpreferredencoding()
+    edits = [(frame[2:], value.decode(enc)) for (frame, value) in edits]
+
+    for filename in filenames:
+        print "Writing", filename
+        try: id3 = mutagen.id3.ID3(filename)
+        except mutagen.id3.ID3NoHeaderError:
+            print "No ID3 header found; creating a new tag"
+            id3 = mutagen.id3.ID3()
+        except Exception, err:
+            print str(err)
+            continue
+        for frame, value in edits:
+            frame = mutagen.id3.Frames[frame](encoding=3, text=value)
+            id3.loaded_frame(frame)
+        id3.save(filename)
+
 def list_tags(filenames):
     for filename in filenames:
         print "id3v2 tag info for %s:" % filename
-        try: id3 = mutagen.id3.ID3(filename)
+        try: id3 = mutagen.id3.ID3(filename, translate=False)
         except Exception, err:
             print str(err)
         else:
@@ -90,37 +108,23 @@ def main(argv):
         "-C", "--convert", action="store_const", dest="action",
         const="convert",
         help="Convert tags to ID3v2.4 (any editing will do this)")
-    parser.add_option(
-        "--add-v1", action="store_const", dest="action", const="add-v1",
-        help="Add an ID3v1 tag to a file")
-    parser.add_option(
-        "-a", "--artist", action="store", dest="set_text_frame_TPE1",
-        help="Set the artist information", metavar='"ARTIST"')
-    parser.add_option(
-        "-A", "--album", action="store", dest="set_text_frame_TALB",
-        help="Set the album title information", metavar='"ALBUM"')
-    parser.add_option(
-        "-t", "--song", action="store", dest="set_text_frame_TIT2",
-        help="Set the song title information", metavar='"SONG"')
-    parser.add_option(
-        "-g", "--genre", action="store", dest="set_text_frame_TCON",
-        help="Set the genre number or string", metavar='num/str')
-    parser.add_option(
-        "-y", "--year", "--date", action="store", dest="set_text_frame_TDRC",
-        help="Set the year or full date", metavar='num/date')
-    parser.add_option(
-        "-T", "--track", action="store", dest="set_text_frame_TRCK",
-        help="Set the track number/(optional) total tracks", metavar='num/num')
+
+    parser.edits = []
 
     for frame in mutagen.id3.Frames:
-        if frame[0] == "T":
+        if issubclass(mutagen.id3.Frames[frame], mutagen.id3.TextFrame):
             parser.add_option(
-                "--" + frame, action="store", dest="set_text_frame_" + frame,
-                help=SUPPRESS_HELP)
+                "--" + frame, action="callback", help=SUPPRESS_HELP,
+                type='string', metavar="value", # optparse blows up with this
+                callback=lambda *args: args[3].edits.append(args[1:3]))
 
     (options, args) = parser.parse_args(argv[1:])
+
     if args:
-        if options.action in [None, 'list']: list_tags(args)
+        if parser.edits: write_files(parser.edits, args)
+        elif options.action in [None, 'list']: list_tags(args)
+        elif options.action == "convert": write_files([], args)
+        else: parser.print_help()
     else: parser.print_help()
 
 if __name__ == "__main__":
