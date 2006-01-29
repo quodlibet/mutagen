@@ -48,6 +48,11 @@ def list_genres(option, opt, value, parser):
         print "%3d: %s" % (i, genre)
     raise SystemExit
 
+def delete_tags(filenames, v1, v2):
+    for filename in filenames:
+        print "deleting ID3 tag info in %s" % filename
+        mutagen.id3.delete(filename, v1, v2)
+
 def write_files(edits, filenames):
     enc = locale.getpreferredencoding()
     edits = [(frame[2:], value.decode(enc)) for (frame, value) in edits]
@@ -103,7 +108,7 @@ def main(argv):
         const="delete-v1", help="Deletes ID3v1 tags")
     parser.add_option(
         "-D", "--delete-all", action="store_const", dest="action",
-        const="delete-all", help="Deletes ID3v1 and ID3v2 tags")
+        const="delete-v1-v2", help="Deletes ID3v1 and ID3v2 tags")
     parser.add_option(
         "-C", "--convert", action="store_const", dest="action",
         const="convert",
@@ -124,6 +129,8 @@ def main(argv):
         if parser.edits: write_files(parser.edits, args)
         elif options.action in [None, 'list']: list_tags(args)
         elif options.action == "convert": write_files([], args)
+        elif options.action.startswith("delete"):
+            delete_tags(args, "v1" in options.action, "v2" in options.action)
         else: parser.print_help()
     else: parser.print_help()
 
