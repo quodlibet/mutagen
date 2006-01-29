@@ -1,0 +1,118 @@
+#!/usr/bin/python
+
+import os
+import sys
+
+from optparse import OptionParser, SUPPRESS_HELP
+
+VERSION = (0, 0)
+
+class ID3OptionParser(OptionParser):
+    def __init__(self):
+        mutagen_version = ".".join(map(str, mutagen.version))
+        my_version = ".".join(map(str, VERSION))
+        version = "mid3v2 %s\nUses Mutagen %s" % (my_version, mutagen_version)
+        return OptionParser.__init__(
+            self, version=version,
+            usage="%prog [OPTION]... [FILE]...")
+
+    def format_help(self, *args, **kwargs):
+        text = OptionParser.format_help(self, *args, **kwargs)
+        return text + """\
+
+Any editing operation will cause the ID3 tag to be upgraded to ID3v2.4.
+
+You can set the value for any ID3v2 frame by using '--' and then a frame ID.
+For example:
+        mid3v2 --TIT3 "Monkey!" file.mp3
+would set the "Subtitle/Description" frame to "Monkey!".
+"""
+
+def list_frames(option, opt, value, parser):
+    items = mutagen.id3.Frames.items()
+    items.sort()
+    for name, frame in items:
+        print "    --%s    %s" % (name, frame.__doc__.split("\n")[0])
+    raise SystemExit
+
+def list_frames_2_2(option, opt, value, parser):
+    items = mutagen.id3.Frames_2_2.items()
+    items.sort()
+    for name, frame in items:
+        print "    --%s    %s" % (name, frame.__doc__.split("\n")[0])
+    raise SystemExit
+
+def list_genres(option, opt, value, parser):
+    for i, genre in enumerate(mutagen.id3.TCON.GENRES):
+        print "%3d: %s" % (i, genre)
+    raise SystemExit
+
+def main(argv):
+    parser = ID3OptionParser()
+    parser.add_option(
+        "-f", "--list-frames", action="callback", callback=list_frames,
+        help="Display all possible frames for ID3v2.3 / ID3v2.4")
+    parser.add_option(
+        "--list-frames-v2.2", action="callback", callback=list_frames_2_2,
+        help="Display all possible frames for ID3v2.2")
+    parser.add_option(
+        "-L", "--list-genres", action="callback", callback=list_genres,
+        help="Lists all ID3v1 genres")
+    parser.add_option(
+        "-l", "--list", action="store_const", dest="action", const="list",
+        help="Lists the tag(s) on the file(s)")
+    parser.add_option(
+        "-R", "--list-rfc822", action="store_const", dest="action",
+        const="list-822", help="Lists using an rfc822-style format for output")
+    parser.add_option(
+        "-d", "--delete-v2", action="store_const", dest="action",
+        const="delete-v2", help="Deletes ID3v2 tags")
+    parser.add_option(
+        "-s", "--delete-v1", action="store_const", dest="action",
+        const="delete-v1", help="Deletes ID3v1 tags")
+    parser.add_option(
+        "-D", "--delete-all", action="store_const", dest="action",
+        const="delete-all", help="Deletes ID3v1 and ID3v2 tags")
+    parser.add_option(
+        "-C", "--convert", action="store_const", dest="action",
+        const="convert",
+        help="Convert tags to ID3v2.4 (any editing will do this)")
+    parser.add_option(
+        "--add-v1", action="store_const", dest="action", const="add-v1",
+        help="Add an ID3v1 tag to a file")
+    parser.add_option(
+        "-a", "--artist", action="store", dest="set_text_frame_TPE1",
+        help="Set the artist information", metavar='"ARTIST"')
+    parser.add_option(
+        "-A", "--album", action="store", dest="set_text_frame_TALB",
+        help="Set the album title information", metavar='"ALBUM"')
+    parser.add_option(
+        "-t", "--song", action="store", dest="set_text_frame_TIT2",
+        help="Set the song title information", metavar='"SONG"')
+    parser.add_option(
+        "-g", "--genre", action="store", dest="set_text_frame_TCON",
+        help="Set the genre number or string", metavar='num/str')
+    parser.add_option(
+        "-y", "--year", "--date", action="store", dest="set_text_frame_TDRC",
+        help="Set the year or full date", metavar='num/date')
+    parser.add_option(
+        "-T", "--track", action="store", dest="set_text_frame_TRCK",
+        help="Set the track number/(optional) total tracks", metavar='num/num')
+
+    for frame in mutagen.id3.Frames:
+        if frame[0] == "T":
+            parser.add_option(
+                "--" + frame, action="store", dest="set_text_frame_" + frame,
+                help=SUPPRESS_HELP)
+
+    (options, args) = parser.parse_args(argv[1:])
+    if args: pass
+    else: parser.print_help()
+
+if __name__ == "__main__":
+    try: import mutagen, mutagen.id3
+    except ImportError:
+        # Run as ./mid3v2 out of tools/
+        sys.path.append(os.path.abspath("../"))
+        import mutagen, mutagen.id3
+    main(sys.argv)
