@@ -2,7 +2,6 @@
 
 import os, sys
 import traceback
-from mutagen.id3 import ID3
 
 class Report(object):
     def __init__(self, pathname):
@@ -57,7 +56,8 @@ class Report(object):
             strings.append("\nERRORS:\n")
             for filename, Ex, value, trace in self.errors:
                 strings.append("\nReading %s:" % filename)
-                strings.append("".join(traceback.format_exception(Ex, value, trace)[1:]))
+                strings.append(
+                    "".join(traceback.format_exception(Ex, value, trace)[1:]))
         else: strings.append("\nNo errors!")
 
         return "\n".join(strings)
@@ -84,7 +84,10 @@ def check_dir(path):
     print str(rep)
 
 if __name__ == "__main__":
-    import sys
+    try: from mutagen.id3 import ID3
+    except ImportError:
+        sys.path.append(os.path.abspath("../"))
+        from mutagen.id3 import ID3
     if len(sys.argv) == 1: print "Usage: %s directory ..." % sys.argv[0]
     else:
         for path in sys.argv[1:]: check_dir(path)

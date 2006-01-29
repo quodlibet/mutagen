@@ -17,7 +17,7 @@ The goals are (in rough order of importance):
 Testing the Module
 ------------------
 To test Mutagen's ID3 reading support, run
- $ ./_pony.py <your top-level MP3 directory here>
+ $ tools/id3report <your top-level MP3 directory here>
 Mutagen will try to load all of them, and report any errors.
 
 To look at the ID3 or APEv2 tags in files, run
