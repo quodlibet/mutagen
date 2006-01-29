@@ -2,7 +2,7 @@ import os; from os.path import join
 import shutil
 from unittest import TestCase
 from tests import registerCase
-from mutagen.id3 import ID3, BitPaddedInt, COMR
+from mutagen.id3 import ID3, BitPaddedInt, COMR, Frames, Frames_2_2
 
 try: from sets import Set as set
 except ImportError: pass
@@ -97,6 +97,10 @@ class ID3Tags(TestCase):
         id3 = ID3(self.silence, known_frames={})
         self.assertEquals(0, len(id3.keys()))
         self.assertEquals(9, len(id3.unknown_frames))
+
+    def test_has_docs(self):
+        for Kind in Frames.values() + Frames_2_2.values():
+            self.failUnless(Kind.__doc__, "%s has no docstring" % Kind)
 
     def test_23(self):
         id3 = ID3(self.silence)

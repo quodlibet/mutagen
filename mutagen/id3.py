@@ -1175,6 +1175,8 @@ class POSS(Frame):
     def __eq__(self, other): return self.position == other
 
 class UFID(Frame):
+    "Unique file identifier"
+
     _framespec = [ Latin1TextSpec('owner'), BinaryDataSpec('data') ]
     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.owner))
     def __eq__(s, o):
