@@ -14,7 +14,8 @@ class ID3OptionParser(OptionParser):
         version = "mid3v2 %s\nUses Mutagen %s" % (my_version, mutagen_version)
         return OptionParser.__init__(
             self, version=version,
-            usage="%prog [OPTION]... [FILE]...")
+            usage="%prog [OPTION]... [FILE]...",
+            description="Replacement for id3lib's id3v2.")
 
     def format_help(self, *args, **kwargs):
         text = OptionParser.format_help(self, *args, **kwargs)
@@ -47,6 +48,21 @@ def list_genres(option, opt, value, parser):
         print "%3d: %s" % (i, genre)
     raise SystemExit
 
+def list_tags(filenames):
+    for filename in filenames:
+        print "id3v2 tag info for %s:" % filename
+        try: id3 = mutagen.id3.ID3(filename)
+        except Exception, err:
+            print str(err)
+        else:
+            strings = []
+            for frame in id3.values():
+                name = type(frame).__name__
+                desc = frame.__doc__.split("\n")[0]
+                strings.append('%s (%s): %s' % (name, desc, str(frame)))
+            strings.sort()
+            print "\n".join(strings)
+
 def main(argv):
     parser = ID3OptionParser()
     parser.add_option(
@@ -61,9 +77,6 @@ def main(argv):
     parser.add_option(
         "-l", "--list", action="store_const", dest="action", const="list",
         help="Lists the tag(s) on the file(s)")
-    parser.add_option(
-        "-R", "--list-rfc822", action="store_const", dest="action",
-        const="list-822", help="Lists using an rfc822-style format for output")
     parser.add_option(
         "-d", "--delete-v2", action="store_const", dest="action",
         const="delete-v2", help="Deletes ID3v2 tags")
@@ -106,7 +119,8 @@ def main(argv):
                 help=SUPPRESS_HELP)
 
     (options, args) = parser.parse_args(argv[1:])
-    if args: pass
+    if args:
+        if options.action in [None, 'list']: list_tags(args)
     else: parser.print_help()
 
 if __name__ == "__main__":
