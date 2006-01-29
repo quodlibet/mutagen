@@ -114,7 +114,30 @@ def main(argv):
         const="convert",
         help="Convert tags to ID3v2.4 (any editing will do this)")
 
-    parser.edits = []
+    parser.add_option(
+        "-a", "--artist", metavar='"ARTIST"', action="callback",
+        help="Set the artist information", type="string",
+        callback=lambda *args: args[3].edits.append(("--TPE1", args[2])))
+    parser.add_option(
+        "-A", "--album", metavar='"ALBUM"', action="callback",
+        help="Set the album title information", type="string",
+        callback=lambda *args: args[3].edits.append(("--TALB", args[2])))
+    parser.add_option(
+        "-t", "--song", metavar='"SONG"', action="callback",
+        help="Set the song title information", type="string",
+        callback=lambda *args: args[3].edits.append(("--TIT2", args[2])))
+    parser.add_option(
+        "-g", "--genre", metavar='"GENRE"', action="callback",
+        help="Set the genre or genre number", type="string",
+        callback=lambda *args: args[3].edits.append(("--TCON", args[2])))
+    parser.add_option(
+        "-y", "--year", "--date", metavar='YYYY[-MM-DD]', action="callback",
+        help="Set the year/date", type="string",
+        callback=lambda *args: args[3].edits.append(("--TDRC", args[2])))
+    parser.add_option(
+        "-T", "--track", metavar='"num/num"', action="callback",
+        help="Set the track number/(optional) total tracks", type="string",
+        callback=lambda *args: args[3].edits.append(("--TRCK", args[2])))
 
     for frame in mutagen.id3.Frames:
         if issubclass(mutagen.id3.Frames[frame], mutagen.id3.TextFrame):
@@ -123,6 +146,7 @@ def main(argv):
                 type='string', metavar="value", # optparse blows up with this
                 callback=lambda *args: args[3].edits.append(args[1:3]))
 
+    parser.edits = []
     (options, args) = parser.parse_args(argv[1:])
 
     if args:
