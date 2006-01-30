@@ -67,7 +67,19 @@ def write_files(edits, filenames):
             print str(err)
             continue
         for frame, value in edits:
-            frame = mutagen.id3.Frames[frame](encoding=3, text=value)
+            if frame == "COMM":
+                values = value.split(":")
+                if len(values) == 1:
+                    value, desc, lang = values[0], "", "eng"
+                elif len(values) == 2:
+                    desc, value, lang = values[0], values[1], "eng"
+                else:
+                    value = ":".join(values[1:-1])
+                    desc, lang = values[0], values[-1]
+                frame = mutagen.id3.COMM(
+                    encoding=3, text=value, lang=lang, desc=desc)
+            else:
+                frame = mutagen.id3.Frames[frame](encoding=3, text=value)
             id3.loaded_frame(frame)
         id3.save(filename)
 
@@ -82,6 +94,8 @@ def list_tags(filenames):
             for frame in id3.values():
                 name = type(frame).__name__
                 desc = frame.__doc__.split("\n")[0]
+                try: desc += " [%s]" % frame.desc
+                except AttributeError: pass
                 strings.append('%s (%s): %s' % (name, desc, str(frame)))
             strings.sort()
             print "\n".join(strings)
@@ -126,6 +140,10 @@ def main(argv):
         "-t", "--song", metavar='"SONG"', action="callback",
         help="Set the song title information", type="string",
         callback=lambda *args: args[3].edits.append(("--TIT2", args[2])))
+    parser.add_option(
+        "-c", "--comment", metavar='"DESCRIPTION":"COMMENT":"LANGUAGE"',
+        action="callback", help="Set the comment information", type="string",
+        callback=lambda *args: args[3].edits.append(("--COMM", args[2])))
     parser.add_option(
         "-g", "--genre", metavar='"GENRE"', action="callback",
         help="Set the genre or genre number", type="string",
