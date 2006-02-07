@@ -43,7 +43,10 @@ from mutagen import Metadata
 class APEv2(Metadata):
     """An APEv2 contains the tags in the file. It behaves much like a
     dictionary of key/value pairs, except that the keys must be strings,
-    and the values a support APE tag value."""
+    and the values a support APE tag value.
+
+    ID3v1 tags are silently ignored and overwritten."""
+
     def __init__(self, filename=None):
         self.filename = filename
         if filename: self.load(filename)
@@ -81,33 +84,80 @@ class APEv2(Metadata):
             value = f.read(size)
             self[key] = APEValue(value, kind)
 
+    def __header_start(self, fileobj):
+        # Return a tuple of (position, is_at_end). If no tags are found,
+        # position is None.
+        #
+        # A tag that is at both the start and end of the file (i.e. is
+        # the entire content of the file) is considered to not be at
+        # the start.
+        #
+        # As a side effect, the file object position pointer will be placed
+        # at the appropriate offset, or at the end if no tag is found.
+
+        # Check for a simple footer.
+        try: fileobj.seek(-32, 2)
+        except IOError:
+            fileobj.seek(0, 2)
+            return None, False
+        if fileobj.read(8) == "APETAGEX":
+            fileobj.seek(-8, 1)
+            return fileobj.tell(), False
+
+        # Check for a tag at the start.
+        fileobj.seek(0, 0)
+        if fileobj.read(8) == "APETAGEX":
+            fileobj.seek(0, 0)
+            return fileobj.tell(), True
+
+        # Check for an APEv2 tag followed by an ID3v1 tag at the end.
+        try: fileobj.seek(-128, 2)
+        except IOError: return None, False
+        if fileobj.read(3) == "TAG":
+            try: fileobj.seek(-35, 1) # "TAG" + header length
+            except IOError:
+                fileobj.seek(0, 2)
+                return None, False
+            if fileobj.read(8) == "APETAGEX":
+                fileobj.seek(-8, 1)
+                return fileobj.tell(), False
+
+        fileobj.seek(0, 2)
+        return None, False
+
     def __tag_start(self, f):
-        try: f.seek(-32, 2)
-        except IOError: f.seek(0, 0)
-        if f.read(8) == "APETAGEX":
+        # Find the start of the actual tag data, by finding and parsing
+        # a header or footer. Or, if no tag data is found, use the
+        # end of the file.
+
+        pos, header = self.__header_start(f)
+        if pos is None or pos == 0:
+            # No tag was found, or we found a header. Either way, the
+            # current position is the correct offset.
+            return f.tell(), header
+        else:
+            assert(f.read(8) == "APETAGEX")
             f.read(4) # version
             tag_size = _read_int(f.read(4))
             items = _read_int(f.read(4))
             flags = _read_int(f.read(4))
             if flags & HAS_HEADER: offset = 32
             else: offset = 0
-            f.seek(-(tag_size + offset), 2) # start of header *or* data
+            # Seek to start of header, or the data if there's no header.
+            f.seek(-(tag_size + offset), 2)
             value = f.tell()
 
             while value > 0:
                 # Clean up broken writing from pre-Mutagen PyMusepack.
                 # It didn't remove the first 24 bytes of header.
                 try: f.seek(-24, 1)
-                except IOError: return value
+                except IOError: return value, header
                 else:
                     if f.read(8) == "APETAGEX":
                         value = f.tell() - 8
                         f.seek(-8, 1)
-                    else: return value
-            else: return value
-        else:
-            f.seek(0, 2)
-            return f.tell()
+                    else: return value, header
+            else: return value, header
 
     # 32 bytes header/footer; they should be identical except
     # for the IS_HEADER bit.
@@ -120,12 +170,13 @@ class APEv2(Metadata):
     # least a footer, a APE tag in the beginning of a file (strongly
     # unrcommneded) must have at least a header."
     # This module only supports tags at the end.
-
     def __find_tag(self, f):
-        try: f.seek(-32, 2)
-        except IOError: return None, 0
-        data = f.read(32)
-        if data.startswith("APETAGEX"):
+        pos, is_at_start = self.__header_start(f)
+        if pos is None: return None, 0
+        else:
+            data = f.read(32)
+            assert(data.startswith("APETAGEX"))
+
             # 4 byte version
             version = _read_int(data[8:12])
             if version < 2000 or version >= 3000:
@@ -140,18 +191,12 @@ class APEv2(Metadata):
 
             # 4 byte flags
             flags = _read_int(data[20:24])
-            if flags & IS_HEADER:
+            if flags & IS_HEADER and not is_at_start:
                 raise APENoHeaderError("Found header at end of file")
 
             f.seek(-tag_size, 2)
             # tag size includes footer
             return f.read(tag_size - 32), item_count
-        else:
-            f.seek(0, 0)
-            if f.read(8) == "APETAGEX":
-                raise APENoHeaderError(
-                    "APEv2 at start of file is not (yet) supported")
-            return None, 0
 
     def __contains__(self, k):
         return super(APEv2, self).__contains__(APEKey(k))
@@ -192,7 +237,10 @@ class APEv2(Metadata):
         a header and a footer."""
         filename = filename or self.filename
         f = file(filename, "ab+")
-        offset = self.__tag_start(f)
+        offset, is_at_start = self.__tag_start(f)
+
+        if is_at_start:
+            raise NotImplementedError("APEv2 tags at start not supported")
 
         f.seek(offset, 0)
         f.truncate()
@@ -226,7 +274,11 @@ class APEv2(Metadata):
         """Remove tags from a file."""
         filename = filename or self.filename
         f = file(filename, "ab+")
-        offset = self.__tag_start(f)
+        offset, is_at_start = self.__tag_start(f)
+
+        if is_at_start:
+            raise NotImplementedError("APEv2 tags at start not supported")
+
         f.seek(offset, 0)
         f.truncate()
         f.close()
