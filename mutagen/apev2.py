@@ -40,6 +40,110 @@ class APEBadItemError(error, ValueError): pass
 
 from mutagen import Metadata
 
+class _APEv2Data(object):
+    # Store offsets of the important parts of the file.
+    start = header = data = footer = end = None
+    # Footer or header; seek here and read 32 to get version/size/items/flags
+    metadata = None
+    # Actual tag data
+    tag = None
+
+    version = None
+    size = None
+    items = None
+    flags = 0
+
+    # The tag is at the start rather than the end. A tag at both
+    # the start and end of the file (i.e. the tag is the whole file)
+    # is not considered to be at the start.
+    is_at_start = False
+
+    def __init__(self, fileobj):
+        self.__find_metadata(fileobj)
+        self.metadata = max(self.header, self.footer)
+        if self.metadata is None: return
+        self.__fill_missing(fileobj)
+        self.__fix_brokenness(fileobj)
+        if self.data is not None:
+            fileobj.seek(self.data)
+            self.tag = fileobj.read(self.size)
+
+    def __find_metadata(self, fileobj):
+        # Try to find a header or footer.
+
+        # Check for a simple footer.
+        try: fileobj.seek(-32, 2)
+        except IOError:
+            fileobj.seek(0, 2)
+            return
+        if fileobj.read(8) == "APETAGEX":
+            fileobj.seek(-8, 1)
+            self.footer = self.metadata = fileobj.tell()
+            return
+
+        # Check for an APEv2 tag followed by an ID3v1 tag at the end.
+        try: fileobj.seek(-128, 2)
+        except IOError: pass
+        else:
+            if fileobj.read(3) == "TAG":
+                try: fileobj.seek(-35, 1) # "TAG" + header length
+                except IOError: pass
+                else:
+                    if fileobj.read(8) == "APETAGEX":
+                        fileobj.seek(-8, 1)
+                        self.footer = fileobj.tell()
+                        return
+
+        # Check for a tag at the start.
+        fileobj.seek(0, 0)
+        if fileobj.read(8) == "APETAGEX":
+            fileobj.seek(0, 0)
+            self.is_at_start = True
+            self.header = fileobj.tell()
+
+    def __fill_missing(self, fileobj):
+        fileobj.seek(self.metadata)
+        assert(self.metadata is not None)
+        assert(fileobj.read(8) == "APETAGEX")
+
+        self.version = fileobj.read(4)
+        self.size = _read_int(fileobj.read(4))
+        self.items = _read_int(fileobj.read(4))
+        self.flags = _read_int(fileobj.read(4))
+
+        if self.header is not None:
+            # If we're reading the header, the size is the header
+            # offset + the size, which includes the footer.
+            self.end = self.header + self.size
+            fileobj.seek(self.end - 32, 0)
+            if fileobj.read(8) == "APETAGEX":
+                self.footer = self.end - 32
+            self.data = self.header + 32
+        elif self.footer is not None:
+            self.end = self.footer + 32
+            self.data = self.end - self.size
+            if self.flags & HAS_HEADER: self.header = self.data - 32
+            else: self.header = self.data
+        else: raise APENoHeaderError("No APE tag found")
+
+    def __fix_brokenness(self, fileobj):
+        # Fix broken tags written with PyMusepack.
+        if self.header is not None: start = self.header
+        else: start = self.data
+        fileobj.seek(start)
+
+        while start > 0:
+            # Clean up broken writing from pre-Mutagen PyMusepack.
+            # It didn't remove the first 24 bytes of header.
+            try: fileobj.seek(-24, 1)
+            except IOError: break
+            else:
+                if fileobj.read(8) == "APETAGEX":
+                    fileobj.seek(-8, 1)
+                    start = fileobj.tell()
+                else: break
+        self.start = start
+
 class APEv2(Metadata):
     """An APEv2 contains the tags in the file. It behaves much like a
     dictionary of key/value pairs, except that the keys must be strings,
@@ -56,14 +160,12 @@ class APEv2(Metadata):
         self.filename = filename
 
         fileobj = file(filename, "rb")
-        try:
-            tag, count = self.__find_tag(fileobj)
+        try: data = _APEv2Data(fileobj)
         except EOFError:
             raise APENoHeaderError("%s: too small (%d bytes)" %(
                 filename, os.path.getsize(filename)))
-
         fileobj.close()
-        if tag: self.__parse_tag(tag, count)
+        if data.tag: self.__parse_tag(data.tag, data.items)
         else: raise APENoHeaderError("No APE tag found")
 
     def __parse_tag(self, tag, count):
@@ -83,120 +185,6 @@ class APEv2(Metadata):
             key = key[:-1]
             value = f.read(size)
             self[key] = APEValue(value, kind)
-
-    def __header_start(self, fileobj):
-        # Return a tuple of (position, is_at_end). If no tags are found,
-        # position is None.
-        #
-        # A tag that is at both the start and end of the file (i.e. is
-        # the entire content of the file) is considered to not be at
-        # the start.
-        #
-        # As a side effect, the file object position pointer will be placed
-        # at the appropriate offset, or at the end if no tag is found.
-
-        # Check for a simple footer.
-        try: fileobj.seek(-32, 2)
-        except IOError:
-            fileobj.seek(0, 2)
-            return None, False
-        if fileobj.read(8) == "APETAGEX":
-            fileobj.seek(-8, 1)
-            return fileobj.tell(), False
-
-        # Check for a tag at the start.
-        fileobj.seek(0, 0)
-        if fileobj.read(8) == "APETAGEX":
-            fileobj.seek(0, 0)
-            return fileobj.tell(), True
-
-        # Check for an APEv2 tag followed by an ID3v1 tag at the end.
-        try: fileobj.seek(-128, 2)
-        except IOError: return None, False
-        if fileobj.read(3) == "TAG":
-            try: fileobj.seek(-35, 1) # "TAG" + header length
-            except IOError:
-                fileobj.seek(0, 2)
-                return None, False
-            if fileobj.read(8) == "APETAGEX":
-                fileobj.seek(-8, 1)
-                return fileobj.tell(), False
-
-        fileobj.seek(0, 2)
-        return None, False
-
-    def __tag_start(self, f):
-        # Find the start of the actual tag data, by finding and parsing
-        # a header or footer. Or, if no tag data is found, use the
-        # end of the file.
-
-        pos, header = self.__header_start(f)
-        if pos is None or pos == 0:
-            # No tag was found, or we found a header. Either way, the
-            # current position is the correct offset.
-            return f.tell(), header
-        else:
-            assert(f.read(8) == "APETAGEX")
-            f.read(4) # version
-            tag_size = _read_int(f.read(4))
-            items = _read_int(f.read(4))
-            flags = _read_int(f.read(4))
-            if flags & HAS_HEADER: offset = 32
-            else: offset = 0
-            # Seek to start of header, or the data if there's no header.
-            f.seek(-(tag_size + offset), 2)
-            value = f.tell()
-
-            while value > 0:
-                # Clean up broken writing from pre-Mutagen PyMusepack.
-                # It didn't remove the first 24 bytes of header.
-                try: f.seek(-24, 1)
-                except IOError: return value, header
-                else:
-                    if f.read(8) == "APETAGEX":
-                        value = f.tell() - 8
-                        f.seek(-8, 1)
-                    else: return value, header
-            else: return value, header
-
-    # 32 bytes header/footer; they should be identical except
-    # for the IS_HEADER bit.
-    # 4B: Int tag version (== 2000, 2.000)
-    # 4B: Tag size including footer, not including header
-    # 4B: Item count
-    # 4B: Global flags; the important part is the IS_HEADER flag.
-
-    # "An APE tag at the end of a file (strongly recommended) must have at
-    # least a footer, a APE tag in the beginning of a file (strongly
-    # unrcommneded) must have at least a header."
-    # This module only supports tags at the end.
-    def __find_tag(self, f):
-        pos, is_at_start = self.__header_start(f)
-        if pos is None: return None, 0
-        else:
-            data = f.read(32)
-            assert(data.startswith("APETAGEX"))
-
-            # 4 byte version
-            version = _read_int(data[8:12])
-            if version < 2000 or version >= 3000:
-                raise APEUnsupportedVersionError(
-                    "module only supports APEv2 (2000-2999), has %d" % version)
-
-            # 4 byte tag size
-            tag_size = _read_int(data[12:16])
-
-            # 4 byte item count
-            item_count = _read_int(data[16:20])
-
-            # 4 byte flags
-            flags = _read_int(data[20:24])
-            if flags & IS_HEADER and not is_at_start:
-                raise APENoHeaderError("Found header at end of file")
-
-            f.seek(-tag_size, 2)
-            # tag size includes footer
-            return f.read(tag_size - 32), item_count
 
     def __contains__(self, k):
         return super(APEv2, self).__contains__(APEKey(k))
@@ -237,13 +225,14 @@ class APEv2(Metadata):
         a header and a footer."""
         filename = filename or self.filename
         f = file(filename, "ab+")
-        offset, is_at_start = self.__tag_start(f)
+        data = _APEv2Data(f)
 
-        if is_at_start:
+        if data.is_at_start:
             raise NotImplementedError("APEv2 tags at start not supported")
-
-        f.seek(offset, 0)
-        f.truncate()
+        elif data.start is not None:
+            f.seek(data.start)
+            f.truncate()
+        else: f.seek(0, 2)
 
         # "APE tags items should be sorted ascending by size... This is
         # not a MUST, but STRONGLY recommended. Actually the items should
@@ -273,15 +262,10 @@ class APEv2(Metadata):
     def delete(self, filename=None):
         """Remove tags from a file."""
         filename = filename or self.filename
-        f = file(filename, "ab+")
-        offset, is_at_start = self.__tag_start(f)
-
-        if is_at_start:
-            raise NotImplementedError("APEv2 tags at start not supported")
-
-        f.seek(offset, 0)
-        f.truncate()
-        f.close()
+        fileobj = file(filename, "ab+")
+        data = _APEv2Data(fileobj)
+        if data.start is not None and data.size is not None:
+            self._delete_bytes(fileobj, data.end - data.start, data.start)
 
 def delete(filename):
     """Remove tags from a file."""

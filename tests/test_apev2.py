@@ -9,6 +9,8 @@ OLD = os.path.join(DIR, "data", "oldtag.apev2")
 BROKEN = os.path.join(DIR, "data", "brokentag.apev2")
 
 class APEWriter(TestCase):
+    offset = 0
+
     def setUp(self):
         import shutil
         shutil.copy(SAMPLE, SAMPLE + ".new")
@@ -24,18 +26,19 @@ class APEWriter(TestCase):
         self.tag = mutagen.apev2.APEv2(SAMPLE + ".new")
 
     def test_changed(self):
-        size = os.path.getsize(SAMPLE + ".new")
+        size = os.path.getsize(SAMPLE + ".new") 
         self.tag.save()
-        self.failUnlessEqual(os.path.getsize(SAMPLE + ".new"), size)
+        self.failUnlessEqual(
+            os.path.getsize(SAMPLE + ".new"), size - self.offset)
 
     def test_fix_broken(self):
         # Clean up garbage from a bug in pre-Mutagen APEv2.
+        # This also tests removing ID3v1 tags on writes.
         self.failIfEqual(os.path.getsize(OLD), os.path.getsize(BROKEN))
         tag = mutagen.apev2.APEv2(BROKEN)
         tag.save(BROKEN + ".new")
         self.failUnlessEqual(
             os.path.getsize(OLD), os.path.getsize(BROKEN+".new"))
-
 
     def test_readback(self):
         for k, v in self.tag.items():
@@ -49,8 +52,8 @@ class APEWriter(TestCase):
     def test_delete(self):
         mutagen.apev2.delete(SAMPLE + ".justtag")
         mutagen.apev2.delete(SAMPLE + ".new")
-        self.failUnlessEqual(os.path.getsize(SAMPLE + ".justtag"), 0)
-        self.failUnlessEqual(os.path.getsize(SAMPLE),
+        self.failUnlessEqual(os.path.getsize(SAMPLE + ".justtag"), self.offset)
+        self.failUnlessEqual(os.path.getsize(SAMPLE) + self.offset,
                              os.path.getsize(SAMPLE + ".new"))
 
     def tearDown(self):
@@ -94,6 +97,35 @@ class APEReader(TestCase):
         self.failUnlessEqual("07", self.tag["track"])
 
         self.failIfEqual(self.tag["album"], "A test Case")
+
+class APEv2ThenID3v1Reader(APEReader):
+    def setUp(self):
+        import shutil
+        shutil.copy(OLD, OLD + ".new")
+        f = file(OLD + ".new", "ab+")
+        f.write("TAG" + "\x00" * 125)
+        f.close()
+        self.tag = mutagen.apev2.APEv2(OLD + ".new")
+
+    def tearDown(self):
+        os.unlink(OLD + ".new")
+registerCase(APEv2ThenID3v1Reader)
+
+class APEv2ThenID3v1Writer(APEWriter):
+    offset = 128
+
+    def setUp(self):
+        super(APEv2ThenID3v1Writer, self).setUp()
+        f = file(SAMPLE + ".new", "ab+")
+        f.write("TAG" + "\x00" * 125)
+        f.close()
+        f = file(BROKEN + ".new", "ab+")
+        f.write("TAG" + "\x00" * 125)
+        f.close()
+        f = file(SAMPLE + ".justtag", "ab+")
+        f.write("TAG" + "\x00" * 125)
+        f.close()
+registerCase(APEv2ThenID3v1Writer)
 
 class APEKeyTest(TestCase):
     from mutagen.apev2 import APEKey
