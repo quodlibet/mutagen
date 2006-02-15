@@ -889,6 +889,12 @@ class BrokenDiscarded(TestCase):
             data = head + tail
             self.assertEquals(0, len(list(id3.read_frames(data, Frames))))
 
+    def test_bad_unicodedecode(self):
+        from mutagen.id3 import COMM, ID3JunkFrameError
+        # 7 bytes of "UTF16" data.
+        data = '\x01\x00\x00\x00\xff\xfe\x00\xff\xfeh\x00'
+        self.assertRaises(ID3JunkFrameError, COMM.fromData, _24, 0x00, data)
+
 class BrokenButParsed(TestCase):
     def test_missing_encoding(self):
         from mutagen.id3 import TIT2

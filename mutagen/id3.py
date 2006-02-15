@@ -753,7 +753,10 @@ class Frame(object):
     def _readData(self, data):
         odata = data
         for reader in self._framespec:
-            if len(data): value, data = reader.read(self, data)
+            if len(data):
+                try: value, data = reader.read(self, data)
+                except UnicodeDecodeError:
+                    raise ID3JunkFrameError
             else: raise ID3JunkFrameError
             setattr(self, reader.name, value)
         if data.strip('\x00'):
