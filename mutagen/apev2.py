@@ -16,8 +16,7 @@
 """This module reads and writes APEv2 metadata tags, the kind
 usually found in Musepack files. For more information, see
 http://wiki.hydrogenaudio.org/index.php?title=APEv2_specification
-
-It does not support APE tags at the start of a file, only at the end."""
+"""
 
 import os, struct
 from cStringIO import StringIO
@@ -228,7 +227,9 @@ class APEv2(Metadata):
         data = _APEv2Data(f)
 
         if data.is_at_start:
-            raise NotImplementedError("APEv2 tags at start not supported")
+            f.close()
+            self.delete(filename)
+            return self.save(filename)
         elif data.start is not None:
             f.seek(data.start)
             f.truncate()
