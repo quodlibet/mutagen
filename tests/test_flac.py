@@ -91,12 +91,22 @@ class TFLAC(TestCase):
     def setUp(self):
         shutil.copy(self.SAMPLE, self.NEW)
         self.failUnlessEqual(file(self.SAMPLE).read(), file(self.NEW).read())
+        self.flac = FLAC(self.NEW)
 
     def test_info(self):
         self.failUnlessAlmostEqual(FLAC(self.NEW).info.length, 3.7, 1)
 
+    def test_keys(self):
+        self.failUnlessEqual(self.flac.keys(), self.flac.vc.keys())
+
+    def test_values(self):
+        self.failUnlessEqual(self.flac.values(), self.flac.vc.values())
+
+    def test_items(self):
+        self.failUnlessEqual(self.flac.items(), self.flac.vc.items())
+
     def test_vc(self):
-        self.failUnlessEqual(FLAC(self.NEW).vc['title'][0], 'Silence')
+        self.failUnlessEqual(self.flac['title'][0], 'Silence')
 
     def test_write_nochange(self):
         f = FLAC(self.NEW)
@@ -105,23 +115,30 @@ class TFLAC(TestCase):
 
     def test_write_changetitle(self):
         f = FLAC(self.NEW)
-        f.vc["title"] = "A New Title"
+        f["title"] = "A New Title"
         f.save()
         f = FLAC(self.NEW)
-        self.failUnlessEqual(f.vc["title"][0], "A New Title")
+        self.failUnlessEqual(f["title"][0], "A New Title")
 
     def test_force_grow(self):
         f = FLAC(self.NEW)
-        f.vc["faketag"] = ["a" * 1000] * 1000
+        f["faketag"] = ["a" * 1000] * 1000
         f.save()
         f = FLAC(self.NEW)
-        self.failUnlessEqual(f.vc["faketag"][0], "a" * 1000)
+        self.failUnlessEqual(f["faketag"][0], "a" * 1000)
 
     def test_add_vc(self):
         f = FLAC()
         self.failIf(f.vc)
         f.add_vorbiscomment()
         self.failUnless(f.vc == [])
+        self.failUnlessRaises(ValueError, f.add_vorbiscomment)
+
+    def test_add_vc_implicit(self):
+        f = FLAC()
+        self.failIf(f.vc)
+        f["foo"] = "bar"
+        self.failUnless(f.vc == [("foo", "bar")])
         self.failUnlessRaises(ValueError, f.add_vorbiscomment)
 
     def tearDown(self):

@@ -196,6 +196,30 @@ class FLAC(object):
             self.metadata_blocks.append(self.vc)
         else: raise FLACVorbisError("a Vorbis comment already exists")
 
+    def __getitem__(self, key):
+        if self.vc is None: raise KeyError, key
+        else: return self.vc[key]
+
+    def __setitem__(self, key, value):
+        if self.vc is None: self.add_vorbiscomment()
+        self.vc[key] = value
+
+    def __delitem__(self, key):
+        if self.vc is None: raise KeyError, key
+        else: del(self.vc[key])
+
+    def keys(self):
+        if self.vc is None: return []
+        else: return self.vc.keys()
+
+    def values(self):
+        if self.vc is None: return []
+        else: return self.vc.values()
+
+    def items(self):
+        if self.vc is None: return []
+        else: return self.vc.items()
+
     def load(self, filename):
         self.filename = filename
         f = file(filename, "rb")
