@@ -29,10 +29,7 @@ def main(argv):
     for kind, Klass in formats.items():
         opt = kind.lower()
         parser.add_option(
-            "--" + opt, action="store_true", dest=kind, default=True,
-            help="Check for %s tags" % kind)
-        parser.add_option(
-            "--no-" + opt, action="store_false", dest=kind,
+            "--no-" + opt, action="store_false", dest=kind, default=True,
             help="Don't check for %s tags" % kind)
 
     (options, args) = parser.parse_args(argv[1:])
