@@ -10,7 +10,7 @@
 # $Id$
 #
 
-version = (0, 0, -1)
+version = (0, 9, 0)
 
 """
 mutagen aims to be an all purpose tagging library.
@@ -18,10 +18,10 @@ mutagen aims to be an all purpose tagging library.
     import mutagen.[format]
     metadata = mutagen.[format].Open(filename)
 
-metadata is now acts like a dictionary of tags in the file. tags are
-generally a list of string-like values, but may have additional methods
-available depending on tag or format. They may also be entirely different
-objects for certain keys, again depending on format.
+metadata acts like a dictionary of tags in the file. Tags are generally a
+list of string-like values, but may have additional methods available
+depending on tag or format. They may also be entirely different objects
+for certain keys, again depending on format.
 """
 
 class Metadata(dict):
