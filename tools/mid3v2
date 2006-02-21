@@ -16,7 +16,7 @@ class ID3OptionParser(OptionParser):
         return OptionParser.__init__(
             self, version=version,
             usage="%prog [OPTION] [FILE]...",
-            description="Replacement for id3lib's id3v2.")
+            description="Mutange-based replacement for id3lib's id3v2.")
 
     def format_help(self, *args, **kwargs):
         text = OptionParser.format_help(self, *args, **kwargs)
@@ -85,20 +85,15 @@ def write_files(edits, filenames):
 
 def list_tags(filenames):
     for filename in filenames:
-        print "id3v2 tag info for %s:" % filename
+        print "IDv2 tag info for %s:" % filename
         try: id3 = mutagen.id3.ID3(filename, translate=False)
         except Exception, err:
             print str(err)
         else:
             strings = []
+            enc = locale.getpreferredencoding()
             for frame in id3.values():
-                name = type(frame).__name__
-                desc = frame.__doc__.split("\n")[0]
-                try: desc += " [%s]" % frame.desc
-                except AttributeError: pass
-                strings.append('%s (%s): %s' % (name, desc, str(frame)))
-            strings.sort()
-            print "\n".join(strings)
+                print frame.pprint().encode(enc, "replace")
 
 def main(argv):
     parser = ID3OptionParser()

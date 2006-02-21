@@ -750,6 +750,18 @@ class Frame(object):
             kw.append('%s=%r' % (attr.name, getattr(self, attr.name)))
         return '%s(%s)' % (type(self).__name__, ', '.join(kw))
 
+    def pprint(self):
+        text, data = self._pprint()
+        if data:
+            items = data.items()
+            items.sort()
+            data = " " + " ".join(map("[%s:%s]".__mod__, items))
+        else: data = ""
+        if text: text = ": " + text
+        name = type(self).__name__
+        doc = type(self).__doc__.splitlines()[0]
+        return "%s (%s%s)%s" % (name, doc, data, text)
+
     def _readData(self, data):
         odata = data
         for reader in self._framespec:
@@ -768,6 +780,12 @@ class Frame(object):
         for writer in self._framespec:
             data.append(writer.write(self, getattr(self, writer.name)))
         return ''.join(data)
+
+    def pprint(self):
+        return "%s=%s" % (type(self).__name__, self._pprint())
+
+    def _pprint(self):
+        return "[unrepresentable data]"
 
     def fromData(cls, id3, tflags, data):
 
@@ -878,6 +896,7 @@ class TextFrame(Frame):
     def __iter__(self): return iter(self.text)
     def append(self, value): return self.text.append(value)
     def extend(self, value): return self.text.extend(value)
+    def _pprint(self): return " / ".join(self.text)
 
 class NumericTextFrame(TextFrame):
     """In addition to the TextFrame methods, these frames support the
@@ -901,12 +920,15 @@ class TimeStampTextFrame(TextFrame):
         MultiSpec('text', TimeStampSpec('stamp'), sep=u',') ]
     def __str__(self): return self.__unicode__().encode('utf-8')
     def __unicode__(self): return ','.join([stamp.text for stamp in self.text])
+    def _pprint(self):
+        return " / ".join([stamp.text for stamp in self.text])
 
 class UrlFrame(Frame):
     _framespec = [ Latin1TextSpec('url') ]
     def __str__(self): return self.url.encode('utf-8')
     def __unicode__(self): return self.url
     def __eq__(self, other): return self.url == other
+    def _pprint(self): return self.url
 
 class UrlFrameU(UrlFrame):
     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.url))
@@ -969,6 +991,9 @@ class TCON(TextFrame):
     genres = property(__get_genres, __set_genres, None,
                       "A list of genres parsed from the raw text data.")
 
+    def _pprint(self):
+        return " / ".join(self.genres)
+
 class TCOP(TextFrame): "Copyright (c)"
 class TDAT(TextFrame): "Date of recording (DDMM)"
 class TDEN(TimeStampTextFrame): "Encoding Time"
@@ -1020,6 +1045,7 @@ class TXXX(TextFrame):
     _framespec = [ EncodingSpec('encoding'), EncodedTextSpec('desc'),
         MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000') ]
     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.desc))
+    def _pprint(self): return "%s=%s" % (self.desc, " / ".join(self.text))
 
 class WCOM(UrlFrameU): "Commercial Information"
 class WCOP(UrlFrame): "Copyright Information"
@@ -1075,6 +1101,8 @@ class COMM(TextFrame):
         EncodedTextSpec('desc'),
         MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000') ]
     HashKey = property(lambda s: '%s:%s:%r'%(s.FrameID, s.desc, s.lang))
+    def _pprint(self): return "%s=%s=%s" % (
+        self.desc, self.lang, " / ".join(self.text))
 
 class RVA2(Frame):
     """Relative volume adjustment (2)
@@ -1120,6 +1148,9 @@ class APIC(Frame):
         ByteSpec('type'), EncodedTextSpec('desc'), BinaryDataSpec('data') ]
     def __eq__(self, other): return self.data == other
     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.desc))
+    def _pprint(self):
+        return "%s (%s, %d bytes)" % (
+            self.desc, self.mime, len(self.data))
 
 class PCNT(Frame):
     "Play counter"
@@ -1127,6 +1158,7 @@ class PCNT(Frame):
 
     def __eq__(self, other): return self.count == other
     def __pos__(self): return self.count
+    def _pprint(self): return unicode(self.count)
 
 class POPM(Frame):
     "Popularimeter"
@@ -1136,6 +1168,8 @@ class POPM(Frame):
 
     def __eq__(self, other): return self.rating == other
     def __pos__(self): return self.rating
+    def _pprint(self): return "%s=%s %s/255" % (
+        self.email, self.count, self.rating)
 
 class GEOB(Frame):
     "General Encapsulated Object"
@@ -1185,6 +1219,10 @@ class UFID(Frame):
     def __eq__(s, o):
         if isinstance(o, UFI): return s.owner == o.owner and s.data == o.data
         else: return s.data == o
+    def _pprint(self):
+        isascii = ord(max(self.data)) < 128
+        if isascii: return "%s=%s" % (self.owner, self.data)
+        else: return "%s (%d bytes)" % len(self.data)
 
 class USER(Frame):
     "Terms of use"
@@ -1195,6 +1233,7 @@ class USER(Frame):
     def __str__(self): return self.text.encode('utf-8')
     def __unicode__(self): return self.text
     def __eq__(self, other): return self.text == other
+    def _pprint(self): "%s=%s" % (self.lang, self.text)
 
 class OWNE(Frame):
     "Ownership frame"
@@ -1244,6 +1283,10 @@ class PRIV(Frame):
         s.FrameID, s.owner, s.data.decode('latin1')))
     def __str__(self): return self.data
     def __eq__(self, other): return self.data == other
+    def _pprint(self):
+        isascii = ord(max(self.data)) < 128
+        if isascii: return "%s=%s" % (self.owner, self.data)
+        else: return "%s (%d bytes)" % len(self.data)
 
 class SIGN(Frame):
     "Signature frame"
