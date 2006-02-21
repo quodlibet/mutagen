@@ -1,0 +1,57 @@
+#!/usr/bin/python
+# Full tag list for any given file.
+# Copyright 2005 Joe Wreschnig
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of version 2 of the GNU General Public License as
+# published by the Free Software Foundation.
+#
+# $Id: id3.py 1435 2005-07-26 03:34:25Z mu $
+
+import os
+import sys
+import locale
+
+from optparse import OptionParser
+
+def main(argv):
+    from mutagen.id3 import ID3
+    from mutagen.apev2 import APEv2
+    from mutagen.flac import FLAC
+
+    parser = OptionParser()
+    formats = {
+        "ID3": ID3,
+        "APEv2": APEv2,
+        "FLAC": FLAC,
+        }
+
+    for kind, Klass in formats.items():
+        opt = kind.lower()
+        parser.add_option(
+            "--" + opt, action="store_true", dest=kind, default=True,
+            help="Check for %s tags" % kind)
+        parser.add_option(
+            "--no-" + opt, action="store_false", dest=kind,
+            help="Don't check for %s tags" % kind)
+
+    (options, args) = parser.parse_args(argv[1:])
+    if not args:
+        raise SystemExit(parser.print_help() or 1)
+
+    enc = locale.getpreferredencoding()
+    for filename in args:
+        print "--", filename
+        for kind, Kind in formats.items():
+            if getattr(options, kind):
+                print "- %s tags" % kind
+                try: print Kind(filename).pprint().encode(enc, 'replace')
+                except Exception, err: print str(err)
+
+if __name__ == "__main__":
+    try: import mutagen
+    except ImportError:
+        # Run as ./mid3v2 out of tools/
+        sys.path.append(os.path.abspath("../"))
+        import mutagen
+    main(sys.argv)
