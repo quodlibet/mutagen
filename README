@@ -17,11 +17,11 @@ the source code.
 Testing the Module
 ------------------
 To test Mutagen's ID3 reading support, run
- $ tools/id3report <your top-level MP3 directory here>
+ $ cd tools && mutagen-pony <your top-level MP3 directory here>
 Mutagen will try to load all of them, and report any errors.
 
 To look at the tags in files, run
- $ ./tools/mutagen-inspect filename ...
+ $ cd tools && mutagen-inspect filename ...
 
 To run our test suite,
  $ ./_sanity.sh
