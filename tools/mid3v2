@@ -1,4 +1,12 @@
 #!/usr/bin/python
+# Pretend to be /usr/bin/id3v2 from id3lib, sort of.
+# Copyright 2005 Joe Wreschnig
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of version 2 of the GNU General Public License as
+# published by the Free Software Foundation.
+#
+# $Id: id3.py 1435 2005-07-26 03:34:25Z mu $
 
 import os
 import sys
@@ -6,7 +14,7 @@ import locale
 
 from optparse import OptionParser, SUPPRESS_HELP
 
-VERSION = (0, 0)
+VERSION = (1, 0)
 
 class ID3OptionParser(OptionParser):
     def __init__(self):
@@ -84,16 +92,21 @@ def write_files(edits, filenames):
         id3.save(filename)
 
 def list_tags(filenames):
+    enc = locale.getpreferredencoding()
     for filename in filenames:
         print "IDv2 tag info for %s:" % filename
         try: id3 = mutagen.id3.ID3(filename, translate=False)
-        except Exception, err:
-            print str(err)
+        except Exception, err: print str(err)
+        else: print id3.pprint().encode(enc, "replace")
+
+def list_tags_raw(filenames):
+    enc = locale.getpreferredencoding()
+    for filename in filenames:
+        print "Raw IDv2 tag info for %s:" % filename
+        try: id3 = mutagen.id3.ID3(filename, translate=False)
+        except Exception, err: print str(err)
         else:
-            strings = []
-            enc = locale.getpreferredencoding()
-            for frame in id3.values():
-                print frame.pprint().encode(enc, "replace")
+            for frame in id3.values(): print repr(frame)
 
 def main(argv):
     parser = ID3OptionParser()
@@ -109,6 +122,9 @@ def main(argv):
     parser.add_option(
         "-l", "--list", action="store_const", dest="action", const="list",
         help="Lists the tag(s) on the file(s)")
+    parser.add_option(
+        "--list-raw", action="store_const", dest="action", const="list-raw",
+        help="Lists the tag(s) on the file(s) in Python format")
     parser.add_option(
         "-d", "--delete-v2", action="store_const", dest="action",
         const="delete-v2", help="Deletes ID3v2 tags")
@@ -165,6 +181,7 @@ def main(argv):
     if args:
         if parser.edits: write_files(parser.edits, args)
         elif options.action in [None, 'list']: list_tags(args)
+        elif options.action == "list-raw": list_tags_raw(args)
         elif options.action == "convert": write_files([], args)
         elif options.action.startswith("delete"):
             delete_tags(args, "v1" in options.action, "v2" in options.action)
