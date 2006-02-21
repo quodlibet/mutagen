@@ -154,6 +154,11 @@ class APEv2(Metadata):
         self.filename = filename
         if filename: self.load(filename)
 
+    def pprint(self):
+        items = self.items()
+        items.sort()
+        return "\n".join(["%s=%s" % (k, v.pprint()) for k, v in items])
+
     def load(self, filename):
         """Load tags from the filename."""
         self.filename = filename
@@ -347,13 +352,19 @@ class APETextValue(_APEValue):
         l[i] = v.encode("utf-8")
         self.value = "\0".join(l).encode("utf-8")
 
+    def pprint(self): return " / ".join(self)
+
 class APEBinaryValue(_APEValue):
     """Binary values may be converted to a string of bytes. They are
     used for anything not intended to be human-readable."""
 
+    def pprint(self): return "[%d bytes]" % len(self)
+
 class APEExtValue(_APEValue):
     """An external value is a string containing a URI (http://..., file://...)
     that contains the actual value of the tag."""
+
+    def pprint(self): return "[External] %s" % unicode(self)
 
 # The standard doesn't say anything about the byte ordering, but
 # based on files tested, it's little-endian.

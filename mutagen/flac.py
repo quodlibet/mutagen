@@ -173,6 +173,9 @@ class FLAC(object):
         self.metadata_blocks = []
         if filename is not None: self.load(filename)
 
+    def pprint(self):
+        return "\n".join(["%s=%s" % (k.lower(), v) for k, v in (self.vc or [])])
+
     def __read_metadata_block(self, file):
         byte = ord(file.read(1))
         size = to_int_be(file.read(3))

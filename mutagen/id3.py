@@ -153,6 +153,9 @@ class ID3(mutagen.Metadata):
         for tag in values:
             self[tag.HashKey] = tag
 
+    def pprint(self):
+        return "\n".join(map(Frame.pprint, self.values()))
+
     def loaded_frame(self, tag):
         # turn 2.2 into 2.3/2.4 tags
         if len(type(tag).__name__) == 3: tag = type(tag).__base__(tag)
