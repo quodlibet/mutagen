@@ -19,7 +19,7 @@
 # not interpret the / characters as a separator, and will almost always accept
 # null separators to generate multi-valued text frames.
 
-__all__ = ['ID3', 'Frames', 'Open']
+__all__ = ['ID3', 'Frames', 'Open', 'delete']
 
 import mutagen
 import struct; from struct import unpack, pack

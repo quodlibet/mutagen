@@ -18,6 +18,8 @@ usually found in Musepack files. For more information, see
 http://wiki.hydrogenaudio.org/index.php?title=APEv2_specification
 """
 
+__all__ = ["APEv2", "Open", "delete"]
+
 import os, struct
 from cStringIO import StringIO
 
@@ -272,6 +274,8 @@ class APEv2(Metadata):
         data = _APEv2Data(fileobj)
         if data.start is not None and data.size is not None:
             self._delete_bytes(fileobj, data.end - data.start, data.start)
+
+Open = APEv2
 
 def delete(filename):
     """Remove tags from a file."""

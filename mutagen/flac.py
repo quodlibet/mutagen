@@ -11,6 +11,8 @@
 # FLAC files use Vorbis comments, but in a different fashion.
 # This module doesn't handle Ogg FLAC files, either.
 
+__all__ = ["FLAC", "Open"]
+
 import struct
 from cStringIO import StringIO
 from _vorbis import VCommentDict
@@ -280,3 +282,5 @@ class FLAC(object):
             size = to_int_be(fileobj.read(3))
             fileobj.read(size)
         return fileobj.tell()
+
+Open = FLAC
