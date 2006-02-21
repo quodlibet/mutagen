@@ -1,0 +1,62 @@
+.TH mid3v2 1 "February 20th, 2006"
+.SH NAME
+mid3v2 \- audio tag editor similar to 'id3v2'
+.SH SYNOPSIS
+\fBmid3v2\fR [\fIoptions\fR] \fIfilename\fR ...
+.SH DESCRIPTION
+mid3v2 is a Mutagen-based replacement for id3lib's \fBid3v2\fR. It supports
+ID3v2.4 and more frames; it also does not have the numerous bugs that
+plague \fBid3v2\fR.
+.PP
+This program exists mostly for compatibility with programs that want to tag
+files using \fBid3v2\fR. For a more usable interface, we recommend Ex Falso.
+.SH OPTIONS
+.IP \-f,\ \-\-list\-frames
+Display all supported ID3v2.3/2.4 frames and their meanings.
+.IP \-L,\ \-\-list\-genres
+List all ID3v1 numeric genres. These can be used to set TCON frames,
+but it is not recommended.
+.IP \-l,\ \-\-list
+List all tags in the files. The output format is \fInot\fR the same as
+\fBid3v2\fR's; instead, it is easily parsable and readable. Some tags
+may not have human-readable representations.
+.IP \-\-list\-raw
+List all tags in the files, in raw format. Although this format is
+nominally human-readable, it may be very long if the tag contains
+embedded binary data.
+.IP \-d,\ \-\-delete\-v2
+Delete ID3v2 tags.
+.IP \-s,\ \-\-delete\-v1
+Delete ID3v1 tags.
+.IP \-D, \-\-delete-all
+Delete all ID3 tags.
+.IP \-C,\ \-\-convert
+Convert ID3v1 tags to ID3v2 tags. This will also happen automatically
+during any editing.
+.IP \-a,\ \-\-artist=\fIartist
+Set the artist information (TPE1).
+.IP \-A,\ \-\-album=\fIalbum
+Set the album information (TALB).
+.IP \-t,\ \-\-song=\fItitle
+Set the title information (TIT2).
+.IP \-c,\ \-\-comment=\fIDESCRIPTION:COMMENT:LANGUAGE
+Set a comment (COMM). The language and description may be omitted, in which
+case the language defaults to English, and the description to an empty string.
+.IP \-g,\ \-\-genre=\fIgenre
+Set the genre information (TCON).
+.IP \-y,\ \-\-year=,\ \-\-date=\fIYYYY-[MM-DD]
+Set the year/date information (TDRC).
+.IP \-Tnum/num,\ \-\-track=\fInum/num
+Set the track number (TRCK).
+.PP
+Any text frame (those beginning with T) can be modified or added by
+prefixing the name of the frame with "\-\-". For example,
+\fB\-\-TIT3 "Monkey!"\fR will set the TIT3 (subtitle) frame to \fBMonkey!\fR.
+.SH BUGS
+No sanity checking is done on the editing operations you perform, so
+mid3v2 will happily accept \-\-TSIZ when editing an ID3v2.4 frame. However,
+it will also automatically throw it out during the next edit operation.
+.PP
+There is no way to force an ID3v1 tag to be added.
+.SH AUTHOR
+Joe Wreschnig is the author of mid3v2, but he doesn't like to admit it.
