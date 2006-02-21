@@ -3,7 +3,7 @@
 from distutils.core import setup, Extension
 setup(name="mutagen", version="0.9",
       url="http://www.sacredchao.net/quodlibet/wiki/Development/Mutagen",
-      description="ID3v1.1, 2.2, 2.3, 2.4, APEv2, FLAC reader / 1.1, 2.4, APEv2, FLAC writer",
+      description="read and write ID3v1/ID3v2/APEv2/FLAC audio tags",
       author="Michael Urman",
       license = "GNU GPL v2",
       packages = ["mutagen"],

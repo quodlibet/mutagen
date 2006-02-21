@@ -1,6 +1,6 @@
 Mutagen is an audio metadata tag reader and writer implemented in pure
-Python. It currently supports reading ID3v1.1, ID3v2.2, ID3v2.3, ID3v2.4,
-APEv2, and FLAC, and writing ID3v1.1, ID3v2.4, APEv2, and FLAC.
+Python. It supports reading ID3v1.1, ID3v2.2, ID3v2.3, ID3v2.4, APEv2, and
+FLAC, and writing ID3v1.1, ID3v2.4, APEv2, and FLAC.
 
 The goals are (in rough order of importance):
  * Read as many files as possible
@@ -17,11 +17,11 @@ the source code.
 Testing the Module
 ------------------
 To test Mutagen's ID3 reading support, run
- $ cd tools && mutagen-pony <your top-level MP3 directory here>
+ $ cd tools && ./mutagen-pony <your top-level MP3 directory here>
 Mutagen will try to load all of them, and report any errors.
 
 To look at the tags in files, run
- $ cd tools && mutagen-inspect filename ...
+ $ cd tools && ./mutagen-inspect filename ...
 
 To run our test suite,
  $ ./_sanity.sh
