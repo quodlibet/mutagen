@@ -24,7 +24,7 @@ class ID3OptionParser(OptionParser):
         return OptionParser.__init__(
             self, version=version,
             usage="%prog [OPTION] [FILE]...",
-            description="Mutange-based replacement for id3lib's id3v2.")
+            description="Mutagen-based replacement for id3lib's id3v2.")
 
     def format_help(self, *args, **kwargs):
         text = OptionParser.format_help(self, *args, **kwargs)
