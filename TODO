@@ -5,8 +5,12 @@ mutagen.id3 needs:
  * Perhaps implement tag merging - "intelligently" merge information
    from all known tag formats
  * Polish padding - perhaps make it client selectable
+ * Better cross-compatibility tests with eyeD3.
 
 mutagen.oggvorbis, mutagen.oggflac, mutagen.mp4 needs:
  * To exist
  * Clean MP4 metadata reader at
    http://svn.myrealbox.com/viewcvs/trunk/entagged-sharp/src/Mp4/Util/Mp4TagReader.cs?rev=53657&view=auto
+
+mutagen.flac needs:
+ * delete
