@@ -1289,7 +1289,7 @@ class PRIV(Frame):
     def _pprint(self):
         isascii = ord(max(self.data)) < 128
         if isascii: return "%s=%s" % (self.owner, self.data)
-        else: return "%s (%d bytes)" % len(self.data)
+        else: return "%s (%d bytes)" % (self.owner, len(self.data))
 
 class SIGN(Frame):
     "Signature frame"
