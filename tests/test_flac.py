@@ -93,6 +93,13 @@ class TFLAC(TestCase):
         self.failUnlessEqual(file(self.SAMPLE).read(), file(self.NEW).read())
         self.flac = FLAC(self.NEW)
 
+    def test_delete(self):
+        self.failUnless(self.flac.vc)
+        self.flac.delete()
+        self.failIf(self.flac.vc)
+        flac = FLAC(self.NEW)
+        self.failIf(flac.vc)
+
     def test_info(self):
         self.failUnlessAlmostEqual(FLAC(self.NEW).info.length, 3.7, 1)
 

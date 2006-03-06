@@ -201,6 +201,16 @@ class FLAC(object):
             self.metadata_blocks.append(self.vc)
         else: raise FLACVorbisError("a Vorbis comment already exists")
 
+    def delete(self):
+        """Remove tags from a file."""
+        removed = False
+        for s in list(self.metadata_blocks):
+            if isinstance(s, VCFLACDict):
+                self.metadata_blocks.remove(s)
+                self.vc = None
+                self.save()
+                break
+
     def __getitem__(self, key):
         if self.vc is None: raise KeyError, key
         else: return self.vc[key]
@@ -260,7 +270,7 @@ class FLAC(object):
                 assert len(data) == available
 
         elif len(data) < available:
-            # If we hve too little data, increase padding.
+            # If we have too little data, increase padding.
             self.metadata_blocks[-1].length += (available - len(data))
             data = MetadataBlock.writeblocks(self.metadata_blocks)
             assert len(data) == available
@@ -284,3 +294,7 @@ class FLAC(object):
         return fileobj.tell()
 
 Open = FLAC
+
+def delete(filename):
+    """Remove tags from a file."""
+    FLAC(filename).delete()
