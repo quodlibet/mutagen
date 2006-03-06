@@ -10,7 +10,7 @@
 # $Id$
 #
 
-version = (0, 9, 0)
+version = (1, 0, -1)
 
 """
 mutagen aims to be an all purpose tagging library.
