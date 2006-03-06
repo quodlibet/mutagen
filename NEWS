@@ -1,2 +1,7 @@
+1.0
+ * Add FLAC#delete.
+ * Fix typo in FLAC#save when saving to a non-FLAC file.
+ * Fix typos in PRIV#_pprint, OWNE#_pprint, UFID#_pprint.
+
 0.9 - 2006.02.21
  * Initial release.

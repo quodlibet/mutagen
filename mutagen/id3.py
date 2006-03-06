@@ -753,18 +753,6 @@ class Frame(object):
             kw.append('%s=%r' % (attr.name, getattr(self, attr.name)))
         return '%s(%s)' % (type(self).__name__, ', '.join(kw))
 
-    def pprint(self):
-        text, data = self._pprint()
-        if data:
-            items = data.items()
-            items.sort()
-            data = " " + " ".join(map("[%s:%s]".__mod__, items))
-        else: data = ""
-        if text: text = ": " + text
-        name = type(self).__name__
-        doc = type(self).__doc__.splitlines()[0]
-        return "%s (%s%s)%s" % (name, doc, data, text)
-
     def _readData(self, data):
         odata = data
         for reader in self._framespec:
@@ -1225,7 +1213,7 @@ class UFID(Frame):
     def _pprint(self):
         isascii = ord(max(self.data)) < 128
         if isascii: return "%s=%s" % (self.owner, self.data)
-        else: return "%s (%d bytes)" % len(self.data)
+        else: return "%s (%d bytes)" % (self.owner, len(self.data))
 
 class USER(Frame):
     "Terms of use"
@@ -1236,7 +1224,7 @@ class USER(Frame):
     def __str__(self): return self.text.encode('utf-8')
     def __unicode__(self): return self.text
     def __eq__(self, other): return self.text == other
-    def _pprint(self): "%s=%s" % (self.lang, self.text)
+    def _pprint(self): return "%s=%s" % (self.lang, self.text)
 
 class OWNE(Frame):
     "Ownership frame"
@@ -1308,6 +1296,7 @@ class SEEK(Frame):
 
 Frames = dict([(k,v) for (k,v) in globals().items()
         if len(k)==4 and isinstance(v, type) and issubclass(v, Frame)])
+del(k); del(v)
 
 # ID3v2.2 frames
 class UFI(UFID): "Unique File Identifier"

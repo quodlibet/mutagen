@@ -203,7 +203,6 @@ class FLAC(object):
 
     def delete(self):
         """Remove tags from a file."""
-        removed = False
         for s in list(self.metadata_blocks):
             if isinstance(s, VCFLACDict):
                 self.metadata_blocks.remove(s)
@@ -285,7 +284,7 @@ class FLAC(object):
 
     def __find_audio_offset(self, fileobj):
         if fileobj.read(4) != "fLaC":
-            raise FLACNoHeaderError("%r is not a valid FLAC file" % filename)
+            raise FLACNoHeaderError("%r is not a FLAC file" % fileobj.name)
         byte = 0x00
         while not (byte >> 7) & 1:
             byte = ord(fileobj.read(1))
