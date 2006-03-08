@@ -86,6 +86,9 @@ class VComment(list):
                 except: raise ValueError("%r is not a valid value" % value)
         else: return True
 
+    def clear(self):
+        del(self[:])
+
     def write(self):
         """Return a string encoding the comment data. Validation is
         always done before writing."""
