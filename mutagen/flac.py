@@ -169,14 +169,15 @@ class Padding(MetadataBlock):
 class FLAC(object):
     METADATA_BLOCKS = [StreamInfo, Padding, None, None, VCFLACDict]
 
-    vc = None
+    tags = None
 
     def __init__(self, filename=None):
         self.metadata_blocks = []
         if filename is not None: self.load(filename)
 
     def pprint(self):
-        return "\n".join(["%s=%s" % (k.lower(), v) for k, v in (self.vc or [])])
+        return "\n".join(
+            ["%s=%s" % (k.lower(), v) for k, v in (self.tags or [])])
 
     def __read_metadata_block(self, file):
         byte = ord(file.read(1))
@@ -191,48 +192,51 @@ class FLAC(object):
         else:
             self.metadata_blocks.append(block)
             if block.code == VCFLACDict.code:
-                if self.vc is None: self.vc = block
+                if self.tags is None: self.tags = block
                 else: raise FLACVorbisError("> 1 Vorbis comment block found")
         return (byte >> 7) ^ 1
 
-    def add_vorbiscomment(self):
-        if self.vc is None:
-            self.vc = VCFLACDict()
-            self.metadata_blocks.append(self.vc)
+    def add_tags(self):
+        if self.tags is None:
+            self.tags = VCFLACDict()
+            self.metadata_blocks.append(self.tags)
         else: raise FLACVorbisError("a Vorbis comment already exists")
+    add_vorbiscomment = add_tags
 
     def delete(self):
         """Remove tags from a file."""
         for s in list(self.metadata_blocks):
             if isinstance(s, VCFLACDict):
                 self.metadata_blocks.remove(s)
-                self.vc = None
+                self.tags = None
                 self.save()
                 break
 
+    vc = property(lambda s: s.tags)
+
     def __getitem__(self, key):
-        if self.vc is None: raise KeyError, key
-        else: return self.vc[key]
+        if self.tags is None: raise KeyError, key
+        else: return self.tags[key]
 
     def __setitem__(self, key, value):
-        if self.vc is None: self.add_vorbiscomment()
-        self.vc[key] = value
+        if self.tags is None: self.add_tags()
+        self.tags[key] = value
 
     def __delitem__(self, key):
-        if self.vc is None: raise KeyError, key
-        else: del(self.vc[key])
+        if self.tags is None: raise KeyError, key
+        else: del(self.tags[key])
 
     def keys(self):
-        if self.vc is None: return []
-        else: return self.vc.keys()
+        if self.tags is None: return []
+        else: return self.tags.keys()
 
     def values(self):
-        if self.vc is None: return []
-        else: return self.vc.values()
+        if self.tags is None: return []
+        else: return self.tags.values()
 
     def items(self):
-        if self.vc is None: return []
-        else: return self.vc.items()
+        if self.tags is None: return []
+        else: return self.tags.items()
 
     def load(self, filename):
         self.filename = filename

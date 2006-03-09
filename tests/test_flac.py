@@ -94,23 +94,23 @@ class TFLAC(TestCase):
         self.flac = FLAC(self.NEW)
 
     def test_delete(self):
-        self.failUnless(self.flac.vc)
+        self.failUnless(self.flac.tags)
         self.flac.delete()
-        self.failIf(self.flac.vc)
+        self.failIf(self.flac.tags)
         flac = FLAC(self.NEW)
-        self.failIf(flac.vc)
+        self.failIf(flac.tags)
 
     def test_info(self):
         self.failUnlessAlmostEqual(FLAC(self.NEW).info.length, 3.7, 1)
 
     def test_keys(self):
-        self.failUnlessEqual(self.flac.keys(), self.flac.vc.keys())
+        self.failUnlessEqual(self.flac.keys(), self.flac.tags.keys())
 
     def test_values(self):
-        self.failUnlessEqual(self.flac.values(), self.flac.vc.values())
+        self.failUnlessEqual(self.flac.values(), self.flac.tags.values())
 
     def test_items(self):
-        self.failUnlessEqual(self.flac.items(), self.flac.vc.items())
+        self.failUnlessEqual(self.flac.items(), self.flac.tags.items())
 
     def test_vc(self):
         self.failUnlessEqual(self.flac['title'][0], 'Silence')
@@ -136,17 +136,17 @@ class TFLAC(TestCase):
 
     def test_add_vc(self):
         f = FLAC()
-        self.failIf(f.vc)
-        f.add_vorbiscomment()
-        self.failUnless(f.vc == [])
-        self.failUnlessRaises(ValueError, f.add_vorbiscomment)
+        self.failIf(f.tags)
+        f.add_tags()
+        self.failUnless(f.tags == [])
+        self.failUnlessRaises(ValueError, f.add_tags)
 
     def test_add_vc_implicit(self):
         f = FLAC()
-        self.failIf(f.vc)
+        self.failIf(f.tags)
         f["foo"] = "bar"
-        self.failUnless(f.vc == [("foo", "bar")])
-        self.failUnlessRaises(ValueError, f.add_vorbiscomment)
+        self.failUnless(f.tags == [("foo", "bar")])
+        self.failUnlessRaises(ValueError, f.add_tags)
 
     def tearDown(self):
         os.unlink(self.NEW)
