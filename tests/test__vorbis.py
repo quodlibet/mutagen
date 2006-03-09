@@ -142,4 +142,11 @@ class TVCommentDict(TestCase):
         self.failIf(self.c.values())
         self.failIf(self.c.items())
 
+    def test_as_dict(self):
+        d = self.c.as_dict()
+        self.failUnless("artist" in d)
+        self.failUnless("title" in d)
+        self.failUnlessEqual(d["artist"], self.c["artist"])
+        self.failUnlessEqual(d["title"], self.c["title"])
+
 add(TVCommentDict)

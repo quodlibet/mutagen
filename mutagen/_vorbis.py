@@ -146,3 +146,10 @@ class VCommentDict(VComment):
     def keys(self): return self and map(str.lower, set(zip(*self)[0]))
     def values(self): return map(self.__getitem__, self.keys())
     def items(self): return [(k.lower(), self[k]) for k in self.keys()]
+
+    def as_dict(self):
+        """Return a copy of the tag data in a real dict.""
+        d = {}
+        for key, value in self:
+            d.setdefault(key, []).append(value)
+        return d
