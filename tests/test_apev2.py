@@ -98,6 +98,9 @@ class APEReader(TestCase):
 
         self.failIfEqual(self.tag["album"], "A test Case")
 
+    def test_pprint(self):
+        self.failUnless(self.tag.pprint())
+
 class APEv2ThenID3v1Reader(APEReader):
     def setUp(self):
         import shutil

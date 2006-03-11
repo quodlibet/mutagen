@@ -148,6 +148,9 @@ class TFLAC(TestCase):
         self.failUnless(f.tags == [("foo", "bar")])
         self.failUnlessRaises(ValueError, f.add_tags)
 
+    def test_pprint(self):
+        self.failUnless(self.flac.pprint())
+
     def tearDown(self):
         os.unlink(self.NEW)
 

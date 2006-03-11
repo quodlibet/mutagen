@@ -425,6 +425,7 @@ def TestReadTags():
             TAG = getattr(id3, tag)
             tag = TAG.fromData(_23, 0, data)
             self.failUnless(tag.HashKey)
+            self.failUnless(tag.pprint())
             self.assertEquals(value, tag)
             if 'encoding' not in info:
                 self.assertRaises(AttributeError, getattr, tag, 'encoding')
