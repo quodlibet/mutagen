@@ -102,3 +102,39 @@ class Metadata(dict):
         fobj.flush()
     _delete_bytes = staticmethod(_delete_bytes)
 
+class FileType(object):
+    """Abstract object that provides a specific type of file format.
+    Any metadata tags are exposed as .tags (and looks basically like a dict),
+    and the audio info is exposed as .info, which has at least a length
+    attribute."""
+
+    info = None
+    tags = None
+
+    def __getitem__(self, key):
+        if self.tags is None: raise KeyError, key
+        else: return self.tags[key]
+
+    def __setitem__(self, key, value):
+        if self.tags is None: self.add_tags()
+        self.tags[key] = value
+
+    def __delitem__(self, key):
+        if self.tags is None: raise KeyError, key
+        else: del(self.tags[key])
+
+    def keys(self):
+        if self.tags is None: return []
+        else: return self.tags.keys()
+
+    def values(self):
+        if self.tags is None: return []
+        else: return self.tags.values()
+
+    def items(self):
+        if self.tags is None: return []
+        else: return self.tags.items()
+
+    def delete(self):
+        """Remove tags from a file."""
+        if self.tags is not None: self.tags.delete()

@@ -16,7 +16,7 @@ __all__ = ["FLAC", "Open"]
 import struct
 from cStringIO import StringIO
 from _vorbis import VCommentDict
-from mutagen import Metadata
+from mutagen import Metadata, FileType
 
 """Read metadata from a FLAC file.
 
@@ -166,10 +166,8 @@ class Padding(MetadataBlock):
     def __repr__(self):
         return "<%s (%d bytes)>" % (type(self).__name__, self.length)
 
-class FLAC(object):
+class FLAC(FileType):
     METADATA_BLOCKS = [StreamInfo, Padding, None, None, VCFLACDict]
-
-    tags = None
 
     def __init__(self, filename=None):
         self.metadata_blocks = []
@@ -213,30 +211,6 @@ class FLAC(object):
                 break
 
     vc = property(lambda s: s.tags)
-
-    def __getitem__(self, key):
-        if self.tags is None: raise KeyError, key
-        else: return self.tags[key]
-
-    def __setitem__(self, key, value):
-        if self.tags is None: self.add_tags()
-        self.tags[key] = value
-
-    def __delitem__(self, key):
-        if self.tags is None: raise KeyError, key
-        else: del(self.tags[key])
-
-    def keys(self):
-        if self.tags is None: return []
-        else: return self.tags.keys()
-
-    def values(self):
-        if self.tags is None: return []
-        else: return self.tags.values()
-
-    def items(self):
-        if self.tags is None: return []
-        else: return self.tags.items()
 
     def load(self, filename):
         self.filename = filename

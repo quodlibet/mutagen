@@ -1,7 +1,14 @@
 1.0
- * Add FLAC#delete.
- * Fix typo in FLAC#save when saving to a non-FLAC file.
- * Fix typos in PRIV#_pprint, OWNE#_pprint, UFID#_pprint.
+ * mutagen.FileType, an abstract container for tags and stream information.
+ * FLAC:
+  * Add FLAC#delete.
+  * Raise correct exception when saving to a non-FLAC file.
+  * FLAC#vc is deprecated in favor of FLAC#tags.
+ * VComment (used by FLAC):
+  * VComment#clear to clear all tags.
+  * VComment#as_dict to return a dict of the tags.
+ * ID3:
+  * Fix typos in PRIV#_pprint, OWNE#_pprint, UFID#_pprint.
 
 0.9 - 2006.02.21
  * Initial release.
