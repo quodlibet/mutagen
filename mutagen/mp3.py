@@ -164,9 +164,9 @@ class MP3(FileType):
     """An MPEG audio (usually MPEG-1 Layer 3) object, optionally
     with ID3 tags as .tags."""
 
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, ID3=ID3):
         if filename is not None:
-            self.load(filename)
+            self.load(filename, ID3)
 
     def pprint(self):
         if self.tags is not None:
@@ -178,7 +178,7 @@ class MP3(FileType):
             self.tags = ID3()
         else: raise ID3Error("a ID3 tag already exists")
 
-    def load(self, filename):
+    def load(self, filename, ID3=ID3):
         self.filename = filename
         try: self.tags = ID3(filename)
         except ID3Error: pass
