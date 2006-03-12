@@ -151,13 +151,13 @@ class MPEGInfo(object):
             xing = data[:-4].index("Xing")
         except ValueError: pass
         else:
-            flags = struct.unpack('>i', data[xing + 4:xing + 8])[0]
+            flags = struct.unpack('>I', data[xing + 4:xing + 8])[0]
             if flags & 0x1:
-                frame_count = struct.unpack('>i', data[xing + 8:xing + 12])[0]
+                frame_count = struct.unpack('>I', data[xing + 8:xing + 12])[0]
                 samples = frame_size * frame_count
                 self.length = samples / self.sample_rate
             if flags & 0x2:
-                bytes = struct.unpack('>i', data[xing + 12:xing + 16])[0]
+                bytes = struct.unpack('>I', data[xing + 12:xing + 16])[0]
                 self.bitrate = int((bytes * 8.0 / self.length))
 
 class MP3(FileType):
