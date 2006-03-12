@@ -1,5 +1,6 @@
 1.0
  * mutagen.FileType, an abstract container for tags and stream information.
+ * MP3: A new FileType subclass for MPEG audio files.
  * FLAC:
   * Add FLAC#delete.
   * Raise correct exception when saving to a non-FLAC file.

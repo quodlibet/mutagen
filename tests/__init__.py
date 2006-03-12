@@ -11,6 +11,7 @@ import test_id3
 import test_apev2
 import test__vorbis
 import test_flac
+import test_mp3
 
 class Result(unittest.TestResult):
 

@@ -87,7 +87,7 @@ class ID3Loading(TestCase):
         id3._ID3__fileobj = file(self.silence, 'rb')
         id3.load_header()
         self.assertEquals(id3.version, (2,3,0))
-        self.assertEquals(getattr(id3, '_ID3__size'), 1304)
+        self.assertEquals(id3._size, 1304)
 
 class ID3Tags(TestCase):
     def setUp(self):

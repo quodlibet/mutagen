@@ -56,7 +56,7 @@ class ID3(mutagen.Metadata):
         self.__known_frames = known_frames
         self.filename = None
         self.__flags = 0
-        self.__size = 0
+        self._size = 0
         self.__readbytes = 0
         self.__crc = None
 
@@ -113,7 +113,7 @@ class ID3(mutagen.Metadata):
                 if frames is None:
                     if (2,3,0) <= self.version: frames = Frames
                     elif (2,2,0) <= self.version: frames = Frames_2_2
-                data = self.fullread(self.__size)
+                data = self.fullread(self._size)
                 for frame in self.read_frames(data, frames=frames):
                     if isinstance(frame, Frame): self.loaded_frame(frame)
                     else: self.unknown_frames.append(frame)
@@ -166,7 +166,7 @@ class ID3(mutagen.Metadata):
         data = self.fullread(10)
         id3, vmaj, vrev, flags, size = unpack('>3sBBB4s', data)
         self.__flags = flags
-        self.__size = BitPaddedInt(size)
+        self._size = BitPaddedInt(size)
         self.version = (2, vmaj, vrev)
 
         if id3 != 'ID3':
