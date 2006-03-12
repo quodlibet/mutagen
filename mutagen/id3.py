@@ -95,9 +95,11 @@ class ID3(mutagen.Metadata):
             try:
                 self.load_header()
             except EOFError:
+                self._size = 0
                 raise ID3NoHeaderError("%s: too small (%d bytes)" %(
                     filename, self.__filesize))
             except (ID3NoHeaderError, ID3UnsupportedVersionError), err:
+                self._size = 0
                 import sys
                 stack = sys.exc_info()[2]
                 try: self.__fileobj.seek(-128, 2)
