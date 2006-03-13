@@ -138,3 +138,9 @@ class FileType(object):
     def delete(self):
         """Remove tags from a file."""
         if self.tags is not None: self.tags.delete()
+
+    def save(self, filename=None, **kwargs):
+        if filename is None: filename = self.filename
+        if self.tags is not None:
+            self.tags.save(filename, **kwargs)
+        else: raise ValueError("no tags in file")

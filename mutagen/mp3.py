@@ -170,8 +170,9 @@ class MPEGInfo(object):
                 self.bitrate = (bytes * 8) // self.length
 
 class MP3(FileType):
-    """An MPEG audio (usually MPEG-1 Layer 3) object, optionally
-    with ID3 tags as .tags."""
+    """An MPEG audio (usually MPEG-1 Layer 3) object.
+
+    The tags attribute points to any ID3 tag found in the file."""
 
     def __init__(self, filename=None, ID3=ID3):
         if filename is not None:
@@ -191,16 +192,14 @@ class MP3(FileType):
         else: raise ID3Error("a ID3 tag already exists")
 
     def load(self, filename, ID3=ID3):
+        """A custom ID3 subclass can be passed in to be used, instead
+        of the default mutagen.id3.ID3."""
         self.filename = filename
         try: self.tags = ID3(filename)
         except ID3Error: pass
         if self.tags is not None: offset = self.tags._size
         else: offset = None
         self.info = MPEGInfo(file(filename, "rb"), offset)
-
-    def save(self, filename=None):
-        if self.tags is not None:
-            self.tags.save(filename)
 
 Open = MP3
 
