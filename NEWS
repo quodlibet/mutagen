@@ -1,4 +1,4 @@
-1.0
+1.0 - 2006.03.13
  * mutagen.FileType, an abstract container for tags and stream information.
  * MP3: A new FileType subclass for MPEG audio files.
  * FLAC:
@@ -10,6 +10,8 @@
   * VComment#as_dict to return a dict of the tags.
  * ID3:
   * Fix typos in PRIV#_pprint, OWNE#_pprint, UFID#_pprint.
+ * mutagen-pony: Try finding lengths as well as tags.
+ * mutagen-inspect: Output stream information with tags.
 
 0.9 - 2006.02.21
  * Initial release.
