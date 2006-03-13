@@ -174,7 +174,9 @@ class FLAC(FileType):
         if filename is not None: self.load(filename)
 
     def pprint(self):
-        return "\n".join(
+        s = "FLAC, %d Hz, %.2f seconds\n" % (
+            self.info.sample_rate, self.info.length)
+        return s + "\n".join(
             ["%s=%s" % (k.lower(), v) for k, v in (self.tags or [])])
 
     def __read_metadata_block(self, file):

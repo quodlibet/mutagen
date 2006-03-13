@@ -15,13 +15,13 @@ import locale
 from optparse import OptionParser
 
 def main(argv):
-    from mutagen.id3 import ID3
+    from mutagen.mp3 import MP3
     from mutagen.apev2 import APEv2
     from mutagen.flac import FLAC
 
     parser = OptionParser()
     formats = {
-        "ID3": ID3,
+        "MP3": MP3,
         "APEv2": APEv2,
         "FLAC": FLAC,
         }

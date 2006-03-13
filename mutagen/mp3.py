@@ -27,7 +27,12 @@ class MPEGInfo(object):
     For best performance and accuracy, call the constructor with an
     file-like object and the suspected start of the audio data (i.e.
     after any metadata tags, but before a Xing tag). I can't emphasize
-    enough how important a correct offset is, if speed is important."""
+    enough how important a good offset is.
+
+    This code tries very hard to find MPEG headers. It might try too hard,
+    and load files that are not MPEG audio. If the 'sketchy' attribute
+    is set, then it's not entirely sure it found an accurate MPEG header.
+    """
 
 
     # Map (version, layer) tuples to bitrates.
@@ -48,6 +53,8 @@ class MPEGInfo(object):
         2: [22050, 24000, 16000],
         2.5: [11025, 12000, 8000]
         }
+
+    sketchy = False
 
     def __init__(self, fileobj, offset=None):
         try: size = os.path.getsize(fileobj.name)
@@ -75,7 +82,9 @@ class MPEGInfo(object):
             else: break
         # If we can't find any two consecutive frames, try to find just
         # one frame back at the original offset given.
-        else: self.__try(fileobj, offset, size - offset, False)
+        else:
+            self.__try(fileobj, offset, size - offset, False)
+            self.sketchy = True
 
     def __try(self, fileobj, offset, real_size, check_second=True):
         # This is going to be one really long function; bear with it,
@@ -169,9 +178,12 @@ class MP3(FileType):
             self.load(filename, ID3)
 
     def pprint(self):
+        s = "MPEG %s layer %d, %d bps, %s Hz, %.2f seconds" %(
+            self.info.version, self.info.layer, self.info.bitrate,
+            self.info.sample_rate, self.info.length)
         if self.tags is not None:
-            return self.tags.pprint()
-        else: return ""
+            return s + "\n" + self.tags.pprint()
+        else: return s
 
     def add_tags(self):
         if self.tags is None:

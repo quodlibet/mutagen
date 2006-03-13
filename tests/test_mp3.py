@@ -1,7 +1,7 @@
 import os
 from unittest import TestCase
 from tests import registerCase
-from mutagen.mp3 import MP3
+from mutagen.mp3 import MP3, error as MP3Error
 from mutagen.id3 import ID3
 
 class TMP3(TestCase):
@@ -28,4 +28,19 @@ class TMP3(TestCase):
     def test_bitrate(self):
         self.failUnlessEqual(self.mp3.info.bitrate, 32000)
         self.failUnlessEqual(self.mp3_2.info.bitrate, 32000)
+
+    def test_notmp3(self):
+        self.failUnlessRaises(MP3Error, MP3, "README")
+
+    def test_sketchy(self):
+        self.failIf(self.mp3.info.sketchy)
+        self.failIf(self.mp3_2.info.sketchy)
+
+    def test_sketchy_notmp3(self):
+        notmp3 = MP3("tests/data/silence-44-s.flac")
+        self.failUnless(notmp3.info.sketchy)
+
+    def test_pprint(self):
+        self.failUnless(self.mp3.pprint())
+
 registerCase(TMP3)
