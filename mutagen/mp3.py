@@ -182,6 +182,7 @@ class MP3(FileType):
         s = "MPEG %s layer %d, %d bps, %s Hz, %.2f seconds" %(
             self.info.version, self.info.layer, self.info.bitrate,
             self.info.sample_rate, self.info.length)
+        if self.info.sketchy: s += " (sketchy)"
         if self.tags is not None:
             return s + "\n" + self.tags.pprint()
         else: return s
