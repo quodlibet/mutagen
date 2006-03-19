@@ -43,4 +43,9 @@ class TMP3(TestCase):
     def test_pprint(self):
         self.failUnless(self.mp3.pprint())
 
+    def test_xing(self):
+        mp3 = MP3("tests/data/xing.mp3")
+        self.failUnlessEqual(mp3.info.length, 26122)
+        self.failUnlessEqual(mp3.info.bitrate, 306)
+
 registerCase(TMP3)
