@@ -261,6 +261,10 @@ def TestReadTags():
 
     ['COMM', '\x00ENUT\x00Com', 'Com', '',
         dict(desc='T', lang='ENU', encoding=0)],
+    # found in a real MP3
+    ['COMM', '\x00\x00\xcc\x01\x00     ', '     ', '',
+        dict(desc=u'', lang='\x00\xcc\x01', encoding=0)],
+
     ['APIC', '\x00-->\x00\x03cover\x00cover.jpg', 'cover.jpg', '',
         dict(mime='-->', type=3, desc='cover', encoding=0)],
     ['USER', '\x00ENUCom', 'Com', '', dict(lang='ENU', encoding=0)],

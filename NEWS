@@ -1,3 +1,7 @@
+1.1
+ * ID3:
+  * COMM, USER: Accept non-ASCII (completely invalid) language codes.
+
 1.0 - 2006.03.13
  * mutagen.FileType, an abstract container for tags and stream information.
  * MP3: A new FileType subclass for MPEG audio files.

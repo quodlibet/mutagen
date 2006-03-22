@@ -1093,8 +1093,8 @@ class COMM(TextFrame):
     _framespec = [ EncodingSpec('encoding'), StringSpec('lang', 3),
         EncodedTextSpec('desc'),
         MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000') ]
-    HashKey = property(lambda s: '%s:%s:%r'%(s.FrameID, s.desc, s.lang))
-    def _pprint(self): return "%s=%s=%s" % (
+    HashKey = property(lambda s: '%s:%s:%r'% (s.FrameID, s.desc, s.lang))
+    def _pprint(self): return "%s=%r=%s" % (
         self.desc, self.lang, " / ".join(self.text))
 
 class RVA2(Frame):
@@ -1221,12 +1221,12 @@ class USER(Frame):
     "Terms of use"
     _framespec = [ EncodingSpec('encoding'), StringSpec('lang', 3),
         EncodedTextSpec('text') ]
-    HashKey = property(lambda s: '%s:%r'%(s.FrameID, s.lang))
+    HashKey = property(lambda s: '%s:%r' % (s.FrameID, s.lang))
 
     def __str__(self): return self.text.encode('utf-8')
     def __unicode__(self): return self.text
     def __eq__(self, other): return self.text == other
-    def _pprint(self): return "%s=%s" % (self.lang, self.text)
+    def _pprint(self): return "%r=%s" % (self.lang, self.text)
 
 class OWNE(Frame):
     "Ownership frame"
