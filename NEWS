@@ -1,5 +1,6 @@
 1.1
  * ID3:
+  * Frame and Spec objects are not hashable.
   * COMM, USER: Accept non-ASCII (completely invalid) language codes.
 
 1.0 - 2006.03.13

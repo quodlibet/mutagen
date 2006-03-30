@@ -497,7 +497,7 @@ class unsynch(object):
 
 class Spec(object):
     def __init__(self, name): self.name = name
-    def __hash__(self): raise SpecError("Spec objects are unhashable")
+    def __hash__(self): raise TypeError("Spec objects are unhashable")
 
 class ByteSpec(Spec):
     def read(self, frame, data): return ord(data[0]), data[1:]

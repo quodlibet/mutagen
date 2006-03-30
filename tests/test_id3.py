@@ -1305,6 +1305,15 @@ class FileHandlingNoMMap(FileHandling):
         import mmap
         mmap.mmap = self.__real_mmap_mmap
 
+class NoHash(TestCase):
+    def test_spec(self):
+        from mutagen.id3 import Spec
+        self.failUnlessRaises(TypeError, {}.__setitem__, Spec("foo"), None)
+
+    def test_frame(self):
+        from mutagen.id3 import TIT1
+        self.failUnlessRaises(
+            TypeError, {}.__setitem__, TIT1(encoding=0, text="foo"), None)
 
 registerCase(ID3Loading)
 registerCase(ID3GetSetDel)
@@ -1321,6 +1330,7 @@ registerCase(WriteRoundtrip)
 registerCase(OddWrites)
 registerCase(FileHandling)
 registerCase(FileHandlingNoMMap)
+registerCase(NoHash)
 
 try: import eyeD3
 except ImportError: pass
