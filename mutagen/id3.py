@@ -497,6 +497,7 @@ class unsynch(object):
 
 class Spec(object):
     def __init__(self, name): self.name = name
+    def __hash__(self): raise SpecError("Spec objects are unhashable")
 
 class ByteSpec(Spec):
     def read(self, frame, data): return ord(data[0]), data[1:]
@@ -822,6 +823,9 @@ class Frame(object):
         frame._readData(data)
         return frame
     fromData = classmethod(fromData)
+
+    def __hash__(self):
+        raise TypeError("Frame objects are unhashable")
 
 class FrameOpt(Frame):
     """A frame that supports an _optionalspec list. These specs contain
