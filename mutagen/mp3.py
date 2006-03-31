@@ -190,7 +190,7 @@ class MP3(FileType):
     def add_tags(self):
         if self.tags is None:
             self.tags = ID3()
-        else: raise ID3Error("a ID3 tag already exists")
+        else: raise ID3Error("an ID3 tag already exists")
 
     def load(self, filename, ID3=ID3):
         """A custom ID3 subclass can be passed in to be used, instead
