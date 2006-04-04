@@ -350,7 +350,7 @@ class ID3(mutagen.Metadata):
         usize = len(framedata)
         if usize > 2048:
             framedata = pack('>L', usize) + framedata.encode('zlib')
-            flags |= Frame.FLAG24_COMPRESS
+            flags |= Frame.FLAG24_COMPRESS | Frame.FLAG24_DATALEN
         datasize = BitPaddedInt.to_str(len(framedata), width=4)
         header = pack('>4s4sH', type(frame).__name__, datasize, flags)
         return header + framedata
@@ -784,7 +784,7 @@ class Frame(object):
     def fromData(cls, id3, tflags, data):
 
         if (2,4,0) <= id3.version:
-            if tflags & Frame.FLAG24_COMPRESS:
+            if tflags & (Frame.FLAG24_COMPRESS | Frame.FLAG24_DATALEN):
                 usize, = unpack('>L', data[:4])
                 data = data[4:]
             if tflags & Frame.FLAG24_UNSYNCH and not id3.f_unsynch:

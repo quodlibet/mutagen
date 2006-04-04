@@ -2,6 +2,7 @@
  * ID3:
   * Frame and Spec objects are not hashable.
   * COMM, USER: Accept non-ASCII (completely invalid) language codes.
+  * Enable redundant data length bit for compressed frames.
 
 1.0 - 2006.03.13
  * mutagen.FileType, an abstract container for tags and stream information.

@@ -653,10 +653,16 @@ class FrameSanityChecks(TestCase):
 
     def test_zlib_latin1(self):
         from mutagen.id3 import TPE1
-        tag = TPE1.fromData(_23, 0x80, '\x00\x00\x00\x0f'
+        tag = TPE1.fromData(_24, 0x9, '\x00\x00\x00\x0f'
                 'x\x9cc(\xc9\xc8,V\x00\xa2D\xfd\x92\xd4\xe2\x12\x00&\x7f\x05%')
         self.assertEquals(tag.encoding, 0)
         self.assertEquals(tag, ['this is a/test'])
+
+    def test_datalen_but_not_compressed(self):
+        from mutagen.id3 import TPE1
+        tag = TPE1.fromData(_24, 0x01, '\x00\x00\x00\x06\x00A test')
+        self.assertEquals(tag.encoding, 0)
+        self.assertEquals(tag, ['A test'])
 
     def test_utf8(self):
         from mutagen.id3 import TPE1
@@ -942,6 +948,13 @@ class BrokenButParsed(TestCase):
         tag = TPE1.fromData(_24, 0x08, 'x\x9cc\xfc\xff\xaf\x84!\x83!\x93'
                 '\xa1\x98A\x01J&2\xe83\x940\xa4\x02\xd9%\x0c\x00\x87\xc6\x07#')
         self.assertEquals(tag.encoding, 1)
+        self.assertEquals(tag, ['this is a/test'])
+
+    def test_zlib_latin1_missing_datalen(self):
+        from mutagen.id3 import TPE1
+        tag = TPE1.fromData(_24, 0x8, '\x00\x00\x00\x0f'
+                'x\x9cc(\xc9\xc8,V\x00\xa2D\xfd\x92\xd4\xe2\x12\x00&\x7f\x05%')
+        self.assertEquals(tag.encoding, 0)
         self.assertEquals(tag, ['this is a/test'])
 
     def test_detect_23_ints_in_24_frames(self):
