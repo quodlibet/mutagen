@@ -1,4 +1,4 @@
-1.1
+1.1 - 2006.04.04
  * ID3:
   * Frame and Spec objects are not hashable.
   * COMM, USER: Accept non-ASCII (completely invalid) language codes.
