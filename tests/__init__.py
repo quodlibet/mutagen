@@ -53,11 +53,15 @@ class Runner:
         result = Result()
         suite(result)
         result.printErrors()
+        return bool(result.failures + result.errors)
 
 def unit(run = []):
     runner = Runner()
+    failures = False
     for test in suites:
-        if not run or test.__name__ in run: runner.run(test)
+        if not run or test.__name__ in run:
+            failures |= runner.run(test)
+    return failures
 
 if __name__ == "__main__":
-    unit(sys.argv[1:])
+    raise SystemExit(unit(sys.argv[1:]))
