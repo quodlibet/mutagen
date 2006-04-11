@@ -1,3 +1,7 @@
+1.X
+ * mid3iconv, a clone of id3iconv, was added by Emfox Zhou.
+ * Tests exit with non-zero status if any have failed.
+
 1.1 - 2006.04.04
  * ID3:
   * Frame and Spec objects are not hashable.
