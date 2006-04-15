@@ -7,7 +7,13 @@ mutagen.id3 needs:
  * Polish padding - perhaps make it client selectable
  * Better cross-compatibility tests with eyeD3.
 
-mutagen.oggvorbis, mutagen.oggflac, mutagen.mp4 needs:
- * To exist
+mutagen.oggvorbis needs:
+ * A custom Ogg parser/writer (see e.g. TagLib).
+
+mutagen.oggflac needs:
+ * To exist.
+
+mutagen.mp4 needs:
+ * To exit.
  * Clean MP4 metadata reader at
    http://svn.myrealbox.com/viewcvs/trunk/entagged-sharp/src/Mp4/Util/Mp4TagReader.cs?rev=53657&view=auto

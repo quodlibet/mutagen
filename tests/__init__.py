@@ -12,6 +12,7 @@ import test_apev2
 import test__vorbis
 import test_flac
 import test_mp3
+import test_oggvorbis
 
 class Result(unittest.TestResult):
 
