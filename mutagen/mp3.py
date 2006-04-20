@@ -187,7 +187,7 @@ class MP3(FileType):
             return s + "\n" + self.tags.pprint()
         else: return s
 
-    def add_tags(self):
+    def add_tags(self, ID3=ID3):
         if self.tags is None:
             self.tags = ID3()
         else: raise ID3Error("an ID3 tag already exists")

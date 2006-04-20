@@ -7,6 +7,8 @@
 
 import sys
 import struct
+
+from mutagen._util import DictMixin
 from cStringIO import StringIO
 
 if sys.version < (2, 4): from sets import Set as set
@@ -105,13 +107,15 @@ class VComment(list):
         f.write("\x01")
         return f.getvalue()
 
-class VCommentDict(VComment):
+class VCommentDict(VComment, DictMixin):
     """Wrap a VComment in a way that looks a bit like a dictionary.
     The weakness of this method is that inter-key ordering can
     be lost.
 
     Note that most of these operations happen in linear time on
     the number of values (not keys), and are not optimized."""
+
+    __len__ = VComment.__len__
 
     def __getitem__(self, key):
         """Return a ''copy'' of the values for this key.
@@ -144,8 +148,6 @@ class VCommentDict(VComment):
         for value in values: self.append((key, value))
 
     def keys(self): return self and map(str.lower, set(zip(*self)[0]))
-    def values(self): return map(self.__getitem__, self.keys())
-    def items(self): return [(k.lower(), self[k]) for k in self.keys()]
 
     def as_dict(self):
         """Return a copy of the tag data in a real dict."""

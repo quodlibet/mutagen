@@ -34,19 +34,19 @@ class TOggVorbis(TestCase):
         self.failUnlessRaises(KeyError, self.vorbis.tags.__getitem__, "vendor")
 
     def test_vendor_safe(self):
-        self.vorbis.tags["vendor"] = "a vendor"
+        self.vorbis["vendor"] = "a vendor"
         self.vorbis.save()
         vorbis = OggVorbis(self.filename)
-        self.failUnlessEqual(vorbis.tags["vendor"], ["a vendor"])
+        self.failUnlessEqual(vorbis["vendor"], ["a vendor"])
 
     def test_set_two_tags(self):
-        self.vorbis.tags["foo"] = ["a"]
-        self.vorbis.tags["bar"] = ["b"]
+        self.vorbis["foo"] = ["a"]
+        self.vorbis["bar"] = ["b"]
         self.vorbis.save()
         vorbis = OggVorbis(self.filename)
         self.failUnlessEqual(len(vorbis.tags.keys()), 2)
-        self.failUnlessEqual(vorbis.tags["foo"], ["a"])
-        self.failUnlessEqual(vorbis.tags["bar"], ["b"])
+        self.failUnlessEqual(vorbis["foo"], ["a"])
+        self.failUnlessEqual(vorbis["bar"], ["b"])
 
     def test_save_twice(self):
         self.vorbis.save()

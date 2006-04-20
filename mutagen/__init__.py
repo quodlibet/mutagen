@@ -24,6 +24,8 @@ depending on tag or format. They may also be entirely different objects
 for certain keys, again depending on format.
 """
 
+from mutagen._util import DictMixin
+
 class Metadata(dict):
     """Abstract dict-like object that each format inherits for managing
     metadata."""
@@ -102,7 +104,7 @@ class Metadata(dict):
         fobj.flush()
     _delete_bytes = staticmethod(_delete_bytes)
 
-class FileType(object):
+class FileType(DictMixin):
     """Abstract object that provides a specific type of file format.
     Any metadata tags are exposed as .tags (and looks basically like a dict),
     and the audio info is exposed as .info, which has at least a length
@@ -126,14 +128,6 @@ class FileType(object):
     def keys(self):
         if self.tags is None: return []
         else: return self.tags.keys()
-
-    def values(self):
-        if self.tags is None: return []
-        else: return self.tags.values()
-
-    def items(self):
-        if self.tags is None: return []
-        else: return self.tags.items()
 
     def delete(self):
         """Remove tags from a file."""
