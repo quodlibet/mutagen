@@ -1,10 +1,11 @@
-1.X
+1.2
  * mid3iconv, a clone of id3iconv, was added by Emfox Zhou.
  * Tests exit with non-zero status if any have failed.
  * mutagen.oggvorbis, using pyvorbis.
  * mutagen.easyid3, a more convenient ID3 reader/writer API.
  * VComments now support the full Python 2.3 dict API.
  * MP3: Load files with zeroed Xing headers. (#626)
+ * A brief TUTORIAL was added.
 
 1.1 - 2006.04.04
  * ID3:

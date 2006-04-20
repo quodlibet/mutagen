@@ -16,16 +16,22 @@ The goals are (in rough order of importance):
  * Easily extensible
 
 The primary documentation for Mutagen is the doc strings found in
-the source code.
+the source code. The tools/ directory contains several useful examples,
+and there is a brief tutorial in TUTORIAL.
+
+Installing
+----------
+ $ ./setup.py build
+ $ su -c "./setup.py install"
 
 Testing the Module
 ------------------
 To test Mutagen's MP3 reading support, run
- $ cd tools && ./mutagen-pony <your top-level MP3 directory here>
+ $ tools/mutagen-pony <your top-level MP3 directory here>
 Mutagen will try to load all of them, and report any errors.
 
 To look at the tags in files, run
- $ cd tools && ./mutagen-inspect filename ...
+ $ tools/mutagen-inspect filename ...
 
 To run our test suite,
  $ ./_sanity.sh
