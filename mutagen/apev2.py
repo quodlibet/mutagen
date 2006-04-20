@@ -104,8 +104,8 @@ class _APEv2Data(object):
 
     def __fill_missing(self, fileobj):
         fileobj.seek(self.metadata)
-        assert(self.metadata is not None)
-        assert(fileobj.read(8) == "APETAGEX")
+        if fileobj.read(8) != "APETAGEX":
+            raise APENoHeaderError("the header disappeared")
 
         self.version = fileobj.read(4)
         self.size = _read_int(fileobj.read(4))

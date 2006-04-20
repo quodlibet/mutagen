@@ -94,7 +94,7 @@ class VComment(list):
     def write(self):
         """Return a string encoding the comment data. Validation is
         always done before writing."""
-        assert self.validate()
+        self.validate()
 
         f = StringIO()
         f.write(struct.pack("<I", len(self.vendor.encode('utf-8'))))
