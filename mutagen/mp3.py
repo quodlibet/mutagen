@@ -164,10 +164,10 @@ class MPEGInfo(object):
             if flags & 0x1:
                 frame_count = struct.unpack('>I', data[xing + 8:xing + 12])[0]
                 samples = frame_size * frame_count
-                self.length = samples / self.sample_rate
+                self.length = (samples / self.sample_rate) or self.length
             if flags & 0x2:
                 bytes = struct.unpack('>I', data[xing + 12:xing + 16])[0]
-                self.bitrate = (bytes * 8) // self.length
+                self.bitrate = int((bytes * 8) // self.length)
 
 class MP3(FileType):
     """An MPEG audio (usually MPEG-1 Layer 3) object.
