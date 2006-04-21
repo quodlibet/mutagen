@@ -5,6 +5,8 @@
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
 
+"""MPEG audio stream information and tags."""
+
 import os
 import struct
 
@@ -16,24 +18,26 @@ class HeaderNotFoundError(error, IOError): pass
 class InvalidMPEGHeader(error, IOError): pass
 
 class MPEGInfo(object):
-    """Parse information about an MPEG audio file; most importantly,
-    get the length. Since this can be incredibly inaccurate (e.g. when
-    lacking a Xing header in a VBR MP3) it is recommended you let
-    the TLEN tag, if present, override it.
+    """MPEG audio stream information
 
-    http://www.dv.co.yu/mpgscript/mpeghdr.htm documents the header
-    format this code parses.
+    Parse information about an MPEG audio file. This also reads the
+    Xing VBR header format.
 
-    For best performance and accuracy, call the constructor with an
-    file-like object and the suspected start of the audio data (i.e.
-    after any metadata tags, but before a Xing tag). I can't emphasize
-    enough how important a good offset is.
+    This code was implemented based on the format documentation at
+    http://www.dv.co.yu/mpgscript/mpeghdr.htm.
 
-    This code tries very hard to find MPEG headers. It might try too hard,
-    and load files that are not MPEG audio. If the 'sketchy' attribute
-    is set, then it's not entirely sure it found an accurate MPEG header.
+    Useful attributes:
+    length -- audio length, in seconds
+    bitrate -- audio bitrate, in bits per second
+    sketchy -- if true, the file may not be valid MPEG audio
+
+    Useless attributes:
+    version -- MPEG version (1, 2, 2.5)
+    layer -- 1, 2, or 3
+    protected -- whether or not the file is "protected"
+    padding -- whether or not audio frames are padded
+    sample_rate -- audio sample rate, in Hz
     """
-
 
     # Map (version, layer) tuples to bitrates.
     __BITRATE = {
@@ -57,6 +61,14 @@ class MPEGInfo(object):
     sketchy = False
 
     def __init__(self, fileobj, offset=None):
+        """Parse MPEG stream information from a file-like object.
+
+        If an offset argument is given, it is used to start looking
+        for stream information and Xing headers; otherwise, ID3v2 tags
+        will be skipped automatically. A correct offset can make
+        loading files significantly faster.
+        """
+
         try: size = os.path.getsize(fileobj.name)
         except (IOError, OSError, AttributeError):
             fileobj.seek(0, 2)
@@ -160,6 +172,8 @@ class MPEGInfo(object):
             xing = data[:-4].index("Xing")
         except ValueError: pass
         else:
+            # If a Xing header was found, this is definitely MPEG audio.
+            self.sketchy = False
             flags = struct.unpack('>I', data[xing + 4:xing + 8])[0]
             if flags & 0x1:
                 frame_count = struct.unpack('>I', data[xing + 8:xing + 12])[0]
@@ -170,15 +184,14 @@ class MPEGInfo(object):
                 self.bitrate = int((bytes * 8) // self.length)
 
 class MP3(FileType):
-    """An MPEG audio (usually MPEG-1 Layer 3) object.
-
-    The tags attribute points to any ID3 tag found in the file."""
+    """An MPEG audio (usually MPEG-1 Layer 3) file."""
 
     def __init__(self, filename=None, ID3=ID3):
         if filename is not None:
             self.load(filename, ID3)
 
     def pprint(self):
+        """Print stream and tag information."""
         s = "MPEG %s layer %d, %d bps, %s Hz, %.2f seconds" %(
             self.info.version, self.info.layer, self.info.bitrate,
             self.info.sample_rate, self.info.length)
@@ -188,17 +201,27 @@ class MP3(FileType):
         else: return s
 
     def add_tags(self, ID3=ID3):
+        """Add an empty ID3 tag to the file.
+
+        A custom tag reader may be used in instead of the default
+        mutagen.id3.ID3 object, e.g. an EasyID3 reader.
+        """
         if self.tags is None:
             self.tags = ID3()
         else: raise ID3Error("an ID3 tag already exists")
 
     def load(self, filename, ID3=ID3):
-        """A custom ID3 subclass can be passed in to be used, instead
-        of the default mutagen.id3.ID3."""
+        """Load stream and tag information from a file.
+
+        A custom tag reader may be used in instead of the default
+        mutagen.id3.ID3 object, e.g. an EasyID3 reader.
+        """
         self.filename = filename
         try: self.tags = ID3(filename)
         except ID3Error: pass
-        if self.tags is not None: offset = self.tags._size
+        if self.tags is not None:
+            try: offset = self.tags._size
+            except AttributeError: offset = None
         else: offset = None
         self.info = MPEGInfo(file(filename, "rb"), offset)
 
