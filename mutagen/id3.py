@@ -1,4 +1,3 @@
-#
 # id3 support for mutagen
 # Copyright (C) 2005  Michael Urman
 #
@@ -7,17 +6,26 @@
 # published by the Free Software Foundation.
 #
 # $Id$
-#
-#
-# This is based off of the following references:
-#   http://www.id3.org/id3v2.4.0-structure.txt
-#   http://www.id3.org/id3v2.4.0-frames.txt
-#   http://www.id3.org/id3v2.3.0.html
-#   http://www.id3.org/id3v2-00.txt
-#
-# Its largest deviation from the above (versions 2.3 and 2.2) is that it will
-# not interpret the / characters as a separator, and will almost always accept
-# null separators to generate multi-valued text frames.
+
+"""ID3v2 reading and writing.
+
+ This is based off of the following references:
+   http://www.id3.org/id3v2.4.0-structure.txt
+   http://www.id3.org/id3v2.4.0-frames.txt
+   http://www.id3.org/id3v2.3.0.html
+   http://www.id3.org/id3v2-00.txt
+
+Its largest deviation from the above (versions 2.3 and 2.2) is that it
+will not interpret the / characters as a separator, and will almost
+always accept null separators to generate multi-valued text frames.
+
+Because ID3 frame structure differs between frame types, each frame is
+implemented as a different class (e.g. TIT2 as mutagen.id3.TIT2). Each
+frame's docmentation contains a list of its attributes.
+
+Since this file's documentation is a little unwieldy, you are probably
+interested in the 'ID3' class to start with.
+"""
 
 __all__ = ['ID3', 'Frames', 'Open', 'delete']
 
@@ -36,21 +44,29 @@ class ID3EncryptionUnsupportedError(error, NotImplementedError): pass
 class ID3JunkFrameError(error, ValueError): pass
 
 class ID3(mutagen.Metadata):
-    """ID3 is the mutagen.ID3 metadata class.
+    """A file with an ID3v2 tag.
 
-    It accepts a filename and a dictionary of frameid to frame handlers.
+    Attributes:
+    version -- ID3 tag version as a tuple
+    unknown_frames -- raw frame data of any unknown frames found
     """
 
     PEDANTIC = True
-    version = (2,4,0)
+    version = (2, 4, 0)
 
     def __init__(self, filename=None, known_frames=None, translate=True):
-        """Create a dict-like ID3 tag. If a filename is given, load it.
-        known_frames contains a list of supported frames; it defaults
-        to mutagen.id3.Frames. By adding new frame types you can load
-        custom ('experimental') frames.
+        """Create an empty ID3 tag or load one from a file.
 
-        translate is passed directly to the load function."""
+        Keyword arguments:
+        known_frames -- an alternate list of ID3 frames to load
+        translate -- passed to the load function
+
+        Example of loading a custom frame:
+            my_frames = dict(mutagen.id3.Frames)
+            class XMYF(Frame): ...
+            my_frames["XMYF"] = XMYF
+            mutagen.id3.ID3(filename, known_frames=my_frames)
+        """
 
         self.unknown_frames = []
         self.__known_frames = known_frames
@@ -78,14 +94,13 @@ class ID3(mutagen.Metadata):
         return data
 
     def load(self, filename, translate=True):
-        """Load tags from the filename. If translate is true, all
-        tags are translated to ID3v2.4 internally (for example,
-        the 2.3 TYER and TDAT tags are combined to form TDRC). You must
-        do this if you intend to write the tag, or else other ID3
-        libraries may not load it.
+        """Load tags from a filename.
 
-        ID3v2.2 tags are subclasses of the equivalent v2.3/4 tags, so
-        you can treat them either way."""
+        Keyword arguments:
+        translate -- Update all tags to ID3v2.4 internally. Mutagen is
+                     only capable of writing ID3v2.4 tags, so if you
+                     intend to save, this must be true.
+        """
 
         from os.path import getsize
         self.filename = filename
@@ -127,15 +142,18 @@ class ID3(mutagen.Metadata):
                 self.update_to_v24()
 
     def getall(self, key):
-        """Return all frames with a given name (the list may be empty). E.g.
-        id3.getall('TTTT') == []
-        id3.getall('TIT2') == [id3['TIT2']]
-        id3.getall('TXXX') == [TXXX(desc='woo', text='bar'),
-                               TXXX(desc='baz', text='quuuux'), ...]
+        """Return all frames with a given name (the list may be empty).
 
-        Since this is based on the frame's HashKey, you can abuse it to do
-        things like getall('COMM:MusicMatch') or getall('TXXX:QuodLibet:')."""
+        This is best explained by examples:
+            id3.getall('TIT2') == [id3['TIT2']]
+            id3.getall('TTTT') == []
+            id3.getall('TXXX') == [TXXX(desc='woo', text='bar'),
+                                   TXXX(desc='baz', text='quuuux'), ...]
 
+        Since this is based on the frame's HashKey, which is
+        colon-separated, you can use it to do things like
+        getall('COMM:MusicMatch') or getall('TXXX:QuodLibet:').
+        """
         if key in self: return [self[key]]
         else:
             key = key + ":"
@@ -150,12 +168,20 @@ class ID3(mutagen.Metadata):
                 del(self[k])
 
     def setall(self, key, values):
-        """Equivalent to delall(key) and adding each frame in 'values'."""
+        """Delete frames of the given type and add frames in 'values'."""
         self.delall(key)
         for tag in values:
             self[tag.HashKey] = tag
 
     def pprint(self):
+        """Return tags in a human-readable format.
+
+        "Human-readable" is used loosely here. The format is intended
+        to mirror that used for Vorbis or APEv2 output, e.g.
+            TIT2=My Title
+        However, ID3 frames can have multiple keys:
+            POPM=user@example.org=3 128/255
+        """
         return "\n".join(map(Frame.pprint, self.values()))
 
     def loaded_frame(self, tag):
@@ -166,8 +192,9 @@ class ID3(mutagen.Metadata):
     # add = loaded_frame (and vice versa) break applications that
     # expect to be able to override loaded_frame (e.g. Quod Libet),
     # as does making loaded_frame call add.
-    def add(self, tag):
-        return self.loaded_frame(tag)
+    def add(self, frame):
+        """Add a frame to the tag."""
+        return self.loaded_frame(frame)
 
     def load_header(self):
         fn = self.filename
@@ -276,18 +303,18 @@ class ID3(mutagen.Metadata):
     #f_crc = property(lambda s: bool(s.__extflags & 0x8000))
 
     def save(self, filename=None, v1=1):
-        """Save changes to a file, overwriting an old ID3v2 tag but
-        preserving any other (e.g. MPEG) data. The default filename is
-        the one this tag was created with.
+        """Save changes to a file.
 
-        If v1 is 0, any ID3v1 tag will be removed. If it is 1, the ID3v1
-        will be updated if present but not created (this is the default).
-        If 2, an ID3v1 tag will be created or updated.
+        If no filename is given, the one most recently loaded is used.
 
-        The lack of a way to neither update nor remove an ID3v1 tag is
-        intentional."""
-    
-        # don't trust this code yet - it could corrupt your files
+        Keyword arguments:
+        v1 -- if 0, ID3v1 tags will be removed
+              if 1, ID3v1 tags will be updated but not added
+              if 2, ID3v1 tags will be created and/or updated
+
+        The lack of a way to update only an ID3v1 tag is intentional.
+        """
+
         if filename is None: filename = self.filename
         try: f = open(filename, 'rb+')
         except IOError, err:
@@ -341,9 +368,14 @@ class ID3(mutagen.Metadata):
             f.close()
 
     def delete(self, filename=None, delete_v1=True, delete_v2=True):
-        """Remove tags from a file, by default both v1 and v2 tags,
-        preserving any other (e.g. MPEG) data. The default filename is
-        the one this tag was created with."""
+        """Remove tags from a file.
+
+        If no filename is given, the one most recently loaded is used.
+
+        Keyword arguments:
+        delete_v1 -- delete any ID3v1 tag
+        delete_v2 -- delete any ID3v2 tag
+        """
         if filename is None:
             filename = self.filename
         delete(filename, delete_v1, delete_v2)
@@ -362,11 +394,15 @@ class ID3(mutagen.Metadata):
         return header + framedata
 
     def update_to_v24(self):
-        """Convert an ID3v2.3 tag into an ID3v2.4 tag, either replacing
-        or deleting obsolete frames."""
+        """Convert older tags into an ID3v2.4 tag.
 
-        if self.version < (2,3,0):
-            del self.unknown_frames[:] # unsafe to write
+        This updates old ID3v2 frames to ID3v2.4 ones (e.g. TYER to
+        TDRC). If you intend to save tags, you must call this function
+        at some point; it is called by default when loading the tag.
+        """
+
+        if self.version < (2,3,0): del self.unknown_frames[:]
+        # unsafe to write
 
         # TDAT, TYER, and TIME have been turned into TDRC.
         if str(self.get("TYER", "")).strip("\x00"):
@@ -402,8 +438,13 @@ class ID3(mutagen.Metadata):
             if key in self: del(self[key])
 
 def delete(filename, delete_v1=True, delete_v2=True):
-    """Remove tags from a file, by default both v1 and v2 tags,
-    preserving any other (e.g. MPEG) data."""
+    """Remove tags from a file.
+
+    Keyword arguments:
+    delete_v1 -- delete any ID3v1 tag
+    delete_v2 -- delete any ID3v2 tag
+    """
+
     f = open(filename, 'rb+')
 
     if delete_v1:
@@ -749,7 +790,8 @@ class Frame(object):
             for checker, val in zip(self._framespec, args):
                 setattr(self, checker.name, checker.validate(self, val))
             for checker in self._framespec[len(args):]:
-                validated = checker.validate(self, kwargs.get(checker.name, None))
+                validated = checker.validate(
+                    self, kwargs.get(checker.name, None))
                 setattr(self, checker.name, validated)
 
     HashKey = property(lambda s: s.FrameID, doc="serves as a hash key")
