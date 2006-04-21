@@ -1,3 +1,5 @@
+"""Constants used by Mutagen."""
+
 GENRES = [
     u"Blues",
     u"Classic Rock",
@@ -148,3 +150,4 @@ GENRES = [
     u"Jpop",
     u"Synthpop"
     ]
+"""The ID3v1 genre list."""
