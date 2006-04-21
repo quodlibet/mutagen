@@ -8,19 +8,30 @@
 #
 # $Id$
 
-# Based off the documentation found at
-# http://wiki.hydrogenaudio.org/index.php?title=APEv2_specification
-# which is in turn a copy of the old
-# http://www.personal.uni-jena.de/~pfk/mpp/sv8/apetag.html
+"""APEv2 reading and writing.
 
-"""This module reads and writes APEv2 metadata tags, the kind
-usually found in Musepack files. For more information, see
-http://wiki.hydrogenaudio.org/index.php?title=APEv2_specification
+The APEv2 format is most commonly used with Musepack files, but is
+also the format of choice for WavPack and other formats. Some MP3s
+also have APEv2 tags, but this can cause problems with many MP3
+decoders and taggers.
+
+APEv2 tags, like Vorbis comments, are freeform key=value pairs. APEv2
+keys can be any UTF-8 string, but restricting keys to ASCII is
+strongly recommended. Keys are case-insensitive, but usually stored
+title-cased (e.g. 'Artist' rather than 'artist').
+
+APEv2 values are slightly more structured than Vorbis comments; values
+are flagged as one of text, binary, or an external reference (usually
+a URI).
+
+Based off the format specification found at
+http://wiki.hydrogenaudio.org/index.php?title=APEv2_specification.
 """
 
 __all__ = ["APEv2", "Open", "delete"]
 
-import os, struct
+import os
+import struct
 from cStringIO import StringIO
 
 # There are three different kinds of APE tag values.
@@ -146,23 +157,23 @@ class _APEv2Data(object):
         self.start = start
 
 class APEv2(Metadata):
-    """An APEv2 contains the tags in the file. It behaves much like a
-    dictionary of key/value pairs, except that the keys must be strings,
-    and the values a support APE tag value.
+    """A file with an APEv2 tag.
 
-    ID3v1 tags are silently ignored and overwritten."""
+    ID3v1 tags are silently ignored and overwritten.
+    """
 
     def __init__(self, filename=None):
         self.filename = filename
         if filename: self.load(filename)
 
     def pprint(self):
+        """Return tag key=value pairs in a human-readable format."""
         items = self.items()
         items.sort()
         return "\n".join(["%s=%s" % (k, v.pprint()) for k, v in items])
 
     def load(self, filename):
-        """Load tags from the filename."""
+        """Load tags from a filename."""
         self.filename = filename
 
         fileobj = file(filename, "rb")
@@ -199,12 +210,23 @@ class APEv2(Metadata):
     def __delitem__(self, k):
         return super(APEv2, self).__delitem__(APEKey(k))
     def __setitem__(self, k, v):
-        """This function tries (and usually succeeds) to guess at what
+        """'Magic' value setter
+
+        This function tries to guess at what
         kind of value you want to store. If you pass in a valid UTF-8
         or Unicode string, it treats it as a text value. If you pass
         in a list, it treats it as a list of string/Unicode values.
-        If you pass in a string that is not valid UTF-8, it assumes
-        it is a binary value."""
+        If you pass in a string that is not valid UTF-8, it assumes it
+        is a binary value.
+
+        If you need to force a specific type of value (e.g. binary
+        data that also happens to be valid UTF-8, or an external
+        reference), use the APEValue factory and set the value to the
+        result of that:
+            from mutagen.apev2 import APEValue, EXTERNAL
+            tag['Website'] = APEValue('http://example.org', EXTERNAL)
+        """
+
         if not isinstance(v, _APEValue):
             # let's guess at the content if we're not already a value...
             if isinstance(v, unicode):
@@ -224,11 +246,14 @@ class APEv2(Metadata):
         super(APEv2, self).__setitem__(APEKey(k), v)
 
     def save(self, filename=None):
-        """Saves any changes you've made to the file, or to a different
-        file if you specify one. Any existing tag will be removed.
+        """Save changes to a file.
+
+        If no filename is given, the one most recently loaded is used.
 
         Tags are always written at the end of the file, and include
-        a header and a footer."""
+        a header and a footer.
+        """
+
         filename = filename or self.filename
         f = file(filename, "ab+")
         data = _APEv2Data(f)
@@ -268,7 +293,10 @@ class APEv2(Metadata):
         f.close()
 
     def delete(self, filename=None):
-        """Remove tags from a file."""
+        """Remove tags from a file.
+
+        If no filename is given, the one most recently loaded is used.
+        """
         filename = filename or self.filename
         fileobj = file(filename, "ab+")
         data = _APEv2Data(fileobj)
@@ -283,9 +311,12 @@ def delete(filename):
     except APENoHeaderError: pass
 
 class APEKey(str):
-    """An APE key is an ASCII string of length 2 to 255. The specification's
-    case rules are silly, so this object is case-preserving but not
-    case-sensitive, i.e. "album" == "Album"."""
+    """An APEv2 tag key.
+
+    APEv2 keys preserve the case of a string, but are case-insensitive
+    for hashing or comparison. Keys in an APEv2 dict are automatically
+    converted to APEKey objects.
+    """
 
     # "APE Tags Item Key are case sensitive. Nevertheless it is forbidden
     # to use APE Tags Item Key which only differs in case. And nevertheless
@@ -300,11 +331,15 @@ class APEKey(str):
     def __hash__(self):
         return str.__hash__(self.lower())
 
-    def __repr__(self): return "%s(%r)" % (type(self), str(self))
+    def __repr__(self):
+        return "%s(%r)" % (type(self), str(self))
 
 def APEValue(value, kind):
-    """It is not recommended you construct APE values manually; instead
-    use APEv2's __setitem__."""
+    """APEv2 tag value factory.
+
+    Use this if you need to specify the value's type manually.  Binary
+    and text data are automatically detected by APEv2.__setitem__.
+    """
     if kind == TEXT: return APETextValue(value, kind)
     elif kind == BINARY: return APEBinaryValue(value, kind)
     elif kind == EXTERNAL: return APEExtValue(value, kind)
@@ -333,14 +368,16 @@ class _APEValue(object):
         return "%s(%r, %d)" % (type(self).__name__, self.value, self.kind)
 
 class APETextValue(_APEValue):
-    """APE text values are Unicode/UTF-8 strings. They can be accessed
-    like strings (with a null seperating the values), or arrays of strings."""
+    """An APEv2 text value.
+
+    Text values are Unicode/UTF-8 strings. They can be accessed like
+    strings (with a null seperating the values), or arrays of strings."""
+
     def __unicode__(self):
         return unicode(str(self), "utf-8")
 
     def __iter__(self):
-        """Iterating over an APETextValue will iterate over the Unicode
-        strings, not the characters in the string."""
+        """Iterate over the strings of the value (not the characters)"""
         return iter(unicode(self).split("\0"))
 
     def __getitem__(self, i):
@@ -356,18 +393,19 @@ class APETextValue(_APEValue):
         l[i] = v.encode("utf-8")
         self.value = "\0".join(l).encode("utf-8")
 
-    def pprint(self): return " / ".join(self)
+    def pprint(self):
+        return " / ".join(self)
 
 class APEBinaryValue(_APEValue):
-    """Binary values may be converted to a string of bytes. They are
-    used for anything not intended to be human-readable."""
+    """An APEv2 binary value."""
 
     def pprint(self): return "[%d bytes]" % len(self)
 
 class APEExtValue(_APEValue):
-    """An external value is a string containing a URI (http://..., file://...)
-    that contains the actual value of the tag."""
+    """An APEv2 external value.
 
+    External values are usually URI or IRI strings.
+    """
     def pprint(self): return "[External] %s" % unicode(self)
 
 # The standard doesn't say anything about the byte ordering, but
