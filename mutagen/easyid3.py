@@ -7,6 +7,12 @@
 #
 # $Id: id3.py 3086 2006-04-04 02:13:21Z piman $
 
+"""Easier access to ID3 tags.
+
+EasyID3 is a wrapper around mutagen.id3.ID3 to make ID3 tags appear
+more like Vorbis or APEv2 tags.
+"""
+
 import mutagen.id3
 from mutagen import Metadata
 from mutagen._util import DictMixin
@@ -14,11 +20,13 @@ from mutagen.id3 import ID3, error
 
 __all__ = ['EasyID3', 'Open', 'delete']
 
-class EasyID3(Metadata, DictMixin):
-    """EasyID3 is a wrapper around mutagen.id3.ID3 to make ID3 tags
-    appear slightly more like Vorbis or APE tags. Only a subset of ID3
-    frames (those with simple text keys) are supported; EasyID3.valid_keys
-    maps human-readable EasyID3 names to ID3 frame IDs.
+class EasyID3(DictMixin, Metadata):
+    """A file with an ID3 tag.
+
+    Like Vorbis comments, EasyID3 keys are case-insensitive ASCII
+    values. Only a subset of ID3 frames (those with simple text keys)
+    are supported; EasyID3.valid_keys maps human-readable EasyID3
+    names to ID3 frame IDs.
 
     To use an EasyID3 class with mutagen.mp3.MP3:
         from mutagen.mp3 import MP3
@@ -37,9 +45,13 @@ class EasyID3(Metadata, DictMixin):
         "artist": "TPE1",
         "tracknumber": "TRCK",
         }
+    """Valid keys for EasyID3 instances."""
 
     def __init__(self, filename=None):
         self.__id3 = ID3()
+        self.load = self.__id3.load
+        self.save = self.__id3.save
+        self.delete = self.__id3.delete
         if filename is not None:
             self.load(filename)
 
@@ -70,9 +82,6 @@ class EasyID3(Metadata, DictMixin):
         frame.encoding = 3
         frame.text = value
 
-    def load(self, filename):
-        self.__id3.load(filename)
-
     def __getitem__(self, key):
         key = key.lower()
         if key in self.valid_keys:
@@ -102,13 +111,8 @@ class EasyID3(Metadata, DictMixin):
     def keys(self):
         return [k for (k, v) in self.valid_keys.items() if v in self.__id3]
 
-    def save(self, filename=None):
-        self.__id3.save(filename)
-
-    def delete(self, filename=None):
-        self.__id3.delete(filename)
-
     def pprint(self):
+        """Print tag key=value pairs."""
         strings = []
         for key in self.keys():
             values = self[key]
@@ -124,6 +128,7 @@ class EasyID3(Metadata, DictMixin):
     __default = (__text_get, __text_set)
 
 def delete(filename):
+    """Remove tags from a file."""
     mutagen.id3.delete(filename)
 
 Open = EasyID3
