@@ -8,10 +8,16 @@
 #
 # $Id$
 
-"""Read and write Ogg Vorbis files (http://vorbis.com/).
+"""Read and write Ogg Vorbis comments.
 
-Mutagen uses an external module, pyvorbis, to open Ogg Vorbis files.
-Read more about pyvorbis at http://www.andrewchatham.com/pyogg/.
+Read more about Ogg Vorbis at http://vorbis.com/. Mutagen uses an
+external module, pyvorbis, to open Ogg Vorbis files.  Read more about
+pyvorbis at http://www.andrewchatham.com/pyogg/.
+
+Benefits of using Mutagen rather than pyvorbis directly include an API
+consistent with the rest of Mutagen, a full dict-like interface to the
+comment data, and the ability to properly read and write a 'vendor'
+comment key.
 """
 
 try: from ogg.vorbis import VorbisFile, VorbisError
@@ -25,10 +31,10 @@ from mutagen._vorbis import VCommentDict
 class error(IOError): pass
 class OggVorbisNoHeaderError(error): pass
 
-__all__ = ["Open", "OggVorbis"]
-
 class OggVorbisInfo(object):
-    """The 'info' attribute of OggVorbis objects. It has two attributes:
+    """Ogg Vorbis stream information.
+
+    Attributes:
     length - file length in seconds, as a float
     bitrate - nominal ("average") bitrate in bits per second, as an int
     """
@@ -36,10 +42,13 @@ class OggVorbisInfo(object):
     __slots__ = ["length", "bitrate"]
 
 class OggVorbis(FileType):
+    """An Ogg Vorbis file."""
+
     def __init__(self, filename=None):
         if filename is not None: self.load(filename)
 
     def pprint(self):
+        """Print stream information and comment key=value pairs."""
         s = "Ogg Vorbis, %.2f seconds, %d bps\n" % (
             self.info.length, self.info.bitrate)
         return s + "\n".join(
@@ -47,6 +56,7 @@ class OggVorbis(FileType):
 
     def load(self, filename):
         """Load file information from a filename."""
+
         self.filename = filename
         try: vorbis = VorbisFile(filename)
         except VorbisError, e: raise OggVorbisNoHeaderError(e)
@@ -69,9 +79,8 @@ class OggVorbis(FileType):
     def delete(self, filename=None):
         """Remove tags from a file.
 
-        If no filename is given, the one passed to the constructor is used.
+        If no filename is given, the one most recently loaded is used.
         """
-
         if filename is None: filename = self.filename
         try: vorbis = VorbisFile(filename)
         except VorbisError, e: raise OggVorbisNoHeaderError(e)
@@ -82,13 +91,14 @@ class OggVorbis(FileType):
     def save(self, filename=None):
         """Save a tag to a file.
 
-        If no filename is given, the one passed to the constructor is used.
+        If no filename is given, the one most recently loaded is used.
         """
-
-        if filename is None: filename = self.filename
+        if filename is None:
+            filename = self.filename
         self.tags.validate()
         try: vorbis = VorbisFile(filename)
-        except VorbisError, e: raise OggVorbisNoHeaderError(e)
+        except VorbisError, e:
+            raise OggVorbisNoHeaderError(e)
         comment = vorbis.comment()
         comment.clear()
         for key, value in self.tags:
