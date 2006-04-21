@@ -6,16 +6,25 @@
 #
 # $Id: apev2.py 2866 2006-02-21 05:59:20Z piman $
 
-class DictMixin(object):
-    """Similar to UserDict.DictMixin, this takes a class that defines
-    __getitem__, __setitem__, __delitem__, and keys(), and turns it into
-    a full(er) dictionary-like object.
+"""Utility classes for Mutagen.
 
-    UserDict.DictMixin is not suitable for this purpose because it's an
-    old-style class.
+You should not rely on the interfaces here being stable. They are
+intended for internal use in Mutagen only.
+"""
+
+class DictMixin(object):
+    """Implement the dict API using keys() and __*item__ methods.
+
+    Similar to UserDict.DictMixin, this takes a class that defines
+    __getitem__, __setitem__, __delitem__, and keys(), and turns it
+    into a full dict-like object.
+
+    UserDict.DictMixin is not suitable for this purpose because it's
+    an old-style class.
 
     This class is not optimized for very large dictionaries; many
-    functions have linear memory requirements.
+    functions have linear memory requirements. I recommend you
+    override some of these functions if speed is required.
     """
 
     def __iter__(self):
@@ -56,7 +65,11 @@ class DictMixin(object):
             return key, self.pop(key)
         except IndexError: raise KeyError("dictionary is empty")
 
-    def update(self, other):
+    def update(self, other=None, **kwargs):
+        if other is None:
+            self.update(kwargs)
+            other = {}
+
         try: map(self.__setitem__, other.keys(), other.values())
         except AttributeError:
             for key, value in other:
