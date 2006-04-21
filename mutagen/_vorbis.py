@@ -1,9 +1,17 @@
 # Vorbis comment support for Mutagen
-# Copyright 2005 Joe Wreschnig
+# Copyright 2005-2006 Joe Wreschnig
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
+
+"""Read and write Vorbis comment data, used in Ogg Vorbis and FLAC
+files. Vorbis comments are freeform key/value pairs; keys are
+case-insensitive ASCII and values are Unicode strings. A key may
+have multiple values.
+
+The specification is at http://www.xiph.org/vorbis/doc/v-comment.html.
+"""
 
 import sys
 import struct
@@ -13,67 +21,82 @@ from cStringIO import StringIO
 
 if sys.version < (2, 4): from sets import Set as set
 
-"""Read and write Vorbis comment data, used in Ogg Vorbis and FLAC
-files. Vorbis comments are Unicode values with a key that is
-case-insensitive ASCII between 0x20 and 0x7D inclusive, excluding '=' and '~'.
+def is_valid_key(key):
+    """Return true if a string is a valid Vorbis comment key.
 
-Specification at http://www.xiph.org/vorbis/doc/v-comment.html."""
-
-def istag(key):
-    """Return true if 'key' is a valid Vorbis comment key. This means
-    it contains ASCII from 0x20 to 0x7D inclusive, barring '~' and '='."""
+    Valid Vorbis comment keys are printable ASCII between 0x20 (space)
+    and 0x7D ('}'), excluding '='.
+    """
     for c in key:
         if c < " " or c > "}" or c == "=": return False
     else: return bool(key)
+istag = is_valid_key
 
 class error(IOError): pass
 class VorbisUnsetFrameError(error): pass
 
 class VComment(list):
-    """Since Vorbis comments are always wrapped in something like an
-    Ogg Vorbis bitstream or a FLAC metadata block, this takes
-    string data or a file-like object, not a filename.
 
-    This isn't really intended to be used directly. File-specific classes
-    should wrap it and put its output in the appropriate places.
+    """A Vorbis comment parser, accessor, and renderer.
 
-    All comment ordering is preserved.
+    All comment ordering is preserved. A VComment is a list of
+    key/value pairs, and so any Python list method can be used on it.
 
     The default vendor if you make a new tag is 'Mutagen'. Otherwise,
-    any vendor tag will be preserved."""
+    any vendor tag will be preserved; the vendor can be accessed with
+    the .vendor attribute.
+
+    Vorbis comments are always wrapped in something like an Ogg Vorbis
+    bitstream or a FLAC metadata block, so this loads string data or a
+    file-like object, not a filename.
+    """
 
     vendor = u"Mutagen"
+    """The comment 'vendor' (i.e. writer)."""
 
     def __init__(self, data=None, errors='replace'):
         if data is not None:
-            if isinstance(data, str): data = StringIO(data)
+            if isinstance(data, str):
+                data = StringIO(data)
             elif not hasattr(data, 'read'):
                 raise TypeError("VComment requires string data or a file-like")
             self.load(data, errors)
 
-    def load(self, data, errors='replace', framing=True):
-        """Load a file-like object."""
+    def load(self, fileobj, errors='replace', framing=True):
+        """Parse a Vorbis comment from a file-like object.
 
+        Keyword arguments:
+        errors -- any valid error handler name for str.decode
+        framing -- if true, fail if a framing bit is not present
+
+        Framing bits are required by the Vorbis comment specification,
+        but are not used in FLAC Vorbis comment blocks.
+
+        """
         try:
-            vendor_length = struct.unpack("<I", data.read(4))[0]
-            self.vendor = data.read(vendor_length).decode('utf-8', errors)
-            count = struct.unpack("<I", data.read(4))[0]
+            vendor_length = struct.unpack("<I", fileobj.read(4))[0]
+            self.vendor = fileobj.read(vendor_length).decode('utf-8', errors)
+            count = struct.unpack("<I", fileobj.read(4))[0]
             for i in range(count):
-                length = struct.unpack("<I", data.read(4))[0]
-                string = data.read(length).decode('utf-8', 'replace')
+                length = struct.unpack("<I", fileobj.read(4))[0]
+                string = fileobj.read(length).decode('utf-8', errors)
                 tag, value = string.split('=', 1)
                 try: tag = tag.encode('ascii')
                 except UnicodeEncodeError: pass
                 else:
-                    if istag(tag): self.append((tag, value))
-            if framing and not ord(data.read(1)) & 0x01:
+                    if is_valid_key(tag): self.append((tag, value))
+            if framing and not ord(fileobj.read(1)) & 0x01:
                 raise VorbisUnsetFrameError("framing bit was unset")
         except (struct.error, TypeError):
-            raise error("data is not a valid Vorbis comment")
+            raise error("file is not a valid Vorbis comment")
 
     def validate(self):
-        """Validate keys and values, raising a ValueError if there
-        are any problems."""
+        """Validate keys and values.
+
+        Check to make sure every key used is a valid Vorbis key, and
+        that every value used is a valid Unicode or UTF-8 string. If
+        any invalid keys or values are found, a ValueError is raised.
+        """
 
         if not isinstance(self.vendor, unicode):
             try: self.vendor.decode('utf-8')
@@ -81,7 +104,7 @@ class VComment(list):
 
         for key, value in self:
             try:
-                if not istag(key): raise ValueError
+                if not is_valid_key(key): raise ValueError
             except: raise ValueError("%r is not a valid key" % key)
             if not isinstance(value, unicode):
                 try: value.encode("utf-8")
@@ -89,11 +112,19 @@ class VComment(list):
         else: return True
 
     def clear(self):
+        """Clear all keys from the comment."""
         del(self[:])
 
-    def write(self):
-        """Return a string encoding the comment data. Validation is
-        always done before writing."""
+    def write(self, framing=True):
+        """Return a string representation of the data.
+
+        Validation is always performed, so calling this function on
+        invalid data may raise a ValueError.
+
+        Keyword arguments:
+        framing -- if true, append a framing bit (see load)
+        """
+
         self.validate()
 
         f = StringIO()
@@ -104,53 +135,74 @@ class VComment(list):
             comment = "%s=%s" % (tag, value.encode('utf-8'))
             f.write(struct.pack("<I", len(comment)))
             f.write(comment)
-        f.write("\x01")
+        if framing: f.write("\x01")
         return f.getvalue()
 
 class VCommentDict(VComment, DictMixin):
-    """Wrap a VComment in a way that looks a bit like a dictionary.
-    The weakness of this method is that inter-key ordering can
-    be lost.
 
-    Note that most of these operations happen in linear time on
-    the number of values (not keys), and are not optimized."""
+    """A VComment that looks like a dictionary.
+
+    This object differs from a dictionary in two ways. First,
+    len(comment) will still return the number of values, not the
+    number of keys. Secondly, iterating through the object will
+    iterate over (key, value) pairs, not keys. Since a key may have
+    multiple values, the same value may appear multiple times while
+    iterating.
+
+    Since Vorbis comment keys are case-insensitive, all keys are
+    normalized to lowercase ASCII.
+    """
 
     __len__ = VComment.__len__
 
     def __getitem__(self, key):
-        """Return a ''copy'' of the values for this key.
-        comment['title'].append('a title') will not work."""
+        """A list of values for the key.
 
+        This is a copy, so comment['title'].append('a title') will not
+        work.
+
+        """
         key = key.lower()
         values = [value for (k, value) in self if k.lower() == key]
         if not values: raise KeyError, key
         else: return values
 
     def __delitem__(self, key):
+        """Delete all values associated with the key."""
         key = key.lower()
         to_delete = filter(lambda x: x[0].lower() == key, self)
-        if not to_delete: raise KeyError, key
+        if not to_delete:raise KeyError, key
         else: map(self.remove, to_delete)
 
     def __contains__(self, key):
+        """Return true if the key has any values."""
         key = key.lower()
         for k, value in self:
             if k.lower() == key: return True
         else: return False
 
     def __setitem__(self, key, values):
-        """Setting a value overwrites all old ones. The value give may be
-        a UTF-8 string, a unicode object, or a list of either."""
+        """Set a key's value or values.
+
+        Setting a value overwrites all old ones. The value may be a
+        list of Unicode or UTF-8 strings, or a single Unicode or UTF-8
+        string.
+
+        """
         key = key.lower()
-        if not isinstance(values, list): values = [values]
+        if not isinstance(values, list):
+            values = [values]
         try: del(self[key])
         except KeyError: pass
-        for value in values: self.append((key, value))
+        for value in values:
+            self.append((key, value))
 
-    def keys(self): return self and map(str.lower, set(zip(*self)[0]))
+    def keys(self):
+        """Return all keys in the comment."""
+        return self and map(str.lower, set(zip(*self)[0]))
 
     def as_dict(self):
-        """Return a copy of the tag data in a real dict."""
+        """Return a copy of the comment data in a real dict."""
         d = {}
         for key, value in self:
             d.setdefault(key, []).append(value)
