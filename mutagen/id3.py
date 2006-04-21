@@ -108,7 +108,7 @@ class ID3(mutagen.Metadata):
                     frames = ParseID3v1(self.__fileobj.read(128))
                     if frames is not None:
                         self.version = (1, 1)
-                        map(self.loaded_frame, frames.values())
+                        map(self.add, frames.values())
                     else: raise err, None, stack
             else:
                 frames = self.__known_frames
@@ -117,7 +117,7 @@ class ID3(mutagen.Metadata):
                     elif (2,2,0) <= self.version: frames = Frames_2_2
                 data = self.fullread(self._size)
                 for frame in self.read_frames(data, frames=frames):
-                    if isinstance(frame, Frame): self.loaded_frame(frame)
+                    if isinstance(frame, Frame): self.add(frame)
                     else: self.unknown_frames.append(frame)
         finally:
             self.__fileobj.close()
@@ -162,6 +162,12 @@ class ID3(mutagen.Metadata):
         # turn 2.2 into 2.3/2.4 tags
         if len(type(tag).__name__) == 3: tag = type(tag).__base__(tag)
         self[tag.HashKey] = tag
+
+    # add = loaded_frame (and vice versa) break applications that
+    # expect to be able to override loaded_frame (e.g. Quod Libet),
+    # as does making loaded_frame call add.
+    def add(self, tag):
+        return self.loaded_frame(tag)
 
     def load_header(self):
         fn = self.filename
@@ -372,19 +378,19 @@ class ID3(mutagen.Metadata):
                     time = str(self.pop("TIME"))
                     date += "T%s:%s:00" % (time[:2], time[2:])
             if "TDRC" not in self:
-                self.loaded_frame(TDRC(encoding=0, text=date))
+                self.add(TDRC(encoding=0, text=date))
 
         # TORY can be the first part of a TDOR.
         if "TORY" in self:
             date = str(self.pop("TORY"))
             if "TDOR" not in self:
-                self.loaded_frame(TDOR(encoding=0, text=date))
+                self.add(TDOR(encoding=0, text=date))
 
         # IPLS is now TIPL.
         if "IPLS" in self:
             if "TIPL" not in self:
                 f = self.pop("IPLS")
-                self.loaded_frame(TIPL(encoding=f.encoding, people=f.people))
+                self.add(TIPL(encoding=f.encoding, people=f.people))
 
         if "TCON" in self:
             # Get rid of "(xx)Foobr" format.

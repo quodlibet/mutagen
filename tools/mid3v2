@@ -88,7 +88,7 @@ def write_files(edits, filenames):
                     encoding=3, text=value, lang=lang, desc=desc)
             else:
                 frame = mutagen.id3.Frames[frame](encoding=3, text=value)
-            id3.loaded_frame(frame)
+            id3.add(frame)
         id3.save(filename)
 
 def list_tags(filenames):
