@@ -10,10 +10,7 @@
 # $Id$
 #
 
-version = (1, 1, 0)
-
-"""
-mutagen aims to be an all purpose tagging library.
+"""Mutagen aims to be an all purpose tagging library.
 
     import mutagen.[format]
     metadata = mutagen.[format].Open(filename)
@@ -24,31 +21,32 @@ depending on tag or format. They may also be entirely different objects
 for certain keys, again depending on format.
 """
 
+version = (1, 1, 0)
+
 from mutagen._util import DictMixin
 
 class Metadata(dict):
-    """Abstract dict-like object that each format inherits for managing
-    metadata."""
+    """An abstract dict-like object.
 
-    def __init__(self, filename=None, fileobj=None):
-        """Initializes a tag structure. If fileobj is specified it is the
-        source and must include a "read" method or an AttributeError will be
-        raised. Otherwise if filename is specified it must exist and be
-        readable or normal exceptions will be thrown. Finally for various kinds
-        of bad data, a subclass of ValueError may be thrown."""
+    Metadata is the base class for most of the tag formats in Mutagen.
+    """
+
+    def __init__(self, filename=None):
         raise NotImplementedError
 
     def save(self, filename=None):
-        """Save metadata to previously referenced or newly specified file"""
         raise NotImplementedError
 
     def delete(self):
-        """Remove tags from the open file"""
         raise NotImplementedError
 
     def _insert_space(fobj, size, offset):
-        """insert size bytes of empty space starting at offset. fobj must be
-        an open file object, open rb+ or equivalent."""
+        """Insert size bytes of empty space starting at offset.
+
+        fobj must be an open file object, open rb+ or
+        equivalent. Mutagen tries to use mmap to resize the file, but
+        falls back to a significantly slower method if mmap fails.
+        """
         from mmap import mmap
         assert 0 < size
         assert 0 <= offset
@@ -78,8 +76,12 @@ class Metadata(dict):
     _insert_space = staticmethod(_insert_space)
 
     def _delete_bytes(fobj, size, offset):
-        """delete size bytes of data starting at offset. fobj must be
-        an open file object, open rb+ or equivalent."""
+        """Delete size bytes of empty space starting at offset.
+
+        fobj must be an open file object, open rb+ or
+        equivalent. Mutagen tries to use mmap to resize the file, but
+        falls back to a significantly slower method if mmap fails.
+        """
         from mmap import mmap
         assert 0 < size
         assert 0 <= offset
@@ -105,35 +107,67 @@ class Metadata(dict):
     _delete_bytes = staticmethod(_delete_bytes)
 
 class FileType(DictMixin):
-    """Abstract object that provides a specific type of file format.
-    Any metadata tags are exposed as .tags (and looks basically like a dict),
-    and the audio info is exposed as .info, which has at least a length
-    attribute."""
+    """An abstract object wrapping tags and audio stream information.
+
+    Attributes:
+    info -- stream information (length, bitrate, sample rate)
+    tags -- metadata tags, if any
+
+    Each file format has different potential tags and stream
+    information.
+
+    FileTypes implement an interface very similar to Metadata; the
+    dict interface, save, load, and delete calls on a FileType call
+    the appropriate methods on its tag data.
+    """
 
     info = None
     tags = None
 
     def __getitem__(self, key):
+        """Look up a metadata tag key.
+
+        If the file has no tags at all, a KeyError is raised.
+        """
         if self.tags is None: raise KeyError, key
         else: return self.tags[key]
 
     def __setitem__(self, key, value):
+        """Set a metadata tag.
+
+        If the file has no tags, an appropriate format is added (but
+        not written until save is called).
+        """
         if self.tags is None: self.add_tags()
         self.tags[key] = value
 
     def __delitem__(self, key):
+        """Delete a metadata tag key.
+
+        If the file has no tags at all, a KeyError is raised.
+        """
         if self.tags is None: raise KeyError, key
         else: del(self.tags[key])
 
     def keys(self):
+        """Return a list of keys in the metadata tag.
+
+        If the file has no tags at all, an empty list is returned.
+        """
         if self.tags is None: return []
         else: return self.tags.keys()
 
-    def delete(self):
+    def delete(self, filename=None):
         """Remove tags from a file."""
-        if self.tags is not None: self.tags.delete()
+        if self.tags is not None:
+            if filename is None: filename = self.filename
+            self.tags.delete(filename)
 
     def save(self, filename=None, **kwargs):
+        """Save metadata tags.
+
+        If no filename is given, the one most recently loaded is used.
+        """
         if filename is None: filename = self.filename
         if self.tags is not None:
             self.tags.save(filename, **kwargs)
