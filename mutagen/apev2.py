@@ -51,6 +51,7 @@ class APEUnsupportedVersionError(error, ValueError): pass
 class APEBadItemError(error, ValueError): pass
 
 from mutagen import Metadata
+from mutagen._util import DictMixin
 
 class _APEv2Data(object):
     # Store offsets of the important parts of the file.
@@ -156,7 +157,7 @@ class _APEv2Data(object):
                 else: break
         self.start = start
 
-class APEv2(Metadata):
+class APEv2(DictMixin, Metadata):
     """A file with an APEv2 tag.
 
     ID3v1 tags are silently ignored and overwritten.
@@ -203,8 +204,6 @@ class APEv2(Metadata):
             value = f.read(size)
             self[key] = APEValue(value, kind)
 
-    def __contains__(self, k):
-        return super(APEv2, self).__contains__(APEKey(k))
     def __getitem__(self, k):
         return super(APEv2, self).__getitem__(APEKey(k))
     def __delitem__(self, k):
