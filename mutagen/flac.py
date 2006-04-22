@@ -5,11 +5,19 @@
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
 
-# Based off documentation available at
-# http://flac.sourceforge.net/format.html
+"""Read and write FLAC Vorbis comments and stream information.
 
-# FLAC files use Vorbis comments, but in a different fashion.
-# This module doesn't handle Ogg FLAC files, either.
+Read more about FLAC at http://flac.sourceforge.net.
+
+FLAC supports arbitrary metadata blocks. The two most interesting ones
+are the FLAC stream information block, and the Vorbis comment block;
+these are also the only ones Mutagen can currently read.
+
+This module does not handle Ogg FLAC files.
+
+Based off documentation available at
+http://flac.sourceforge.net/format.html
+"""
 
 __all__ = ["FLAC", "Open"]
 
@@ -17,12 +25,6 @@ import struct
 from cStringIO import StringIO
 from _vorbis import VCommentDict
 from mutagen import Metadata, FileType
-
-"""Read metadata from a FLAC file.
-
-Based on the documentation at http://flac.sourceforge.net/format.html.
-
-Ogg FLAC is not supported."""
 
 class error(IOError): pass
 class FLACNoHeaderError(error): pass
@@ -34,8 +36,14 @@ def to_int_be(string):
     return reduce(lambda a, b: (a << 8) + ord(b), string, 0L)
 
 class MetadataBlock(object):
-    """A generic block of metadata, used as an ancestor for more specific
-    blocks, and also as a container for data blobs of unknown blocks."""
+    """A generic block of FLAC metadata.
+
+    This class is extended by specific used as an ancestor for more specific
+    blocks, and also as a container for data blobs of unknown blocks.
+
+    Attributes:
+    data -- raw binary data for this block
+    """
 
     def __init__(self, data):
         """Parse the given data string or file-like as a metadata block.
@@ -51,6 +59,7 @@ class MetadataBlock(object):
     def write(self): return self.data
 
     def writeblocks(blocks):
+        """Render metadata block as a byte string."""
         data = []
         codes = [[block.code, block.write()] for block in blocks]
         codes[-1][0] |= 128
@@ -62,8 +71,10 @@ class MetadataBlock(object):
     writeblocks = staticmethod(writeblocks)
 
     def group_padding(blocks):
-        """Replace any padding metadata blocks with a single block
-        at the end, maintaining the same size as the old blocks."""
+        """Consolidate FLAC padding metadata blocks.
+
+        The overall size of the rendered blocks does not change, so
+        this adds several bytes of padding for each merged block."""
         paddings = filter(lambda x: isinstance(x, Padding), blocks)
         map(blocks.remove, paddings)
         padding = Padding()
@@ -75,8 +86,23 @@ class MetadataBlock(object):
     group_padding = staticmethod(group_padding)
 
 class StreamInfo(MetadataBlock):
-    """Parse a FLAC's stream information metadata block. This contains
-    information about the block size and sample format."""
+    """FLAC stream information.
+
+    This contains information about the audio data in the FLAC file.
+    Unlike most stream information objects in Mutagen, changes to this
+    one will rewritten to the file when it is saved. Unless you are
+    actually changing the audio stream itself, don't change any
+    attributes of this block.
+
+    Attributes:
+    min_blocksize -- minimum audio block size
+    max_blocksize -- maximum audio block size
+    sample_rate -- audio sample rate in Hz
+    channels -- audio channels (1 for mono, 2 for stereo)
+    bits_per_sample -- bits per sample
+    total_samples -- total samples in file
+    length -- audio length in seconds
+    """
 
     code = 0
 
@@ -140,8 +166,11 @@ class StreamInfo(MetadataBlock):
         return f.getvalue()
 
 class VCFLACDict(VCommentDict):
-    """FLACs don't use the framing bit at the end of the comment block.
-    So don't expect it during reads, and chop it off during writes."""
+    """Read and write FLAC Vorbis comments.
+
+    FLACs don't use the framing bit at the end of the comment block.
+    So this extends VCommentDict to not use the framing bit.
+    """
 
     code = 4
 
@@ -152,11 +181,13 @@ class VCFLACDict(VCommentDict):
         return super(VCFLACDict, self).write()[:-1]
 
 class Padding(MetadataBlock):
-    """A block consisting of null padding. Its size can be adjusted by
-    changing the 'length' attribute.
+    """Empty padding space for metadata blocks.
 
-    Usually this will follow a Vorbis comment, to avoid needing to
-    resize the file when changing tags."""
+    To avoid rewriting the entire FLAC file when editing comments,
+    metadata is often padded. Padding should occur at the end, and no
+    more than one padding block should be in any FLAC file. Mutagen
+    handles this with MetadataBlock.group_padding.
+    """
 
     code = 1
 
@@ -167,13 +198,19 @@ class Padding(MetadataBlock):
         return "<%s (%d bytes)>" % (type(self).__name__, self.length)
 
 class FLAC(FileType):
+    """A FLAC audio file."""
+
     METADATA_BLOCKS = [StreamInfo, Padding, None, None, VCFLACDict]
+    """Known metadata block types, indexed by ID."""
 
     def __init__(self, filename=None):
         self.metadata_blocks = []
+        """A list of metadata blocks in the file. If you want to save
+        custom block types, you can append them to this list."""
         if filename is not None: self.load(filename)
 
     def pprint(self):
+        """Print stream information and comment key=value pairs."""
         s = "FLAC, %d Hz, %.2f seconds\n" % (
             self.info.sample_rate, self.info.length)
         return s + "\n".join(
@@ -197,14 +234,19 @@ class FLAC(FileType):
         return (byte >> 7) ^ 1
 
     def add_tags(self):
+        """Add a Vorbis comment block to the file."""
         if self.tags is None:
             self.tags = VCFLACDict()
             self.metadata_blocks.append(self.tags)
         else: raise FLACVorbisError("a Vorbis comment already exists")
     add_vorbiscomment = add_tags
 
-    def delete(self):
-        """Remove tags from a file."""
+    def delete(self, filename=None):
+        """Remove Vorbis comments from a file.
+
+        If no filename is given, the one most recently loaded is used.
+        """
+        if filename is None: filename = self.filename
         for s in list(self.metadata_blocks):
             if isinstance(s, VCFLACDict):
                 self.metadata_blocks.remove(s)
@@ -212,9 +254,11 @@ class FLAC(FileType):
                 self.save()
                 break
 
-    vc = property(lambda s: s.tags)
+    vc = property(lambda s: s.tags, doc="Alias for tags; don't use this.")
 
     def load(self, filename):
+        """Load file information from a filename."""
+
         self.filename = filename
         f = file(filename, "rb")
         if f.read(4) != "fLaC":
@@ -228,6 +272,11 @@ class FLAC(FileType):
     info = property(lambda s: s.metadata_blocks[0])
 
     def save(self, filename=None):
+        """Save metadata blocks to a file.
+
+        If no filename is given, the one most recently loaded is used.
+        """
+
         if filename is None: filename = self.filename
         f = open(filename, 'rb+')
 
