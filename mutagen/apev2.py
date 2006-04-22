@@ -209,14 +209,13 @@ class APEv2(DictMixin, Metadata):
     def __delitem__(self, k):
         return super(APEv2, self).__delitem__(APEKey(k))
     def __setitem__(self, k, v):
-        """'Magic' value setter
+        """'Magic' value setter.
 
-        This function tries to guess at what
-        kind of value you want to store. If you pass in a valid UTF-8
-        or Unicode string, it treats it as a text value. If you pass
-        in a list, it treats it as a list of string/Unicode values.
-        If you pass in a string that is not valid UTF-8, it assumes it
-        is a binary value.
+        This function tries to guess at what kind of value you want to
+        store. If you pass in a valid UTF-8 or Unicode string, it
+        treats it as a text value. If you pass in a list, it treats it
+        as a list of string/Unicode values.  If you pass in a string
+        that is not valid UTF-8, it assumes it is a binary value.
 
         If you need to force a specific type of value (e.g. binary
         data that also happens to be valid UTF-8, or an external
