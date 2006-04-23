@@ -9,7 +9,7 @@
 
 """ID3v2 reading and writing.
 
- This is based off of the following references:
+This is based off of the following references:
    http://www.id3.org/id3v2.4.0-structure.txt
    http://www.id3.org/id3v2.4.0-frames.txt
    http://www.id3.org/id3v2.3.0.html
@@ -683,6 +683,16 @@ class Latin1TextSpec(EncodedTextSpec):
     def validate(self, frame, value): return unicode(value)
 
 class ID3TimeStamp(object):
+    """A time stamp in ID3v2 format.
+
+    This is a restricted form of the ISO 8601 standard; time stamps
+    take the form of:
+        YYYY-MM-DD HH:MM:SS
+    Or some partial form (YYYY-MM-DD HH, YYYY, etc.).
+
+    The 'text' attribute contains the raw text data of the time stamp.
+    """
+
     import re
     def __init__(self, text):
         if isinstance(text, ID3TimeStamp): text = text.text
@@ -706,7 +716,7 @@ class ID3TimeStamp(object):
             except ValueError: v = None
             setattr(self, a, v)
 
-    text = property(get_text, set_text, doc="ID3v2.4 datetime")
+    text = property(get_text, set_text, doc="ID3v2.4 date and time.")
 
     def __str__(self): return self.text
     def __repr__(self): return repr(self.text)
@@ -763,6 +773,12 @@ class VolumePeakSpec(Spec):
     def validate(self, frame, value): return value
 
 class Frame(object):
+    """Fundamental unit of ID3 data.
+
+    ID3 tags are split into frames. Each frame has a potentially
+    different structure, and so this base class is not very featureful.
+    """
+
     FLAG23_ALTERTAG     = 0x8000
     FLAG23_ALTERFILE    = 0x4000
     FLAG23_READONLY     = 0x2000
@@ -794,11 +810,19 @@ class Frame(object):
                     self, kwargs.get(checker.name, None))
                 setattr(self, checker.name, validated)
 
-    HashKey = property(lambda s: s.FrameID, doc="serves as a hash key")
-    FrameID = property(lambda s: type(s).__name__, doc="ID3 Frame ID")
+    HashKey = property(
+        lambda s: s.FrameID,
+        doc="an internal key used to ensure frame uniqueness in a tag")
+    FrameID = property(
+        lambda s: type(s).__name__,
+        doc="ID3v2 three or four character frame ID")
 
     def __repr__(self):
-        """eval(repr(frame)) == frame, for all frames."""
+        """Python representation of a frame.
+
+        The string returned is a valid Python expression to construct
+        a copy of this frame.
+        """
         kw = []
         for attr in self._framespec:
             kw.append('%s=%r' % (attr.name, getattr(self, attr.name)))
@@ -824,12 +848,14 @@ class Frame(object):
         return ''.join(data)
 
     def pprint(self):
+        """Return a human-readable representation of the frame."""
         return "%s=%s" % (type(self).__name__, self._pprint())
 
     def _pprint(self):
         return "[unrepresentable data]"
 
     def fromData(cls, id3, tflags, data):
+        """Construct this ID3 frame from raw string data."""
 
         if (2,4,0) <= id3.version:
             if tflags & (Frame.FLAG24_COMPRESS | Frame.FLAG24_DATALEN):
@@ -876,8 +902,11 @@ class Frame(object):
         raise TypeError("Frame objects are unhashable")
 
 class FrameOpt(Frame):
-    """A frame that supports an _optionalspec list. These specs contain
-    parts of the frame that are not mandatory."""
+    """A frame with optional parts.
+
+    Some ID3 frames have optional data; this class extends Frame to
+    provide support for those parts.
+    """
     _optionalspec = []
 
     def __init__(self, *args, **kwargs):
@@ -924,9 +953,19 @@ class FrameOpt(Frame):
 
 
 class TextFrame(Frame):
-    """Text frames support multiple values; it can be streated as a
-    single null-separated string, or a list of values (with append,
-    extend, and a [] accessor)."""
+    """Text strings.
+
+    Text frames support casts to unicode or str objects, as well as
+    list-like indexing, extend, and append.
+
+    Iterating over a TextFrame iterates over its strings, not its
+    characters.
+
+    Text frames have a 'text' attribute which is the list of strings,
+    and an 'encoding' attribute; 0 for ISO-8859 1, 1 UTF-16, 2 for
+    UTF-16BE, and 3 for UTF-8. If you don't want to worry about
+    encodings, just set it to 3.
+    """
 
     _framespec = [ EncodingSpec('encoding'),
         MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000') ]
@@ -944,23 +983,41 @@ class TextFrame(Frame):
     def _pprint(self): return " / ".join(self.text)
 
 class NumericTextFrame(TextFrame):
-    """In addition to the TextFrame methods, these frames support the
-    unary plus operation (+frame) to return the first number in the list."""
+    """Numerical text strings.
+
+    The numeric value of these frames can be gotten with unary plus, e.g.
+        frame = TLEN('12345')
+        length = +frame
+    """
 
     _framespec = [ EncodingSpec('encoding'),
         MultiSpec('text', EncodedNumericTextSpec('text'), sep=u'\u0000') ]
-    def __pos__(self): return int(self.text[0])
+
+    def __pos__(self):
+        """Return the numerical value of the string."""
+        return int(self.text[0])
 
 class NumericPartTextFrame(TextFrame):
-    """In addition to the TextFrame methods, these frames support the
-    unary plus operation (+frame) to return the first number in the list."""
+    """Multivalue numreical text strings.
+
+    These strings indicate 'part (e.g. track) X of Y', and unary plus
+    returns the first value:
+        frame = TRCK('4/15')
+        track = +frame # track == 4
+    """
+
     _framespec = [ EncodingSpec('encoding'),
         MultiSpec('text', EncodedNumericPartTextSpec('text'), sep=u'\u0000') ]
     def __pos__(self):
-        t = self.text[0]
-        return int('/' in t and t[:t.find('/')] or t)
+        return int(self.text[0].split("/")[0])
 
 class TimeStampTextFrame(TextFrame):
+    """A list of timp stamps.
+
+    The 'text' attribute in this frame is a list of ID3TimeStamp
+    objects, not a list of strings.
+    """
+
     _framespec = [ EncodingSpec('encoding'),
         MultiSpec('text', TimeStampSpec('stamp'), sep=u',') ]
     def __str__(self): return self.__unicode__().encode('utf-8')
@@ -969,6 +1026,17 @@ class TimeStampTextFrame(TextFrame):
         return " / ".join([stamp.text for stamp in self.text])
 
 class UrlFrame(Frame):
+    """A frame containing a URL string.
+
+    The ID3 specification is silent about IRIs and normalized URL
+    forms. Mutagen assumes all URLs in files are encoded as Latin 1,
+    but string conversion of this frame returns a UTF-8 representation
+    for compatibility with other string conversions.
+
+    The only sane way to handle URLs in MP3s is to restrict them to
+    ASCII.
+    """
+
     _framespec = [ Latin1TextSpec('url') ]
     def __str__(self): return self.url.encode('utf-8')
     def __unicode__(self): return self.url
@@ -976,7 +1044,7 @@ class UrlFrame(Frame):
     def _pprint(self): return self.url
 
 class UrlFrameU(UrlFrame):
-    HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.url))
+    HashKey = property(lambda s: '%s:%s' % (s.FrameID, s.url))
 
 class TALB(TextFrame): "Album"
 class TBPM(NumericTextFrame): "Beats per minute"
@@ -985,9 +1053,9 @@ class TCOM(TextFrame): "Composer"
 class TCON(TextFrame):
     """Content type (Genre)
 
-    The raw text data for a genre may be in one of several formats, either
-    string data or a numeric code. For friendly access, use the genres
-    property."""
+    ID3 has several ways genres can be represented; for convenience,
+    use the 'genres' property rather than the 'text' attribute.
+    """
 
     from mutagen._constants import GENRES
 
@@ -1086,7 +1154,12 @@ class TSST(TextFrame): "Set Subtitle"
 class TYER(NumericTextFrame): "Year of recording"
 
 class TXXX(TextFrame):
-    "User-defined Text"
+    """User-defined text data.
+
+    TXXX frames have a 'desc' attribute which is set to any Unicode
+    value (though the encoding of the text and the description must be
+    the same). Many taggers use this frame to store freeform keys.
+    """
     _framespec = [ EncodingSpec('encoding'), EncodedTextSpec('desc'),
         MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000') ]
     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.desc))
@@ -1102,12 +1175,25 @@ class WPAY(UrlFrame): "Payment Information"
 class WPUB(UrlFrame): "Official Publisher Information"
 
 class WXXX(UrlFrame):
-    "User-defined URL"
+    """User-defined URL data.
+
+    Like TXXX, this has a freeform description associated with it.
+    """
     _framespec = [ EncodingSpec('encoding'), EncodedTextSpec('desc'),
         Latin1TextSpec('url') ]
     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.desc))
 
 class PairedTextFrame(Frame):
+    """Paired text strings.
+
+    Some ID3 frames pair text strings, to associate names with a more
+    specific involvement in the song. The 'people' attribute of these
+    frames contains a list of pairs:
+        [['trumpet', 'Miles Davis'], ['Paul Chambers', 'bass']]
+
+    Like text frames, these frames also have an encoding attribute.
+    """
+
     _framespec = [ EncodingSpec('encoding'), MultiSpec('people',
         EncodedTextSpec('involvement'), EncodedTextSpec('person')) ]
     def __eq__(self, other):
@@ -1118,7 +1204,10 @@ class TMCL(PairedTextFrame): "Musicians Credits List"
 class IPLS(TIPL): "Involved People List"
 
 class MCDI(Frame):
-    "Binary dump of CD's TOC"
+    """Binary dump of CD's TOC.
+
+    The 'data' attribute contains the raw byte string.
+    """
     _framespec = [ BinaryDataSpec('data') ]
     def __eq__(self, other): return self.data == other
 
@@ -1127,11 +1216,15 @@ class MCDI(Frame):
 # class SYTC: unsupported
 
 class USLT(Frame):
-    "Unsychronised lyrics/text transcription"
+    """Unsychronised lyrics/text transcription.
+
+    Lyrics have a three letter ISO language code ('lang'), a
+    descripton ('desc'), and a block of plain text ('text').
+    """
 
     _framespec = [ EncodingSpec('encoding'), StringSpec('lang', 3),
-                   EncodedTextSpec('desc'), EncodedTextSpec('text') ]
-    HashKey = property(lambda s: '%s:%s:%r'%(s.FrameID, s.desc, s.lang))
+        EncodedTextSpec('desc'), EncodedTextSpec('text') ]
+    HashKey = property(lambda s: '%s:%s:%r' % (s.FrameID, s.desc, s.lang))
 
     def __str__(self): return self.text.encode('utf-8')
     def __unicode__(self): return self.text
@@ -1141,7 +1234,11 @@ class USLT(Frame):
 #     HashKey = property(lambda s: '%s:%s:%r'%(s.FrameID, s.desc, s.lang))
 
 class COMM(TextFrame):
-    "User comment"
+    """User comment.
+
+    User comment frames have a descrption, like TXXX, and also a three
+    letter ISO language code in the 'lang' attribute.
+    """
     _framespec = [ EncodingSpec('encoding'), StringSpec('lang', 3),
         EncodedTextSpec('desc'),
         MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000') ]
@@ -1150,10 +1247,21 @@ class COMM(TextFrame):
         self.desc, self.lang, " / ".join(self.text))
 
 class RVA2(Frame):
-    """Relative volume adjustment (2)
+    """Relative volume adjustment (2).
 
-    Peak levels are not supported because the ID3 standard does not
-    describe how they are stored."""
+    This frame is used to implemented volume scaling, and in
+    particular, normalzation using ReplayGain.
+
+    Attributes:
+    desc -- description or context of this adjustment
+    channel -- audio channel to adjust (master is 1)
+    gain -- a + or - dB gain relative to some reference level
+    peak -- peak of the audio as a floating point number, [0, 1]
+
+    When storing ReplayGain tags, use descriptions of 'album' and
+    'track' on channel 1.
+    """
+
     _framespec = [ Latin1TextSpec('desc'), ChannelSpec('channel'),
         VolumeAdjustmentSpec('gain'), VolumePeakSpec('peak') ]
     _channels = ["Other", "Master volume", "Front right", "Front left",
@@ -1178,7 +1286,7 @@ class RVA2(Frame):
 # class EQUA: unsupported
 
 class RVRB(Frame):
-    "Reverb"
+    """Reverb."""
     _framespec = [ SizedIntegerSpec('left', 2), SizedIntegerSpec('right', 2),
                    ByteSpec('bounce_left'), ByteSpec('bounce_right'),
                    ByteSpec('feedback_ltl'), ByteSpec('feedback_ltr'),
@@ -1188,17 +1296,33 @@ class RVRB(Frame):
     def __eq__(self, other): return (self.left, self.right) == other
 
 class APIC(Frame):
-    "Attached (or linked) Picture"
+    """Attached (or linked) Picture.
+
+    Attributes:
+    encoding -- text encoding for the description
+    mime -- a MIME type (e.g. image/jpeg) or '-->' if the data is a URI
+    type -- the source of the image (3 is the album front cover)
+    desc -- a text description of the image
+    data -- raw image data, as a byte string
+
+    Mutagen will automatically compress large images when saving tags.
+    """
     _framespec = [ EncodingSpec('encoding'), Latin1TextSpec('mime'),
         ByteSpec('type'), EncodedTextSpec('desc'), BinaryDataSpec('data') ]
     def __eq__(self, other): return self.data == other
-    HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.desc))
+    HashKey = property(lambda s: '%s:%s' % (s.FrameID, s.desc))
     def _pprint(self):
         return "%s (%s, %d bytes)" % (
             self.desc, self.mime, len(self.data))
 
 class PCNT(Frame):
-    "Play counter"
+    """Play counter.
+
+    The 'count' attribute contains the (recorded) number of times this
+    file has been played.
+
+    This frame is basically obsoleted by POPM.
+    """
     _framespec = [ IntegerSpec('count') ]
 
     def __eq__(self, other): return self.count == other
@@ -1206,7 +1330,16 @@ class PCNT(Frame):
     def _pprint(self): return unicode(self.count)
 
 class POPM(Frame):
-    "Popularimeter"
+    """Popularimeter.
+
+    This frame keys a rating (out of 255) and a play count to an email
+    address.
+
+    Attributes:
+    email -- email this POPM frame is for
+    rating -- rating from 0 to 255
+    count -- number of times the files has been played
+    """
     _framespec = [ Latin1TextSpec('email'), ByteSpec('rating'),
         IntegerSpec('count') ]
     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.email))
@@ -1217,7 +1350,17 @@ class POPM(Frame):
         self.email, self.count, self.rating)
 
 class GEOB(Frame):
-    "General Encapsulated Object"
+    """General Encapsulated Object.
+
+    A blob of binary data, that is not a picture (those go in APIC).
+
+    Attribues:
+    encoding -- encoding of the description
+    mime -- MIME type of the data or '-->' if the data is a URI
+    filename -- suggested filename if extracted
+    desc -- text description of the data
+    data -- raw data, as a byte string
+    """
     _framespec = [ EncodingSpec('encoding'), Latin1TextSpec('mime'),
         EncodedTextSpec('filename'), EncodedTextSpec('desc'), 
         BinaryDataSpec('data') ]
@@ -1226,7 +1369,15 @@ class GEOB(Frame):
     def __eq__(self, other): return self.data == other
 
 class RBUF(FrameOpt):
-    "Recommended buffer size"
+    """Recommended buffer size.
+
+    Attributes:
+    size -- recommended buffer size in bytes
+    info -- if ID3 tags may be elsewhere in the file (optional)
+    offset -- the location of the next ID3 tag, if any
+
+    Mutagen will not find the next tag itself.
+    """
     _framespec = [ SizedIntegerSpec('size', 3) ]
     _optionalspec = [ ByteSpec('info'), SizedIntegerSpec('offset', 4) ]
 
@@ -1234,7 +1385,16 @@ class RBUF(FrameOpt):
     def __pos__(self): return self.size
 
 class AENC(FrameOpt):
-    "Audio encryption"
+    """Audio encryption.
+
+    Attributes:
+    owner -- key identifying this encryption type
+    preview_start -- unencrypted data block offset
+    preview_length -- number of unencrypted blocks
+    data -- data required for decryption (optional)
+
+    Mutagen cannot decrypt files.
+    """
     _framespec = [ Latin1TextSpec('owner'),
                    SizedIntegerSpec('preview_start', 2),
                    SizedIntegerSpec('preview_length', 2) ]
@@ -1250,14 +1410,24 @@ class AENC(FrameOpt):
 #        s.FrameID, s.frameid, s.url, s.data))
 
 class POSS(Frame):
-    "Position synchronisation frame"
+    """Position synchronisation frame
+
+    Attribute:
+    format -- format of the position attribute (frames or milliseconds)
+    position -- current position of the file
+    """
     _framespec = [ ByteSpec('format'), IntegerSpec('position') ]
 
     def __pos__(self): return self.position
     def __eq__(self, other): return self.position == other
 
 class UFID(Frame):
-    "Unique file identifier"
+    """Unique file identifier.
+
+    Attributes:
+    owner -- format/type of identifier
+    data -- identifier
+    """
 
     _framespec = [ Latin1TextSpec('owner'), BinaryDataSpec('data') ]
     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.owner))
@@ -1270,7 +1440,13 @@ class UFID(Frame):
         else: return "%s (%d bytes)" % (self.owner, len(self.data))
 
 class USER(Frame):
-    "Terms of use"
+    """Terms of use.
+
+    Attributes:
+    encoding -- text encoding
+    lang -- ISO three letter language code
+    text -- licensing terms for the audio
+    """
     _framespec = [ EncodingSpec('encoding'), StringSpec('lang', 3),
         EncodedTextSpec('text') ]
     HashKey = property(lambda s: '%s:%r' % (s.FrameID, s.lang))
@@ -1281,7 +1457,7 @@ class USER(Frame):
     def _pprint(self): return "%r=%s" % (self.lang, self.text)
 
 class OWNE(Frame):
-    "Ownership frame"
+    """Ownership frame."""
     _framespec = [ EncodingSpec('encoding'), Latin1TextSpec('price'),
                    StringSpec('date', 8), EncodedTextSpec('seller') ]
 
@@ -1290,7 +1466,7 @@ class OWNE(Frame):
     def __eq__(self, other): return self.seller == other
 
 class COMR(FrameOpt):
-    "Commercial frame"
+    """Commercial frame."""
     _framespec = [ EncodingSpec('encoding'), Latin1TextSpec('price'),
                    StringSpec('valid_until', 8), Latin1TextSpec('contact'),
                    ByteSpec('format'), EncodedTextSpec('seller'),
@@ -1300,10 +1476,11 @@ class COMR(FrameOpt):
     def __eq__(self, other): return self._writeData() == other._writeData()
 
 class ENCR(Frame):
-    """Encryption method registration
+    """Encryption method registration.
 
     The standard does not allow multiple ENCR frames with the same owner
-    or the same method. Mutagen only verifies that the owner is unique."""
+    or the same method. Mutagen only verifies that the owner is unique.
+    """
     _framespec = [ Latin1TextSpec('owner'), ByteSpec('method'),
                    BinaryDataSpec('data') ]
     HashKey = property(lambda s: "%s:%s" % (s.FrameID, s.owner))
@@ -1311,7 +1488,7 @@ class ENCR(Frame):
     def __eq__(self, other): return self.data == other
 
 class GRID(FrameOpt):
-    "Group identification registration"
+    """Group identification registration."""
     _framespec = [ Latin1TextSpec('owner'), ByteSpec('group') ]
     _optionalspec = [ BinaryDataSpec('data') ]
     HashKey = property(lambda s: '%s:%s' % (s.FrameID, s.group))
@@ -1322,7 +1499,7 @@ class GRID(FrameOpt):
     
 
 class PRIV(Frame):
-    "Private frame"
+    """Private frame."""
     _framespec = [ Latin1TextSpec('owner'), BinaryDataSpec('data') ]
     HashKey = property(lambda s: '%s:%s:%s' % (
         s.FrameID, s.owner, s.data.decode('latin1')))
@@ -1334,14 +1511,17 @@ class PRIV(Frame):
         else: return "%s (%d bytes)" % (self.owner, len(self.data))
 
 class SIGN(Frame):
-    "Signature frame"
+    """Signature frame."""
     _framespec = [ ByteSpec('group'), BinaryDataSpec('sig') ]
     HashKey = property(lambda s: '%s:%c:%s' % (s.FrameID, s.group, s.sig))
     def __str__(self): return self.sig
     def __eq__(self, other): return self.sig == other
 
 class SEEK(Frame):
-    "Seek frame"
+    """Seek frame.
+
+    Mutagen does not find tags at seek offets.
+    """
     _framespec = [ IntegerSpec('offset') ]
     def __pos__(self): return self.offset
     def __eq__(self, other): return self.offset == other
@@ -1350,6 +1530,7 @@ class SEEK(Frame):
 
 Frames = dict([(k,v) for (k,v) in globals().items()
         if len(k)==4 and isinstance(v, type) and issubclass(v, Frame)])
+"""All supported ID3v2 frames, keyed by frame name."""
 del(k); del(v)
 
 # ID3v2.2 frames
@@ -1414,7 +1595,11 @@ class COM(COMM): "Comment"
 #class EQU(EQUA)
 class REV(RVRB): "Reverb"
 class PIC(APIC):
-    "Attached Picture"
+    """Attached Picture.
+
+    The 'MIME' attribute of an ID3v2.2 attached picture must be either
+    'PNG' or 'JPG'.
+    """
     _framespec = [ EncodingSpec('encoding'), StringSpec('mime', 3),
         ByteSpec('type'), EncodedTextSpec('desc'), BinaryDataSpec('data') ]
 class GEO(GEOB): "General Encapsulated Object"
@@ -1434,8 +1619,7 @@ Open = ID3
 
 # ID3v1.1 support.
 def ParseID3v1(string):
-    """Parse a 128-byte string as an ID3v1.1 tag, returning a dict of
-    ID3v2.4 frames."""
+    """Parse an ID3v1 tag, returning a list of ID3v2.4 frames."""
     from struct import error as StructError
     frames = {}
     try:
@@ -1460,8 +1644,7 @@ def ParseID3v1(string):
     return frames
 
 def MakeID3v1(id3):
-    """Generate an ID3v1.1 tag string from a dictionary of ID3v2.4 frames
-    (like a mutagen.id3.ID3 instance)."""
+    """Return an ID3v1.1 tag string from a dict of ID3v2.4 frames."""
 
     v1 = {}
 
