@@ -73,12 +73,17 @@ class APEReader(TestCase):
         self.failUnless("artist" in self.tag)
         self.failUnless("artisT" in self.tag)
 
-    def test_dictlike(self):
+    def test_keys(self):
+        self.failUnless("track" in self.tag.keys())
         self.failUnless("Track" in self.tag.keys())
         self.failUnless("AnArtist" in self.tag.values())
 
         self.failUnlessEqual(
             self.tag.items(), zip(self.tag.keys(), self.tag.values()))
+
+    def test_dictlike(self):
+        self.failUnless(self.tag.get("track"))
+        self.failUnless(self.tag.get("Track"))
 
     def test_del(self):
         s = self.tag["artist"]
