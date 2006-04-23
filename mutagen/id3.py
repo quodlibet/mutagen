@@ -1596,7 +1596,7 @@ class REV(RVRB): "Reverb"
 class PIC(APIC):
     """Attached Picture.
 
-    The 'MIME' attribute of an ID3v2.2 attached picture must be either
+    The 'mime' attribute of an ID3v2.2 attached picture must be either
     'PNG' or 'JPG'.
     """
     _framespec = [ EncodingSpec('encoding'), StringSpec('mime', 3),
