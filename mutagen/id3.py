@@ -432,6 +432,17 @@ class ID3(mutagen.Metadata):
             # Get rid of "(xx)Foobr" format.
             self["TCON"].genres = self["TCON"].genres
 
+        if self.version < (2, 3):
+            # ID3v2.2 PIC frames are slightly different.
+            pics = self.getall("APIC")
+            mimes = { "PNG": "image/png", "JPG": "image/jpeg" }
+            self.delall("APIC")
+            for pic in pics:
+                newpic = APIC(
+                    encoding=pic.encoding, mime=mimes.get(pic.mime, pic.mime),
+                    type=pic.type, desc=pic.desc, data=pic.data)
+                self.add(newpic)
+
         # These can't be trivially translated to any ID3v2.4 tags, or
         # should have been removed already.
         for key in ["RVAD", "EQUA", "TRDA", "TSIZ", "TDAT", "TIME"]:

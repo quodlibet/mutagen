@@ -394,6 +394,7 @@ def TestReadTags():
         dict(desc='T', lang='ENU', encoding=0)],
     ['PIC', '\x00-->\x03cover\x00cover.jpg', 'cover.jpg', '',
         dict(mime='-->', type=3, desc='cover', encoding=0)],
+
     ['POP', 'foo@bar.org\x00\xde\x00\x00\x00\x11', 222, 222,
         dict(email="foo@bar.org", rating=222, count=17)],
     ['CNT', '\x00\x00\x00\x11', 17, 17, dict(count=17)],
@@ -807,6 +808,17 @@ class FrameSanityChecks(TestCase):
 
         total -= len(missing)
         print total-failcount, '/', total, 'success [%d missing] (%d unsynch)' % (len(missing), unsynch)
+
+class UpdateTo24(TestCase):
+    def test_pic(self):
+        from mutagen.id3 import PIC
+        id3 = ID3()
+        id3.version = (2, 2)
+        id3.add(PIC(encoding=0, mime="PNG", desc="cover", type=3, data=""))
+        id3.update_to_v24()
+        self.failUnlessEqual(id3["APIC:cover"].mime, "image/png")
+
+registerCase(UpdateTo24)
 
 class Genres(TestCase):
     from mutagen.id3 import TCON
