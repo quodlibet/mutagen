@@ -767,48 +767,6 @@ class FrameSanityChecks(TestCase):
         self.assertEquals(USER(text="a").HashKey, USER(text="b").HashKey)
         self.assertNotEquals(USER(lang="abc").HashKey, USER(lang="def").HashKey)
 
-    def skip_test_harsh(self):
-        from os import walk
-        from traceback import print_exc
-        from mutagen.id3 import ID3NoHeaderError, ID3UnsupportedVersionError
-        total = 0
-        unsynch = 0
-        failures = {}
-        missing = []
-        for path, dirs, files in walk('/vault/music'):
-            for fn in files:
-                if not fn.lower().endswith('.mp3'): continue
-                ffn = join(path, fn)
-                try:
-                    total += 1
-                    if not total & 0xFF: print total
-                    #print ffn
-                    id3 = ID3()
-                    id3.PEDANTIC = False
-                    id3.load(ffn)
-                    for frame, val in id3.iteritems():
-                        pass #print frame, str(val)
-                except KeyboardInterrupt: raise
-                except ID3NoHeaderError:
-                    missing.append(ffn)
-                except ID3UnsupportedVersionError, err:
-                    failures.setdefault(err.__class__, []).append(fn)
-                except Exception, err:
-                    if err.__class__ not in failures:
-                        print_exc()
-                    failures.setdefault(err.__class__, []).append(ffn)
-                else:
-                    if id3.f_unsynch: unsynch += 1
-
-        #for ffn in missing: print ffn
-        failcount = 0
-        for fail, files in failures.iteritems():
-            failcount += len(files)
-            print fail, len(files)
-
-        total -= len(missing)
-        print total-failcount, '/', total, 'success [%d missing] (%d unsynch)' % (len(missing), unsynch)
-
 class UpdateTo24(TestCase):
     def test_pic(self):
         from mutagen.id3 import PIC
