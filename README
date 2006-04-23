@@ -6,23 +6,20 @@ MPEG audio and Xing headers.
 With the help of pyvorbis (http://www.andrewchatham.com/pyogg/), it can
 read Ogg Vorbis information.
 
-The goals are (in rough order of importance):
- * Read as many files as possible
- * Compatibility with as many other tag readers and editors as possible 
- * Compliance with the relevant specifications
- * Written in Pythonic Python, with a Pythonic API
- * Unit and regression test suite
- * Provide access to all features of the supported formats
- * Easily extensible
-
-The primary documentation for Mutagen is the doc strings found in
-the source code. The tools/ directory contains several useful examples,
-and there is a brief tutorial in TUTORIAL.
-
 Installing
 ----------
  $ ./setup.py build
  $ su -c "./setup.py install"
+
+Documentation
+-------------
+The primary documentation for Mutagen is the doc strings found in
+the source code.
+ $ pydoc mutagen
+ $ pydoc mutagen.<module>
+
+The tools/ directory contains several useful examples, and there is a
+brief tutorial in TUTORIAL.
 
 Testing the Module
 ------------------
