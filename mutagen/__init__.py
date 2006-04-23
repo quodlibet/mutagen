@@ -21,7 +21,7 @@ depending on tag or format. They may also be entirely different objects
 for certain keys, again depending on format.
 """
 
-version = (1, 1, 0)
+version = (1, 2, 0)
 
 from mutagen._util import DictMixin
 

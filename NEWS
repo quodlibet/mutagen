@@ -1,4 +1,4 @@
-1.2
+1.2 - 2006.04.23
  * mid3iconv, a clone of id3iconv, was added by Emfox Zhou.
  * Tests exit with non-zero status if any have failed.
  * mutagen.oggvorbis, using pyvorbis.
