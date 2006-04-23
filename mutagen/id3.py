@@ -21,7 +21,7 @@ always accept null separators to generate multi-valued text frames.
 
 Because ID3 frame structure differs between frame types, each frame is
 implemented as a different class (e.g. TIT2 as mutagen.id3.TIT2). Each
-frame's docmentation contains a list of its attributes.
+frame's documentation contains a list of its attributes.
 
 Since this file's documentation is a little unwieldy, you are probably
 interested in the 'ID3' class to start with.
@@ -942,7 +942,6 @@ class FrameOpt(Frame):
         return ''.join(data)
 
     def __repr__(self):
-        """eval(repr(frame)) == frame, for all frames."""
         kw = []
         for attr in self._framespec:
             kw.append('%s=%r' % (attr.name, getattr(self, attr.name)))
@@ -998,7 +997,7 @@ class NumericTextFrame(TextFrame):
         return int(self.text[0])
 
 class NumericPartTextFrame(TextFrame):
-    """Multivalue numreical text strings.
+    """Multivalue numerical text strings.
 
     These strings indicate 'part (e.g. track) X of Y', and unary plus
     returns the first value:
@@ -1012,7 +1011,7 @@ class NumericPartTextFrame(TextFrame):
         return int(self.text[0].split("/")[0])
 
 class TimeStampTextFrame(TextFrame):
-    """A list of timp stamps.
+    """A list of time stamps.
 
     The 'text' attribute in this frame is a list of ID3TimeStamp
     objects, not a list of strings.
@@ -1216,10 +1215,10 @@ class MCDI(Frame):
 # class SYTC: unsupported
 
 class USLT(Frame):
-    """Unsychronised lyrics/text transcription.
+    """Unsynchronised lyrics/text transcription.
 
     Lyrics have a three letter ISO language code ('lang'), a
-    descripton ('desc'), and a block of plain text ('text').
+    description ('desc'), and a block of plain text ('text').
     """
 
     _framespec = [ EncodingSpec('encoding'), StringSpec('lang', 3),
@@ -1250,7 +1249,7 @@ class RVA2(Frame):
     """Relative volume adjustment (2).
 
     This frame is used to implemented volume scaling, and in
-    particular, normalzation using ReplayGain.
+    particular, normalization using ReplayGain.
 
     Attributes:
     desc -- description or context of this adjustment
@@ -1354,7 +1353,7 @@ class GEOB(Frame):
 
     A blob of binary data, that is not a picture (those go in APIC).
 
-    Attribues:
+    Attributes:
     encoding -- encoding of the description
     mime -- MIME type of the data or '-->' if the data is a URI
     filename -- suggested filename if extracted
@@ -1520,7 +1519,7 @@ class SIGN(Frame):
 class SEEK(Frame):
     """Seek frame.
 
-    Mutagen does not find tags at seek offets.
+    Mutagen does not find tags at seek offsets.
     """
     _framespec = [ IntegerSpec('offset') ]
     def __pos__(self): return self.offset
