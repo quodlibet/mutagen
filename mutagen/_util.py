@@ -12,6 +12,8 @@ You should not rely on the interfaces here being stable. They are
 intended for internal use in Mutagen only.
 """
 
+import struct
+
 class DictMixin(object):
     """Implement the dict API using keys() and __*item__ methods.
 
@@ -94,3 +96,28 @@ class DictMixin(object):
 
     def __len__(self):
         return len(self.keys())
+
+class BitSet(int):
+    """An integer with convenient methods for bit arithmetic.
+
+    Integer operations on a BitSet will return an int.
+
+    Based on the C++ STL bitset type. For more information see
+    http://www.cppreference.com/cppbitset/all.html. Methods should be
+    implemented as needed.
+    """
+
+    def test(self, n):
+        """Return true if the nth bit is set."""
+        return bool((self >> n) & 1)
+
+class cdata(object):
+    """C character buffer to Python numeric type conversions."""
+
+    from struct import error
+
+    int_le = staticmethod(lambda data: struct.unpack('<i', data)[0])
+    uint_le = staticmethod(lambda data: struct.unpack('<I', data)[0])
+
+    long_le = staticmethod(lambda data: struct.unpack('<q', data)[0])
+    ulong_le = staticmethod(lambda data: struct.unpack('<Q', data)[0])

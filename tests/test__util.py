@@ -1,4 +1,4 @@
-from mutagen._util import DictMixin
+from mutagen._util import DictMixin, BitSet, cdata
 from tests import TestCase, add
 
 class FDict(DictMixin):
@@ -77,3 +77,56 @@ class TDictMixin(TestCase):
         self.failUnlessEqual(self.rdict, self.fdict)
 
 add(TDictMixin)
+
+class Tcdata(TestCase):
+    ZERO = "\x00\x00\x00\x00"
+    LEONE = "\x01\x00\x00\x00"
+    BEONE = "\x00\x00\x00\x01"
+    NEGONE = "\xff\xff\xff\xff"
+
+    def test_int_le(self):
+        self.failUnlessEqual(cdata.int_le(self.ZERO), 0)
+        self.failUnlessEqual(cdata.int_le(self.LEONE), 1)
+        self.failUnlessEqual(cdata.int_le(self.BEONE), 16777216)
+        self.failUnlessEqual(cdata.int_le(self.NEGONE), -1)
+
+    def test_uint_le(self):
+        self.failUnlessEqual(cdata.uint_le(self.ZERO), 0)
+        self.failUnlessEqual(cdata.uint_le(self.LEONE), 1)
+        self.failUnlessEqual(cdata.uint_le(self.BEONE), 16777216)
+        self.failUnlessEqual(cdata.uint_le(self.NEGONE), 2**32-1)
+
+    def test_long_le(self):
+        self.failUnlessEqual(cdata.long_le(self.ZERO * 2), 0)
+        self.failUnlessEqual(cdata.long_le(self.LEONE + self.ZERO), 1)
+        self.failUnlessEqual(cdata.long_le(self.NEGONE * 2), -1)
+
+    def test_ulong_le(self):
+        self.failUnlessEqual(cdata.ulong_le(self.ZERO * 2), 0)
+        self.failUnlessEqual(cdata.ulong_le(self.LEONE + self.ZERO), 1)
+        self.failUnlessEqual(cdata.ulong_le(self.NEGONE * 2), 2**64-1)
+
+    def test_invalid_lengths(self):
+        self.failUnlessRaises(cdata.error, cdata.int_le, "")
+        self.failUnlessRaises(cdata.error, cdata.long_le, "")
+        self.failUnlessRaises(cdata.error, cdata.uint_le, "")
+        self.failUnlessRaises(cdata.error, cdata.ulong_le, "")
+add(Tcdata)
+
+class TBitSet(TestCase):
+    def test_test(self):
+        self.failUnless(BitSet(1).test(0))
+        self.failIf(BitSet(1).test(1))
+
+        self.failUnless(BitSet(2).test(1))
+        self.failIf(BitSet(2).test(0))
+
+        v = (1 << 12) + (1 << 5) + 1
+        self.failUnless(BitSet(v).test(0))
+        self.failUnless(BitSet(v).test(5))
+        self.failUnless(BitSet(v).test(12))
+        self.failIf(BitSet(v).test(3))
+        self.failIf(BitSet(v).test(8))
+        self.failIf(BitSet(v).test(13))
+
+add(TBitSet)

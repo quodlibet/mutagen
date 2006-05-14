@@ -51,7 +51,7 @@ class APEUnsupportedVersionError(error, ValueError): pass
 class APEBadItemError(error, ValueError): pass
 
 from mutagen import Metadata
-from mutagen._util import DictMixin
+from mutagen._util import DictMixin, cdata
 
 class _APEv2Data(object):
     # Store offsets of the important parts of the file.
@@ -120,9 +120,9 @@ class _APEv2Data(object):
             raise APENoHeaderError("the header disappeared")
 
         self.version = fileobj.read(4)
-        self.size = _read_int(fileobj.read(4))
-        self.items = _read_int(fileobj.read(4))
-        self.flags = _read_int(fileobj.read(4))
+        self.size = cdata.uint_le(fileobj.read(4))
+        self.items = cdata.uint_le(fileobj.read(4))
+        self.flags = cdata.uint_le(fileobj.read(4))
 
         if self.header is not None:
             # If we're reading the header, the size is the header
@@ -190,8 +190,8 @@ class APEv2(DictMixin, Metadata):
         f = StringIO(tag)
 
         for i in range(count):
-            size = _read_int(f.read(4))
-            flags = _read_int(f.read(4))
+            size = cdata.uint_le(f.read(4))
+            flags = cdata.uint_le(f.read(4))
 
             # Bits 1 and 2 bits are flags, 0-3
             # Bit 0 is read/write flag, ignored
@@ -405,10 +405,6 @@ class APEExtValue(_APEValue):
     External values are usually URI or IRI strings.
     """
     def pprint(self): return "[External] %s" % unicode(self)
-
-# The standard doesn't say anything about the byte ordering, but
-# based on files tested, it's little-endian.
-def _read_int(data): return struct.unpack('<I', data)[0]
 
 def _utf8(data):
     if isinstance(data, str):
