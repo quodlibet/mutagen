@@ -3,16 +3,13 @@ suites = []
 add = registerCase = suites.append
 from unittest import TestCase
 
-class Mock(object):
-    # A generic mocking object.
-    def __init__(self, **kwargs): self.__dict__.update(kwargs)
-
 import test_id3
 import test_apev2
 import test__vorbis
 import test_flac
 import test_mp3
 import test_oggvorbis
+import test__ogg
 import test_easyid3
 import test__util
 
