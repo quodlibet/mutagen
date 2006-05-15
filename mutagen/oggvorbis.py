@@ -27,6 +27,8 @@ except ImportError:
 
 from mutagen import FileType
 from mutagen._vorbis import VCommentDict
+from mutagen._ogg import OggPage
+from mutagen._util import cdata
 
 class error(IOError): pass
 class OggVorbisNoHeaderError(error): pass
@@ -36,16 +38,71 @@ class OggVorbisInfo(object):
 
     Attributes:
     length - file length in seconds, as a float
-    bitrate - nominal ("average") bitrate in bits per second, as an int
+    bitrate - nominal ('average') bitrate in bits per second, as an int
     """
+    def __init__(self, fileobj):
+        fileobj.seek(0)
+        page = OggPage(fileobj)
+        while not page.data.startswith("\x01vorbis"):
+            page = OggPage(fileobj)
+        if not page.first:
+            raise IOError("page has ID header, but doesn't start a packet")
+        channels = ord(page.data[11])
+        sample_rate = cdata.uint_le(page.data[12:16])
+        serial = page.serial
 
-    __slots__ = ["length", "bitrate"]
+        max_bitrate = cdata.uint_le(page.data[16:20])
+        nominal_bitrate = cdata.uint_le(page.data[20:24])
+        min_bitrate = cdata.uint_le(page.data[24:28])
+        if nominal_bitrate == 0:
+            self.bitrate = (max_bitrate + min_bitrate) / 2
+        elif max_bitrate:
+            # If the max bitrate is less than the nominal, we know
+            # the nominal is wrong.
+            self.bitrate = min(max_bitrate, nominal_bitrate)
+        elif min_bitrate:
+            self.bitrate = max(min_bitrate, nominal_bitrate)
+        else:
+            self.bitrate = nominal_bitrate
+
+        # Store the file offset of this page to avoid rescanning it
+        # when looking for comments.
+        self._offset = fileobj.tell()
+
+        samples = page.position
+        while not page.last:
+            page = OggPage(fileobj)
+            if page.serial == serial:
+                samples = max(samples, page.position)
+        self.length = samples / float(sample_rate)
+
+class OggVCommentDict(VCommentDict):
+    """Vorbis comments embedded in an Ogg bitstream."""
+
+    def __init__(self, fileobj, info):
+        offset = info._offset
+        fileobj.seek(info._offset)
+        page = OggPage(fileobj)
+        # Seek to the start of the comment header.
+        while not page.data.startswith("\x03vorbis"):
+            page = OggPage(fileobj)
+        data = [page.data]
+        # Keep seeking forward until we have the entire comment header.
+        # We may accidentally grab some of the setup header at the end;
+        # VComment will just ignore it.
+        page = OggPage(fileobj)
+        while page.continued:
+            data.append(page.data)
+            page = OggPage(fileobj)
+        data = "".join(data)[7:] # Strip off "\x03vorbis".
+        super(OggVCommentDict, self).__init__(data)
 
 class OggVorbis(FileType):
     """An Ogg Vorbis file."""
 
     def __init__(self, filename=None):
-        if filename is not None: self.load(filename)
+        if filename is not None:
+            self.load(filename)
 
     def pprint(self):
         """Print stream information and comment key=value pairs."""
@@ -58,23 +115,12 @@ class OggVorbis(FileType):
         """Load file information from a filename."""
 
         self.filename = filename
-        try: vorbis = VorbisFile(filename)
-        except VorbisError, e: raise OggVorbisNoHeaderError(e)
-
-        self.info = OggVorbisInfo()
-        self.info.length = vorbis.time_total(-1)
-        self.info.bitrate = vorbis.bitrate(-1)
-
-        self.tags = VCommentDict()
-        for k, v in vorbis.comment().as_dict().iteritems():
-            if not isinstance(v, list):
-                v = [v]
-            v = map(unicode, v)
-            if k.lower() == "vendor":
-                # The first item in the vendor list is the actual vendor
-                # data, which is not a tag, and also not editable.
-                self.tags.vendor = v.pop(0)
-            if v: self.tags[k] = v
+        fileobj = file(filename, "rb")
+        try:
+            self.info = OggVorbisInfo(fileobj)
+            self.tags = OggVCommentDict(fileobj, self.info)
+        except IOError, e:
+            raise OggVorbisNoHeaderError(e)
 
     def delete(self, filename=None):
         """Remove tags from a file.

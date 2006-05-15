@@ -22,7 +22,7 @@ class TOggVorbis(TestCase):
         self.failUnlessAlmostEqual(3.7, self.vorbis.info.length, 1)
 
     def test_bitrate(self):
-        self.failUnlessEqual(758, self.vorbis.info.bitrate)
+        self.failUnlessEqual(112000, self.vorbis.info.bitrate)
 
     def test_no_tags(self):
         self.failIf(self.vorbis.tags)
