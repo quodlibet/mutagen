@@ -13,13 +13,13 @@ have multiple values.
 The specification is at http://www.xiph.org/vorbis/doc/v-comment.html.
 """
 
-import sys
-import struct
-
-from mutagen._util import DictMixin
 from cStringIO import StringIO
 
-if sys.version < (2, 4): from sets import Set as set
+from mutagen._util import DictMixin, cdata
+
+try: set
+except NameError:
+    from sets import Set as set
 
 def is_valid_key(key):
     """Return true if a string is a valid Vorbis comment key.
@@ -74,11 +74,11 @@ class VComment(list):
 
         """
         try:
-            vendor_length = struct.unpack("<I", fileobj.read(4))[0]
+            vendor_length = cdata.uint_le(fileobj.read(4))
             self.vendor = fileobj.read(vendor_length).decode('utf-8', errors)
-            count = struct.unpack("<I", fileobj.read(4))[0]
+            count = cdata.uint_le(fileobj.read(4))
             for i in range(count):
-                length = struct.unpack("<I", fileobj.read(4))[0]
+                length = cdata.uint_le(fileobj.read(4))
                 string = fileobj.read(length).decode('utf-8', errors)
                 tag, value = string.split('=', 1)
                 try: tag = tag.encode('ascii')
@@ -87,7 +87,7 @@ class VComment(list):
                     if is_valid_key(tag): self.append((tag, value))
             if framing and not ord(fileobj.read(1)) & 0x01:
                 raise VorbisUnsetFrameError("framing bit was unset")
-        except (struct.error, TypeError):
+        except (cdata.error, TypeError):
             raise error("file is not a valid Vorbis comment")
 
     def validate(self):
@@ -128,12 +128,12 @@ class VComment(list):
         self.validate()
 
         f = StringIO()
-        f.write(struct.pack("<I", len(self.vendor.encode('utf-8'))))
+        f.write(cdata.to_uint_le(len(self.vendor.encode('utf-8'))))
         f.write(self.vendor.encode('utf-8'))
-        f.write(struct.pack("<I", len(self)))
+        f.write(cdata.to_uint_le(len(self)))
         for tag, value in self:
             comment = "%s=%s" % (tag, value.encode('utf-8'))
-            f.write(struct.pack("<I", len(comment)))
+            f.write(cdata.to_uint_le(len(comment)))
             f.write(comment)
         if framing: f.write("\x01")
         return f.getvalue()

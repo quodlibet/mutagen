@@ -121,3 +121,5 @@ class cdata(object):
 
     long_le = staticmethod(lambda data: struct.unpack('<q', data)[0])
     ulong_le = staticmethod(lambda data: struct.unpack('<Q', data)[0])
+
+    to_uint_le = staticmethod(lambda data: struct.pack('<I', data))
