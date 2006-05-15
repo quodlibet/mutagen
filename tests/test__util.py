@@ -96,21 +96,21 @@ class Tcdata(TestCase):
         self.failUnlessEqual(cdata.uint_le(self.BEONE), 16777216)
         self.failUnlessEqual(cdata.uint_le(self.NEGONE), 2**32-1)
 
-    def test_long_le(self):
-        self.failUnlessEqual(cdata.long_le(self.ZERO * 2), 0)
-        self.failUnlessEqual(cdata.long_le(self.LEONE + self.ZERO), 1)
-        self.failUnlessEqual(cdata.long_le(self.NEGONE * 2), -1)
+    def test_longlong_le(self):
+        self.failUnlessEqual(cdata.longlong_le(self.ZERO * 2), 0)
+        self.failUnlessEqual(cdata.longlong_le(self.LEONE + self.ZERO), 1)
+        self.failUnlessEqual(cdata.longlong_le(self.NEGONE * 2), -1)
 
-    def test_ulong_le(self):
-        self.failUnlessEqual(cdata.ulong_le(self.ZERO * 2), 0)
-        self.failUnlessEqual(cdata.ulong_le(self.LEONE + self.ZERO), 1)
-        self.failUnlessEqual(cdata.ulong_le(self.NEGONE * 2), 2**64-1)
+    def test_ulonglong_le(self):
+        self.failUnlessEqual(cdata.ulonglong_le(self.ZERO * 2), 0)
+        self.failUnlessEqual(cdata.ulonglong_le(self.LEONE + self.ZERO), 1)
+        self.failUnlessEqual(cdata.ulonglong_le(self.NEGONE * 2), 2**64-1)
 
     def test_invalid_lengths(self):
         self.failUnlessRaises(cdata.error, cdata.int_le, "")
-        self.failUnlessRaises(cdata.error, cdata.long_le, "")
+        self.failUnlessRaises(cdata.error, cdata.longlong_le, "")
         self.failUnlessRaises(cdata.error, cdata.uint_le, "")
-        self.failUnlessRaises(cdata.error, cdata.ulong_le, "")
+        self.failUnlessRaises(cdata.error, cdata.ulonglong_le, "")
 add(Tcdata)
 
 class TBitSet(TestCase):
