@@ -43,17 +43,17 @@ class OggVorbisInfo(object):
     def __init__(self, fileobj):
         fileobj.seek(0)
         page = OggPage(fileobj)
-        while not page.data.startswith("\x01vorbis"):
+        while not page.data[0].startswith("\x01vorbis"):
             page = OggPage(fileobj)
         if not page.first:
             raise IOError("page has ID header, but doesn't start a packet")
-        channels = ord(page.data[11])
-        sample_rate = cdata.uint_le(page.data[12:16])
+        channels = ord(page.data[0][11])
+        sample_rate = cdata.uint_le(page.data[0][12:16])
         serial = page.serial
 
-        max_bitrate = cdata.uint_le(page.data[16:20])
-        nominal_bitrate = cdata.uint_le(page.data[20:24])
-        min_bitrate = cdata.uint_le(page.data[24:28])
+        max_bitrate = cdata.uint_le(page.data[0][16:20])
+        nominal_bitrate = cdata.uint_le(page.data[0][20:24])
+        min_bitrate = cdata.uint_le(page.data[0][24:28])
         if nominal_bitrate == 0:
             self.bitrate = (max_bitrate + min_bitrate) / 2
         elif max_bitrate:
@@ -83,18 +83,13 @@ class OggVCommentDict(VCommentDict):
         offset = info._offset
         fileobj.seek(info._offset)
         page = OggPage(fileobj)
-        # Seek to the start of the comment header.
-        while not page.data.startswith("\x03vorbis"):
+        # Seek to the start of the comment header. We know it's got
+        # to be at the start of the second page.
+        while not page.data[0].startswith("\x03vorbis"):
             page = OggPage(fileobj)
-        data = [page.data]
-        # Keep seeking forward until we have the entire comment header.
-        # We may accidentally grab some of the setup header at the end;
-        # VComment will just ignore it.
-        page = OggPage(fileobj)
-        while page.continued:
-            data.append(page.data)
-            page = OggPage(fileobj)
-        data = "".join(data)[7:] # Strip off "\x03vorbis".
+        if len(page.data) == 1:
+            raise NotImplementedError("comment in > 1 page")
+        data = page.data[0][7:] # Strip off "\x03vorbis".
         super(OggVCommentDict, self).__init__(data)
 
 class OggVorbis(FileType):

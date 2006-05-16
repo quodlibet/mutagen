@@ -42,7 +42,7 @@ class OggPage(object):
     position = -1L
     serial = 0
     sequence = 0
-    data = ""
+    data = []
 
     def __init__(self, fileobj=None):
         if fileobj is None:
@@ -64,11 +64,15 @@ class OggPage(object):
         crc = cdata.uint_le(fileobj.read(4))
 
         segments = ord(fileobj.read(1))
-        lacing = map(ord, fileobj.read(segments))
-        if len(lacing) != segments:
-            raise IOError("unable to read full lacing data")
-        self.data = fileobj.read(sum(lacing))
-        if len(self.data) != sum(lacing):
+        total = 0
+        lacings = []
+        for c in map(ord, fileobj.read(segments)):
+            total += c
+            if c < 255:
+                lacings.append(total)
+                total = 0
+        self.data = map(fileobj.read, lacings)
+        if map(len, self.data) != lacings:
             raise IOError("unable to read full data")
 
     def __eq__(self, other):
@@ -92,7 +96,7 @@ class OggPage(object):
     def write(self):
         """Return a string encoding of the page header and data."""
 
-        data = "".join([
+        data = [
             "OggS",
             chr(self.version),
             chr(self.type_flags),
@@ -100,25 +104,23 @@ class OggPage(object):
             cdata.to_uint_le(self.serial),
             cdata.to_uint_le(self.sequence),
             "\x00\x00\x00\x00", # Uninitialized CRC
-            ])
+            ]
 
-        quot, rem = divmod(len(self.data), 255)
-        try: data += chr(quot + bool(rem))
-        except ValueError:
-            raise ValueError("data is longer than 255*255 characters")
-        data += ("\xff" * quot)
-        if rem: data += chr(rem)
-        data += self.data
+        lacing_data = []
+        for datum in self.data:
+            quot, rem = divmod(len(datum), 255)
+            lacing_data.append("\xff" * quot + chr(rem))
+        lacing_data = "".join(lacing_data)
+        data.append(chr(len(lacing_data)))
+        data.append(lacing_data)
+        data.extend(self.data)
+        data = "".join(data)
+
         crc = cdata.to_int_le(binascii.crc32(data))
         data = data[:22] + crc + data[26:]
         return data
 
-    def __size(self):
-        size = 27 + len(self.data)
-        quot, rem = divmod(len(self.data), 255)
-        size += quot + bool(rem)
-        return size
-    size = property(__size, doc="Total frame size.")
+    size = property(lambda self: len(self.write()), doc="Total frame size.")
 
     continued = property(lambda self: BitSet(self.type_flags).test(0),
                          doc="Packet is continued from the last page")
