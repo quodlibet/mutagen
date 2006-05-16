@@ -10,22 +10,18 @@
 
 """Read and write Ogg Vorbis comments.
 
-Read more about Ogg Vorbis at http://vorbis.com/. Mutagen uses an
-external module, pyvorbis, to open Ogg Vorbis files.  Read more about
-pyvorbis at http://www.andrewchatham.com/pyogg/.
+This code only supports Ogg Vorbis I files, though it will probably be
+able to read comments from Vorbis streams in multiplexed Ogg files (in
+particular, it assumes that the identification and comment headers fit
+into the first two packets).
 
-Benefits of using Mutagen rather than pyvorbis directly include an API
-consistent with the rest of Mutagen, a full dict-like interface to the
-comment data, and the ability to properly read and write a 'vendor'
-comment key.
+This cannot handle very long (> 60KB or so) Vorbis comments.
+
+Read more about Ogg Vorbis at http://vorbis.com/. This module is based
+off the specification at http://www.xiph.org/ogg/doc/rfc3533.txt.
 """
 
-try: from ogg.vorbis import VorbisFile, VorbisError
-except ImportError:
-    raise ImportError("%s requires pyvorbis "
-                      "(http://www.andrewchatham.com/pyogg/" % __name__)
-
-from mutagen import FileType
+from mutagen import FileType, Metadata
 from mutagen._vorbis import VCommentDict
 from mutagen._ogg import OggPage
 from mutagen._util import cdata
@@ -92,6 +88,28 @@ class OggVCommentDict(VCommentDict):
         data = page.data[0][7:] # Strip off "\x03vorbis".
         super(OggVCommentDict, self).__init__(data)
 
+    def _inject(self, fileobj, offset=0):
+        """Write tag data into the Vorbis comment packet/page."""
+        fileobj.seek(offset)
+        page = OggPage(fileobj)
+        while not page.data[0].startswith("\x03vorbis"):
+            offset = fileobj.tell()
+            page = OggPage(fileobj)
+        oldpagesize = page.size
+
+        page.data[0] = "\x03vorbis" + self.write()
+        if page.size > 255*255:
+            raise NotImplementedError(
+                "repagination needed for %d bytes" % page.size)
+        else:
+            delta = page.size - oldpagesize
+            if delta > 0:
+                Metadata._insert_space(fileobj, delta, offset)
+            elif delta < 0:
+                Metadata._delete_bytes(fileobj, -delta, offset)
+            fileobj.seek(offset)
+            fileobj.write(page.write())
+
 class OggVorbis(FileType):
     """An Ogg Vorbis file."""
 
@@ -122,12 +140,15 @@ class OggVorbis(FileType):
 
         If no filename is given, the one most recently loaded is used.
         """
-        if filename is None: filename = self.filename
-        try: vorbis = VorbisFile(filename)
-        except VorbisError, e: raise OggVorbisNoHeaderError(e)
-        comment = vorbis.comment()
-        comment.clear()
-        comment.write_to(filename)
+        if filename is None:
+            filename = self.filename
+
+        self.tags.clear()
+        fileobj = file(filename, "rb+")
+        try: self.tags._inject(fileobj)
+        except IOError, e:
+            raise OggVorbisNoHeaderError(e)
+        fileobj.close()
 
     def save(self, filename=None):
         """Save a tag to a file.
@@ -137,14 +158,11 @@ class OggVorbis(FileType):
         if filename is None:
             filename = self.filename
         self.tags.validate()
-        try: vorbis = VorbisFile(filename)
-        except VorbisError, e:
+        fileobj = file(filename, "rb+")
+        try: self.tags._inject(fileobj)
+        except IOError, e:
             raise OggVorbisNoHeaderError(e)
-        comment = vorbis.comment()
-        comment.clear()
-        for key, value in self.tags:
-            comment[key] = value
-        comment.write_to(filename)
+        fileobj.close()
 
 Open = OggVorbis
 
