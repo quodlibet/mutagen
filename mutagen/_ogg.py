@@ -66,13 +66,16 @@ class OggPage(object):
         segments = ord(fileobj.read(1))
         total = 0
         lacings = []
+        self.finished = []
         for c in map(ord, fileobj.read(segments)):
             total += c
             if c < 255:
                 lacings.append(total)
                 total = 0
+                self.finished.append(True)
         if total:
             lacings.append(total)
+            self.finished.append(False)
         self.data = map(fileobj.read, lacings)
         if map(len, self.data) != lacings:
             raise IOError("unable to read full data")
@@ -113,6 +116,8 @@ class OggPage(object):
             quot, rem = divmod(len(datum), 255)
             lacing_data.append("\xff" * quot + chr(rem))
         lacing_data = "".join(lacing_data)
+        if self.finished[-1] is False:
+            lacing_data = lacing_data.rstrip("\x00")
         data.append(chr(len(lacing_data)))
         data.append(lacing_data)
         data.extend(self.data)
@@ -125,7 +130,7 @@ class OggPage(object):
     size = property(lambda self: len(self.write()), doc="Total frame size.")
 
     continued = property(lambda self: BitSet(self.type_flags).test(0),
-                         doc="Packet is continued from the last page")
+                         doc="First packet continued from the previous page.")
     first = property(lambda self: BitSet(self.type_flags).test(1),
                      doc="First page of a logical bitstream.")
     last = property(lambda self: BitSet(self.type_flags).test(2),
