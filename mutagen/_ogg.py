@@ -71,6 +71,8 @@ class OggPage(object):
             if c < 255:
                 lacings.append(total)
                 total = 0
+        if total:
+            lacings.append(total)
         self.data = map(fileobj.read, lacings)
         if map(len, self.data) != lacings:
             raise IOError("unable to read full data")

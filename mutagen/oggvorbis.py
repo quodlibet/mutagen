@@ -83,8 +83,6 @@ class OggVCommentDict(VCommentDict):
         # to be at the start of the second page.
         while not page.data[0].startswith("\x03vorbis"):
             page = OggPage(fileobj)
-        if len(page.data) == 1:
-            raise NotImplementedError("comment in > 1 page")
         data = page.data[0][7:] # Strip off "\x03vorbis".
         super(OggVCommentDict, self).__init__(data)
 
