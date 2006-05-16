@@ -70,6 +70,10 @@ class TOggVorbis(TestCase):
         self.failUnlessRaises(OggVorbisNoHeaderError, OggVorbis,
                               os.path.join('tests', 'data', 'xing.mp3'))
 
+    def test_vorbiscomment(self):
+        self.vorbis.save()
+        self.failUnless(ogg.vorbis.VorbisFile(self.filename))
+
     def test_invalid_delete(self):
         self.failUnlessRaises(OggVorbisNoHeaderError, self.vorbis.delete,
                               os.path.join('tests', 'data', 'xing.mp3'))
@@ -80,4 +84,9 @@ class TOggVorbis(TestCase):
 
     def tearDown(self):
         os.unlink(self.filename)
+
+try: import ogg.vorbis
+except ImportError:
+    del(TOggVorbis.test_vorbiscomment)
+
 registerCase(TOggVorbis)
