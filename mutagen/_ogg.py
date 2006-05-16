@@ -15,7 +15,7 @@ This implementation is based on the RFC 3533 standard found at
 http://www.xiph.org/ogg/doc/rfc3533.txt.
 """
 
-import binascii
+import zlib, binascii
 
 from mutagen._util import BitSet, cdata
 
@@ -61,7 +61,7 @@ class OggPage(object):
         self.serial = cdata.uint_le(fileobj.read(4))
         self.sequence = cdata.uint_le(fileobj.read(4))
 
-        crc = cdata.uint_le(fileobj.read(4))
+        crc = cdata.int_le(fileobj.read(4))
 
         segments = ord(fileobj.read(1))
         total = 0
@@ -123,7 +123,13 @@ class OggPage(object):
         data.extend(self.data)
         data = "".join(data)
 
-        crc = cdata.to_int_le(binascii.crc32(data))
+        from mutagen._util import crc32
+        crc = crc32(data)
+        #crc2 = binascii.crc32(data)
+        #crc3 = zlib.crc32(data)
+        #print "CRCs: Fight!", crc, crc2, crc3
+
+        crc = cdata.to_int_le(crc)
         data = data[:22] + crc + data[26:]
         return data
 

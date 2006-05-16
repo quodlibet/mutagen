@@ -127,3 +127,10 @@ class cdata(object):
 
     to_longlong_le = staticmethod(lambda data: struct.pack('<q', data))
     to_ulonglong_le = staticmethod(lambda data: struct.pack('<Q', data))
+
+def crc32(data):
+    sum = 0
+    from mutagen._constants import OGG_CRC_TABLE
+    for v in map(ord, data):
+        sum = (sum << 8) ^ OGG_CRC_TABLE[((sum >> 24) & 0xFF) ^ v]
+    return sum
