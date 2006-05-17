@@ -783,6 +783,29 @@ class VolumePeakSpec(Spec):
 
     def validate(self, frame, value): return value
 
+class SynchronizedTextSpec(EncodedTextSpec):
+    def read(self, frame, data):
+        texts = []
+        encoding, term = self.encodings[frame.encoding]
+        while data:
+            l = len(term)
+            value_idx = data.index(term)
+            value = data[:value_idx].decode(encoding)
+            time, = struct.unpack(">I", data[value_idx+l:value_idx+l+4])
+            texts.append((value, time))
+            data = data[value_idx+l+4:]
+        return texts, ""
+
+    def write(self, frame, value):
+        data = []
+        encoding, term = self.encodings[frame.encoding]
+        for text, time in frame.text:
+            text = text.encode(encoding) + term
+            data.append(text + struct.pack(">I", time))
+        return "".join(data)
+
+    def validate(self, frame, value): return value
+
 class Frame(object):
     """Fundamental unit of ID3 data.
 
@@ -1240,8 +1263,19 @@ class USLT(Frame):
     def __unicode__(self): return self.text
     def __eq__(self, other): return self.text == other
     
-# class SYLT: unsupported
-#     HashKey = property(lambda s: '%s:%s:%r'%(s.FrameID, s.desc, s.lang))
+class SYLT(Frame):
+    """Synchronised lyrics/text."""
+
+    _framespec = [ EncodingSpec('encoding'), StringSpec('lang', 3),
+        ByteSpec('format'), ByteSpec('type'), EncodedTextSpec('desc'),
+        SynchronizedTextSpec('text') ]
+    HashKey = property(lambda s: '%s:%s:%r'%(s.FrameID, s.desc, s.lang))
+
+    def __eq__(self, other):
+        return str(self) == other
+
+    def __str__(self):
+        return "".join([text for (text, time) in self.text]).encode('utf-8')
 
 class COMM(TextFrame):
     """User comment.
@@ -1599,7 +1633,7 @@ class MCI(MCDI): "Binary dump of CD's TOC"
 #class MLL(MLLT)
 #class STC(SYTC)
 class ULT(USLT): "Unsychronised lyrics/text transcription"
-#class SLT(SYLT)
+class SLT(SYLT): "Synchronised lyrics/text"
 class COM(COMM): "Comment"
 #class RVA(RVAD)
 #class EQU(EQUA)

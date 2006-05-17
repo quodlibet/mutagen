@@ -290,6 +290,10 @@ def TestReadTags():
     ['USLT', '\x00engsome lyrics\x00woo\nfun', 'woo\nfun', '',
      dict(encoding=0, lang='eng', desc='some lyrics', text='woo\nfun')],
 
+    ['SYLT', ('\x00eng\x02\x01some lyrics\x00foo\x00\x00\x00\x00\x01bar'
+              '\x00\x00\x00\x00\x10'), "foobar", '',
+     dict(encoding=0, lang='eng', type=1, format=2, desc='some lyrics')],
+
     ['POSS', '\x01\x0f', 15, 15, dict(format=1, position=15)],
     ['OWNE', '\x00USD10.01\x0020041010CDBaby', 'CDBaby', 'CDBaby',
      dict(encoding=0, price="USD10.01", date='20041010', seller='CDBaby')],
@@ -341,6 +345,9 @@ def TestReadTags():
 
     # 2.2 tags
     ['UFI', 'own\x00data', 'data', '', dict(data='data', owner='own')],
+    ['SLT', ('\x00eng\x02\x01some lyrics\x00foo\x00\x00\x00\x00\x01bar'
+              '\x00\x00\x00\x00\x10'), "foobar", '',
+     dict(encoding=0, lang='eng', type=1, format=2, desc='some lyrics')],
     ['TT1', '\x00ab\x00', 'ab', '', dict(encoding=0)],
     ['TT2', '\x00ab', 'ab', '', dict(encoding=0)],
     ['TT3', '\x00ab', 'ab', '', dict(encoding=0)],
