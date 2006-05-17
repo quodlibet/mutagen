@@ -13,7 +13,8 @@
 This code only supports Ogg Vorbis I files, though it will probably be
 able to read comments from Vorbis streams in multiplexed Ogg files (in
 particular, it assumes that the identification and comment headers fit
-into the first two packets).
+into the first two packets, and that the last Ogg packet's position
+is a Vorbis sample position).
 
 This cannot handle very long (> 60KB or so) Vorbis comments.
 
@@ -68,7 +69,7 @@ class OggVCommentDict(VCommentDict):
         # we don't need to separate the packets.
         page = OggPage(fileobj, needs_data=False)
         # Seek to the start of the comment header. We know it's got
-        # to be at the start of the second page.
+        # to be at the start of the second packet.
         while not page.data[0].startswith("\x03vorbis"):
             page = OggPage(fileobj, needs_data=False)
         data = page.data[0][7:] # Strip off "\x03vorbis".
@@ -110,8 +111,14 @@ class OggVorbis(FileType):
         return s + "\n".join(
             ["%s=%s" % (k.lower(), v) for k, v in (self.tags or [])])
 
-    def load(self, filename):
-        """Load file information from a filename."""
+    def load(self, filename, accurate_length=False):
+        """Load file information from a filename.
+
+        If the stream is multiplexed, pass accurate_length=True to scan
+        the whole file for the proper length. Otherwise, a faster method
+        will be used, but it gives incorrect results for multiplexed
+        streams.
+        """
 
         self.filename = filename
         fileobj = file(filename, "rb")
@@ -119,12 +126,24 @@ class OggVorbis(FileType):
             self.info = OggVorbisInfo(fileobj)
             self.tags = OggVCommentDict(fileobj)
 
-            page = OggPage(fileobj, needs_data=False)
-            samples = page.position
-            while not page.last:
+            if accurate_length:
                 page = OggPage(fileobj, needs_data=False)
-                if page.serial == self.info.serial:
-                    samples = max(samples, page.position)
+                samples = page.position
+                while not page.last:
+                    page = OggPage(fileobj, needs_data=False)
+                    if page.serial == self.info.serial:
+                        samples = max(samples, page.position)
+            else:
+                try: fileobj.seek(-256*256, 2)
+                except IOError:
+                    # The file is less than 64k in length.
+                    fileobj.seek(0)
+                data = fileobj.read()
+                try: index = data.rindex("OggS")
+                except ValueError:
+                    raise OggVorbisNoHeaderError(
+                        "unable to find final Ogg header")
+                samples = cdata.longlong_le(data[index+6:index+14])
             self.info.length = samples / float(self.info.sample_rate)
 
         except IOError, e:
