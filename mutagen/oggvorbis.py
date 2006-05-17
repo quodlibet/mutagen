@@ -37,9 +37,9 @@ class OggVorbisInfo(object):
     bitrate - nominal ('average') bitrate in bits per second, as an int
     """
     def __init__(self, fileobj):
-        page = OggPage(fileobj)
+        page = OggPage(fileobj, needs_data=False)
         while not page.data[0].startswith("\x01vorbis"):
-            page = OggPage(fileobj)
+            page = OggPage(fileobj, needs_data=False)
         if not page.first:
             raise IOError("page has ID header, but doesn't start a packet")
         self.channels = ord(page.data[0][11])
@@ -64,11 +64,13 @@ class OggVCommentDict(VCommentDict):
     """Vorbis comments embedded in an Ogg bitstream."""
 
     def __init__(self, fileobj):
-        page = OggPage(fileobj)
+        # Since VComment can cope with garbage after the tag's data,
+        # we don't need to separate the packets.
+        page = OggPage(fileobj, needs_data=False)
         # Seek to the start of the comment header. We know it's got
         # to be at the start of the second page.
         while not page.data[0].startswith("\x03vorbis"):
-            page = OggPage(fileobj)
+            page = OggPage(fileobj, needs_data=False)
         data = page.data[0][7:] # Strip off "\x03vorbis".
         super(OggVCommentDict, self).__init__(data)
 
@@ -117,10 +119,10 @@ class OggVorbis(FileType):
             self.info = OggVorbisInfo(fileobj)
             self.tags = OggVCommentDict(fileobj)
 
-            page = OggPage(fileobj)
+            page = OggPage(fileobj, needs_data=False)
             samples = page.position
             while not page.last:
-                page = OggPage(fileobj)
+                page = OggPage(fileobj, needs_data=False)
                 if page.serial == self.info.serial:
                     samples = max(samples, page.position)
             self.info.length = samples / float(self.info.sample_rate)
