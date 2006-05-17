@@ -184,3 +184,10 @@ def delete_bytes(fobj, size, offset):
                 buf = fobj.read(size)
     fobj.truncate(filesize - size)
     fobj.flush()
+
+def utf8(data):
+    if isinstance(data, str):
+        return data.decode("utf-8", "replace").encode("utf-8")
+    elif isinstance(data, unicode):
+        return data.encode("utf-8")
+    else: raise TypeError("only unicode/str types can be converted to UTF-8")

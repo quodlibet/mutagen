@@ -51,7 +51,7 @@ class APEUnsupportedVersionError(error, ValueError): pass
 class APEBadItemError(error, ValueError): pass
 
 from mutagen import Metadata
-from mutagen._util import DictMixin, cdata
+from mutagen._util import DictMixin, cdata, utf8
 
 class _APEv2Data(object):
     # Store offsets of the important parts of the file.
@@ -229,10 +229,10 @@ class APEv2(DictMixin, Metadata):
             # let's guess at the content if we're not already a value...
             if isinstance(v, unicode):
                 # unicode? we've got to be text.
-                v = APEValue(_utf8(v), TEXT)
+                v = APEValue(utf8(v), TEXT)
             elif isinstance(v, list):
                 # list? text.
-                v = APEValue("\0".join(map(_utf8, v)), TEXT)
+                v = APEValue("\0".join(map(utf8, v)), TEXT)
             else:
                 try: dummy = k.decode("utf-8")
                 except UnicodeError:
@@ -405,10 +405,3 @@ class APEExtValue(_APEValue):
     External values are usually URI or IRI strings.
     """
     def pprint(self): return "[External] %s" % unicode(self)
-
-def _utf8(data):
-    if isinstance(data, str):
-        return data.decode("utf-8", "replace").encode("utf-8")
-    elif isinstance(data, unicode):
-        return data.encode("utf-8")
-    else: raise TypeError("only unicode/str types can be converted to UTF-8")
