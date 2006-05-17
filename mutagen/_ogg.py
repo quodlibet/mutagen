@@ -16,7 +16,7 @@ http://www.xiph.org/ogg/doc/rfc3533.txt.
 """
 
 import struct
-import zlib, binascii
+import zlib
 
 from mutagen._util import cdata
 
@@ -125,7 +125,7 @@ class OggPage(object):
         data = "".join(data)
 
         # Python's CRC is swapped relative to Ogg's needs.
-        crc = ~binascii.crc32(data.translate(cdata.bitswap), -1)
+        crc = ~zlib.crc32(data.translate(cdata.bitswap), -1)
         # Although we're using to_int_be, this actually makes the CRC
         # a proper le integer, since Python's CRC is byteswapped.
         crc = cdata.to_int_be(crc).translate(cdata.bitswap)
