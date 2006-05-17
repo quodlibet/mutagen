@@ -1,3 +1,5 @@
+from __future__ import division
+
 import unittest, sys
 suites = []
 add = registerCase = suites.append
