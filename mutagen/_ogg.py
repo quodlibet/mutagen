@@ -91,7 +91,7 @@ class OggPage(object):
                  'sequence']
         values = ["%s=%r" % (attr, getattr(self, attr)) for attr in attrs]
         return "<%s %s, %d bytes>" % (
-            type(self).__name__, " ".join(values), len(self.data))
+            type(self).__name__, " ".join(values), sum(map(len, self.data)))
 
     def write(self):
         """Return a string encoding of the page header and data."""
