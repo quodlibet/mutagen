@@ -8,7 +8,7 @@ mutagen.id3 needs:
  * Better cross-compatibility tests with eyeD3.
 
 mutagen.oggvorbis needs:
- * A custom Ogg parser/writer (see e.g. TagLib).
+ * Repagination support.
 
 mutagen.oggflac needs:
  * To exist.

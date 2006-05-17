@@ -1,10 +1,8 @@
 Mutagen is an audio metadata tag reader and writer implemented in pure
-Python. It supports reading ID3v1.1, ID3v2.2, ID3v2.3, ID3v2.4, APEv2, and
-FLAC, and writing ID3v1.1, ID3v2.4, APEv2, and FLAC. It can also read
-MPEG audio and Xing headers.
-
-With the help of pyvorbis (http://www.andrewchatham.com/pyogg/), it can
-read Ogg Vorbis information.
+Python. It supports reading ID3v1.1, ID3v2.2, ID3v2.3, ID3v2.4, APEv2,
+Ogg Vorbis, and FLAC, and writing ID3v1.1, ID3v2.4, APEv2, Ogg Vorbis,
+and FLAC. It can also read MPEG audio and Xing headers, FLAC stream
+info blocks, and Ogg Vorbis identification headers.
 
 Installing
 ----------
@@ -33,14 +31,9 @@ To look at the tags in files, run
 To run our test suite,
  $ ./_sanity.sh
 
+If you install pyvorbis and/or eyeD3, compatibility tests will be run.
+
 Compatibility
 -------------
-If you have eyeD3 installed, some cross-compatibility tests are done as
-part of the test suite (./_sanity.sh) to make sure eyeD3 can read tags
-written by Mutagen.
-
-Although not yet automated, we have tested our tags with TagLib and MAD's
-libid3tag, and they are both capable of reading tags written by Mutagen.
-
 As we write ID3v2.4 tags, id3lib cannot read them. However, if you enable
 ID3v1 tag saving (pass v1=2 to ID3.save), id3lib will read that.

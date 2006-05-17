@@ -1,3 +1,7 @@
+1.3 -
+ * New Features:
+   * mutagen.oggvorbis no longer depends on pyvorbis.
+
 1.2 - 2006.04.23
  * Bug Fixes:
    * MP3: Load files with zeroed Xing headers. (#626)
