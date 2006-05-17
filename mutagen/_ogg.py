@@ -15,9 +15,10 @@ This implementation is based on the RFC 3533 standard found at
 http://www.xiph.org/ogg/doc/rfc3533.txt.
 """
 
+import struct
 import zlib, binascii
 
-from mutagen._util import BitSet, cdata
+from mutagen._util import cdata
 
 class OggPage(object):
     """A single Ogg page (not necessarily a single encoded packet).
@@ -123,22 +124,19 @@ class OggPage(object):
         data.extend(self.data)
         data = "".join(data)
 
-        from mutagen._util import crc32
-        crc = crc32(data)
-        #crc2 = binascii.crc32(data)
-        #crc3 = zlib.crc32(data)
-        #print "CRCs: Fight!", crc, crc2, crc3
-
-        crc = cdata.to_int_le(crc)
+        # Python's CRC is swapped relative to Ogg's needs.
+        crc = ~binascii.crc32(data.translate(cdata.bitswap), -1)
+        # Although we're using to_int_be, this actually makes the CRC
+        # a proper le integer, since Python's CRC is byteswapped.
+        crc = cdata.to_int_be(crc).translate(cdata.bitswap)
         data = data[:22] + crc + data[26:]
         return data
 
     size = property(lambda self: len(self.write()), doc="Total frame size.")
 
-    continued = property(lambda self: BitSet(self.type_flags).test(0),
+    continued = property(lambda self: cdata.test_bit(self.type_flags, 0),
                          doc="First packet continued from the previous page.")
-    first = property(lambda self: BitSet(self.type_flags).test(1),
+    first = property(lambda self: cdata.test_bit(self.type_flags, 1),
                      doc="First page of a logical bitstream.")
-    last = property(lambda self: BitSet(self.type_flags).test(2),
+    last = property(lambda self: cdata.test_bit(self.type_flags, 2),
                     doc="Last page of a logical bitstream.")
-

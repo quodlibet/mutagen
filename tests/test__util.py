@@ -1,4 +1,4 @@
-from mutagen._util import DictMixin, BitSet, cdata
+from mutagen._util import DictMixin, cdata
 from tests import TestCase, add
 
 class FDict(DictMixin):
@@ -111,22 +111,20 @@ class Tcdata(TestCase):
         self.failUnlessRaises(cdata.error, cdata.longlong_le, "")
         self.failUnlessRaises(cdata.error, cdata.uint_le, "")
         self.failUnlessRaises(cdata.error, cdata.ulonglong_le, "")
-add(Tcdata)
 
-class TBitSet(TestCase):
     def test_test(self):
-        self.failUnless(BitSet(1).test(0))
-        self.failIf(BitSet(1).test(1))
+        self.failUnless(cdata.test_bit((1), 0))
+        self.failIf(cdata.test_bit(1, 1))
 
-        self.failUnless(BitSet(2).test(1))
-        self.failIf(BitSet(2).test(0))
+        self.failUnless(cdata.test_bit(2, 1))
+        self.failIf(cdata.test_bit(2, 0))
 
         v = (1 << 12) + (1 << 5) + 1
-        self.failUnless(BitSet(v).test(0))
-        self.failUnless(BitSet(v).test(5))
-        self.failUnless(BitSet(v).test(12))
-        self.failIf(BitSet(v).test(3))
-        self.failIf(BitSet(v).test(8))
-        self.failIf(BitSet(v).test(13))
+        self.failUnless(cdata.test_bit(v, 0))
+        self.failUnless(cdata.test_bit(v, 5))
+        self.failUnless(cdata.test_bit(v, 12))
+        self.failIf(cdata.test_bit(v, 3))
+        self.failIf(cdata.test_bit(v, 8))
+        self.failIf(cdata.test_bit(v, 13))
 
-add(TBitSet)
+add(Tcdata)

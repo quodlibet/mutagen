@@ -97,20 +97,6 @@ class DictMixin(object):
     def __len__(self):
         return len(self.keys())
 
-class BitSet(int):
-    """An integer with convenient methods for bit arithmetic.
-
-    Integer operations on a BitSet will return an int.
-
-    Based on the C++ STL bitset type. For more information see
-    http://www.cppreference.com/cppbitset/all.html. Methods should be
-    implemented as needed.
-    """
-
-    def test(self, n):
-        """Return true if the nth bit is set."""
-        return bool((self >> n) & 1)
-
 class cdata(object):
     """C character buffer to Python numeric type conversions."""
 
@@ -128,9 +114,11 @@ class cdata(object):
     to_longlong_le = staticmethod(lambda data: struct.pack('<q', data))
     to_ulonglong_le = staticmethod(lambda data: struct.pack('<Q', data))
 
-def crc32(data):
-    sum = 0
-    from mutagen._constants import OGG_CRC_TABLE
-    for v in map(ord, data):
-        sum = (sum << 8) ^ OGG_CRC_TABLE[((sum >> 24) & 0xFF) ^ v]
-    return sum
+    to_int_be = staticmethod(lambda data: struct.pack('>i', data))
+
+    bitswap = ''.join([chr(sum([((val >> i) & 1) << (7-i) for i in range(8)]))
+                       for val in range(256)])
+
+    test_bit = staticmethod(lambda value, n: bool((value >> n) & 1),
+                            doc="Return true if the nth bit is set.")
+
