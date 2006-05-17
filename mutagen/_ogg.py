@@ -49,22 +49,16 @@ class OggPage(object):
         if fileobj is None:
             return
 
-        oggs = fileobj.read(4)
+        (oggs, self.version, self.type_flags, self.position,
+         self.serial, self.sequence, crc, segments) = struct.unpack(
+            "<4sBBqIIiB", fileobj.read(27))
+
         if oggs != "OggS":
             raise IOError("read %r, expected %r" % (oggs, "OggS"))
 
-        self.version = ord(fileobj.read(1))
         if self.version != 0:
             raise IOError("version %r unsupported" % self.version)
 
-        self.type_flags = ord(fileobj.read(1))
-        self.position = cdata.longlong_le(fileobj.read(8))
-        self.serial = cdata.uint_le(fileobj.read(4))
-        self.sequence = cdata.uint_le(fileobj.read(4))
-
-        crc = cdata.int_le(fileobj.read(4))
-
-        segments = ord(fileobj.read(1))
         total = 0
         lacings = []
         self.finished = []
@@ -103,13 +97,8 @@ class OggPage(object):
         """Return a string encoding of the page header and data."""
 
         data = [
-            "OggS",
-            chr(self.version),
-            chr(self.type_flags),
-            cdata.to_longlong_le(self.position),
-            cdata.to_uint_le(self.serial),
-            cdata.to_uint_le(self.sequence),
-            "\x00\x00\x00\x00", # Uninitialized CRC
+            struct.pack("<4sBBqIIi", "OggS", self.version, self.type_flags,
+                        self.position, self.serial, self.sequence, 0)
             ]
 
         lacing_data = []
