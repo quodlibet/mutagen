@@ -37,15 +37,14 @@ class OggVorbisInfo(object):
     bitrate - nominal ('average') bitrate in bits per second, as an int
     """
     def __init__(self, fileobj):
-        fileobj.seek(0)
         page = OggPage(fileobj)
         while not page.data[0].startswith("\x01vorbis"):
             page = OggPage(fileobj)
         if not page.first:
             raise IOError("page has ID header, but doesn't start a packet")
-        channels = ord(page.data[0][11])
-        sample_rate = cdata.uint_le(page.data[0][12:16])
-        serial = page.serial
+        self.channels = ord(page.data[0][11])
+        self.sample_rate = cdata.uint_le(page.data[0][12:16])
+        self.serial = page.serial
 
         max_bitrate = cdata.uint_le(page.data[0][16:20])
         nominal_bitrate = cdata.uint_le(page.data[0][20:24])
@@ -61,23 +60,10 @@ class OggVorbisInfo(object):
         else:
             self.bitrate = nominal_bitrate
 
-        # Store the file offset of this page to avoid rescanning it
-        # when looking for comments.
-        self._offset = fileobj.tell()
-
-        samples = page.position
-        while not page.last:
-            page = OggPage(fileobj)
-            if page.serial == serial:
-                samples = max(samples, page.position)
-        self.length = samples / float(sample_rate)
-
 class OggVCommentDict(VCommentDict):
     """Vorbis comments embedded in an Ogg bitstream."""
 
-    def __init__(self, fileobj, info):
-        offset = info._offset
-        fileobj.seek(info._offset)
+    def __init__(self, fileobj):
         page = OggPage(fileobj)
         # Seek to the start of the comment header. We know it's got
         # to be at the start of the second page.
@@ -129,7 +115,16 @@ class OggVorbis(FileType):
         fileobj = file(filename, "rb")
         try:
             self.info = OggVorbisInfo(fileobj)
-            self.tags = OggVCommentDict(fileobj, self.info)
+            self.tags = OggVCommentDict(fileobj)
+
+            page = OggPage(fileobj)
+            samples = page.position
+            while not page.last:
+                page = OggPage(fileobj)
+                if page.serial == self.info.serial:
+                    samples = max(samples, page.position)
+            self.info.length = samples / float(self.info.sample_rate)
+
         except IOError, e:
             raise OggVorbisNoHeaderError(e)
 
