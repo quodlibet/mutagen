@@ -23,7 +23,7 @@ for certain keys, again depending on format.
 
 version = (1, 2, 0)
 
-from mutagen._util import DictMixin
+import mutagen._util
 
 class Metadata(dict):
     """An abstract dict-like object.
@@ -40,73 +40,10 @@ class Metadata(dict):
     def delete(self):
         raise NotImplementedError
 
-    def _insert_space(fobj, size, offset):
-        """Insert size bytes of empty space starting at offset.
+    _insert_space = staticmethod(mutagen._util.insert_bytes)
+    _delete_bytes = staticmethod(mutagen._util.delete_bytes)
 
-        fobj must be an open file object, open rb+ or
-        equivalent. Mutagen tries to use mmap to resize the file, but
-        falls back to a significantly slower method if mmap fails.
-        """
-        from mmap import mmap
-        assert 0 < size
-        assert 0 <= offset
-        fobj.seek(0, 2)
-        filesize = fobj.tell()
-        movesize = filesize - offset
-        fobj.write('\x00' * size)
-        fobj.flush()
-        map = mmap(fobj.fileno(), filesize + size)
-        try:
-            map.move(offset+size, offset, movesize)
-        except ValueError: # handle broken python on 64bit
-            map.close()
-            fobj.truncate(filesize)
-
-            fobj.seek(offset)
-            backbuf = fobj.read(size)
-            if len(backbuf) < size:
-                fobj.write('\x00' * (size - len(backbuf)))
-            while len(backbuf) == size:
-                frontbuf = fobj.read(size)
-                fobj.seek(-len(frontbuf), 1)
-                fobj.write(backbuf)
-                backbuf = frontbuf
-            fobj.write(backbuf)
-
-    _insert_space = staticmethod(_insert_space)
-
-    def _delete_bytes(fobj, size, offset):
-        """Delete size bytes of empty space starting at offset.
-
-        fobj must be an open file object, open rb+ or
-        equivalent. Mutagen tries to use mmap to resize the file, but
-        falls back to a significantly slower method if mmap fails.
-        """
-        from mmap import mmap
-        assert 0 < size
-        assert 0 <= offset
-        fobj.seek(0, 2)
-        filesize = fobj.tell()
-        movesize = filesize - offset - size
-        assert 0 <= movesize
-        if movesize > 0:
-            fobj.flush()
-            map = mmap(fobj.fileno(), filesize)
-            try:
-                map.move(offset, offset+size, movesize)
-            except ValueError: # handle broken python on 64bit
-                fobj.seek(offset + size)
-                buf = fobj.read(size)
-                while len(buf):
-                    fobj.seek(-len(buf) - size, 1)
-                    fobj.write(buf)
-                    fobj.seek(size, 1)
-                    buf = fobj.read(size)
-        fobj.truncate(filesize - size)
-        fobj.flush()
-    _delete_bytes = staticmethod(_delete_bytes)
-
-class FileType(DictMixin):
+class FileType(mutagen._util.DictMixin):
     """An abstract object wrapping tags and audio stream information.
 
     Attributes:
