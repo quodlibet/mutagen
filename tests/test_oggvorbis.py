@@ -66,6 +66,10 @@ class TOggVorbis(TestCase):
         vorbis = OggVorbis(self.filename)
         self.failIf(vorbis.tags)
 
+    def test_too_big(self):
+        self.vorbis["foo"] = "foo" * (2**16)
+        self.failUnlessRaises(NotImplementedError, self.vorbis.save)
+
     def test_invalid_open(self):
         self.failUnlessRaises(OggVorbisNoHeaderError, OggVorbis,
                               os.path.join('tests', 'data', 'xing.mp3'))

@@ -88,17 +88,17 @@ class OggVCommentDict(VCommentDict):
         oldpagesize = page.size
 
         page.data[0] = "\x03vorbis" + self.write()
-        if page.size > 255*255:
-            raise NotImplementedError(
-                "repagination needed for %d bytes" % page.size)
-        else:
-            delta = page.size - oldpagesize
-            if delta > 0:
-                Metadata._insert_space(fileobj, delta, offset)
-            elif delta < 0:
-                Metadata._delete_bytes(fileobj, -delta, offset)
-            fileobj.seek(offset)
-            fileobj.write(page.write())
+        try: data = page.write()
+        except ValueError:
+            raise NotImplementedError("repagination needed")
+
+        delta = page.size - oldpagesize
+        if delta > 0:
+            Metadata._insert_space(fileobj, delta, offset)
+        elif delta < 0:
+            Metadata._delete_bytes(fileobj, -delta, offset)
+        fileobj.seek(offset)
+        fileobj.write(data)
 
 class OggVorbis(FileType):
     """An Ogg Vorbis file."""
