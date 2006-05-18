@@ -190,6 +190,11 @@ class MP3(FileType):
         if filename is not None:
             self.load(filename, ID3)
 
+    def score(filename, fileobj, header):
+        return (header.startswith("ID3") +
+                filename.lower().endswith(".mp3"))
+    score = staticmethod(score)
+
     def pprint(self):
         """Print stream and tag information."""
         s = "MPEG %s layer %d, %d bps, %s Hz, %.2f seconds" %(

@@ -5,6 +5,7 @@ suites = []
 add = registerCase = suites.append
 from unittest import TestCase
 
+import test___init__
 import test_id3
 import test_apev2
 import test__vorbis

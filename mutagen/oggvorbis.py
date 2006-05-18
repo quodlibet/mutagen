@@ -104,6 +104,10 @@ class OggVorbis(FileType):
         if filename is not None:
             self.load(filename)
 
+    def score(filename, fileobj, header):
+        return (header.startswith("OggS") + ("\x01vorbis" in header))
+    score = staticmethod(score)
+
     def pprint(self):
         """Print stream information and comment key=value pairs."""
         s = "Ogg Vorbis, %.2f seconds, %d bps\n" % (

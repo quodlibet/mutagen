@@ -109,3 +109,33 @@ class FileType(mutagen._util.DictMixin):
         if self.tags is not None:
             self.tags.save(filename, **kwargs)
         else: raise ValueError("no tags in file")
+
+def File(filename, options=None):
+    """Guess the type of the file and try to open it.
+
+    The file type is decided by several things, such as the first 128
+    bytes (which usually contains a file type identifier), the
+    filename extension, and the presence of existing tags.
+
+    If no appropriate type could be found, None is returned.
+    """
+
+    if options is None:
+        from mutagen.oggvorbis import OggVorbis
+        from mutagen.flac import FLAC
+        from mutagen.mp3 import MP3
+        from mutagen.apev2 import APEv2File
+        options = [OggVorbis, FLAC, MP3, APEv2File]
+
+    if not options:
+        return None
+
+    fileobj = file(filename, "rb")
+    header = fileobj.read(128)
+
+    results = [Kind.score(filename, fileobj, header) for Kind in options]
+    results = zip(results, options)
+    results.sort()
+    score, Kind = results[-1]
+    if score > 0: return Kind(filename)
+    else: return None

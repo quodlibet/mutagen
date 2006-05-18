@@ -209,6 +209,10 @@ class FLAC(FileType):
         custom block types, you can append them to this list."""
         if filename is not None: self.load(filename)
 
+    def score(filename, fileobj, header):
+        return (header.startswith("fLaC") * 2)
+    score = staticmethod(score)
+
     def pprint(self):
         """Print stream information and comment key=value pairs."""
         s = "FLAC, %d Hz, %.2f seconds\n" % (

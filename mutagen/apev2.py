@@ -50,7 +50,7 @@ class APENoHeaderError(error, ValueError): pass
 class APEUnsupportedVersionError(error, ValueError): pass
 class APEBadItemError(error, ValueError): pass
 
-from mutagen import Metadata
+from mutagen import Metadata, FileType
 from mutagen._util import DictMixin, cdata, utf8
 
 class _APEv2Data(object):
@@ -405,3 +405,29 @@ class APEExtValue(_APEValue):
     External values are usually URI or IRI strings.
     """
     def pprint(self): return "[External] %s" % unicode(self)
+
+class APEv2File(FileType):
+    class info(object):
+        length = 0
+        bitrate = 0
+    
+    def __init__(self, filename=None):
+        if filename:
+            self.load(filename)
+
+    def load(self, filename):
+        self.filename = filename
+        try: self.tags = APEv2(filename)
+        except error: pass
+
+    def add_tags(self):
+        self.tags = APEv2()
+
+    def score(filename, fileobj, header):
+        fileobj.seek(-160, 2)
+        footer = fileobj.read()
+        filename = filename.lower()
+        return (("APETAGEX" in footer) * 2 +
+                header.startswith("MP+") * 2 +
+                header.startswith("wvpk") * 2)
+    score = staticmethod(score)

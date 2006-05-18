@@ -1,5 +1,6 @@
 1.3 -
  * New Features:
+   * mutagen.File: Automatic file type detection.
    * mutagen.oggvorbis no longer depends on pyvorbis.
    * ID3: SYLT support. (#672)
 
