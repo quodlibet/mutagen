@@ -216,11 +216,6 @@ class FLAC(FileType):
         return (header.startswith("fLaC") * 2)
     score = staticmethod(score)
 
-    def pprint(self):
-        """Print stream information and comment key=value pairs."""
-        return s + "\n".join(
-            ["%s=%s" % (k.lower(), v) for k, v in (self.tags or [])])
-
     def __read_metadata_block(self, file):
         byte = ord(file.read(1))
         size = to_int_be(file.read(3))
