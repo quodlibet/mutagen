@@ -138,6 +138,9 @@ class VComment(list):
         if framing: f.write("\x01")
         return f.getvalue()
 
+    def pprint(self):
+        return "\n".join(["%s=%s" % (k.lower(), v) for k, v in self])
+
 class VCommentDict(VComment, DictMixin):
 
     """A VComment that looks like a dictionary.

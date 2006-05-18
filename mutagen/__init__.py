@@ -110,6 +110,14 @@ class FileType(mutagen._util.DictMixin):
             self.tags.save(filename, **kwargs)
         else: raise ValueError("no tags in file")
 
+    def pprint(self):
+        """Print stream information and comment key=value pairs."""
+        stream = self.info.pprint()
+        try: tags = self.tags.pprint()
+        except AttributeError:
+            return stream
+        else: return stream + ((tags and "\n" + tags) or "")
+
 def File(filename, options=None):
     """Guess the type of the file and try to open it.
 

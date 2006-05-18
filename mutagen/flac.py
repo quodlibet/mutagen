@@ -165,6 +165,9 @@ class StreamInfo(MetadataBlock):
             (sig >> 32) & 0xFFFFFFFFL, sig & 0xFFFFFFFFL))
         return f.getvalue()
 
+    def pprint(self):
+        return "FLAC, %.2f seconds, %d Hz" % (self.sample_rate, self.length)
+
 class VCFLACDict(VCommentDict):
     """Read and write FLAC Vorbis comments.
 
@@ -215,8 +218,6 @@ class FLAC(FileType):
 
     def pprint(self):
         """Print stream information and comment key=value pairs."""
-        s = "FLAC, %d Hz, %.2f seconds\n" % (
-            self.info.sample_rate, self.info.length)
         return s + "\n".join(
             ["%s=%s" % (k.lower(), v) for k, v in (self.tags or [])])
 

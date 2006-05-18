@@ -183,6 +183,13 @@ class MPEGInfo(object):
                 bytes = struct.unpack('>I', data[xing + 12:xing + 16])[0]
                 self.bitrate = int((bytes * 8) // self.length)
 
+    def pprint(self):
+        s = "MPEG %s layer %d, %d bps, %s Hz, %.2f seconds" % (
+            self.version, self.layer, self.bitrate, self.sample_rate,
+            self.length)
+        if self.sketchy: s += " (sketchy)"
+        return s
+
 class MP3(FileType):
     """An MPEG audio (usually MPEG-1 Layer 3) file."""
 
@@ -194,16 +201,6 @@ class MP3(FileType):
         return (header.startswith("ID3") +
                 filename.lower().endswith(".mp3"))
     score = staticmethod(score)
-
-    def pprint(self):
-        """Print stream and tag information."""
-        s = "MPEG %s layer %d, %d bps, %s Hz, %.2f seconds" %(
-            self.info.version, self.info.layer, self.info.bitrate,
-            self.info.sample_rate, self.info.length)
-        if self.info.sketchy: s += " (sketchy)"
-        if self.tags is not None:
-            return s + "\n" + self.tags.pprint()
-        else: return s
 
     def add_tags(self, ID3=ID3):
         """Add an empty ID3 tag to the file.

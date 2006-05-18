@@ -61,6 +61,9 @@ class OggVorbisInfo(object):
         else:
             self.bitrate = nominal_bitrate
 
+    def pprint(self):
+        return "Ogg Vorbis, %.2f seconds, %d bps" % (self.length, self.bitrate)
+
 class OggVCommentDict(VCommentDict):
     """Vorbis comments embedded in an Ogg bitstream."""
 
@@ -107,13 +110,6 @@ class OggVorbis(FileType):
     def score(filename, fileobj, header):
         return (header.startswith("OggS") + ("\x01vorbis" in header))
     score = staticmethod(score)
-
-    def pprint(self):
-        """Print stream information and comment key=value pairs."""
-        s = "Ogg Vorbis, %.2f seconds, %d bps\n" % (
-            self.info.length, self.info.bitrate)
-        return s + "\n".join(
-            ["%s=%s" % (k.lower(), v) for k, v in (self.tags or [])])
 
     def load(self, filename, accurate_length=False):
         """Load file information from a filename.

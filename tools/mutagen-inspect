@@ -15,22 +15,12 @@ import locale
 from optparse import OptionParser
 
 def main(argv):
-    from mutagen.mp3 import MP3
-    from mutagen.apev2 import APEv2
-    from mutagen.flac import FLAC
+    from mutagen import File
 
     parser = OptionParser()
-    formats = {
-        "MP3": MP3,
-        "APEv2": APEv2,
-        "FLAC": FLAC,
-        }
-
-    for kind, Klass in formats.items():
-        opt = kind.lower()
-        parser.add_option(
-            "--no-" + opt, action="store_false", dest=kind, default=True,
-            help="Don't check for %s tags" % kind)
+    parser.add_option("--no-flac", help="Compatibility; does nothing.")
+    parser.add_option("--no-mp3", help="Compatibility; does nothing.")
+    parser.add_option("--no-apev2", help="Compatibility; does nothing.")
 
     (options, args) = parser.parse_args(argv[1:])
     if not args:
@@ -39,11 +29,9 @@ def main(argv):
     enc = locale.getpreferredencoding()
     for filename in args:
         print "--", filename
-        for kind, Kind in formats.items():
-            if getattr(options, kind):
-                print "- %s tags" % kind
-                try: print Kind(filename).pprint().encode(enc, 'replace')
-                except Exception, err: print str(err)
+        try: print "- " + File(filename).pprint().encode(enc, 'replace')
+        except Exception, err: print str(err)
+        print
 
 if __name__ == "__main__":
     try: import mutagen
