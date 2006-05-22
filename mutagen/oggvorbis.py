@@ -67,15 +67,15 @@ class OggVorbisInfo(object):
 class OggVCommentDict(VCommentDict):
     """Vorbis comments embedded in an Ogg bitstream."""
 
-    def __init__(self, fileobj):
-        # Since VComment can cope with garbage after the tag's data,
-        # we don't need to separate the packets.
-        page = OggPage(fileobj, needs_data=False)
-        # Seek to the start of the comment header. We know it's got
-        # to be at the start of the second packet.
-        while not page.data[0].startswith("\x03vorbis"):
-            page = OggPage(fileobj, needs_data=False)
-        data = page.data[0][7:] # Strip off "\x03vorbis".
+    def __init__(self, fileobj, info):
+        pages = []
+        finished = False
+        while not finished:
+            page = OggPage(fileobj)
+            if page.serial == info.serial:
+                pages.append(page)
+            finished = page.finished or (len(page.data) > 1)
+        data = OggPage.from_pages(pages)[0][7:] # Strip off "\x03vorbis".
         super(OggVCommentDict, self).__init__(data)
 
     def _inject(self, fileobj, offset=0):
@@ -124,7 +124,7 @@ class OggVorbis(FileType):
         fileobj = file(filename, "rb")
         try:
             self.info = OggVorbisInfo(fileobj)
-            self.tags = OggVCommentDict(fileobj)
+            self.tags = OggVCommentDict(fileobj, self.info)
 
             if accurate_length:
                 page = OggPage(fileobj, needs_data=False)

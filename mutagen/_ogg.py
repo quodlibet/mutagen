@@ -20,6 +20,11 @@ import zlib
 
 from mutagen._util import cdata
 
+class LeftoverData(IOError):
+    def __init__(self, value):
+        self.data = value
+        IOError.__init__(self, "leftover data: %r" % value)
+
 class OggPage(object):
     """A single Ogg page (not necessarily a single encoded packet).
 
@@ -43,21 +48,27 @@ class OggPage(object):
     position = -1L
     serial = 0
     sequence = 0
-    data = []
+    finished = True
 
     def __init__(self, fileobj=None, needs_data=True):
-        """If you don't need to access the page's data, or are certain
+        """Read a single Ogg page from fileobj.
+
+        If you don't need to access the page's data, or are certain
         that the page entirely contains only a single packet, pass in
         False for needs_data; this avoids short seeks. Doing this
         disables writing.
         """
 
+        self.data = []
+
         if fileobj is None:
             return
-
+        header = fileobj.read(27)
+        if len(header) == 0:
+            raise EOFError
         (oggs, self.version, self.type_flags, self.position,
          self.serial, self.sequence, crc, segments) = struct.unpack(
-            "<4sBBqIIiB", fileobj.read(27))
+            "<4sBBqIIiB", header)
 
         if oggs != "OggS":
             raise IOError("read %r, expected %r" % (oggs, "OggS"))
@@ -67,16 +78,16 @@ class OggPage(object):
 
         total = 0
         lacings = []
-        self.finished = []
+
         for c in map(ord, fileobj.read(segments)):
             total += c
             if c < 255:
                 lacings.append(total)
                 total = 0
-                self.finished.append(True)
         if total:
             lacings.append(total)
-            self.finished.append(False)
+            self.finished = False
+
         if needs_data:
             self.data = map(fileobj.read, lacings)
             if map(len, self.data) != lacings:
@@ -92,6 +103,7 @@ class OggPage(object):
         try:
             return (self.version == other.version and
                     self.type_flags == other.type_flags and
+                    self.finished == other.finished and
                     self.position == other.position and
                     self.serial == other.serial and
                     self.sequence == other.sequence and
@@ -101,7 +113,7 @@ class OggPage(object):
 
     def __repr__(self):
         attrs = ['version', 'type_flags', 'position', 'serial',
-                 'sequence']
+                 'sequence', 'finished']
         values = ["%s=%r" % (attr, getattr(self, attr)) for attr in attrs]
         return "<%s %s, %d bytes>" % (
             type(self).__name__, " ".join(values), sum(map(len, self.data)))
@@ -119,7 +131,7 @@ class OggPage(object):
             quot, rem = divmod(len(datum), 255)
             lacing_data.append("\xff" * quot + chr(rem))
         lacing_data = "".join(lacing_data)
-        if self.finished[-1] is False:
+        if not self.finished:
             lacing_data = lacing_data.rstrip("\x00")
         data.append(chr(len(lacing_data)))
         data.append(lacing_data)
@@ -134,11 +146,136 @@ class OggPage(object):
         data = data[:22] + crc + data[26:]
         return data
 
-    size = property(lambda self: len(self.write()), doc="Total frame size.")
+    def __size(self):
+        size = 27 # Initial header size
+        for datum in self.data:
+            quot, rem = divmod(len(datum), 255)
+            size += quot + 1
+        if not self.finished:
+            # Last packet doesn't have a final lacing marker.
+            size -= bool(rem)
+        size += sum(map(len, self.data))
+        return size
+
+    size = property(__size, doc="Total frame size.")
+
+    def __set_continued(self, val):
+        if val: self.type_flags |= 1
+        else: self.type_flags &= ~1
+
+    def __set_first(self, val):
+        if val: self.type_flags |= 2
+        else: self.type_flags &= ~2
+
+    def __set_last(self, val):
+        if val: self.type_flags |= 4
+        else: self.type_flags &= ~4
 
     continued = property(lambda self: cdata.test_bit(self.type_flags, 0),
+                         __set_continued,
                          doc="First packet continued from the previous page.")
     first = property(lambda self: cdata.test_bit(self.type_flags, 1),
+                     __set_first,
                      doc="First page of a logical bitstream.")
     last = property(lambda self: cdata.test_bit(self.type_flags, 2),
+                    __set_last,
                     doc="Last page of a logical bitstream.")
+
+    def renumber(klass, fileobj, serial, start):
+        """Renumber pages in an Ogg file, starting at page number 'start',
+        in the logical bitstream identified by 'serial'.
+
+        fileobj must point to the start of the first Ogg page to renumber.
+        No adjustment will be made to the data in the pages nor the
+        granule position; only the page number, and so also the CRC.
+
+        If an error occurs (e.g. non-Ogg data is found), fileobj will
+        be left pointing to the place in the stream the error occured,
+        but the invalid data will be left intact.
+
+        This is a slow function since it must rewrite most of the file.
+        Avoid renumbering pages when possible.
+        """
+
+        number = start
+        while True:
+            try: page = OggPage(fileobj)
+            except EOFError:
+                break
+            else:
+                if page.serial != serial:
+                    # Wrong stream, skip this page.
+                    continue
+                # Changing the number can't change the page size,
+                # so seeking back based on the current size is safe.
+                fileobj.seek(-page.size, 1)
+            page.sequence = number
+            fileobj.write(page.write())
+            number += 1
+    renumber = classmethod(renumber)
+
+    def from_pages(klass, pages, strict=False):
+        """Construct a list of packet data from a list of Ogg pages.
+
+        If strict is true, the last packet must end on the last page.
+        """
+
+        serial = pages[0].serial
+        sequence = pages[0].sequence
+
+        if strict and not pages[-1].finished:
+            raise ValueError("last packet does not complete")
+
+        packets = [[]]
+        for page in pages:
+            if serial != page.serial:
+                raise ValueError("invalid serial number in %r" % page)
+            elif sequence != page.sequence:
+                raise ValueError("bad sequence number in %r" % page)
+            else: sequence += 1
+            for packet in page.data:
+                packets[-1].append(packet)
+                if page.finished:
+                    packets.append([])
+        if packets[-1] == []: packets.pop(-1)
+        return map("".join, packets)
+    from_pages = classmethod(from_pages)
+
+    def from_packets(klass, packets, number=0):
+        """Construct a list of Ogg pages from a list of packets.
+
+        The exact packet/page segmentation chosen by this function is
+        undefined, except it will be within Ogg specifications.
+        (However, currently, it should not be used for many packets of
+        very small data.)
+
+        Pages are numbered started at number; other information is
+        uninitialized.
+        """
+
+        pages = []
+        packets = list(packets)
+
+        while packets:
+            packet = packets.pop(0)
+            if len(packet) < 255*255:
+                page = OggPage()
+                page.data = [packet]
+                page.finished = True
+                pages.append(page)
+            else:
+                while packet:
+                    page = OggPage()
+                    data = packet[:8192]
+                    packet = packet[8192:]
+                    page.data = [data]
+                    page.continued = pages and not pages[-1].finished
+                    page.finished = bool(not packet)
+                    pages.append(page)
+
+        for page in pages:
+            page.sequence = number
+            number += 1
+
+        return pages
+    from_packets = classmethod(from_packets)
