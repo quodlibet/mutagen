@@ -141,9 +141,10 @@ class OggPage(object):
         for datum in self.data:
             quot, rem = divmod(len(datum), 255)
             size += quot + 1
-        if not self.finished:
-            # Last packet doesn't have a final lacing marker.
-            size -= bool(rem)
+        if not self.finished and rem == 0:
+            # Packet contains a multiple of 255 bytes and is not
+            # terminated, so we don't have a \x00 at the end.
+            size -= 1
         size += sum(map(len, self.data))
         return size
 
