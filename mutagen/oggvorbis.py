@@ -74,7 +74,7 @@ class OggVCommentDict(VCommentDict):
             page = OggPage(fileobj)
             if page.serial == info.serial:
                 pages.append(page)
-            finished = page.finished or (len(page.data) > 1)
+                finished = page.finished or (len(page.data) > 1)
         data = OggPage.from_pages(pages)[0][7:] # Strip off "\x03vorbis".
         super(OggVCommentDict, self).__init__(data)
 
