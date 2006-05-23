@@ -86,6 +86,13 @@ class TOggVorbis(TestCase):
         self.failUnlessRaises(OggVorbisNoHeaderError, self.vorbis.save,
                               os.path.join('tests', 'data', 'xing.mp3'))
 
+    def test_huge_tag(self):
+        vorbis = OggVorbis("tests/data/multipagecomment.ogg")
+        self.failUnless("big" in vorbis.tags)
+        self.failUnless("bigger" in vorbis.tags)
+        self.failUnlessEqual(vorbis.tags["big"], ["foobar" * 10000])
+        self.failUnlessEqual(vorbis.tags["bigger"], ["quuxbaz" * 10000])
+
     def tearDown(self):
         os.unlink(self.filename)
 
