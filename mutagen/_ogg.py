@@ -48,6 +48,7 @@ class OggPage(object):
     position = -1L
     serial = 0
     sequence = 0
+    offset = None
     finished = True
 
     def __init__(self, fileobj=None):
@@ -55,6 +56,8 @@ class OggPage(object):
 
         if fileobj is None:
             return
+
+        self.offset = fileobj.tell()
 
         header = fileobj.read(27)
         if len(header) == 0:
@@ -64,7 +67,8 @@ class OggPage(object):
             "<4sBBqIIiB", header)
 
         if oggs != "OggS":
-            raise IOError("read %r, expected %r" % (oggs, "OggS"))
+            raise IOError("read %r, expected %r, at 0x%x" % (
+                oggs, "OggS", fileobj.tell() - 27))
 
         if self.version != 0:
             raise IOError("version %r unsupported" % self.version)
