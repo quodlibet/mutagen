@@ -38,9 +38,9 @@ class OggVorbisInfo(object):
     bitrate - nominal ('average') bitrate in bits per second, as an int
     """
     def __init__(self, fileobj):
-        page = OggPage(fileobj, needs_data=False)
+        page = OggPage(fileobj)
         while not page.data[0].startswith("\x01vorbis"):
-            page = OggPage(fileobj, needs_data=False)
+            page = OggPage(fileobj)
         if not page.first:
             raise IOError("page has ID header, but doesn't start a packet")
         self.channels = ord(page.data[0][11])
@@ -127,10 +127,10 @@ class OggVorbis(FileType):
             self.tags = OggVCommentDict(fileobj, self.info)
 
             if accurate_length:
-                page = OggPage(fileobj, needs_data=False)
+                page = OggPage(fileobj)
                 samples = page.position
                 while not page.last:
-                    page = OggPage(fileobj, needs_data=False)
+                    page = OggPage(fileobj)
                     if page.serial == self.info.serial:
                         samples = max(samples, page.position)
             else:

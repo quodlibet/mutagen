@@ -50,19 +50,12 @@ class OggPage(object):
     sequence = 0
     finished = True
 
-    def __init__(self, fileobj=None, needs_data=True):
-        """Read a single Ogg page from fileobj.
-
-        If you don't need to access the page's data, or are certain
-        that the page entirely contains only a single packet, pass in
-        False for needs_data; this avoids short seeks. Doing this
-        disables writing.
-        """
-
+    def __init__(self, fileobj=None):
         self.data = []
 
         if fileobj is None:
             return
+
         header = fileobj.read(27)
         if len(header) == 0:
             raise EOFError
@@ -88,16 +81,9 @@ class OggPage(object):
             lacings.append(total)
             self.finished = False
 
-        if needs_data:
-            self.data = map(fileobj.read, lacings)
-            if map(len, self.data) != lacings:
-                raise IOError("unable to read full data")
-        else:
-            self.write = lambda: None
-            total = sum(lacings)
-            self.data = [fileobj.read(total)]
-            if len(self.data[0]) != total:
-                raise IOError("unable to read full data")
+        self.data = map(fileobj.read, lacings)
+        if map(len, self.data) != lacings:
+            raise IOError("unable to read full data")
 
     def __eq__(self, other):
         try:
