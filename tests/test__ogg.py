@@ -1,6 +1,10 @@
+import os
+import shutil
+
 from StringIO import StringIO
 from tests import TestCase, add
 from mutagen._ogg import OggPage
+from tempfile import mkstemp
 
 class TOggPage(TestCase):
     def setUp(self):
@@ -42,6 +46,7 @@ class TOggPage(TestCase):
     def test_length(self):
         # Always true for Ogg Vorbis files
         self.failUnlessEqual(self.page.size, 58)
+        self.failUnlessEqual(len(self.page.write()), 58)
 
     def test_first_metadata_page_is_separate(self):
         self.failIf(OggPage(self.fileobj).continued)
@@ -68,6 +73,12 @@ class TOggPage(TestCase):
         pages = [OggPage(fileobj) for i in range(3)]
         self.failUnlessEqual([page.sequence for page in pages], [10, 11, 12])
 
+        fileobj.seek(0)
+        OggPage.renumber(fileobj, 1, 20)
+        fileobj.seek(0)
+        pages = [OggPage(fileobj) for i in range(3)]
+        self.failUnlessEqual([page.sequence for page in pages], [20, 21, 22])
+
     def test_renumber_extradata(self):
         fileobj = StringIO()
         for page in self.pages:
@@ -84,6 +95,20 @@ class TOggPage(TestCase):
         self.failUnlessEqual([page.sequence for page in pages], [10, 11, 12])
         # And the garbage that caused the error should be okay too.
         self.failUnlessEqual(fileobj.read(), "left over data")
+
+    def test_renumber_reread(self):
+        try:
+            filename = mkstemp(suffix=".ogg")[1]
+            shutil.copy("tests/data/multipagecomment.ogg", filename)
+            fileobj = file(filename, "rb+")
+            OggPage.renumber(fileobj, 1002429366L, 20)
+            fileobj.close()
+            fileobj = file(filename, "rb+")
+            OggPage.renumber(fileobj, 1002429366L, 0)
+            fileobj.close()
+        finally:
+            try: os.unlink(filename)
+            except OSError: pass
 
     def test_from_pages(self):
         self.failUnlessEqual(
