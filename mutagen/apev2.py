@@ -297,10 +297,12 @@ class APEv2(DictMixin, Metadata):
         """
         filename = filename or self.filename
         fileobj = file(filename, "ab+")
-        data = _APEv2Data(fileobj)
-        if data.start is not None and data.size is not None:
-            self._delete_bytes(fileobj, data.end - data.start, data.start)
-        fileobj.close()
+        try:
+            data = _APEv2Data(fileobj)
+            if data.start is not None and data.size is not None:
+                self._delete_bytes(fileobj, data.end - data.start, data.start)
+        finally:
+            fileobj.close()
 
 Open = APEv2
 
