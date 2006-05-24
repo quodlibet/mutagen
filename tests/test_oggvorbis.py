@@ -7,7 +7,8 @@ from tempfile import mkstemp
 class TOggVorbis(TestCase):
     def setUp(self):
         original = os.path.join("tests", "data", "empty.ogg")
-        self.filename = mkstemp(suffix='.ogg')[1]
+        fd, self.filename = mkstemp(suffix='.ogg')
+        os.close(fd)
         shutil.copy(original, self.filename)
         self.vorbis = OggVorbis(self.filename)
 

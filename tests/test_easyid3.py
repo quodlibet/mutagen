@@ -8,7 +8,8 @@ from tempfile import mkstemp
 class TEasyID3(TestCase):
 
     def setUp(self):
-        self.filename = mkstemp('.mp3')[1]
+        fd, self.filename = mkstemp('.mp3')
+        os.close(fd)
         empty = os.path.join('tests', 'data', 'emptyfile.mp3')
         shutil.copy(empty, self.filename)
         self.id3 = EasyID3()
