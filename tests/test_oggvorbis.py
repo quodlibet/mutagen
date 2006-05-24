@@ -66,9 +66,11 @@ class TOggVorbis(TestCase):
         vorbis = OggVorbis(self.filename)
         self.failIf(vorbis.tags)
 
-    def test_too_big(self):
+    def test_really_big(self):
         self.vorbis["foo"] = "foo" * (2**16)
-        self.failUnlessRaises(NotImplementedError, self.vorbis.save)
+        self.vorbis["bar"] = "bar" * (2**16)
+        self.vorbis["bar"] = "quux" * (2**16)
+        self.vorbis.save()
 
     def test_invalid_open(self):
         self.failUnlessRaises(OggVorbisNoHeaderError, OggVorbis,
@@ -77,6 +79,10 @@ class TOggVorbis(TestCase):
     def test_vorbiscomment(self):
         self.vorbis.save()
         self.failUnless(ogg.vorbis.VorbisFile(self.filename))
+
+        self.test_really_big()
+        vfc = ogg.vorbis.VorbisFile(self.filename).comment()
+        self.failUnlessEqual(self.vorbis["foo"], vfc["foo"])
 
     def test_invalid_delete(self):
         self.failUnlessRaises(OggVorbisNoHeaderError, self.vorbis.delete,
@@ -98,6 +104,7 @@ class TOggVorbis(TestCase):
 
 try: import ogg.vorbis
 except ImportError:
+    print "WARNING: Disabling pyvorbis crosscheck."
     del(TOggVorbis.test_vorbiscomment)
 
 registerCase(TOggVorbis)

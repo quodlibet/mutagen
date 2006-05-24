@@ -81,24 +81,59 @@ class OggVCommentDict(VCommentDict):
     def _inject(self, fileobj, offset=0):
         """Write tag data into the Vorbis comment packet/page."""
         fileobj.seek(offset)
+
+        # Find the old pages in the file; we'll need to remove them,
+        # plus grab any stray setup packet data out of them.
+        old_pages = []
         page = OggPage(fileobj)
         while not page.packets[0].startswith("\x03vorbis"):
-            offset = fileobj.tell()
             page = OggPage(fileobj)
-        oldpagesize = page.size
+        old_pages.append(page)
+        while not page.packets[-1].startswith("\x05vorbis"):
+            page = OggPage(fileobj)
+            if page.serial == old_pages[0].serial:
+                old_pages.append(page)
 
-        page.packets[0] = "\x03vorbis" + self.write()
-        try: data = page.write()
-        except ValueError:
-            raise NotImplementedError("repagination needed")
+        # We will have the comment data, and the setup packet for sure.
+        # Ogg Vorbis I says there won't be another one until at least
+        # one more page.
+        packets = OggPage.to_packets(old_pages)
+        assert(len(packets) == 2)
 
-        delta = page.size - oldpagesize
-        if delta > 0:
-            Metadata._insert_space(fileobj, delta, offset)
-        elif delta < 0:
-            Metadata._delete_bytes(fileobj, -delta, offset)
-        fileobj.seek(offset)
-        fileobj.write(data)
+        # Set the new comment packet.
+        packets[0] = "\x03vorbis" + self.write()
+
+        # Render the new pages, copying the header from the old ones.
+        new_pages = OggPage.from_packets(packets, old_pages[0].sequence)
+        for page in new_pages:
+            page.serial = old_pages[0].serial
+        new_pages[-1].complete = old_pages[-1].complete
+        new_data = "".join(map(OggPage.write, new_pages))
+
+        # Make room in the file for the new data.
+        delta = len(new_data)
+        fileobj.seek(old_pages[0].offset, 0)
+        Metadata._insert_space(fileobj, delta, old_pages[0].offset)
+        fileobj.seek(old_pages[0].offset, 0)
+        fileobj.write(new_data)
+        new_data_end = fileobj.tell()
+
+        # Go through the old pages and delete them. Since we shifted
+        # the data down the file, we need to adjust their offsets. We
+        # also need to go backwards, so we don't adjust the deltas of
+        # the other pages.
+        old_pages.reverse()
+        for old_page in old_pages:
+            adj_offset = old_page.offset + delta
+            Metadata._delete_bytes(fileobj, old_page.size, adj_offset)
+
+        # Finally, if there's any discrepency in length, we need to
+        # renumber the pages for the logical stream.
+        if len(old_pages) != len(new_pages):
+            fileobj.seek(new_data_end, 0)
+            serial = new_pages[0].serial
+            sequence = new_pages[0].sequence + 1
+            OggPage.renumber(fileobj, serial, sequence)
 
 class OggVorbis(FileType):
     """An Ogg Vorbis file."""

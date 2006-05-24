@@ -243,7 +243,7 @@ class OggPage(object):
         return packets
     to_packets = classmethod(to_packets)
 
-    def from_packets(klass, packets, number=0):
+    def from_packets(klass, packets, sequence=0):
         """Construct a list of Ogg pages from a list of packet data.
 
         The exact packet/page segmentation chosen by this function is
@@ -251,7 +251,7 @@ class OggPage(object):
         Currently, it generates pages approximately 4kb in size,
         in accordance with the specification's recommendations.
 
-        Pages are numbered started at 'number'; other information is
+        Pages are numbered started at 'sequence'; other information is
         uninitialized.
         """
 
@@ -259,7 +259,7 @@ class OggPage(object):
         packets = list(packets)
 
         page = OggPage()
-        page.sequence = number
+        page.sequence = sequence
         while packets:
             packet = packets.pop(0)
             page.packets.append("")
