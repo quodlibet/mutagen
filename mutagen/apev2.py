@@ -425,7 +425,8 @@ class APEv2File(FileType):
         self.tags = APEv2()
 
     def score(filename, fileobj, header):
-        fileobj.seek(-160, 2)
+        try: fileobj.seek(-160, 2)
+        except IOError: fileobj.seek(0)
         footer = fileobj.read()
         filename = filename.lower()
         return (("APETAGEX" in footer) * 2 +
