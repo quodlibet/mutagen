@@ -175,7 +175,7 @@ class OggVorbis(FileType):
                     page = OggPage(fileobj)
                     samples = page.position
                     while not page.last:
-                        while page.serial !=sself.info.serial:
+                        while page.serial != self.info.serial:
                             page = OggPage(fileobj)
                         if page.serial == self.info.serial:
                             samples = max(samples, page.position)
