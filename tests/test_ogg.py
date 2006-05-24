@@ -155,6 +155,48 @@ class TOggPage(TestCase):
             self.failUnlessEqual(
                 packets, OggPage.to_packets(OggPage.from_packets(packets)))
 
+    def test_packet_exactly_255(self):
+        page = OggPage()
+        page.packets = ["1" * 255]
+        page.complete = False
+        page2 = OggPage()
+        page2.packets = [""]
+        page2.sequence = 1
+        page2.continued = True
+        self.failUnlessEqual(
+            ["1" * 255], OggPage.to_packets([page, page2]))
+
+    def test_page_max_size_alone_too_big(self):
+        page = OggPage()
+        page.packets = ["1" * 255 * 255]
+        page.complete = True
+        self.failUnlessRaises(ValueError, page.write)
+
+    def test_page_max_size(self):
+        page = OggPage()
+        page.packets = ["1" * 255 * 255]
+        page.complete = False
+        page2 = OggPage()
+        page2.packets = [""]
+        page2.sequence = 1
+        page2.continued = True
+        self.failUnlessEqual(
+            ["1" * 255 * 255], OggPage.to_packets([page, page2]))
+
+    def test_read_max_size(self):
+        page = OggPage()
+        page.packets = ["1" * 255 * 255]
+        page.complete = False
+        page2 = OggPage()
+        page2.packets = [""]
+        page2.sequence = 1
+        page2.continued = True
+        data = page.write() + page2.write()
+        fileobj = StringIO(data)
+        self.failUnlessEqual(OggPage(fileobj), page)
+        self.failUnlessEqual(OggPage(fileobj), page2)
+        self.failUnlessRaises(EOFError, OggPage, fileobj)
+
     def tearDown(self):
         self.fileobj.close()
 add(TOggPage)
