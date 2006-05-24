@@ -99,7 +99,8 @@ class TOggVorbis(TestCase):
                               os.path.join('tests', 'data', 'xing.mp3'))
 
     def test_huge_tag(self):
-        vorbis = OggVorbis("tests/data/multipagecomment.ogg")
+        vorbis = OggVorbis(
+            os.path.join("tests", "data", "multipagecomment.ogg"))
         self.failUnless("big" in vorbis.tags)
         self.failUnless("bigger" in vorbis.tags)
         self.failUnlessEqual(vorbis.tags["big"], ["foobar" * 10000])

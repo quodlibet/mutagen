@@ -86,7 +86,7 @@ class TPadding(TestCase):
 add(TPadding)
 
 class TFLAC(TestCase):
-    SAMPLE = "tests/data/silence-44-s.flac"
+    SAMPLE = os.path.join("tests", "data", "silence-44-s.flac")
     NEW = SAMPLE + ".new"
     def setUp(self):
         shutil.copy(self.SAMPLE, self.NEW)

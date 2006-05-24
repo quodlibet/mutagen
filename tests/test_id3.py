@@ -1029,7 +1029,7 @@ class OddWrites(TestCase):
 
     def test_toemptyfile(self):
         os.unlink(self.newsilence)
-        file(self.newsilence, "w").close()
+        file(self.newsilence, "wb").close()
         ID3(self.silence).save(self.newsilence)
 
     def test_tononfile(self):
@@ -1038,12 +1038,12 @@ class OddWrites(TestCase):
 
     def test_1bfile(self):
         os.unlink(self.newsilence)
-        f = file(self.newsilence, "w")
+        f = file(self.newsilence, "wb")
         f.write("!")
         f.close()
         ID3(self.silence).save(self.newsilence)
         self.assert_(os.path.getsize(self.newsilence) > 1)
-        self.assertEquals(file(self.newsilence).read()[-1], "!")
+        self.assertEquals(file(self.newsilence, "rb").read()[-1], "!")
 
     def tearDown(self):
         try: os.unlink(self.newsilence)

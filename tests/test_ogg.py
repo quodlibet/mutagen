@@ -9,7 +9,7 @@ from tempfile import mkstemp
 
 class TOggPage(TestCase):
     def setUp(self):
-        self.fileobj = file("tests/data/empty.ogg", "rb")
+        self.fileobj = file(os.path.join("tests", "data", "empty.ogg"), "rb")
         self.page = OggPage(self.fileobj)
 
         pages = [OggPage(), OggPage(), OggPage()]
@@ -100,7 +100,8 @@ class TOggPage(TestCase):
     def test_renumber_reread(self):
         try:
             filename = mkstemp(suffix=".ogg")[1]
-            shutil.copy("tests/data/multipagecomment.ogg", filename)
+            shutil.copy(os.path.join("tests", "data", "multipagecomment.ogg"),
+                        filename)
             fileobj = file(filename, "rb+")
             OggPage.renumber(fileobj, 1002429366L, 20)
             fileobj.close()
@@ -146,7 +147,10 @@ class TOggPage(TestCase):
         self.failUnlessEqual(OggPage.to_packets(pages), packets)
 
     def test_random_data_roundtrip(self):
-        random_file = file("/dev/urandom", "rb")
+        try: random_file = file("/dev/urandom", "rb")
+        except (IOError, OSError):
+            print "WARNING: Random data round trip test disabled."
+            return
         for i in range(10):
             num_packets = random.randrange(2, 100)
             lengths = [random.randrange(10, 10000)

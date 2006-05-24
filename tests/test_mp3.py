@@ -37,18 +37,18 @@ class TMP3(TestCase):
         self.failIf(self.mp3_2.info.sketchy)
 
     def test_sketchy_notmp3(self):
-        notmp3 = MP3("tests/data/silence-44-s.flac")
+        notmp3 = MP3(os.path.join("tests", "data", "silence-44-s.flac"))
         self.failUnless(notmp3.info.sketchy)
 
     def test_pprint(self):
         self.failUnless(self.mp3.pprint())
 
     def test_xing(self):
-        mp3 = MP3("tests/data/xing.mp3")
+        mp3 = MP3(os.path.join("tests", "data", "xing.mp3"))
         self.failUnlessEqual(mp3.info.length, 26122)
         self.failUnlessEqual(mp3.info.bitrate, 306)
 
     def test_empty_xing(self):
-        mp3 = MP3("tests/data/bad-xing.mp3")
+        mp3 = MP3(os.path.join("tests", "data", "bad-xing.mp3"))
 
 registerCase(TMP3)
