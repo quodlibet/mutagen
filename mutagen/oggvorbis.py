@@ -10,17 +10,16 @@
 
 """Read and write Ogg Vorbis comments.
 
-This code only supports Ogg Vorbis I files, though it will probably be
-able to read comments from Vorbis streams in multiplexed Ogg files (in
-particular, it assumes that the identification and comment headers fit
-into the first two packets, and that the last Ogg packet's position
-is a Vorbis sample position).
-
-This cannot handle very long (> 60KB or so) Vorbis comments.
+This module can handle Vorbis streams in any Ogg file (though it only
+finds and manipulates the first one; if you need better logical stream
+control, use OggPage directly). This means it can read, tag, and get
+information about e.g. OGM files with a Vorbis stream.
 
 Read more about Ogg Vorbis at http://vorbis.com/. This module is based
 off the specification at http://www.xiph.org/ogg/doc/rfc3533.txt.
 """
+
+from cStringIO import StringIO
 
 from mutagen import FileType, Metadata
 from mutagen._vorbis import VCommentDict
@@ -146,14 +145,8 @@ class OggVorbis(FileType):
         return (header.startswith("OggS") + ("\x01vorbis" in header))
     score = staticmethod(score)
 
-    def load(self, filename, accurate_length=False):
-        """Load file information from a filename.
-
-        If the stream is multiplexed, pass accurate_length=True to scan
-        the whole file for the proper length. Otherwise, a faster method
-        will be used, but it gives incorrect results for multiplexed
-        streams.
-        """
+    def load(self, filename):
+        """Load file information from a filename."""
 
         self.filename = filename
         fileobj = file(filename, "rb")
@@ -162,24 +155,31 @@ class OggVorbis(FileType):
                 self.info = OggVorbisInfo(fileobj)
                 self.tags = OggVCommentDict(fileobj, self.info)
 
-                if accurate_length:
+                # For non-muxed streams, look at the last page.
+                try: fileobj.seek(-256*256, 2)
+                except IOError:
+                    # The file is less than 64k in length.
+                    fileobj.seek(0)
+                data = fileobj.read()
+                try: index = data.rindex("OggS")
+                except ValueError:
+                    raise OggVorbisNoHeaderError(
+                        "unable to find final Ogg header")
+                stringobj = StringIO(data[index:])
+                last_page = OggPage(stringobj)
+                if last_page.serial == self.info.serial:
+                    samples = last_page.position
+                else:
+                    # The stream is muxed, so use the slow way.
+                    fileobj.seek(0)
                     page = OggPage(fileobj)
                     samples = page.position
                     while not page.last:
-                        page = OggPage(fileobj)
+                        while page.serial !=sself.info.serial:
+                            page = OggPage(fileobj)
                         if page.serial == self.info.serial:
                             samples = max(samples, page.position)
-                else:
-                    try: fileobj.seek(-256*256, 2)
-                    except IOError:
-                        # The file is less than 64k in length.
-                        fileobj.seek(0)
-                    data = fileobj.read()
-                    try: index = data.rindex("OggS")
-                    except ValueError:
-                        raise OggVorbisNoHeaderError(
-                            "unable to find final Ogg header")
-                    samples = cdata.longlong_le(data[index+6:index+14])
+
                 self.info.length = samples / float(self.info.sample_rate)
 
             except IOError, e:
