@@ -1321,7 +1321,7 @@ class RVA2(Frame):
                  self.peak == other.peak))
 
     def __str__(self):
-        return "%s: %+f dB/%f" % (
+        return "%s: %+0.4f dB/%0.4f" % (
             self._channels[self.channel], self.gain, self.peak)
 
 # class EQU2: unsupported

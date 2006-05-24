@@ -270,13 +270,13 @@ def TestReadTags():
     ['USER', '\x00ENUCom', 'Com', '', dict(lang='ENU', encoding=0)],
 
     ['RVA2', 'testdata\x00\x01\xfb\x8c\x10\x12\x23',
-        'Master volume: -2.226562 dB/0.141693', '',
+        'Master volume: -2.2266 dB/0.1417', '',
         dict(desc='testdata', channel=1,
              # FIXME: we need to use almost
              gain=-2.22656, peak=0.14169)],
 
     ['RVA2', 'testdata2\x00\x01\x04\x01\x00',
-        'Master volume: +2.001953 dB/0.000000', '',
+        'Master volume: +2.0020 dB/0.0000', '',
         dict(desc='testdata2', channel=1, gain=2.001953125, peak=0)],
 
     ['PCNT', '\x00\x00\x00\x11', 17, 17, dict(count=17)],
