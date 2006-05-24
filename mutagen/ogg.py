@@ -9,7 +9,8 @@
 """Read and write Ogg bitstreams and pages.
 
 This module reads and writes a subset of the Ogg bitstream format
-version 0 (notably, the subset required to tag Ogg Vorbis I files).
+version 0. It does *not* read or write Ogg Vorbis files! For that,
+you should use mutagen.oggvorbis.
 
 This implementation is based on the RFC 3533 standard found at
 http://www.xiph.org/ogg/doc/rfc3533.txt.

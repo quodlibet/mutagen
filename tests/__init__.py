@@ -12,7 +12,7 @@ import test__vorbis
 import test_flac
 import test_mp3
 import test_oggvorbis
-import test__ogg
+import test_ogg
 import test_easyid3
 import test__util
 

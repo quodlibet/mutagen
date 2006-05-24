@@ -3,7 +3,7 @@ import shutil
 
 from StringIO import StringIO
 from tests import TestCase, add
-from mutagen._ogg import OggPage
+from mutagen.ogg import OggPage
 from tempfile import mkstemp
 
 class TOggPage(TestCase):

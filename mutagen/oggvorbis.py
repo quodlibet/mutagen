@@ -24,7 +24,7 @@ off the specification at http://www.xiph.org/ogg/doc/rfc3533.txt.
 
 from mutagen import FileType, Metadata
 from mutagen._vorbis import VCommentDict
-from mutagen._ogg import OggPage
+from mutagen.ogg import OggPage
 from mutagen._util import cdata
 
 class error(IOError): pass
