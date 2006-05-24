@@ -158,31 +158,34 @@ class OggVorbis(FileType):
         self.filename = filename
         fileobj = file(filename, "rb")
         try:
-            self.info = OggVorbisInfo(fileobj)
-            self.tags = OggVCommentDict(fileobj, self.info)
+            try:
+                self.info = OggVorbisInfo(fileobj)
+                self.tags = OggVCommentDict(fileobj, self.info)
 
-            if accurate_length:
-                page = OggPage(fileobj)
-                samples = page.position
-                while not page.last:
+                if accurate_length:
                     page = OggPage(fileobj)
-                    if page.serial == self.info.serial:
-                        samples = max(samples, page.position)
-            else:
-                try: fileobj.seek(-256*256, 2)
-                except IOError:
-                    # The file is less than 64k in length.
-                    fileobj.seek(0)
-                data = fileobj.read()
-                try: index = data.rindex("OggS")
-                except ValueError:
-                    raise OggVorbisNoHeaderError(
-                        "unable to find final Ogg header")
-                samples = cdata.longlong_le(data[index+6:index+14])
-            self.info.length = samples / float(self.info.sample_rate)
+                    samples = page.position
+                    while not page.last:
+                        page = OggPage(fileobj)
+                        if page.serial == self.info.serial:
+                            samples = max(samples, page.position)
+                else:
+                    try: fileobj.seek(-256*256, 2)
+                    except IOError:
+                        # The file is less than 64k in length.
+                        fileobj.seek(0)
+                    data = fileobj.read()
+                    try: index = data.rindex("OggS")
+                    except ValueError:
+                        raise OggVorbisNoHeaderError(
+                            "unable to find final Ogg header")
+                    samples = cdata.longlong_le(data[index+6:index+14])
+                self.info.length = samples / float(self.info.sample_rate)
 
-        except IOError, e:
-            raise OggVorbisNoHeaderError(e)
+            except IOError, e:
+                raise OggVorbisNoHeaderError(e)
+        finally:
+            fileobj.close()
 
     def delete(self, filename=None):
         """Remove tags from a file.
@@ -194,10 +197,12 @@ class OggVorbis(FileType):
 
         self.tags.clear()
         fileobj = file(filename, "rb+")
-        try: self.tags._inject(fileobj)
-        except IOError, e:
-            raise OggVorbisNoHeaderError(e)
-        fileobj.close()
+        try:
+            try: self.tags._inject(fileobj)
+            except IOError, e:
+                raise OggVorbisNoHeaderError(e)
+        finally:
+            fileobj.close()
 
     def save(self, filename=None):
         """Save a tag to a file.
@@ -208,10 +213,12 @@ class OggVorbis(FileType):
             filename = self.filename
         self.tags.validate()
         fileobj = file(filename, "rb+")
-        try: self.tags._inject(fileobj)
-        except IOError, e:
-            raise OggVorbisNoHeaderError(e)
-        fileobj.close()
+        try:
+            try: self.tags._inject(fileobj)
+            except IOError, e:
+                raise OggVorbisNoHeaderError(e)
+        finally:
+            fileobj.close()
 
 Open = OggVorbis
 
