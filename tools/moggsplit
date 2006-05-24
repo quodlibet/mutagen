@@ -1,0 +1,58 @@
+#!/usr/bin/python
+# Split a multiplex/chained Ogg file into its component parts.
+# Copyright 2006 Joe Wreschnig
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of version 2 of the GNU General Public License as
+# published by the Free Software Foundation.
+#
+# $Id: mutagen-inspect 3299 2006-05-18 20:58:15Z piman $
+
+import os
+import sys
+import locale
+
+from optparse import OptionParser
+
+def main(argv):
+    from mutagen.ogg import OggPage
+    parser = OptionParser(
+        usage="%prog [options] filename.ogg ...",
+        description="Split Ogg logical streams using Mutagen.",
+        version="Mutagen %s" % ".".join(map(str, mutagen.version))
+        )
+        
+    parser.add_option(
+        "--extension", dest="extension", default="ogg", metavar='ext',
+        help="use this extension (default 'ogg')")
+    parser.add_option(
+        "--pattern", dest="pattern", default="%(base)s-%(stream)d.%(ext)s",
+        metavar='pattern', help="name files using this pattern")
+
+    (options, args) = parser.parse_args(argv[1:])
+    if not args:
+        raise SystemExit(parser.print_help() or 1)
+
+    format = { 'ext': options.extension }
+    for filename in args:
+        fileobjs = {}
+        format["base"] = os.path.splitext(os.path.basename(filename))[0]
+        fileobj = file(filename, "rb")
+        while True:
+            try: page = OggPage(fileobj)
+            except EOFError: break
+            else:
+                format["stream"] = page.serial
+                if page.serial not in fileobjs:
+                    new_filename = options.pattern % format
+                    new_fileobj = file(new_filename, "wb")
+                    fileobjs[page.serial] = new_fileobj
+                fileobjs[page.serial].write(page.write())
+        map(file.close, fileobjs.values())
+
+if __name__ == "__main__":
+    try: import mutagen.ogg
+    except ImportError:
+        sys.path.append(os.path.abspath("../"))
+        import mutagen.ogg
+    main(sys.argv)
