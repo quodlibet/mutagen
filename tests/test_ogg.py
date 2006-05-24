@@ -99,7 +99,7 @@ class TOggPage(TestCase):
 
     def test_renumber_reread(self):
         try:
-            fd, filename = mkstemp(suffix=".ogg")[1]
+            fd, filename = mkstemp(suffix=".ogg")
             os.close(fd)
             shutil.copy(os.path.join("tests", "data", "multipagecomment.ogg"),
                         filename)
