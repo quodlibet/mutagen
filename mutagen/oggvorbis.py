@@ -131,8 +131,8 @@ class OggVCommentDict(VCommentDict):
         # renumber the pages for the logical stream.
         if len(old_pages) != len(new_pages):
             fileobj.seek(new_data_end, 0)
-            serial = new_pages[0].serial
-            sequence = new_pages[0].sequence + 1
+            serial = new_pages[-1].serial
+            sequence = new_pages[-1].sequence + 1
             OggPage.renumber(fileobj, serial, sequence)
 
 class OggVorbis(FileType):

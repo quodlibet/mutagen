@@ -84,6 +84,12 @@ class TOggVorbis(TestCase):
         vfc = ogg.vorbis.VorbisFile(self.filename).comment()
         self.failUnlessEqual(self.vorbis["foo"], vfc["foo"])
 
+        self.vorbis.delete()
+        self.vorbis["foobar"] = "foobar" * 1000
+        self.vorbis.save()
+        vfc = ogg.vorbis.VorbisFile(self.filename).comment()
+        self.failUnlessEqual(self.vorbis["foobar"], vfc["foobar"])
+
     def test_invalid_delete(self):
         self.failUnlessRaises(OggVorbisNoHeaderError, self.vorbis.delete,
                               os.path.join('tests', 'data', 'xing.mp3'))
