@@ -300,6 +300,7 @@ class APEv2(DictMixin, Metadata):
         data = _APEv2Data(fileobj)
         if data.start is not None and data.size is not None:
             self._delete_bytes(fileobj, data.end - data.start, data.start)
+        fileobj.close()
 
 Open = APEv2
 
