@@ -188,7 +188,7 @@ class TOggPage(TestCase):
         page.packets = ["1" * 255 * 255]
         page.complete = False
         page2 = OggPage()
-        page2.packets = [""]
+        page2.packets = ["", "foo"]
         page2.sequence = 1
         page2.continued = True
         data = page.write() + page2.write()
