@@ -188,6 +188,18 @@ class TOggPage(TestCase):
         self.failUnlessEqual(
             ["1" * 255 * 255], OggPage.to_packets([page, page2]))
 
+    def test_complete_zero_length(self):
+        packets = [""] * 20
+        page = OggPage.from_packets(packets)[0]
+        new_page = OggPage(StringIO(page.write()))
+        self.failUnlessEqual(new_page, page)
+        self.failUnlessEqual(OggPage.to_packets([new_page]), packets)
+
+    def test_too_many_packets(self):
+        packets = ["1"] * 3000
+        pages = OggPage.from_packets(packets)
+        map(OggPage.write, pages)
+
     def test_read_max_size(self):
         page = OggPage()
         page.packets = ["1" * 255 * 255]

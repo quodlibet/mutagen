@@ -80,8 +80,10 @@ class OggPage(object):
 
         total = 0
         lacings = []
-
-        for c in map(ord, fileobj.read(segments)):
+        lacing_bytes = fileobj.read(segments)
+        if len(lacing_bytes) != segments:
+            raise IOError("unable to read %r lacing bytes" % segments)
+        for c in map(ord, lacing_bytes):
             total += c
             if c < 255:
                 lacings.append(total)
@@ -126,8 +128,8 @@ class OggPage(object):
             quot, rem = divmod(len(datum), 255)
             lacing_data.append("\xff" * quot + chr(rem))
         lacing_data = "".join(lacing_data)
-        if not self.complete:
-            lacing_data = lacing_data.rstrip("\x00")
+        if not self.complete and lacing_data.endswith("\x00"):
+            lacing_data = lacing_data[:-1]
         data.append(chr(len(lacing_data)))
         data.append(lacing_data)
         data.extend(self.packets)
@@ -268,7 +270,7 @@ class OggPage(object):
                 # FIXME: Building strings like this is ridiculously
                 # slow (though it's probably dominated by the cost of
                 # file access for any real Ogg handling).
-                if page.size < 4096:
+                if page.size < 4096 and len(page.packets) < 255:
                     page.packets[-1] += data
                 else:
                     page.complete = False
