@@ -140,7 +140,8 @@ def insert_bytes(fobj, size, offset):
     fobj.flush()
     map = mmap(fobj.fileno(), filesize + size)
     try:
-        map.move(offset+size, offset, movesize)
+        map.move(offset + size, offset, movesize)
+        map.close()
     except ValueError: # handle broken python on 64bit
         map.close()
         fobj.truncate(filesize)
@@ -173,8 +174,10 @@ def delete_bytes(fobj, size, offset):
         fobj.flush()
         map = mmap(fobj.fileno(), filesize)
         try:
-            map.move(offset, offset+size, movesize)
+            map.move(offset, offset + size, movesize)
+            map.close()
         except ValueError: # handle broken python on 64bit
+            map.close()
             fobj.seek(offset + size)
             buf = fobj.read(size)
             while len(buf):
