@@ -25,7 +25,7 @@ class TOggPage(TestCase):
         self.failUnless(self.page.first)
         self.failIf(self.page.continued)
         self.failIf(self.page.last)
-        self.failUnless(self.page.finished)
+        self.failUnless(self.page.complete)
 
         for first in [True, False]:
             self.page.first = first
@@ -110,39 +110,39 @@ class TOggPage(TestCase):
             try: os.unlink(filename)
             except OSError: pass
 
-    def test_from_pages(self):
+    def test_to_packets(self):
         self.failUnlessEqual(
-            ["foo", "bar", "baz"], OggPage.from_pages(self.pages))
-        self.pages[0].finished = False
+            ["foo", "bar", "baz"], OggPage.to_packets(self.pages))
+        self.pages[0].complete = False
         self.pages[1].continued = True
         self.failUnlessEqual(
-            ["foobar", "baz"], OggPage.from_pages(self.pages))
+            ["foobar", "baz"], OggPage.to_packets(self.pages))
 
-    def test_from_pages_mixed_stream(self):
+    def test_to_packets_mixed_stream(self):
         self.pages[0].serial = 3
-        self.failUnlessRaises(ValueError, OggPage.from_pages, self.pages)
+        self.failUnlessRaises(ValueError, OggPage.to_packets, self.pages)
 
-    def test_from_pages_missing_sequence(self):
+    def test_to_packets_missing_sequence(self):
         self.pages[0].sequence = 3
-        self.failUnlessRaises(ValueError, OggPage.from_pages, self.pages)
+        self.failUnlessRaises(ValueError, OggPage.to_packets, self.pages)
 
-    def test_from_pages_strict(self):
+    def test_to_packets_strict(self):
         for page in self.pages:
-            page.finished = False
+            page.complete = False
         self.failUnlessRaises(
-            ValueError, OggPage.from_pages, self.pages, strict=True)
+            ValueError, OggPage.to_packets, self.pages, strict=True)
 
     def test_from_packets_short_enough(self):
         packets = ["1" * 200, "2" * 200, "3" * 200]
         pages = OggPage.from_packets(packets)
-        self.failUnlessEqual(OggPage.from_pages(pages), packets)
+        self.failUnlessEqual(OggPage.to_packets(pages), packets)
 
     def test_from_packets_long(self):
         packets = ["1" * 100000, "2" * 100000, "3" * 100000]
         pages = OggPage.from_packets(packets)
-        self.failIf(pages[0].finished)
+        self.failIf(pages[0].complete)
         self.failUnless(pages[1].continued)
-        self.failUnlessEqual(OggPage.from_pages(pages), packets)
+        self.failUnlessEqual(OggPage.to_packets(pages), packets)
 
     def tearDown(self):
         self.fileobj.close()

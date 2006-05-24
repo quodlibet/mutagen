@@ -69,13 +69,13 @@ class OggVCommentDict(VCommentDict):
 
     def __init__(self, fileobj, info):
         pages = []
-        finished = False
-        while not finished:
+        complete = False
+        while not complete:
             page = OggPage(fileobj)
             if page.serial == info.serial:
                 pages.append(page)
-                finished = page.finished or (len(page.packets) > 1)
-        data = OggPage.from_pages(pages)[0][7:] # Strip off "\x03vorbis".
+                complete = page.complete or (len(page.packets) > 1)
+        data = OggPage.to_packets(pages)[0][7:] # Strip off "\x03vorbis".
         super(OggVCommentDict, self).__init__(data)
 
     def _inject(self, fileobj, offset=0):
