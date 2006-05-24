@@ -258,15 +258,13 @@ class OggPage(object):
         """
 
         pages = []
-        packets = list(packets)
 
         page = OggPage()
         page.sequence = sequence
-        while packets:
-            packet = packets.pop(0)
+        for packet in packets:
             page.packets.append("")
             while packet:
-                data, packet = packet[:255], packet[255:]
+                data, packet = packet[:2040], packet[2040:]
                 # FIXME: Building strings like this is ridiculously
                 # slow (though it's probably dominated by the cost of
                 # file access for any real Ogg handling).
