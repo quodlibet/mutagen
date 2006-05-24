@@ -39,17 +39,17 @@ class OggVorbisInfo(object):
     """
     def __init__(self, fileobj):
         page = OggPage(fileobj)
-        while not page.data[0].startswith("\x01vorbis"):
+        while not page.packets[0].startswith("\x01vorbis"):
             page = OggPage(fileobj)
         if not page.first:
             raise IOError("page has ID header, but doesn't start a packet")
-        self.channels = ord(page.data[0][11])
-        self.sample_rate = cdata.uint_le(page.data[0][12:16])
+        self.channels = ord(page.packets[0][11])
+        self.sample_rate = cdata.uint_le(page.packets[0][12:16])
         self.serial = page.serial
 
-        max_bitrate = cdata.uint_le(page.data[0][16:20])
-        nominal_bitrate = cdata.uint_le(page.data[0][20:24])
-        min_bitrate = cdata.uint_le(page.data[0][24:28])
+        max_bitrate = cdata.uint_le(page.packets[0][16:20])
+        nominal_bitrate = cdata.uint_le(page.packets[0][20:24])
+        min_bitrate = cdata.uint_le(page.packets[0][24:28])
         if nominal_bitrate == 0:
             self.bitrate = (max_bitrate + min_bitrate) // 2
         elif max_bitrate:
@@ -74,7 +74,7 @@ class OggVCommentDict(VCommentDict):
             page = OggPage(fileobj)
             if page.serial == info.serial:
                 pages.append(page)
-                finished = page.finished or (len(page.data) > 1)
+                finished = page.finished or (len(page.packets) > 1)
         data = OggPage.from_pages(pages)[0][7:] # Strip off "\x03vorbis".
         super(OggVCommentDict, self).__init__(data)
 
@@ -82,12 +82,12 @@ class OggVCommentDict(VCommentDict):
         """Write tag data into the Vorbis comment packet/page."""
         fileobj.seek(offset)
         page = OggPage(fileobj)
-        while not page.data[0].startswith("\x03vorbis"):
+        while not page.packets[0].startswith("\x03vorbis"):
             offset = fileobj.tell()
             page = OggPage(fileobj)
         oldpagesize = page.size
 
-        page.data[0] = "\x03vorbis" + self.write()
+        page.packets[0] = "\x03vorbis" + self.write()
         try: data = page.write()
         except ValueError:
             raise NotImplementedError("repagination needed")

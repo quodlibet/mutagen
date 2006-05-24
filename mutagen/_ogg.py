@@ -40,7 +40,7 @@ class OggPage(object):
     position -- Absolute stream position (codec-depdendent semantics).
     serial -- Logical stream serial number.
     sequence -- Page sequence number within logical stream.
-    data -- Raw page data.
+    packets -- Raw packet data.
     """
 
     version = 0
@@ -52,7 +52,7 @@ class OggPage(object):
     finished = True
 
     def __init__(self, fileobj=None):
-        self.data = []
+        self.packets = []
 
         if fileobj is None:
             return
@@ -85,8 +85,8 @@ class OggPage(object):
             lacings.append(total)
             self.finished = False
 
-        self.data = map(fileobj.read, lacings)
-        if map(len, self.data) != lacings:
+        self.packets = map(fileobj.read, lacings)
+        if map(len, self.packets) != lacings:
             raise IOError("unable to read full data")
 
     def __eq__(self, other):
@@ -97,7 +97,7 @@ class OggPage(object):
                     self.position == other.position and
                     self.serial == other.serial and
                     self.sequence == other.sequence and
-                    self.data == other.data)
+                    self.packets == other.packets)
         except AttributeError:
             return False
 
@@ -105,8 +105,9 @@ class OggPage(object):
         attrs = ['version', 'type_flags', 'position', 'serial',
                  'sequence', 'finished']
         values = ["%s=%r" % (attr, getattr(self, attr)) for attr in attrs]
-        return "<%s %s, %d bytes>" % (
-            type(self).__name__, " ".join(values), sum(map(len, self.data)))
+        return "<%s %s, %d bytes in %d packets>" % (
+            type(self).__name__, " ".join(values), sum(map(len, self.packets)),
+            len(self.packets))
 
     def write(self):
         """Return a string encoding of the page header and data."""
@@ -117,7 +118,7 @@ class OggPage(object):
             ]
 
         lacing_data = []
-        for datum in self.data:
+        for datum in self.packets:
             quot, rem = divmod(len(datum), 255)
             lacing_data.append("\xff" * quot + chr(rem))
         lacing_data = "".join(lacing_data)
@@ -125,7 +126,7 @@ class OggPage(object):
             lacing_data = lacing_data.rstrip("\x00")
         data.append(chr(len(lacing_data)))
         data.append(lacing_data)
-        data.extend(self.data)
+        data.extend(self.packets)
         data = "".join(data)
 
         # Python's CRC is swapped relative to Ogg's needs.
@@ -138,14 +139,14 @@ class OggPage(object):
 
     def __size(self):
         size = 27 # Initial header size
-        for datum in self.data:
+        for datum in self.packets:
             quot, rem = divmod(len(datum), 255)
             size += quot + 1
         if not self.finished and rem == 0:
             # Packet contains a multiple of 255 bytes and is not
             # terminated, so we don't have a \x00 at the end.
             size -= 1
-        size += sum(map(len, self.data))
+        size += sum(map(len, self.packets))
         return size
 
     size = property(__size, doc="Total frame size.")
@@ -208,28 +209,31 @@ class OggPage(object):
     def from_pages(klass, pages, strict=False):
         """Construct a list of packet data from a list of Ogg pages.
 
-        If strict is true, the last packet must end on the last page.
+        If strict is true, the last packet must end on the last page,
         """
 
         serial = pages[0].serial
         sequence = pages[0].sequence
 
-        if strict and not pages[-1].finished:
-            raise ValueError("last packet does not complete")
+        if strict:
+            if pages[0].continued:
+                raise ValueError("first packet is continued")
+            if not pages[-1].finished:
+                raise ValueError("last packet does not complete")
 
-        packets = [[]]
+        packets = []
         for page in pages:
             if serial != page.serial:
                 raise ValueError("invalid serial number in %r" % page)
             elif sequence != page.sequence:
                 raise ValueError("bad sequence number in %r" % page)
             else: sequence += 1
-            for packet in page.data:
-                packets[-1].append(packet)
-                if page.finished:
-                    packets.append([])
-        if packets[-1] == []: packets.pop(-1)
-        return map("".join, packets)
+
+            if page.continued: packets[-1] += page.packets[0]
+            else: packets.append(page.packets[0])
+            packets.extend(page.packets[1:])
+
+        return packets
     from_pages = classmethod(from_pages)
 
     def from_packets(klass, packets, number=0):
@@ -237,8 +241,6 @@ class OggPage(object):
 
         The exact packet/page segmentation chosen by this function is
         undefined, except it will be within Ogg specifications.
-        (However, currently, it should not be used for many packets of
-        very small data.)
 
         Pages are numbered started at number; other information is
         uninitialized.
@@ -247,26 +249,29 @@ class OggPage(object):
         pages = []
         packets = list(packets)
 
+        page = OggPage()
         while packets:
             packet = packets.pop(0)
-            if len(packet) < 255*255:
-                page = OggPage()
-                page.data = [packet]
-                page.finished = True
-                pages.append(page)
-            else:
-                while packet:
-                    page = OggPage()
-                    data = packet[:8192]
-                    packet = packet[8192:]
-                    page.data = [data]
-                    page.continued = pages and not pages[-1].finished
-                    page.finished = bool(not packet)
+            page.packets.append("")
+            while packet:
+                data, packet = packet[:255], packet[255:]
+                # FIXME: Building strings like this is ridiculously
+                # slow (though it's probably dominated by the cost of
+                # file access for any real Ogg handling).
+                if page.size < 4096:
+                    page.packets[-1] += data
+                else:
+                    page.finished = False
                     pages.append(page)
+                    page = OggPage()
+                    page.continued = True
+                    page.packets.append(data)
 
-        for page in pages:
-            page.sequence = number
-            number += 1
+        if page.packets:
+            pages.append(page)
+
+        for i, page in enumerate(pages):
+            page.sequence = i + number
 
         return pages
     from_packets = classmethod(from_packets)

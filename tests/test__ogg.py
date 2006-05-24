@@ -12,9 +12,9 @@ class TOggPage(TestCase):
         self.page = OggPage(self.fileobj)
 
         pages = [OggPage(), OggPage(), OggPage()]
-        pages[0].data = ["foo"]
-        pages[1].data = ["bar"]
-        pages[2].data = ["baz"]
+        pages[0].packets = ["foo"]
+        pages[1].packets = ["bar"]
+        pages[2].packets = ["baz"]
         for i in range(len(pages)):
             pages[i].sequence = i
         for page in pages:
@@ -114,6 +114,7 @@ class TOggPage(TestCase):
         self.failUnlessEqual(
             ["foo", "bar", "baz"], OggPage.from_pages(self.pages))
         self.pages[0].finished = False
+        self.pages[1].continued = True
         self.failUnlessEqual(
             ["foobar", "baz"], OggPage.from_pages(self.pages))
 
@@ -134,22 +135,14 @@ class TOggPage(TestCase):
     def test_from_packets_short_enough(self):
         packets = ["1" * 200, "2" * 200, "3" * 200]
         pages = OggPage.from_packets(packets)
-        self.failUnlessEqual(len(pages), 3)
-        for page in pages:
-            # Each page should have one packet
-            self.failUnlessEqual(len(page.data), 1)
-            self.failUnlessEqual(len(page.data[0]), 200)
-            self.failUnless(page.finished)
         self.failUnlessEqual(OggPage.from_pages(pages), packets)
 
     def test_from_packets_long(self):
         packets = ["1" * 100000, "2" * 100000, "3" * 100000]
         pages = OggPage.from_packets(packets)
-        self.failUnless(len(pages) > 3)
         self.failIf(pages[0].finished)
         self.failUnless(pages[1].continued)
-        self.failUnlessEqual(OggPage.from_pages(pages), packets,
-                             "inaccurate page/packet roundtrip")
+        self.failUnlessEqual(OggPage.from_pages(pages), packets)
 
     def tearDown(self):
         self.fileobj.close()
