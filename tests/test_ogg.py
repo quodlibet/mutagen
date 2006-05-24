@@ -1,4 +1,5 @@
 import os
+import random
 import shutil
 
 from StringIO import StringIO
@@ -51,7 +52,7 @@ class TOggPage(TestCase):
     def test_first_metadata_page_is_separate(self):
         self.failIf(OggPage(self.fileobj).continued)
 
-    def test_roundtrip(self):
+    def test_single_page_roundtrip(self):
         self.failUnlessEqual(
             self.page, OggPage(StringIO(self.page.write())))
 
@@ -143,6 +144,16 @@ class TOggPage(TestCase):
         self.failIf(pages[0].complete)
         self.failUnless(pages[1].continued)
         self.failUnlessEqual(OggPage.to_packets(pages), packets)
+
+    def test_random_data_roundtrip(self):
+        random_file = file("/dev/urandom", "rb")
+        for i in range(10):
+            num_packets = random.randrange(2, 100)
+            lengths = [random.randrange(10, 10000)
+                       for i in range(num_packets)]
+            packets = map(random_file.read, lengths)
+            self.failUnlessEqual(
+                packets, OggPage.to_packets(OggPage.from_packets(packets)))
 
     def tearDown(self):
         self.fileobj.close()
