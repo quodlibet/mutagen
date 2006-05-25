@@ -130,10 +130,11 @@ def File(filename, options=None):
 
     if options is None:
         from mutagen.oggvorbis import OggVorbis
+        from mutagen.oggflac import OggFLAC
         from mutagen.flac import FLAC
         from mutagen.mp3 import MP3
         from mutagen.apev2 import APEv2File
-        options = [OggVorbis, FLAC, MP3, APEv2File]
+        options = [OggVorbis, OggFLAC, FLAC, MP3, APEv2File]
 
     if not options:
         return None

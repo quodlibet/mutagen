@@ -166,7 +166,7 @@ class StreamInfo(MetadataBlock):
         return f.getvalue()
 
     def pprint(self):
-        return "FLAC, %.2f seconds, %d Hz" % (self.sample_rate, self.length)
+        return "FLAC, %.2f seconds, %d Hz" % (self.length, self.sample_rate)
 
 class VCFLACDict(VCommentDict):
     """Read and write FLAC Vorbis comments.
@@ -213,7 +213,7 @@ class FLAC(FileType):
         if filename is not None: self.load(filename)
 
     def score(filename, fileobj, header):
-        return (header.startswith("fLaC") * 2)
+        return (header.startswith("fLaC") * 3)
     score = staticmethod(score)
 
     def __read_metadata_block(self, file):

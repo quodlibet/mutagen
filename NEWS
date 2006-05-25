@@ -2,6 +2,7 @@
  * New Features:
    * mutagen.File: Automatic file type detection.
    * mutagen.ogg: Generic Ogg stream parsing.
+   * mutagen.oggflac: Read/tag Ogg FLAC files.
    * mutagen.oggvorbis no longer depends on pyvorbis.
    * ID3: SYLT support. (#672)
 
