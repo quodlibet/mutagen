@@ -1,6 +1,6 @@
 import os
 import shutil
-from mutagen.oggvorbis import OggVorbis, OggVorbisNoHeaderError
+from mutagen.oggvorbis import OggVorbis
 from tests import TestCase, registerCase
 from tempfile import mkstemp
 
