@@ -213,7 +213,7 @@ class FLAC(FileType):
         if filename is not None: self.load(filename)
 
     def score(filename, fileobj, header):
-        return (header.startswith("fLaC") * 3)
+        return header.startswith("fLaC")
     score = staticmethod(score)
 
     def __read_metadata_block(self, file):

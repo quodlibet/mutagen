@@ -113,7 +113,7 @@ class OggVorbis(OggFileType):
     _Error = OggVorbisHeaderError
 
     def score(filename, fileobj, header):
-        return (header.startswith("OggS") + ("\x01vorbis" in header))
+        return (header.startswith("OggS") * ("\x01vorbis" in header))
     score = staticmethod(score)
 
 Open = OggVorbis

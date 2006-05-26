@@ -105,8 +105,8 @@ class OggFLAC(OggFileType):
     _Error = OggFLACHeaderError
 
     def score(filename, fileobj, header):
-        return (header.startswith("OggS") + ("FLAC" in header) +
-                ("fLaC" in header))
+        return (header.startswith("OggS") * (
+            ("FLAC" in header) + ("fLaC" in header)))
     score = staticmethod(score)
 
 Open = OggFLAC
