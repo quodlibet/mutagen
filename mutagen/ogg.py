@@ -433,7 +433,6 @@ class OggFileType(FileType):
         """
         if filename is None:
             filename = self.filename
-        self.tags.validate()
         fileobj = file(filename, "rb+")
         try:
             try: self.tags._inject(fileobj)
