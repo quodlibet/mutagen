@@ -421,7 +421,7 @@ class OggFileType(FileType):
         fileobj = file(filename, "rb+")
         try:
             try: self.tags._inject(fileobj)
-            except IOError, e:
+            except error, e:
                 raise self._Error, e, sys.exc_info()[2]
         finally:
             fileobj.close()
@@ -438,6 +438,6 @@ class OggFileType(FileType):
         try:
             try: self.tags._inject(fileobj)
             except error, e:
-                raise self._Error(e)
+                raise self._Error, e, sys.exc_info()[2]
         finally:
             fileobj.close()
