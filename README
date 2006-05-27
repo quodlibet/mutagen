@@ -1,8 +1,9 @@
-Mutagen is an audio metadata tag reader and writer implemented in pure
-Python. It supports reading ID3v1.1, ID3v2.2, ID3v2.3, ID3v2.4, APEv2,
-Ogg Vorbis, and FLAC, and writing ID3v1.1, ID3v2.4, APEv2, Ogg Vorbis,
-and FLAC. It can also read MPEG audio and Xing headers, FLAC stream
-info blocks, and Ogg Vorbis identification headers.
+Mutagen is a Python module to handle audio metadata. It supports
+reading ID3 (all versions), APEv2, Ogg Vorbis, FLAC, and Ogg FLAC, and
+writing ID3v1.1, ID3v2.4, APEv2, Ogg Vorbis, FLAC, and Ogg FLAC. It
+can also read MPEG audio and Xing headers, FLAC stream info blocks,
+and Ogg Vorbis and Ogg FLAC stream headers. Finally, it includes a
+module to handle generic Ogg bitstreams.
 
 Installing
 ----------
@@ -37,3 +38,9 @@ Compatibility
 -------------
 As we write ID3v2.4 tags, id3lib cannot read them. However, if you enable
 ID3v1 tag saving (pass v1=2 to ID3.save), id3lib will read that.
+
+iTunes has a bug in its handling of very large ID3v2.4 tags (such as
+tags that contain an attached picture). Mutagen will be able to read
+frames from iTunes, but iTunes may not be able to read the frames
+written by Quod Libet. Removing the APIC (or other large) tag will
+solve this.

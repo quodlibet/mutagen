@@ -24,6 +24,10 @@ from cStringIO import StringIO
 from mutagen import FileType
 from mutagen._util import cdata, insert_bytes, delete_bytes
 
+class error(IOError):
+    """Ogg stream parsing errors."""
+    pass
+
 class OggPage(object):
     """A single Ogg page (not necessarily a single encoded packet).
 
@@ -47,8 +51,7 @@ class OggPage(object):
     property must be true (so set both when constructing pages).
 
     If a file-like object is supplied to the constructor, the above
-    attributes will be filled in based on it. If the file does not
-    contain an Ogg stream, an IOError is raised.
+    attributes will be filled in based on it.
     """
 
     version = 0
@@ -75,17 +78,17 @@ class OggPage(object):
             "<4sBBqIIiB", header)
 
         if oggs != "OggS":
-            raise IOError("read %r, expected %r, at 0x%x" % (
+            raise error("read %r, expected %r, at 0x%x" % (
                 oggs, "OggS", fileobj.tell() - 27))
 
         if self.version != 0:
-            raise IOError("version %r unsupported" % self.version)
+            raise error("version %r unsupported" % self.version)
 
         total = 0
         lacings = []
         lacing_bytes = fileobj.read(segments)
         if len(lacing_bytes) != segments:
-            raise IOError("unable to read %r lacing bytes" % segments)
+            raise error("unable to read %r lacing bytes" % segments)
         for c in map(ord, lacing_bytes):
             total += c
             if c < 255:
@@ -97,7 +100,7 @@ class OggPage(object):
 
         self.packets = map(fileobj.read, lacings)
         if map(len, self.packets) != lacings:
-            raise IOError("unable to read full data")
+            raise error("unable to read full data")
 
     def __eq__(self, other):
         """Two Ogg pages are the same if they write the same data."""
@@ -355,7 +358,7 @@ class OggPage(object):
         data = fileobj.read()
         try: index = data.rindex("OggS")
         except ValueError:
-            raise IOError("unable to find final Ogg header")
+            raise error("unable to find final Ogg header")
         stringobj = StringIO(data[index:])
         page = OggPage(stringobj)
         if page.serial == serial:

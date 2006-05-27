@@ -19,7 +19,7 @@ Based off documentation available at
 http://flac.sourceforge.net/format.html
 """
 
-__all__ = ["FLAC", "Open"]
+__all__ = ["FLAC", "Open", "delete"]
 
 import struct
 from cStringIO import StringIO

@@ -1,4 +1,4 @@
-# Ogg Vorbis support, sort of.
+# Ogg Vorbis support.
 #
 # Copyright 2006 Joe Wreschnig <piman@sacredchao.net>
 #
@@ -10,20 +10,22 @@
 
 """Read and write Ogg Vorbis comments.
 
-This module can handle Vorbis streams in any Ogg file (though it only
-finds and manipulates the first one; if you need better logical stream
-control, use OggPage directly). This means it can read, tag, and get
-information about e.g. OGM files with a Vorbis stream.
+This module handles Vorbis files wrapped in an Ogg bitstream. The
+first Vorbis stream found is used.
 
 Read more about Ogg Vorbis at http://vorbis.com/. This module is based
 off the specification at http://www.xiph.org/ogg/doc/rfc3533.txt.
 """
 
+__all__ = ["OggVorbis", "Open", "delete"]
+
+import struct
+
 from mutagen._vorbis import VCommentDict
-from mutagen.ogg import OggPage, OggFileType
+from mutagen.ogg import OggPage, OggFileType, error as OggError
 from mutagen._util import cdata
 
-class error(IOError): pass
+class error(OggError): pass
 class OggVorbisHeaderError(error): pass
 
 class OggVorbisInfo(object):
@@ -41,14 +43,12 @@ class OggVorbisInfo(object):
         while not page.packets[0].startswith("\x01vorbis"):
             page = OggPage(fileobj)
         if not page.first:
-            raise IOError("page has ID header, but doesn't start a packet")
-        self.channels = ord(page.packets[0][11])
-        self.sample_rate = cdata.uint_le(page.packets[0][12:16])
+            raise OggVorbisHeaderError(
+                "page has ID header, but doesn't start a packet")
+        (self.channels, self.sample_rate, max_bitrate, nominal_bitrate,
+         min_bitrate) = struct.unpack("<B4I", page.packets[0][11:28])
         self.serial = page.serial
 
-        max_bitrate = cdata.uint_le(page.packets[0][16:20])
-        nominal_bitrate = cdata.uint_le(page.packets[0][20:24])
-        min_bitrate = cdata.uint_le(page.packets[0][24:28])
         if nominal_bitrate == 0:
             self.bitrate = (max_bitrate + min_bitrate) // 2
         elif max_bitrate:

@@ -40,11 +40,11 @@ class DictMixin(object):
         else: return True
     __contains__ = has_key
 
-    iterkeys = lambda s: iter(s.keys())
+    iterkeys = lambda self: iter(self.keys())
 
     def values(self):
         return map(self.__getitem__, self.keys())
-    itervalues = lambda s: iter(s.values())
+    itervalues = lambda self: iter(self.values())
 
     def items(self):
         return zip(self.keys(), self.values())
@@ -120,9 +120,10 @@ class cdata(object):
 
     bitswap = ''.join([chr(sum([((val >> i) & 1) << (7-i) for i in range(8)]))
                        for val in range(256)])
+    del(i)
+    del(val)
 
-    test_bit = staticmethod(lambda value, n: bool((value >> n) & 1),
-                            doc="Return true if the nth bit is set.")
+    test_bit = staticmethod(lambda value, n: bool((value >> n) & 1))
 
 def insert_bytes(fobj, size, offset):
     """Insert size bytes of empty space starting at offset.
@@ -189,6 +190,7 @@ def delete_bytes(fobj, size, offset):
     fobj.flush()
 
 def utf8(data):
+    """Convert a basestring to a valid UTF-8 str."""
     if isinstance(data, str):
         return data.decode("utf-8", "replace").encode("utf-8")
     elif isinstance(data, unicode):

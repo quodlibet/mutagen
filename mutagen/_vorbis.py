@@ -5,10 +5,11 @@
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
 
-"""Read and write Vorbis comment data, used in Ogg Vorbis and FLAC
-files. Vorbis comments are freeform key/value pairs; keys are
-case-insensitive ASCII and values are Unicode strings. A key may
-have multiple values.
+"""Read and write Vorbis comment data.
+
+Vorbis comments are freeform key/value pairs; keys are
+case-insensitive ASCII and values are Unicode strings. A key may have
+multiple values.
 
 The specification is at http://www.xiph.org/vorbis/doc/v-comment.html.
 """
@@ -36,23 +37,20 @@ class error(IOError): pass
 class VorbisUnsetFrameError(error): pass
 
 class VComment(list):
-
     """A Vorbis comment parser, accessor, and renderer.
 
     All comment ordering is preserved. A VComment is a list of
     key/value pairs, and so any Python list method can be used on it.
 
-    The default vendor if you make a new tag is 'Mutagen'. Otherwise,
-    any vendor tag will be preserved; the vendor can be accessed with
-    the .vendor attribute.
-
     Vorbis comments are always wrapped in something like an Ogg Vorbis
     bitstream or a FLAC metadata block, so this loads string data or a
     file-like object, not a filename.
+
+    Attributes:
+    vendor -- the stream 'vendor' (i.e. writer); default 'Mutagen'
     """
 
     vendor = u"Mutagen"
-    """The comment 'vendor' (i.e. writer)."""
 
     def __init__(self, data=None, errors='replace'):
         if data is not None:
@@ -142,7 +140,6 @@ class VComment(list):
         return "\n".join(["%s=%s" % (k.lower(), v) for k, v in self])
 
 class VCommentDict(VComment, DictMixin):
-
     """A VComment that looks like a dictionary.
 
     This object differs from a dictionary in two ways. First,

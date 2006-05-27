@@ -10,28 +10,34 @@
 
 """Read and write Ogg FLAC comments.
 
-This module handles FLAC files wrapped in an Ogg bitstream. For
-'naked' FLACs, see mutagen.flac.
+This module handles FLAC files wrapped in an Ogg bitstream. The first
+FLAC stream found is used. For 'naked' FLACs, see mutagen.flac.
 
 This module is bsaed off the specification at
 http://flac.sourceforge.net/ogg_mapping.html.
 """
+
+__all__ = ["OggFLAC", "Open", "delete"]
 
 import struct
 
 from cStringIO import StringIO
 
 from mutagen.flac import StreamInfo, VCFLACDict
-from mutagen.ogg import OggPage, OggFileType
+from mutagen.ogg import OggPage, OggFileType, error as OggError
 
-class error(Exception): pass
-class OggFLACHeaderError(error, IOError): pass
+class error(OggError): pass
+class OggFLACHeaderError(error): pass
 
 class OggFLACStreamInfo(StreamInfo):
     """Ogg FLAC general header and stream info.
 
     This encompasses the Ogg wrapper for the FLAC STREAMINFO metadata
     block, as well as the Ogg codec setup that precedes it.
+
+    Attributes (in addition to StreamInfo's):
+    packets -- number of metadata packets
+    serial -- Ogg logical stream serial number
     """
 
     packets = 0
@@ -40,19 +46,22 @@ class OggFLACStreamInfo(StreamInfo):
     def load(self, data):
         page = OggPage(data)
         while not page.packets[0].startswith("\x7FFLAC"):
-            print repr(page.packets[0])
             page = OggPage(data)
         major, minor, self.packets, flac = struct.unpack(
             ">BBH4s", page.packets[0][5:13])
         if flac != "fLaC":
-            raise IOError("invalid FLAC marker (%r)" % flac)
+            raise OggFLACHeaderError("invalid FLAC marker (%r)" % flac)
         elif (major, minor) != (1, 0):
-            raise IOError("unknown mapping version: %d.%d" % (major, minor))
+            raise OggFLACHeaderError(
+                "unknown mapping version: %d.%d" % (major, minor))
         self.serial = page.serial
 
         # Skip over the block header.
         stringobj = StringIO(page.packets[0][17:])
         super(OggFLACStreamInfo, self).load(StringIO(page.packets[0][17:]))
+
+    def pprint(self):
+        return "Ogg " + super(OggFLACStreamInfo, self).pprint()
 
 class OggFLACVComment(VCFLACDict):
     def load(self, data, info, errors='replace'):
