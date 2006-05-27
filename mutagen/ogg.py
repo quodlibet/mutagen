@@ -17,6 +17,7 @@ http://www.xiph.org/ogg/doc/rfc3533.txt.
 """
 
 import struct
+import sys
 import zlib
 
 from cStringIO import StringIO
@@ -403,8 +404,8 @@ class OggFileType(FileType):
                 samples = last_page.position
                 self.info.length = samples / float(self.info.sample_rate)
 
-            except IOError, e:
-                raise self._Error(e)
+            except error, e:
+                raise self._Error, e, sys.exc_info()[2]
         finally:
             fileobj.close()
 
@@ -421,7 +422,7 @@ class OggFileType(FileType):
         try:
             try: self.tags._inject(fileobj)
             except IOError, e:
-                raise self._Error(e)
+                raise self._Error, e, sys.exc_info()[2]
         finally:
             fileobj.close()
 
@@ -436,7 +437,7 @@ class OggFileType(FileType):
         fileobj = file(filename, "rb+")
         try:
             try: self.tags._inject(fileobj)
-            except IOError, e:
+            except error, e:
                 raise self._Error(e)
         finally:
             fileobj.close()
