@@ -5,7 +5,6 @@ mutagen.id3 needs:
  * Perhaps implement tag merging - "intelligently" merge information
    from all known tag formats
  * Polish padding - perhaps make it client selectable
- * Better cross-compatibility tests with eyeD3.
 
 mutagen.mp4 needs:
  * To exist.
