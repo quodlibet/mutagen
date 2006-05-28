@@ -1,17 +1,13 @@
-.TH mutagen-inspect 1 "February 20th, 2006"
+.TH mutagen-inspect 1 "May 27th, 2006"
 .SH NAME
 mutagen-inspect \- view Mutagen-supported audio tags
 .SH SYNOPSIS
-\fBmutagen-inspect\fR [\fIoptions\fR] \fIfilename\fR ...
+\fBmutagen-inspect\fR \fIfilename\fR ...
 .SH DESCRIPTION
-\fBmutagen-inspect\fR tries to load a file with each of Mutagen's file
-loaders in turn. This can be useful to find ID3v1 tags in a Musepack
-file, or APEv2 tags in an MP3.
+\fBmutagen-inspect\fR loads and prints information about an audio file
+and its tags.
 .PP
 It is primarily intended as a debugging tool for Mutagen, but can
 be useful for extracting tags from the command line.
-.SH OPTIONS
-.IP \-\-no\-flac,\ \-\-no\-apev2,\ \-\-no\-mp3
-Disable the check for tags in that format.
 .SH AUTHOR
 Joe Wreschnig

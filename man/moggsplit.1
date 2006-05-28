@@ -1,0 +1,23 @@
+.TH moggsplit 1 "May 27th, 2006"
+.SH NAME
+moggsplit \- split Ogg logical streams
+.SH SYNOPSIS
+\fBmoggsplit\fR \fIfilename\fR ...
+.SH DESCRIPTION
+\fBmoggsplit\fR splits a multiplexed Ogg stream into separate
+files. For example, it can separate an OGM into separate Ogg DivX and
+Ogg Vorbis streams, or a chained Ogg Vorbis file into two separate
+files.
+.SH OPTIONS
+.IP \-\-extension
+Use the supplied extension when generating new files; the default is
+\fBogg\fR.
+.IP \-\-pattern
+Use the supplied pattern when generating new files. This is a Python
+keyword format string with three variables, \fIbase\fR for the
+original file's base name, \fIstream\fR for the stream's serial
+number, and \fIext\fR for the extension give by \fB\-\-extension\fR.
+.br
+The default is \fB%(base)s\-%(stream)d.%(ext)s\fR.
+.SH AUTHORS
+Joe Wreschnig
