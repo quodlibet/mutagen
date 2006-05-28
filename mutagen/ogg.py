@@ -252,38 +252,62 @@ class OggPage(object):
         return packets
     to_packets = classmethod(to_packets)
 
-    def from_packets(klass, packets, sequence=0):
+    def from_packets(klass, packets, sequence=0,
+                     default_size=4096, wiggle_room=2048):
         """Construct a list of Ogg pages from a list of packet data.
 
-        The exact packet/page segmentation chosen by this function is
-        undefined, except it will be within Ogg specifications.
-        Currently, it generates pages approximately 4kb in size,
-        in accordance with the specification's recommendations.
+        The algorithm will generate pages of approximately
+        default_size in size (rounded down to the nearest multiple of
+        255). However, it will also allow pages to increase to
+        approximately default_size + wiggle_room if allowing the
+        wiggle room would finish a packet (only one packet will be
+        finished in this way per page; if the next packet would fit
+        into the wiggle room, it still starts on a new page).
+
+        This method reduces packet fragmentation when packet sizes are
+        slightly larger than the default page size, while still
+        ensuring most pages are of the average size.
 
         Pages are numbered started at 'sequence'; other information is
         uninitialized.
         """
 
+        chunk_size = (default_size // 255) * 255
+
         pages = []
 
         page = OggPage()
         page.sequence = sequence
+
+        # FIXME: Building strings like this is ridiculously slow
+        # (though it's probably dominated by the cost of file access
+        # for any real Ogg handling).
+
         for packet in packets:
             page.packets.append("")
             while packet:
-                data, packet = packet[:2040], packet[2040:]
-                # FIXME: Building strings like this is ridiculously
-                # slow (though it's probably dominated by the cost of
-                # file access for any real Ogg handling).
-                if page.size < 4096 and len(page.packets) < 255:
+                data, packet = packet[:chunk_size], packet[chunk_size:]
+                if page.size < default_size and len(page.packets) < 255:
                     page.packets[-1] += data
                 else:
-                    page.complete = False
+                    # If we've put any packet data into this page yet,
+                    # we need to mark it incomplete. However, we can
+                    # also have just started this packet on an already
+                    # full page, in which case, just start the new
+                    # page with this packet.
+                    if page.packets[-1]:
+                        page.complete = False
+                    else:
+                        page.packets.pop(-1)
                     pages.append(page)
                     page = OggPage()
-                    page.continued = True
+                    page.continued = not pages[-1].complete
                     page.sequence = pages[-1].sequence + 1
                     page.packets.append(data)
+
+                if len(packet) < wiggle_room:
+                    page.packets[-1] += packet
+                    packet = ""
 
         if page.packets:
             pages.append(page)

@@ -62,6 +62,25 @@ class TOggPage(TestCase):
             page = OggPage(self.fileobj)
         self.failUnless(page.last)
 
+    def test_crappy_fragmentation(self):
+        packets = ["1" * 511, "2" * 511, "3" * 511]
+        pages = OggPage.from_packets(packets, default_size=510, wiggle_room=0)
+        self.failUnless(len(pages) > 3)
+        self.failUnlessEqual(OggPage.to_packets(pages), packets)
+
+    def test_wiggle_room(self):
+        packets = ["1" * 511, "2" * 511, "3" * 511]
+        pages = OggPage.from_packets(packets, default_size=510, wiggle_room=100)
+        self.failUnlessEqual(len(pages), 3)
+        self.failUnlessEqual(OggPage.to_packets(pages), packets)
+
+    def test_one_packet_per_wiggle(self):
+        packets = ["1" * 511, "2" * 511, "3" * 511]
+        pages = OggPage.from_packets(
+            packets, default_size=1000, wiggle_room=1000000)
+        self.failUnlessEqual(len(pages), 2)
+        self.failUnlessEqual(OggPage.to_packets(pages), packets)
+
     def test_renumber(self):
         self.failUnlessEqual(
             [page.sequence for page in self.pages], [0, 1, 2])
