@@ -406,6 +406,8 @@ class OggFileType(FileType):
 
             except error, e:
                 raise self._Error, e, sys.exc_info()[2]
+            except EOFError:
+                raise self._Error, "no appropriate stream found"
         finally:
             fileobj.close()
 
@@ -423,6 +425,8 @@ class OggFileType(FileType):
             try: self.tags._inject(fileobj)
             except error, e:
                 raise self._Error, e, sys.exc_info()[2]
+            except EOFError:
+                raise self._Error, "no appropriate stream found"
         finally:
             fileobj.close()
 
@@ -438,5 +442,7 @@ class OggFileType(FileType):
             try: self.tags._inject(fileobj)
             except error, e:
                 raise self._Error, e, sys.exc_info()[2]
+            except EOFError:
+                raise self._Error, "no appropriate stream found"
         finally:
             fileobj.close()

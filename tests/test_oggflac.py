@@ -41,4 +41,10 @@ class TOggFLAC(TOggVorbis):
     def test_huge_tag(self):
         pass
 
+    def test_not_my_ogg(self):
+        fn = os.path.join('tests', 'data', 'empty.ogg')
+        self.failUnlessRaises(IOError, type(self.audio), fn)
+        self.failUnlessRaises(IOError, self.audio.save, fn)
+        self.failUnlessRaises(IOError, self.audio.delete, fn)
+
 add(TOggFLAC)

@@ -109,6 +109,12 @@ class TOggVorbis(TestCase):
         self.failUnlessEqual(vorbis.tags["big"], ["foobar" * 10000])
         self.failUnlessEqual(vorbis.tags["bigger"], ["quuxbaz" * 10000])
 
+    def test_not_my_ogg(self):
+        fn = os.path.join('tests', 'data', 'empty.oggflac')
+        self.failUnlessRaises(IOError, type(self.audio), fn)
+        self.failUnlessRaises(IOError, self.audio.save, fn)
+        self.failUnlessRaises(IOError, self.audio.delete, fn)
+
     def tearDown(self):
         os.unlink(self.filename)
 
