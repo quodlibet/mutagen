@@ -30,6 +30,7 @@ def main(argv):
     for filename in args:
         print "--", filename
         try: print "- " + File(filename).pprint().encode(enc, 'replace')
+        except AttributeError: print "- Unknown file type"
         except Exception, err: print str(err)
         print
 
