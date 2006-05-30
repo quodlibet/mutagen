@@ -64,7 +64,9 @@ class VComment(list):
         """Parse a Vorbis comment from a file-like object.
 
         Keyword arguments:
-        errors -- any valid error handler name for str.decode
+        errors:
+          'strict', 'replace', or 'ignore'. This affects Unicode decoding
+          and how other malformed content is interpreted.
         framing -- if true, fail if a framing bit is not present
 
         Framing bits are required by the Vorbis comment specification,
@@ -78,7 +80,13 @@ class VComment(list):
             for i in range(count):
                 length = cdata.uint_le(fileobj.read(4))
                 string = fileobj.read(length).decode('utf-8', errors)
-                tag, value = string.split('=', 1)
+                try: tag, value = string.split('=', 1)
+                except ValueError:
+                    if errors == "ignore":
+                        continue
+                    elif errors == "replace":
+                        tag, value = u"unknown%d" % i, string
+                    else: raise
                 try: tag = tag.encode('ascii')
                 except UnicodeEncodeError: pass
                 else:

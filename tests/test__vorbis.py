@@ -63,6 +63,20 @@ class TVComment(TestCase):
         self.failUnlessRaises(ValueError, self.c.validate)
         self.failUnlessRaises(ValueError, self.c.write)
 
+    def test_invalid_format_strict(self):
+        data = '\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x03\x00\x00\x00abc\x01'
+        self.failUnlessRaises(ValueError, VComment, data, errors='strict')
+
+    def test_invalid_format_replace(self):
+        data = '\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x03\x00\x00\x00abc\x01'
+        comment = VComment(data)
+        self.failUnlessEqual("abc", comment[0][1])
+
+    def test_invalid_format_ignore(self):
+        data = '\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x03\x00\x00\x00abc\x01'
+        comment = VComment(data, errors='ignore')
+        self.failIf(len(comment))
+
     def test_roundtrip(self):
         self.failUnlessEqual(self.c, VComment(self.c.write()))
 add(TVComment)
