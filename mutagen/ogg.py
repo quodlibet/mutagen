@@ -218,6 +218,7 @@ class OggPage(object):
                 fileobj.seek(-page.size, 1)
             page.sequence = number
             fileobj.write(page.write())
+            fileobj.flush()
             number += 1
     renumber = classmethod(renumber)
 
