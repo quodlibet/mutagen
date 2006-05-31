@@ -7,6 +7,7 @@ DIR = os.path.dirname(__file__)
 SAMPLE = os.path.join(DIR, "data", "click.mpc")
 OLD = os.path.join(DIR, "data", "oldtag.apev2")
 BROKEN = os.path.join(DIR, "data", "brokentag.apev2")
+LYRICS2 = os.path.join(DIR, "data", "apev2-lyricsv2.mp3")
 
 class APEWriter(TestCase):
     offset = 0
@@ -134,6 +135,17 @@ class APEv2ThenID3v1Writer(APEWriter):
         f.write("TAG" + "\x00" * 125)
         f.close()
 registerCase(APEv2ThenID3v1Writer)
+
+class APEv2WithLyrics2(TestCase):
+    def setUp(self):
+        self.tag = mutagen.apev2.APEv2(LYRICS2)
+		
+    def test_values(self):
+        self.failUnlessEqual(self.tag["MP3GAIN_MINMAX"], "000,179")
+        self.failUnlessEqual(self.tag["REPLAYGAIN_TRACK_GAIN"], "-4.080000 dB")
+        self.failUnlessEqual(self.tag["REPLAYGAIN_TRACK_PEAK"], "1.008101")
+
+registerCase(APEv2WithLyrics2)
 
 class APEKeyTest(TestCase):
     from mutagen.apev2 import APEKey

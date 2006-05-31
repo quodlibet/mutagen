@@ -1,3 +1,9 @@
+1.x -
+ * Bug Fixes:
+   * Handle malformed Vorbis comments when errors='ignore' or 
+     errors='replace' is passed to VComment#load. (Bastian Kleineidam)
+   * APEv2: Skip Lyrics3v2 tags. (Miguel Angel Alvarez)
+
 1.3 - 2006.05.29
  * New Features:
    * mutagen.File: Automatic file type detection.

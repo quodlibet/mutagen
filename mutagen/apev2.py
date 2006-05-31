@@ -106,6 +106,20 @@ class _APEv2Data(object):
                         fileobj.seek(-8, 1)
                         self.footer = fileobj.tell()
                         return
+                    else:
+                        # ID3v1 tag at the end, maybe preceded by Lyrics3v2.
+                        # (http://www.id3.org/lyrics3200.html)
+                        # (header length - "APETAGEX") - "LYRICS200"
+                        fileobj.seek(15, 1)
+                        if fileobj.read(9) == 'LYRICS200':
+                            fileobj.seek(-15, 1) # "LYRICS200" + size tag
+                            try: fileobj.seek(-32 - int(fileobj.read(6)) - 6, 1)
+                            except IOError, ValueError: pass
+                            else:
+                                if fileobj.read(8) == "APETAGEX":
+                                    fileobj.seek(-8, 1)
+                                    self.footer = fileobj.tell()
+                                    return
 
         # Check for a tag at the start.
         fileobj.seek(0, 0)
@@ -244,7 +258,7 @@ class APEv2(DictMixin, Metadata):
         super(APEv2, self).__setitem__(APEKey(k), v)
 
     def save(self, filename=None):
-        """Save changes to a file.
+        """Save changes to a file.Miguel Angel Alvarez
 
         If no filename is given, the one most recently loaded is used.
 
