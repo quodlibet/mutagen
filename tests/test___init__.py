@@ -24,6 +24,7 @@ class TMetadata(TestCase):
         self.failUnlessRaises(NotImplementedError, self.FakeMeta().delete)
         self.failUnlessRaises(
             NotImplementedError, self.FakeMeta().delete, "filename")
+add(TMetadata)
 
 class TFileType(TestCase):
     def setUp(self):
