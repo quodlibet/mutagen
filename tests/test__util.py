@@ -1,4 +1,4 @@
-from mutagen._util import DictMixin, cdata
+from mutagen._util import DictMixin, cdata, utf8
 from tests import TestCase, add
 
 class FDict(DictMixin):
@@ -9,6 +9,33 @@ class FDict(DictMixin):
     def __getitem__(self, *args): return self.__d.__getitem__(*args)
     def __setitem__(self, *args): return self.__d.__setitem__(*args)
     def __delitem__(self, *args): return self.__d.__delitem__(*args)
+
+class Tutf8(TestCase):
+    def test_str(self):
+        value = utf8("1234")
+        self.failUnlessEqual(value, "1234")
+        self.failUnless(isinstance(value, str))
+
+    def test_bad_str(self):
+        value = utf8("\xab\xde")
+        # Two '?' symbols.
+        self.failUnlessEqual(value, "\xef\xbf\xbd\xef\xbf\xbd")
+        self.failUnless(isinstance(value, str))
+
+    def test_low_unicode(self):
+        value = utf8(u"1234")
+        self.failUnlessEqual(value, "1234")
+        self.failUnless(isinstance(value, str))
+
+    def test_high_unicode(self):
+        value = utf8(u"\u1234")
+        self.failUnlessEqual(value, '\xe1\x88\xb4')
+        self.failUnless(isinstance(value, str))
+
+    def test_invalid(self):
+        self.failUnlessRaises(TypeError, utf8, 1234)
+
+add(Tutf8)
 
 class TDictMixin(TestCase):
     def setUp(self):
@@ -26,6 +53,14 @@ class TDictMixin(TestCase):
         self.failUnless(self.fdict.has_key("foo"))
         self.failIf(self.fdict.has_key("bar"))
 
+    def test_iter(self):
+        self.failUnlessEqual(list(iter(self.fdict)), ["foo"])
+
+    def test_clear(self):
+        self.fdict.clear()
+        self.rdict.clear()
+        self.failIf(self.fdict)
+
     def test_keys(self):
         self.failUnlessEqual(list(self.fdict.keys()), list(self.rdict.keys()))
         self.failUnlessEqual(
@@ -38,7 +73,8 @@ class TDictMixin(TestCase):
             list(self.fdict.itervalues()), list(self.rdict.itervalues()))
 
     def test_items(self):
-        self.failUnlessEqual(list(self.fdict.items()), list(self.rdict.items()))
+        self.failUnlessEqual(
+            list(self.fdict.items()), list(self.rdict.items()))
         self.failUnlessEqual(
             list(self.fdict.iteritems()), list(self.rdict.iteritems()))
 
@@ -46,14 +82,28 @@ class TDictMixin(TestCase):
         self.failUnlessEqual(self.fdict.pop("foo"), self.rdict.pop("foo"))
         self.failUnlessRaises(KeyError, self.fdict.pop, "woo")
 
+    def test_pop_bad(self):
+        self.failUnlessRaises(TypeError, self.fdict.pop, "foo", 1, 2)
+
     def test_popitem(self):
         self.failUnlessEqual(self.fdict.popitem(), self.rdict.popitem())
         self.failUnlessRaises(KeyError, self.fdict.popitem)
 
     def test_update_other(self):
         other = {"a": 1, "b": 2}
-        self.rdict.update(other)
         self.fdict.update(other)
+        self.rdict.update(other)
+
+    def test_update_other_is_list(self):
+        other = [("a", 1), ("b", 2)]
+        self.fdict.update(other)
+        self.rdict.update(dict(other))
+
+    def test_update_kwargs(self):
+        self.fdict.update(a=1, b=2)
+        # Ironically, the *real* dict doesn't support this on Python 2.3
+        other = {"a": 1, "b": 2}
+        self.rdict.update(other)
 
     def test_setdefault(self):
         self.fdict.setdefault("foo", "baz")
@@ -63,7 +113,8 @@ class TDictMixin(TestCase):
 
     def test_get(self):
         self.failUnlessEqual(self.rdict.get("a"), self.fdict.get("a"))
-        self.failUnlessEqual(self.rdict.get("a", "b"), self.fdict.get("a", "b"))
+        self.failUnlessEqual(
+            self.rdict.get("a", "b"), self.fdict.get("a", "b"))
         self.failUnlessEqual(self.rdict.get("foo"), self.fdict.get("foo"))
 
     def test_repr(self):
