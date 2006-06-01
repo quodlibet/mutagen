@@ -1,15 +1,22 @@
 import os
+import shutil
+
 from unittest import TestCase
 from tests import registerCase
-from mutagen.mp3 import MP3, error as MP3Error
+from mutagen.mp3 import MP3, error as MP3Error, delete
 from mutagen.id3 import ID3
+from tempfile import mkstemp
 
 class TMP3(TestCase):
     silence = os.path.join('tests', 'data', 'silence-44-s.mp3')
     silence_nov2 = os.path.join('tests', 'data', 'silence-44-s-v1.mp3')
 
     def setUp(self):
-        self.mp3 = MP3(self.silence)
+        original = os.path.join("tests", "data", "silence-44-s.mp3")
+        fd, self.filename = mkstemp(suffix='mp3')
+        os.close(fd)
+        shutil.copy(original, self.filename)
+        self.mp3 = MP3(self.filename)
         self.mp3_2 = MP3(self.silence_nov2)
 
     def test_id3(self):
@@ -43,6 +50,10 @@ class TMP3(TestCase):
     def test_pprint(self):
         self.failUnless(self.mp3.pprint())
 
+    def test_pprint_no_tags(self):
+        self.mp3.tags = None
+        self.failUnless(self.mp3.pprint())
+
     def test_xing(self):
         mp3 = MP3(os.path.join("tests", "data", "xing.mp3"))
         self.failUnlessEqual(mp3.info.length, 26122)
@@ -50,5 +61,25 @@ class TMP3(TestCase):
 
     def test_empty_xing(self):
         mp3 = MP3(os.path.join("tests", "data", "bad-xing.mp3"))
+
+    def test_delete(self):
+        self.mp3.delete()
+        self.failUnless(MP3(self.filename).tags is None)
+
+    def test_module_delete(self):
+        delete(self.filename)
+        self.failUnless(MP3(self.filename).tags is None)
+
+    def test_save(self):
+        self.mp3["TIT1"].text = ["foobar"]
+        self.mp3.save()
+        self.failUnless(MP3(self.filename)["TIT1"] == "foobar")
+
+    def test_save_no_tags(self):
+        self.mp3.tags = None
+        self.failUnlessRaises(ValueError, self.mp3.save)
+
+    def tearDown(self):
+        os.unlink(self.filename)
 
 registerCase(TMP3)
