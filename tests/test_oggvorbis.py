@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 from mutagen.oggvorbis import OggVorbis
 from tests import TestCase, registerCase
 from tempfile import mkstemp
@@ -120,7 +121,6 @@ class TOggVorbis(TestCase):
 
 try: import ogg.vorbis
 except ImportError:
-    print "WARNING: Disabling pyvorbis crosscheck."
-    del(TOggVorbis.test_vorbiscomment)
+    TOggVorbis.test_vorbiscomment = lambda self: sys.stdout.write("\bS")
 
 registerCase(TOggVorbis)

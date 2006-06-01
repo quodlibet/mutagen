@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 
 from tempfile import mkstemp
 
@@ -27,16 +28,23 @@ class TOggFLAC(TOggVorbis):
 
     def test_vorbiscomment(self):
         self.audio.save()
-        self.failIf(os.system("flac --ogg -t %s 2> /dev/null" % self.filename))
+        badval = os.system("tools/notarealprogram 2> /dev/null")
+        value = os.system("flac --ogg -t %s 2> /dev/null" % self.filename)
+        self.failIf(value and value != badval)
+        if value == badval:
+            sys.stdout.write("\bS")
+            return
 
         self.test_really_big()
         self.audio.save()
-        self.failIf(os.system("flac --ogg -t %s 2> /dev/null" % self.filename))
+        value = os.system("flac --ogg -t %s 2> /dev/null" % self.filename)
+        self.failIf(value and value != badval)
 
         self.audio.delete()
         self.audio["foobar"] = "foobar" * 1000
         self.audio.save()
-        self.failIf(os.system("flac --ogg -t %s 2> /dev/null" % self.filename))
+        value = os.system("flac --ogg -t %s 2> /dev/null" % self.filename)
+        self.failIf(value and value != badval)
 
     def test_huge_tag(self):
         pass
