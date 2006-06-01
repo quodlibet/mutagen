@@ -70,11 +70,26 @@ class TOggVorbis(TestCase):
         vorbis = self.Kind(self.filename)
         self.failIf(vorbis.tags)
 
+        self.audio["foobar"] = "foobar" * 1000
+        self.audio.save()
+        audio = self.Kind(self.filename)
+        self.failUnlessEqual(self.audio["foobar"], audio["foobar"])
+
     def test_really_big(self):
         self.audio["foo"] = "foo" * (2**16)
         self.audio["bar"] = "bar" * (2**16)
-        self.audio["bar"] = "quux" * (2**16)
+        self.audio["baz"] = "quux" * (2**16)
         self.audio.save()
+
+    def test_delete_really_big(self):
+        self.audio["foo"] = "foo" * (2**16)
+        self.audio["bar"] = "bar" * (2**16)
+        self.audio["baz"] = "quux" * (2**16)
+        self.audio.save()
+
+        self.audio.delete()
+        audio = self.Kind(self.filename)
+        self.failIf(audio.tags)
 
     def test_invalid_open(self):
         self.failUnlessRaises(IOError, self.Kind,
