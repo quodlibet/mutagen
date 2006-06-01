@@ -13,8 +13,7 @@ intended for internal use in Mutagen only.
 """
 
 import struct
-
-from mmap import mmap
+import mmap
 
 class DictMixin(object):
     """Implement the dict API using keys() and __*item__ methods.
@@ -139,7 +138,7 @@ def insert_bytes(fobj, size, offset):
     movesize = filesize - offset
     fobj.write('\x00' * size)
     fobj.flush()
-    map = mmap(fobj.fileno(), filesize + size)
+    map = mmap.mmap(fobj.fileno(), filesize + size)
     try:
         map.move(offset + size, offset, movesize)
         map.close()
@@ -173,7 +172,7 @@ def delete_bytes(fobj, size, offset):
     assert 0 <= movesize
     if movesize > 0:
         fobj.flush()
-        map = mmap(fobj.fileno(), filesize)
+        map = mmap.mmap(fobj.fileno(), filesize)
         try:
             map.move(offset, offset + size, movesize)
             map.close()
