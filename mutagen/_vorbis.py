@@ -14,6 +14,8 @@ multiple values.
 The specification is at http://www.xiph.org/vorbis/doc/v-comment.html.
 """
 
+import sys
+
 from cStringIO import StringIO
 
 from mutagen._util import DictMixin, cdata
@@ -35,6 +37,7 @@ istag = is_valid_key
 
 class error(IOError): pass
 class VorbisUnsetFrameError(error): pass
+class VorbisEncodingError(error): pass
 
 class VComment(list):
     """A Vorbis comment parser, accessor, and renderer.
@@ -81,14 +84,16 @@ class VComment(list):
                 length = cdata.uint_le(fileobj.read(4))
                 string = fileobj.read(length).decode('utf-8', errors)
                 try: tag, value = string.split('=', 1)
-                except ValueError:
+                except ValueError, err:
                     if errors == "ignore":
                         continue
                     elif errors == "replace":
                         tag, value = u"unknown%d" % i, string
-                    else: raise
-                try: tag = tag.encode('ascii')
-                except UnicodeEncodeError: pass
+                    else:
+                        raise VorbisEncodingError, str(err), sys.exc_info()[2]
+                try: tag = tag.encode('ascii', errors)
+                except UnicodeEncodeError:
+                    raise VorbisEncodingError, "invalid tag name %r" % tag
                 else:
                     if is_valid_key(tag): self.append((tag, value))
             if framing and not ord(fileobj.read(1)) & 0x01:
