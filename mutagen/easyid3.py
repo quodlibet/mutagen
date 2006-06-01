@@ -66,20 +66,23 @@ class EasyID3(DictMixin, Metadata):
 
     def __TCON_set(self, frame, value):
         frame.encoding = 3
+        if not isinstance(value, list):
+            value = [value]
         frame.genres = value
 
     def __TDRC_get(self, frame):
         return [stamp.text for stamp in frame.text]
 
     def __TDRC_set(self, frame, value):
-        frame.encoding = 3
-        frame.text = value
+        self.__id3.add(mutagen.id3.TDRC(encoding=3, text=value))
 
     def __text_get(self, frame):
         return list(frame)
 
     def __text_set(self, frame, value):
         frame.encoding = 3
+        if not isinstance(value, list):
+            value = [value]
         frame.text = value
 
     def __getitem__(self, key):
@@ -118,7 +121,7 @@ class EasyID3(DictMixin, Metadata):
             values = self[key]
             for value in values:
                 strings.append("%s=%s" % (key, value))
-        print "\n".join(strings)
+        return "\n".join(strings)
 
     __mungers = {
         "TCON": (__TCON_get, __TCON_set),
