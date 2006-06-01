@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
-import os
-import sys
 import glob
+import os
+import shutil
+import sys
 
-from distutils.core import setup, Extension, Command
+from distutils.core import setup, Command
 
 from distutils.command.clean import clean as distutils_clean
 
@@ -24,6 +25,9 @@ class clean(distutils_clean):
                 except EnvironmentError, err:
                     print str(err)
 
+        coverage = os.path.join(os.path.dirname(__file__), "coverage")
+        shutil.rmtree(coverage)
+
 class test_cmd(Command):
     description = "run automated tests"
     user_options = [
@@ -42,12 +46,37 @@ class test_cmd(Command):
         if tests.unit(self.to_run):
             raise SystemExit("Test failures are listed above.")
 
+class coverage_cmd(Command):
+    description = "generate test coverage data"
+    user_options = []
+
+    def initialize_options(self):
+        pass
+    
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        import trace
+        tracer = trace.Trace(
+            count=True, trace=False, ignoremods=["tests"],
+            ignoredirs=[sys.prefix, sys.exec_prefix, "tests"])
+        def run_tests():
+            import tests
+            tests.unit()
+        tracer.runfunc(run_tests)
+        results = tracer.results()
+        coverage = os.path.join(os.path.dirname(__file__), "coverage")
+        results.write_results(show_missing=True, coverdir=coverage)
+        map(os.unlink, glob.glob(os.path.join(coverage, "[!m]*.cover")))
+        print "Coverage data written to", coverage
+
 if os.name == "posix":
     data_files = [('share/man/man1', glob.glob("man/*.1"))]
 else:
     data_files = []
 
-setup(cmdclass={'clean': clean, 'test': test_cmd},
+setup(cmdclass={'clean': clean, 'test': test_cmd, 'coverage': coverage_cmd},
       name="mutagen", version="1.3",
       url="http://www.sacredchao.net/quodlibet/wiki/Development/Mutagen",
       description="read and write ID3v1/ID3v2/APEv2/FLAC/Ogg audio tags",
