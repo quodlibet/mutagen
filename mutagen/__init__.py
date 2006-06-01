@@ -37,7 +37,7 @@ class Metadata(dict):
     def save(self, filename=None):
         raise NotImplementedError
 
-    def delete(self):
+    def delete(self, filename=None):
         raise NotImplementedError
 
     _insert_space = staticmethod(mutagen._util.insert_bytes)
