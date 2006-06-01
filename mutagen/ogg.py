@@ -74,9 +74,13 @@ class OggPage(object):
         header = fileobj.read(27)
         if len(header) == 0:
             raise EOFError
-        (oggs, self.version, self.__type_flags, self.position,
-         self.serial, self.sequence, crc, segments) = struct.unpack(
-            "<4sBBqIIiB", header)
+
+        try:
+            (oggs, self.version, self.__type_flags, self.position,
+             self.serial, self.sequence, crc, segments) = struct.unpack(
+                "<4sBBqIIiB", header)
+        except struct.error:
+            raise error("unable to read full header; got %r" % header)
 
         if oggs != "OggS":
             raise error("read %r, expected %r, at 0x%x" % (
@@ -231,14 +235,16 @@ class OggPage(object):
 
         serial = pages[0].serial
         sequence = pages[0].sequence
+        packets = []
 
         if strict:
             if pages[0].continued:
                 raise ValueError("first packet is continued")
             if not pages[-1].complete:
                 raise ValueError("last packet does not complete")
+        elif pages and pages[0].continued:
+            packets.append("")
 
-        packets = []
         for page in pages:
             if serial != page.serial:
                 raise ValueError("invalid serial number in %r" % page)
@@ -387,16 +393,20 @@ class OggPage(object):
             raise error("unable to find final Ogg header")
         stringobj = StringIO(data[index:])
         page = OggPage(stringobj)
-        if page.serial == serial:
+        if page.serial == serial and page.last:
             return page
         else:
             # The stream is muxed, so use the slow way.
             fileobj.seek(0)
-            page = OggPage(fileobj)
-            while not page.last:
-                while page.serial != serial:
+            try:
+                page = OggPage(fileobj)
+                while not page.last:
                     page = OggPage(fileobj)
-            return page
+                    while page.serial != serial:
+                        page = OggPage(fileobj)
+                return page
+            except EOFError:
+                return None
     find_last = classmethod(find_last)
 
 class OggFileType(FileType):

@@ -4,7 +4,7 @@ import shutil
 
 from StringIO import StringIO
 from tests import TestCase, add
-from mutagen.ogg import OggPage
+from mutagen.ogg import OggPage, error as OggError
 from tempfile import mkstemp
 
 class TOggPage(TestCase):
@@ -132,6 +132,22 @@ class TOggPage(TestCase):
             try: os.unlink(filename)
             except OSError: pass
 
+    def test_renumber_muxed(self):
+        pages = [OggPage() for i in range(10)]
+        for seq, page in enumerate(pages[0:1] + pages[2:]):
+            page.serial = 0
+            page.sequence = seq
+        pages[1].serial = 2
+        pages[1].sequence = 100
+        data = StringIO("".join([page.write() for page in pages]))
+        OggPage.renumber(data, 0, 20)
+        data.seek(0)
+        pages = [OggPage(data) for i in range(10)]
+        self.failUnlessEqual(pages[1].serial, 2)
+        self.failUnlessEqual(pages[1].sequence, 100)
+        pages.pop(1)
+        self.failUnlessEqual([page.sequence for page in pages], range(20, 29))
+
     def test_to_packets(self):
         self.failUnlessEqual(
             ["foo", "bar", "baz"], OggPage.to_packets(self.pages))
@@ -147,6 +163,16 @@ class TOggPage(TestCase):
     def test_to_packets_missing_sequence(self):
         self.pages[0].sequence = 3
         self.failUnlessRaises(ValueError, OggPage.to_packets, self.pages)
+
+    def test_to_packets_continued(self):
+        self.pages[0].continued = True
+        self.failUnlessEqual(
+            OggPage.to_packets(self.pages), ["foo", "bar", "baz"])
+
+    def test_to_packets_continued_strict(self):
+        self.pages[0].continued = True
+        self.failUnlessRaises(
+            ValueError, OggPage.to_packets, self.pages, strict=True)
 
     def test_to_packets_strict(self):
         for page in self.pages:
@@ -232,6 +258,61 @@ class TOggPage(TestCase):
         self.failUnlessEqual(OggPage(fileobj), page)
         self.failUnlessEqual(OggPage(fileobj), page2)
         self.failUnlessRaises(EOFError, OggPage, fileobj)
+
+    def test_invalid_version(self):
+        page = OggPage()
+        OggPage(StringIO(page.write()))
+        page.version = 1
+        self.failUnlessRaises(OggError, OggPage, StringIO(page.write()))
+
+    def test_not_enough_lacing(self):
+        data = OggPage().write()[:-1] + "\x10"
+        self.failUnlessRaises(OggError, OggPage, StringIO(data))
+
+    def test_not_enough_data(self):
+        data = OggPage().write()[:-1] + "\x01\x10"
+        self.failUnlessRaises(OggError, OggPage, StringIO(data))
+
+    def test_not_equal(self):
+        self.failIfEqual(OggPage(), 12)
+
+    def test_find_last(self):
+        pages = [OggPage() for i in range(10)]
+        for i, page in enumerate(pages): page.sequence = i
+        data = StringIO("".join([page.write() for page in pages]))
+        self.failUnlessEqual(
+            OggPage.find_last(data, pages[0].serial), pages[-1])
+
+    def test_find_last(self):
+        pages = [OggPage() for i in range(10)]
+        pages[-1].last = True
+        for i, page in enumerate(pages): page.sequence = i
+        data = StringIO("".join([page.write() for page in pages]))
+        self.failUnlessEqual(
+            OggPage.find_last(data, pages[0].serial), pages[-1])
+
+    def test_find_last_muxed(self):
+        pages = [OggPage() for i in range(10)]
+        for i, page in enumerate(pages): page.sequence = i
+        pages[-2].last = True
+        pages[-1].serial = pages[0].serial + 1
+        data = StringIO("".join([page.write() for page in pages]))
+        self.failUnlessEqual(
+            OggPage.find_last(data, pages[0].serial), pages[-2])
+
+    def test_find_last_no_serial(self):
+        pages = [OggPage() for i in range(10)]
+        for i, page in enumerate(pages): page.sequence = i
+        data = StringIO("".join([page.write() for page in pages]))
+        self.failUnless(OggPage.find_last(data, pages[0].serial + 1) is None)
+
+    def test_find_last_invalid(self):
+        data = StringIO("if you think this is an Ogg, you're crazy")
+        self.failUnlessRaises(OggError, OggPage.find_last, data, 0)
+
+    def test_find_last_invalid_sync(self):
+        data = StringIO("if you think this is an OggS, you're crazy")
+        self.failUnlessRaises(OggError, OggPage.find_last, data, 0)
 
     def tearDown(self):
         self.fileobj.close()
