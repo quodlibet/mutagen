@@ -88,16 +88,12 @@ class OggVCommentDict(VCommentDict):
             page = OggPage(fileobj)
 
         old_pages = [page]
-        while not page.packets[-1].startswith("\x05vorbis"):
+        while not (old_pages[-1].complete or len(old_pages[-1].packets) > 1):
             page = OggPage(fileobj)
             if page.serial == old_pages[0].serial:
                 old_pages.append(page)
 
-        # We will have the comment data, and the setup packet for sure.
-        # Ogg Vorbis I says there won't be another one until at least
-        # one more page.
-        packets = OggPage.to_packets(old_pages)
-        assert(len(packets) == 2)
+        packets = OggPage.to_packets(old_pages, strict=True)
 
         # Set the new comment packet.
         packets[0] = "\x03vorbis" + self.write()
