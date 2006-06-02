@@ -1,6 +1,7 @@
 import os
 import shutil
 import sys
+from mutagen.ogg import OggPage
 from mutagen.oggvorbis import OggVorbis
 from tests import TestCase, registerCase
 from tempfile import mkstemp
@@ -14,6 +15,17 @@ class TOggVorbis(TestCase):
         os.close(fd)
         shutil.copy(original, self.filename)
         self.audio = self.Kind(self.filename)
+
+    def scan_file(self):
+        fileobj = file(self.filename, "rb")
+        try:
+            try:
+                while True:
+                    page = OggPage(fileobj)
+            except EOFError:
+                pass
+        finally:
+            fileobj.close()
 
     def test_pprint_empty(self):
         self.audio.pprint()
@@ -51,11 +63,13 @@ class TOggVorbis(TestCase):
         self.failUnlessEqual(len(vorbis.tags.keys()), 2)
         self.failUnlessEqual(vorbis["foo"], ["a"])
         self.failUnlessEqual(vorbis["bar"], ["b"])
+        self.scan_file()
 
     def test_save_twice(self):
         self.audio.save()
         self.audio.save()
         self.failUnlessEqual(self.Kind(self.filename).tags, self.audio.tags)
+        self.scan_file()
 
     def test_set_delete(self):
         self.test_set_two_tags()
@@ -63,6 +77,7 @@ class TOggVorbis(TestCase):
         self.audio.save()
         vorbis = self.Kind(self.filename)
         self.failIf(vorbis.tags)
+        self.scan_file()
 
     def test_delete(self):
         self.test_set_two_tags()
@@ -75,11 +90,18 @@ class TOggVorbis(TestCase):
         audio = self.Kind(self.filename)
         self.failUnlessEqual(self.audio["foobar"], audio["foobar"])
 
+        self.scan_file()
+
     def test_really_big(self):
         self.audio["foo"] = "foo" * (2**16)
         self.audio["bar"] = "bar" * (2**16)
         self.audio["baz"] = "quux" * (2**16)
         self.audio.save()
+        audio = self.Kind(self.filename)
+        self.failUnlessEqual(audio["foo"], ["foo" * 2**16])
+        self.failUnlessEqual(audio["bar"], ["bar" * 2**16])
+        self.failUnlessEqual(audio["baz"], ["quux" * 2**16])
+        self.scan_file()
 
     def test_delete_really_big(self):
         self.audio["foo"] = "foo" * (2**16)
@@ -90,6 +112,7 @@ class TOggVorbis(TestCase):
         self.audio.delete()
         audio = self.Kind(self.filename)
         self.failIf(audio.tags)
+        self.scan_file()
 
     def test_invalid_open(self):
         self.failUnlessRaises(IOError, self.Kind,
@@ -108,6 +131,7 @@ class TOggVorbis(TestCase):
         self.audio.save()
         vfc = ogg.vorbis.VorbisFile(self.filename).comment()
         self.failUnlessEqual(self.audio["foobar"], vfc["foobar"])
+        self.scan_file()
 
     def test_invalid_delete(self):
         self.failUnlessRaises(IOError, self.audio.delete,
@@ -124,6 +148,7 @@ class TOggVorbis(TestCase):
         self.failUnless("bigger" in vorbis.tags)
         self.failUnlessEqual(vorbis.tags["big"], ["foobar" * 10000])
         self.failUnlessEqual(vorbis.tags["bigger"], ["quuxbaz" * 10000])
+        self.scan_file()
 
     def test_not_my_ogg(self):
         fn = os.path.join('tests', 'data', 'empty.oggflac')
