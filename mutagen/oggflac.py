@@ -85,7 +85,8 @@ class OggFLACVComment(VCFLACDict):
         fileobj.seek(0)
         page = OggPage(fileobj)
         while not page.packets[0].startswith("\x7FFLAC"):
-            OggPage(fileobj)
+            page = OggPage(fileobj)
+
         first_page = page
         while not (page.sequence == 1 and page.serial == first_page.serial):
             page = OggPage(fileobj)
