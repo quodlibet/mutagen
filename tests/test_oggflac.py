@@ -37,12 +37,18 @@ class TOggFLAC(TOggVorbis):
 
         self.test_really_big()
         self.audio.save()
+        self.scan_file()
         value = os.system("flac --ogg -t %s 2> /dev/null" % self.filename)
         self.failIf(value and value != badval)
 
         self.audio.delete()
+        self.scan_file()
+        value = os.system("flac --ogg -t %s 2> /dev/null" % self.filename)
+        self.failIf(value and value != badval)
+
         self.audio["foobar"] = "foobar" * 1000
         self.audio.save()
+        self.scan_file()
         value = os.system("flac --ogg -t %s 2> /dev/null" % self.filename)
         self.failIf(value and value != badval)
 

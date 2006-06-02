@@ -148,6 +148,16 @@ class TFLAC(TestCase):
         self.failUnless(f.tags == [("foo", "bar")])
         self.failUnlessRaises(ValueError, f.add_tags)
 
+    def test_with_real_flac(self):
+        self.flac["faketag"] = "foobar" * 1000
+        self.flac.save()
+        badval = os.system("tools/notarealprogram 2> /dev/null")
+        value = os.system("flac -t %s 2> /dev/null" % self.flac.filename)
+        self.failIf(value and value != badval)
+        if value == badval:
+            sys.stdout.write("\bS")
+            return
+
     def test_pprint(self):
         self.failUnless(self.flac.pprint())
 
