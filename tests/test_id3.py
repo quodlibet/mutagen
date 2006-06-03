@@ -3,6 +3,7 @@ import shutil
 from unittest import TestCase
 from tests import registerCase
 from mutagen.id3 import ID3, BitPaddedInt, COMR, Frames, Frames_2_2
+from StringIO import StringIO
 
 try: from sets import Set as set
 except ImportError: pass
@@ -89,6 +90,50 @@ class ID3Loading(TestCase):
         self.assertEquals(id3.version, (2,3,0))
         self.assertEquals(id3._size, 1304)
 
+    def test_header_2_4_invalid_flags(self):
+        id3 = ID3()
+        id3._ID3__fileobj = StringIO('ID3\x04\x00\x1f\x00\x00\x00\x00')
+        self.assertRaises(ValueError, id3.load_header)
+
+    def test_header_2_3_invalid_flags(self):
+        id3 = ID3()
+        id3._ID3__fileobj = StringIO('ID3\x03\x00\x1f\x00\x00\x00\x00')
+        self.assertRaises(ValueError, id3.load_header)
+
+    def test_header_2_2(self):
+        id3 = ID3()
+        id3._ID3__fileobj = StringIO('ID3\x02\x00\x00\x00\x00\x00\x00')
+        id3.load_header()
+        self.assertEquals(id3.version, (2,2,0))
+
+    def test_header_2_1(self):
+        id3 = ID3()
+        id3._ID3__fileobj = StringIO('ID3\x01\x00\x00\x00\x00\x00\x00')
+        self.assertRaises(NotImplementedError, id3.load_header)
+
+    def test_header_too_small(self):
+        id3 = ID3()
+        id3._ID3__fileobj = StringIO('ID3\x01\x00\x00\x00\x00\x00')
+        self.assertRaises(EOFError, id3.load_header)
+
+    def test_header_2_4_extended(self):
+        id3 = ID3()
+        id3._ID3__fileobj = StringIO('ID3\x04\x00\x40\x00\x00\x00\x00\x00\x00\x00\x05\x5a')
+        id3.load_header()
+        self.assertEquals(id3._ID3__extsize, 5)
+        self.assertEquals(id3._ID3__extdata, '\x5a')
+
+    def test_unsynch(self):
+        id3 = ID3()
+        id3.version = (2,4,0)
+        id3._ID3__flags = 0x80
+        badsync = '\x00\xff\x00ab\x00'
+        self.assertEquals(id3.load_framedata(Frames["TPE2"], 0, badsync), [u"\xffab"])
+        id3._ID3__flags = 0x00
+        self.assertEquals(id3.load_framedata(Frames["TPE2"], 0x40, badsync), [u"\xffab"])
+        tag = id3.load_framedata(Frames["TPE2"], 0, badsync)
+        self.assertEquals(tag, [u"\xff", u"ab"])
+
 class ID3Tags(TestCase):
     def setUp(self):
         self.silence = join('tests', 'data', 'silence-44-s.mp3')
@@ -135,6 +180,24 @@ class ID3Tags(TestCase):
         self.assertEquals('02/10', id3['TRCK'])
         self.assertEquals(2, +id3['TRCK'])
         self.assertEquals('2004', id3['TDRC'])
+
+    def test_badencoding(self):
+        self.assertRaises(IndexError, Frames["TPE1"].fromData, _24, 0, "\x09ab")
+        self.assertRaises(ValueError, Frames["TPE1"], encoding=9, text="ab")
+
+    def test_badsync(self):
+        self.assertRaises(ValueError, Frames["TPE1"].fromData, _24, 0x02, "\x00\xff\xfe")
+
+    def test_noencrypt(self):
+        self.assertRaises(NotImplementedError, Frames["TPE1"].fromData, _24, 0x04, "\x00")
+        self.assertRaises(NotImplementedError, Frames["TPE1"].fromData, _23, 0x40, "\x00")
+
+    def test_badcompress(self):
+        self.assertRaises(ValueError, Frames["TPE1"].fromData, _24, 0x08, "\x00\x00\x00\x00#")
+        self.assertRaises(ValueError, Frames["TPE1"].fromData, _23, 0x80, "\x00\x00\x00\x00#")
+
+    def test_junkframe(self):
+        self.assertRaises(ValueError, Frames["TPE1"].fromData, _24, 0, "")
 
 class ID3v1Tags(TestCase):
     silence = join('tests', 'data', 'silence-44-s-v1.mp3')
@@ -183,6 +246,13 @@ class ID3v1Tags(TestCase):
         for key in ["TIT2", "TALB", "TPE1", "TDRC"]:
             frames[key] = self.id3[key]
         self.assertEquals(ParseID3v1(MakeID3v1(frames)), frames)
+
+    def test_make_from_empty(self):
+        from mutagen.id3 import MakeID3v1, TCON, COMM
+        empty = 'TAG' + '\x00' * 124 + '\xff'
+        self.assertEquals(MakeID3v1({}), empty)
+        self.assertEquals(MakeID3v1({'TCON': TCON()}), empty)
+        self.assertEquals(MakeID3v1({'COMM': COMM(encoding=0, text="")}), empty)
 
 def TestReadTags():
     tests = [
@@ -783,6 +853,50 @@ class UpdateTo24(TestCase):
         id3.update_to_v24()
         self.failUnlessEqual(id3["APIC:cover"].mime, "image/png")
 
+    def test_tyer(self):
+        from mutagen.id3 import TYER
+        id3 = ID3()
+        id3.version = (2, 3)
+        id3.add(TYER(encoding=0, text="2006"))
+        id3.update_to_v24()
+        self.failUnlessEqual(id3["TDRC"], "2006")
+
+    def test_tyer_tdat(self):
+        from mutagen.id3 import TYER, TDAT
+        id3 = ID3()
+        id3.version = (2, 3)
+        id3.add(TYER(encoding=0, text="2006"))
+        id3.add(TDAT(encoding=0, text="0603"))
+        id3.update_to_v24()
+        self.failUnlessEqual(id3["TDRC"], "2006-06-03")
+
+    def test_tyer_tdat_time(self):
+        from mutagen.id3 import TYER, TDAT, TIME
+        id3 = ID3()
+        id3.version = (2, 3)
+        id3.add(TYER(encoding=0, text="2006"))
+        id3.add(TDAT(encoding=0, text="0603"))
+        id3.add(TIME(encoding=0, text="1127"))
+        id3.update_to_v24()
+        self.failUnlessEqual(id3["TDRC"], "2006-06-03 11:27:00")
+
+    def test_tory(self):
+        from mutagen.id3 import TORY
+        id3 = ID3()
+        id3.version = (2, 3)
+        id3.add(TORY(encoding=0, text="2006"))
+        id3.update_to_v24()
+        self.failUnlessEqual(id3["TDOR"], "2006")
+
+    def test_ipls(self):
+        from mutagen.id3 import IPLS
+        id3 = ID3()
+        id3.version = (2, 3)
+        id3.add(IPLS(encoding=0, people=[["a", "b"], ["c", "d"]]))
+        id3.update_to_v24()
+        self.failUnlessEqual(id3["TIPL"], [["a", "b"], ["c", "d"]])
+
+
 registerCase(UpdateTo24)
 
 class Genres(TestCase):
@@ -1089,6 +1203,15 @@ class WriteRoundtrip(TestCase):
         f.save()
         id3 = ID3(self.newsilence)
         self.assertEquals(id3["TPE1"], ["jzig", "piman"])
+
+    def test_compressibly_large(self):
+        from mutagen.id3 import TPE2
+        f = ID3(self.newsilence)
+        self.assert_("TPE2" not in f)
+        f["TPE2"] = TPE2(encoding=0, text="Ab" * 1025)
+        f.save()
+        id3 = ID3(self.newsilence)
+        self.assertEquals(id3["TPE2"], "Ab" * 1025)
 
     def test_nofile_emptytag(self):
         os.unlink(self.newsilence)
