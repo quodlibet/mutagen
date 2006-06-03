@@ -43,8 +43,20 @@ class test_cmd(Command):
 
     def run(self):
         import tests
+        import mmap
+        from mmap import mmap as real_mmap
+        class MockMMap(object):
+            def __init__(self, *args, **kwargs): pass
+            def move(self, dest, src, count): raise ValueError
+            def close(self): pass
+        print "Running tests with real mmap."
         if tests.unit(self.to_run):
             raise SystemExit("Test failures are listed above.")
+        mmap.mmap = MockMMap
+        print "Running tests with mocked failing mmap."
+        if tests.unit(self.to_run):
+            raise SystemExit("Test failures are listed above.")
+        
 
 class coverage_cmd(Command):
     description = "generate test coverage data"
