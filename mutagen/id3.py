@@ -33,8 +33,7 @@ __all__ = ['ID3', 'Frames', 'Open', 'delete']
 import mutagen
 import struct; from struct import unpack, pack
 from zlib import error as zlibError
-
-PRINT_ERRORS = True
+from warnings import warn
 
 class error(Exception): pass
 class ID3NoHeaderError(error, ValueError): pass
@@ -43,6 +42,8 @@ class ID3BadCompressedData(error, ValueError): pass
 class ID3UnsupportedVersionError(error, NotImplementedError): pass
 class ID3EncryptionUnsupportedError(error, NotImplementedError): pass
 class ID3JunkFrameError(error, ValueError): pass
+
+class ID3Warning(error, UserWarning): pass
 
 class ID3(mutagen.Metadata):
     """A file with an ID3v2 tag.
@@ -82,12 +83,11 @@ class ID3(mutagen.Metadata):
 
     def fullread(self, size):
         try:
-            if size > self.__filesize or size < 0:
-                if PRINT_ERRORS and self.__filesize:
-                    print 'Requested %#x of %#x (%s)' % \
-                        (size, self.__filesize, self.filename)
-                raise EOFError, 'Requested %#x of %#x (%s)' % \
-                        (size, self.__filesize, self.filename)
+            if size < 0:
+                raise ValueError('Requested bytes (%s) less than zero' % size)
+            if size > self.__filesize:
+                raise EOFError('Requested %#x of %#x (%s)' % 
+                        (long(size), long(self.__filesize), self.filename))
         except AttributeError: pass
         data = self.__fileobj.read(size)
         if len(data) != size: raise EOFError
@@ -869,8 +869,9 @@ class Frame(object):
             else: raise ID3JunkFrameError
             setattr(self, reader.name, value)
         if data.strip('\x00'):
-            if PRINT_ERRORS: print 'Leftover data: %s: %r (from %r)' % (
-                    type(self).__name__, data, odata)
+            warn('Leftover data: %s: %r (from %r)' % (
+                    type(self).__name__, data, odata),
+                    ID3Warning)
 
     def _writeData(self):
         data = []
@@ -960,8 +961,9 @@ class FrameOpt(Frame):
                 else: break
                 setattr(self, reader.name, value)
         if data.strip('\x00'):
-            if PRINT_ERRORS: print 'Leftover data: %s: %r (from %r)' % (
-                    type(self).__name__, data, odata)
+            warn('Leftover data: %s: %r (from %r)' % (
+                    type(self).__name__, data, odata),
+                    ID3Warning)
 
     def _writeData(self):
         data = []

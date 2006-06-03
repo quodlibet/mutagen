@@ -2,12 +2,15 @@ import os; from os.path import join
 import shutil
 from unittest import TestCase
 from tests import registerCase
-from mutagen.id3 import ID3, BitPaddedInt, COMR, Frames, Frames_2_2
+from mutagen.id3 import ID3, BitPaddedInt, COMR, Frames, Frames_2_2, ID3Warning
 from StringIO import StringIO
+import warnings
+warnings.simplefilter('error', ID3Warning)
 
 try: from sets import Set as set
 except ImportError: pass
 
+_22 = ID3(); _22.version = (2,2,0)
 _23 = ID3(); _23.version = (2,3,0)
 _24 = ID3(); _24.version = (2,4,0)
 
@@ -134,6 +137,12 @@ class ID3Loading(TestCase):
         tag = id3.load_framedata(Frames["TPE2"], 0, badsync)
         self.assertEquals(tag, [u"\xff", u"ab"])
 
+    def test_insane_fullread(self):
+        id3 = ID3()
+        id3._ID3__filesize = 0
+        self.assertRaises(ValueError, id3.fullread, -3)
+        self.assertRaises(EOFError, id3.fullread, 3)
+
 class ID3Tags(TestCase):
     def setUp(self):
         self.silence = join('tests', 'data', 'silence-44-s.mp3')
@@ -198,6 +207,16 @@ class ID3Tags(TestCase):
 
     def test_junkframe(self):
         self.assertRaises(ValueError, Frames["TPE1"].fromData, _24, 0, "")
+
+    def test_extradata(self):
+        from mutagen.id3 import RVRB, RBUF
+        self.assertRaises(ID3Warning,
+                RVRB()._readData, 'L1R1BBFFFFPP#xyz')
+        self.assertRaises(ID3Warning,
+                RBUF()._readData, '\x00\x01\x00\x01\x00\x00\x00\x00#xyz')
+
+
+
 
 class ID3v1Tags(TestCase):
     silence = join('tests', 'data', 'silence-44-s-v1.mp3')
@@ -723,12 +742,21 @@ class FrameSanityChecks(TestCase):
         self.assert_(isinstance(TXXX(desc='d',text='text'), TXXX))
 
     def test_22_uses_direct_ints(self):
-        from mutagen.id3 import TT1, Frames_2_2
         data = 'TT1\x00\x00\x83\x00' + ('123456789abcdef' * 16)
         id3 = ID3()
         id3.version = (2,2,0)
         tag = list(id3.read_frames(data, Frames_2_2))[0]
         self.assertEquals(data[7:7+0x82].decode('latin1'), tag.text[0])
+
+    def test_frame_too_small(self):
+        self.assertEquals([], list(_24.read_frames('012345678', Frames)))
+        self.assertEquals([], list(_23.read_frames('012345678', Frames)))
+        self.assertEquals([], list(_22.read_frames('01234', Frames_2_2)))
+        self.assertEquals([], list(_22.read_frames('TT1'+'\x00'*3, Frames_2_2)))
+
+    def test_unknown_22_frame(self):
+        data = 'XYZ\x00\x00\x01\x00'
+        self.assertEquals([data], list(_22.read_frames(data, {})))
 
 
     def test_zlib_latin1(self):
