@@ -317,3 +317,109 @@ class TOggPage(TestCase):
     def tearDown(self):
         self.fileobj.close()
 add(TOggPage)
+
+class TOggFileType(TestCase):
+    def scan_file(self):
+        fileobj = file(self.filename, "rb")
+        try:
+            try:
+                while True:
+                    page = OggPage(fileobj)
+            except EOFError:
+                pass
+        finally:
+            fileobj.close()
+
+    def test_pprint_empty(self):
+        self.audio.pprint()
+
+    def test_pprint_stuff(self):
+        self.test_set_two_tags()
+        self.audio.pprint()
+
+    def test_length(self):
+        self.failUnlessAlmostEqual(3.7, self.audio.info.length, 1)
+
+    def test_no_tags(self):
+        self.failIf(self.audio.tags)
+        self.failIf(self.audio.tags is None)
+
+    def test_vendor_safe(self):
+        self.audio["vendor"] = "a vendor"
+        self.audio.save()
+        audio = self.Kind(self.filename)
+        self.failUnlessEqual(audio["vendor"], ["a vendor"])
+
+    def test_set_two_tags(self):
+        self.audio["foo"] = ["a"]
+        self.audio["bar"] = ["b"]
+        self.audio.save()
+        audio = self.Kind(self.filename)
+        self.failUnlessEqual(len(audio.tags.keys()), 2)
+        self.failUnlessEqual(audio["foo"], ["a"])
+        self.failUnlessEqual(audio["bar"], ["b"])
+        self.scan_file()
+
+    def test_save_twice(self):
+        self.audio.save()
+        self.audio.save()
+        self.failUnlessEqual(self.Kind(self.filename).tags, self.audio.tags)
+        self.scan_file()
+
+    def test_set_delete(self):
+        self.test_set_two_tags()
+        self.audio.tags.clear()
+        self.audio.save()
+        audio = self.Kind(self.filename)
+        self.failIf(audio.tags)
+        self.scan_file()
+
+    def test_delete(self):
+        self.test_set_two_tags()
+        self.audio.delete()
+        audio = self.Kind(self.filename)
+        self.failIf(audio.tags)
+
+        self.audio["foobar"] = "foobar" * 1000
+        self.audio.save()
+        audio = self.Kind(self.filename)
+        self.failUnlessEqual(self.audio["foobar"], audio["foobar"])
+
+        self.scan_file()
+
+    def test_really_big(self):
+        self.audio["foo"] = "foo" * (2**16)
+        self.audio["bar"] = "bar" * (2**16)
+        self.audio["baz"] = "quux" * (2**16)
+        self.audio.save()
+        audio = self.Kind(self.filename)
+        self.failUnlessEqual(audio["foo"], ["foo" * 2**16])
+        self.failUnlessEqual(audio["bar"], ["bar" * 2**16])
+        self.failUnlessEqual(audio["baz"], ["quux" * 2**16])
+        self.scan_file()
+
+    def test_delete_really_big(self):
+        self.audio["foo"] = "foo" * (2**16)
+        self.audio["bar"] = "bar" * (2**16)
+        self.audio["baz"] = "quux" * (2**16)
+        self.audio.save()
+
+        self.audio.delete()
+        audio = self.Kind(self.filename)
+        self.failIf(audio.tags)
+        self.scan_file()
+
+    def test_invalid_open(self):
+        self.failUnlessRaises(IOError, self.Kind,
+                              os.path.join('tests', 'data', 'xing.mp3'))
+
+    def test_invalid_delete(self):
+        self.failUnlessRaises(IOError, self.audio.delete,
+                              os.path.join('tests', 'data', 'xing.mp3'))
+
+    def test_invalid_save(self):
+        self.failUnlessRaises(IOError, self.audio.save,
+                              os.path.join('tests', 'data', 'xing.mp3'))
+
+    def tearDown(self):
+        os.unlink(self.filename)

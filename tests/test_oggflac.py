@@ -6,9 +6,9 @@ from tempfile import mkstemp
 
 from mutagen.oggflac import OggFLAC
 from tests import add
-from tests.test_oggvorbis import TOggVorbis
+from tests.test_ogg import TOggFileType
 
-class TOggFLAC(TOggVorbis):
+class TOggFLAC(TOggFileType):
     Kind = OggFLAC
 
     def setUp(self):
@@ -17,9 +17,6 @@ class TOggFLAC(TOggVorbis):
         os.close(fd)
         shutil.copy(original, self.filename)
         self.audio = OggFLAC(self.filename)
-
-    def test_bitrate(self):
-        pass
 
     def test_vendor(self):
         self.failUnless(
@@ -51,9 +48,6 @@ class TOggFLAC(TOggVorbis):
         self.scan_file()
         value = os.system("flac --ogg -t %s 2> /dev/null" % self.filename)
         self.failIf(value and value != badval)
-
-    def test_huge_tag(self):
-        pass
 
     def test_not_my_ogg(self):
         fn = os.path.join('tests', 'data', 'empty.ogg')
