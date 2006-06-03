@@ -191,7 +191,7 @@ class OggPage(object):
     def renumber(klass, fileobj, serial, start):
         """Renumber pages belonging to a specified logical stream.
 
-        fileobj must be opened with mode rb+ or equivalent.
+        fileobj must be opened with mode r+b or w+b.
 
         Starting at page number 'start', renumber all pages belonging
         to logical stream 'serial'. Other pages will be ignored.
@@ -222,7 +222,7 @@ class OggPage(object):
                 fileobj.seek(-page.size, 1)
             page.sequence = number
             fileobj.write(page.write())
-            fileobj.flush()
+            fileobj.seek(page.offset + page.size, 0)
             number += 1
     renumber = classmethod(renumber)
 
@@ -330,7 +330,8 @@ class OggPage(object):
         and so the serial and sequence numbers will be copied, as will
         the flags for the first and last pages.
 
-        fileobj will be resized and pages renumbered as necessary.
+        fileobj will be resized and pages renumbered as necessary. As
+        such, it must be opened r+b or w+b.
         """
 
         # Number the new pages starting from the first old page.
@@ -355,7 +356,7 @@ class OggPage(object):
         insert_bytes(fileobj, delta, old_pages[0].offset)
         fileobj.seek(old_pages[0].offset, 0)
         fileobj.write(new_data)
-        new_data_end = fileobj.tell()
+        new_data_end = old_pages[0].offset + delta
 
         # Go through the old pages and delete them. Since we shifted
         # the data down the file, we need to adjust their offsets. We
