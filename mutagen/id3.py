@@ -600,7 +600,6 @@ class StringSpec(Spec):
     def write(s, frame, value):
         if value is None: return '\x00' * s.len
         else: return (str(value) + '\x00' * s.len)[:s.len]
-        return str(value)
     def validate(s, frame, value):
         if value is None: return None
         if isinstance(value, basestring) and len(value) == s.len: return value
