@@ -1173,128 +1173,6 @@ class WriteForEyeD3(TestCase):
     def tearDown(self):
         os.unlink(self.newsilence)
 
-class FileHandling(TestCase):
-    def setUp(self):
-        self.id3 = ID3()
-
-    def tearDown(self):
-        del self.id3
-
-    def file(self, contents):
-        import tempfile
-        temp = tempfile.TemporaryFile()
-        temp.write(contents)
-        temp.flush()
-        temp.seek(0)
-        return temp
-
-    def read(self, fobj):
-        fobj.seek(0, 0)
-        return fobj.read()
-
-    def test_insert_into_empty(self):
-        o = self.file('')
-        self.id3._insert_space(o, 8, 0)
-        self.assertEquals('\x00' * 8, self.read(o))
-
-    def test_insert_before_one(self):
-        o = self.file('a')
-        self.id3._insert_space(o, 8, 0)
-        self.assertEquals('a' + '\x00' * 7 + 'a', self.read(o))
-
-    def test_insert_after_one(self):
-        o = self.file('a')
-        self.id3._insert_space(o, 8, 1)
-        self.assertEquals('a' + '\x00' * 8, self.read(o))
-
-    def test_smaller_than_file_middle(self):
-        o = self.file('abcdefghij')
-        self.id3._insert_space(o, 4, 4)
-        self.assertEquals('abcdefghefghij', self.read(o))
-
-    def test_smaller_than_file_to_end(self):
-        o = self.file('abcdefghij')
-        self.id3._insert_space(o, 4, 6)
-        self.assertEquals('abcdefghijghij', self.read(o))
-
-    def test_smaller_than_file_across_end(self):
-        o = self.file('abcdefghij')
-        self.id3._insert_space(o, 4, 8)
-        self.assertEquals('abcdefghij\x00\x00ij', self.read(o))
-
-    def test_smaller_than_file_at_end(self):
-        o = self.file('abcdefghij')
-        self.id3._insert_space(o, 3, 10)
-        self.assertEquals('abcdefghij\x00\x00\x00', self.read(o))
-
-    def test_smaller_than_file_at_beginning(self):
-        o = self.file('abcdefghij')
-        self.id3._insert_space(o, 3, 0)
-        self.assertEquals('abcabcdefghij', self.read(o))
-
-    def test_zero(self):
-        o = self.file('abcdefghij')
-        self.assertRaises((AssertionError, ValueError), self.id3._insert_space, o, 0, 1)
-
-    def test_negative(self):
-        o = self.file('abcdefghij')
-        self.assertRaises((AssertionError, ValueError), self.id3._insert_space, o, 8, -1)
-
-    def test_delete_one(self):
-        o = self.file('a')
-        self.id3._delete_bytes(o, 1, 0)
-        self.assertEquals('', self.read(o))
-
-    def test_delete_first_of_two(self):
-        o = self.file('ab')
-        self.id3._delete_bytes(o, 1, 0)
-        self.assertEquals('b', self.read(o))
-
-    def test_delete_second_of_two(self):
-        o = self.file('ab')
-        self.id3._delete_bytes(o, 1, 1)
-        self.assertEquals('a', self.read(o))
-
-    def test_delete_third_of_two(self):
-        o = self.file('ab')
-        self.assertRaises(AssertionError, self.id3._delete_bytes, o, 1, 2)
-
-    def test_delete_middle(self):
-        o = self.file('abcdefg')
-        self.id3._delete_bytes(o, 3, 2)
-        self.assertEquals('abfg', self.read(o))
-
-    def test_delete_across_end(self):
-        o = self.file('abcdefg')
-        self.assertRaises(AssertionError, self.id3._delete_bytes, o, 4, 8)
-
-    def test_delete_zero(self):
-        o = self.file('abcdefg')
-        self.assertRaises(AssertionError, self.id3._delete_bytes, o, 0, 3)
-
-    def test_delete_negative(self):
-        o = self.file('abcdefg')
-        self.assertRaises(AssertionError, self.id3._delete_bytes, o, 4, -8)
-
-class FileHandlingNoMMap(FileHandling):
-    # run the FileHandling tests with a broken mmap#move to simulate amd64
-    class MockMMap(object):
-        def __init__(self, *args, **kwargs): pass
-        def move(self, dest, src, count): raise ValueError
-        def close(self): pass
-
-    from mmap import mmap as __real_mmap_mmap
-
-    def setUp(self):
-        super(FileHandlingNoMMap, self).setUp()
-        import mmap
-        mmap.mmap = self.MockMMap
-
-    def tearDown(self):
-        super(FileHandlingNoMMap, self).tearDown()
-        import mmap
-        mmap.mmap = self.__real_mmap_mmap
-
 class NoHash(TestCase):
     def test_spec(self):
         from mutagen.id3 import Spec
@@ -1318,8 +1196,6 @@ registerCase(Genres)
 registerCase(TimeStamp)
 registerCase(WriteRoundtrip)
 registerCase(OddWrites)
-registerCase(FileHandling)
-registerCase(FileHandlingNoMMap)
 registerCase(NoHash)
 
 try: import eyeD3
