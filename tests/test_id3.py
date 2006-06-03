@@ -341,9 +341,11 @@ def TestReadTags():
 
     ['RVA2', 'testdata\x00\x01\xfb\x8c\x10\x12\x23',
         'Master volume: -2.2266 dB/0.1417', '',
-        dict(desc='testdata', channel=1,
-             # FIXME: we need to use almost
-             gain=-2.22656, peak=0.14169)],
+        dict(desc='testdata', channel=1, gain=-2.22656, peak=0.14169)],
+
+    ['RVA2', 'testdata\x00\x01\xfb\x8c\x24\x01\x22\x30\x00\x00',
+        'Master volume: -2.2266 dB/0.1417', '',
+        dict(desc='testdata', channel=1, gain=-2.22656, peak=0.14169)],
 
     ['RVA2', 'testdata2\x00\x01\x04\x01\x00',
         'Master volume: +2.0020 dB/0.0000', '',

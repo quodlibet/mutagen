@@ -773,9 +773,6 @@ class VolumePeakSpec(Spec):
             peak *= 256
             peak += ord(data[i])
         peak *= 2**shift
-        if bits > 32:
-            bytes += 1
-            peak += ord(data[1+bytes]) >> (8 - shift);
         return (float(peak) / (2**31-1)), data[1+bytes:]
 
     def write(self, frame, value):
