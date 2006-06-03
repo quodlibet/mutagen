@@ -69,4 +69,4 @@ add(TOggFLAC)
 NOTFOUND = os.system("tools/notarealprogram 2> /dev/null")
 
 if os.system("flac 2> /dev/null > /dev/null") == NOTFOUND:
-    print "WARNING: Skipping FLAC reference tests."
+    print "WARNING: Skipping Ogg FLAC reference tests."

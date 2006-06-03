@@ -28,18 +28,21 @@ class TOggVorbis(TOggFileType):
     def test_vorbiscomment(self):
         self.audio.save()
         self.scan_file()
+        if ogg is None: return
         self.failUnless(ogg.vorbis.VorbisFile(self.filename))
 
     def test_vorbiscomment_big(self):
         self.test_really_big()
         self.audio.save()
         self.scan_file()
+        if ogg is None: return
         vfc = ogg.vorbis.VorbisFile(self.filename).comment()
         self.failUnlessEqual(self.audio["foo"], vfc["foo"])
 
     def test_vorbiscomment_delete(self):
         self.audio.delete()
         self.scan_file()
+        if ogg is None: return
         vfc = ogg.vorbis.VorbisFile(self.filename).comment()
         self.failUnlessEqual(vfc.keys(), ["VENDOR"])
 
@@ -49,6 +52,7 @@ class TOggVorbis(TOggFileType):
         self.audio["foobar"] = "foobar" * 1000
         self.audio.save()
         self.scan_file()
+        if ogg is None: return
         vfc = ogg.vorbis.VorbisFile(self.filename).comment()
         self.failUnlessEqual(self.audio["foobar"], vfc["foobar"])
         self.failUnless("FOOBAR" in vfc.keys())
@@ -71,6 +75,7 @@ class TOggVorbis(TOggFileType):
 
 try: import ogg.vorbis
 except ImportError:
-    TOggVorbis.test_vorbiscomment = lambda self: sys.stdout.write("\bS")
+    print "WARNING: Skipping Ogg Vorbis reference tests."
+    ogg = None
 
 registerCase(TOggVorbis)

@@ -154,9 +154,6 @@ class TFLAC(TestCase):
         badval = os.system("tools/notarealprogram 2> /dev/null")
         value = os.system("flac -t %s 2> /dev/null" % self.flac.filename)
         self.failIf(value and value != badval)
-        if value == badval:
-            sys.stdout.write("\bS")
-            return
 
     def test_pprint(self):
         self.failUnless(self.flac.pprint())
@@ -165,3 +162,8 @@ class TFLAC(TestCase):
         os.unlink(self.NEW)
 
 add(TFLAC)
+
+NOTFOUND = os.system("tools/notarealprogram 2> /dev/null")
+
+if os.system("flac 2> /dev/null > /dev/null") == NOTFOUND:
+    print "WARNING: Skipping FLAC reference tests."
