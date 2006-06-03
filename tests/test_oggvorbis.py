@@ -27,18 +27,32 @@ class TOggVorbis(TOggFileType):
 
     def test_vorbiscomment(self):
         self.audio.save()
+        self.scan_file()
         self.failUnless(ogg.vorbis.VorbisFile(self.filename))
 
+    def test_vorbiscomment_big(self):
         self.test_really_big()
+        self.audio.save()
+        self.scan_file()
         vfc = ogg.vorbis.VorbisFile(self.filename).comment()
         self.failUnlessEqual(self.audio["foo"], vfc["foo"])
 
+    def test_vorbiscomment_delete(self):
         self.audio.delete()
+        self.scan_file()
+        vfc = ogg.vorbis.VorbisFile(self.filename).comment()
+        self.failUnlessEqual(vfc.keys(), ["VENDOR"])
+
+    def test_vorbiscomment_delete_readd(self):
+        self.audio.delete()
+        self.audio.tags.clear()
         self.audio["foobar"] = "foobar" * 1000
         self.audio.save()
+        self.scan_file()
         vfc = ogg.vorbis.VorbisFile(self.filename).comment()
         self.failUnlessEqual(self.audio["foobar"], vfc["foobar"])
-        self.scan_file()
+        self.failUnless("FOOBAR" in vfc.keys())
+        self.failUnless("VENDOR" in vfc.keys())
 
     def test_huge_tag(self):
         vorbis = self.Kind(
