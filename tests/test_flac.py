@@ -1,7 +1,7 @@
 import shutil, os
 from tests import TestCase, add
 from mutagen.flac import to_int_be, Padding, VCFLACDict, MetadataBlock
-from mutagen.flac import StreamInfo, FLAC
+from mutagen.flac import StreamInfo, FLAC, delete
 from tests.test__vorbis import TVCommentDict, VComment
 
 class Tto_int_be(TestCase):
@@ -34,6 +34,9 @@ class TMetadataBlock(TestCase):
     def test_writeblocks(self):
         blocks = [Padding("\x00" * 20), Padding("\x00" * 30)]
         self.failUnlessEqual(len(MetadataBlock.writeblocks(blocks)), 58)
+
+    def test_ctr_garbage(self):
+        self.failUnlessRaises(TypeError, StreamInfo, 12)
 
     def test_group_padding(self):
         blocks = [Padding("\x00" * 20), Padding("\x00" * 30),
@@ -80,6 +83,7 @@ class TPadding(TestCase):
     def test_padding(self): self.failUnlessEqual(self.b.write(), "\x00" * 100)
     def test_blank(self): self.failIf(Padding().write())
     def test_empty(self): self.failIf(Padding("").write())
+    def test_repr(self): repr(Padding())
     def test_change(self):
         self.b.length = 20
         self.failUnlessEqual(self.b.write(), "\x00" * 20)
@@ -97,6 +101,11 @@ class TFLAC(TestCase):
         self.failUnless(self.flac.tags)
         self.flac.delete()
         self.failIf(self.flac.tags)
+        flac = FLAC(self.NEW)
+        self.failIf(flac.tags)
+
+    def test_module_delete(self):
+        delete(self.NEW)
         flac = FLAC(self.NEW)
         self.failIf(flac.tags)
 
@@ -132,7 +141,15 @@ class TFLAC(TestCase):
         f["faketag"] = ["a" * 1000] * 1000
         f.save()
         f = FLAC(self.NEW)
-        self.failUnlessEqual(f["faketag"][0], "a" * 1000)
+        self.failUnlessEqual(f["faketag"], ["a" * 1000] * 1000)
+
+    def test_force_shrink(self):
+        self.test_force_grow()
+        f = FLAC(self.NEW)
+        f["faketag"] = "foo"
+        f.save()
+        f = FLAC(self.NEW)
+        self.failUnlessEqual(f["faketag"], ["foo"])
 
     def test_add_vc(self):
         f = FLAC()
@@ -154,6 +171,37 @@ class TFLAC(TestCase):
         badval = os.system("tools/notarealprogram 2> /dev/null")
         value = os.system("flac -t %s 2> /dev/null" % self.flac.filename)
         self.failIf(value and value != badval)
+
+    def test_save_unknown_block(self):
+        block = MetadataBlock("test block data")
+        block.code = 99
+        self.flac.metadata_blocks.append(block)
+        self.flac.save()
+
+    def test_load_unknown_block(self):
+        self.test_save_unknown_block()
+        flac = FLAC(self.NEW)
+        self.failUnlessEqual(len(flac.metadata_blocks), 4)
+        self.failUnlessEqual(flac.metadata_blocks[2].code, 99)
+        self.failUnlessEqual(flac.metadata_blocks[2].data, "test block data")
+
+    def test_two_vorbis_blocks(self):
+        self.flac.metadata_blocks.append(self.flac.metadata_blocks[1])
+        self.flac.save()
+        self.failUnlessRaises(IOError, FLAC, self.NEW)
+
+    def test_missing_streaminfo(self):
+        self.flac.metadata_blocks.pop(0)
+        self.flac.save()
+        self.failUnlessRaises(IOError, FLAC, self.NEW)
+
+    def test_load_invalid_flac(self):
+        self.failUnlessRaises(
+            IOError, FLAC, os.path.join("tests", "data", "xing.mp3"))
+
+    def test_save_invalid_flac(self):
+        self.failUnlessRaises(
+            IOError, self.flac.save, os.path.join("tests", "data", "xing.mp3"))
 
     def test_pprint(self):
         self.failUnless(self.flac.pprint())
