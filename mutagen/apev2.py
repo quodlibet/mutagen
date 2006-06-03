@@ -258,7 +258,7 @@ class APEv2(DictMixin, Metadata):
         super(APEv2, self).__setitem__(APEKey(k), v)
 
     def save(self, filename=None):
-        """Save changes to a file.Miguel Angel Alvarez
+        """Save changes to a file.
 
         If no filename is given, the one most recently loaded is used.
 
@@ -267,7 +267,8 @@ class APEv2(DictMixin, Metadata):
         """
 
         filename = filename or self.filename
-        f = file(filename, "ab+")
+        try: f = file(filename, "r+b")
+        except IOError: f = file(filename, "w+b")
         data = _APEv2Data(f)
 
         if data.is_at_start:
@@ -310,7 +311,8 @@ class APEv2(DictMixin, Metadata):
         If no filename is given, the one most recently loaded is used.
         """
         filename = filename or self.filename
-        fileobj = file(filename, "ab+")
+        try: fileobj = file(filename, "r+b")
+        except IOError: fileobj = file(filename, "w+b")
         try:
             data = _APEv2Data(fileobj)
             if data.start is not None and data.size is not None:
