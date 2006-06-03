@@ -148,12 +148,16 @@ def insert_bytes(fobj, size, offset):
 
         fobj.seek(offset)
         backbuf = fobj.read(size)
+        offset += len(backbuf)
         if len(backbuf) < size:
+            fobj.seek(offset)
             fobj.write('\x00' * (size - len(backbuf)))
         while len(backbuf) == size:
             frontbuf = fobj.read(size)
-            fobj.seek(-len(frontbuf), 1)
+            fobj.seek(offset)
             fobj.write(backbuf)
+            offset += len(backbuf)
+            fobj.seek(offset)
             backbuf = frontbuf
         fobj.write(backbuf)
 
@@ -181,9 +185,10 @@ def delete_bytes(fobj, size, offset):
             fobj.seek(offset + size)
             buf = fobj.read(size)
             while len(buf):
-                fobj.seek(-len(buf) - size, 1)
+                fobj.seek(offset)
                 fobj.write(buf)
-                fobj.seek(size, 1)
+                offset += len(buf)
+                fobj.seek(offset + size)
                 buf = fobj.read(size)
     fobj.truncate(filesize - size)
     fobj.flush()
