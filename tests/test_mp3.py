@@ -2,8 +2,9 @@ import os
 import shutil
 
 from unittest import TestCase
-from tests import registerCase
-from mutagen.mp3 import MP3, error as MP3Error, delete
+from cStringIO import StringIO
+from tests import add
+from mutagen.mp3 import MP3, error as MP3Error, delete, MPEGInfo
 from mutagen.id3 import ID3
 from tempfile import mkstemp
 
@@ -75,6 +76,23 @@ class TMP3(TestCase):
         self.mp3.save()
         self.failUnless(MP3(self.filename)["TIT1"] == "foobar")
 
+    def test_load_non_id3(self):
+        filename = os.path.join("tests", "data", "apev2-lyricsv2.mp3")
+        from mutagen.apev2 import APEv2
+        mp3 = MP3(filename, ID3=APEv2)
+        self.failUnless("replaygain_track_peak" in mp3.tags)
+
+    def test_add_tags(self):
+        mp3 = MP3(os.path.join("tests", "data", "xing.mp3"))
+        self.failIf(mp3.tags)
+        mp3.add_tags()
+        self.failUnless(isinstance(mp3.tags, ID3))
+
+    def test_add_tags_already_there(self):
+        mp3 = MP3(os.path.join("tests", "data", "silence-44-s.mp3"))
+        self.failUnless(mp3.tags)
+        self.failUnlessRaises(Exception, mp3.add_tags)
+
     def test_save_no_tags(self):
         self.mp3.tags = None
         self.failUnlessRaises(ValueError, self.mp3.save)
@@ -82,4 +100,15 @@ class TMP3(TestCase):
     def tearDown(self):
         os.unlink(self.filename)
 
-registerCase(TMP3)
+add(TMP3)
+
+class TMPEGInfo(TestCase):
+    def test_not_real_file(self):
+        filename = os.path.join("tests", "data", "silence-44-s-v1.mp3")
+        fileobj = StringIO(file(filename, "rb").read(20))
+        MPEGInfo(fileobj)
+
+    def test_empty(self):
+        fileobj = StringIO("")
+        self.failUnlessRaises(IOError, MPEGInfo, fileobj)
+add(TMPEGInfo)
