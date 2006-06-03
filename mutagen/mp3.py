@@ -89,7 +89,7 @@ class MPEGInfo(object):
         # at the given offset, 30% through the file, 60% through the file,
         # and 90% through the file.
         for i in [offset, 0.3 * size, 0.6 * size, 0.9 * size]:
-            try: self.__try(fileobj, i, size - offset)
+            try: self.__try(fileobj, int(i), size - offset)
             except error, e: pass
             else: break
         # If we can't find any two consecutive frames, try to find just
