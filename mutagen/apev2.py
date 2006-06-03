@@ -124,9 +124,8 @@ class _APEv2Data(object):
         # Check for a tag at the start.
         fileobj.seek(0, 0)
         if fileobj.read(8) == "APETAGEX":
-            fileobj.seek(0, 0)
             self.is_at_start = True
-            self.header = fileobj.tell()
+            self.header = 0
 
     def __fill_missing(self, fileobj):
         fileobj.seek(self.metadata)
@@ -139,13 +138,13 @@ class _APEv2Data(object):
         self.flags = cdata.uint_le(fileobj.read(4))
 
         if self.header is not None:
+            self.data = self.header + 32
             # If we're reading the header, the size is the header
             # offset + the size, which includes the footer.
-            self.end = self.header + self.size
+            self.end = self.data + self.size
             fileobj.seek(self.end - 32, 0)
             if fileobj.read(8) == "APETAGEX":
                 self.footer = self.end - 32
-            self.data = self.header + 32
         elif self.footer is not None:
             self.end = self.footer + 32
             self.data = self.end - self.size
@@ -212,9 +211,12 @@ class APEv2(DictMixin, Metadata):
             kind = (flags & 6) >> 1
             if kind == 3:
                 raise APEBadItemError("value type must be 0, 1, or 2")
-            key = ""
-            while key[-1:] != '\0': key += f.read(1)
-            key = key[:-1]
+            key = value = f.read(1)
+            while key[-1:] != '\x00' and value:
+                value = f.read(1)
+                key += value
+            if key[-1:] == "\x00":
+                key = key[:-1]
             value = f.read(size)
             self[key] = APEValue(value, kind)
 
@@ -339,12 +341,8 @@ class APEKey(str):
     # to use APE Tags Item Key which only differs in case. And nevertheless
     # Tag readers are recommended to be case insensitive."
 
-    def __cmp__(self, o):
-        return cmp(str(self).lower(), str(o).lower())
-    
     def __eq__(self, o):
         return str(self).lower() == str(o).lower()
-    
     def __hash__(self):
         return str.__hash__(self.lower())
 
@@ -441,7 +439,10 @@ class APEv2File(FileType):
         except error: pass
 
     def add_tags(self):
-        self.tags = APEv2()
+        if self.tags is None:
+            self.tags = APEv2()
+        else:
+            raise ValueError("%r already has tags: %r" % (self, self.tags))
 
     def score(filename, fileobj, header):
         try: fileobj.seek(-160, 2)

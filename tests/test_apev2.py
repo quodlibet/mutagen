@@ -3,6 +3,8 @@ from tests import registerCase
 from unittest import TestCase
 import mutagen.apev2
 
+from mutagen.apev2 import APEv2File
+
 DIR = os.path.dirname(__file__)
 SAMPLE = os.path.join(DIR, "data", "click.mpc")
 OLD = os.path.join(DIR, "data", "oldtag.apev2")
@@ -24,6 +26,10 @@ class APEWriter(TestCase):
             tag[k] = v
         tag.save(SAMPLE + ".new")
         tag.save(SAMPLE + ".justtag")
+        tag.save(SAMPLE + ".tag_at_start")
+        fileobj = file(SAMPLE + ".tag_at_start", "ab")
+        fileobj.write("tag garbage" * 1000)
+        fileobj.close()
         self.tag = mutagen.apev2.APEv2(SAMPLE + ".new")
 
     def test_changed(self):
@@ -57,10 +63,39 @@ class APEWriter(TestCase):
         self.failUnlessEqual(os.path.getsize(SAMPLE) + self.offset,
                              os.path.getsize(SAMPLE + ".new"))
 
+    def test_empty(self):
+        self.failUnlessRaises(
+            IOError, mutagen.apev2.APEv2,
+            os.path.join("tests", "data", "emptyfile.mp3"))
+
+    def test_tag_at_start(self):
+        filename = SAMPLE + ".tag_at_start"
+        tag = mutagen.apev2.APEv2(filename)
+        self.failUnlessEqual(tag["album"], "Mutagen tests")
+
+    def test_tag_at_start_write(self):
+        filename = SAMPLE + ".tag_at_start"
+        tag = mutagen.apev2.APEv2(filename)
+        tag.save()
+        tag = mutagen.apev2.APEv2(filename)
+        self.failUnlessEqual(tag["album"], "Mutagen tests")
+        self.failUnlessEqual(
+            os.path.getsize(SAMPLE + ".justtag"),
+            os.path.getsize(filename) - (len("tag garbage") * 1000))
+
+    def test_tag_at_start_delete(self):
+        filename = SAMPLE + ".tag_at_start"
+        tag = mutagen.apev2.APEv2(filename)
+        tag.delete()
+        self.failUnlessRaises(IOError, mutagen.apev2.APEv2, filename)
+        self.failUnlessEqual(
+            os.path.getsize(filename), len("tag garbage") * 1000)
+
     def tearDown(self):
         os.unlink(SAMPLE + ".new")
         os.unlink(BROKEN + ".new")
         os.unlink(SAMPLE + ".justtag")
+        os.unlink(SAMPLE + ".tag_at_start")
 
 class APEReader(TestCase):
     def setUp(self):
@@ -134,6 +169,10 @@ class APEv2ThenID3v1Writer(APEWriter):
         f = file(SAMPLE + ".justtag", "ab+")
         f.write("TAG" + "\x00" * 125)
         f.close()
+
+    def test_tag_at_start_write(self):
+        pass
+
 registerCase(APEv2ThenID3v1Writer)
 
 class APEv2WithLyrics2(TestCase):
@@ -163,6 +202,9 @@ class APEKeyTest(TestCase):
         self.failUnlessEqual(hash("foo"), hash(self.APEKey("foo")))
         self.failUnlessEqual(hash("foo"), hash(self.APEKey("FoO")))
 
+    def test_repr(self):
+        self.failUnless(repr(self.APEKey("foo")))
+
 class APEBinaryTest(TestCase):
     from mutagen.apev2 import APEBinaryValue as BV
 
@@ -175,6 +217,9 @@ class APEBinaryTest(TestCase):
 
     def test_const(self):
         self.failUnlessEqual(self.sample, str(self.value))
+
+    def test_repr(self):
+        repr(self.value)
 
 class APETextTest(TestCase):
     from mutagen.apev2 import APETextValue as TV
@@ -189,7 +234,7 @@ class APETextTest(TestCase):
     def test_list(self):
         self.failUnlessEqual(self.sample, list(self.value))
 
-    def test_setitem(self):
+    def test_setitem_list(self):
         self.value[2] = self.sample[2] = 'quux'
         self.test_list()
         self.test_getitem()
@@ -198,6 +243,9 @@ class APETextTest(TestCase):
     def test_getitem(self):
         for i in range(len(self.value)):
             self.failUnlessEqual(self.sample[i], self.value[i])
+
+    def test_repr(self):
+        repr(self.value)
 
 class APEExtTest(TestCase):
     from mutagen.apev2 import APEExtValue as EV
@@ -212,6 +260,20 @@ class APEExtTest(TestCase):
 
     def test_const(self):
         self.failUnlessEqual(self.sample, str(self.value))
+
+    def test_repr(self):
+        repr(self.value)
+
+class TAPEv2File(TestCase):
+    def setUp(self):
+        self.audio = APEv2File("tests/data/click.mpc")
+
+    def test_add_tags(self):
+        self.failUnless(self.audio.tags is None)
+        self.audio.add_tags()
+        self.failUnless(self.audio.tags is not None)
+        self.failUnlessRaises(ValueError, self.audio.add_tags)
+registerCase(TAPEv2File)
 
 registerCase(APEReader)
 registerCase(APEWriter)
