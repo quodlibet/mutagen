@@ -1,8 +1,10 @@
 import os
 import shutil
 import sys
+
+from cStringIO import StringIO
 from mutagen.ogg import OggPage
-from mutagen.oggvorbis import OggVorbis
+from mutagen.oggvorbis import OggVorbis, OggVorbisInfo, delete
 from tests import TestCase, registerCase
 from tests.test_ogg import TOggFileType
 from tempfile import mkstemp
@@ -17,8 +19,51 @@ class TOggVorbis(TOggFileType):
         shutil.copy(original, self.filename)
         self.audio = self.Kind(self.filename)
 
+    def test_module_delete(self):
+        delete(self.filename)
+        self.scan_file()
+        self.failIf(OggVorbis(self.filename).tags)
+
     def test_bitrate(self):
         self.failUnlessEqual(112000, self.audio.info.bitrate)
+
+    def test_channels(self):
+        self.failUnlessEqual(2, self.audio.info.channels)
+
+    def test_sample_rate(self):
+        self.failUnlessEqual(44100, self.audio.info.sample_rate)
+
+    def test_invalid_not_first(self):
+        page = OggPage(file(self.filename, "rb"))
+        page.first = False
+        self.failUnlessRaises(IOError, OggVorbisInfo, StringIO(page.write()))
+
+    def test_avg_bitrate(self):
+        page = OggPage(file(self.filename, "rb"))
+        packet = page.packets[0]
+        packet = (packet[:16] + "\x00\x00\x01\x00" + "\x00\x00\x00\x00" +
+                  "\x00\x00\x00\x00" + packet[28:])
+        page.packets[0] = packet
+        info = OggVorbisInfo(StringIO(page.write()))
+        self.failUnlessEqual(info.bitrate, 32768)
+
+    def test_overestimated_bitrate(self):
+        page = OggPage(file(self.filename, "rb"))
+        packet = page.packets[0]
+        packet = (packet[:16] + "\x00\x00\x01\x00" + "\x00\x00\x00\x01" +
+                  "\x00\x00\x00\x00" + packet[28:])
+        page.packets[0] = packet
+        info = OggVorbisInfo(StringIO(page.write()))
+        self.failUnlessEqual(info.bitrate, 65536)
+
+    def test_underestimated_bitrate(self):
+        page = OggPage(file(self.filename, "rb"))
+        packet = page.packets[0]
+        packet = (packet[:16] + "\x00\x00\x01\x00" + "\x01\x00\x00\x00" +
+                  "\x00\x00\x01\x00" + packet[28:])
+        page.packets[0] = packet
+        info = OggVorbisInfo(StringIO(page.write()))
+        self.failUnlessEqual(info.bitrate, 65536)
 
     def test_vendor(self):
         self.failUnless(

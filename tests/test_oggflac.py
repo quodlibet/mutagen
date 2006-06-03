@@ -3,8 +3,10 @@ import shutil
 import sys
 
 from tempfile import mkstemp
+from cStringIO import StringIO
 
-from mutagen.oggflac import OggFLAC
+from mutagen.oggflac import OggFLAC, OggFLACStreamInfo, delete
+from mutagen.ogg import OggPage
 from tests import add
 from tests.test_ogg import TOggFileType
 
@@ -23,6 +25,16 @@ class TOggFLAC(TOggFileType):
             self.audio.tags.vendor.startswith("reference libFLAC"))
         self.failUnlessRaises(KeyError, self.audio.tags.__getitem__, "vendor")
 
+    def test_streaminfo_bad_marker(self):
+        page = OggPage(file(self.filename, "rb")).write()
+        page = page.replace("fLaC", "!fLa", 1)
+        self.failUnlessRaises(IOError, OggFLACStreamInfo, StringIO(page))
+
+    def test_streaminfo_bad_version(self):
+        page = OggPage(file(self.filename, "rb")).write()
+        page = page.replace("\x01\x00", "\x02\x00", 1)
+        self.failUnlessRaises(IOError, OggFLACStreamInfo, StringIO(page))
+
     def test_flac_reference_simple_save(self):
         self.audio.save()
         self.scan_file()
@@ -35,6 +47,11 @@ class TOggFLAC(TOggFileType):
         self.scan_file()
         value = os.system("flac --ogg -t %s 2> /dev/null" % self.filename)
         self.failIf(value and value != NOTFOUND)
+
+    def test_module_delete(self):
+        delete(self.filename)
+        self.scan_file()
+        self.failIf(OggFLAC(self.filename).tags)
 
     def test_flac_reference_delete(self):
         self.audio.delete()

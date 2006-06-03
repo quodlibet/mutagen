@@ -51,12 +51,12 @@ class OggVorbisInfo(object):
 
         if nominal_bitrate == 0:
             self.bitrate = (max_bitrate + min_bitrate) // 2
-        elif max_bitrate:
+        elif max_bitrate and max_bitrate < nominal_bitrate:
             # If the max bitrate is less than the nominal, we know
             # the nominal is wrong.
-            self.bitrate = min(max_bitrate, nominal_bitrate)
-        elif min_bitrate:
-            self.bitrate = max(min_bitrate, nominal_bitrate)
+            self.bitrate = max_bitrate
+        elif min_bitrate > nominal_bitrate:
+            self.bitrate = min_bitrate
         else:
             self.bitrate = nominal_bitrate
 
