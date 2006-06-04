@@ -90,7 +90,7 @@ else:
     data_files = []
 
 setup(cmdclass={'clean': clean, 'test': test_cmd, 'coverage': coverage_cmd},
-      name="mutagen", version="1.3",
+      name="mutagen", version="1.4",
       url="http://www.sacredchao.net/quodlibet/wiki/Development/Mutagen",
       description="read and write ID3v1/ID3v2/APEv2/FLAC/Ogg audio tags",
       author="Michael Urman",
