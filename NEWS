@@ -1,7 +1,9 @@
-1.4 -
+1.4 - 2006.06.03
  * Bug Fixes:
    * EasyID3: Fix tag["key"] = "string" handler. (#693)
-   * APEv2: Skip Lyrics3v2 tags. (Miguel Angel Alvarez)
+   * APEv2:
+     * Skip Lyrics3v2 tags. (Miguel Angel Alvarez)
+     * Avoid infinite loop on malformed tags at the start of the file.
    * Proper ANSI semantics for file positioning. (#707)
 
  * New Features:
@@ -10,6 +12,7 @@
      (Bastian Kleineidam, #696)
    * Test running is now controlled through setup.py (./setup.py test).
    * Test coverage data can be generated (./setup.py coverage).
+   * Considerably more test coverage.
 
 1.3 - 2006.05.29
  * New Features:

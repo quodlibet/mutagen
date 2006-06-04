@@ -26,7 +26,8 @@ class clean(distutils_clean):
                     print str(err)
 
         coverage = os.path.join(os.path.dirname(__file__), "coverage")
-        shutil.rmtree(coverage)
+        if os.path.isdir(coverage):
+            shutil.rmtree(coverage)
 
 class test_cmd(Command):
     description = "run automated tests"
