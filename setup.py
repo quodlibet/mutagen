@@ -25,9 +25,10 @@ class clean(distutils_clean):
                 except EnvironmentError, err:
                     print str(err)
 
-        coverage = os.path.join(os.path.dirname(__file__), "coverage")
-        if os.path.isdir(coverage):
-            shutil.rmtree(coverage)
+        for base in ["coverage", "build", "dist"]:
+             path = os.path.join(os.path.dirname(__file__), base)
+             if os.path.isdir(path):
+                 shutil.rmtree(path)
 
 class test_cmd(Command):
     description = "run automated tests"
@@ -82,7 +83,21 @@ class coverage_cmd(Command):
         coverage = os.path.join(os.path.dirname(__file__), "coverage")
         results.write_results(show_missing=True, coverdir=coverage)
         map(os.unlink, glob.glob(os.path.join(coverage, "[!m]*.cover")))
-        print "Coverage data written to", coverage
+        try: os.unlink(os.path.join(coverage, "..setup.cover"))
+        except OSError: pass
+
+        total_lines = 0
+        bad_lines = 0
+        for filename in glob.glob(os.path.join(coverage, "*.cover")):
+            lines = file(filename, "rU").readlines()
+            total_lines += len(lines)
+            bad_lines += len(
+                [line for line in lines if
+                 (line.startswith(">>>>>>") and
+                  "finally:" not in line and '"""' not in line)])
+        print "Coverage data written to", coverage, "(%d/%d, %0.2f%%)" % (
+            total_lines - bad_lines, total_lines,
+            100.0 * (total_lines - bad_lines) / float(total_lines))
 
 if os.name == "posix":
     data_files = [('share/man/man1', glob.glob("man/*.1"))]

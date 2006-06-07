@@ -5,7 +5,7 @@ import sys
 from cStringIO import StringIO
 from mutagen.ogg import OggPage
 from mutagen.oggvorbis import OggVorbis, OggVorbisInfo, delete
-from tests import TestCase, registerCase
+from tests import TestCase, add
 from tests.test_ogg import TOggFileType
 from tempfile import mkstemp
 
@@ -123,4 +123,4 @@ except ImportError:
     print "WARNING: Skipping Ogg Vorbis reference tests."
     ogg = None
 
-registerCase(TOggVorbis)
+add(TOggVorbis)

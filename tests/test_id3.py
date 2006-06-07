@@ -1,7 +1,7 @@
 import os; from os.path import join
 import shutil
 from unittest import TestCase
-from tests import registerCase
+from tests import add
 from mutagen.id3 import ID3, BitPaddedInt, COMR, Frames, Frames_2_2, ID3Warning
 from StringIO import StringIO
 import warnings
@@ -574,11 +574,11 @@ def TestReadTags():
         write_tests['test_write_%s_%d' % (tag, i)] = test_tag_write
 
     testcase = type('TestReadTags', (TestCase,), load_tests)
-    registerCase(testcase)
+    add(testcase)
     testcase = type('TestReadReprTags', (TestCase,), repr_tests)
-    registerCase(testcase)
+    add(testcase)
     testcase = type('TestReadWriteTags', (TestCase,), write_tests)
-    registerCase(testcase)
+    add(testcase)
 
     test_tests = {}
     from mutagen.id3 import Frames, Frames_2_2
@@ -588,7 +588,7 @@ def TestReadTags():
         def check(self, tag=tag): self.assert_(tag in tested_tags)
         tested_tags['test_' + tag + '_tested'] = check
     testcase = type('TestTestedTags', (TestCase,), tested_tags)
-    registerCase(testcase)
+    add(testcase)
 
 TestReadTags()
 del TestReadTags
@@ -927,7 +927,7 @@ class UpdateTo24(TestCase):
         self.failUnlessEqual(id3["TIPL"], [["a", "b"], ["c", "d"]])
 
 
-registerCase(UpdateTo24)
+add(UpdateTo24)
 
 class Genres(TestCase):
     from mutagen.id3 import TCON
@@ -1336,21 +1336,21 @@ class NoHash(TestCase):
         self.failUnlessRaises(
             TypeError, {}.__setitem__, TIT1(encoding=0, text="foo"), None)
 
-registerCase(ID3Loading)
-registerCase(ID3GetSetDel)
-registerCase(BitPaddedIntTest)
-registerCase(ID3Tags)
-registerCase(ID3v1Tags)
-registerCase(BrokenDiscarded)
-registerCase(BrokenButParsed)
-registerCase(FrameSanityChecks)
-registerCase(SpecSanityChecks)
-registerCase(Genres)
-registerCase(TimeStamp)
-registerCase(WriteRoundtrip)
-registerCase(OddWrites)
-registerCase(NoHash)
+add(ID3Loading)
+add(ID3GetSetDel)
+add(BitPaddedIntTest)
+add(ID3Tags)
+add(ID3v1Tags)
+add(BrokenDiscarded)
+add(BrokenButParsed)
+add(FrameSanityChecks)
+add(SpecSanityChecks)
+add(Genres)
+add(TimeStamp)
+add(WriteRoundtrip)
+add(OddWrites)
+add(NoHash)
 
 try: import eyeD3
 except ImportError: pass
-else: registerCase(WriteForEyeD3)
+else: add(WriteForEyeD3)

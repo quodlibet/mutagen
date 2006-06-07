@@ -1,5 +1,5 @@
 import os
-from tests import registerCase
+from tests import add
 from unittest import TestCase
 import mutagen.apev2
 
@@ -153,7 +153,7 @@ class APEv2ThenID3v1Reader(APEReader):
 
     def tearDown(self):
         os.unlink(OLD + ".new")
-registerCase(APEv2ThenID3v1Reader)
+add(APEv2ThenID3v1Reader)
 
 class APEv2ThenID3v1Writer(APEWriter):
     offset = 128
@@ -173,7 +173,7 @@ class APEv2ThenID3v1Writer(APEWriter):
     def test_tag_at_start_write(self):
         pass
 
-registerCase(APEv2ThenID3v1Writer)
+add(APEv2ThenID3v1Writer)
 
 class APEv2WithLyrics2(TestCase):
     def setUp(self):
@@ -184,7 +184,7 @@ class APEv2WithLyrics2(TestCase):
         self.failUnlessEqual(self.tag["REPLAYGAIN_TRACK_GAIN"], "-4.080000 dB")
         self.failUnlessEqual(self.tag["REPLAYGAIN_TRACK_PEAK"], "1.008101")
 
-registerCase(APEv2WithLyrics2)
+add(APEv2WithLyrics2)
 
 class APEKeyTest(TestCase):
     from mutagen.apev2 import APEKey
@@ -273,11 +273,11 @@ class TAPEv2File(TestCase):
         self.audio.add_tags()
         self.failUnless(self.audio.tags is not None)
         self.failUnlessRaises(ValueError, self.audio.add_tags)
-registerCase(TAPEv2File)
+add(TAPEv2File)
 
-registerCase(APEReader)
-registerCase(APEWriter)
-registerCase(APEKeyTest)
-registerCase(APEBinaryTest)
-registerCase(APETextTest)
-registerCase(APEExtTest)
+add(APEReader)
+add(APEWriter)
+add(APEKeyTest)
+add(APEBinaryTest)
+add(APETextTest)
+add(APEExtTest)
