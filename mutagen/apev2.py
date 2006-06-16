@@ -113,8 +113,11 @@ class _APEv2Data(object):
                         fileobj.seek(15, 1)
                         if fileobj.read(9) == 'LYRICS200':
                             fileobj.seek(-15, 1) # "LYRICS200" + size tag
-                            try: fileobj.seek(-32 - int(fileobj.read(6)) - 6, 1)
-                            except IOError, ValueError: pass
+                            try:
+                                offset = int(fileobj.read(6))
+                                fileobj.seek(-32 - offset - 6, 1)
+                            except (IOError, ValueError):
+                                pass
                             else:
                                 if fileobj.read(8) == "APETAGEX":
                                     fileobj.seek(-8, 1)
@@ -250,7 +253,7 @@ class APEv2(DictMixin, Metadata):
                 # list? text.
                 v = APEValue("\0".join(map(utf8, v)), TEXT)
             else:
-                try: dummy = k.decode("utf-8")
+                try: dummy = v.decode("utf-8")
                 except UnicodeError:
                     # invalid UTF8 text, probably binary
                     v = APEValue(v, BINARY)

@@ -1,9 +1,12 @@
+# FIXME: This test suite is a mess, a lot of it dates from PyMusepack so
+# it doesn't match the other Mutagen test conventions/quality.
+
 import os
 from tests import add
 from unittest import TestCase
 import mutagen.apev2
 
-from mutagen.apev2 import APEv2File
+from mutagen.apev2 import APEv2File, APEv2
 
 DIR = os.path.dirname(__file__)
 SAMPLE = os.path.join(DIR, "data", "click.mpc")
@@ -178,7 +181,7 @@ add(APEv2ThenID3v1Writer)
 class APEv2WithLyrics2(TestCase):
     def setUp(self):
         self.tag = mutagen.apev2.APEv2(LYRICS2)
-		
+
     def test_values(self):
         self.failUnlessEqual(self.tag["MP3GAIN_MINMAX"], "000,179")
         self.failUnlessEqual(self.tag["REPLAYGAIN_TRACK_GAIN"], "-4.080000 dB")
@@ -274,6 +277,42 @@ class TAPEv2File(TestCase):
         self.failUnless(self.audio.tags is not None)
         self.failUnlessRaises(ValueError, self.audio.add_tags)
 add(TAPEv2File)
+
+class TAPEv2(TestCase):
+
+    def setUp(self):
+        self.audio = APEv2(OLD)
+
+    def test_guess_text(self):
+        from mutagen.apev2 import APETextValue
+        self.audio["test"] = u"foobar"
+        self.failUnlessEqual(self.audio["test"], "foobar")
+        self.failUnless(isinstance(self.audio["test"], APETextValue))
+
+    def test_guess_text_list(self):
+        from mutagen.apev2 import APETextValue
+        self.audio["test"] = [u"foobar", "quuxbarz"]
+        self.failUnlessEqual(self.audio["test"], "foobar\x00quuxbarz")
+        self.failUnless(isinstance(self.audio["test"], APETextValue))
+
+    def test_guess_text_list(self):
+        from mutagen.apev2 import APETextValue
+        self.audio["test"] = [u"foobar", "quuxbarz"]
+        self.failUnlessEqual(self.audio["test"], "foobar\x00quuxbarz")
+        self.failUnless(isinstance(self.audio["test"], APETextValue))
+
+    def test_guess_utf8(self):
+        from mutagen.apev2 import APETextValue
+        self.audio["test"] = "foobar"
+        self.failUnlessEqual(self.audio["test"], "foobar")
+        self.failUnless(isinstance(self.audio["test"], APETextValue))
+
+    def test_guess_not_utf8(self):
+        from mutagen.apev2 import APEBinaryValue
+        self.audio["test"] = "\xa4woo"
+        self.failUnless(isinstance(self.audio["test"], APEBinaryValue))
+    
+add(TAPEv2)
 
 add(APEReader)
 add(APEWriter)
