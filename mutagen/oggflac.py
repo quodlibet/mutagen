@@ -97,7 +97,7 @@ class OggFLACVComment(VCFLACDict):
             if page.serial == first_page.serial:
                 old_pages.append(page)
 
-        packets = OggPage.to_packets(old_pages, strict=True)
+        packets = OggPage.to_packets(old_pages, strict=False)
 
         # Set the new comment block.
         data = self.write()

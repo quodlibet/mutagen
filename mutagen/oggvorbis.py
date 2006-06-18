@@ -93,7 +93,7 @@ class OggVCommentDict(VCommentDict):
             if page.serial == old_pages[0].serial:
                 old_pages.append(page)
 
-        packets = OggPage.to_packets(old_pages, strict=True)
+        packets = OggPage.to_packets(old_pages, strict=False)
 
         # Set the new comment packet.
         packets[0] = "\x03vorbis" + self.write()

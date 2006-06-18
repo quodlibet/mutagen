@@ -118,6 +118,23 @@ class TOggVorbis(TOggFileType):
         self.failUnlessRaises(IOError, self.audio.save, fn)
         self.failUnlessRaises(IOError, self.audio.delete, fn)
 
+    def test_save_split_setup_packet(self):
+        fn = os.path.join("tests", "data", "multipage-setup.ogg")
+        shutil.copy(fn, self.filename)
+        audio = OggVorbis(self.filename)
+        tags = audio.tags
+        self.failUnless(tags)
+        audio.save()
+        self.audio = OggVorbis(self.filename)
+        self.failUnlessEqual(self.audio.tags, tags)
+
+    def test_save_split_setup_packet_vorbiscomment(self):
+        if ogg is None: return
+        self.test_save_split_setup_packet()
+        vfc = ogg.vorbis.VorbisFile(self.filename).comment()
+        for key in self.audio:
+            self.failUnlessEqual(vfc[key], self.audio[key])
+
 try: import ogg.vorbis
 except ImportError:
     print "WARNING: Skipping Ogg Vorbis reference tests."
