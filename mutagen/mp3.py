@@ -225,7 +225,11 @@ class MP3(FileType):
             try: offset = self.tags._size
             except AttributeError: offset = None
         else: offset = None
-        self.info = MPEGInfo(file(filename, "rb"), offset)
+        try:
+            fileobj = file(filename, "rb")
+            self.info = MPEGInfo(fileobj, offset)
+        finally:
+            fileobj.close()
 
 Open = MP3
 

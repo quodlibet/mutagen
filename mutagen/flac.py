@@ -260,10 +260,14 @@ class FLAC(FileType):
         """Load file information from a filename."""
 
         self.filename = filename
-        f = file(filename, "rb")
-        if f.read(4) != "fLaC":
-            raise FLACNoHeaderError("%r is not a valid FLAC file" % filename)
-        while self.__read_metadata_block(f): pass
+        try:
+            fileobj = file(filename, "rb")
+            if fileobj.read(4) != "fLaC":
+                raise FLACNoHeaderError(
+                    "%r is not a valid FLAC file" % filename)
+            while self.__read_metadata_block(fileobj): pass
+        finally:
+            fileobj.close()
 
         try: self.metadata_blocks[0].length
         except (AttributeError, IndexError):

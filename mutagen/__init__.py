@@ -140,10 +140,12 @@ def File(filename, options=None):
     if not options:
         return None
 
-    fileobj = file(filename, "rb")
-    header = fileobj.read(128)
-
-    results = [Kind.score(filename, fileobj, header) for Kind in options]
+    try:
+        fileobj = file(filename, "rb")
+        header = fileobj.read(128)
+        results = [Kind.score(filename, fileobj, header) for Kind in options]
+    finally:
+        fileobj.close()
     results = zip(results, options)
     results.sort()
     score, Kind = results[-1]

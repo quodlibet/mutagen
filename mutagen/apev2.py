@@ -195,10 +195,11 @@ class APEv2(DictMixin, Metadata):
     def load(self, filename):
         """Load tags from a filename."""
         self.filename = filename
-
         fileobj = file(filename, "rb")
-        data = _APEv2Data(fileobj)
-        fileobj.close()
+        try:
+            data = _APEv2Data(fileobj)
+        finally:
+            fileobj.close()
         if data.tag:
             self.__parse_tag(data.tag, data.items)
         else:
