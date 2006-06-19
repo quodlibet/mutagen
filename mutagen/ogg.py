@@ -57,7 +57,7 @@ class OggPage(object):
 
     version = 0
     __type_flags = 0
-    position = -1L
+    position = 0L
     serial = 0
     sequence = 0
     offset = None

@@ -421,5 +421,45 @@ class TOggFileType(TestCase):
         self.failUnlessRaises(IOError, self.audio.save,
                               os.path.join('tests', 'data', 'xing.mp3'))
 
+    def test_ogg_reference_simple_save(self):
+        self.audio.save()
+        self.scan_file()
+        value = os.system("ogginfo %s > /dev/null 2> /dev/null" % self.filename)
+        self.failIf(value and value != NOTFOUND)
+
+    def test_ogg_reference_really_big(self):
+        self.test_really_big()
+        self.audio.save()
+        self.scan_file()
+        value = os.system("ogginfo %s > /dev/null 2> /dev/null" % self.filename)
+        self.failIf(value and value != NOTFOUND)
+
+    def test_ogg_reference_delete(self):
+        self.audio.delete()
+        self.scan_file()
+        value = os.system("ogginfo %s > /dev/null 2> /dev/null" % self.filename)
+        self.failIf(value and value != NOTFOUND)
+ 
+    def test_ogg_reference_medium_sized(self):
+        self.audio["foobar"] = "foobar" * 1000
+        self.audio.save()
+        self.scan_file()
+        value = os.system("ogginfo %s > /dev/null 2> /dev/null" % self.filename)
+        self.failIf(value and value != NOTFOUND)
+
+    def test_ogg_reference_delete_readd(self):
+        self.audio.delete()
+        self.audio.tags.clear()
+        self.audio["foobar"] = "foobar" * 1000
+        self.audio.save()
+        self.scan_file()
+        value = os.system("ogginfo %s > /dev/null 2> /dev/null" % self.filename)
+        self.failIf(value and value != NOTFOUND)
+ 
     def tearDown(self):
         os.unlink(self.filename)
+
+NOTFOUND = os.system("tools/notarealprogram 2> /dev/null")
+
+if os.system("ogginfo > /dev/null 2> /dev/null") == NOTFOUND:
+    print "WARNING: Skipping Ogg reference tests."

@@ -90,8 +90,6 @@ class OggTheoraCommentDict(VCommentDict):
         packets[0] = "\x81theora" + self.write(framing=False)
 
         new_pages = OggPage.from_packets(packets, old_pages[0].sequence)
-        for page in new_pages:
-            page.position = 0
         OggPage.replace(fileobj, old_pages, new_pages)
 
 class OggTheora(OggFileType):

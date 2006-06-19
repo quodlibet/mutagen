@@ -42,49 +42,9 @@ class TOggTheora(TOggFileType):
     def test_length(self):
         self.failUnlessAlmostEqual(5.5, self.audio.info.length, 1)
 
-    def test_theora_reference_simple_save(self):
-        self.audio.save()
-        self.scan_file()
-        value = os.system("ogginfo %s > /dev/null 2> /dev/null" % self.filename)
-        self.failIf(value and value != NOTFOUND)
-
-    def test_theora_reference_really_big(self):
-        self.test_really_big()
-        self.audio.save()
-        self.scan_file()
-        value = os.system("ogginfo %s > /dev/null 2> /dev/null" % self.filename)
-        self.failIf(value and value != NOTFOUND)
-
     def test_module_delete(self):
         delete(self.filename)
         self.scan_file()
         self.failIf(OggTheora(self.filename).tags)
 
-    def test_theora_reference_delete(self):
-        self.audio.delete()
-        self.scan_file()
-        value = os.system("ogginfo %s > /dev/null 2> /dev/null" % self.filename)
-        self.failIf(value and value != NOTFOUND)
- 
-    def test_theora_reference_medium_sized(self):
-        self.audio["foobar"] = "foobar" * 1000
-        self.audio.save()
-        self.scan_file()
-        value = os.system("ogginfo %s > /dev/null 2> /dev/null" % self.filename)
-        self.failIf(value and value != NOTFOUND)
-
-    def test_theora_reference_delete_readd(self):
-        self.audio.delete()
-        self.audio.tags.clear()
-        self.audio["foobar"] = "foobar" * 1000
-        self.audio.save()
-        self.scan_file()
-        value = os.system("ogginfo %s > /dev/null 2> /dev/null" % self.filename)
-        self.failIf(value and value != NOTFOUND)
- 
 add(TOggTheora)
-
-NOTFOUND = os.system("tools/notarealprogram 2> /dev/null")
-
-if os.system("ogginfo > /dev/null 2> /dev/null") == NOTFOUND:
-    print "WARNING: Skipping Ogg Theora reference tests."
