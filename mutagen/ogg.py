@@ -381,6 +381,9 @@ class OggPage(object):
 
         If the file is not multiplexed this function is fast. If it is,
         it must read the whole the stream.
+
+        This finds the last page in the actual file object, or the last
+        page in the stream (with eos set), whichever comes first.
         """
 
         # For non-muxed streams, look at the last page.
@@ -394,20 +397,24 @@ class OggPage(object):
             raise error("unable to find final Ogg header")
         stringobj = StringIO(data[index:])
         page = OggPage(stringobj)
-        if page.serial == serial and page.last:
-            return page
-        else:
-            # The stream is muxed, so use the slow way.
-            fileobj.seek(0)
-            try:
+        best_page = None
+        if page.serial == serial:
+            if page.last: return page
+            else: best_page = page
+        else: best_page = None
+
+        # The stream is muxed, so use the slow way.
+        fileobj.seek(0)
+        try:
+            page = OggPage(fileobj)
+            while not page.last:
                 page = OggPage(fileobj)
-                while not page.last:
+                while page.serial != serial:
                     page = OggPage(fileobj)
-                    while page.serial != serial:
-                        page = OggPage(fileobj)
-                return page
-            except EOFError:
-                return None
+                best_page = page
+            return page
+        except EOFError:
+            return best_page
     find_last = classmethod(find_last)
 
 class OggFileType(FileType):
@@ -438,7 +445,10 @@ class OggFileType(FileType):
 
                 last_page = OggPage.find_last(fileobj, self.info.serial)
                 samples = last_page.position
-                self.info.length = samples / float(self.info.sample_rate)
+                try:
+                    self.info.length = samples / float(self.info.sample_rate)
+                except AttributeError:
+                    self.info.length = samples / float(self.info.fps)
 
             except error, e:
                 raise self._Error, e, sys.exc_info()[2]

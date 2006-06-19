@@ -1,3 +1,14 @@
+1.5
+ * Bug Fixes:
+   * APEv2
+      * Invalid Lyrics3v2 tags are properly ignored/overwritten.
+      * Binary values are properly autodetected.
+   * OggVorbis, OggFLAC:
+      * Write when the setup packet spans multiple pages.
+
+ * New Features:
+   * mutagen.oggtheora: Read/tag Ogg Theora files.
+
 1.4 - 2006.06.03
  * Bug Fixes:
    * EasyID3: Fix tag["key"] = "string" handler. (#693)
