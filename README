@@ -30,7 +30,7 @@ To look at the tags in files, run
  $ tools/mutagen-inspect filename ...
 
 To run our test suite,
- $ ./_sanity.sh
+ $ ./setup.py test
 
 If you install pyvorbis and/or eyeD3, compatibility tests will be run.
 
