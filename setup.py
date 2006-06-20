@@ -15,7 +15,9 @@ class clean(distutils_clean):
         # and pyo files from the source tree.
         distutils_clean.run(self)
         def should_remove(filename):
-            if filename.lower()[-4:] in [".pyc", ".pyo"]:
+            if (filename.lower()[-4:] in [".pyc", ".pyo"] or
+                filename.endswith("~") or
+                (filename.startswith("#") and filename.endswith("#"))):
                 return True
             else:
                 return False
@@ -58,7 +60,6 @@ class test_cmd(Command):
         print "Running tests with mocked failing mmap."
         if tests.unit(self.to_run):
             raise SystemExit("Test failures are listed above.")
-        
 
 class coverage_cmd(Command):
     description = "generate test coverage data"
