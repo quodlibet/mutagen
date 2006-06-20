@@ -22,7 +22,6 @@ import struct
 
 from mutagen._vorbis import VCommentDict
 from mutagen.ogg import OggPage, OggFileType, error as OggError
-from mutagen._util import cdata
 
 class error(OggError): pass
 class OggTheoraHeaderError(error): pass
@@ -45,7 +44,7 @@ class OggTheoraInfo(object):
             raise OggTheoraHeaderError(
                 "page has ID header, but doesn't start a stream")
         data = page.packets[0]
-        vmaj, vmin, vrev = struct.unpack("3B", data[7:10])
+        vmaj, vmin = struct.unpack("2B", data[7:9])
         if (vmaj, vmin) != (3, 2):
             raise OggTheoraHeaderError(
                 "found Theora version %d.%d != 3.2" % (vmaj, vmin))

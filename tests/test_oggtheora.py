@@ -28,6 +28,12 @@ class TOggTheora(TOggFileType):
         fileobj = StringIO(page.write())
         self.failUnlessRaises(IOError, OggTheoraInfo, fileobj)
 
+    def test_theora_not_first_page(self):
+        page = OggPage(file(self.filename, "rb"))
+        page.first = False
+        fileobj = StringIO(page.write())
+        self.failUnlessRaises(IOError, OggTheoraInfo, fileobj)
+
     def test_vendor(self):
         self.failUnless(
             self.audio.tags.vendor.startswith("Xiph.Org libTheora"))

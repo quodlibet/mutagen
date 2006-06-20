@@ -1,13 +1,15 @@
-1.5
+1.5 - 2006.06.20
  * Bug Fixes:
    * APEv2
-      * Invalid Lyrics3v2 tags are properly ignored/overwritten.
-      * Binary values are properly autodetected.
+      * Invalid Lyrics3v2 tags are ignored/overwritten.
+      * Binary values are autodetected as documented.
    * OggVorbis, OggFLAC:
       * Write when the setup packet spans multiple pages.
+      * Zero granule position for header packets.
 
  * New Features:
    * mutagen.oggtheora: Read/tag Ogg Theora files.
+   * Test Ogg formats with ogginfo, if present.
 
 1.4 - 2006.06.03
  * Bug Fixes:

@@ -283,7 +283,7 @@ class TOggPage(TestCase):
         self.failUnlessEqual(
             OggPage.find_last(data, pages[0].serial), pages[-1])
 
-    def test_find_last(self):
+    def test_find_last_really_last(self):
         pages = [OggPage() for i in range(10)]
         pages[-1].last = True
         for i, page in enumerate(pages): page.sequence = i
