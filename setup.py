@@ -76,8 +76,7 @@ class coverage_cmd(Command):
             count=True, trace=False, ignoremods=["tests"],
             ignoredirs=[sys.prefix, sys.exec_prefix, "tests"])
         def run_tests():
-            import tests
-            tests.unit()
+            test_cmd(self.distribution).run()
         tracer.runfunc(run_tests)
         results = tracer.results()
         coverage = os.path.join(os.path.dirname(__file__), "coverage")
