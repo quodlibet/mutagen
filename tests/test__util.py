@@ -1,5 +1,6 @@
 from mutagen._util import DictMixin, cdata, utf8, insert_bytes, delete_bytes
 from tests import TestCase, add
+import mmap
 
 class FDict(DictMixin):
     def __init__(self):
@@ -297,24 +298,3 @@ class FileHandling(TestCase):
         self.failUnless(data == self.read(o))
 
 add(FileHandling)
-
-class FileHandlingNoMMap(FileHandling):
-    # run the FileHandling tests with a broken mmap#move to simulate amd64
-    class MockMMap(object):
-        def __init__(self, *args, **kwargs): pass
-        def move(self, dest, src, count): raise ValueError
-        def close(self): pass
-
-    from mmap import mmap as __real_mmap_mmap
-
-    def setUp(self):
-        super(FileHandlingNoMMap, self).setUp()
-        import mmap
-        mmap.mmap = self.MockMMap
-
-    def tearDown(self):
-        super(FileHandlingNoMMap, self).tearDown()
-        import mmap
-        mmap.mmap = self.__real_mmap_mmap
-
-add(FileHandlingNoMMap)
