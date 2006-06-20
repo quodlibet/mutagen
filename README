@@ -32,7 +32,12 @@ To look at the tags in files, run
 To run our test suite,
  $ ./setup.py test
 
-If you install pyvorbis and/or eyeD3, compatibility tests will be run.
+If you install pyvorbis, eyeD3, flac, and ogginfo, compatibility tests
+will be run (if not a warning will be printed).
+
+If you're using Python 2.4.2 the tests will fail. This is due to a
+file descriptor leak present in that version of Python. 2.4.1 and
+earlier and 2.4.3 and later work correctly.
 
 Compatibility
 -------------
