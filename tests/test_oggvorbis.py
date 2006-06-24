@@ -128,12 +128,29 @@ class TOggVorbis(TOggFileType):
         self.audio = OggVorbis(self.filename)
         self.failUnlessEqual(self.audio.tags, tags)
 
-    def test_save_split_setup_packet_vorbiscomment(self):
+    def test_save_split_setup_packet_reference(self):
         if ogg is None: return
         self.test_save_split_setup_packet()
         vfc = ogg.vorbis.VorbisFile(self.filename).comment()
         for key in self.audio:
             self.failUnlessEqual(vfc[key], self.audio[key])
+        self.ogg_reference(self.filename)
+
+    def test_save_grown_split_setup_packet_reference(self):
+        if ogg is None: return
+        fn = os.path.join("tests", "data", "multipage-setup.ogg")
+        shutil.copy(fn, self.filename)
+        audio = OggVorbis(self.filename)
+        audio["foobar"] = ["quux" * 50000]
+        tags = audio.tags
+        self.failUnless(tags)
+        audio.save()
+        self.audio = OggVorbis(self.filename)
+        self.failUnlessEqual(self.audio.tags, tags)
+        vfc = ogg.vorbis.VorbisFile(self.filename).comment()
+        for key in self.audio:
+            self.failUnlessEqual(vfc[key], self.audio[key])
+        self.ogg_reference(self.filename)
 
 try: import ogg.vorbis
 except ImportError:
