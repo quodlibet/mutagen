@@ -279,7 +279,54 @@ class ID3v1Tags(TestCase):
         empty = 'TAG' + '\x00' * 124 + '\xff'
         self.assertEquals(MakeID3v1({}), empty)
         self.assertEquals(MakeID3v1({'TCON': TCON()}), empty)
-        self.assertEquals(MakeID3v1({'COMM': COMM(encoding=0, text="")}), empty)
+        self.assertEquals(
+            MakeID3v1({'COMM': COMM(encoding=0, text="")}), empty)
+
+class TestWriteID3v1(TestCase):
+    SILENCE = os.path.join("tests", "data", "silence-44-s.mp3")
+    def setUp(self):
+        from tempfile import mkstemp
+        fd, self.filename = mkstemp(suffix='.ogg')
+        os.close(fd)
+        shutil.copy(self.SILENCE, self.filename)
+        self.audio = ID3(self.filename)
+
+    def failIfV1(self):
+        fileobj = file(self.filename, "rb")
+        fileobj.seek(-128, 2)
+        self.failIf(fileobj.read(3) == "TAG")
+
+    def failUnlessV1(self):
+        fileobj = file(self.filename, "rb")
+        fileobj.seek(-128, 2)
+        self.failUnless(fileobj.read(3) == "TAG")
+
+    def test_save_delete(self):
+        self.audio.save(v1=0)
+        self.failIfV1()
+
+    def test_save_add(self):
+        self.audio.save(v1=2)
+        self.failUnlessV1()
+
+    def test_save_add(self):
+        self.audio.save(v1=2)
+        self.failUnlessV1()
+
+    def test_save_defaults(self):
+        self.audio.save(v1=0)
+        self.failIfV1()
+        self.audio.save(v1=1)
+        self.failIfV1()
+        self.audio.save(v1=2)
+        self.failUnlessV1()
+        self.audio.save(v1=1)
+        self.failUnlessV1()
+
+    def tearDown(self):
+        os.unlink(self.filename)
+
+add(TestWriteID3v1)
 
 def TestReadTags():
     tests = [
@@ -383,6 +430,8 @@ def TestReadTags():
         dict(email="foo@bar.org", rating=222, count=17)],
 
     ['UFID', 'own\x00data', 'data', '', dict(data='data', owner='own')],
+    ['UFID', 'own\x00\xdd', '\xdd', '', dict(data='\xdd', owner='own')],
+
     ['GEOB', '\x00mime\x00name\x00desc\x00data', 'data', '',
         dict(encoding=0, mime='mime', filename='name', desc='desc')],
 
@@ -399,6 +448,9 @@ def TestReadTags():
 
     ['PRIV', 'a@b.org\x00random data', 'random data', 'random data',
      dict(owner='a@b.org', data='random data')],
+    ['PRIV', 'a@b.org\x00\xdd', '\xdd', '\xdd',
+     dict(owner='a@b.org', data='\xdd')],
+
     ['SIGN', '\x92huh?', 'huh?', 'huh?', dict(group=0x92, sig='huh?')],
     ['ENCR', 'a@b.org\x00\x92Data!', 'Data!', 'Data!',
      dict(owner='a@b.org', method=0x92, data='Data!')],
