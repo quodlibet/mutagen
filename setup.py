@@ -116,7 +116,7 @@ else:
     data_files = []
 
 setup(cmdclass={'clean': clean, 'test': test_cmd, 'coverage': coverage_cmd},
-      name="mutagen", version="1.4",
+      name="mutagen", version="1.5.1",
       url="http://www.sacredchao.net/quodlibet/wiki/Development/Mutagen",
       description="read and write ID3v1/ID3v2/APEv2/FLAC/Ogg audio tags",
       author="Michael Urman",
@@ -128,10 +128,9 @@ setup(cmdclass={'clean': clean, 'test': test_cmd, 'coverage': coverage_cmd},
       long_description="""\
 Mutagen is a Python module to handle audio metadata. It supports
 reading ID3 (all versions), APEv2, FLAC, and Ogg Vorbis/FLAC/Theora.
-It can write ID3v1.1, ID3v2.4, APEv2, FLAC, and Ogg
-Vorbis/FLAC/Theora. It can also read MPEG audio and Xing headers, FLAC
-stream info blocks, and Ogg Vorbis/FLAC/Theora stream
-headers. Finally, it includes a module to handle generic Ogg
-bitstreams.
+It can write ID3v1.1, ID3v2.4, APEv2, FLAC, and Ogg Vorbis/FLAC/Theora
+comments. It can also read MPEG audio and Xing headers, FLAC stream
+info blocks, and Ogg Vorbis/FLAC/Theora stream headers. Finally, it
+includes a module to handle generic Ogg bitstreams.
 """
     )

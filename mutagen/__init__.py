@@ -21,7 +21,7 @@ depending on tag or format. They may also be entirely different objects
 for certain keys, again depending on format.
 """
 
-version = (1, 5, 0)
+version = (1, 5, 1)
 
 import mutagen._util
 

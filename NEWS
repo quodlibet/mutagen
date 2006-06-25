@@ -1,3 +1,8 @@
+1.5.1
+ * Bug Fixes:
+   * Handle ENODEV from mmap (e.g. on fuse+sshfs).
+   * Reduce test rerun time.
+
 1.5 - 2006.06.20
  * Bug Fixes:
    * APEv2
