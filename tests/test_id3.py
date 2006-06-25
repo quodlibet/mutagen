@@ -346,6 +346,18 @@ class TestWriteID3v1(TestCase):
 
 add(TestWriteID3v1)
 
+class TestV22Tags(TestCase):
+    uses_mmap = False
+
+    def setUp(self):
+        filename = os.path.join("tests", "data", "id3v22-test.mp3")
+        self.tags = ID3(filename)
+
+    def test_tags(self):
+        self.failUnless(self.tags["TRCK"].text == ["3/11"])
+        self.failUnless(self.tags["TPE1"].text == ["Anais Mitchell"])
+add(TestV22Tags)
+
 def TestReadTags():
     tests = [
     ['TALB', '\x00a/b', 'a/b', '', dict(encoding=0)],
