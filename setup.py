@@ -48,16 +48,24 @@ class test_cmd(Command):
     def run(self):
         import tests
         import mmap
-        from mmap import mmap as real_mmap
+
+        print "Running tests with real mmap."
+        if tests.unit(self.to_run):
+            raise SystemExit("Test failures are listed above.")
+
         class MockMMap(object):
             def __init__(self, *args, **kwargs): pass
             def move(self, dest, src, count): raise ValueError
             def close(self): pass
-        print "Running tests with real mmap."
+        print "Running tests with mocked failing mmap.move."
+        mmap.mmap = MockMMap
         if tests.unit(self.to_run):
             raise SystemExit("Test failures are listed above.")
-        mmap.mmap = MockMMap
-        print "Running tests with mocked failing mmap."
+
+        def MockMMap2(*args, **kwargs):
+            raise EnvironmentError
+        mmap.mmap = MockMMap2
+        print "Running tests with mocked failing mmap.mmap."
         if tests.unit(self.to_run):
             raise SystemExit("Test failures are listed above.")
 
