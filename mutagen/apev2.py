@@ -95,36 +95,33 @@ class _APEv2Data(object):
             return
 
         # Check for an APEv2 tag followed by an ID3v1 tag at the end.
-        try: fileobj.seek(-128, 2)
-        except IOError:
-            pass
-        else:
+        try:
+            fileobj.seek(-128, 2)
             if fileobj.read(3) == "TAG":
-                try: fileobj.seek(-35, 1) # "TAG" + header length
-                except IOError:
-                    pass
-                else:
+
+                fileobj.seek(-35, 1) # "TAG" + header length
+                if fileobj.read(8) == "APETAGEX":
+                    fileobj.seek(-8, 1)
+                    self.footer = fileobj.tell()
+                    return
+
+                # ID3v1 tag at the end, maybe preceded by Lyrics3v2.
+                # (http://www.id3.org/lyrics3200.html)
+                # (header length - "APETAGEX") - "LYRICS200"
+                fileobj.seek(15, 1)
+                if fileobj.read(9) == 'LYRICS200':
+                    fileobj.seek(-15, 1) # "LYRICS200" + size tag
+                    try: offset = int(fileobj.read(6))
+                    except ValueError: raise IOError
+
+                    fileobj.seek(-32 - offset - 6, 1)
                     if fileobj.read(8) == "APETAGEX":
                         fileobj.seek(-8, 1)
                         self.footer = fileobj.tell()
                         return
-                    else:
-                        # ID3v1 tag at the end, maybe preceded by Lyrics3v2.
-                        # (http://www.id3.org/lyrics3200.html)
-                        # (header length - "APETAGEX") - "LYRICS200"
-                        fileobj.seek(15, 1)
-                        if fileobj.read(9) == 'LYRICS200':
-                            fileobj.seek(-15, 1) # "LYRICS200" + size tag
-                            try:
-                                offset = int(fileobj.read(6))
-                                fileobj.seek(-32 - offset - 6, 1)
-                            except (IOError, ValueError):
-                                pass
-                            else:
-                                if fileobj.read(8) == "APETAGEX":
-                                    fileobj.seek(-8, 1)
-                                    self.footer = fileobj.tell()
-                                    return
+
+        except IOError:
+            pass
 
         # Check for a tag at the start.
         fileobj.seek(0, 0)
