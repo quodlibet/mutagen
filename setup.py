@@ -85,8 +85,8 @@ class coverage_cmd(Command):
     def run(self):
         import trace
         tracer = trace.Trace(
-            count=True, trace=False, ignoremods=["tests"],
-            ignoredirs=[sys.prefix, sys.exec_prefix, "tests"])
+            count=True, trace=False,
+            ignoredirs=[sys.prefix, sys.exec_prefix])
         def run_tests():
             test_cmd(self.distribution).run()
         tracer.runfunc(run_tests)
