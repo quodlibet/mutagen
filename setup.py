@@ -53,20 +53,23 @@ class test_cmd(Command):
         if tests.unit(self.to_run):
             raise SystemExit("Test failures are listed above.")
 
+        def uses_mmap(Kind):
+            return getattr(Kind, 'uses_mmap', True)
+
         class MockMMap(object):
             def __init__(self, *args, **kwargs): pass
             def move(self, dest, src, count): raise ValueError
             def close(self): pass
         print "Running tests with mocked failing mmap.move."
         mmap.mmap = MockMMap
-        if tests.unit(self.to_run):
+        if tests.unit(self.to_run, uses_mmap):
             raise SystemExit("Test failures are listed above.")
 
         def MockMMap2(*args, **kwargs):
             raise EnvironmentError
         mmap.mmap = MockMMap2
         print "Running tests with mocked failing mmap.mmap."
-        if tests.unit(self.to_run):
+        if tests.unit(self.to_run, uses_mmap):
             raise SystemExit("Test failures are listed above.")
 
 class coverage_cmd(Command):

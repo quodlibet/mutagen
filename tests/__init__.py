@@ -6,6 +6,7 @@ import sys
 import unittest
 
 from unittest import TestCase
+TestCase.uses_mmap = True
 suites = []
 add = suites.append
 
@@ -55,10 +56,11 @@ class Runner(object):
         result.printErrors()
         return bool(result.failures + result.errors)
 
-def unit(run=[]):
+def unit(run=[], filter_func=None):
     runner = Runner()
     failures = False
-    for test in suites:
+    use_suites = filter(filter_func, suites)
+    for test in use_suites:
         if not run or test.__name__ in run:
             failures |= runner.run(test)
     return failures

@@ -8,6 +8,8 @@ from mutagen.ogg import OggPage, error as OggError
 from tempfile import mkstemp
 
 class TOggPage(TestCase):
+    uses_mmap = False
+
     def setUp(self):
         self.fileobj = file(os.path.join("tests", "data", "empty.ogg"), "rb")
         self.page = OggPage(self.fileobj)

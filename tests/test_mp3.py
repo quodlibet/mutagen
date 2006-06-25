@@ -103,6 +103,8 @@ class TMP3(TestCase):
 add(TMP3)
 
 class TMPEGInfo(TestCase):
+    uses_mmap = False
+
     def test_not_real_file(self):
         filename = os.path.join("tests", "data", "silence-44-s-v1.mp3")
         fileobj = StringIO(file(filename, "rb").read(20))

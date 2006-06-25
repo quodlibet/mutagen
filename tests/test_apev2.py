@@ -101,6 +101,8 @@ class APEWriter(TestCase):
         os.unlink(SAMPLE + ".tag_at_start")
 
 class APEReader(TestCase):
+    uses_mmap = False
+
     def setUp(self):
         self.tag = mutagen.apev2.APEv2(OLD)
 
@@ -146,6 +148,8 @@ class APEReader(TestCase):
         self.failUnless(self.tag.pprint())
 
 class APEv2ThenID3v1Reader(APEReader):
+    uses_mmap = False
+
     def setUp(self):
         import shutil
         shutil.copy(OLD, OLD + ".new")
@@ -179,6 +183,8 @@ class APEv2ThenID3v1Writer(APEWriter):
 add(APEv2ThenID3v1Writer)
 
 class APEv2WithLyrics2(TestCase):
+    uses_mmap = False
+
     def setUp(self):
         self.tag = mutagen.apev2.APEv2(LYRICS2)
 
@@ -190,6 +196,8 @@ class APEv2WithLyrics2(TestCase):
 add(APEv2WithLyrics2)
 
 class APEKeyTest(TestCase):
+    uses_mmap = False
+
     from mutagen.apev2 import APEKey
 
     def test_eq(self):
@@ -209,6 +217,8 @@ class APEKeyTest(TestCase):
         self.failUnless(repr(self.APEKey("foo")))
 
 class APEBinaryTest(TestCase):
+    uses_mmap = False
+
     from mutagen.apev2 import APEBinaryValue as BV
 
     def setUp(self):
@@ -225,6 +235,8 @@ class APEBinaryTest(TestCase):
         repr(self.value)
 
 class APETextTest(TestCase):
+    uses_mmap = False
+
     from mutagen.apev2 import APETextValue as TV
     def setUp(self):
         self.sample = ["foo", "bar", "baz"]
@@ -251,6 +263,8 @@ class APETextTest(TestCase):
         repr(self.value)
 
 class APEExtTest(TestCase):
+    uses_mmap = False
+
     from mutagen.apev2 import APEExtValue as EV
 
     def setUp(self):
@@ -268,6 +282,8 @@ class APEExtTest(TestCase):
         repr(self.value)
 
 class TAPEv2File(TestCase):
+    uses_mmap = False
+
     def setUp(self):
         self.audio = APEv2File("tests/data/click.mpc")
 
@@ -279,6 +295,7 @@ class TAPEv2File(TestCase):
 add(TAPEv2File)
 
 class TAPEv2(TestCase):
+    uses_mmap = False
 
     def setUp(self):
         self.audio = APEv2(OLD)

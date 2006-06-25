@@ -5,6 +5,8 @@ from mutagen.flac import StreamInfo, FLAC, delete
 from tests.test__vorbis import TVCommentDict, VComment
 
 class Tto_int_be(TestCase):
+    uses_mmap = False
+
     def test_empty(self): self.failUnlessEqual(to_int_be(""), 0)
     def test_0(self): self.failUnlessEqual(to_int_be("\x00"), 0)
     def test_1(self): self.failUnlessEqual(to_int_be("\x01"), 1)
@@ -14,6 +16,8 @@ class Tto_int_be(TestCase):
 add(Tto_int_be)
 
 class TVCFLACDict(TVCommentDict):
+    uses_mmap = False
+
     Kind = VCFLACDict
 
     def test_roundtrip_vc(self):
@@ -21,6 +25,8 @@ class TVCFLACDict(TVCommentDict):
 add(TVCFLACDict)
 
 class TMetadataBlock(TestCase):
+    uses_mmap = False
+
     def test_empty(self):
         self.failUnlessEqual(MetadataBlock("").write(), "")
     def test_not_empty(self):
@@ -50,6 +56,8 @@ class TMetadataBlock(TestCase):
 add(TMetadataBlock)
 
 class TStreamInfo(TestCase):
+    uses_mmap = False
+
     data = ("\x12\x00\x12\x00\x00\x00\x0e\x00\x35\xea\x0a\xc4\x42\xf0"
             "\x00\xca\x30\x14\x28\x90\xf9\xe1\x29\x32\x13\x01\xd4\xa7"
             "\xa9\x11\x21\x38\xab\x91")
@@ -79,6 +87,8 @@ class TStreamInfo(TestCase):
 add(TStreamInfo)
         
 class TPadding(TestCase):
+    uses_mmap = False
+
     def setUp(self): self.b = Padding("\x00" * 100)
     def test_padding(self): self.failUnlessEqual(self.b.write(), "\x00" * 100)
     def test_blank(self): self.failIf(Padding().write())

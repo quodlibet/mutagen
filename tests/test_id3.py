@@ -15,6 +15,8 @@ _23 = ID3(); _23.version = (2,3,0)
 _24 = ID3(); _24.version = (2,4,0)
 
 class ID3GetSetDel(TestCase):
+    uses_mmap = False
+
     def setUp(self):
         self.i = ID3()
         self.i["BLAH"] = 1
@@ -64,6 +66,8 @@ class ID3GetSetDel(TestCase):
         self.assert_(self.i.getall("FOOB") in [[t, t2], [t2, t]])
 
 class ID3Loading(TestCase):
+    uses_mmap = False
+
 
     empty = join('tests', 'data', 'emptyfile.mp3')
     silence = join('tests', 'data', 'silence-44-s.mp3')
@@ -144,6 +148,8 @@ class ID3Loading(TestCase):
         self.assertRaises(EOFError, id3.fullread, 3)
 
 class ID3Tags(TestCase):
+    uses_mmap = False
+
     def setUp(self):
         self.silence = join('tests', 'data', 'silence-44-s.mp3')
 
@@ -219,6 +225,8 @@ class ID3Tags(TestCase):
 
 
 class ID3v1Tags(TestCase):
+    uses_mmap = False
+
     silence = join('tests', 'data', 'silence-44-s-v1.mp3')
     id3 = ID3(silence)
 
@@ -574,10 +582,13 @@ def TestReadTags():
         write_tests['test_write_%s_%d' % (tag, i)] = test_tag_write
 
     testcase = type('TestReadTags', (TestCase,), load_tests)
+    testcase.uses_mmap = False
     add(testcase)
     testcase = type('TestReadReprTags', (TestCase,), repr_tests)
+    testcase.uses_mmap = False
     add(testcase)
     testcase = type('TestReadWriteTags', (TestCase,), write_tests)
+    testcase.uses_mmap = False
     add(testcase)
 
     test_tests = {}
@@ -588,12 +599,14 @@ def TestReadTags():
         def check(self, tag=tag): self.assert_(tag in tested_tags)
         tested_tags['test_' + tag + '_tested'] = check
     testcase = type('TestTestedTags', (TestCase,), tested_tags)
+    testcase.uses_mmap = False
     add(testcase)
 
 TestReadTags()
 del TestReadTags
 
 class BitPaddedIntTest(TestCase):
+    uses_mmap = False
 
     def test_zero(self):
         self.assertEquals(BitPaddedInt('\x00\x00\x00\x00'), 0)
@@ -650,6 +663,7 @@ class BitPaddedIntTest(TestCase):
         self.assertEquals(len(BitPaddedInt.to_str(2**32, width=-1)), 5)
 
 class SpecSanityChecks(TestCase):
+    uses_mmap = False
 
     def test_bytespec(self):
         from mutagen.id3 import ByteSpec
@@ -712,6 +726,7 @@ class SpecSanityChecks(TestCase):
         self.assertEquals('\xfc\x00', s.write(None, -2.0))
 
 class FrameSanityChecks(TestCase):
+    uses_mmap = False
 
     def test_TF(self):
         from mutagen.id3 import TextFrame
@@ -875,6 +890,8 @@ class FrameSanityChecks(TestCase):
         self.assertNotEquals(USER(lang="abc").HashKey, USER(lang="def").HashKey)
 
 class UpdateTo24(TestCase):
+    uses_mmap = False
+
     def test_pic(self):
         from mutagen.id3 import PIC
         id3 = ID3()
@@ -930,6 +947,8 @@ class UpdateTo24(TestCase):
 add(UpdateTo24)
 
 class Genres(TestCase):
+    uses_mmap = False
+
     from mutagen.id3 import TCON
     from mutagen._constants import GENRES
 
@@ -996,6 +1015,8 @@ class Genres(TestCase):
         self.assertEquals(gen.genres, [u"Unknown", u"genre"])
 
 class BrokenDiscarded(TestCase):
+    uses_mmap = False
+
     def test_empty(self):
         from mutagen.id3 import TPE1, ID3JunkFrameError
         self.assertRaises(ID3JunkFrameError, TPE1.fromData, _24, 0x00, '')
@@ -1028,6 +1049,8 @@ class BrokenDiscarded(TestCase):
         self.assertRaises(ID3JunkFrameError, COMM.fromData, _24, 0x00, data)
 
 class BrokenButParsed(TestCase):
+    uses_mmap = False
+
     def test_missing_encoding(self):
         from mutagen.id3 import TIT2
         tag = TIT2.fromData(_23, 0x00, 'a test')
@@ -1101,6 +1124,8 @@ class BrokenButParsed(TestCase):
 
 
 class TimeStamp(TestCase):
+    uses_mmap = False
+
     from mutagen.id3 import ID3TimeStamp as Stamp
 
     def test_Y(self):
@@ -1327,6 +1352,8 @@ class WriteForEyeD3(TestCase):
         os.unlink(self.newsilence)
 
 class NoHash(TestCase):
+    uses_mmap = False
+
     def test_spec(self):
         from mutagen.id3 import Spec
         self.failUnlessRaises(TypeError, {}.__setitem__, Spec("foo"), None)

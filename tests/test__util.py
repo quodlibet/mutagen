@@ -3,6 +3,8 @@ from tests import TestCase, add
 import mmap
 
 class FDict(DictMixin):
+    uses_mmap = False
+
     def __init__(self):
         self.__d = {}
         self.keys = self.__d.keys
@@ -12,6 +14,8 @@ class FDict(DictMixin):
     def __delitem__(self, *args): return self.__d.__delitem__(*args)
 
 class Tutf8(TestCase):
+    uses_mmap = False
+
     def test_str(self):
         value = utf8("1234")
         self.failUnlessEqual(value, "1234")
@@ -39,6 +43,8 @@ class Tutf8(TestCase):
 add(Tutf8)
 
 class TDictMixin(TestCase):
+    uses_mmap = False
+
     def setUp(self):
         self.fdict = FDict()
         self.rdict = {}
@@ -131,6 +137,8 @@ class TDictMixin(TestCase):
 add(TDictMixin)
 
 class Tcdata(TestCase):
+    uses_mmap = False
+
     ZERO = "\x00\x00\x00\x00"
     LEONE = "\x01\x00\x00\x00"
     BEONE = "\x00\x00\x00\x01"
@@ -182,7 +190,6 @@ class Tcdata(TestCase):
 add(Tcdata)
 
 class FileHandling(TestCase):
-
     def file(self, contents):
         import tempfile
         temp = tempfile.TemporaryFile()
