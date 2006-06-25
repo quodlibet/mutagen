@@ -282,6 +282,24 @@ class ID3v1Tags(TestCase):
         self.assertEquals(
             MakeID3v1({'COMM': COMM(encoding=0, text="")}), empty)
 
+    def test_invalid(self):
+        from mutagen.id3 import ParseID3v1
+        self.failUnless(ParseID3v1("") is None)
+
+    def test_invalid_track(self):
+        from mutagen.id3 import ParseID3v1, MakeID3v1, TRCK
+        tag = {}
+        tag["TRCK"] = TRCK(encoding=0, text="not a number")
+        v1tag = MakeID3v1(tag)
+        self.failIf("TRCK" in ParseID3v1(v1tag))
+
+    def test_v1_genre(self):
+        from mutagen.id3 import ParseID3v1, MakeID3v1, TCON
+        tag = {}
+        tag["TCON"] = TCON(encoding=0, text="Pop")
+        v1tag = MakeID3v1(tag)
+        self.failUnlessEqual(ParseID3v1(v1tag)["TCON"].genres, ["Pop"])
+
 class TestWriteID3v1(TestCase):
     SILENCE = os.path.join("tests", "data", "silence-44-s.mp3")
     def setUp(self):
