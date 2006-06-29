@@ -14,7 +14,7 @@ This module handles Vorbis files wrapped in an Ogg bitstream. The
 first Vorbis stream found is used.
 
 Read more about Ogg Vorbis at http://vorbis.com/. This module is based
-off the specification at http://www.xiph.org/ogg/doc/rfc3533.txt.
+on the specification at http://www.xiph.org/vorbis/doc/Vorbis_I_spec.html.
 """
 
 __all__ = ["OggVorbis", "Open", "delete"]
