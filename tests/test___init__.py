@@ -52,6 +52,9 @@ class TFile(TestCase):
             print "WARNING: Unable to open /dev/null."
         self.failUnless(File(__file__) is None)
 
+    def test_not_file(self):
+        self.failUnlessRaises(EnvironmentError, File, "/dev/doesnotexist")
+
     def test_no_options(self):
         for filename in ["empty.ogg", "empty.oggflac", "silence-44-s.mp3"]:
             filename = os.path.join("tests", "data", "empty.ogg")
