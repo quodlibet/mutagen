@@ -304,6 +304,8 @@ class OggPage(object):
                     # page with this packet.
                     if page.packets[-1]:
                         page.complete = False
+                        if len(page.packets) == 1:
+                            page.position = -1L
                     else:
                         page.packets.pop(-1)
                     pages.append(page)

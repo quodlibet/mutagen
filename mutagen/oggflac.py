@@ -75,7 +75,7 @@ class OggFLACVComment(VCFLACDict):
                 pages.append(page)
                 complete = page.complete or (len(page.packets) > 1)
         comment = StringIO(OggPage.to_packets(pages)[0][4:])
-        super(OggFLACVComment, self).load(comment, errors)
+        super(OggFLACVComment, self).load(comment, errors=errors)
 
     def _inject(self, fileobj):
         """Write tag data into the FLAC Vorbis comment packet/page."""

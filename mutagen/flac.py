@@ -177,11 +177,11 @@ class VCFLACDict(VCommentDict):
 
     code = 4
 
-    def load(self, data, errors='replace'):
-        super(VCFLACDict, self).load(data, errors, False)
+    def load(self, data, errors='replace', framing=False):
+        super(VCFLACDict, self).load(data, errors=errors, framing=False)
 
-    def write(self):
-        return super(VCFLACDict, self).write()[:-1]
+    def write(self, framing=False):
+        return super(VCFLACDict, self).write(framing=framing)
 
 class Padding(MetadataBlock):
     """Empty padding space for metadata blocks.

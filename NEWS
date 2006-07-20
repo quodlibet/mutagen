@@ -1,3 +1,13 @@
+1.6
+ * Bug Fixes:
+   * IOError rather than NameError is raised when File succeeds in
+     typefinding but fails in stream parsing.
+   * errors= kwarg is correctly interpreted for FLAC tags now.
+
+ * New Features:
+   * Vorbis comment vendors include the Mutagen version.
+   * mutagen.oggspeex: Read/tag Ogg Speex files.
+
 1.5.1 - 2006.06.26
  * Bug Fixes:
    * Handle ENODEV from mmap (e.g. on fuse+sshfs).

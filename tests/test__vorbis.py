@@ -59,7 +59,7 @@ class TVComment(TestCase):
         self.failUnlessRaises(ValueError, self.c.write)
 
     def test_vendor_default(self):
-        self.failUnlessEqual(self.c.vendor, "Mutagen")
+        self.failUnless(self.c.vendor.startswith("Mutagen"))
 
     def test_vendor_set(self):
         self.c.vendor = "Not Mutagen"

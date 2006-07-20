@@ -18,6 +18,7 @@ import sys
 
 from cStringIO import StringIO
 
+import mutagen
 from mutagen._util import DictMixin, cdata
 
 try: set
@@ -53,15 +54,18 @@ class VComment(list):
     vendor -- the stream 'vendor' (i.e. writer); default 'Mutagen'
     """
 
-    vendor = u"Mutagen"
+    vendor = u"Mutagen " + mutagen.version_string
 
-    def __init__(self, data=None, errors='replace'):
+    def __init__(self, data=None, *args, **kwargs):
+        # Collect the args to pass to load, this lets child classes
+        # override just load and get equivalent magic for the
+        # constructor.
         if data is not None:
             if isinstance(data, str):
                 data = StringIO(data)
             elif not hasattr(data, 'read'):
                 raise TypeError("VComment requires string data or a file-like")
-            self.load(data, errors)
+            self.load(data, *args, **kwargs)
 
     def load(self, fileobj, errors='replace', framing=True):
         """Parse a Vorbis comment from a file-like object.
