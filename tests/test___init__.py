@@ -8,6 +8,7 @@ from mutagen.oggtheora import OggTheora
 from mutagen.mp3 import MP3
 from mutagen.apev2 import APEv2File
 from mutagen.flac import FLAC
+from mutagen.wavpack import WavPack
 
 class TMetadata(TestCase):
     uses_mmap = False
@@ -93,5 +94,9 @@ class TFile(TestCase):
     def test_apev2(self):
         self.failUnless(isinstance(
             File(os.path.join("tests", "data", "click.mpc")), APEv2File))
+
+    def test_wavpack(self):
+        self.failUnless(isinstance(
+            File(os.path.join("tests", "data", "silence-44-s.wv")), WavPack))
 
 add(TFile)

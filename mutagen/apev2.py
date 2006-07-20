@@ -433,9 +433,10 @@ class APEExtValue(_APEValue):
     def pprint(self): return "[External] %s" % unicode(self)
 
 class APEv2File(FileType):
-    class info(object):
+    class _Info(object):
         length = 0
         bitrate = 0
+        def __init__(self, fileobj): pass
         pprint = staticmethod(lambda: "Unknown APEv2 file type.")
 
     def __init__(self, filename=None):
@@ -444,6 +445,7 @@ class APEv2File(FileType):
 
     def load(self, filename):
         self.filename = filename
+        self.info = self._Info(file(filename, "rb"))
         try: self.tags = APEv2(filename)
         except error: pass
 
@@ -458,7 +460,5 @@ class APEv2File(FileType):
         except IOError: fileobj.seek(0)
         footer = fileobj.read()
         filename = filename.lower()
-        return (("APETAGEX" in footer) * 2 +
-                header.startswith("MP+") * 2 +
-                header.startswith("wvpk") * 2)
+        return ("APETAGEX" in footer) + header.startswith("MP+")
     score = staticmethod(score)

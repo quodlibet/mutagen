@@ -103,6 +103,9 @@ class cdata(object):
 
     from struct import error
 
+    short_le = staticmethod(lambda data: struct.unpack('<h', data)[0])
+    ushort_le = staticmethod(lambda data: struct.unpack('<H', data)[0])
+
     int_le = staticmethod(lambda data: struct.unpack('<i', data)[0])
     uint_le = staticmethod(lambda data: struct.unpack('<I', data)[0])
 
