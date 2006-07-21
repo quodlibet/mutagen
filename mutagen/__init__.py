@@ -136,10 +136,11 @@ def File(filename, options=None):
         from mutagen.oggflac import OggFLAC
         from mutagen.flac import FLAC
         from mutagen.mp3 import MP3
+        from mutagen.id3 import ID3FileType
         from mutagen.apev2 import APEv2File
         from mutagen.wavpack import WavPack
         options = [OggTheora, OggSpeex, OggVorbis, OggFLAC,
-                   FLAC, MP3, APEv2File, WavPack]
+                   FLAC, MP3, APEv2File, ID3FileType, WavPack]
 
     if not options:
         return None

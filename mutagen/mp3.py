@@ -11,7 +11,7 @@ import os
 import struct
 
 from mutagen import FileType
-from mutagen.id3 import ID3, BitPaddedInt, error as ID3Error
+from mutagen.id3 import ID3FileType, BitPaddedInt
 
 class error(RuntimeError): pass
 class HeaderNotFoundError(error, IOError): pass
@@ -190,46 +190,15 @@ class MPEGInfo(object):
         if self.sketchy: s += " (sketchy)"
         return s
 
-class MP3(FileType):
+class MP3(ID3FileType):
     """An MPEG audio (usually MPEG-1 Layer 3) file."""
 
-    def __init__(self, filename=None, ID3=ID3):
-        if filename is not None:
-            self.load(filename, ID3)
+    _Info = MPEGInfo
 
     def score(filename, fileobj, header):
         return (header.startswith("ID3") +
                 filename.lower().endswith(".mp3"))
     score = staticmethod(score)
-
-    def add_tags(self, ID3=ID3):
-        """Add an empty ID3 tag to the file.
-
-        A custom tag reader may be used in instead of the default
-        mutagen.id3.ID3 object, e.g. an EasyID3 reader.
-        """
-        if self.tags is None:
-            self.tags = ID3()
-        else: raise ID3Error("an ID3 tag already exists")
-
-    def load(self, filename, ID3=ID3):
-        """Load stream and tag information from a file.
-
-        A custom tag reader may be used in instead of the default
-        mutagen.id3.ID3 object, e.g. an EasyID3 reader.
-        """
-        self.filename = filename
-        try: self.tags = ID3(filename)
-        except ID3Error: pass
-        if self.tags is not None:
-            try: offset = self.tags._size
-            except AttributeError: offset = None
-        else: offset = None
-        try:
-            fileobj = file(filename, "rb")
-            self.info = MPEGInfo(fileobj, offset)
-        finally:
-            fileobj.close()
 
 Open = MP3
 

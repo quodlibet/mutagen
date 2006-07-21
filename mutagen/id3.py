@@ -1720,3 +1720,49 @@ def MakeID3v1(id3):
     else: v1["year"] = "\x00\x00\x00\x00"
 
     return "TAG%(title)s%(artist)s%(album)s%(year)s%(comment)s%(track)s%(genre)s" % v1 
+
+class ID3FileType(mutagen.FileType):
+    """An unknown type of file with ID3 tags."""
+
+    class _Info(object):
+        length = 0
+        def __init__(self, fileobj, offset): pass
+        pprint = staticmethod(lambda: "Unknown format with ID3 tag")
+
+    def __init__(self, filename=None, ID3=ID3):
+        if filename is not None:
+            self.load(filename, ID3)
+
+    def score(filename, fileobj, header):
+        return header.startswith("ID3")
+    score = staticmethod(score)
+
+    def add_tags(self, ID3=ID3):
+        """Add an empty ID3 tag to the file.
+
+        A custom tag reader may be used in instead of the default
+        mutagen.id3.ID3 object, e.g. an EasyID3 reader.
+        """
+        if self.tags is None:
+            self.tags = ID3()
+        else: raise ID3Error("an ID3 tag already exists")
+
+    def load(self, filename, ID3=ID3):
+        """Load stream and tag information from a file.
+
+        A custom tag reader may be used in instead of the default
+        mutagen.id3.ID3 object, e.g. an EasyID3 reader.
+        """
+        self.filename = filename
+        try: self.tags = ID3(filename)
+        except error: pass
+        if self.tags is not None:
+            try: offset = self.tags._size
+            except AttributeError: offset = None
+        else: offset = None
+        try:
+            fileobj = file(filename, "rb")
+            self.info = self._Info(fileobj, offset)
+        finally:
+            fileobj.close()
+
