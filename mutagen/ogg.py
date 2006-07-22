@@ -349,6 +349,8 @@ class OggPage(object):
         new_pages[-1].first = old_pages[-1].first
         new_pages[-1].last = old_pages[-1].last
         new_pages[-1].complete = old_pages[-1].complete
+        if not new_pages[-1].complete and len(new_pages[-1].packets) == 1:
+            new_pages[-1].position = -1L
 
         new_data = "".join(map(klass.write, new_pages))
 

@@ -435,7 +435,12 @@ class TOggFileType(TestCase):
     def ogg_reference(self, filename):
         self.scan_file()
         value = os.system("ogginfo %s > /dev/null 2> /dev/null" % filename)
-        self.failIf(value and value != NOTFOUND)
+        self.failIf(value and value != NOTFOUND,
+                    "ogginfo failed on %s" % filename)
+        value = os.system(
+            "oggz-validate %s > /dev/null" % filename)
+        self.failIf(value and value != NOTFOUND,
+                    "oggz-validate failed on %s" % filename)
 
     def test_ogg_reference_simple_save(self):
         self.audio.save()
@@ -468,4 +473,6 @@ class TOggFileType(TestCase):
 NOTFOUND = os.system("tools/notarealprogram 2> /dev/null")
 
 if os.system("ogginfo > /dev/null 2> /dev/null") == NOTFOUND:
-    print "WARNING: Skipping Ogg reference tests."
+    print "WARNING: Skipping ogginfo reference tests."
+if os.system("oggz-validate > /dev/null 2> /dev/null") == NOTFOUND:
+    print "WARNING: Skipping oggz-validate reference tests."

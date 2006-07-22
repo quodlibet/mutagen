@@ -10,3 +10,10 @@ mutagen.mp4 needs:
  * To exist.
  * Clean MP4 metadata reader at
    http://svn.myrealbox.com/viewcvs/trunk/entagged-sharp/src/Mp4/Util/Mp4TagReader.cs?rev=53657&view=auto
+
+mutagen.apev2 needs:
+ * General cleanup to fit the basic structure of the rest of Mutagen.
+
+mutagen.ogg needs:
+ * OggPage.replace can fragment pages poorly; maybe it should try to
+   defrag the next two or three pages after the replaced ones.
