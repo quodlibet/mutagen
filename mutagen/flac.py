@@ -197,6 +197,8 @@ class Padding(MetadataBlock):
     def __init__(self, data=""): super(Padding, self).__init__(data)
     def load(self, data): self.length = len(data.read())
     def write(self): return "\x00" * self.length
+    def __eq__(self, other):
+        return isinstance(other, Padding) and self.length == other.length
     def __repr__(self):
         return "<%s (%d bytes)>" % (type(self).__name__, self.length)
 
@@ -259,6 +261,8 @@ class FLAC(FileType):
     def load(self, filename):
         """Load file information from a filename."""
 
+        self.metadata_blocks = []
+        self.tags = None
         self.filename = filename
         try:
             fileobj = file(filename, "rb")
