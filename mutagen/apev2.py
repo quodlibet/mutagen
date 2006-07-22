@@ -30,7 +30,6 @@ http://wiki.hydrogenaudio.org/index.php?title=APEv2_specification.
 
 __all__ = ["APEv2", "APEv2File", "Open", "delete"]
 
-import os
 import struct
 from cStringIO import StringIO
 

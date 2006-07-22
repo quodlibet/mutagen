@@ -23,7 +23,6 @@ import struct
 
 from mutagen._vorbis import VCommentDict
 from mutagen.ogg import OggPage, OggFileType, error as OggError
-from mutagen._util import cdata
 
 class error(OggError): pass
 class OggVorbisHeaderError(error): pass

@@ -28,7 +28,7 @@ Since this file's documentation is a little unwieldy, you are probably
 interested in the 'ID3' class to start with.
 """
 
-__all__ = ['ID3', 'Frames', 'Open', 'delete']
+__all__ = ['ID3', 'ID3FileType', 'Frames', 'Open', 'delete']
 
 import mutagen
 import struct; from struct import unpack, pack
@@ -1745,7 +1745,8 @@ class ID3FileType(mutagen.FileType):
         """
         if self.tags is None:
             self.tags = ID3()
-        else: raise ID3Error("an ID3 tag already exists")
+        else:
+            raise error("an ID3 tag already exists")
 
     def load(self, filename, ID3=ID3):
         """Load stream and tag information from a file.

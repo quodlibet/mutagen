@@ -10,7 +10,6 @@
 import os
 import struct
 
-from mutagen import FileType
 from mutagen.id3 import ID3FileType, BitPaddedInt
 
 class error(RuntimeError): pass
