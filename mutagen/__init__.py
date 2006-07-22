@@ -130,17 +130,18 @@ def File(filename, options=None):
     """
 
     if options is None:
-        from mutagen.oggtheora import OggTheora
-        from mutagen.oggspeex import OggSpeex
-        from mutagen.oggvorbis import OggVorbis
-        from mutagen.oggflac import OggFLAC
-        from mutagen.flac import FLAC
-        from mutagen.mp3 import MP3
-        from mutagen.id3 import ID3FileType
         from mutagen.apev2 import APEv2File
+        from mutagen.flac import FLAC
+        from mutagen.id3 import ID3FileType
+        from mutagen.mp3 import MP3
+        from mutagen.oggflac import OggFLAC
+        from mutagen.oggspeex import OggSpeex
+        from mutagen.oggtheora import OggTheora
+        from mutagen.oggvorbis import OggVorbis
+        from mutagen.tta import TTA
         from mutagen.wavpack import WavPack
-        options = [OggTheora, OggSpeex, OggVorbis, OggFLAC,
-                   FLAC, MP3, APEv2File, ID3FileType, WavPack]
+        options = [MP3, TTA, OggTheora, OggSpeex, OggVorbis, OggFLAC,
+                   FLAC, APEv2File, ID3FileType, WavPack]
 
     if not options:
         return None

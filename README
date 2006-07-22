@@ -1,10 +1,10 @@
 Mutagen is a Python module to handle audio metadata. It supports
 reading ID3 (all versions), APEv2, FLAC, and Ogg
 Vorbis/FLAC/Theora/Speex.  It can write ID3v1.1, ID3v2.4, APEv2, FLAC,
-and Ogg Vorbis/FLAC/Theora/Speex comments. It can also read MPEG audio
-and Xing headers, FLAC stream info blocks, WavPack headers, and Ogg
-Vorbis/FLAC/Theora/Speex stream headers. Finally, it includes a module
-to handle generic Ogg bitstreams.
+and Ogg Vorbis/FLAC/Theora/Speex comments. It can also read MPEG,
+Xing, FLAC, WavPack, Vorbis, FLAC, Speex, Theora, and True Audio
+stream headers.  Finally, it includes a module to handle generic Ogg
+bitstreams.
 
 Installing
 ----------
