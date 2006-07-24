@@ -138,9 +138,9 @@ def File(filename, options=None):
         from mutagen.oggspeex import OggSpeex
         from mutagen.oggtheora import OggTheora
         from mutagen.oggvorbis import OggVorbis
-        from mutagen.tta import TTA
+        from mutagen.trueaudio import TrueAudio
         from mutagen.wavpack import WavPack
-        options = [MP3, TTA, OggTheora, OggSpeex, OggVorbis, OggFLAC,
+        options = [MP3, TrueAudio, OggTheora, OggSpeex, OggVorbis, OggFLAC,
                    FLAC, APEv2File, ID3FileType, WavPack]
 
     if not options:

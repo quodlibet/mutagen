@@ -7,7 +7,7 @@
  * New Features:
    * Vorbis comment vendors include the Mutagen version.
    * mutagen.oggspeex: Read/tag Ogg Speex files.
-   * mutagen.tta: Read/tag True Audio files.
+   * mutagen.trueaudio: Read/tag True Audio files.
    * mutagen.wavpack: Read/tag WavPack files.
 
 1.5.1 - 2006.06.26

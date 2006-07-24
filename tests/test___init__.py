@@ -9,7 +9,7 @@ from mutagen.mp3 import MP3
 from mutagen.apev2 import APEv2File
 from mutagen.flac import FLAC
 from mutagen.wavpack import WavPack
-from mutagen.tta import TTA
+from mutagen.trueaudio import TrueAudio
 
 class TMetadata(TestCase):
     uses_mmap = False
@@ -98,7 +98,7 @@ class TFile(TestCase):
 
     def test_tta(self):
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "empty.tta")), TTA))
+            File(os.path.join("tests", "data", "empty.tta")), TrueAudio))
 
     def test_wavpack(self):
         self.failUnless(isinstance(

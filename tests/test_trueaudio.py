@@ -1,12 +1,12 @@
 import os
-from mutagen.tta import TTA, delete
+from mutagen.trueaudio import TrueAudio, delete
 from tests import TestCase, add
 
-class TTTA(TestCase):
+class TTrueAudio(TestCase):
     uses_mmap = False
 
     def setUp(self):
-        self.audio = TTA(os.path.join("tests", "data", "empty.tta"))
+        self.audio = TrueAudio(os.path.join("tests", "data", "empty.tta"))
 
     def test_tags(self):
         self.failUnless(self.audio.tags is None)
@@ -19,7 +19,7 @@ class TTTA(TestCase):
 
     def test_not_my_file(self):
         filename = os.path.join("tests", "data", "empty.ogg")
-        self.failUnlessRaises(IOError, TTA, filename)
+        self.failUnlessRaises(IOError, TrueAudio, filename)
 
     def test_delete(self):
         delete(os.path.join("tests", "data", "empty.tta"))
@@ -27,4 +27,4 @@ class TTTA(TestCase):
     def test_pprint(self):
         self.audio.pprint()
 
-add(TTTA)
+add(TTrueAudio)
