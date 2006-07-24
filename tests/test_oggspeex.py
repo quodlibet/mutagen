@@ -48,4 +48,13 @@ class TOggSpeex(TOggFileType):
         self.failUnlessRaises(IOError, type(self.audio), fn)
         self.failUnlessRaises(IOError, self.audio.save, fn)
         self.failUnlessRaises(IOError, self.audio.delete, fn)
+
+    def test_multiplexed_in_headers(self):
+        shutil.copy(
+            os.path.join("tests", "data", "multiplexed.spx"), self.filename)
+        audio = self.Kind(self.filename)
+        audio.tags["foo"] = ["bar"]
+        audio.save()
+        audio = self.Kind(self.filename)
+        self.failUnlessEqual(audio.tags["foo"], ["bar"])
 add(TOggSpeex)
