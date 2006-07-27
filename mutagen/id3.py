@@ -841,6 +841,31 @@ class VolumeAdjustmentsSpec(Spec):
     def validate(self, frame, value):
         return value
 
+class ASPIIndexSpec(Spec):
+    def read(self, frame, data):
+        if frame.b == 16:
+            format = "H"
+            size = 2
+        elif frame.b == 8:
+            format = "B"
+            size = 1
+        else:
+            warn("invalid bit count in ASPI (%d)" % frame.b, IDWarning)
+            return [], data
+        
+        indexes = data[:frame.N * size]
+        data = data[frame.N * size:]
+        return list(struct.unpack(">" + format * frame.N, indexes)), data
+
+    def write(self, frame, values):
+        if frame.b == 16: format = "H"
+        elif frame.b == 8: format = "B"
+        else: raise ValueError("frame.b must be 8 or 16")
+        return struct.pack(">" + format * frame.N, *values)
+
+    def validate(self, frame, values):
+        return values
+
 class Frame(object):
     """Fundamental unit of ID3 data.
 
@@ -1642,7 +1667,16 @@ class SEEK(Frame):
     def __pos__(self): return self.offset
     def __eq__(self, other): return self.offset == other
 
-# class ASPI: unsupported
+class ASPI(Frame):
+    """Audio seek point index.
+
+    Attributes: S, L, N, b, and Fi. For the meaning of these, see
+    the ID3v2.4 specification. Fi is a list of integers.
+    """
+    _framespec = [ SizedIntegerSpec("S", 4), SizedIntegerSpec("L", 4),
+                   SizedIntegerSpec("N", 2), ByteSpec("b"),
+                   ASPIIndexSpec("Fi") ]
+    def __eq__(self, other): return self.Fi == other
 
 Frames = dict([(k,v) for (k,v) in globals().items()
         if len(k)==4 and isinstance(v, type) and issubclass(v, Frame)])

@@ -541,6 +541,12 @@ def TestReadTags():
     ['EQU2', '\x00Foobar\x00\x01\x01\x04\x00', [(128.5, 2.0)], '',
      dict(method=0, desc="Foobar")],
 
+    ['ASPI', '\x00\x00\x00\x00\x00\x00\x00\x10\x00\x03\x08\x01\x02\x03',
+     [1, 2, 3], '', dict(S=0, L=16, N=3, b=8)],
+
+    ['ASPI', '\x00\x00\x00\x00\x00\x00\x00\x10\x00\x03\x10'
+     '\x00\x01\x00\x02\x00\x03', [1, 2, 3], '', dict(S=0, L=16, N=3, b=16)],
+
     # 2.2 tags
     ['UFI', 'own\x00data', 'data', '', dict(data='data', owner='own')],
     ['SLT', ('\x00eng\x02\x01some lyrics\x00foo\x00\x00\x00\x00\x01bar'
