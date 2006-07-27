@@ -221,14 +221,12 @@ class ID3Tags(TestCase):
         self.assertRaises(ID3Warning,
                 RBUF()._readData, '\x00\x01\x00\x01\x00\x00\x00\x00#xyz')
 
-
-
-
 class ID3v1Tags(TestCase):
     uses_mmap = False
 
-    silence = join('tests', 'data', 'silence-44-s-v1.mp3')
-    id3 = ID3(silence)
+    def setUp(self):
+        self.silence = join('tests', 'data', 'silence-44-s-v1.mp3')
+        self.id3 = ID3(self.silence)
 
     def test_album(self):
         self.assertEquals('Quod Libet Test Data', self.id3['TALB'])
@@ -243,6 +241,16 @@ class ID3v1Tags(TestCase):
         self.assertEquals(2, +self.id3['TRCK'])
     def test_year(self):
         self.assertEquals('2004', self.id3['TDRC'])
+
+    def test_v1_not_v11(self):
+        from mutagen.id3 import MakeID3v1, ParseID3v1, TRCK
+        self.id3["TRCK"] = TRCK(encoding=0, text="32")
+        tag = MakeID3v1(self.id3)
+        self.failUnless(32, ParseID3v1(tag)["TRCK"])
+        del(self.id3["TRCK"])
+        tag = MakeID3v1(self.id3)
+        tag = tag[:125] + '  ' + tag[-1]
+        self.failIf("TRCK" in ParseID3v1(tag))
 
     def test_nulls(self):
         from mutagen.id3 import ParseID3v1

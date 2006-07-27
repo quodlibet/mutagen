@@ -1706,7 +1706,10 @@ def ParseID3v1(string):
     if year: frames["TDRC"] = TDRC(encoding=0, text=year)
     if comment: frames["COMM"] = COMM(
         encoding=0, lang="eng", desc="ID3v1 Comment", text=comment)
-    if track: frames["TRCK"] = TRCK(encoding=0, text=str(track))
+    # Don't read a track number if it looks like the comment was
+    # padded with spaces instead of nulls (thanks, WinAmp).
+    if track and (track != 32 or string[-3] == '\x00'):
+        frames["TRCK"] = TRCK(encoding=0, text=str(track))
     if genre != 255: frames["TCON"] = TCON(encoding=0, text=str(genre))
     return frames
 
@@ -1743,7 +1746,8 @@ def MakeID3v1(id3):
     if "TDRC" in id3: v1["year"] = str(id3["TDRC"])[:4]
     else: v1["year"] = "\x00\x00\x00\x00"
 
-    return "TAG%(title)s%(artist)s%(album)s%(year)s%(comment)s%(track)s%(genre)s" % v1 
+    return ("TAG%(title)s%(artist)s%(album)s%(year)s%(comment)s"
+            "%(track)s%(genre)s") % v1 
 
 class ID3FileType(mutagen.FileType):
     """An unknown type of file with ID3 tags."""
