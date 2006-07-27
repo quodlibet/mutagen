@@ -431,7 +431,7 @@ def TestReadTags():
 
     ['MCDI', '\x01\x02\x03\x04', '\x01\x02\x03\x04', '', {}],
     
-    #'ETCO', '\x01\x12\x00\x00\x7f\xff', [(18,32767)], '', dict(format=1)],
+    ['ETCO', '\x01\x12\x00\x00\x7f\xff', [(18, 32767)], '', dict(format=1)],
 
     ['COMM', '\x00ENUT\x00Com', 'Com', '',
         dict(desc='T', lang='ENU', encoding=0)],
@@ -486,6 +486,8 @@ def TestReadTags():
      dict(owner='a@b.org', method=0x92, data='Data!')],
     ['SEEK', '\x00\x12\x00\x56', 0x12*256*256+0x56, 0x12*256*256+0x56,
      dict(offset=0x12*256*256+0x56)],
+
+    ['SYTC', "\x01\x10obar", '\x10obar', '', dict(format=1, data='\x10obar')],
     
     ['RBUF', '\x00\x12\x00', 0x12*256, 0x12*256, dict(size=0x12*256)],
     ['RBUF', '\x00\x12\x00\x01', 0x12*256, 0x12*256,

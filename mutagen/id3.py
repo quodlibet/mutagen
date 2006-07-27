@@ -186,6 +186,7 @@ class ID3(mutagen.Metadata):
         return "\n".join(map(Frame.pprint, self.values()))
 
     def loaded_frame(self, tag):
+        """Deprecated; use the add method."""
         # turn 2.2 into 2.3/2.4 tags
         if len(type(tag).__name__) == 3: tag = type(tag).__base__(tag)
         self[tag.HashKey] = tag
@@ -801,7 +802,22 @@ class SynchronizedTextSpec(EncodedTextSpec):
             data.append(text + struct.pack(">I", time))
         return "".join(data)
 
-    def validate(self, frame, value): return value
+    def validate(self, frame, value):
+        return value
+
+class KeyEventSpec(Spec):
+    def read(self, frame, data):
+        events = []
+        while len(data) >= 5:
+            events.append(struct.unpack(">bI", data[:5]))
+            data = data[5:]
+        return events, data
+
+    def write(self, frame, value):
+        return "".join([struct.pack(">bI", *event) for event in value])
+
+    def validate(self, frame, value):
+        return value
 
 class Frame(object):
     """Fundamental unit of ID3 data.
@@ -1243,9 +1259,17 @@ class MCDI(Frame):
     _framespec = [ BinaryDataSpec('data') ]
     def __eq__(self, other): return self.data == other
 
-# class ETCO: unsupported
+class ETCO(Frame):
+    """Event timing codes."""
+    _framespec = [ ByteSpec("format"), KeyEventSpec("events") ]
+    def __eq__(self, other): return self.events == other
+
 # class MLLT: unsupported
-# class SYTC: unsupported
+
+class SYTC(Frame):
+    """Synchronised tempo codes."""
+    _framespec = [ ByteSpec("format"), BinaryDataSpec("data") ]
+    def __eq__(self, other): return self.data == other
 
 class USLT(Frame):
     """Unsynchronised lyrics/text transcription.
