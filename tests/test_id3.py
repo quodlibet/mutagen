@@ -534,6 +534,13 @@ def TestReadTags():
         encoding=0, price="USD10.00", valid_until="20051010",
         contact="ql@sc.net", format=9, seller="Joe", desc="A song")],
 
+    ['MLLT', '\x00\x01\x00\x00\x02\x00\x00\x03\x04\x08foobar', 'foobar', '',
+     dict(frames=1, bytes=2, milliseconds=3, bits_for_bytes=4,
+          bits_for_milliseconds=8, data='foobar')],
+
+    ['EQU2', '\x00Foobar\x00\x01\x01\x04\x00', [(128.5, 2.0)], '',
+     dict(method=0, desc="Foobar")],
+
     # 2.2 tags
     ['UFI', 'own\x00data', 'data', '', dict(data='data', owner='own')],
     ['SLT', ('\x00eng\x02\x01some lyrics\x00foo\x00\x00\x00\x00\x01bar'
@@ -588,6 +595,8 @@ def TestReadTags():
         dict(encoding=0)],
     ['MCI', '\x01\x02\x03\x04', '\x01\x02\x03\x04', '', {}],
 
+    ['ETC', '\x01\x12\x00\x00\x7f\xff', [(18, 32767)], '', dict(format=1)],
+
     ['COM', '\x00ENUT\x00Com', 'Com', '',
         dict(desc='T', lang='ENU', encoding=0)],
     ['PIC', '\x00-->\x03cover\x00cover.jpg', 'cover.jpg', '',
@@ -611,6 +620,12 @@ def TestReadTags():
     ['REV', '\x12\x12\x23\x23\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11',
      (0x12*256+0x12, 0x23*256+0x23), '',
      dict(left=0x12*256+0x12, right=0x23*256+0x23) ],
+
+    ['STC', "\x01\x10obar", '\x10obar', '', dict(format=1, data='\x10obar')],
+
+    ['MLL', '\x00\x01\x00\x00\x02\x00\x00\x03\x04\x08foobar', 'foobar', '',
+     dict(frames=1, bytes=2, milliseconds=3, bits_for_bytes=4,
+          bits_for_milliseconds=8, data='foobar')],
 
 
     ]

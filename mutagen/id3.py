@@ -819,6 +819,28 @@ class KeyEventSpec(Spec):
     def validate(self, frame, value):
         return value
 
+class VolumeAdjustmentsSpec(Spec):
+    # Not to be confused with VolumeAdjustmentSpec.
+    def read(self, frame, data):
+        adjustments = {}
+        while len(data) >= 4:
+            freq, adj = struct.unpack(">Hh", data[:4])
+            data = data[4:]
+            freq /= 2.0
+            adj /= 512.0
+            adjustments[freq] = adj
+        adjustments = adjustments.items()
+        adjustments.sort()
+        return adjustments, data
+
+    def write(self, frame, value):
+        value.sort()
+        return "".join([struct.pack(">Hh", int(freq * 2), int(adj * 512))
+                        for (freq, adj) in value])
+
+    def validate(self, frame, value):
+        return value
+
 class Frame(object):
     """Fundamental unit of ID3 data.
 
@@ -1264,10 +1286,26 @@ class ETCO(Frame):
     _framespec = [ ByteSpec("format"), KeyEventSpec("events") ]
     def __eq__(self, other): return self.events == other
 
-# class MLLT: unsupported
+class MLLT(Frame):
+    """MPEG location lookup table.
+
+    This frame's attributes may be changed in the future based on
+    feedback from real-world use.
+    """
+    _framespec = [ SizedIntegerSpec('frames', 2),
+                   SizedIntegerSpec('bytes', 3),
+                   SizedIntegerSpec('milliseconds', 3),
+                   ByteSpec('bits_for_bytes'),
+                   ByteSpec('bits_for_milliseconds'),
+                   BinaryDataSpec('data') ]
+    def __eq__(self, other): return self.data == other
 
 class SYTC(Frame):
-    """Synchronised tempo codes."""
+    """Synchronised tempo codes.
+
+    This frame's attributes may be changed in the future based on
+    feedback from real-world use.
+    """
     _framespec = [ ByteSpec("format"), BinaryDataSpec("data") ]
     def __eq__(self, other): return self.data == other
 
@@ -1347,8 +1385,19 @@ class RVA2(Frame):
         return "%s: %+0.4f dB/%0.4f" % (
             self._channels[self.channel], self.gain, self.peak)
 
-# class EQU2: unsupported
-#     HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.desc))
+class EQU2(Frame):
+    """Equalisation (2).
+
+    Attributes:
+    method -- interpolation method (0 = band, 1 = linear)
+    desc -- identifying description
+    adjustments -- list of (frequency, vol_adjustment) pairs
+    """
+    _framespec = [ ByteSpec("method"), Latin1TextSpec("desc"),
+                   VolumeAdjustmentsSpec("adjustments") ]
+    def __eq__(self, other): return self.adjustments == other
+    HashKey = property(lambda s: '%s:%s' % (s.FrameID, s.desc))
+
 # class RVAD: unsupported
 # class EQUA: unsupported
 
@@ -1652,9 +1701,9 @@ class WXX(WXXX): "User-defined URL"
 
 class IPL(IPLS): "Involved people list"
 class MCI(MCDI): "Binary dump of CD's TOC"
-#class ETC(ETCO)
-#class MLL(MLLT)
-#class STC(SYTC)
+class ETC(ETCO): "Event timing codes"
+class MLL(MLLT): "MPEG location lookup table"
+class STC(SYTC): "Synced tempo codes"
 class ULT(USLT): "Unsychronised lyrics/text transcription"
 class SLT(SYLT): "Synchronised lyrics/text"
 class COM(COMM): "Comment"
