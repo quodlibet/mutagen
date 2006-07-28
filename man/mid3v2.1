@@ -1,4 +1,4 @@
-.TH mid3v2 1 "February 20th, 2006"
+.TH mid3v2 1 "July 27th, 2006"
 .SH NAME
 mid3v2 \- audio tag editor similar to 'id3v2'
 .SH SYNOPSIS
@@ -28,8 +28,10 @@ embedded binary data.
 Delete ID3v2 tags.
 .IP \-s,\ \-\-delete\-v1
 Delete ID3v1 tags.
-.IP \-D,\ \-\-delete-all
+.IP \-D,\ \-\-delete\-all
 Delete all ID3 tags.
+.IP \-\-delete\-frames=\fIFID1,FID2,...
+Delete specific ID3v2 frames (or groups of frames) from the files.
 .IP \-C,\ \-\-convert
 Convert ID3v1 tags to ID3v2 tags. This will also happen automatically
 during any editing.
@@ -44,7 +46,7 @@ Set a comment (COMM). The language and description may be omitted, in which
 case the language defaults to English, and the description to an empty string.
 .IP \-g,\ \-\-genre=\fIgenre
 Set the genre information (TCON).
-.IP \-y,\ \-\-year=,\ \-\-date=\fIYYYY-[MM-DD]
+.IP \-y,\ \-\-year=,\ \-\-date=\fIYYYY\-[MM-DD]
 Set the year/date information (TDRC).
 .IP \-Tnum/num,\ \-\-track=\fInum/num
 Set the track number (TRCK).
@@ -56,7 +58,5 @@ prefixing the name of the frame with "\-\-". For example,
 No sanity checking is done on the editing operations you perform, so
 mid3v2 will happily accept \-\-TSIZ when editing an ID3v2.4 frame. However,
 it will also automatically throw it out during the next edit operation.
-.PP
-There is no way to force an ID3v1 tag to be added.
 .SH AUTHOR
 Joe Wreschnig is the author of mid3v2, but he doesn't like to admit it.

@@ -14,7 +14,7 @@ import locale
 
 from optparse import OptionParser, SUPPRESS_HELP
 
-VERSION = (1, 0)
+VERSION = (1, 1)
 
 class ID3OptionParser(OptionParser):
     def __init__(self):
@@ -60,6 +60,21 @@ def delete_tags(filenames, v1, v2):
     for filename in filenames:
         print "deleting ID3 tag info in %s" % filename
         mutagen.id3.delete(filename, v1, v2)
+
+def delete_frames(deletes, filenames):
+    frames = deletes.split(",")
+    for filename in filenames:
+        print "deleting %s from %s" % (deletes, filename)
+        try: id3 = mutagen.id3.ID3(filename)
+        except mutagen.id3.ID3NoHeaderError:
+            print "No ID3 header found; skipping."
+            continue
+        except Exception, err:
+            print str(err)
+            continue
+        else:
+            map(id3.delall, frames)
+            id3.save()
 
 def write_files(edits, filenames):
     enc = locale.getpreferredencoding()
@@ -135,6 +150,9 @@ def main(argv):
         "-D", "--delete-all", action="store_const", dest="action",
         const="delete-v1-v2", help="Deletes ID3v1 and ID3v2 tags")
     parser.add_option(
+        '--delete-frames', metavar='FID1,FID2,...', action='store',
+        dest='deletes', default='', help="Delete the given frames")
+    parser.add_option(
         "-C", "--convert", action="store_const", dest="action",
         const="convert",
         help="Convert tags to ID3v2.4 (any editing will do this)")
@@ -180,6 +198,7 @@ def main(argv):
 
     if args:
         if parser.edits: write_files(parser.edits, args)
+        elif options.deletes: delete_frames(options.deletes, args)
         elif options.action in [None, 'list']: list_tags(args)
         elif options.action == "list-raw": list_tags_raw(args)
         elif options.action == "convert": write_files([], args)
