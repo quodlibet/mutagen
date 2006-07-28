@@ -445,9 +445,12 @@ class ID3(mutagen.Metadata):
                     type=pic.type, desc=pic.desc, data=pic.data)
                 self.add(newpic)
 
+            # ID3v2.2 LNK frames are just way too different to upgrade.
+            self.delall("LINK")
+
         # These can't be trivially translated to any ID3v2.4 tags, or
         # should have been removed already.
-        for key in ["RVAD", "EQUA", "TRDA", "TSIZ", "TDAT", "TIME"]:
+        for key in ["RVAD", "EQUA", "TRDA", "TSIZ", "TDAT", "TIME", "CRM"]:
             if key in self: del(self[key])
 
 def delete(filename, delete_v1=True, delete_v2=True):
@@ -1540,15 +1543,33 @@ class AENC(FrameOpt):
                    SizedIntegerSpec('preview_start', 2),
                    SizedIntegerSpec('preview_length', 2) ]
     _optionalspec = [ BinaryDataSpec('data') ]
-    HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.owner))
+    HashKey = property(lambda s: '%s:%s' % (s.FrameID, s.owner))
 
     def __str__(self): return self.owner.encode('utf-8')
     def __unicode__(self): return self.owner
     def __eq__(self, other): return self.owner == other
 
-# class LINK(Frame): unsupported
-#    HashKey = property(lambda s: '%s:%s:%s:%s'%(
-#        s.FrameID, s.frameid, s.url, s.data))
+class LINK(FrameOpt):
+    """Linked information.
+
+    Attributes:
+    frameid -- the ID of the linked frame
+    url -- the location of the linked frame
+    data -- further ID information for the frame
+    """
+
+    _framespec = [ StringSpec('frameid', 4), Latin1TextSpec('url') ]
+    _optionalspec = [ BinaryDataSpec('data') ]
+    def __HashKey(self):
+        try:
+            return "%s:%s:%s:%r" % (
+                self.FrameID, self.frameid, self.url, self.data)
+        except AttributeError:
+            return "%s:%s:%s" % (self.FrameID, self.frameid, self.url)
+    HashKey = property(__HashKey)
+    def __eq__(self, other):
+        try: return (self.frameid, self.url, self.data) == other
+        except AttributeError: return (self.frameid, self.url) == other
 
 class POSS(Frame):
     """Position synchronisation frame
@@ -1757,9 +1778,18 @@ class CNT(PCNT): "Play counter"
 class POP(POPM): "Popularimeter"
 class BUF(RBUF): "Recommended buffer size"
 
-#class CRM(????): unsupported
+class CRM(Frame):
+    """Encrypted meta frame"""
+    _framespec = [ Latin1TextSpec('owner'), Latin1TextSpec('desc'),
+                   BinaryDataSpec('data') ]
+    def __eq__(self, other): return self.data == other
+
 class CRA(AENC): "Audio encryption"
-#class LNK(LINK)
+
+class LNK(LINK):
+    """Linked information"""
+    _framespec = [ StringSpec('frameid', 3), Latin1TextSpec('url') ]
+    _optionalspec = [ BinaryDataSpec('data') ]
 
 Frames_2_2 = dict([(k,v) for (k,v) in globals().items()
         if len(k)==3 and isinstance(v, type) and issubclass(v, Frame)])

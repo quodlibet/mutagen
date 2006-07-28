@@ -547,6 +547,14 @@ def TestReadTags():
     ['ASPI', '\x00\x00\x00\x00\x00\x00\x00\x10\x00\x03\x10'
      '\x00\x01\x00\x02\x00\x03', [1, 2, 3], '', dict(S=0, L=16, N=3, b=16)],
 
+    ['LINK', 'TIT1http://www.example.org/TIT1.txt\x00',
+     ("TIT1", 'http://www.example.org/TIT1.txt'), '',
+     dict(frameid='TIT1', url='http://www.example.org/TIT1.txt')],
+    ['LINK', 'COMMhttp://www.example.org/COMM.txt\x00engfoo',
+     ("COMM", 'http://www.example.org/COMM.txt', 'engfoo'), '',
+     dict(frameid='COMM', url='http://www.example.org/COMM.txt',
+          data='engfoo')],
+
     # 2.2 tags
     ['UFI', 'own\x00data', 'data', '', dict(data='data', owner='own')],
     ['SLT', ('\x00eng\x02\x01some lyrics\x00foo\x00\x00\x00\x00\x01bar'
@@ -632,10 +640,13 @@ def TestReadTags():
     ['MLL', '\x00\x01\x00\x00\x02\x00\x00\x03\x04\x08foobar', 'foobar', '',
      dict(frames=1, bytes=2, milliseconds=3, bits_for_bytes=4,
           bits_for_milliseconds=8, data='foobar')],
-
+    ['LNK', 'TT1http://www.example.org/TIT1.txt\x00',
+     ("TT1", 'http://www.example.org/TIT1.txt'), '',
+     dict(frameid='TT1', url='http://www.example.org/TIT1.txt')],
+    ['CRM', 'foo@example.org\x00test\x00woo',
+     'woo', '', dict(owner='foo@example.org', desc='test', data='woo')],
 
     ]
-
 
     load_tests = {}
     repr_tests = {}

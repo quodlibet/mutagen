@@ -6,7 +6,7 @@
 
  * New Features:
    * Vorbis comment vendors include the Mutagen version.
-   * mutagen.id3: ASPI, ETCO, SYTC, MLLT, EQU2 frame support.
+   * mutagen.id3: ASPI, ETCO, SYTC, MLLT, EQU2, LINK frame support.
    * mutagen.oggspeex: Read/tag Ogg Speex files.
    * mutagen.trueaudio: Read/tag True Audio files.
    * mutagen.wavpack: Read/tag WavPack files.
