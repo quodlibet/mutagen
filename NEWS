@@ -3,6 +3,7 @@
    * IOError rather than NameError is raised when File succeeds in
      typefinding but fails in stream parsing.
    * errors= kwarg is correctly interpreted for FLAC tags now.
+   * Handle struct.pack API change in Python 2.5b2. (SF #1530559)
 
  * New Features:
    * Vorbis comment vendors include the Mutagen version.

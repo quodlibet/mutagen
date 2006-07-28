@@ -761,7 +761,7 @@ class VolumeAdjustmentSpec(Spec):
         return value/512.0, data[2:]
 
     def write(self, frame, value):
-        return pack('>h', round(value * 512))
+        return pack('>h', int(round(value * 512)))
 
     def validate(self, frame, value): return value
 
@@ -780,7 +780,7 @@ class VolumePeakSpec(Spec):
 
     def write(self, frame, value):
         # always write as 16 bits for sanity.
-        return "\x10" + pack('>H', round(value * 32768))
+        return "\x10" + pack('>H', int(round(value * 32768)))
 
     def validate(self, frame, value): return value
 
@@ -1260,7 +1260,7 @@ class TXXX(TextFrame):
     """
     _framespec = [ EncodingSpec('encoding'), EncodedTextSpec('desc'),
         MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000') ]
-    HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.desc))
+    HashKey = property(lambda s: '%s:%s' % (s.FrameID, s.desc))
     def _pprint(self): return "%s=%s" % (self.desc, " / ".join(self.text))
 
 class WCOM(UrlFrameU): "Commercial Information"
@@ -1279,7 +1279,7 @@ class WXXX(UrlFrame):
     """
     _framespec = [ EncodingSpec('encoding'), EncodedTextSpec('desc'),
         Latin1TextSpec('url') ]
-    HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.desc))
+    HashKey = property(lambda s: '%s:%s' % (s.FrameID, s.desc))
 
 class PairedTextFrame(Frame):
     """Paired text strings.
@@ -1358,7 +1358,7 @@ class SYLT(Frame):
     _framespec = [ EncodingSpec('encoding'), StringSpec('lang', 3),
         ByteSpec('format'), ByteSpec('type'), EncodedTextSpec('desc'),
         SynchronizedTextSpec('text') ]
-    HashKey = property(lambda s: '%s:%s:%r'%(s.FrameID, s.desc, s.lang))
+    HashKey = property(lambda s: '%s:%s:%r' % (s.FrameID, s.desc, s.lang))
 
     def __eq__(self, other):
         return str(self) == other
@@ -1375,7 +1375,7 @@ class COMM(TextFrame):
     _framespec = [ EncodingSpec('encoding'), StringSpec('lang', 3),
         EncodedTextSpec('desc'),
         MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000') ]
-    HashKey = property(lambda s: '%s:%s:%r'% (s.FrameID, s.desc, s.lang))
+    HashKey = property(lambda s: '%s:%s:%r' % (s.FrameID, s.desc, s.lang))
     def _pprint(self): return "%s=%r=%s" % (
         self.desc, self.lang, " / ".join(self.text))
 
@@ -1400,7 +1400,7 @@ class RVA2(Frame):
     _channels = ["Other", "Master volume", "Front right", "Front left",
                  "Back right", "Back left", "Front centre", "Back centre",
                  "Subwoofer"]
-    HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.desc))
+    HashKey = property(lambda s: '%s:%s' % (s.FrameID, s.desc))
 
     def __eq__(self, other):
         return ((str(self) == other) or
@@ -1486,7 +1486,7 @@ class POPM(Frame):
     """
     _framespec = [ Latin1TextSpec('email'), ByteSpec('rating'),
         IntegerSpec('count') ]
-    HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.email))
+    HashKey = property(lambda s: '%s:%s' % (s.FrameID, s.email))
 
     def __eq__(self, other): return self.rating == other
     def __pos__(self): return self.rating
@@ -1508,7 +1508,7 @@ class GEOB(Frame):
     _framespec = [ EncodingSpec('encoding'), Latin1TextSpec('mime'),
         EncodedTextSpec('filename'), EncodedTextSpec('desc'), 
         BinaryDataSpec('data') ]
-    HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.desc))
+    HashKey = property(lambda s: '%s:%s' % (s.FrameID, s.desc))
 
     def __eq__(self, other): return self.data == other
 
@@ -1592,7 +1592,7 @@ class UFID(Frame):
     """
 
     _framespec = [ Latin1TextSpec('owner'), BinaryDataSpec('data') ]
-    HashKey = property(lambda s: '%s:%s'%(s.FrameID, s.owner))
+    HashKey = property(lambda s: '%s:%s' % (s.FrameID, s.owner))
     def __eq__(s, o):
         if isinstance(o, UFI): return s.owner == o.owner and s.data == o.data
         else: return s.data == o
