@@ -1,10 +1,8 @@
 mutagen.id3 needs:
- * Specify all known frames
  * Detect tags in non-beginning locations, particularly if multiple
    separate version tags exist at the beginning of the file
  * Perhaps implement tag merging - "intelligently" merge information
    from all known tag formats
- * Polish padding - perhaps make it client selectable
 
 mutagen.mp4 needs:
  * To exist.
