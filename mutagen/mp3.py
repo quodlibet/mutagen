@@ -195,8 +195,10 @@ class MP3(ID3FileType):
     _Info = MPEGInfo
 
     def score(filename, fileobj, header):
-        return (header.startswith("ID3") +
-                filename.lower().endswith(".mp3"))
+        filename = filename.lower()
+        return (header.startswith("ID3") + filename.endswith(".mp3") +
+                filename.endswith(".mp3") + filename.endswith(".mpg") +
+                filename.endswith(".mpeg"))
     score = staticmethod(score)
 
 Open = MP3
