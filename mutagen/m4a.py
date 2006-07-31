@@ -150,10 +150,10 @@ class M4ATags(Metadata):
         except KeyError, key:
             raise M4AMetadataError(key)
         for atom in ilst.children:
-            last = atom.name
             fileobj.seek(atom.offset + 8)
             data = fileobj.read(atom.length - 8)
-            self.atoms.get(last, (M4ATags.__parse_text,))[0](self, atom, data)
+            parse = self.atoms.get(atom.name, (M4ATags.__parse_text,))[0]
+            parse(self, atom, data)
 
     def save(self, filename=None):
         if filename is None:
@@ -194,16 +194,22 @@ class M4ATags(Metadata):
         return Atom.render(key, Atom.render("data", data))
 
     def __parse_freeform(self, atom, data):
-        fileobj = StringIO(data)
-        mean_length = cdata.uint_be(fileobj.read(4))
-        # skip over 8 bytes of atom name, flags
-        mean = fileobj.read(mean_length - 4)[8:]
-        name_length = cdata.uint_be(fileobj.read(4))
-        name = fileobj.read(name_length - 4)[8:]
-        value_length = cdata.uint_be(fileobj.read(4))
-        # Name, flags, and reserved bytes
-        value = fileobj.read(value_length - 4)[12:]
-        self["%s:%s:%s" % (atom.name, mean, name)] = value
+        try:
+            fileobj = StringIO(data)
+            mean_length = cdata.uint_be(fileobj.read(4))
+            # skip over 8 bytes of atom name, flags
+            mean = fileobj.read(mean_length - 4)[8:]
+            name_length = cdata.uint_be(fileobj.read(4))
+            name = fileobj.read(name_length - 4)[8:]
+            value_length = cdata.uint_be(fileobj.read(4))
+            # Name, flags, and reserved bytes
+            value = fileobj.read(value_length - 4)[12:]
+        except struct.error:
+            # Some ---- atoms have no data atom, I have no clue why
+            # they actually end up in the file.
+            pass
+        else:
+            self["%s:%s:%s" % (atom.name, mean, name)] = value
     def __render_freeform(self, key, value):
         dummy, mean, name = key.split(":", 2)
         mean = struct.pack(">I4sI", len(mean) + 12, "mean", 0) + mean
@@ -279,7 +285,7 @@ class M4AInfo(object):
         self.length = float(length) / unit
 
     def pprint(self):
-        return "MPEG-4 AAC, %.2f seconds" % (self.length)
+        return "MPEG-4 audio, %.2f seconds" % (self.length)
 
 class M4A(FileType):
     """An MPEG-4 audio file, probably containing AAC."""
