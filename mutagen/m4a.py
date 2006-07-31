@@ -24,6 +24,8 @@ work on files over 4GB.
 
 import struct
 
+from cStringIO import StringIO
+
 from mutagen import FileType, Metadata
 from mutagen._constants import GENRES
 from mutagen._util import cdata, DictMixin
@@ -32,8 +34,9 @@ class error(IOError): pass
 class M4AMetadataError(error): pass
 class M4AStreamInfoError(error): pass
 
-_CONTAINERS = ["moov", "udta", "trak", "mdia", "minf", "dinf",
-               "stbl", "meta", "ilst"]
+# This is not an exhaustive list of container atoms, but just the
+# ones this module needs to peek inside.
+_CONTAINERS = ["moov", "udta", "trak", "mdia", "meta", "ilst"]
 _SKIP_SIZE = { "meta": 4 }
 
 class Atom(DictMixin):
@@ -126,32 +129,39 @@ class M4ATags(Metadata):
             last = atom.name
             fileobj.seek(atom.offset + 8)
             data = fileobj.read(atom.length - 8)
-            parsers.get(last, self.__parse_text)(last, data)
+            parsers.get(last, self.__parse_text)(atom, data)
 
-    def __parse_freeform(self, name, data):
-        # FIXME: Incomplete.
-        pass
+    def __parse_freeform(self, atom, data):
+        fileobj = StringIO(data)
+        mean_length = cdata.uint_be(fileobj.read(4))
+        # skip over 8 bytes of atom name, flags
+        mean = fileobj.read(mean_length - 4)[8:]
+        name_length = cdata.uint_be(fileobj.read(4))
+        name = fileobj.read(name_length - 4)[8:]
+        value_length = cdata.uint_be(fileobj.read(4))
+        value = fileobj.read(value_length - 4)[8:]
+        self["%s:%s:%s" % (atom.name, mean, name)] = value
 
-    def __parse_pair(self, name, data):
-        self[name] = struct.unpack(">2H", data[18:22])
+    def __parse_pair(self, atom, data):
+        self[atom.name] = struct.unpack(">2H", data[18:22])
 
-    def __parse_genre(self, name, data):
+    def __parse_genre(self, atom, data):
         genre = cdata.short_be(data[16:18])
         if "\xa9gen" not in self:
             try: self["\xa9gen"] = GENRES[genre - 1]
             except IndexError: pass
 
-    def __parse_tempo(self, name, data):
-        self[name] = cdata.short(data[16:18])
+    def __parse_tempo(self, atom, data):
+        self[atom.name] = cdata.short(data[16:18])
 
-    def __parse_compilation(self, name, data):
-        self[name] = bool(ord(data[16:]))
+    def __parse_compilation(self, atom, data):
+        self[atom.name] = bool(ord(data[16:]))
 
-    def __parse_cover(self, name, data):
-        self[name] = data[16:]
+    def __parse_cover(self, atom, data):
+        self[atom.name] = data[16:]
 
-    def __parse_text(self, name, data):
-        self[name] = data[16:].decode('utf-8', 'replace')
+    def __parse_text(self, atom, data):
+        self[atom.name] = data[16:].decode('utf-8', 'replace')
 
     def pprint(self):
         return "\n".join(["%s=%s" % (key.decode('latin1'), value)
@@ -184,5 +194,5 @@ class M4A(FileType):
         self.tags = M4ATags(atoms, fileobj)
 
     def score(filename, fileobj, header):
-        return ("ftyp" in header + "mp4" in header)
+        return ("ftyp" in header) + ("mp4" in header)
     score = staticmethod(score)
