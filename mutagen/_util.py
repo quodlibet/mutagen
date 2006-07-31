@@ -106,8 +106,14 @@ class cdata(object):
     short_le = staticmethod(lambda data: struct.unpack('<h', data)[0])
     ushort_le = staticmethod(lambda data: struct.unpack('<H', data)[0])
 
+    short_be = staticmethod(lambda data: struct.unpack('>h', data)[0])
+    ushort_be = staticmethod(lambda data: struct.unpack('>H', data)[0])
+
     int_le = staticmethod(lambda data: struct.unpack('<i', data)[0])
     uint_le = staticmethod(lambda data: struct.unpack('<I', data)[0])
+
+    int_be = staticmethod(lambda data: struct.unpack('>i', data)[0])
+    uint_be = staticmethod(lambda data: struct.unpack('>I', data)[0])
 
     longlong_le = staticmethod(lambda data: struct.unpack('<q', data)[0])
     ulonglong_le = staticmethod(lambda data: struct.unpack('<Q', data)[0])
@@ -117,6 +123,9 @@ class cdata(object):
 
     to_longlong_le = staticmethod(lambda data: struct.pack('<q', data))
     to_ulonglong_le = staticmethod(lambda data: struct.pack('<Q', data))
+
+    to_longlong_be = staticmethod(lambda data: struct.pack('>q', data))
+    to_ulonglong_be = staticmethod(lambda data: struct.pack('>Q', data))
 
     to_int_be = staticmethod(lambda data: struct.pack('>i', data))
 

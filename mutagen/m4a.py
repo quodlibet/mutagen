@@ -17,11 +17,15 @@ http://developer.apple.com/documentation/QuickTime/QTFF/,
 http://www.geocities.com/xhelmboyx/quicktime/formats/mp4-layout.txt,
 and http://wiki.multimedia.cx/index.php?title=Apple_QuickTime were all
 consulted.
+
+This module does not support 64 bit atom sizes, and so will not
+work on files over 4GB.
 """
 
 import struct
 
 from mutagen import FileType, Metadata
+from mutagen._constants import GENRES
 from mutagen._util import cdata, DictMixin
 
 class error(IOError): pass
@@ -79,7 +83,7 @@ class Atom(DictMixin):
         else:
             children = "\n".join([" " + line for child in self.children
                                   for line in repr(child).splitlines()])
-            return "<%s name=%s length=%r offset=%r\n%s>" % (
+            return "<%s name=%r length=%r offset=%r\n%s>" % (
                 klass, self.name, self.length, self.offset, children)
 
 class Atoms(DictMixin):
@@ -107,22 +111,77 @@ class Atoms(DictMixin):
         return "\n".join(repr(child) for child in self.atoms)
 
 class M4ATags(Metadata):
-    def __init__(self, fileobj):
+    def __init__(self, atoms, fileobj):
+        parsers = {
+            "----": self.__parse_freeform,
+            "trkn": self.__parse_pair,
+            "disk": self.__parse_pair,
+            "gnre": self.__parse_genre,
+            "tmpo": self.__parse_tempo,
+            "cpil": self.__parse_compilation,
+            "covr": self.__parse_cover
+            }
+
+        for atom in atoms["moov.udta.meta.ilst"].children:
+            last = atom.name
+            fileobj.seek(atom.offset + 8)
+            data = fileobj.read(atom.length - 8)
+            parsers.get(last, self.__parse_text)(last, data)
+
+    def __parse_freeform(self, name, data):
+        # FIXME: Incomplete.
         pass
 
-class M4AInfo(object):
-    def __init__(self, fileobj):
-        pass
+    def __parse_pair(self, name, data):
+        self[name] = struct.unpack(">2H", data[18:22])
+
+    def __parse_genre(self, name, data):
+        genre = cdata.short_be(data[16:18])
+        if "\xa9gen" not in self:
+            try: self["\xa9gen"] = GENRES[genre - 1]
+            except IndexError: pass
+
+    def __parse_tempo(self, name, data):
+        self[name] = cdata.short(data[16:18])
+
+    def __parse_compilation(self, name, data):
+        self[name] = bool(ord(data[16:]))
+
+    def __parse_cover(self, name, data):
+        self[name] = data[16:]
+
+    def __parse_text(self, name, data):
+        self[name] = data[16:].decode('utf-8', 'replace')
 
     def pprint(self):
-        return "MPEG-4 AAC"
+        return "\n".join(["%s=%s" % (key.decode('latin1'), value)
+                          for (key, value) in self.iteritems()])
+            
+class M4AInfo(object):
+    def __init__(self, atoms, fileobj):
+        atom = atoms["moov.trak.mdia.mdhd"]
+        fileobj.seek(atom.offset)
+        data = fileobj.read(atom.length)
+        if ord(data[9]) == 0:
+            offset = 20
+            format = ">2I"
+        else:
+            offset = 28
+            format = ">IQ"
+        end = offset + struct.calcsize(format)
+        unit, length = struct.unpack(format, data[offset:end])
+        self.length = float(length) / unit
+
+    def pprint(self):
+        return "MPEG-4 AAC, %.2f seconds" % (self.length)
 
 class M4A(FileType):
     def __init__(self, filename):
         self.filename = filename
         fileobj = file(filename, "rb")
-        self.info = M4AInfo(fileobj)
-        self.tags = M4ATags(fileobj)
+        atoms = Atoms(fileobj)
+        self.info = M4AInfo(atoms, fileobj)
+        self.tags = M4ATags(atoms, fileobj)
 
     def score(filename, fileobj, header):
         return ("ftyp" in header + "mp4" in header)
