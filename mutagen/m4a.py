@@ -56,6 +56,11 @@ class Atom(DictMixin):
         else:
             fileobj.seek(self.offset + self.length, 0)
 
+    def render(name, data):
+        """Render raw atom data."""
+        return struct.pack(">I4s", len(data) + 8, name) + data
+    render = staticmethod(render)
+
     def __getitem__(self, remaining):
         if not remaining:
             return self
@@ -99,6 +104,12 @@ class Atoms(DictMixin):
         while fileobj.tell() < end:
             self.atoms.append(Atom(fileobj))
 
+    def path(self, *names):
+        path = [self]
+        for name in names:
+            path.append(path[-1][name,])
+        return path[1:]
+
     def __getitem__(self, names):
         if isinstance(names, basestring):
             names = names.split(".")
@@ -115,6 +126,23 @@ class Atoms(DictMixin):
         return "\n".join(repr(child) for child in self.atoms)
 
 class M4ATags(Metadata):
+    """Dictionary containing Apple iTunes metadata list key/values.
+
+    Keys are four byte identifiers, except for freeform ('----')
+    keys. Values are usually unicode strings, but some atoms have a
+    special structure:
+        cpil -- boolean
+        trkn, disk -- tuple of 16 bit ints (current, total)
+        tmpo -- 16 bit int
+        covr -- raw str data
+        gnre -- not supported. Use '\\xa9gen' instead.
+
+    The freeform '----' frames use a key in the format '----:mean:name'
+    where 'mean' is usually 'com.apple.iTunes' and 'name' is a unique
+    identifier for this frame. The value is a str, but is probably
+    text that can be decoded as UTF-8.
+    """
+
     def __init__(self, atoms, fileobj):
         if atoms is None and fileobj is None:
             return
@@ -127,22 +155,43 @@ class M4ATags(Metadata):
             data = fileobj.read(atom.length - 8)
             self.atoms.get(last, (M4ATags.__parse_text,))[0](self, atom, data)
 
-    def save(self, filename):
-        data = self.__render()
-        ilst = struct.pack(">I4s", len(data) + 8, "ilst") + data
-        return ilst
-
-    def __render(self):
+    def save(self, filename=None):
+        if filename is None:
+            filename = self.filename
+        # Render all the current data
         values = []
         for key, value in self.iteritems():
             render = self.atoms.get(key[:4], (None, M4ATags.__render_text))[1]
             values.append(render(self, key, value))
-        return "".join(values)
+        data = Atom.render("ilst", "".join(values))
+
+        # Find the old atoms.
+        fileobj = file(filename, "rb+")
+        atoms = Atoms(fileobj)
+        path = atoms.path("moov", "udta", "meta", "ilst")
+        ilst = path.pop()
+
+        # Replace the old ilst atom.
+        delta = len(data) - ilst.length
+        fileobj.seek(ilst.offset)
+        if delta > 0:
+            self._insert_space(fileobj, delta, ilst.offset)
+        elif delta < 0:
+            self._delete_bytes(fileobj, -delta, ilst.offset)
+        fileobj.seek(ilst.offset)
+        fileobj.write(data)
+
+        # Update all parent atoms with the new size.
+        for atom in path:
+            fileobj.seek(atom.offset)
+            size = cdata.uint_be(fileobj.read(4)) + delta
+            fileobj.seek(atom.offset)
+            fileobj.write(cdata.to_uint_be(size))
+        fileobj.close()
 
     def __render_data(self, key, flags, data):
         data = struct.pack(">2I", flags, 0) + data
-        data = cdata.to_uint_be(len(data) + 8) + "data" + data
-        return cdata.to_uint_be(len(data) + 8) + key + data
+        return Atom.render(key, Atom.render("data", data))
 
     def __parse_freeform(self, atom, data):
         fileobj = StringIO(data)
@@ -161,7 +210,7 @@ class M4ATags(Metadata):
         name = struct.pack(">I4sI", len(name) + 12, "name", 0) + name
         value = struct.pack(">I4s2I", len(value) + 16, "data", 0x1, 0) + value
         final = mean + name + value
-        return struct.pack(">I4s", len(final) + 8, "----") + final
+        return Atom.render("----", mean + name + value)
 
     def __parse_pair(self, atom, data):
         self[atom.name] = struct.unpack(">2H", data[18:22])
@@ -233,6 +282,8 @@ class M4AInfo(object):
         return "MPEG-4 AAC, %.2f seconds" % (self.length)
 
 class M4A(FileType):
+    """An MPEG-4 audio file, probably containing AAC."""
+
     def __init__(self, filename):
         self.filename = filename
         fileobj = file(filename, "rb")
