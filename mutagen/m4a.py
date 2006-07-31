@@ -152,10 +152,11 @@ class M4ATags(Metadata):
             except IndexError: pass
 
     def __parse_tempo(self, atom, data):
-        self[atom.name] = cdata.short(data[16:18])
+        self[atom.name] = cdata.short_be(data[16:18])
 
     def __parse_compilation(self, atom, data):
-        self[atom.name] = bool(ord(data[16:]))
+        try: self[atom.name] = bool(ord(data[16:17]))
+        except TypeError: self[atom.name] = False
 
     def __parse_cover(self, atom, data):
         self[atom.name] = data[16:]
