@@ -115,21 +115,23 @@ class Atoms(DictMixin):
 
 class M4ATags(Metadata):
     def __init__(self, atoms, fileobj):
-        parsers = {
-            "----": self.__parse_freeform,
-            "trkn": self.__parse_pair,
-            "disk": self.__parse_pair,
-            "gnre": self.__parse_genre,
-            "tmpo": self.__parse_tempo,
-            "cpil": self.__parse_compilation,
-            "covr": self.__parse_cover
-            }
-
         for atom in atoms["moov.udta.meta.ilst"].children:
             last = atom.name
             fileobj.seek(atom.offset + 8)
             data = fileobj.read(atom.length - 8)
-            parsers.get(last, self.__parse_text)(atom, data)
+            self.atoms.get(last, (M4ATags.__parse_text,))[0](self, atom, data)
+
+    def __render(self):
+        values = []
+        for key, value in self.iteritems():
+            render = self.atoms.get(key[:4], (None, M4ATags.__render_text))[1]
+            values.append(render(self, key, value))
+        return "".join(values)
+
+    def __render_data(self, key, flags, data):
+        data = struct.pack(">2I", flags, 0) + data
+        data = cdata.to_uint_be(len(data) + 8) + "data" + data
+        return cdata.to_uint_be(len(data) + 8) + key + data
 
     def __parse_freeform(self, atom, data):
         fileobj = StringIO(data)
@@ -139,13 +141,27 @@ class M4ATags(Metadata):
         name_length = cdata.uint_be(fileobj.read(4))
         name = fileobj.read(name_length - 4)[8:]
         value_length = cdata.uint_be(fileobj.read(4))
-        value = fileobj.read(value_length - 4)[8:]
+        # Name, flags, and reserved bytes
+        value = fileobj.read(value_length - 4)[12:]
         self["%s:%s:%s" % (atom.name, mean, name)] = value
+    def __render_freeform(self, key, value):
+        dummy, mean, name = key.split(":", 2)
+        mean = struct.pack(">I4sI", len(mean) + 12, "mean", 0) + mean
+        name = struct.pack(">I4sI", len(name) + 12, "name", 0) + name
+        value = struct.pack(">I4s2I", len(value) + 16, "data", 0x1, 0) + value
+        final = mean + name + value
+        return struct.pack(">I4s", len(final) + 8, "----") + final
 
     def __parse_pair(self, atom, data):
         self[atom.name] = struct.unpack(">2H", data[18:22])
+    def __render_pair(self, key, value):
+        track, total = value
+        # Type flag, reserved, empty, track, total, empty.
+        data = struct.pack(">4H", 0, 0, 0, track, total, 0)
+        return self.__render_data(key, 0, data)
 
     def __parse_genre(self, atom, data):
+        # Translate to a freeform genre.
         genre = cdata.short_be(data[16:18])
         if "\xa9gen" not in self:
             try: self["\xa9gen"] = GENRES[genre - 1]
@@ -153,21 +169,41 @@ class M4ATags(Metadata):
 
     def __parse_tempo(self, atom, data):
         self[atom.name] = cdata.short_be(data[16:18])
+    def __render_tempo(self, key, value):
+        return self.__render_data(key, 0x15, cdata.to_ushort_be(value))
 
     def __parse_compilation(self, atom, data):
         try: self[atom.name] = bool(ord(data[16:17]))
         except TypeError: self[atom.name] = False
+    def __render_compilation(self, key, value):
+        if value:            
+            return self.__render_data(key, 0x15, "\x01")
+        else: return ""
 
     def __parse_cover(self, atom, data):
         self[atom.name] = data[16:]
+    def __render_cover(self, key, value):
+        return self.__render_data(key, 0xD, value)
 
     def __parse_text(self, atom, data):
         self[atom.name] = data[16:].decode('utf-8', 'replace')
+    def __render_text(self, key, value):
+        return self.__render_data(key, 0x1, value.encode('utf-8'))
+
+    atoms = {
+        "----": (__parse_freeform, __render_freeform),
+        "trkn": (__parse_pair, __render_pair),
+        "disk": (__parse_pair, __render_pair),
+        "gnre": (__parse_genre, None),
+        "tmpo": (__parse_tempo, __render_tempo),
+        "cpil": (__parse_compilation, __render_compilation),
+        "covr": (__parse_cover, __render_cover),
+        }
 
     def pprint(self):
         return "\n".join(["%s=%s" % (key.decode('latin1'), value)
                           for (key, value) in self.iteritems()])
-            
+
 class M4AInfo(object):
     def __init__(self, atoms, fileobj):
         atom = atoms["moov.trak.mdia.mdhd"]

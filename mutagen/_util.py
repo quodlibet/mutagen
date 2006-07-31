@@ -118,16 +118,23 @@ class cdata(object):
     longlong_le = staticmethod(lambda data: struct.unpack('<q', data)[0])
     ulonglong_le = staticmethod(lambda data: struct.unpack('<Q', data)[0])
 
+    to_short_le = staticmethod(lambda data: struct.pack('<h', data))
+    to_ushort_le = staticmethod(lambda data: struct.pack('<H', data))
+
+    to_short_be = staticmethod(lambda data: struct.pack('>h', data))
+    to_ushort_be = staticmethod(lambda data: struct.pack('>H', data))
+
     to_int_le = staticmethod(lambda data: struct.pack('<i', data))
     to_uint_le = staticmethod(lambda data: struct.pack('<I', data))
+
+    to_int_be = staticmethod(lambda data: struct.pack('>i', data))
+    to_uint_be = staticmethod(lambda data: struct.pack('>I', data))
 
     to_longlong_le = staticmethod(lambda data: struct.pack('<q', data))
     to_ulonglong_le = staticmethod(lambda data: struct.pack('<Q', data))
 
     to_longlong_be = staticmethod(lambda data: struct.pack('>q', data))
     to_ulonglong_be = staticmethod(lambda data: struct.pack('>Q', data))
-
-    to_int_be = staticmethod(lambda data: struct.pack('>i', data))
 
     bitswap = ''.join([chr(sum([((val >> i) & 1) << (7-i) for i in range(8)]))
                        for val in range(256)])
