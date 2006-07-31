@@ -4,11 +4,6 @@ mutagen.id3 needs:
  * Perhaps implement tag merging - "intelligently" merge information
    from all known tag formats
 
-mutagen.mp4 needs:
- * To exist.
- * Clean MP4 metadata reader at
-   http://svn.myrealbox.com/viewcvs/trunk/entagged-sharp/src/Mp4/Util/Mp4TagReader.cs?rev=53657&view=auto
-
 mutagen.apev2 needs:
  * General cleanup to fit the basic structure of the rest of Mutagen.
 
