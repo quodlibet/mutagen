@@ -98,8 +98,9 @@ class FileType(mutagen._util.DictMixin):
     def delete(self, filename=None):
         """Remove tags from a file."""
         if self.tags is not None:
-            if filename is None: filename = self.filename
-            self.tags.delete(filename)
+            if filename is None:
+                filename = self.filename
+            return self.tags.delete(filename)
 
     def save(self, filename=None, **kwargs):
         """Save metadata tags.
@@ -108,7 +109,7 @@ class FileType(mutagen._util.DictMixin):
         """
         if filename is None: filename = self.filename
         if self.tags is not None:
-            self.tags.save(filename, **kwargs)
+            return self.tags.save(filename, **kwargs)
         else: raise ValueError("no tags in file")
 
     def pprint(self):

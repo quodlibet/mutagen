@@ -23,6 +23,7 @@ work on files over 4GB.
 """
 
 import struct
+import sys
 
 from cStringIO import StringIO
 
@@ -64,7 +65,7 @@ class Atom(DictMixin):
             if child.name == remaining[0]:
                 return child[remaining[1:]]
         else:
-            raise KeyError("unable to resolve %r" % remaining)
+            raise KeyError, "%s not found" % remaining[0]
 
     def keys(self):
         if not self.children:
@@ -105,7 +106,7 @@ class Atoms(DictMixin):
             if child.name == names[0]:
                 return child[names[1:]]
         else:
-            raise KeyError("unable to resolve %r" % names[0])
+            raise KeyError, "%s not found" % names[0]
 
     def keys(self):
         return sum([atom.keys() for atom in self.atoms], [])
@@ -115,11 +116,21 @@ class Atoms(DictMixin):
 
 class M4ATags(Metadata):
     def __init__(self, atoms, fileobj):
-        for atom in atoms["moov.udta.meta.ilst"].children:
+        if atoms is None and fileobj is None:
+            return
+        try: ilst = atoms["moov.udta.meta.ilst"]
+        except KeyError, key:
+            raise M4AMetadataError(key)
+        for atom in ilst.children:
             last = atom.name
             fileobj.seek(atom.offset + 8)
             data = fileobj.read(atom.length - 8)
             self.atoms.get(last, (M4ATags.__parse_text,))[0](self, atom, data)
+
+    def save(self, filename):
+        data = self.__render()
+        ilst = struct.pack(">I4s", len(data) + 8, "ilst") + data
+        return ilst
 
     def __render(self):
         values = []
@@ -156,8 +167,7 @@ class M4ATags(Metadata):
         self[atom.name] = struct.unpack(">2H", data[18:22])
     def __render_pair(self, key, value):
         track, total = value
-        # Type flag, reserved, empty, track, total, empty.
-        data = struct.pack(">4H", 0, 0, 0, track, total, 0)
+        data = struct.pack(">4H", 0, track, total, 0)
         return self.__render_data(key, 0, data)
 
     def __parse_genre(self, atom, data):
@@ -227,8 +237,17 @@ class M4A(FileType):
         self.filename = filename
         fileobj = file(filename, "rb")
         atoms = Atoms(fileobj)
-        self.info = M4AInfo(atoms, fileobj)
-        self.tags = M4ATags(atoms, fileobj)
+        try: self.info = M4AInfo(atoms, fileobj)
+        except StandardError, err:
+            raise M4AStreamInfoError, err, sys.exc_info()[2]
+        try: self.tags = M4ATags(atoms, fileobj)
+        except M4AMetadataError:
+            self.tags = None
+        except StandardError, err:
+            raise M4AMetadataError, err, sys.exc_info()[2]
+
+    def add_tags(self):
+        self.tags = M4ATags(None, None)
 
     def score(filename, fileobj, header):
         return ("ftyp" in header) + ("mp4" in header)
