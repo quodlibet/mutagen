@@ -140,8 +140,9 @@ def File(filename, options=None):
         from mutagen.oggvorbis import OggVorbis
         from mutagen.trueaudio import TrueAudio
         from mutagen.wavpack import WavPack
+        from mutagen.m4a import M4A
         options = [MP3, TrueAudio, OggTheora, OggSpeex, OggVorbis, OggFLAC,
-                   FLAC, APEv2File, ID3FileType, WavPack]
+                   FLAC, APEv2File, M4A, ID3FileType, WavPack]
 
     if not options:
         return None
