@@ -51,6 +51,8 @@ class test_cmd(Command):
 
         print "Running tests with real mmap."
         if tests.unit(self.to_run):
+            if sys.version[:3] == (2, 4, 2):
+                print "You're running Python 2.4.2, which is buggy."
             raise SystemExit("Test failures are listed above.")
 
         def uses_mmap(Kind):
@@ -63,6 +65,8 @@ class test_cmd(Command):
         print "Running tests with mocked failing mmap.move."
         mmap.mmap = MockMMap
         if tests.unit(self.to_run, uses_mmap):
+            if sys.version[:3] == (2, 4, 2):
+                print "You're running Python 2.4.2, which is buggy."
             raise SystemExit("Test failures are listed above.")
 
         def MockMMap2(*args, **kwargs):
@@ -70,6 +74,8 @@ class test_cmd(Command):
         mmap.mmap = MockMMap2
         print "Running tests with mocked failing mmap.mmap."
         if tests.unit(self.to_run, uses_mmap):
+            if sys.version[:3] == (2, 4, 2):
+                print "You're running Python 2.4.2, which is buggy."
             raise SystemExit("Test failures are listed above.")
 
 class coverage_cmd(Command):
@@ -116,9 +122,9 @@ else:
     data_files = []
 
 setup(cmdclass={'clean': clean, 'test': test_cmd, 'coverage': coverage_cmd},
-      name="mutagen", version="1.5.1",
+      name="mutagen", version="1.6",
       url="http://www.sacredchao.net/quodlibet/wiki/Development/Mutagen",
-      description="read and write ID3v1/ID3v2/APEv2/FLAC/Ogg audio tags",
+      description="read and write audio tags for many formats",
       author="Michael Urman",
       author_email="quodlibet@lists.sacredchao.net",
       license="GNU GPL v2",
@@ -126,11 +132,12 @@ setup(cmdclass={'clean': clean, 'test': test_cmd, 'coverage': coverage_cmd},
       data_files=data_files,
       scripts=glob.glob("tools/m*[!~]"),
       long_description="""\
-Mutagen is a Python module to handle audio metadata. It supports
-reading ID3 (all versions), APEv2, FLAC, and Ogg Vorbis/FLAC/Theora.
-It can write ID3v1.1, ID3v2.4, APEv2, FLAC, and Ogg Vorbis/FLAC/Theora
-comments. It can also read MPEG audio and Xing headers, FLAC stream
-info blocks, and Ogg Vorbis/FLAC/Theora stream headers. Finally, it
-includes a module to handle generic Ogg bitstreams.
+Mutagen is a Python module to handle audio metadata. It supports FLAC,
+M4A, MP3, Ogg FLAC, Ogg Speex, Ogg Theora, Ogg Vorbis, True Audio, and
+WavPack audio files. All versions of ID3v2 are supported, and all
+standard ID3v2.4 frames are parsed. It can read Xing headers to
+accurately calculate the bitrate and length of MP3s. ID3 and APEv2
+tags can be edited regardless of audio format. It can also manipulate
+Ogg streams on an individual packet/page level.
 """
     )

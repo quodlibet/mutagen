@@ -6,8 +6,9 @@
    * Handle struct.pack API change in Python 2.5b2. (SF #1530559)
 
  * New Features:
-   * Vorbis comment vendors include the Mutagen version.
-   * mutagen.id3: ASPI, ETCO, SYTC, MLLT, EQU2, LINK frame support.
+   * Vorbis comment vendor strings include the Mutagen version.
+   * mutagen.id3: Read ASPI, ETCO, SYTC, MLLT, EQU2, and LINK frames.
+   * mutagen.m4a: MPEG-4 audio with iTunes metadata support.
    * mutagen.oggspeex: Read/tag Ogg Speex files.
    * mutagen.trueaudio: Read/tag True Audio files.
    * mutagen.wavpack: Read/tag WavPack files.
