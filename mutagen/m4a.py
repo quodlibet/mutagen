@@ -34,6 +34,7 @@ from mutagen._util import cdata, DictMixin
 class error(IOError): pass
 class M4AMetadataError(error): pass
 class M4AStreamInfoError(error): pass
+class M4AMetadataValueError(ValueError, M4AMetadataError): pass
 
 # This is not an exhaustive list of container atoms, but just the
 # ones this module needs to peek inside.
@@ -159,9 +160,7 @@ class M4ATags(Metadata):
             parse = self.atoms.get(atom.name, (M4ATags.__parse_text,))[0]
             parse(self, atom, data)
 
-    def save(self, filename=None):
-        if filename is None:
-            filename = self.filename
+    def save(self, filename):
         # Render all the current data
         values = []
         for key, value in self.iteritems():
@@ -243,8 +242,11 @@ class M4ATags(Metadata):
         self[atom.name] = struct.unpack(">2H", data[18:22])
     def __render_pair(self, key, value):
         track, total = value
-        data = struct.pack(">4H", 0, track, total, 0)
-        return self.__render_data(key, 0, data)
+        if 0 <= track < 1 << 16 and 0 <= total < 1 << 16:
+            data = struct.pack(">4H", 0, track, total, 0)
+            return self.__render_data(key, 0, data)
+        else:
+            raise M4AMetadataValueError("invalid numeric pair %r" % (value,))
 
     def __parse_genre(self, atom, data):
         # Translate to a freeform genre.
@@ -256,7 +258,10 @@ class M4ATags(Metadata):
     def __parse_tempo(self, atom, data):
         self[atom.name] = cdata.short_be(data[16:18])
     def __render_tempo(self, key, value):
-        return self.__render_data(key, 0x15, cdata.to_ushort_be(value))
+        if 0 <= value < 1 << 16:
+            return self.__render_data(key, 0x15, cdata.to_ushort_be(value))
+        else:
+            raise M4AMetadataValueError("invalid short integer %r" % value)
 
     def __parse_compilation(self, atom, data):
         try: self[atom.name] = bool(ord(data[16:17]))
