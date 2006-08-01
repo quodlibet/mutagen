@@ -6,7 +6,7 @@
 #
 # $Id$
 
-"""Read and write M4A files.
+"""Read and write M4A files with iTunes metadata.
 
 This module will read MPEG-4 audio information and metadata,
 as found in Apple's M4A (aka MP4, M4B, M4P) files.
@@ -43,13 +43,13 @@ _SKIP_SIZE = { "meta": 4 }
 
 __all__ = ['M4A', 'Open', 'delete']
 
-class Atom(DictMixin):
+class Atom(object):
     def __init__(self, fileobj):
         self.offset = fileobj.tell()
         self.length, self.name = struct.unpack(">I4s", fileobj.read(8))
         if self.length == 1:
             raise error("64 bit atom sizes are not supported")
-        elif self.length == 0:
+        elif self.length < 8:
             return
         self.children = None
 
@@ -77,18 +77,6 @@ class Atom(DictMixin):
         else:
             raise KeyError, "%s not found" % remaining[0]
 
-    def keys(self):
-        if not self.children:
-            return []
-        else:
-            keys = []
-            for child in self.children:
-                if child.children is None:
-                    keys.append((child.name,))
-                else:
-                    keys.extend(child.keys())
-            return map((self.name,).__add__, keys)
-
     def __repr__(self):
         klass = self.__class__.__name__
         if self.children is None:
@@ -100,7 +88,7 @@ class Atom(DictMixin):
             return "<%s name=%r length=%r offset=%r\n%s>" % (
                 klass, self.name, self.length, self.offset, children)
 
-class Atoms(DictMixin):
+class Atoms(object):
     def __init__(self, fileobj):
         self.atoms = []
         fileobj.seek(0, 2)
@@ -123,9 +111,6 @@ class Atoms(DictMixin):
                 return child[names[1:]]
         else:
             raise KeyError, "%s not found" % names[0]
-
-    def keys(self):
-        return sum([atom.keys() for atom in self.atoms], [])
 
     def __repr__(self):
         return "\n".join(repr(child) for child in self.atoms)
@@ -281,6 +266,12 @@ class M4ATags(Metadata):
     def __render_text(self, key, value):
         return self.__render_data(key, 0x1, value.encode('utf-8'))
 
+    def delete(self, filename=None):
+        if filename is None:
+            filename = self.filename
+        self.clear()
+        self.save(filename)
+
     atoms = {
         "----": (__parse_freeform, __render_freeform),
         "trkn": (__parse_pair, __render_pair),
@@ -296,11 +287,16 @@ class M4ATags(Metadata):
                           for (key, value) in self.iteritems()])
 
 class M4AInfo(object):
+    """MPEG-4 stream information.
+
+    Attributes:
+    length -- file length in seconds, as a float
+    """
     def __init__(self, atoms, fileobj):
         atom = atoms["moov.trak.mdia.mdhd"]
         fileobj.seek(atom.offset)
         data = fileobj.read(atom.length)
-        if ord(data[9]) == 0:
+        if ord(data[8]) == 0:
             offset = 20
             format = ">2I"
         else:
@@ -314,7 +310,10 @@ class M4AInfo(object):
         return "MPEG-4 audio, %.2f seconds" % (self.length)
 
 class M4A(FileType):
-    """An MPEG-4 audio file, probably containing AAC."""
+    """An MPEG-4 audio file, probably containing AAC.
+
+    If more than one track is present in the file, the first is used.
+    """
 
     def __init__(self, filename):
         self.load(filename)
@@ -340,3 +339,7 @@ class M4A(FileType):
     score = staticmethod(score)
 
 Open = M4A
+
+def delete(filename):
+    """Remove tags from a file."""
+    M4A(filename).delete()
