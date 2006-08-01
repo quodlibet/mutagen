@@ -155,13 +155,16 @@ class M4ATags(Metadata):
 
         # Find the old atoms.
         fileobj = file(filename, "rb+")
-        atoms = Atoms(fileobj)
         try:
-            path = atoms.path("moov", "udta", "meta", "ilst")
-        except KeyError:
-            self.__save_new(fileobj, atoms, data)
-        else:
-            self.__save_existing(fileobj, atoms, path, data)
+            atoms = Atoms(fileobj)
+            try:
+                path = atoms.path("moov", "udta", "meta", "ilst")
+            except KeyError:
+                self.__save_new(fileobj, atoms, data)
+            else:
+                self.__save_existing(fileobj, atoms, path, data)
+        finally:
+            fileobj.close()
 
     def __save_new(self, fileobj, atoms, ilst):
         hdlr = Atom.render("hdlr", "\x00" * 8 + "mdirappl" + "\x00" * 9)
@@ -192,7 +195,6 @@ class M4ATags(Metadata):
             size = cdata.uint_be(fileobj.read(4)) + delta
             fileobj.seek(atom.offset)
             fileobj.write(cdata.to_uint_be(size))
-        fileobj.close()
 
     def __render_data(self, key, flags, data):
         data = struct.pack(">2I", flags, 0) + data
@@ -321,15 +323,18 @@ class M4A(FileType):
     def load(self, filename):
         self.filename = filename
         fileobj = file(filename, "rb")
-        atoms = Atoms(fileobj)
-        try: self.info = M4AInfo(atoms, fileobj)
-        except StandardError, err:
-            raise M4AStreamInfoError, err, sys.exc_info()[2]
-        try: self.tags = M4ATags(atoms, fileobj)
-        except M4AMetadataError:
-            self.tags = None
-        except StandardError, err:
-            raise M4AMetadataError, err, sys.exc_info()[2]
+        try:
+            atoms = Atoms(fileobj)
+            try: self.info = M4AInfo(atoms, fileobj)
+            except StandardError, err:
+                raise M4AStreamInfoError, err, sys.exc_info()[2]
+            try: self.tags = M4ATags(atoms, fileobj)
+            except M4AMetadataError:
+                self.tags = None
+            except StandardError, err:
+                raise M4AMetadataError, err, sys.exc_info()[2]
+        finally:
+            fileobj.close()
 
     def add_tags(self):
         self.tags = M4ATags(None, None)
