@@ -40,6 +40,8 @@ class M4AStreamInfoError(error): pass
 _CONTAINERS = ["moov", "udta", "trak", "mdia", "meta", "ilst"]
 _SKIP_SIZE = { "meta": 4 }
 
+__all__ = ['M4A', 'Open', 'delete']
+
 class Atom(DictMixin):
     def __init__(self, fileobj):
         self.offset = fileobj.tell()
@@ -170,10 +172,25 @@ class M4ATags(Metadata):
         # Find the old atoms.
         fileobj = file(filename, "rb+")
         atoms = Atoms(fileobj)
-        path = atoms.path("moov", "udta", "meta", "ilst")
-        ilst = path.pop()
+        try:
+            path = atoms.path("moov", "udta", "meta", "ilst")
+        except KeyError:
+            self.__save_new(fileobj, atoms, data)
+        else:
+            self.__save_existing(fileobj, atoms, path, data)
 
+    def __save_new(self, fileobj, atoms, ilst):
+        hdlr = Atom.render("hdlr", "\x00" * 8 + "mdirappl" + "\x00" * 9)
+        meta = Atom.render("meta", "\x00\x00\x00\x00" + hdlr + ilst)
+        moov, udta = atoms.path("moov", "udta")
+        self._insert_space(fileobj, len(meta), udta.offset + 8)
+        fileobj.seek(udta.offset + 8)
+        fileobj.write(meta)
+        self.__update_parents(fileobj, [moov, udta], len(meta))
+
+    def __save_existing(self, fileobj, atoms, path, data):
         # Replace the old ilst atom.
+        ilst = path.pop()
         delta = len(data) - ilst.length
         fileobj.seek(ilst.offset)
         if delta > 0:
@@ -182,7 +199,9 @@ class M4ATags(Metadata):
             self._delete_bytes(fileobj, -delta, ilst.offset)
         fileobj.seek(ilst.offset)
         fileobj.write(data)
+        self.__update_parents(fileobj, path, delta)
 
+    def __update_parents(self, fileobj, path, delta):
         # Update all parent atoms with the new size.
         for atom in path:
             fileobj.seek(atom.offset)
@@ -293,6 +312,9 @@ class M4A(FileType):
     """An MPEG-4 audio file, probably containing AAC."""
 
     def __init__(self, filename):
+        self.load(filename)
+
+    def load(self, filename):
         self.filename = filename
         fileobj = file(filename, "rb")
         atoms = Atoms(fileobj)
@@ -311,3 +333,5 @@ class M4A(FileType):
     def score(filename, fileobj, header):
         return ("ftyp" in header) + ("mp4" in header)
     score = staticmethod(score)
+
+Open = M4A
