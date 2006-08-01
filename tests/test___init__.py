@@ -10,6 +10,7 @@ from mutagen.apev2 import APEv2File
 from mutagen.flac import FLAC
 from mutagen.wavpack import WavPack
 from mutagen.trueaudio import TrueAudio
+from mutagen.m4a import M4A
 
 class TMetadata(TestCase):
     uses_mmap = False
@@ -103,5 +104,9 @@ class TFile(TestCase):
     def test_wavpack(self):
         self.failUnless(isinstance(
             File(os.path.join("tests", "data", "silence-44-s.wv")), WavPack))
+
+    def test_m4a(self):
+        self.failUnless(isinstance(
+            File(os.path.join("tests", "data", "has-tags.m4a")), M4A))
 
 add(TFile)

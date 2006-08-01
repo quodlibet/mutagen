@@ -46,6 +46,8 @@ class Atom(DictMixin):
         self.length, self.name = struct.unpack(">I4s", fileobj.read(8))
         if self.length == 1:
             raise error("64 bit atom sizes are not supported")
+        elif self.length == 0:
+            return
         self.children = None
 
         if self.name in _CONTAINERS:
