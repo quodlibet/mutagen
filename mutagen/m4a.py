@@ -285,8 +285,13 @@ class M4ATags(Metadata):
         }
 
     def pprint(self):
-        return "\n".join(["%s=%s" % (key.decode('latin1'), value)
-                          for (key, value) in self.iteritems()])
+        values = []
+        for key, value in self.iteritems():
+            key = key.decode('latin1')
+            try: values.append("%s=%s" % (key, value))
+            except UnicodeDecodeError:
+                values.append("%s=[%d bytes of data]" % (key, len(value)))
+        return "\n".join(values)
 
 class M4AInfo(object):
     """MPEG-4 stream information.
