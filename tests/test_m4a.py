@@ -95,12 +95,6 @@ class TM4ATags(TestCase):
         self.failIf("gnre" in tags)
         self.failIf("\xa9gen" in tags)
 
-    def test_cpil(self):
-        data = Atom.render("data", "\x00\x00\x00\x0f\x00\x00\x00\x00")
-        genre = Atom.render("cpil", data)
-        tags = self.wrap_ilst(genre)
-        self.failIf(tags["cpil"])
-
 add(TM4ATags)
 
 class TM4A(TestCase):
@@ -142,18 +136,13 @@ class TM4A(TestCase):
 
     def test_compilation(self):
         self.set_key('cpil', True)
+        self.set_key('cpil', False)
 
     def test_cover(self):
         self.set_key('covr', 'woooo')
 
     def test_pprint(self):
         self.audio.pprint()
-
-    def test_remove_false_cpil(self):
-        self.audio["cpil"] = False
-        self.audio.save()
-        audio = M4A(self.audio.filename)
-        self.failIf("cpil" in audio.tags)
 
     def test_delete(self):
         self.audio.delete()

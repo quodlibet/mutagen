@@ -113,7 +113,7 @@ class Atoms(object):
             raise KeyError, "%s not found" % names[0]
 
     def __repr__(self):
-        return "\n".join(repr(child) for child in self.atoms)
+        return "\n".join([repr(child) for child in self.atoms])
 
 class M4ATags(Metadata):
     """Dictionary containing Apple iTunes metadata list key/values.
@@ -253,10 +253,12 @@ class M4ATags(Metadata):
     def __parse_compilation(self, atom, data):
         try: self[atom.name] = bool(ord(data[16:17]))
         except TypeError: self[atom.name] = False
+
     def __render_compilation(self, key, value):
-        if value:            
+        if value:         
             return self.__render_data(key, 0x15, "\x01")
-        else: return ""
+        else:
+            return self.__render_data(key, 0x15, "")
 
     def __parse_cover(self, atom, data):
         self[atom.name] = data[16:]
