@@ -52,11 +52,16 @@ add(TAtoms)
 class TM4AInfo(TestCase):
     uses_mmap = False
 
-    def test_mdhd_version_1(self):
+    def test_no_soun(self):
+        self.failUnlessRaises(
+            IOError, self.test_mdhd_version_1, "no so und data here")
+
+    def test_mdhd_version_1(self, soun="soun"):
         mdhd = Atom.render("mdhd", ("\x01\x00\x00\x00" + "\x00" * 16 +
                                     "\x00\x00\x00\x02" + # 2 Hz
                                     "\x00\x00\x00\x00\x00\x00\x00\x10"))
-        mdia = Atom.render("mdia", mdhd)
+        hdlr = Atom.render("hdlr", soun)
+        mdia = Atom.render("mdia", mdhd + hdlr)
         trak = Atom.render("trak", mdia)
         moov = Atom.render("moov", trak)
         fileobj = StringIO(moov)
@@ -108,6 +113,9 @@ class TM4A(TestCase):
         value = os.system(
             "faad -w %s > /dev/null 2> /dev/null" % self.filename)
         self.failIf(value and value != NOTFOUND)
+
+    def test_bitrate(self):
+        self.failUnlessEqual(self.audio.info.bitrate, 2914)
 
     def test_length(self):
         self.failUnlessAlmostEqual(3.7, self.audio.info.length, 1)

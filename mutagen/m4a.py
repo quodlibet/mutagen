@@ -6,7 +6,7 @@
 #
 # $Id$
 
-"""Read and write M4A files with iTunes metadata.
+"""Read and write MPEG-4 audio files with iTunes metadata.
 
 This module will read MPEG-4 audio information and metadata,
 as found in Apple's M4A (aka MP4, M4B, M4P) files.
@@ -38,12 +38,15 @@ class M4AMetadataValueError(ValueError, M4AMetadataError): pass
 
 # This is not an exhaustive list of container atoms, but just the
 # ones this module needs to peek inside.
-_CONTAINERS = ["moov", "udta", "trak", "mdia", "meta", "ilst"]
+_CONTAINERS = ["moov", "udta", "trak", "mdia", "meta", "ilst",
+               "stbl", "minf", "stsd"]
 _SKIP_SIZE = { "meta": 4 }
 
 __all__ = ['M4A', 'Open', 'delete']
 
 class Atom(object):
+    children = None
+
     def __init__(self, fileobj):
         self.offset = fileobj.tell()
         self.length, self.name = struct.unpack(">I4s", fileobj.read(8))
@@ -51,7 +54,6 @@ class Atom(object):
             raise error("64 bit atom sizes are not supported")
         elif self.length < 8:
             return
-        self.children = None
 
         if self.name in _CONTAINERS:
             self.children = []
@@ -343,12 +345,21 @@ class M4AInfo(object):
     """MPEG-4 stream information.
 
     Attributes:
+    bitrate -- bitrate in bits per second, as an int
     length -- file length in seconds, as a float
     """
+
+    bitrate = 0
+
     def __init__(self, atoms, fileobj):
-        atom = atoms["moov.trak.mdia.mdhd"]
-        fileobj.seek(atom.offset)
-        data = fileobj.read(atom.length)
+        hdlr = atoms["moov.trak.mdia.hdlr"]
+        fileobj.seek(hdlr.offset)
+        if "soun" not in fileobj.read(hdlr.length):
+            raise M4AStreamInfoError("track has no audio data")
+
+        mdhd = atoms["moov.trak.mdia.mdhd"]
+        fileobj.seek(mdhd.offset)
+        data = fileobj.read(mdhd.length)
         if ord(data[8]) == 0:
             offset = 20
             format = ">2I"
@@ -359,8 +370,18 @@ class M4AInfo(object):
         unit, length = struct.unpack(format, data[offset:end])
         self.length = float(length) / unit
 
+        try:
+            atom = atoms["moov.trak.mdia.minf.stbl.stsd"]
+            fileobj.seek(atom.offset)
+            data = fileobj.read(atom.length)
+            self.bitrate = cdata.uint_be(data[-17:-13])
+        except (ValueError, KeyError):
+            # Bitrate values are optional.
+            pass
+
     def pprint(self):
-        return "MPEG-4 audio, %.2f seconds" % (self.length)
+        return "MPEG-4 audio, %.2f seconds, %d bps" % (
+            self.length, self.bitrate)
 
 class M4A(FileType):
     """An MPEG-4 audio file, probably containing AAC.
