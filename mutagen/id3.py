@@ -1870,7 +1870,7 @@ class ID3FileType(mutagen.FileType):
         def __init__(self, fileobj, offset): pass
         pprint = staticmethod(lambda: "Unknown format with ID3 tag")
 
-    def __init__(self, filename=None, ID3=ID3):
+    def __init__(self, filename, ID3=ID3):
         if filename is not None:
             self.load(filename, ID3)
 

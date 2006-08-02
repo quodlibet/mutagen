@@ -438,9 +438,8 @@ class APEv2File(FileType):
         def __init__(self, fileobj): pass
         pprint = staticmethod(lambda: "Unknown format with APEv2 tag.")
 
-    def __init__(self, filename=None):
-        if filename:
-            self.load(filename)
+    def __init__(self, filename):
+        self.load(filename)
 
     def load(self, filename):
         self.filename = filename

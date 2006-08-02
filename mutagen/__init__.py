@@ -24,6 +24,8 @@ for certain keys, again depending on format.
 version = (1, 6)
 version_string = ".".join(map(str, version))
 
+import warnings
+
 import mutagen._util
 
 class Metadata(dict):
@@ -100,6 +102,10 @@ class FileType(mutagen._util.DictMixin):
         if self.tags is not None:
             if filename is None:
                 filename = self.filename
+            else:
+                warnings.warn(
+                    "delete(filename=...) is deprecated, reload the file",
+                    DeprecationWarning)
             return self.tags.delete(filename)
 
     def save(self, filename=None, **kwargs):
@@ -107,7 +113,12 @@ class FileType(mutagen._util.DictMixin):
 
         If no filename is given, the one most recently loaded is used.
         """
-        if filename is None: filename = self.filename
+        if filename is None:
+            filename = self.filename
+        else:
+            warnings.warn(
+                "save(filename=...) is deprecated, reload the file",
+                DeprecationWarning)
         if self.tags is not None:
             return self.tags.save(filename, **kwargs)
         else: raise ValueError("no tags in file")

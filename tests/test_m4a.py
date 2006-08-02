@@ -175,7 +175,7 @@ class TM4AHasTags(TM4A):
     original = os.path.join("tests", "data", "has-tags.m4a")
 
     def test_save_simple(self):
-        self.audio.save(self.filename)
+        self.audio.save()
         self.faad()
 
     def test_shrink(self):
