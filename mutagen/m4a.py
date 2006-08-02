@@ -171,43 +171,68 @@ class M4ATags(Metadata):
         fileobj = file(filename, "rb+")
         try:
             atoms = Atoms(fileobj)
+
+            moov = atoms["moov"]
+
+            if moov != atoms.atoms[-1]:
+                # "Free" the old moov block. Something in the mdat
+                # block is not happy when its offset changes and it
+                # won't play back. So, rather than try to figure that
+                # out, just move the moov atom to the end of the file.
+                offset = self.__move_moov(fileobj, moov)
+            else:
+                offset = 0
+
             try:
                 path = atoms.path("moov", "udta", "meta", "ilst")
             except KeyError:
-                self.__save_new(fileobj, atoms, data)
+                self.__save_new(fileobj, atoms, data, offset)
             else:
-                self.__save_existing(fileobj, atoms, path, data)
+                self.__save_existing(fileobj, atoms, path, data, offset)
         finally:
             fileobj.close()
 
-    def __save_new(self, fileobj, atoms, ilst):
+    def __move_moov(self, fileobj, moov):
+        fileobj.seek(moov.offset)
+        data = fileobj.read(moov.length)
+        fileobj.seek(moov.offset)
+        free = Atom.render("free", "\x00" * (moov.length - 8))
+        fileobj.write(free)
+        fileobj.seek(0, 2)
+        # Figure out how far we have to shift all our successive
+        # seek calls, relative to what the atoms say.
+        old_end = fileobj.tell()
+        fileobj.write(data)
+        return old_end - moov.offset
+
+    def __save_new(self, fileobj, atoms, ilst, offset):
         hdlr = Atom.render("hdlr", "\x00" * 8 + "mdirappl" + "\x00" * 9)
         meta = Atom.render("meta", "\x00\x00\x00\x00" + hdlr + ilst)
         moov, udta = atoms.path("moov", "udta")
-        self._insert_space(fileobj, len(meta), udta.offset + 8)
-        fileobj.seek(udta.offset + 8)
+        self._insert_space(fileobj, len(meta), udta.offset + offset + 8)
+        fileobj.seek(udta.offset + offset + 8)
         fileobj.write(meta)
-        self.__update_parents(fileobj, [moov, udta], len(meta))
+        self.__update_parents(fileobj, [moov, udta], len(meta), offset)
 
-    def __save_existing(self, fileobj, atoms, path, data):
+    def __save_existing(self, fileobj, atoms, path, data, offset):
         # Replace the old ilst atom.
         ilst = path.pop()
         delta = len(data) - ilst.length
-        fileobj.seek(ilst.offset)
+        fileobj.seek(ilst.offset + offset)
         if delta > 0:
-            self._insert_space(fileobj, delta, ilst.offset)
+            self._insert_space(fileobj, delta, ilst.offset + offset)
         elif delta < 0:
-            self._delete_bytes(fileobj, -delta, ilst.offset)
-        fileobj.seek(ilst.offset)
+            self._delete_bytes(fileobj, -delta, ilst.offset + offset)
+        fileobj.seek(ilst.offset + offset)
         fileobj.write(data)
-        self.__update_parents(fileobj, path, delta)
+        self.__update_parents(fileobj, path, delta, offset)
 
-    def __update_parents(self, fileobj, path, delta):
+    def __update_parents(self, fileobj, path, delta, offset):
         # Update all parent atoms with the new size.
         for atom in path:
-            fileobj.seek(atom.offset)
+            fileobj.seek(atom.offset + offset)
             size = cdata.uint_be(fileobj.read(4)) + delta
-            fileobj.seek(atom.offset)
+            fileobj.seek(atom.offset + offset)
             fileobj.write(cdata.to_uint_be(size))
 
     def __render_data(self, key, flags, data):

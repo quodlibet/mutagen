@@ -99,10 +99,15 @@ add(TM4ATags)
 
 class TM4A(TestCase):
     def setUp(self):
-        fd, self.filename = mkstemp(suffix='mp3')
+        fd, self.filename = mkstemp(suffix='m4a')
         os.close(fd)
         shutil.copy(self.original, self.filename)
         self.audio = M4A(self.filename)
+
+    def faad(self):
+        value = os.system(
+            "faad -w %s > /dev/null 2> /dev/null" % self.filename)
+        self.failIf(value and value != NOTFOUND)
 
     def test_length(self):
         self.failUnlessAlmostEqual(3.7, self.audio.info.length, 1)
@@ -113,6 +118,7 @@ class TM4A(TestCase):
         audio = M4A(self.audio.filename)
         self.failUnless(key in audio)
         self.failUnlessEqual(audio[key], value)
+        self.faad()
 
     def test_save_text(self):
         self.set_key('\xa9nam', u"Some test name")
@@ -148,11 +154,13 @@ class TM4A(TestCase):
         self.audio.delete()
         audio = M4A(self.audio.filename)
         self.failIf(audio.tags)
+        self.faad()
 
     def test_module_delete(self):
         delete(self.filename)
         audio = M4A(self.audio.filename)
         self.failIf(audio.tags)
+        self.faad()
 
     def tearDown(self):
         os.unlink(self.filename)
@@ -162,6 +170,7 @@ class TM4AHasTags(TM4A):
 
     def test_save_simple(self):
         self.audio.save(self.filename)
+        self.faad()
 
     def test_shrink(self):
         map(self.audio.__delitem__, self.audio.keys())
@@ -185,3 +194,8 @@ class TM4ANoTags(TM4A):
         self.failUnless(self.audio.tags is None)
 
 add(TM4ANoTags)
+
+NOTFOUND = os.system("tools/notarealprogram 2> /dev/null")
+
+if os.system("faad 2> /dev/null > /dev/null") == NOTFOUND:
+    print "WARNING: Skipping FAAD reference tests."
