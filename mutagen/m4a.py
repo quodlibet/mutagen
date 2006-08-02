@@ -145,10 +145,24 @@ class M4ATags(Metadata):
             parse = self.atoms.get(atom.name, (M4ATags.__parse_text,))[0]
             parse(self, atom, data)
 
+    def __key_sort((key1, v1), (key2, v2)):
+        # iTunes always writes the tags in order of "relevance", try
+        # to copy it as closely as possible.
+        order = ["\xa9nam", "\xa9ART", "\xa9wrt", "\xa9alb",
+                 "\xa9gen", "gnre", "trkn", "disk",
+                 "\xa9day", "cpil", "tmpo", "\xa9too",
+                 "----", "covr", "\xa9lyr"]
+        order = dict(zip(order, range(len(order))))
+        last = len(order)
+        return cmp(order.get(key1[:4], last), order.get(key2[:4], last))
+    __key_sort = staticmethod(__key_sort)
+
     def save(self, filename):
         # Render all the current data
         values = []
-        for key, value in self.iteritems():
+        items = self.items()
+        items.sort(self.__key_sort)
+        for key, value in items:
             render = self.atoms.get(key[:4], (None, M4ATags.__render_text))[1]
             values.append(render(self, key, value))
         data = Atom.render("ilst", "".join(values))
@@ -235,6 +249,14 @@ class M4ATags(Metadata):
         else:
             raise M4AMetadataValueError("invalid numeric pair %r" % (value,))
 
+    def __render_pair_no_trailing(self, key, value):
+        track, total = value
+        if 0 <= track < 1 << 16 and 0 <= total < 1 << 16:
+            data = struct.pack(">3H", 0, track, total)
+            return self.__render_data(key, 0, data)
+        else:
+            raise M4AMetadataValueError("invalid numeric pair %r" % (value,))
+
     def __parse_genre(self, atom, data):
         # Translate to a freeform genre.
         genre = cdata.short_be(data[16:18])
@@ -255,10 +277,7 @@ class M4ATags(Metadata):
         except TypeError: self[atom.name] = False
 
     def __render_compilation(self, key, value):
-        if value:         
-            return self.__render_data(key, 0x15, "\x01")
-        else:
-            return self.__render_data(key, 0x15, "")
+        return self.__render_data(key, 0x15, chr(bool(value)))
 
     def __parse_cover(self, atom, data):
         self[atom.name] = data[16:]
@@ -279,7 +298,7 @@ class M4ATags(Metadata):
     atoms = {
         "----": (__parse_freeform, __render_freeform),
         "trkn": (__parse_pair, __render_pair),
-        "disk": (__parse_pair, __render_pair),
+        "disk": (__parse_pair, __render_pair_no_trailing),
         "gnre": (__parse_genre, None),
         "tmpo": (__parse_tempo, __render_tempo),
         "cpil": (__parse_compilation, __render_compilation),
