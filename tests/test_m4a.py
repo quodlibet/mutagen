@@ -133,6 +133,8 @@ class TM4A(TestCase):
     def test_pair_invalid(self):
         self.failUnlessRaises(ValueError, self.set_key, 'trkn', (-1, 0))
         self.failUnlessRaises(ValueError, self.set_key, 'trkn', (2**18, 1))
+        self.failUnlessRaises(ValueError, self.set_key, 'disk', (-1, 0))
+        self.failUnlessRaises(ValueError, self.set_key, 'disk', (2**18, 1))
 
     def test_tempo(self):
         self.set_key('tmpo', 150)
@@ -148,6 +150,10 @@ class TM4A(TestCase):
         self.set_key('covr', 'woooo')
 
     def test_pprint(self):
+        self.audio.pprint()
+
+    def test_pprint_binary(self):
+        self.audio["covr"] = "\x00\xa9\garbage"
         self.audio.pprint()
 
     def test_delete(self):
