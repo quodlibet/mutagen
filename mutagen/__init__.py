@@ -64,6 +64,16 @@ class FileType(mutagen._util.DictMixin):
     info = None
     tags = None
 
+    def __init__(self, filename=None, *args, **kwargs):
+        if filename is None:
+            warnings.warn("FileType constructor requires a filename",
+                          DeprecationWarning)
+        else:
+            self.load(filename, *args, **kwargs)
+
+    def load(self, filename, *args, **kwargs):
+        raise NotImplementedError
+
     def __getitem__(self, key):
         """Look up a metadata tag key.
 
@@ -109,10 +119,7 @@ class FileType(mutagen._util.DictMixin):
             return self.tags.delete(filename)
 
     def save(self, filename=None, **kwargs):
-        """Save metadata tags.
-
-        If no filename is given, the one most recently loaded is used.
-        """
+        """Save metadata tags."""
         if filename is None:
             filename = self.filename
         else:

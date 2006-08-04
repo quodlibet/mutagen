@@ -1870,10 +1870,6 @@ class ID3FileType(mutagen.FileType):
         def __init__(self, fileobj, offset): pass
         pprint = staticmethod(lambda: "Unknown format with ID3 tag")
 
-    def __init__(self, filename, ID3=ID3):
-        if filename is not None:
-            self.load(filename, ID3)
-
     def score(filename, fileobj, header):
         return header.startswith("ID3")
     score = staticmethod(score)
@@ -1897,7 +1893,7 @@ class ID3FileType(mutagen.FileType):
         """
         self.filename = filename
         try: self.tags = ID3(filename)
-        except error: pass
+        except error: self.tags = None
         if self.tags is not None:
             try: offset = self.tags._size
             except AttributeError: offset = None

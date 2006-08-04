@@ -328,6 +328,11 @@ class TAPEv2(TestCase):
         from mutagen.apev2 import APEBinaryValue
         self.audio["test"] = "\xa4woo"
         self.failUnless(isinstance(self.audio["test"], APEBinaryValue))
+        self.failUnlessEqual(4, len(self.audio["test"]))
+
+    def test_bad_value_type(self):
+        from mutagen.apev2 import APEValue
+        self.failUnlessRaises(ValueError, APEValue, "foo", 99)
     
 add(TAPEv2)
 

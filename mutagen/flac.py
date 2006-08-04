@@ -208,12 +208,6 @@ class FLAC(FileType):
     METADATA_BLOCKS = [StreamInfo, Padding, None, None, VCFLACDict]
     """Known metadata block types, indexed by ID."""
 
-    def __init__(self, filename=None):
-        self.metadata_blocks = []
-        """A list of metadata blocks in the file. If you want to save
-        custom block types, you can append them to this list."""
-        if filename is not None: self.load(filename)
-
     def score(filename, fileobj, header):
         return header.startswith("fLaC")
     score = staticmethod(score)

@@ -19,7 +19,7 @@ and http://wiki.multimedia.cx/index.php?title=Apple_QuickTime were all
 consulted.
 
 This module does not support 64 bit atom sizes, and so will not
-work on files over 4GB.
+work on metadata over 4GB.
 """
 
 import struct
@@ -45,6 +45,17 @@ _SKIP_SIZE = { "meta": 4 }
 __all__ = ['M4A', 'Open', 'delete']
 
 class Atom(object):
+    """An individual atom.
+
+    Attributes:
+    children -- list child atoms (or None for non-container atoms)
+    length -- length of this atom, including length and name
+    name -- four byte name of the atom, as a str
+    offset -- location in the constructor-given fileobj of this atom
+
+    This structure should only be used internally by Mutagen.
+    """
+
     children = None
 
     def __init__(self, fileobj):
@@ -65,19 +76,26 @@ class Atom(object):
 
     def render(name, data):
         """Render raw atom data."""
-        return struct.pack(">I4s", len(data) + 8, name) + data
+        try:
+            return struct.pack(">I4s", len(data) + 8, name) + data
+        except OverflowError:
+            return struct.pack(">I4sQ", 1, name, len(data) + 16) + data
     render = staticmethod(render)
 
     def __getitem__(self, remaining):
+        """Look up a child atom, potentially recursively.
+
+        e.g. atom['udta', 'meta'] => <Atom name='meta' ...>
+        """
         if not remaining:
             return self
         elif self.children is None:
-            raise KeyError("atom is not a container")
+            raise KeyError("%r is not a container" % self.name)
         for child in self.children:
             if child.name == remaining[0]:
                 return child[remaining[1:]]
         else:
-            raise KeyError, "%s not found" % remaining[0]
+            raise KeyError, "%r not found" % remaining[0]
 
     def __repr__(self):
         klass = self.__class__.__name__
@@ -91,6 +109,13 @@ class Atom(object):
                 klass, self.name, self.length, self.offset, children)
 
 class Atoms(object):
+    """Root atoms in a given file.
+
+    Attributes:
+    atoms -- a list of top-level atoms as Atom objects
+
+    This structure should only be used internally by Mutagen.
+    """
     def __init__(self, fileobj):
         self.atoms = []
         fileobj.seek(0, 2)
@@ -100,12 +125,23 @@ class Atoms(object):
             self.atoms.append(Atom(fileobj))
 
     def path(self, *names):
+        """Look up and return the complete path of an atom.
+
+        For example, atoms.path('moov', 'udta', 'meta') will return a
+        list of three atoms, corresponding to the moov, udta, and meta
+        atoms.
+        """
         path = [self]
         for name in names:
             path.append(path[-1][name,])
         return path[1:]
 
     def __getitem__(self, names):
+        """Look up a child atom.
+
+        'names' may be a list of atoms (['moov', 'udta']) or a string
+        specifying the complete path ('moov.udta').
+        """
         if isinstance(names, basestring):
             names = names.split(".")
         for child in self.atoms:
@@ -133,6 +169,9 @@ class M4ATags(Metadata):
     where 'mean' is usually 'com.apple.iTunes' and 'name' is a unique
     identifier for this frame. The value is a str, but is probably
     text that can be decoded as UTF-8.
+
+    M4A tag data cannot exist outside of the structure of an M4A file,
+    so this class should not be manually instantiated.
     """
 
     def __init__(self, atoms, fileobj):
@@ -156,11 +195,15 @@ class M4ATags(Metadata):
                  "----", "covr", "\xa9lyr"]
         order = dict(zip(order, range(len(order))))
         last = len(order)
-        return cmp(order.get(key1[:4], last), order.get(key2[:4], last))
+        # If there's no key-based way to distinguish, order by length.
+        # If there's still no way, go by string comparison on the
+        # values, so we at least have something determinstic.
+        return (cmp(order.get(key1[:4], last), order.get(key2[:4], last)) or
+                cmp(len(v1), len(v2)) or cmp(v1, v2))
     __key_sort = staticmethod(__key_sort)
 
     def save(self, filename):
-        # Render all the current data
+        """Save the metadata to the given filename."""
         values = []
         items = self.items()
         items.sort(self.__key_sort)
@@ -387,10 +430,8 @@ class M4A(FileType):
     """An MPEG-4 audio file, probably containing AAC.
 
     If more than one track is present in the file, the first is used.
+    Only audio ('soun') tracks will be read.
     """
-
-    def __init__(self, filename):
-        self.load(filename)
 
     def load(self, filename):
         self.filename = filename

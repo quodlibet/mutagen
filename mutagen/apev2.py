@@ -438,14 +438,11 @@ class APEv2File(FileType):
         def __init__(self, fileobj): pass
         pprint = staticmethod(lambda: "Unknown format with APEv2 tag.")
 
-    def __init__(self, filename):
-        self.load(filename)
-
     def load(self, filename):
         self.filename = filename
         self.info = self._Info(file(filename, "rb"))
         try: self.tags = APEv2(filename)
-        except error: pass
+        except error: self.tags = None
 
     def add_tags(self):
         if self.tags is None:

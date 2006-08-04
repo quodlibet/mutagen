@@ -428,10 +428,6 @@ class OggFileType(FileType):
     _Tags = None
     _Error = None
 
-    def __init__(self, filename=None):
-        if filename:
-            self.load(filename)
-
     def load(self, filename):
         """Load file information from a filename."""
 

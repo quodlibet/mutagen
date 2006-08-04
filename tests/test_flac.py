@@ -162,14 +162,14 @@ class TFLAC(TestCase):
         self.failUnlessEqual(f["faketag"], ["foo"])
 
     def test_add_vc(self):
-        f = FLAC()
+        f = FLAC(os.path.join("tests", "data", "no-tags.flac"))
         self.failIf(f.tags)
         f.add_tags()
         self.failUnless(f.tags == [])
         self.failUnlessRaises(ValueError, f.add_tags)
 
     def test_add_vc_implicit(self):
-        f = FLAC()
+        f = FLAC(os.path.join("tests", "data", "no-tags.flac"))
         self.failIf(f.tags)
         f["foo"] = "bar"
         self.failUnless(f.tags == [("foo", "bar")])
