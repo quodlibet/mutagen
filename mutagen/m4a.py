@@ -183,7 +183,7 @@ class M4ATags(Metadata):
         for atom in ilst.children:
             fileobj.seek(atom.offset + 8)
             data = fileobj.read(atom.length - 8)
-            parse = self.atoms.get(atom.name, (M4ATags.__parse_text,))[0]
+            parse = self.__atoms.get(atom.name, (M4ATags.__parse_text,))[0]
             parse(self, atom, data)
 
     def __key_sort((key1, v1), (key2, v2)):
@@ -208,7 +208,8 @@ class M4ATags(Metadata):
         items = self.items()
         items.sort(self.__key_sort)
         for key, value in items:
-            render = self.atoms.get(key[:4], (None, M4ATags.__render_text))[1]
+            render = self.__atoms.get(
+                key[:4], (None, M4ATags.__render_text))[1]
             values.append(render(self, key, value))
         data = Atom.render("ilst", "".join(values))
 
@@ -365,7 +366,7 @@ class M4ATags(Metadata):
         self.clear()
         self.save(filename)
 
-    atoms = {
+    __atoms = {
         "----": (__parse_freeform, __render_freeform),
         "trkn": (__parse_pair, __render_pair),
         "disk": (__parse_pair, __render_pair_no_trailing),

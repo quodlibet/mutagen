@@ -134,24 +134,38 @@ class TM4A(TestCase):
     def test_freeform(self):
         self.set_key('----:net.sacredchao.Mutagen:test key', "whee")
 
-    def test_pair(self):
+    def test_tracknumber(self):
         self.set_key('trkn', (1, 10))
+
+    def test_disk(self):
         self.set_key('disk', (18, 0))
 
-    def test_pair_invalid(self):
+    def test_tracknumber_too_small(self):
         self.failUnlessRaises(ValueError, self.set_key, 'trkn', (-1, 0))
         self.failUnlessRaises(ValueError, self.set_key, 'trkn', (2**18, 1))
+
+    def test_disk_too_small(self):
         self.failUnlessRaises(ValueError, self.set_key, 'disk', (-1, 0))
         self.failUnlessRaises(ValueError, self.set_key, 'disk', (2**18, 1))
+
+    def test_tracknumber_wrong_size(self):
+        self.failUnlessRaises(ValueError, self.set_key, 'trkn', (1,))
+        self.failUnlessRaises(ValueError, self.set_key, 'trkn', (1, 2, 3,))
+
+    def test_disk_wrong_size(self):
+        self.failUnlessRaises(ValueError, self.set_key, 'disk', (1,))
+        self.failUnlessRaises(ValueError, self.set_key, 'disk', (1, 2, 3,))
 
     def test_tempo(self):
         self.set_key('tmpo', 150)
 
-    def test_tempo_invalud(self):
+    def test_tempo_invalid(self):
         self.failUnlessRaises(ValueError, self.set_key, 'tmpo', 100000)
 
     def test_compilation(self):
         self.set_key('cpil', True)
+
+    def test_compilation_false(self):
         self.set_key('cpil', False)
 
     def test_cover(self):
