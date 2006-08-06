@@ -1422,8 +1422,9 @@ class WriteRoundtrip(TestCase):
         id3 = ID3(self.newsilence)
         #os.unlink(self.newsilence)
         open(self.newsilence, 'wb').truncate()
-        id3.save(self.newsilence)
-        id3.delete(self.newsilence)
+        id3.save()
+        id3.delete()
+        self.failIf(id3)
         self.assertEquals(open(self.newsilence).read(10), '')
 
     def tearDown(self):

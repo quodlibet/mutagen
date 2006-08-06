@@ -276,13 +276,12 @@ class APEv2(DictMixin, Metadata):
         data = _APEv2Data(fileobj)
 
         if data.is_at_start:
-            fileobj.close()
-            self.delete(filename)
-            return self.save(filename)
+            self._delete_bytes(fileobj, data.end - data.start, data.start)
         elif data.start is not None:
             fileobj.seek(data.start)
+            # Delete an ID3v1 tag if present, too.
             fileobj.truncate()
-        else: fileobj.seek(0, 2)
+        fileobj.seek(0, 2)
 
         # "APE tags items should be sorted ascending by size... This is
         # not a MUST, but STRONGLY recommended. Actually the items should
@@ -310,10 +309,7 @@ class APEv2(DictMixin, Metadata):
         fileobj.close()
 
     def delete(self, filename=None):
-        """Remove tags from a file.
-
-        If no filename is given, the one most recently loaded is used.
-        """
+        """Remove tags from a file."""
         filename = filename or self.filename
         try: fileobj = file(filename, "r+b")
         except IOError:
@@ -324,6 +320,7 @@ class APEv2(DictMixin, Metadata):
                 self._delete_bytes(fileobj, data.end - data.start, data.start)
         finally:
             fileobj.close()
+        self.clear()
 
 Open = APEv2
 

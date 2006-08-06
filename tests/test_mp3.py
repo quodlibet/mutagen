@@ -65,6 +65,7 @@ class TMP3(TestCase):
 
     def test_delete(self):
         self.mp3.delete()
+        self.failIf(self.mp3.tags)
         self.failUnless(MP3(self.filename).tags is None)
 
     def test_module_delete(self):

@@ -21,8 +21,12 @@ class TTrueAudio(TestCase):
         filename = os.path.join("tests", "data", "empty.ogg")
         self.failUnlessRaises(IOError, TrueAudio, filename)
 
-    def test_delete(self):
+    def test_module_delete(self):
         delete(os.path.join("tests", "data", "empty.tta"))
+
+    def test_delete(self):
+        self.audio.delete()
+        self.failIf(self.audio.tags)
 
     def test_pprint(self):
         self.audio.pprint()

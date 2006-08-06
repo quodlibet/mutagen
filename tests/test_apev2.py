@@ -61,10 +61,12 @@ class APEWriter(TestCase):
 
     def test_delete(self):
         mutagen.apev2.delete(SAMPLE + ".justtag")
-        mutagen.apev2.delete(SAMPLE + ".new")
+        tag = mutagen.apev2.APEv2(SAMPLE + ".new")
+        tag.delete()
         self.failUnlessEqual(os.path.getsize(SAMPLE + ".justtag"), self.offset)
         self.failUnlessEqual(os.path.getsize(SAMPLE) + self.offset,
                              os.path.getsize(SAMPLE + ".new"))
+        self.failIf(tag)
 
     def test_empty(self):
         self.failUnlessRaises(

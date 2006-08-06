@@ -375,6 +375,7 @@ class ID3(mutagen.Metadata):
         if filename is None:
             filename = self.filename
         delete(filename, delete_v1, delete_v2)
+        self.clear()
 
     def save_frame(self, frame):
         flags = 0

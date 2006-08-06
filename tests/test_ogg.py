@@ -388,6 +388,7 @@ class TOggFileType(TestCase):
     def test_delete(self):
         self.test_set_two_tags()
         self.audio.delete()
+        self.failIf(self.audio.tags)
         audio = self.Kind(self.filename)
         self.failIf(audio.tags)
 

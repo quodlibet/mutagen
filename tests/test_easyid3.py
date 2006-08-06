@@ -18,8 +18,9 @@ class TEasyID3(TestCase):
         self.id3["artist"] = "foobar"
         self.id3.save(self.filename)
         self.failUnless(os.path.getsize(self.filename))
-        delete(self.filename)
+        self.id3.delete(self.filename)
         self.failIf(os.path.getsize(self.filename))
+        self.failIf(self.id3)
 
     def test_pprint(self):
         self.id3["artist"] = "baz"
