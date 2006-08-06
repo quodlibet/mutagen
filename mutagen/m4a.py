@@ -174,9 +174,7 @@ class M4ATags(Metadata):
     so this class should not be manually instantiated.
     """
 
-    def __init__(self, atoms, fileobj):
-        if atoms is None and fileobj is None:
-            return
+    def load(self, atoms, fileobj):
         try: ilst = atoms["moov.udta.meta.ilst"]
         except KeyError, key:
             raise M4AMetadataError(key)
@@ -451,7 +449,7 @@ class M4A(FileType):
             fileobj.close()
 
     def add_tags(self):
-        self.tags = M4ATags(None, None)
+        self.tags = M4ATags()
 
     def score(filename, fileobj, header):
         return ("ftyp" in header) + ("mp4" in header)

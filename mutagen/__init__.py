@@ -31,10 +31,14 @@ import mutagen._util
 class Metadata(dict):
     """An abstract dict-like object.
 
-    Metadata is the base class for most of the tag formats in Mutagen.
+    Metadata is the base class for many of the tag objects in Mutagen.
     """
 
-    def __init__(self, filename=None):
+    def __init__(self, *args, **kwargs):
+        if args or kwargs:
+            self.load(*args, **kwargs)
+
+    def load(self, *args, **kwargs):
         raise NotImplementedError
 
     def save(self, filename=None):

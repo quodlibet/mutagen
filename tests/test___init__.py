@@ -19,7 +19,6 @@ class TMetadata(TestCase):
         def __init__(self): pass
 
     def test_virtual_constructor(self):
-        self.failUnlessRaises(NotImplementedError, Metadata)
         self.failUnlessRaises(NotImplementedError, Metadata, "filename")
 
     def test_virtual_save(self):

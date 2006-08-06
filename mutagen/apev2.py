@@ -177,10 +177,7 @@ class APEv2(DictMixin, Metadata):
     ID3v1 tags are silently ignored and overwritten.
     """
 
-    def __init__(self, filename=None):
-        self.filename = filename
-        if filename:
-            self.load(filename)
+    filename = None
 
     def pprint(self):
         """Return tag key=value pairs in a human-readable format."""
@@ -197,6 +194,7 @@ class APEv2(DictMixin, Metadata):
         finally:
             fileobj.close()
         if data.tag:
+            self.clear()
             self.__parse_tag(data.tag, data.items)
         else:
             raise APENoHeaderError("No APE tag found")

@@ -56,30 +56,15 @@ class ID3(mutagen.Metadata):
     PEDANTIC = True
     version = (2, 4, 0)
 
-    def __init__(self, filename=None, known_frames=None, translate=True):
-        """Create an empty ID3 tag or load one from a file.
+    filename = None
+    __flags = 0
+    _size = 0
+    __readbytes = 0
+    __crc = None
 
-        Keyword arguments:
-        known_frames -- an alternate list of ID3 frames to load
-        translate -- passed to the load function
-
-        Example of loading a custom frame:
-            my_frames = dict(mutagen.id3.Frames)
-            class XMYF(Frame): ...
-            my_frames["XMYF"] = XMYF
-            mutagen.id3.ID3(filename, known_frames=my_frames)
-        """
-
+    def __init__(self, *args, **kwargs):
         self.unknown_frames = []
-        self.__known_frames = known_frames
-        self.filename = None
-        self.__flags = 0
-        self._size = 0
-        self.__readbytes = 0
-        self.__crc = None
-
-        if filename is not None:
-            self.load(filename, translate)
+        super(ID3, self).__init__(*args, **kwargs)
 
     def fullread(self, size):
         try:
@@ -94,17 +79,26 @@ class ID3(mutagen.Metadata):
         self.__readbytes += size
         return data
 
-    def load(self, filename, translate=True):
+    def load(self, filename, known_frames=None, translate=True):
         """Load tags from a filename.
 
         Keyword arguments:
+        filename -- filename to load tag data from
+        known_frames -- dict mapping frame IDs to Frame objects
         translate -- Update all tags to ID3v2.4 internally. Mutagen is
                      only capable of writing ID3v2.4 tags, so if you
                      intend to save, this must be true.
+
+        Example of loading a custom frame:
+            my_frames = dict(mutagen.id3.Frames)
+            class XMYF(Frame): ...
+            my_frames["XMYF"] = XMYF
+            mutagen.id3.ID3(filename, known_frames=my_frames)
         """
 
         from os.path import getsize
         self.filename = filename
+        self.__known_frames = known_frames
         self.__fileobj = file(filename, 'rb')
         self.__filesize = getsize(filename)
         try:
