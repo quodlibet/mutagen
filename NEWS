@@ -4,6 +4,8 @@
      typefinding but fails in stream parsing.
    * errors= kwarg is correctly interpreted for FLAC tags now.
    * Handle struct.pack API change in Python 2.5b2. (SF #1530559)
+   * Metadata 'load' methods always reset in-memory tags.
+   * Metadata 'delete' methods always clear in-memory tags.
 
  * New Features:
    * Vorbis comment vendor strings include the Mutagen version.

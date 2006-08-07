@@ -21,6 +21,9 @@ the source code.
 The tools/ directory contains several useful examples, and there is a
 brief tutorial in TUTORIAL.
 
+The API-NOTES file lists parts of the API that are either unstable or 
+will be removed in the future.
+
 Testing the Module
 ------------------
 To test Mutagen's MP3 reading support, run

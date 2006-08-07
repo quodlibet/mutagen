@@ -1,0 +1,32 @@
+This file documents deprecated parts of the Mutagen API. New code
+should not use these parts, and several months after being added here,
+they may be removed. Note that we do not intend to ever deprecate or
+remove large portions of the API. All of these are corner cases that
+arose from when Mutagen was still part of Quod Libet, and should never
+be encountered in normal use.
+
+General:
+--------
+FileType constructors require a filename. However, the 'delete' and
+'save' methods should not be called with one.
+
+No modules, types, functions, or attributes beginning with '_' are
+considered public API. These can and do change drastically between
+Mutagen versions. This is the standard Python way of marking a
+function protected or private.
+
+FLAC:
+-----
+The 'vc' attribute predates the FileType API and has been deprecated
+since Mutagen 0.9; this also applies to the 'add_vc' method. The
+standard 'tags' attribute and 'add_tags' method should be used
+instead.
+
+ID3:
+----
+The 'fullread', 'load_header', 'read_frames', 'load_framedata', and
+'save_frame' methods of ID3 are not intended to be public APIs. They
+will change or disappear in the future.
+
+None of the Spec objects are considered part of the public API.
+
