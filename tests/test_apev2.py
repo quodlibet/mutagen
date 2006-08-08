@@ -111,6 +111,10 @@ class APEReader(TestCase):
     def test_invalid(self):
         self.failUnlessRaises(IOError, mutagen.apev2.APEv2, "dne")
 
+    def test_no_tag(self):
+        self.failUnlessRaises(IOError, mutagen.apev2.APEv2,
+                              os.path.join("tests", "data", "empty.mp3"))
+
     def test_cases(self):
         self.failUnlessEqual(self.tag["artist"], self.tag["ARTIST"])
         self.failUnless("artist" in self.tag)
@@ -335,6 +339,10 @@ class TAPEv2(TestCase):
     def test_bad_value_type(self):
         from mutagen.apev2 import APEValue
         self.failUnlessRaises(ValueError, APEValue, "foo", 99)
+
+    def test_module_delete_empty(self):
+        from mutagen.apev2 import delete
+        delete(os.path.join("tests", "data", "emptyfile.mp3"))
     
 add(TAPEv2)
 
