@@ -16,7 +16,7 @@ more like Vorbis or APEv2 tags.
 import mutagen.id3
 from mutagen import Metadata
 from mutagen._util import DictMixin
-from mutagen.id3 import ID3, error
+from mutagen.id3 import ID3, error, delete
 
 __all__ = ['EasyID3', 'Open', 'delete']
 
@@ -129,9 +129,5 @@ class EasyID3(DictMixin, Metadata):
         }
 
     __default = (__text_get, __text_set)
-
-def delete(filename):
-    """Remove tags from a file."""
-    mutagen.id3.delete(filename)
 
 Open = EasyID3
