@@ -18,6 +18,19 @@ class TAtom(TestCase):
         fileobj = StringIO("\x00\x00\x00\x01atom" + "\x00" * 8)
         self.failUnlessRaises(IOError, Atom, fileobj)
 
+    def test_render_too_big(self):
+        class TooBig(str):
+            def __len__(self):
+                return 1L << 32
+        data = TooBig("test")
+        try: len(data)
+        except OverflowError:
+            # Py_ssize_t is still only 32 bits on this system.
+            self.failUnlessRaises(OverflowError, Atom.render, "data", data)
+        else:
+            data = Atom.render("data", data)
+            self.failUnlessEqual(len(data), 4 + 4 + 8 + 4)
+
     def test_length_0(self):
         fileobj = StringIO("\x00\x00\x00\x00atom")
         Atom(fileobj)
@@ -92,6 +105,12 @@ class TM4ATags(TestCase):
         tags = self.wrap_ilst(genre)
         self.failIf("gnre" in tags)
         self.failUnlessEqual(tags.get("\xa9gen"), "Blues")
+
+    def test_empty_cpil(self):
+        cpil = Atom.render("cpil", Atom.render("data", "\x00" * 8))
+        tags = self.wrap_ilst(cpil)
+        self.failUnless("cpil" in tags)
+        self.failIf(tags["cpil"])
 
     def test_genre_too_big(self):
         data = Atom.render("data", "\x00" * 8 + "\x01\x00")
