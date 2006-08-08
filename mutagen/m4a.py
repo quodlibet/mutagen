@@ -29,7 +29,7 @@ from cStringIO import StringIO
 
 from mutagen import FileType, Metadata
 from mutagen._constants import GENRES
-from mutagen._util import cdata, DictMixin
+from mutagen._util import cdata, DictMixin, insert_bytes, delete_bytes
 
 class error(IOError): pass
 class M4AMetadataError(error): pass
@@ -253,7 +253,7 @@ class M4ATags(Metadata):
         hdlr = Atom.render("hdlr", "\x00" * 8 + "mdirappl" + "\x00" * 9)
         meta = Atom.render("meta", "\x00\x00\x00\x00" + hdlr + ilst)
         moov, udta = atoms.path("moov", "udta")
-        self._insert_space(fileobj, len(meta), udta.offset + offset + 8)
+        insert_bytes(fileobj, len(meta), udta.offset + offset + 8)
         fileobj.seek(udta.offset + offset + 8)
         fileobj.write(meta)
         self.__update_parents(fileobj, [moov, udta], len(meta), offset)
@@ -264,9 +264,9 @@ class M4ATags(Metadata):
         delta = len(data) - ilst.length
         fileobj.seek(ilst.offset + offset)
         if delta > 0:
-            self._insert_space(fileobj, delta, ilst.offset + offset)
+            insert_bytes(fileobj, delta, ilst.offset + offset)
         elif delta < 0:
-            self._delete_bytes(fileobj, -delta, ilst.offset + offset)
+            delete_bytes(fileobj, -delta, ilst.offset + offset)
         fileobj.seek(ilst.offset + offset)
         fileobj.write(data)
         self.__update_parents(fileobj, path, delta, offset)
@@ -358,9 +358,7 @@ class M4ATags(Metadata):
     def __render_text(self, key, value):
         return self.__render_data(key, 0x1, value.encode('utf-8'))
 
-    def delete(self, filename=None):
-        if filename is None:
-            filename = self.filename
+    def delete(self, filename):
         self.clear()
         self.save(filename)
 

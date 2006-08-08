@@ -50,7 +50,7 @@ class APEUnsupportedVersionError(error, ValueError): pass
 class APEBadItemError(error, ValueError): pass
 
 from mutagen import Metadata, FileType
-from mutagen._util import DictMixin, cdata, utf8
+from mutagen._util import DictMixin, cdata, utf8, delete_bytes
 
 class _APEv2Data(object):
     # Store offsets of the important parts of the file.
@@ -111,7 +111,8 @@ class _APEv2Data(object):
                 if fileobj.read(9) == 'LYRICS200':
                     fileobj.seek(-15, 1) # "LYRICS200" + size tag
                     try: offset = int(fileobj.read(6))
-                    except ValueError: raise IOError
+                    except ValueError:
+                        raise IOError
 
                     fileobj.seek(-32 - offset - 6, 1)
                     if fileobj.read(8) == "APETAGEX":
@@ -276,7 +277,7 @@ class APEv2(DictMixin, Metadata):
         data = _APEv2Data(fileobj)
 
         if data.is_at_start:
-            self._delete_bytes(fileobj, data.end - data.start, data.start)
+            delete_bytes(fileobj, data.end - data.start, data.start)
         elif data.start is not None:
             fileobj.seek(data.start)
             # Delete an ID3v1 tag if present, too.
@@ -311,13 +312,11 @@ class APEv2(DictMixin, Metadata):
     def delete(self, filename=None):
         """Remove tags from a file."""
         filename = filename or self.filename
-        try: fileobj = file(filename, "r+b")
-        except IOError:
-            fileobj = file(filename, "w+b")
+        fileobj = file(filename, "r+b")
         try:
             data = _APEv2Data(fileobj)
             if data.start is not None and data.size is not None:
-                self._delete_bytes(fileobj, data.end - data.start, data.start)
+                delete_bytes(fileobj, data.end - data.start, data.start)
         finally:
             fileobj.close()
         self.clear()
@@ -447,7 +446,8 @@ class APEv2File(FileType):
 
     def score(filename, fileobj, header):
         try: fileobj.seek(-160, 2)
-        except IOError: fileobj.seek(0)
+        except IOError:
+            fileobj.seek(0)
         footer = fileobj.read()
         filename = filename.lower()
         return ((("APETAGEX" in footer) + header.startswith("MP+"))

@@ -30,10 +30,12 @@ interested in the 'ID3' class to start with.
 
 __all__ = ['ID3', 'ID3FileType', 'Frames', 'Open', 'delete']
 
-import mutagen
 import struct; from struct import unpack, pack
 from zlib import error as zlibError
 from warnings import warn
+
+import mutagen
+from mutagen._util import insert_bytes, delete_bytes
 
 class error(Exception): pass
 class ID3NoHeaderError(error, ValueError): pass
@@ -341,7 +343,7 @@ class ID3(mutagen.Metadata):
             data = header + framedata
 
             if (insize < outsize):
-                self._insert_space(f, outsize-insize, insize+10)
+                insert_bytes(f, outsize-insize, insize+10)
             f.seek(0)
             f.write(data)
 
@@ -474,7 +476,7 @@ def delete(filename, delete_v1=True, delete_v2=True):
         except struct.error: id3, insize = '', 0
         insize = BitPaddedInt(insize)
         if id3 == 'ID3' and insize > 0:
-            ID3._delete_bytes(f, insize + 10, 0)
+            delete_bytes(f, insize + 10, 0)
 
 class BitPaddedInt(int):
     def __new__(cls, value, bits=7, bigendian=True):
@@ -848,7 +850,7 @@ class ASPIIndexSpec(Spec):
             format = "B"
             size = 1
         else:
-            warn("invalid bit count in ASPI (%d)" % frame.b, IDWarning)
+            warn("invalid bit count in ASPI (%d)" % frame.b, ID3Warning)
             return [], data
         
         indexes = data[:frame.N * size]

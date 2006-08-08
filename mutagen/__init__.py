@@ -47,9 +47,6 @@ class Metadata(dict):
     def delete(self, filename=None):
         raise NotImplementedError
 
-    _insert_space = staticmethod(mutagen._util.insert_bytes)
-    _delete_bytes = staticmethod(mutagen._util.delete_bytes)
-
 class FileType(mutagen._util.DictMixin):
     """An abstract object wrapping tags and audio stream information.
 

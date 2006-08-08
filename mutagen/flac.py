@@ -25,6 +25,7 @@ import struct
 from cStringIO import StringIO
 from _vorbis import VCommentDict
 from mutagen import Metadata, FileType
+from mutagen._util import insert_bytes
 
 class error(IOError): pass
 class FLACNoHeaderError(error): pass
@@ -308,7 +309,7 @@ class FLAC(FileType):
         if len(data) != available:
             # We couldn't reduce the padding enough.
             diff = (len(data) - available)
-            Metadata._insert_space(f, diff, 4)
+            insert_bytes(f, diff, 4)
 
         f.seek(4)
         f.write(data)
