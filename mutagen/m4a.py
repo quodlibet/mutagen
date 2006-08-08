@@ -172,6 +172,8 @@ class M4ATags(Metadata):
 
     M4A tag data cannot exist outside of the structure of an M4A file,
     so this class should not be manually instantiated.
+
+    Unknown non-text tags are removed.
     """
 
     def load(self, atoms, fileobj):
@@ -354,7 +356,9 @@ class M4ATags(Metadata):
         return self.__render_data(key, 0xD, value)
 
     def __parse_text(self, atom, data):
-        self[atom.name] = data[16:].decode('utf-8', 'replace')
+        flags = cdata.uint_be(data[8:12])
+        if flags == 1:
+            self[atom.name] = data[16:].decode('utf-8', 'replace')
     def __render_text(self, key, value):
         return self.__render_data(key, 0x1, value.encode('utf-8'))
 

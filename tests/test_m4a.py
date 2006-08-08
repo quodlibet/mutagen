@@ -119,6 +119,12 @@ class TM4ATags(TestCase):
         self.failIf("gnre" in tags)
         self.failIf("\xa9gen" in tags)
 
+    def test_strips_unknown_types(self):
+        data = Atom.render("data", "\x00" * 8 + "whee")
+        foob = Atom.render("foob", data)
+        tags = self.wrap_ilst(foob)
+        self.failIf(tags)
+
 add(TM4ATags)
 
 class TM4A(TestCase):
@@ -208,6 +214,9 @@ class TM4A(TestCase):
         audio = M4A(self.audio.filename)
         self.failIf(audio.tags)
         self.faad()
+
+    def test_reads_unknown_text(self):
+        self.set_key("foob", u"A test")
 
     def tearDown(self):
         os.unlink(self.filename)
