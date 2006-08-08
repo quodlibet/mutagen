@@ -56,6 +56,12 @@ class TFile(TestCase):
             print "WARNING: Unable to open /dev/null."
         self.failUnless(File(__file__) is None)
 
+    def test_empty(self):
+        filename = os.path.join("tests", "data", "empty")
+        file(filename, "wb").close()
+        try: self.failUnless(File(filename) is None)
+        finally: os.unlink(filename)
+
     def test_not_file(self):
         self.failUnlessRaises(EnvironmentError, File, "/dev/doesnotexist")
 
