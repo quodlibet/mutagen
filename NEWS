@@ -1,4 +1,4 @@
-1.6
+1.6 - 2006.08.09
  * Bug Fixes:
    * IOError rather than NameError is raised when File succeeds in
      typefinding but fails in stream parsing.
@@ -10,7 +10,7 @@
  * New Features:
    * Vorbis comment vendor strings include the Mutagen version.
    * mutagen.id3: Read ASPI, ETCO, SYTC, MLLT, EQU2, and LINK frames.
-   * mutagen.m4a: MPEG-4 audio with iTunes metadata support.
+   * mutagen.m4a: Read/tag MPEG-4 AAC audio files with iTunes tags. (#681)
    * mutagen.oggspeex: Read/tag Ogg Speex files.
    * mutagen.trueaudio: Read/tag True Audio files.
    * mutagen.wavpack: Read/tag WavPack files.
