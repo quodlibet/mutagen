@@ -2,6 +2,12 @@
  * Bug Fixes:
    * Raise ID3TagError on attempts to save empty (invalid) ID3 tags.
 
+ * New Features:
+   * FLAC cuesheet and seektable support. (#791, Nuutti Kotivuori)
+
+ * Tools:
+   * mutagen-inspect responds immediately to keyboard interrupts.
+
 1.6 - 2006.08.09
  * Bug Fixes:
    * IOError rather than NameError is raised when File succeeds in

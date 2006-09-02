@@ -1,7 +1,8 @@
+
 import shutil, os
 from tests import TestCase, add
 from mutagen.flac import to_int_be, Padding, VCFLACDict, MetadataBlock
-from mutagen.flac import StreamInfo, FLAC, delete
+from mutagen.flac import StreamInfo, SeekTable, CueSheet, FLAC, delete
 from tests.test__vorbis import TVCommentDict, VComment
 
 class Tto_int_be(TestCase):
@@ -86,6 +87,69 @@ class TStreamInfo(TestCase):
         self.failUnlessEqual(StreamInfo(self.i.write()), self.i)
 add(TStreamInfo)
         
+class TSeekTable(TestCase):
+    SAMPLE = os.path.join("tests", "data", "silence-44-s.flac")
+    uses_mmap = False
+
+    def setUp(self):
+        self.flac = FLAC(self.SAMPLE)
+        self.st = self.flac.seektable
+    def test_seektable(self):
+        self.failUnlessEqual(self.st.seekpoints,
+                             [(0, 0, 4608),
+                              (41472, 11852, 4608),
+                              (50688, 14484, 4608),
+                              (87552, 25022, 4608),
+                              (105984, 30284, 4608),
+                              (0xFFFFFFFFFFFFFFFF, 0, 0)])
+    def test_eq(self): self.failUnlessEqual(self.st, self.st)
+    def test_neq(self): self.failIfEqual(self.st, 12)
+    def test_repr(self): repr(self.st)
+    def test_roundtrip(self):
+        self.failUnlessEqual(SeekTable(self.st.write()), self.st)
+add(TSeekTable)
+
+class TCueSheet(TestCase):
+    SAMPLE = os.path.join("tests", "data", "silence-44-s.flac")
+    uses_mmap = False
+
+    def setUp(self):
+        self.flac = FLAC(self.SAMPLE)
+        self.cs = self.flac.cuesheet
+    def test_cuesheet(self):
+        self.failUnlessEqual(self.cs.media_catalog_number, "1234567890123")
+        self.failUnlessEqual(self.cs.lead_in_samples, 88200)
+        self.failUnlessEqual(self.cs.compact_disc, True)
+        self.failUnlessEqual(len(self.cs.tracks), 4)
+    def test_first_track(self):
+        self.failUnlessEqual(self.cs.tracks[0].track_number, 1)
+        self.failUnlessEqual(self.cs.tracks[0].start_offset, 0)
+        self.failUnlessEqual(self.cs.tracks[0].isrc, '123456789012')
+        self.failUnlessEqual(self.cs.tracks[0].type, 0)
+        self.failUnlessEqual(self.cs.tracks[0].pre_emphasis, False)
+        self.failUnlessEqual(self.cs.tracks[0].indexes, [(1, 0)])
+    def test_second_track(self):
+        self.failUnlessEqual(self.cs.tracks[1].track_number, 2)
+        self.failUnlessEqual(self.cs.tracks[1].start_offset, 44100L)
+        self.failUnlessEqual(self.cs.tracks[1].isrc, '')
+        self.failUnlessEqual(self.cs.tracks[1].type, 1)
+        self.failUnlessEqual(self.cs.tracks[1].pre_emphasis, True)
+        self.failUnlessEqual(self.cs.tracks[1].indexes, [(1, 0),
+                                                         (2, 588)])
+    def test_lead_out(self):
+        self.failUnlessEqual(self.cs.tracks[-1].track_number, 170)
+        self.failUnlessEqual(self.cs.tracks[-1].start_offset, 162496)
+        self.failUnlessEqual(self.cs.tracks[-1].isrc, '')
+        self.failUnlessEqual(self.cs.tracks[-1].type, 0)
+        self.failUnlessEqual(self.cs.tracks[-1].pre_emphasis, False)
+        self.failUnlessEqual(self.cs.tracks[-1].indexes, [])
+    def test_eq(self): self.failUnlessEqual(self.cs, self.cs)
+    def test_neq(self): self.failIfEqual(self.cs, 12)
+    def test_repr(self): repr(self.cs)
+    def test_roundtrip(self):
+        self.failUnlessEqual(CueSheet(self.cs.write()), self.cs)
+add(TCueSheet)
+
 class TPadding(TestCase):
     uses_mmap = False
 
@@ -191,9 +255,9 @@ class TFLAC(TestCase):
     def test_load_unknown_block(self):
         self.test_save_unknown_block()
         flac = FLAC(self.NEW)
-        self.failUnlessEqual(len(flac.metadata_blocks), 4)
-        self.failUnlessEqual(flac.metadata_blocks[2].code, 99)
-        self.failUnlessEqual(flac.metadata_blocks[2].data, "test block data")
+        self.failUnlessEqual(len(flac.metadata_blocks), 6)
+        self.failUnlessEqual(flac.metadata_blocks[4].code, 99)
+        self.failUnlessEqual(flac.metadata_blocks[4].data, "test block data")
 
     def test_two_vorbis_blocks(self):
         self.flac.metadata_blocks.append(self.flac.metadata_blocks[1])
@@ -220,6 +284,12 @@ class TFLAC(TestCase):
         blocks = list(self.flac.metadata_blocks)
         self.flac.load(self.flac.filename)
         self.failUnlessEqual(blocks, self.flac.metadata_blocks)
+
+    def test_seektable(self):
+        self.failUnless(self.flac.seektable)
+
+    def test_cuesheet(self):
+        self.failUnless(self.flac.cuesheet)
 
     def tearDown(self):
         os.unlink(self.NEW)

@@ -169,6 +169,69 @@ class StreamInfo(MetadataBlock):
     def pprint(self):
         return "FLAC, %.2f seconds, %d Hz" % (self.length, self.sample_rate)
 
+class SeekPoint(tuple):
+    """A single seek point in a FLAC file.
+
+    Placeholder seek points have first_sample of 0xFFFFFFFFFFFFFFFFL,
+    and byte_offset and num_samples undefined. Seek points must be
+    sorted in ascending order by first_sample number. Seek points must
+    be unique by first_sample number, except for placeholder
+    points. Placeholder points must occur last in the table and there
+    may be any number of them.
+
+    Attributes:
+    first_sample -- sample number of first sample in the target frame
+    byte_offset -- offset from first frame to target frame
+    num_samples -- number of samples in target frame
+    """
+
+    def __new__(cls, first_sample, byte_offset, num_samples):
+        return super(cls, SeekPoint).__new__(cls, (first_sample,
+            byte_offset, num_samples))
+    first_sample = property(lambda self: self[0])
+    byte_offset = property(lambda self: self[1])
+    num_samples = property(lambda self: self[2])
+
+class SeekTable(MetadataBlock):
+    """Read and write FLAC seek tables.
+
+    Attributes:
+    seekpoints -- list of SeekPoint objects
+    """
+
+    __SEEKPOINT_FORMAT = '>QQH'
+    __SEEKPOINT_SIZE = struct.calcsize(__SEEKPOINT_FORMAT)
+
+    code = 3
+
+    def __init__(self, data):
+        self.seekpoints = []
+        super(SeekTable, self).__init__(data)
+
+    def __eq__(self, other):
+        try: return (self.seekpoints == other.seekpoints)
+        except (AttributeError, TypeError): return False
+
+    def load(self, data):
+        self.seekpoints = []
+        sp = data.read(self.__SEEKPOINT_SIZE)
+        while len(sp) == self.__SEEKPOINT_SIZE:
+            self.seekpoints.append(SeekPoint(
+                *struct.unpack(self.__SEEKPOINT_FORMAT, sp)))
+            sp = data.read(self.__SEEKPOINT_SIZE)
+
+    def write(self):
+        f = StringIO()
+        for seekpoint in self.seekpoints:
+            packed = struct.pack(self.__SEEKPOINT_FORMAT,
+                seekpoint.first_sample, seekpoint.byte_offset,
+                seekpoint.num_samples)
+            f.write(packed)
+        return f.getvalue()
+
+    def __repr__(self):
+        return "<%s seekpoints=%r>" % (type(self).__name__, self.seekpoints)
+
 class VCFLACDict(VCommentDict):
     """Read and write FLAC Vorbis comments.
 
@@ -183,6 +246,162 @@ class VCFLACDict(VCommentDict):
 
     def write(self, framing=False):
         return super(VCFLACDict, self).write(framing=framing)
+
+class CueSheetTrackIndex(tuple):
+    """Index for a track in a cuesheet.
+
+    For CD-DA, an index_number of 0 corresponds to the track
+    pre-gap. The first index in a track must have a number of 0 or 1,
+    and subsequently, index_numbers must increase by 1. Index_numbers
+    must be unique within a track. And index_offset must be evenly
+    divisible by 588 samples.
+
+    Attributes:
+    index_number -- index point number
+    index_offset -- offset in samples from track start
+    """
+    
+    def __new__(cls, index_number, index_offset):
+        return super(cls, CueSheetTrackIndex).__new__(cls,
+            (index_number, index_offset))
+    index_number = property(lambda self: self[0])
+    index_offset = property(lambda self: self[1])
+
+class CueSheetTrack(object):
+    """A track in a cuesheet.
+
+    For CD-DA, track_numbers must be 1-99, or 170 for the
+    lead-out. Track_numbers must be unique within a cue sheet. There
+    must be atleast one index in every track except the lead-out track
+    which must have none.
+
+    Attributes:
+    track_number -- track number
+    start_offset -- track offset in samples from start of FLAC stream
+    isrc -- ISRC code
+    type -- 0 for audio, 1 for digital data
+    pre_emphasis -- true if the track is recorded with pre-emphasis
+    indexes -- list of CueSheetTrackIndex objects
+    """
+
+    def __init__(self, track_number, start_offset, isrc='', type_=0,
+                 pre_emphasis=False, reserved_flags=0, reserved=''):
+        self.track_number = track_number
+        self.start_offset = start_offset
+        self.isrc = isrc
+        self.type = type_
+        self.pre_emphasis = pre_emphasis
+        self.indexes = []
+
+    def __eq__(self, other):
+        try: return (self.track_number == other.track_number and
+                     self.start_offset == other.start_offset and
+                     self.isrc == other.isrc and
+                     self.type == other.type and
+                     self.pre_emphasis == other.pre_emphasis and
+                     self.indexes == other.indexes)
+        except (AttributeError, TypeError): return False
+
+    def __repr__(self):
+        return ("<%s number=%r, offset=%d, isrc=%r, type=%r, "
+                "pre_emphasis=%r, indexes=%r)>") % (
+            type(self).__name__, self.track_number, self.start_offset,
+            self.isrc, self.type, self.pre_emphasis, self.indexes)
+
+class CueSheet(MetadataBlock):
+    """Read and write FLAC embedded cue sheets.
+
+    Number of tracks should be from 1 to 100. There should always be
+    exactly one lead-out track and that track must be the last track
+    in the cue sheet.
+
+    Attributes:
+    media_catalog_number -- media catalog number in ASCII
+    lead_in_samples -- number of lead-in samples
+    compact_disc -- true if the cuesheet corresponds to a compact disc
+    tracks -- list of CueSheetTrack objects
+    lead_out -- lead-out as CueSheetTrack or None if lead-out was not found
+    """
+
+    __CUESHEET_FORMAT = '>128sQB258xB'
+    __CUESHEET_SIZE = struct.calcsize(__CUESHEET_FORMAT)
+    __CUESHEET_TRACK_FORMAT = '>QB12sB13xB'
+    __CUESHEET_TRACK_SIZE = struct.calcsize(__CUESHEET_TRACK_FORMAT)
+    __CUESHEET_TRACKINDEX_FORMAT = '>QB3x'
+    __CUESHEET_TRACKINDEX_SIZE = struct.calcsize(__CUESHEET_TRACKINDEX_FORMAT)
+
+    code = 5
+
+    media_catalog_number = ''
+    lead_in_samples = 88200
+    compact_disc = True
+
+    def __init__(self, data):
+        self.tracks = []
+        super(CueSheet, self).__init__(data)
+
+    def __eq__(self, other):
+        try:
+            return (self.media_catalog_number == other.media_catalog_number and
+                     self.lead_in_samples == other.lead_in_samples and
+                     self.compact_disc == other.compact_disc and
+                     self.tracks == other.tracks)
+        except (AttributeError, TypeError): return False
+
+    def load(self, data):
+        header = data.read(self.__CUESHEET_SIZE)
+        media_catalog_number, lead_in_samples, flags, num_tracks = \
+            struct.unpack(self.__CUESHEET_FORMAT, header)
+        self.media_catalog_number = media_catalog_number.rstrip('\0')
+        self.lead_in_samples = lead_in_samples
+        self.compact_disc = bool(flags & 0x80)
+        self.tracks = []
+        for i in range(num_tracks): 
+            track = data.read(self.__CUESHEET_TRACK_SIZE)
+            start_offset, track_number, isrc_padded, flags, num_indexes = \
+                struct.unpack(self.__CUESHEET_TRACK_FORMAT, track)
+            isrc = isrc_padded.rstrip('\0')
+            type_ = (flags & 0x80) >> 7
+            pre_emphasis = bool(flags & 0x40)
+            val = CueSheetTrack(
+                track_number, start_offset, isrc, type_, pre_emphasis)
+            for j in range(num_indexes):
+                index = data.read(self.__CUESHEET_TRACKINDEX_SIZE)
+                index_offset, index_number = struct.unpack(
+                    self.__CUESHEET_TRACKINDEX_FORMAT, index)
+                val.indexes.append(
+                    CueSheetTrackIndex(index_number, index_offset))
+            self.tracks.append(val)
+            
+    def write(self):
+        f = StringIO()
+        flags = 0
+        if self.compact_disc: flags |= 0x80
+        packed = struct.pack(
+            self.__CUESHEET_FORMAT, self.media_catalog_number,
+            self.lead_in_samples, flags, len(self.tracks))
+        f.write(packed)
+        for track in self.tracks:
+            track_flags = 0
+            track_flags |= (track.type & 1) << 7
+            if track.pre_emphasis: track_flags |= 0x40
+            track_packed = struct.pack(
+                self.__CUESHEET_TRACK_FORMAT, track.start_offset,
+                track.track_number, track.isrc, track_flags,
+                len(track.indexes))
+            f.write(track_packed)
+            for index in track.indexes:
+                index_packed = struct.pack(
+                    self.__CUESHEET_TRACKINDEX_FORMAT,
+                    index.index_offset, index.index_number)
+                f.write(index_packed)
+        return f.getvalue()
+
+    def __repr__(self):
+        return ("<%s media_catalog_number=%r, lead_in=%r, compact_disc=%r, "
+                "tracks=%r>") % (
+            type(self).__name__, self.media_catalog_number,
+            self.lead_in_samples, self.compact_disc, self.tracks)
 
 class Padding(MetadataBlock):
     """Empty padding space for metadata blocks.
@@ -206,7 +425,8 @@ class Padding(MetadataBlock):
 class FLAC(FileType):
     """A FLAC audio file."""
 
-    METADATA_BLOCKS = [StreamInfo, Padding, None, None, VCFLACDict]
+    METADATA_BLOCKS = [StreamInfo, Padding, None, SeekTable, VCFLACDict,
+        CueSheet]
     """Known metadata block types, indexed by ID."""
 
     def score(filename, fileobj, header):
@@ -228,6 +448,12 @@ class FLAC(FileType):
             if block.code == VCFLACDict.code:
                 if self.tags is None: self.tags = block
                 else: raise FLACVorbisError("> 1 Vorbis comment block found")
+            elif block.code == CueSheet.code:
+                if self.cuesheet is None: self.cuesheet = block
+                else: raise error("> 1 CueSheet block found")
+            elif block.code == SeekTable.code:
+                if self.seektable is None: self.seektable = block
+                else: raise error("> 1 SeekTable block found")
         return (byte >> 7) ^ 1
 
     def add_tags(self):
@@ -258,6 +484,8 @@ class FLAC(FileType):
 
         self.metadata_blocks = []
         self.tags = None
+        self.cuesheet = None
+        self.seektable = None
         self.filename = filename
         try:
             fileobj = file(filename, "rb")
