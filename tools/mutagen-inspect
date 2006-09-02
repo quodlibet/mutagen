@@ -31,6 +31,7 @@ def main(argv):
         print "--", filename
         try: print "- " + File(filename).pprint().encode(enc, 'replace')
         except AttributeError: print "- Unknown file type"
+        except KeyboardInterrupt: raise
         except Exception, err: print str(err)
         print
 
