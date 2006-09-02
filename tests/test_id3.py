@@ -1394,15 +1394,8 @@ class WriteRoundtrip(TestCase):
 
     def test_nofile_emptytag(self):
         os.unlink(self.newsilence)
-        ID3().save(self.newsilence)
-        self.assertEquals('ID3', open(self.newsilence).read(3))
-        self.assertEquals(ID3(self.newsilence), {})
-
-    def test_emptyfile_emptytag(self):
-        open(self.newsilence, 'wb').truncate()
-        ID3().save(self.newsilence)
-        self.assertEquals('ID3', open(self.newsilence).read(3))
-        self.assertEquals(ID3(self.newsilence), {})
+        self.assertRaises(ValueError, ID3().save, self.newsilence)
+        self.assertRaises(EnvironmentError, open, self.newsilence)
 
     def test_nofile_silencetag(self):
         id3 = ID3(self.newsilence)
@@ -1428,7 +1421,8 @@ class WriteRoundtrip(TestCase):
         self.assertEquals(open(self.newsilence).read(10), '')
 
     def tearDown(self):
-        os.unlink(self.newsilence)
+        try: os.unlink(self.newsilence)
+        except EnvironmentError: pass
 
 class WriteForEyeD3(TestCase):
     silence = join('tests', 'data', 'silence-44-s.mp3')

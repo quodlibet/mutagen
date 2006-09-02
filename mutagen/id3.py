@@ -41,6 +41,7 @@ class error(Exception): pass
 class ID3NoHeaderError(error, ValueError): pass
 class ID3BadUnsynchData(error, ValueError): pass
 class ID3BadCompressedData(error, ValueError): pass
+class ID3TagError(error, ValueError): pass
 class ID3UnsupportedVersionError(error, NotImplementedError): pass
 class ID3EncryptionUnsupportedError(error, NotImplementedError): pass
 class ID3JunkFrameError(error, ValueError): pass
@@ -313,6 +314,14 @@ class ID3(mutagen.Metadata):
         The lack of a way to update only an ID3v1 tag is intentional.
         """
 
+        framedata = map(self.save_frame, self.values())
+        framedata.extend([data for data in self.unknown_frames
+                if len(data) > 10])
+        if not framedata:
+            raise ID3TagError("An ID3 tag must have at least one frame")
+        framedata = ''.join(framedata)
+        framesize = len(framedata)
+
         if filename is None: filename = self.filename
         try: f = open(filename, 'rb+')
         except IOError, err:
@@ -326,12 +335,6 @@ class ID3(mutagen.Metadata):
             except struct.error: id3, insize = '', 0
             insize = BitPaddedInt(insize)
             if id3 != 'ID3': insize = -10
-
-            framedata = map(self.save_frame, self.values())
-            framedata.extend([data for data in self.unknown_frames
-                    if len(data) > 10])
-            framedata = ''.join(framedata)
-            framesize = len(framedata)
 
             if insize >= framesize: outsize = insize
             else: outsize = (framesize + 1023) & ~0x3FF
