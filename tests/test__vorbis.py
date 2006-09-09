@@ -120,6 +120,9 @@ class TVCommentDict(TestCase):
         self.c["artist"] = ["mu", "piman"]
         self.c["title"] = u"more fakes"
 
+    def test_correct_len(self):
+        self.failUnlessEqual(len(self.c), 3)
+
     def test_keys(self):
         self.failUnless("artist" in self.c.keys())
         self.failUnless("title" in self.c.keys())

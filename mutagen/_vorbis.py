@@ -170,8 +170,6 @@ class VCommentDict(VComment, DictMixin):
     normalized to lowercase ASCII.
     """
 
-    __len__ = VComment.__len__
-
     def __getitem__(self, key):
         """A list of values for the key.
 
