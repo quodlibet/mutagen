@@ -450,6 +450,5 @@ class APEv2File(FileType):
             fileobj.seek(0)
         footer = fileobj.read()
         filename = filename.lower()
-        return ((("APETAGEX" in footer) + header.startswith("MP+"))
-                - header.startswith("ID3"))
+        return (("APETAGEX" in footer) - header.startswith("ID3"))
     score = staticmethod(score)

@@ -11,6 +11,7 @@ from mutagen.flac import FLAC
 from mutagen.wavpack import WavPack
 from mutagen.trueaudio import TrueAudio
 from mutagen.m4a import M4A
+from mutagen.musepack import Musepack
 
 class TMetadata(TestCase):
     uses_mmap = False
@@ -98,9 +99,17 @@ class TFile(TestCase):
         self.failUnless(isinstance(
             File(os.path.join("tests", "data", "silence-44-s.flac")), FLAC))
 
+    def test_musepack(self):
+        self.failUnless(isinstance(
+            File(os.path.join("tests", "data", "click.mpc")), Musepack))
+        self.failUnless(isinstance(
+            File(os.path.join("tests", "data", "sv4_header.mpc")), Musepack))
+        self.failUnless(isinstance(
+            File(os.path.join("tests", "data", "sv5_header.mpc")), Musepack))
+
     def test_apev2(self):
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "click.mpc")), APEv2File))
+            File(os.path.join("tests", "data", "oldtag.apev2")), APEv2File))
 
     def test_tta(self):
         self.failUnless(isinstance(

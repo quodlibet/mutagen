@@ -161,8 +161,9 @@ def File(filename, options=None):
         from mutagen.trueaudio import TrueAudio
         from mutagen.wavpack import WavPack
         from mutagen.m4a import M4A
+        from mutagen.musepack import Musepack
         options = [MP3, TrueAudio, OggTheora, OggSpeex, OggVorbis, OggFLAC,
-                   FLAC, APEv2File, M4A, ID3FileType, WavPack]
+                   FLAC, APEv2File, M4A, ID3FileType, WavPack, Musepack]
 
     if not options:
         return None

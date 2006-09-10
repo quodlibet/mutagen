@@ -1,10 +1,11 @@
 1.7
  * Bug Fixes:
-   * Raise ID3TagError on attempts to save empty (invalid) ID3 tags.
+   * FIXME: See #813.
 
  * New Features:
    * FLAC cuesheet and seektable support. (#791, Nuutti Kotivuori)
    * Kwargs can be passed to ID3 constructors. (#824, Lukáš Lalinský)
+   * mutagen.musepack: Read/tag Musepack files. (#825, Lukáš Lalinský)
 
  * Tools:
    * mutagen-inspect responds immediately to keyboard interrupts.
