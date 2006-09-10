@@ -318,7 +318,13 @@ class ID3(mutagen.Metadata):
         framedata.extend([data for data in self.unknown_frames
                 if len(data) > 10])
         if not framedata:
-            raise ID3TagError("An ID3 tag must have at least one frame")
+            try:
+                self.delete(filename)
+            except EnvironmentError, err:
+                from errno import ENOENT
+                if err.errno != ENOENT: raise
+            return
+
         framedata = ''.join(framedata)
         framesize = len(framedata)
 
@@ -472,13 +478,15 @@ def delete(filename, delete_v1=True, delete_v2=True):
                 f.seek(-128, 2)
                 f.truncate()
 
+    # technically an insize=0 tag is invalid, but we delete it anyway
+    # (primarily because we used to write it)
     if delete_v2:
         f.seek(0, 0)
         idata = f.read(10)
         try: id3, vmaj, vrev, flags, insize = unpack('>3sBBB4s', idata)
-        except struct.error: id3, insize = '', 0
+        except struct.error: id3, insize = '', -1
         insize = BitPaddedInt(insize)
-        if id3 == 'ID3' and insize > 0:
+        if id3 == 'ID3' and insize >= 0:
             delete_bytes(f, insize + 10, 0)
 
 class BitPaddedInt(int):

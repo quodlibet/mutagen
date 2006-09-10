@@ -1394,7 +1394,7 @@ class WriteRoundtrip(TestCase):
 
     def test_nofile_emptytag(self):
         os.unlink(self.newsilence)
-        self.assertRaises(ValueError, ID3().save, self.newsilence)
+        ID3().save(self.newsilence)
         self.assertRaises(EnvironmentError, open, self.newsilence)
 
     def test_nofile_silencetag(self):
@@ -1413,12 +1413,24 @@ class WriteRoundtrip(TestCase):
 
     def test_empty_plustag_minustag_empty(self):
         id3 = ID3(self.newsilence)
-        #os.unlink(self.newsilence)
         open(self.newsilence, 'wb').truncate()
         id3.save()
         id3.delete()
         self.failIf(id3)
         self.assertEquals(open(self.newsilence).read(10), '')
+
+    def test_empty_plustag_emptytag_empty(self):
+        id3 = ID3(self.newsilence)
+        open(self.newsilence, 'wb').truncate()
+        id3.save()
+        id3.clear()
+        id3.save()
+        self.assertEquals(open(self.newsilence).read(10), '')
+
+    def test_delete_invalid_zero(self):
+        open(self.newsilence, 'wb').write('ID3\x04\x00\x00\x00\x00\x00\x00abc')
+        ID3(self.newsilence).delete()
+        self.assertEquals(open(self.newsilence).read(10), 'abc')
 
     def tearDown(self):
         try: os.unlink(self.newsilence)
