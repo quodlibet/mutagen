@@ -1885,14 +1885,14 @@ class ID3FileType(mutagen.FileType):
         else:
             raise error("an ID3 tag already exists")
 
-    def load(self, filename, ID3=ID3):
+    def load(self, filename, ID3=ID3, **kwargs):
         """Load stream and tag information from a file.
 
         A custom tag reader may be used in instead of the default
         mutagen.id3.ID3 object, e.g. an EasyID3 reader.
         """
         self.filename = filename
-        try: self.tags = ID3(filename)
+        try: self.tags = ID3(filename, **kwargs)
         except error: self.tags = None
         if self.tags is not None:
             try: offset = self.tags._size

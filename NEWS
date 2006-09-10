@@ -4,6 +4,7 @@
 
  * New Features:
    * FLAC cuesheet and seektable support. (#791, Nuutti Kotivuori)
+   * Kwargs can be passed to ID3 constructors. (#824, Lukáš Lalinský)
 
  * Tools:
    * mutagen-inspect responds immediately to keyboard interrupts.
