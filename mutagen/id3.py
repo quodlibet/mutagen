@@ -69,7 +69,7 @@ class ID3(mutagen.Metadata):
         self.unknown_frames = []
         super(ID3, self).__init__(*args, **kwargs)
 
-    def fullread(self, size):
+    def __fullread(self, size):
         try:
             if size < 0:
                 raise ValueError('Requested bytes (%s) less than zero' % size)
@@ -106,7 +106,7 @@ class ID3(mutagen.Metadata):
         self.__filesize = getsize(filename)
         try:
             try:
-                self.load_header()
+                self.__load_header()
             except EOFError:
                 self._size = 0
                 raise ID3NoHeaderError("%s: too small (%d bytes)" %(
@@ -128,8 +128,8 @@ class ID3(mutagen.Metadata):
                 if frames is None:
                     if (2,3,0) <= self.version: frames = Frames
                     elif (2,2,0) <= self.version: frames = Frames_2_2
-                data = self.fullread(self._size)
-                for frame in self.read_frames(data, frames=frames):
+                data = self.__fullread(self._size)
+                for frame in self.__read_frames(data, frames=frames):
                     if isinstance(frame, Frame): self.add(frame)
                     else: self.unknown_frames.append(frame)
         finally:
@@ -195,9 +195,9 @@ class ID3(mutagen.Metadata):
         """Add a frame to the tag."""
         return self.loaded_frame(frame)
 
-    def load_header(self):
+    def __load_header(self):
         fn = self.filename
-        data = self.fullread(10)
+        data = self.__fullread(10)
         id3, vmaj, vrev, flags, size = unpack('>3sBBB4s', data)
         self.__flags = flags
         self._size = BitPaddedInt(size)
@@ -217,8 +217,8 @@ class ID3(mutagen.Metadata):
 
 
         if self.f_extended:
-            self.__extsize = BitPaddedInt(self.fullread(4))
-            self.__extdata = self.fullread(self.__extsize - 4)
+            self.__extsize = BitPaddedInt(self.__fullread(4))
+            self.__extdata = self.__fullread(self.__extsize - 4)
 
     def __determine_bpi(self, data, frames):
         if self.version < (2,4,0): return int
@@ -249,7 +249,7 @@ class ID3(mutagen.Metadata):
             return int
         return BitPaddedInt
 
-    def read_frames(self, data, frames):
+    def __read_frames(self, data, frames):
         if (2,3,0) <= self.version:
             bpi = self.__determine_bpi(data, frames)
             while data:
@@ -265,7 +265,7 @@ class ID3(mutagen.Metadata):
                 except KeyError: 
                     if name.isalnum(): yield header + framedata
                 else:
-                    try: yield self.load_framedata(tag, flags, framedata)
+                    try: yield self.__load_framedata(tag, flags, framedata)
                     except NotImplementedError: yield header + framedata
                     except ID3JunkFrameError: pass
 
@@ -283,11 +283,11 @@ class ID3(mutagen.Metadata):
                 except KeyError:
                     if name.isalnum(): yield header + framedata
                 else:
-                    try: yield self.load_framedata(tag, 0, framedata)
+                    try: yield self.__load_framedata(tag, 0, framedata)
                     except NotImplementedError: yield header + framedata
                     except ID3JunkFrameError: pass
 
-    def load_framedata(self, tag, flags, framedata):
+    def __load_framedata(self, tag, flags, framedata):
         if self.f_unsynch or flags & 0x40:
             try: framedata = unsynch.decode(framedata)
             except ValueError: pass
@@ -314,7 +314,7 @@ class ID3(mutagen.Metadata):
         The lack of a way to update only an ID3v1 tag is intentional.
         """
 
-        framedata = map(self.save_frame, self.values())
+        framedata = map(self.__save_frame, self.values())
         framedata.extend([data for data in self.unknown_frames
                 if len(data) > 10])
         if not framedata:
@@ -388,7 +388,7 @@ class ID3(mutagen.Metadata):
         delete(filename, delete_v1, delete_v2)
         self.clear()
 
-    def save_frame(self, frame):
+    def __save_frame(self, frame):
         flags = 0
         if self.PEDANTIC and isinstance(frame, TextFrame):
             if len(str(frame)) == 0: return ''

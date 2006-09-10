@@ -24,9 +24,5 @@ instead.
 
 ID3:
 ----
-The 'fullread', 'load_header', 'read_frames', 'load_framedata', and
-'save_frame' methods of ID3 are not intended to be public APIs. They
-will change or disappear in the future.
-
 None of the Spec objects are considered part of the public API.
 

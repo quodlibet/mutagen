@@ -1,6 +1,7 @@
 1.7
  * Bug Fixes:
-   * FIXME: See #813.
+   * Trying to save an empty tag deletes it. (#813)
+   * The semi-public API removal mentioned in 1.6's API-NOTES happened.
 
  * New Features:
    * FLAC cuesheet and seektable support. (#791, Nuutti Kotivuori)

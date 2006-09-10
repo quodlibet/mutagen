@@ -88,45 +88,46 @@ class ID3Loading(TestCase):
     def test_header_empty(self):
         id3 = ID3()
         id3._ID3__fileobj = file(self.empty, 'rb')
-        self.assertRaises(EOFError, id3.load_header)
+        self.assertRaises(EOFError, id3._ID3__load_header)
 
     def test_header_silence(self):
         id3 = ID3()
         id3._ID3__fileobj = file(self.silence, 'rb')
-        id3.load_header()
+        id3._ID3__load_header()
         self.assertEquals(id3.version, (2,3,0))
         self.assertEquals(id3._size, 1304)
 
     def test_header_2_4_invalid_flags(self):
         id3 = ID3()
         id3._ID3__fileobj = StringIO('ID3\x04\x00\x1f\x00\x00\x00\x00')
-        self.assertRaises(ValueError, id3.load_header)
+        self.assertRaises(ValueError, id3._ID3__load_header)
 
     def test_header_2_3_invalid_flags(self):
         id3 = ID3()
         id3._ID3__fileobj = StringIO('ID3\x03\x00\x1f\x00\x00\x00\x00')
-        self.assertRaises(ValueError, id3.load_header)
+        self.assertRaises(ValueError, id3._ID3__load_header)
 
     def test_header_2_2(self):
         id3 = ID3()
         id3._ID3__fileobj = StringIO('ID3\x02\x00\x00\x00\x00\x00\x00')
-        id3.load_header()
+        id3._ID3__load_header()
         self.assertEquals(id3.version, (2,2,0))
 
     def test_header_2_1(self):
         id3 = ID3()
         id3._ID3__fileobj = StringIO('ID3\x01\x00\x00\x00\x00\x00\x00')
-        self.assertRaises(NotImplementedError, id3.load_header)
+        self.assertRaises(NotImplementedError, id3._ID3__load_header)
 
     def test_header_too_small(self):
         id3 = ID3()
         id3._ID3__fileobj = StringIO('ID3\x01\x00\x00\x00\x00\x00')
-        self.assertRaises(EOFError, id3.load_header)
+        self.assertRaises(EOFError, id3._ID3__load_header)
 
     def test_header_2_4_extended(self):
         id3 = ID3()
-        id3._ID3__fileobj = StringIO('ID3\x04\x00\x40\x00\x00\x00\x00\x00\x00\x00\x05\x5a')
-        id3.load_header()
+        id3._ID3__fileobj = StringIO(
+            'ID3\x04\x00\x40\x00\x00\x00\x00\x00\x00\x00\x05\x5a')
+        id3._ID3__load_header()
         self.assertEquals(id3._ID3__extsize, 5)
         self.assertEquals(id3._ID3__extdata, '\x5a')
 
@@ -135,17 +136,19 @@ class ID3Loading(TestCase):
         id3.version = (2,4,0)
         id3._ID3__flags = 0x80
         badsync = '\x00\xff\x00ab\x00'
-        self.assertEquals(id3.load_framedata(Frames["TPE2"], 0, badsync), [u"\xffab"])
+        self.assertEquals(
+            id3._ID3__load_framedata(Frames["TPE2"], 0, badsync), [u"\xffab"])
         id3._ID3__flags = 0x00
-        self.assertEquals(id3.load_framedata(Frames["TPE2"], 0x40, badsync), [u"\xffab"])
-        tag = id3.load_framedata(Frames["TPE2"], 0, badsync)
+        self.assertEquals(id3._ID3__load_framedata(
+            Frames["TPE2"],0x40, badsync), [u"\xffab"])
+        tag = id3._ID3__load_framedata(Frames["TPE2"], 0, badsync)
         self.assertEquals(tag, [u"\xff", u"ab"])
 
-    def test_insane_fullread(self):
+    def test_insane__ID3__fullread(self):
         id3 = ID3()
         id3._ID3__filesize = 0
-        self.assertRaises(ValueError, id3.fullread, -3)
-        self.assertRaises(EOFError, id3.fullread, 3)
+        self.assertRaises(ValueError, id3._ID3__fullread, -3)
+        self.assertRaises(EOFError, id3._ID3__fullread, 3)
 
 class ID3Tags(TestCase):
     uses_mmap = False
@@ -201,15 +204,20 @@ class ID3Tags(TestCase):
         self.assertRaises(ValueError, Frames["TPE1"], encoding=9, text="ab")
 
     def test_badsync(self):
-        self.assertRaises(ValueError, Frames["TPE1"].fromData, _24, 0x02, "\x00\xff\xfe")
+        self.assertRaises(
+            ValueError, Frames["TPE1"].fromData, _24, 0x02, "\x00\xff\xfe")
 
     def test_noencrypt(self):
-        self.assertRaises(NotImplementedError, Frames["TPE1"].fromData, _24, 0x04, "\x00")
-        self.assertRaises(NotImplementedError, Frames["TPE1"].fromData, _23, 0x40, "\x00")
+        self.assertRaises(
+            NotImplementedError, Frames["TPE1"].fromData, _24, 0x04, "\x00")
+        self.assertRaises(
+            NotImplementedError, Frames["TPE1"].fromData, _23, 0x40, "\x00")
 
     def test_badcompress(self):
-        self.assertRaises(ValueError, Frames["TPE1"].fromData, _24, 0x08, "\x00\x00\x00\x00#")
-        self.assertRaises(ValueError, Frames["TPE1"].fromData, _23, 0x80, "\x00\x00\x00\x00#")
+        self.assertRaises(
+            ValueError, Frames["TPE1"].fromData, _24, 0x08, "\x00\x00\x00\x00#")
+        self.assertRaises(
+            ValueError, Frames["TPE1"].fromData, _23, 0x80, "\x00\x00\x00\x00#")
 
     def test_junkframe(self):
         self.assertRaises(ValueError, Frames["TPE1"].fromData, _24, 0, "")
@@ -375,9 +383,11 @@ def TestReadTags():
     ['TCOP', '\x001900 c', '1900 c', '', dict(encoding=0)],
     ['TDAT', '\x00a/b', 'a/b', '', dict(encoding=0)],
     ['TDEN', '\x001987', '1987', '', dict(encoding=0, year=[1987])],
-    ['TDOR', '\x001987-12', '1987-12', '', dict(encoding=0, year=[1987], month=[12])],
+    ['TDOR', '\x001987-12', '1987-12', '',
+     dict(encoding=0, year=[1987], month=[12])],
     ['TDRC', '\x001987\x00', '1987', '', dict(encoding=0, year=[1987])],
-    ['TDRL', '\x001987\x001988', '1987,1988', '', dict(encoding=0, year=[1987,1988])],
+    ['TDRL', '\x001987\x001988', '1987,1988', '',
+     dict(encoding=0, year=[1987,1988])],
     ['TDTG', '\x001987', '1987', '', dict(encoding=0, year=[1987])],
     ['TDLY', '\x001205', '1205', 1205, dict(encoding=0)],
     ['TENC', '\x00a b/c d', 'a b/c d', '', dict(encoding=0)],
@@ -421,7 +431,8 @@ def TestReadTags():
     ['TSST', '\x0012345', '12345', '', dict(encoding=0)],
     ['TYER', '\x002004', '2004', 2004, dict(encoding=0)],
 
-    ['TXXX', '\x00usr\x00a/b\x00c', ['a/b','c'], '', dict(encoding=0, desc='usr')],
+    ['TXXX', '\x00usr\x00a/b\x00c', ['a/b','c'], '',
+     dict(encoding=0, desc='usr')],
 
     ['WCOM', 'http://foo', 'http://foo', '', {}],
     ['WCOP', 'http://bar', 'http://bar', '', {}],
@@ -654,7 +665,8 @@ def TestReadTags():
     for i, (tag, data, value, intval, info) in enumerate(tests):
         info = info.copy()
 
-        def test_tag(self, tag=tag, data=data, value=value, intval=intval, info=info):
+        def test_tag(self, tag=tag, data=data, value=value, intval=intval,
+                     info=info):
             from operator import pos
             id3 = __import__('mutagen.id3', globals(), locals(), [tag])
             TAG = getattr(id3, tag)
@@ -870,7 +882,8 @@ class FrameSanityChecks(TestCase):
 
     def test_NTPF(self):
         from mutagen.id3 import NumericPartTextFrame
-        self.assert_(isinstance(NumericPartTextFrame(text='1/2'), NumericPartTextFrame))
+        self.assert_(
+            isinstance(NumericPartTextFrame(text='1/2'), NumericPartTextFrame))
 
     def test_MTF(self):
         from mutagen.id3 import TextFrame
@@ -884,18 +897,19 @@ class FrameSanityChecks(TestCase):
         data = 'TT1\x00\x00\x83\x00' + ('123456789abcdef' * 16)
         id3 = ID3()
         id3.version = (2,2,0)
-        tag = list(id3.read_frames(data, Frames_2_2))[0]
+        tag = list(id3._ID3__read_frames(data, Frames_2_2))[0]
         self.assertEquals(data[7:7+0x82].decode('latin1'), tag.text[0])
 
     def test_frame_too_small(self):
-        self.assertEquals([], list(_24.read_frames('012345678', Frames)))
-        self.assertEquals([], list(_23.read_frames('012345678', Frames)))
-        self.assertEquals([], list(_22.read_frames('01234', Frames_2_2)))
-        self.assertEquals([], list(_22.read_frames('TT1'+'\x00'*3, Frames_2_2)))
+        self.assertEquals([], list(_24._ID3__read_frames('012345678', Frames)))
+        self.assertEquals([], list(_23._ID3__read_frames('012345678', Frames)))
+        self.assertEquals([], list(_22._ID3__read_frames('01234', Frames_2_2)))
+        self.assertEquals(
+            [], list(_22._ID3__read_frames('TT1'+'\x00'*3, Frames_2_2)))
 
     def test_unknown_22_frame(self):
         data = 'XYZ\x00\x00\x01\x00'
-        self.assertEquals([data], list(_22.read_frames(data, {})))
+        self.assertEquals([data], list(_22._ID3__read_frames(data, {})))
 
 
     def test_zlib_latin1(self):
@@ -919,8 +933,8 @@ class FrameSanityChecks(TestCase):
 
     def test_zlib_utf16(self):
         from mutagen.id3 import TPE1
-        data = '\x00\x00\x00\x1fx\x9cc\xfc\xff\xaf\x84!\x83!\x93\xa1\x98A' \
-                '\x01J&2\xe83\x940\xa4\x02\xd9%\x0c\x00\x87\xc6\x07#'
+        data = ('\x00\x00\x00\x1fx\x9cc\xfc\xff\xaf\x84!\x83!\x93\xa1\x98A'
+                '\x01J&2\xe83\x940\xa4\x02\xd9%\x0c\x00\x87\xc6\x07#')
         tag = TPE1.fromData(_23, 0x80, data)
         self.assertEquals(tag.encoding, 1)
         self.assertEquals(tag, ['this is a/test'])
@@ -945,10 +959,12 @@ class FrameSanityChecks(TestCase):
 
     def test_load_write(self):
         from mutagen.id3 import TPE1, Frames
-        artists= [s.decode('utf8') for s in ['\xc2\xb5', '\xe6\x97\xa5\xe6\x9c\xac']]
+        artists= [s.decode('utf8') for s in
+                  ['\xc2\xb5', '\xe6\x97\xa5\xe6\x9c\xac']]
         artist = TPE1(encoding=3, text=artists)
         id3 = ID3()
-        tag = list(id3.read_frames(id3.save_frame(artist), Frames))[0]
+        tag = list(id3._ID3__read_frames(
+            id3._ID3__save_frame(artist), Frames))[0]
         self.assertEquals('TPE1', type(tag).__name__)
         self.assertEquals(artist.text, tag.text)
 
@@ -981,7 +997,8 @@ class FrameSanityChecks(TestCase):
         from mutagen.id3 import COMM
         self.assertEquals(COMM(text="a").HashKey, COMM(text="b").HashKey)
         self.assertNotEquals(COMM(desc="a").HashKey, COMM(desc="b").HashKey)
-        self.assertNotEquals(COMM(lang="abc").HashKey, COMM(lang="def").HashKey)
+        self.assertNotEquals(
+            COMM(lang="abc").HashKey, COMM(lang="def").HashKey)
 
     def test_multi_RVA2(self):
         from mutagen.id3 import RVA2
@@ -1011,7 +1028,8 @@ class FrameSanityChecks(TestCase):
     def test_multi_USER(self):
         from mutagen.id3 import USER
         self.assertEquals(USER(text="a").HashKey, USER(text="b").HashKey)
-        self.assertNotEquals(USER(lang="abc").HashKey, USER(lang="def").HashKey)
+        self.assertNotEquals(
+            USER(lang="abc").HashKey, USER(lang="def").HashKey)
 
 class UpdateTo24(TestCase):
     uses_mmap = False
@@ -1156,7 +1174,8 @@ class BrokenDiscarded(TestCase):
         tail = '\x00\x00\x00\x03\x00\x00' '\x01\x02\x03'
         for head in 'RVA2 TXXX APIC'.split():
             data = head + tail
-            self.assertEquals(0, len(list(id3.read_frames(data, Frames))))
+            self.assertEquals(
+                0, len(list(id3._ID3__read_frames(data, Frames))))
 
     def test_drops_nonalphanum_frames(self):
         from mutagen.id3 import Frames
@@ -1164,7 +1183,8 @@ class BrokenDiscarded(TestCase):
         tail = '\x00\x00\x00\x03\x00\x00' '\x01\x02\x03'
         for head in ['\x06\xaf\xfe\x20', 'ABC\x00', 'A   ']:
             data = head + tail
-            self.assertEquals(0, len(list(id3.read_frames(data, Frames))))
+            self.assertEquals(
+                0, len(list(id3._ID3__read_frames(data, Frames))))
 
     def test_bad_unicodedecode(self):
         from mutagen.id3 import COMM, ID3JunkFrameError
@@ -1189,7 +1209,8 @@ class BrokenButParsed(TestCase):
         tail = '\x00' * 6
         for head in 'WOAR TENC TCOP TOPE WXXX'.split():
             data = head + tail
-            self.assertEquals(0, len(list(id3.read_frames(data, Frames))))
+            self.assertEquals(
+                0, len(list(id3._ID3__read_frames(data, Frames))))
 
     def test_lengthone_utf16(self):
         from mutagen.id3 import TPE1
@@ -1202,7 +1223,8 @@ class BrokenButParsed(TestCase):
         from mutagen.id3 import TPE1, Frame, ID3BadCompressedData
         id3 = ID3()
         id3.PEDANTIC = True
-        self.assertRaises(ID3BadCompressedData, TPE1.fromData, id3, Frame.FLAG24_COMPRESS, '\x03abcdefg')
+        self.assertRaises(ID3BadCompressedData, TPE1.fromData, id3,
+                          Frame.FLAG24_COMPRESS, '\x03abcdefg')
 
     def test_fake_zlib_nopedantic(self):
         from mutagen.id3 import TPE1, Frame, ID3BadCompressedData
@@ -1230,8 +1252,8 @@ class BrokenButParsed(TestCase):
         head = 'TIT1\x00\x00\x01\x00\x00\x00\x00'
         tail = 'TPE1\x00\x00\x00\x04\x00\x00Yay!'
 
-        tagsgood = list(_24.read_frames(head + 'a'*127 + tail, Frames))
-        tagsbad = list(_24.read_frames(head + 'a'*255 + tail, Frames))
+        tagsgood = list(_24._ID3__read_frames(head + 'a'*127 + tail, Frames))
+        tagsbad = list(_24._ID3__read_frames(head + 'a'*255 + tail, Frames))
         self.assertEquals(2, len(tagsgood))
         self.assertEquals(2, len(tagsbad))
         self.assertEquals('a'*127, tagsgood[0])
@@ -1239,8 +1261,8 @@ class BrokenButParsed(TestCase):
         self.assertEquals('Yay!', tagsgood[1])
         self.assertEquals('Yay!', tagsbad[1])
 
-        tagsgood = list(_24.read_frames(head + 'a'*127, Frames))
-        tagsbad = list(_24.read_frames(head + 'a'*255, Frames))
+        tagsgood = list(_24._ID3__read_frames(head + 'a'*127, Frames))
+        tagsbad = list(_24._ID3__read_frames(head + 'a'*255, Frames))
         self.assertEquals(1, len(tagsgood))
         self.assertEquals(1, len(tagsbad))
         self.assertEquals('a'*127, tagsgood[0])
