@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # ID3iconv is a Java based ID3 encoding convertor, here's the Python version.
 # Copyright 2006 Emfox Zhou <EmfoxZhou@gmail.com>
 #

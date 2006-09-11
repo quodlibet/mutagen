@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # Split a multiplex/chained Ogg file into its component parts.
 # Copyright 2006 Joe Wreschnig
 #
