@@ -1516,6 +1516,19 @@ class NoHash(TestCase):
         self.failUnlessRaises(
             TypeError, {}.__setitem__, TIT1(encoding=0, text="foo"), None)
 
+class FrameIDValidate(TestCase):
+    uses_mmap = False
+
+    def test_valid(self):
+        from mutagen.id3 import is_valid_frame_id
+        self.failUnless(is_valid_frame_id("APIC"))
+        self.failUnless(is_valid_frame_id("TPE2"))
+
+    def test_invalid(self):
+        from mutagen.id3 import is_valid_frame_id
+        self.failIf(is_valid_frame_id("MP3e"))
+        self.failIf(is_valid_frame_id("+ABC"))
+
 add(ID3Loading)
 add(ID3GetSetDel)
 add(BitPaddedIntTest)
@@ -1530,6 +1543,7 @@ add(TimeStamp)
 add(WriteRoundtrip)
 add(OddWrites)
 add(NoHash)
+add(FrameIDValidate)
 
 try: import eyeD3
 except ImportError: pass
