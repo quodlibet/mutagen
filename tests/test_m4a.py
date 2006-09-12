@@ -5,6 +5,8 @@ from cStringIO import StringIO
 from tempfile import mkstemp
 from tests import TestCase, add
 from mutagen.m4a import M4A, Atom, Atoms, M4ATags, M4AInfo, delete
+try: from os.path import devnull
+except ImportError: devnull = "/dev/null"
 
 class TAtom(TestCase):
     uses_mmap = False
@@ -135,8 +137,10 @@ class TM4A(TestCase):
         self.audio = M4A(self.filename)
 
     def faad(self):
+        if not have_faad: return
         value = os.system(
-            "faad -w %s > /dev/null 2> /dev/null" % self.filename)
+            "faad -w %s > %s 2> %s" % (self.filename,
+                devnull, devnull))
         self.failIf(value and value != NOTFOUND)
 
     def test_bitrate(self):
@@ -251,7 +255,9 @@ class TM4ANoTags(TM4A):
 
 add(TM4ANoTags)
 
-NOTFOUND = os.system("tools/notarealprogram 2> /dev/null")
+NOTFOUND = os.system("tools/notarealprogram 2> %s" % devnull)
 
-if os.system("faad 2> /dev/null > /dev/null") == NOTFOUND:
+have_faad = True
+if os.system("faad 2> %s > %s" % (devnull, devnull)) == NOTFOUND:
+    have_faad = False
     print "WARNING: Skipping FAAD reference tests."

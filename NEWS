@@ -2,6 +2,7 @@
  * Bug Fixes:
    * Trying to save an empty tag deletes it. (#813)
    * The semi-public API removal mentioned in 1.6's API-NOTES happened.
+   * Use os.path.devnull on Win32/Mac OS X. (#831, Lukáš Lalinský)
 
  * New Features:
    * FLAC cuesheet and seektable support. (#791, Nuutti Kotivuori)

@@ -6,6 +6,8 @@ from StringIO import StringIO
 from tests import TestCase, add
 from mutagen.ogg import OggPage, error as OggError
 from tempfile import mkstemp
+try: from os.path import devnull
+except ImportError: devnull = "/dev/null"
 
 class TOggPage(TestCase):
     uses_mmap = False
@@ -435,13 +437,16 @@ class TOggFileType(TestCase):
 
     def ogg_reference(self, filename):
         self.scan_file()
-        value = os.system("ogginfo %s > /dev/null 2> /dev/null" % filename)
-        self.failIf(value and value != NOTFOUND,
-                    "ogginfo failed on %s" % filename)
-        value = os.system(
-            "oggz-validate %s > /dev/null" % filename)
-        self.failIf(value and value != NOTFOUND,
-                    "oggz-validate failed on %s" % filename)
+        if have_ogginfo:
+            value = os.system("ogginfo %s > %s 2> %s" % (filename, devnull,
+                              devnull))
+            self.failIf(value and value != NOTFOUND,
+                        "ogginfo failed on %s" % filename)
+        if have_oggz_validate:
+            value = os.system(
+                "oggz-validate %s > %s" % (filename, devnull))
+            self.failIf(value and value != NOTFOUND,
+                        "oggz-validate failed on %s" % filename)
 
     def test_ogg_reference_simple_save(self):
         self.audio.save()
@@ -471,9 +476,13 @@ class TOggFileType(TestCase):
     def tearDown(self):
         os.unlink(self.filename)
 
-NOTFOUND = os.system("tools/notarealprogram 2> /dev/null")
+NOTFOUND = os.system("tools/notarealprogram 2> %s" % devnull)
 
-if os.system("ogginfo > /dev/null 2> /dev/null") == NOTFOUND:
+have_ogginfo = True
+if os.system("ogginfo 2> %s > %s" % (devnull, devnull)) == NOTFOUND:
+    have_ogginfo = False
     print "WARNING: Skipping ogginfo reference tests."
-if os.system("oggz-validate > /dev/null 2> /dev/null") == NOTFOUND:
+have_oggz_validate = True
+if os.system("oggz-validate 2> %s > %s" % (devnull, devnull)) == NOTFOUND:
+    have_oggz_validate = False
     print "WARNING: Skipping oggz-validate reference tests."

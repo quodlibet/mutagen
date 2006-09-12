@@ -9,6 +9,8 @@ from mutagen.oggflac import OggFLAC, OggFLACStreamInfo, delete
 from mutagen.ogg import OggPage
 from tests import add
 from tests.test_ogg import TOggFileType
+try: from os.path import devnull
+except ImportError: devnull = "/dev/null"
 
 class TOggFLAC(TOggFileType):
     Kind = OggFLAC
@@ -36,16 +38,18 @@ class TOggFLAC(TOggFileType):
         self.failUnlessRaises(IOError, OggFLACStreamInfo, StringIO(page))
 
     def test_flac_reference_simple_save(self):
+        if not have_flac: return
         self.audio.save()
         self.scan_file()
-        value = os.system("flac --ogg -t %s 2> /dev/null" % self.filename)
+        value = os.system("flac --ogg -t %s 2> %s" % (self.filename, devnull))
         self.failIf(value and value != NOTFOUND)
 
     def test_flac_reference_really_big(self):
+        if not have_flac: return
         self.test_really_big()
         self.audio.save()
         self.scan_file()
-        value = os.system("flac --ogg -t %s 2> /dev/null" % self.filename)
+        value = os.system("flac --ogg -t %s 2> %s" % (self.filename, devnull))
         self.failIf(value and value != NOTFOUND)
 
     def test_module_delete(self):
@@ -54,25 +58,28 @@ class TOggFLAC(TOggFileType):
         self.failIf(OggFLAC(self.filename).tags)
 
     def test_flac_reference_delete(self):
+        if not have_flac: return
         self.audio.delete()
         self.scan_file()
-        value = os.system("flac --ogg -t %s 2> /dev/null" % self.filename)
+        value = os.system("flac --ogg -t %s 2> %s" % (self.filename, devnull))
         self.failIf(value and value != NOTFOUND)
  
     def test_flac_reference_medium_sized(self):
+        if not have_flac: return
         self.audio["foobar"] = "foobar" * 1000
         self.audio.save()
         self.scan_file()
-        value = os.system("flac --ogg -t %s 2> /dev/null" % self.filename)
+        value = os.system("flac --ogg -t %s 2> %s" % (self.filename, devnull))
         self.failIf(value and value != NOTFOUND)
 
     def test_flac_reference_delete_readd(self):
+        if not have_flac: return
         self.audio.delete()
         self.audio.tags.clear()
         self.audio["foobar"] = "foobar" * 1000
         self.audio.save()
         self.scan_file()
-        value = os.system("flac --ogg -t %s 2> /dev/null" % self.filename)
+        value = os.system("flac --ogg -t %s 2> %s" % (self.filename, devnull))
         self.failIf(value and value != NOTFOUND)
  
     def test_not_my_ogg(self):
@@ -83,7 +90,9 @@ class TOggFLAC(TOggFileType):
 
 add(TOggFLAC)
 
-NOTFOUND = os.system("tools/notarealprogram 2> /dev/null")
+NOTFOUND = os.system("tools/notarealprogram 2> %s" % devnull)
 
-if os.system("flac 2> /dev/null > /dev/null") == NOTFOUND:
+have_flac = True
+if os.system("flac 2> %s > %s" % (devnull, devnull)) == NOTFOUND:
+    have_flac = False
     print "WARNING: Skipping Ogg FLAC reference tests."

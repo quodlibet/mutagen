@@ -4,6 +4,8 @@ from tests import TestCase, add
 from mutagen.flac import to_int_be, Padding, VCFLACDict, MetadataBlock
 from mutagen.flac import StreamInfo, SeekTable, CueSheet, FLAC, delete
 from tests.test__vorbis import TVCommentDict, VComment
+try: from os.path import devnull
+except ImportError: devnull = "/dev/null"
 
 class Tto_int_be(TestCase):
     uses_mmap = False
@@ -240,10 +242,11 @@ class TFLAC(TestCase):
         self.failUnlessRaises(ValueError, f.add_tags)
 
     def test_with_real_flac(self):
+        if not have_flac: return
         self.flac["faketag"] = "foobar" * 1000
         self.flac.save()
-        badval = os.system("tools/notarealprogram 2> /dev/null")
-        value = os.system("flac -t %s 2> /dev/null" % self.flac.filename)
+        badval = os.system("tools/notarealprogram 2> %s" % devnull)
+        value = os.system("flac -t %s 2> %s" % (self.flac.filename, devnull))
         self.failIf(value and value != badval)
 
     def test_save_unknown_block(self):
@@ -296,7 +299,9 @@ class TFLAC(TestCase):
 
 add(TFLAC)
 
-NOTFOUND = os.system("tools/notarealprogram 2> /dev/null")
+NOTFOUND = os.system("tools/notarealprogram 2> %s" % devnull)
 
-if os.system("flac 2> /dev/null > /dev/null") == NOTFOUND:
+have_flac = True
+if os.system("flac 2> %s > %s" % (devnull, devnull)) == NOTFOUND:
+    have_flac = False
     print "WARNING: Skipping FLAC reference tests."

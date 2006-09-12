@@ -12,6 +12,8 @@ from mutagen.wavpack import WavPack
 from mutagen.trueaudio import TrueAudio
 from mutagen.m4a import M4A
 from mutagen.musepack import Musepack
+try: from os.path import devnull
+except ImportError: devnull = "/dev/null"
 
 class TMetadata(TestCase):
     uses_mmap = False
@@ -52,9 +54,9 @@ class TFile(TestCase):
     uses_mmap = False
 
     def test_bad(self):
-        try: self.failUnless(File("/dev/null") is None)
+        try: self.failUnless(File(devnull) is None)
         except (OSError, IOError):
-            print "WARNING: Unable to open /dev/null."
+            print "WARNING: Unable to open %s." % devnull
         self.failUnless(File(__file__) is None)
 
     def test_empty(self):
