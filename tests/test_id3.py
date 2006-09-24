@@ -320,7 +320,7 @@ class TestWriteID3v1(TestCase):
     SILENCE = os.path.join("tests", "data", "silence-44-s.mp3")
     def setUp(self):
         from tempfile import mkstemp
-        fd, self.filename = mkstemp(suffix='.ogg')
+        fd, self.filename = mkstemp(suffix='.mp3')
         os.close(fd)
         shutil.copy(self.SILENCE, self.filename)
         self.audio = ID3(self.filename)

@@ -14,7 +14,7 @@ class TMP3(TestCase):
 
     def setUp(self):
         original = os.path.join("tests", "data", "silence-44-s.mp3")
-        fd, self.filename = mkstemp(suffix='mp3')
+        fd, self.filename = mkstemp(suffix='.mp3')
         os.close(fd)
         shutil.copy(original, self.filename)
         self.mp3 = MP3(self.filename)

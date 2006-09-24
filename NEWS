@@ -1,4 +1,4 @@
-1.7.1 - 2006.9.24
+1.7.1 - 2006.09.24
  * Bug Fixes:
    * Expose full ID3 tag size as .size. (#848)
 

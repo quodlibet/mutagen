@@ -3,10 +3,7 @@ mutagen.id3 needs:
    separate version tags exist at the beginning of the file
  * Perhaps implement tag merging - "intelligently" merge information
    from all known tag formats
+ * Some test cleanup
 
 mutagen.apev2 needs:
  * General cleanup to fit the basic structure of the rest of Mutagen.
-
-mutagen.ogg needs:
- * OggPage.replace can fragment pages poorly; maybe it should try to
-   defrag the next two or three pages after the replaced ones.

@@ -122,7 +122,7 @@ else:
     data_files = []
 
 setup(cmdclass={'clean': clean, 'test': test_cmd, 'coverage': coverage_cmd},
-      name="mutagen", version="1.7",
+      name="mutagen", version="1.7.1",
       url="http://www.sacredchao.net/quodlibet/wiki/Development/Mutagen",
       description="read and write audio tags for many formats",
       author="Michael Urman",
