@@ -95,7 +95,7 @@ class ID3Loading(TestCase):
         id3._ID3__fileobj = file(self.silence, 'rb')
         id3._ID3__load_header()
         self.assertEquals(id3.version, (2,3,0))
-        self.assertEquals(id3._size, 1304)
+        self.assertEquals(id3.size, 1314)
 
     def test_header_2_4_invalid_flags(self):
         id3 = ID3()

@@ -45,8 +45,7 @@ class TTrueAudio(TestCase):
             audio.save()
             audio = TrueAudio(filename)
             self.failUnlessEqual(audio["TIT1"], "A Title")
-        except:
+        finally:
             os.unlink(filename)
-            raise
 
 add(TTrueAudio)

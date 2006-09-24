@@ -30,7 +30,7 @@ interested in the 'ID3' class to start with.
 
 __all__ = ['ID3', 'ID3FileType', 'Frames', 'Open', 'delete']
 
-import struct; from struct import unpack, pack
+import struct; from struct import unpack, pack, calcsize
 from zlib import error as zlibError
 from warnings import warn
 
@@ -57,14 +57,15 @@ class ID3(mutagen.Metadata):
     Attributes:
     version -- ID3 tag version as a tuple
     unknown_frames -- raw frame data of any unknown frames found
+    size -- the total size of the ID3 tag, including the header
     """
 
     PEDANTIC = True
     version = (2, 4, 0)
 
     filename = None
+    size = 0
     __flags = 0
-    _size = 0
     __readbytes = 0
     __crc = None
 
@@ -111,11 +112,11 @@ class ID3(mutagen.Metadata):
             try:
                 self.__load_header()
             except EOFError:
-                self._size = 0
+                self.size = 0
                 raise ID3NoHeaderError("%s: too small (%d bytes)" %(
                     filename, self.__filesize))
             except (ID3NoHeaderError, ID3UnsupportedVersionError), err:
-                self._size = 0
+                self.size = 0
                 import sys
                 stack = sys.exc_info()[2]
                 try: self.__fileobj.seek(-128, 2)
@@ -131,7 +132,7 @@ class ID3(mutagen.Metadata):
                 if frames is None:
                     if (2,3,0) <= self.version: frames = Frames
                     elif (2,2,0) <= self.version: frames = Frames_2_2
-                data = self.__fullread(self._size)
+                data = self.__fullread(self.size - 10)
                 for frame in self.__read_frames(data, frames=frames):
                     if isinstance(frame, Frame): self.add(frame)
                     else: self.unknown_frames.append(frame)
@@ -203,7 +204,7 @@ class ID3(mutagen.Metadata):
         data = self.__fullread(10)
         id3, vmaj, vrev, flags, size = unpack('>3sBBB4s', data)
         self.__flags = flags
-        self._size = BitPaddedInt(size)
+        self.size = BitPaddedInt(size) + 10
         self.version = (2, vmaj, vrev)
 
         if id3 != 'ID3':
@@ -217,7 +218,6 @@ class ID3(mutagen.Metadata):
                 raise ValueError("'%s' has invalid flags %#02x" % (fn, flags))
             elif (2,3,0) <= self.version and (flags & 0x1f):
                 raise ValueError("'%s' has invalid flags %#02x" % (fn, flags))
-
 
         if self.f_extended:
             self.__extsize = BitPaddedInt(self.__fullread(4))
@@ -1906,7 +1906,7 @@ class ID3FileType(mutagen.FileType):
         try: self.tags = ID3(filename, **kwargs)
         except error: self.tags = None
         if self.tags is not None:
-            try: offset = self.tags._size
+            try: offset = self.tags.size
             except AttributeError: offset = None
         else: offset = None
         try:
