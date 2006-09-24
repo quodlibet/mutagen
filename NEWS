@@ -1,3 +1,10 @@
+1.7.1 - 2006.9.24
+ * Bug Fixes:
+   * Expose full ID3 tag size as .size. (#848)
+
+ * New Features:
+   * Musepack Replay Gain data is available in SV7 files.
+
 1.7 - 2006.09.15
  * Bug Fixes:
    * Trying to save an empty tag deletes it. (#813)

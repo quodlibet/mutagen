@@ -32,6 +32,13 @@ class TMusepack(TestCase):
         self.failUnlessAlmostEqual(self.sv5.info.length, 26.3, 1)
         self.failUnlessAlmostEqual(self.sv4.info.length, 26.3, 1)
 
+    def test_gain(self):
+        self.failUnlessAlmostEqual(self.sv7.info.title_gain, 9.27, 6)
+        self.failUnlessAlmostEqual(self.sv7.info.title_peak, 0.1149, 4)
+        self.failUnlessEqual(self.sv7.info.title_gain, self.sv7.info.album_gain)
+        self.failUnlessEqual(self.sv7.info.title_peak, self.sv7.info.album_peak)
+        self.failUnlessRaises(AttributeError, getattr, self.sv5, 'title_gain')
+
     def test_not_my_file(self):
         self.failUnlessRaises(
             MusepackHeaderError, Musepack,

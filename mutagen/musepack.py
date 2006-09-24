@@ -18,6 +18,8 @@ For more information, see http://www.musepack.net/.
 
 __all__ = ["Musepack", "Open", "delete"]
 
+import struct
+
 from mutagen.apev2 import APEv2File, error, delete
 from mutagen._util import cdata
 
@@ -34,6 +36,15 @@ class MusepackInfo(object):
     sample_rate -- audio sampling rate in Hz
     bitrate -- audio bitrate, in bits per second 
     version -- Musepack stream version
+
+    Optional Attributes:
+    title_gain, title_peak -- Replay Gain and peak data for this song
+    album_gain, album_peak -- Replay Gain and peak data for this album
+
+    These attributes are only available in stream version 7. The
+    gains are a float, +/- some dB. The peaks are a percentage [0..1] of
+    the maximum amplitude. This means to get a number comparable to
+    VorbisGain, you must multiply the peak by 2.
     """
 
     def __init__(self, fileobj):
@@ -47,6 +58,16 @@ class MusepackInfo(object):
                 raise MusepackHeaderError("not a Musepack file")
             frames = cdata.uint_le(header[4:8])
             flags = cdata.uint_le(header[8:12])
+
+            self.title_peak, self.title_gain = struct.unpack(
+                "<Hh", header[12:16])
+            self.album_peak, self.album_gain = struct.unpack(
+                "<Hh", header[16:20])
+            self.title_gain /= 100.0
+            self.album_gain /= 100.0
+            self.title_peak /= 65535.0
+            self.album_peak /= 65535.0
+
             self.sample_rate = RATES[(flags >> 16) & 0x0003]
             self.bitrate = 0
         # SV4-SV6
@@ -70,8 +91,13 @@ class MusepackInfo(object):
             self.bitrate = int(fileobj.tell() * 8 / (self.length * 1000) + 0.5)
 
     def pprint(self):
-        return "Musepack, %.2f seconds, %d Hz" % (
-            self.length, self.sample_rate)
+        if self.version >= 7:
+            rg_data = ", Gain: %+0.2f (title), %+0.2f (album)" %(
+                self.title_gain, self.album_gain)
+        else:
+            rg_data = ""
+        return "Musepack, %.2f seconds, %d Hz%s" % (
+            self.length, self.sample_rate, rg_data)
 
 class Musepack(APEv2File):
     _Info = MusepackInfo
