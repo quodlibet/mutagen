@@ -1,6 +1,9 @@
 import os
+import shutil
 from mutagen.trueaudio import TrueAudio, delete
+from mutagen.id3 import TIT1
 from tests import TestCase, add
+from tempfile import mkstemp
 
 class TTrueAudio(TestCase):
     uses_mmap = False
@@ -30,5 +33,20 @@ class TTrueAudio(TestCase):
 
     def test_pprint(self):
         self.audio.pprint()
+
+    def test_save_reload(self):
+        try:
+            fd, filename = mkstemp(suffix='.tta')
+            os.close(fd)
+            shutil.copy(self.audio.filename, filename)
+            audio = TrueAudio(filename)
+            audio.add_tags()
+            audio.tags.add(TIT1(encoding=0, text="A Title"))
+            audio.save()
+            audio = TrueAudio(filename)
+            self.failUnlessEqual(audio["TIT1"], "A Title")
+        except:
+            os.unlink(filename)
+            raise
 
 add(TTrueAudio)
