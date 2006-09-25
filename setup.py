@@ -46,36 +46,35 @@ class test_cmd(Command):
             self.to_run = self.to_run.split(",")
 
     def run(self):
-        import tests
         import mmap
 
         print "Running tests with real mmap."
-        if tests.unit(self.to_run):
-            if sys.version[:3] == (2, 4, 2):
-                print "You're running Python 2.4.2, which is buggy."
-            raise SystemExit("Test failures are listed above.")
+        self.__test()
 
         def uses_mmap(Kind):
             return getattr(Kind, 'uses_mmap', True)
-
         class MockMMap(object):
             def __init__(self, *args, **kwargs): pass
             def move(self, dest, src, count): raise ValueError
             def close(self): pass
         print "Running tests with mocked failing mmap.move."
         mmap.mmap = MockMMap
-        if tests.unit(self.to_run, uses_mmap):
-            if sys.version[:3] == (2, 4, 2):
-                print "You're running Python 2.4.2, which is buggy."
-            raise SystemExit("Test failures are listed above.")
+        self.__test(uses_mmap)
 
         def MockMMap2(*args, **kwargs):
             raise EnvironmentError
         mmap.mmap = MockMMap2
         print "Running tests with mocked failing mmap.mmap."
-        if tests.unit(self.to_run, uses_mmap):
+        self.__test(uses_mmap)
+
+    def __test(self, filter=None):
+        import tests
+        if tests.unit(self.to_run, filter):
             if sys.version[:3] == (2, 4, 2):
-                print "You're running Python 2.4.2, which is buggy."
+                print "You're running Python 2.4.2, which has known mmap bugs."
+            elif sys.version[:3] < (2, 5, 2):
+                print ("You're running Python 2.5, which has known unicode "
+                   "comparison bugs.")
             raise SystemExit("Test failures are listed above.")
 
 class coverage_cmd(Command):
