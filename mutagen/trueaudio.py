@@ -16,7 +16,7 @@ True Audio files use ID3 tags.
 
 __all__ = ["TrueAudio", "Open", "delete"]
 
-from mutagen.id3 import ID3FileType
+from mutagen.id3 import ID3FileType, delete
 from mutagen._util import cdata
 
 class error(RuntimeError): pass
@@ -54,7 +54,3 @@ class TrueAudio(ID3FileType):
     score = staticmethod(score)
 
 Open = TrueAudio
-
-def delete(filename):
-    """Remove tags from a file."""
-    TrueAudio(filename).delete()

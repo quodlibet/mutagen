@@ -16,7 +16,7 @@ http://www.wavpack.com/ for more information.
 
 __all__ = ["WavPack", "Open", "delete"]
 
-from mutagen.apev2 import APEv2File, error
+from mutagen.apev2 import APEv2File, error, delete
 from mutagen._util import cdata
 
 class WavPackHeaderError(error): pass

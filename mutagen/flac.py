@@ -24,7 +24,7 @@ __all__ = ["FLAC", "Open", "delete"]
 import struct
 from cStringIO import StringIO
 from _vorbis import VCommentDict
-from mutagen import Metadata, FileType
+from mutagen import FileType
 from mutagen._util import insert_bytes
 
 class error(IOError): pass
@@ -242,7 +242,7 @@ class VCFLACDict(VCommentDict):
     code = 4
 
     def load(self, data, errors='replace', framing=False):
-        super(VCFLACDict, self).load(data, errors=errors, framing=False)
+        super(VCFLACDict, self).load(data, errors=errors, framing=framing)
 
     def write(self, framing=False):
         return super(VCFLACDict, self).write(framing=framing)
@@ -285,7 +285,7 @@ class CueSheetTrack(object):
     """
 
     def __init__(self, track_number, start_offset, isrc='', type_=0,
-                 pre_emphasis=False, reserved_flags=0, reserved=''):
+                 pre_emphasis=False):
         self.track_number = track_number
         self.start_offset = start_offset
         self.isrc = isrc

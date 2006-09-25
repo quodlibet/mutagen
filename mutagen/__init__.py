@@ -64,6 +64,7 @@ class FileType(mutagen._util.DictMixin):
 
     info = None
     tags = None
+    filename = None
 
     def __init__(self, filename=None, *args, **kwargs):
         if filename is None:
@@ -89,7 +90,8 @@ class FileType(mutagen._util.DictMixin):
         If the file has no tags, an appropriate format is added (but
         not written until save is called).
         """
-        if self.tags is None: self.add_tags()
+        if self.tags is None:
+            self.add_tags()
         self.tags[key] = value
 
     def __delitem__(self, key):
@@ -138,6 +140,9 @@ class FileType(mutagen._util.DictMixin):
         except AttributeError:
             return stream
         else: return stream + ((tags and "\n" + tags) or "")
+
+    def add_tags(self):
+        raise NotImplementedError
 
 def File(filename, options=None):
     """Guess the type of the file and try to open it.

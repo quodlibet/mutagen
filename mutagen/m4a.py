@@ -29,7 +29,7 @@ from cStringIO import StringIO
 
 from mutagen import FileType, Metadata
 from mutagen._constants import GENRES
-from mutagen._util import cdata, DictMixin, insert_bytes, delete_bytes
+from mutagen._util import cdata, insert_bytes, delete_bytes
 
 class error(IOError): pass
 class M4AMetadataError(error): pass

@@ -10,7 +10,7 @@
 import os
 import struct
 
-from mutagen.id3 import ID3FileType, BitPaddedInt
+from mutagen.id3 import ID3FileType, BitPaddedInt, delete
 
 class error(RuntimeError): pass
 class HeaderNotFoundError(error, IOError): pass
@@ -202,8 +202,3 @@ class MP3(ID3FileType):
     score = staticmethod(score)
 
 Open = MP3
-
-def delete(filename):
-    """Remove tags from a file."""
-    MP3(filename).delete()
-

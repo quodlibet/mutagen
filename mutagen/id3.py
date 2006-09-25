@@ -30,7 +30,7 @@ interested in the 'ID3' class to start with.
 
 __all__ = ['ID3', 'ID3FileType', 'Frames', 'Open', 'delete']
 
-import struct; from struct import unpack, pack, calcsize
+import struct; from struct import unpack, pack
 from zlib import error as zlibError
 from warnings import warn
 
