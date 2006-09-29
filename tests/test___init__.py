@@ -133,3 +133,17 @@ class TFile(TestCase):
             File(os.path.join("tests", "data", "has-tags.m4a")), M4A))
 
 add(TFile)
+
+class TMutagen(TestCase):
+    def test_safe_version(self):
+        from mutagen import version_string
+        path = os.path.join("../../releases/mutagen-%s" % version_string)
+        self.failIf(os.path.isdir(path), "mutagen.version is out of date.")
+
+    def test_not_prerelease(self):
+        from mutagen import version
+        from os.path import dirname, basename, abspath
+        trunk = basename(dirname(dirname(dirname(abspath(__file__)))))
+        if trunk != "trunk":
+            self.failIf(version[-1] < 0, "mutagen.version is a prerelease.")
+add(TMutagen)
