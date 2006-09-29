@@ -1,0 +1,49 @@
+import os
+
+from mutagen.monkeysaudio import MonkeysAudio, MonkeysAudioHeaderError
+from cStringIO import StringIO
+from tests import TestCase, add
+
+class TMonkeysAudio(TestCase):
+    uses_mmap = False
+
+    def setUp(self):
+        self.mac399 = MonkeysAudio(os.path.join("tests", "data",
+                                                "mac-399.ape"))
+        self.mac396 = MonkeysAudio(os.path.join("tests", "data",
+                                                "mac-396.ape"))
+        self.mac390 = MonkeysAudio(os.path.join("tests", "data",
+                                                "mac-390-hdr.ape"))
+
+    def test_channels(self):
+        self.failUnlessEqual(self.mac399.info.channels, 2)
+        self.failUnlessEqual(self.mac396.info.channels, 2)
+        self.failUnlessEqual(self.mac390.info.channels, 2)
+
+    def test_sample_rate(self):
+        self.failUnlessEqual(self.mac399.info.sample_rate, 44100)
+        self.failUnlessEqual(self.mac396.info.sample_rate, 44100)
+        self.failUnlessEqual(self.mac390.info.sample_rate, 44100)
+
+    def test_length(self):
+        self.failUnlessAlmostEqual(self.mac399.info.length, 3.68, 2)
+        self.failUnlessAlmostEqual(self.mac396.info.length, 3.68, 2)
+        self.failUnlessAlmostEqual(self.mac390.info.length, 15.63, 2)
+
+    def test_version(self):
+        self.failUnlessEqual(self.mac399.info.version, 3.99)
+        self.failUnlessEqual(self.mac396.info.version, 3.96)
+        self.failUnlessEqual(self.mac390.info.version, 3.90)
+
+    def test_not_my_file(self):
+        self.failUnlessRaises(
+            MonkeysAudioHeaderError, MonkeysAudio,
+            os.path.join("tests", "data", "empty.ogg"))
+        self.failUnlessRaises(
+            MonkeysAudioHeaderError, MonkeysAudio,
+            os.path.join("tests", "data", "click.mpc"))
+
+    def test_pprint(self):
+        self.failUnless(self.mac399.pprint())
+        self.failUnless(self.mac396.pprint())
+add(TMonkeysAudio)

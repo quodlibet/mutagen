@@ -1,3 +1,7 @@
+1.8
+ * New Features:
+   * MonkeysAudio support. (#851, Lukáš Lalinský)
+
 1.7.1 - 2006.09.24
  * Bug Fixes:
    * Expose full ID3 tag size as .size. (#848)

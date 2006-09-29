@@ -12,6 +12,7 @@ from mutagen.wavpack import WavPack
 from mutagen.trueaudio import TrueAudio
 from mutagen.m4a import M4A
 from mutagen.musepack import Musepack
+from mutagen.monkeysaudio import MonkeysAudio
 try: from os.path import devnull
 except ImportError: devnull = "/dev/null"
 
@@ -108,6 +109,12 @@ class TFile(TestCase):
             File(os.path.join("tests", "data", "sv4_header.mpc")), Musepack))
         self.failUnless(isinstance(
             File(os.path.join("tests", "data", "sv5_header.mpc")), Musepack))
+
+    def test_monkeysaudio(self):
+        self.failUnless(isinstance(
+            File(os.path.join("tests", "data", "mac-399.ape")), MonkeysAudio))
+        self.failUnless(isinstance(
+            File(os.path.join("tests", "data", "mac-396.ape")), MonkeysAudio))
 
     def test_apev2(self):
         self.failUnless(isinstance(
