@@ -96,6 +96,15 @@ class APEWriter(TestCase):
         self.failUnlessEqual(
             os.path.getsize(filename), len("tag garbage") * 1000)
 
+    def test_case_preservation(self):
+        mutagen.apev2.delete(SAMPLE + ".justtag")
+        tag = mutagen.apev2.APEv2(SAMPLE + ".new")
+        tag["FoObaR"] = "Quux"
+        tag.save()
+        tag = mutagen.apev2.APEv2(SAMPLE + ".new")
+        self.failUnless("FoObaR" in tag.keys())
+        self.failIf("foobar" in tag.keys())
+
     def tearDown(self):
         os.unlink(SAMPLE + ".new")
         os.unlink(BROKEN + ".new")
@@ -121,7 +130,6 @@ class APEReader(TestCase):
         self.failUnless("artisT" in self.tag)
 
     def test_keys(self):
-        self.failUnless("track" in self.tag.keys())
         self.failUnless("Track" in self.tag.keys())
         self.failUnless("AnArtist" in self.tag.values())
 
@@ -200,27 +208,6 @@ class APEv2WithLyrics2(TestCase):
         self.failUnlessEqual(self.tag["REPLAYGAIN_TRACK_PEAK"], "1.008101")
 
 add(APEv2WithLyrics2)
-
-class APEKeyTest(TestCase):
-    uses_mmap = False
-
-    from mutagen.apev2 import APEKey
-
-    def test_eq(self):
-        self.failUnlessEqual(self.APEKey("foo"), "foo")
-        self.failUnlessEqual("foo", self.APEKey("foo"))
-        self.failUnlessEqual(self.APEKey("foo"), u"foo")
-        self.failUnlessEqual(u"foo", self.APEKey("foo"))
-
-        self.failUnlessEqual(self.APEKey("Bar"), "baR")
-        self.failUnlessEqual(u"baR", self.APEKey("Bar"))
-
-    def test_hash(self):
-        self.failUnlessEqual(hash("foo"), hash(self.APEKey("foo")))
-        self.failUnlessEqual(hash("foo"), hash(self.APEKey("FoO")))
-
-    def test_repr(self):
-        self.failUnless(repr(self.APEKey("foo")))
 
 class APEBinaryTest(TestCase):
     uses_mmap = False
@@ -348,7 +335,6 @@ add(TAPEv2)
 
 add(APEReader)
 add(APEWriter)
-add(APEKeyTest)
 add(APEBinaryTest)
 add(APETextTest)
 add(APEExtTest)

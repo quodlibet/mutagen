@@ -26,3 +26,23 @@ ID3:
 ----
 None of the Spec objects are considered part of the public API.
 
+
+APEv2:
+------
+Python 2.5 forced an API change in the APEv2 reading code. Some things
+which were case-insensitive are now case-sensitive. For example,
+given:
+
+    tag = APEv2()
+    tag["Foo"] = "Bar"
+    print "foo" in tag.keys()
+
+Mutagen 1.7.1 and earlier would print "True", as the keys were a str
+subclass that compared case-insensitively. However, Mutagen 1.8 and
+above print "False", as the keys are normal strings.
+
+    print "foo" in tag
+
+Still prints "True", however, as __getitem__, __delitem__, and
+__setitem__ (and so any operations on the dict itself) remain
+case-insensitive.

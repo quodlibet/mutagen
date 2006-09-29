@@ -180,6 +180,16 @@ class APEv2(DictMixin, Metadata):
 
     filename = None
 
+    def __init__(self, *args, **kwargs):
+        self.__casemap = {}
+        super(APEv2, self).__init__(*args, **kwargs)
+        # Internally all names are stored as lowercase, but the case
+        # they were set with is remembered and used when saving.  This
+        # is roughly in line with the standard, which says that keys
+        # are case-sensitive but two keys differing only in case are
+        # not allowed, and recommends case-insensitive
+        # implementations.
+
     def pprint(self):
         """Return tag key=value pairs in a human-readable format."""
         items = self.items()
@@ -196,6 +206,7 @@ class APEv2(DictMixin, Metadata):
             fileobj.close()
         if data.tag:
             self.clear()
+            self.__casemap.clear()
             self.__parse_tag(data.tag, data.items)
         else:
             raise APENoHeaderError("No APE tag found")
@@ -222,9 +233,9 @@ class APEv2(DictMixin, Metadata):
             self[key] = APEValue(value, kind)
 
     def __getitem__(self, key):
-        return super(APEv2, self).__getitem__(APEKey(key))
+        return super(APEv2, self).__getitem__(key.lower())
     def __delitem__(self, key):
-        return super(APEv2, self).__delitem__(APEKey(key))
+        return super(APEv2, self).__delitem__(key.lower())
     def __setitem__(self, key, value):
         """'Magic' value setter.
 
@@ -258,7 +269,11 @@ class APEv2(DictMixin, Metadata):
                 else:
                     # valid UTF8, probably text
                     value = APEValue(value, TEXT)
-        super(APEv2, self).__setitem__(APEKey(key), value)
+        self.__casemap[key.lower()] = key
+        super(APEv2, self).__setitem__(key.lower(), value)
+
+    def keys(self):
+        return [self.__casemap.get(key, key) for key in dict.keys(self)]
 
     def save(self, filename=None):
         """Save changes to a file.
@@ -327,26 +342,6 @@ def delete(filename):
     """Remove tags from a file."""
     try: APEv2(filename).delete()
     except APENoHeaderError: pass
-
-class APEKey(str):
-    """An APEv2 tag key.
-
-    APEv2 keys preserve the case of a string, but are case-insensitive
-    for hashing or comparison. Keys in an APEv2 dict are automatically
-    converted to APEKey objects.
-    """
-
-    # "APE Tags Item Key are case sensitive. Nevertheless it is forbidden
-    # to use APE Tags Item Key which only differs in case. And nevertheless
-    # Tag readers are recommended to be case insensitive."
-
-    def __eq__(self, obj):
-        return str(self).lower() == str(obj).lower()
-    def __hash__(self):
-        return str.__hash__(self.lower())
-
-    def __repr__(self):
-        return "%s(%r)" % (type(self), str(self))
 
 def APEValue(value, kind):
     """APEv2 tag value factory.

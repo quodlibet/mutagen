@@ -72,9 +72,6 @@ class test_cmd(Command):
         if tests.unit(self.to_run, filter):
             if sys.version[:3] == (2, 4, 2):
                 print "You're running Python 2.4.2, which has known mmap bugs."
-            elif (2, 5, -100) < sys.version[:3] < (2, 5, 2):
-                print ("You're running Python 2.5, which has known unicode "
-                   "comparison bugs.")
             raise SystemExit("Test failures are listed above.")
 
 class coverage_cmd(Command):

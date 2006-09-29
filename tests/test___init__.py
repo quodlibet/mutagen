@@ -135,6 +135,8 @@ class TFile(TestCase):
 add(TFile)
 
 class TMutagen(TestCase):
+    uses_mmap = False
+
     def test_safe_version(self):
         from mutagen import version_string
         path = os.path.join("../../releases/mutagen-%s" % version_string)
