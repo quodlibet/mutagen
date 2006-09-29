@@ -286,10 +286,6 @@ class OggPage(object):
         page = OggPage()
         page.sequence = sequence
 
-        # FIXME: Building strings like this is ridiculously slow
-        # (though it's probably dominated by the cost of file access
-        # for any real Ogg handling).
-
         for packet in packets:
             page.packets.append("")
             while packet:
