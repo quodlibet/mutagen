@@ -26,7 +26,6 @@ ID3:
 ----
 None of the Spec objects are considered part of the public API.
 
-
 APEv2:
 ------
 Python 2.5 forced an API change in the APEv2 reading code. Some things

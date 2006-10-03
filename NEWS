@@ -1,7 +1,7 @@
-1.8
+1.8 - 2006.10.02
  * New Features:
    * MonkeysAudio support. (#851, Lukáš Lalinský)
-   * APEv2 support on Python 2.5. (#852)
+   * APEv2 support on Python 2.5; see API-NOTES. (#852)
 
 1.7.1 - 2006.09.24
  * Bug Fixes:
