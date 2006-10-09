@@ -42,7 +42,22 @@ _CONTAINERS = ["moov", "udta", "trak", "mdia", "meta", "ilst",
                "stbl", "minf", "stsd"]
 _SKIP_SIZE = { "meta": 4 }
 
-__all__ = ['M4A', 'Open', 'delete']
+__all__ = ['M4A', 'Open', 'delete', 'M4ACover']
+
+class M4ACover(str):
+    """A cover artwork.
+    
+    Attributes:
+    format -- format of the image (either FORMAT_JPEG or FORMAT_PNG)
+    """
+    FORMAT_JPEG = 0x0D
+    FORMAT_PNG = 0x0E
+
+    def __new__(cls, data, format=None):
+        self = str.__new__(cls, data)
+        if format is None: format= M4ACover.FORMAT_JPEG
+        self.format = format
+        return self
 
 class Atom(object):
     """An individual atom.
@@ -162,7 +177,7 @@ class M4ATags(Metadata):
         cpil -- boolean
         trkn, disk -- tuple of 16 bit ints (current, total)
         tmpo -- 16 bit int
-        covr -- raw str data
+        covr -- list of M4ACover objects (which are tagged strs)
         gnre -- not supported. Use '\\xa9gen' instead.
 
     The freeform '----' frames use a key in the format '----:mean:name'
@@ -351,9 +366,27 @@ class M4ATags(Metadata):
         return self.__render_data(key, 0x15, chr(bool(value)))
 
     def __parse_cover(self, atom, data):
-        self[atom.name] = data[16:]
+        self[atom.name] = []
+        pos = 0
+        while pos < atom.length - 8:
+            length, name, format = struct.unpack(">I4sI", data[pos:pos+12])
+            if name != "data":
+                raise M4AMetadataError(
+                    "unexpected atom %r inside 'covr'" % name)
+            if format not in (M4ACover.FORMAT_JPEG, M4ACover.FORMAT_PNG):
+                raise M4AMetadataError(
+                    "unknown cover format %r" % format)
+            cover = M4ACover(data[pos+16:pos+length], format)
+            self[atom.name].append(M4ACover(data[pos+16:pos+length], format))
+            pos += length
     def __render_cover(self, key, value):
-        return self.__render_data(key, 0xD, value)
+        atom_data = []
+        for cover in value:
+            try: format = cover.format
+            except AttributeError: format = M4ACover.FORMAT_JPEG
+            atom_data.append(
+                Atom.render("data", struct.pack(">2I", format, 0) + cover))
+        return Atom.render(key, "".join(atom_data))
 
     def __parse_text(self, atom, data):
         flags = cdata.uint_be(data[8:12])

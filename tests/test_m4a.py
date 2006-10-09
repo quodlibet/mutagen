@@ -4,7 +4,8 @@ import shutil
 from cStringIO import StringIO
 from tempfile import mkstemp
 from tests import TestCase, add
-from mutagen.m4a import M4A, Atom, Atoms, M4ATags, M4AInfo, delete
+from mutagen.m4a import (M4A, Atom, Atoms, M4ATags, M4AInfo, delete, M4ACover,
+    M4AMetadataError)
 try: from os.path import devnull
 except ImportError: devnull = "/dev/null"
 
@@ -127,6 +128,16 @@ class TM4ATags(TestCase):
         tags = self.wrap_ilst(foob)
         self.failIf(tags)
 
+    def test_bad_covr(self):
+        data = Atom.render("foob", "\x00\x00\x00\x0E" + "\x00" * 4 + "whee")
+        covr = Atom.render("covr", data)
+        self.failUnlessRaises(M4AMetadataError, self.wrap_ilst, covr)
+
+    def test_bad_covr_format(self):
+        data = Atom.render("data", "\x00" * 8 + "whee")
+        covr = Atom.render("covr", data)
+        self.failUnlessRaises(M4AMetadataError, self.wrap_ilst, covr)
+
 add(TM4ATags)
 
 class TM4A(TestCase):
@@ -198,7 +209,13 @@ class TM4A(TestCase):
         self.set_key('cpil', False)
 
     def test_cover(self):
-        self.set_key('covr', 'woooo')
+        self.set_key('covr', ['woooo'])
+
+    def test_cover_png(self):
+        self.set_key('covr', [
+            M4ACover('woooo', M4ACover.FORMAT_PNG),
+            M4ACover('hoooo', M4ACover.FORMAT_JPEG),
+        ])
 
     def test_pprint(self):
         self.audio.pprint()
@@ -240,6 +257,13 @@ class TM4AHasTags(TM4A):
 
     def test_has_tags(self):
         self.failUnless(self.audio.tags)
+
+    def test_has_covr(self):
+        self.failUnless('covr' in self.audio.tags)
+        covr = self.audio.tags['covr']
+        self.failUnlessEqual(len(covr), 2)
+        self.failUnlessEqual(covr[0].format, M4ACover.FORMAT_PNG)
+        self.failUnlessEqual(covr[1].format, M4ACover.FORMAT_JPEG)
 
     def test_not_my_file(self):
         self.failUnlessRaises(
