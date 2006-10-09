@@ -1,0 +1,10 @@
+include API-NOTES
+include COPYING
+include NEWS
+include README
+include TODO
+include TUTORIAL
+include tests/data/*
+include tests/*.py
+include man/*.1
+
