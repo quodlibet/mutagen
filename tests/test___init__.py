@@ -137,15 +137,13 @@ add(TFile)
 class TMutagen(TestCase):
     uses_mmap = False
 
-    def test_safe_version(self):
-        from mutagen import version_string
-        path = os.path.join("../../releases/mutagen-%s" % version_string)
-        self.failIf(os.path.isdir(path), "mutagen.version is out of date.")
-
     def test_not_prerelease(self):
         from mutagen import version
         from os.path import dirname, basename, abspath
         trunk = basename(dirname(dirname(dirname(abspath(__file__)))))
         if trunk != "trunk":
             self.failIf(version[-1] < 0, "mutagen.version is a prerelease.")
+        else:
+            self.failIf(
+                version[-1] >= 0, "mutagen.version is not a prerelease.")
 add(TMutagen)

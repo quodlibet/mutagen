@@ -1,3 +1,7 @@
+1.8.1
+ * Bug Fixes:
+   * Multiple cover images in M4A are supported. (Lukáš Lalinský)
+
 1.8 - 2006.10.02
  * New Features:
    * MonkeysAudio support. (#851, Lukáš Lalinský)

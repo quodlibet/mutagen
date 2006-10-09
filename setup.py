@@ -8,6 +8,60 @@ import sys
 from distutils.core import setup, Command
 
 from distutils.command.clean import clean as distutils_clean
+from distutils.command.sdist import sdist as distutils_sdist
+
+def system(cmdline):
+    if os.system(cmdline):
+        raise SystemExit(True)
+
+class release(Command):
+    description = "release a new version of Mutagen"
+    user_options = [
+        ("all-the-way", None, "svn commit and copy release tarball to kai")
+        ]
+
+    def initialize_options(self):
+        self.all_the_way = False
+
+    def finalize_options(self):
+        pass
+
+    def rewrite_version(self, target, version):
+        filename = os.path.join(target, "mutagen", "__init__.py")
+        lines = file(filename, "rU").readlines()
+        fileout = file(filename, "w")
+        for line in lines:
+            if line.startswith("version ="):
+                fileout.write("version = %s\n" % repr(version))
+            else:
+                fileout.write(line)
+        fileout.close()
+
+    def run(self):
+        from mutagen import version
+        test_cmd(self.distribution).run()
+        if version[-1] >= 0:
+            raise SystemExit("Invalid version number to release.")
+        sversion = ".".join(map(str, version[:-1]))
+        target = "../../releases/mutagen-%s" % sversion
+        if os.path.isdir(target):
+            raise SystemExit("Mutagen %s was already released." % sversion)
+        system("svn cp ../mutagen %s" % target)
+
+        self.rewrite_version(target, version[:-1])
+
+        if self.all_the_way:
+            if os.environ.get("USER") != "piman":
+                print "You're not Joe, so this might not work."
+            system("svn commit -m 'Mutagen %s.' %s ." % (sversion, target))
+            os.chdir(target)
+            if os.environ.get("USER") != "piman":
+                print "You're not Joe, so this definitely won't work."
+            print "Copying tarball to kai."
+            system("./setup.py sdist")
+            system("scp dist/mutagen-%s.tar.gz "
+                   "sacredchao.net:~piman/public_html/software" % sversion)
+            system("./setup.py register")
 
 class clean(distutils_clean):
     def run(self):
@@ -27,10 +81,23 @@ class clean(distutils_clean):
                 except EnvironmentError, err:
                     print str(err)
 
+        try: os.unlink("MANIFEST")
+        except OSError: pass
+
         for base in ["coverage", "build", "dist"]:
              path = os.path.join(os.path.dirname(__file__), base)
              if os.path.isdir(path):
                  shutil.rmtree(path)
+
+class sdist(distutils_sdist):
+    def run(self):
+        import mutagen
+        if mutagen.version[-1] < 0:
+            raise SystemExit(
+                "Refusing to create a source distribution for a prerelease.")
+        else:
+            test_cmd(self.distribution).run()
+            distutils_sdist.run(self)
 
 class test_cmd(Command):
     description = "run automated tests"
@@ -119,7 +186,8 @@ else:
 
 if __name__ == "__main__":
     from mutagen import version_string
-    setup(cmdclass={'clean': clean, 'test': test_cmd, 'coverage': coverage_cmd},
+    setup(cmdclass={'clean': clean, 'test': test_cmd, 'coverage': coverage_cmd,
+                    "sdist": sdist, "release": release},
           name="mutagen", version=version_string,
           url="http://www.sacredchao.net/quodlibet/wiki/Development/Mutagen",
           description="read and write audio tags for many formats",
