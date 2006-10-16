@@ -141,6 +141,16 @@ class TMP4Tags(TestCase):
                              "\x00\x00\x00\x19pgap\x00\x00\x00\x11data"
                              "\x00\x00\x00\x15\x00\x00\x00\x00\x00")
 
+    def test_render_text(self):
+        self.failUnlessEqual(
+             MP4Tags()._MP4Tags__render_text('purl', 'http://foo/bar.xml', 0),
+             "\x00\x00\x00*purl\x00\x00\x00\"data\x00\x00\x00\x00\x00\x00"
+             "\x00\x00http://foo/bar.xml")
+        self.failUnlessEqual(
+             MP4Tags()._MP4Tags__render_text('aART', 'Album Artist'),
+             "\x00\x00\x00$aART\x00\x00\x00\x1cdata\x00\x00\x00\x01\x00\x00"
+             "\x00\x00Album Artist")
+
 add(TMP4Tags)
 
 class TMP4(TestCase):
@@ -231,6 +241,9 @@ class TMP4(TestCase):
             MP4Cover('woooo', MP4Cover.FORMAT_PNG),
             MP4Cover('hoooo', MP4Cover.FORMAT_JPEG),
         ])
+
+    def test_podcast_url(self):
+        self.set_key('purl', 'http://pdl.warnerbros.com/wbie/justiceleagueheroes/audio/JLH_EA.xml')
 
     def test_pprint(self):
         self.audio.pprint()

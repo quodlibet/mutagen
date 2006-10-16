@@ -188,6 +188,7 @@ class MP4Tags(Metadata):
         '\xa9grp' -- grouping
         '\xa9genre' -- genre
         '\xa9lyr' -- lyrics
+        'purl' -- podcast URL
 
     Boolean values:
         'cpil' -- part of a compilation
@@ -222,8 +223,8 @@ class MP4Tags(Metadata):
         for atom in ilst.children:
             fileobj.seek(atom.offset + 8)
             data = fileobj.read(atom.length - 8)
-            parse = self.__atoms.get(atom.name, (MP4Tags.__parse_text,))[0]
-            parse(self, atom, data)
+            info = self.__atoms.get(atom.name, (MP4Tags.__parse_text, None))
+            info[0](self, atom, data, *info[2:])
 
     def __key_sort((key1, v1), (key2, v2)):
         # iTunes always writes the tags in order of "relevance", try
@@ -247,9 +248,8 @@ class MP4Tags(Metadata):
         items = self.items()
         items.sort(self.__key_sort)
         for key, value in items:
-            render = self.__atoms.get(
-                key[:4], (None, MP4Tags.__render_text))[1]
-            values.append(render(self, key, value))
+            info = self.__atoms.get(key[:4], (None, MP4Tags.__render_text))
+            values.append(info[1](self, key, value, *info[2:]))
         data = Atom.render("ilst", "".join(values))
 
         # Find the old atoms.
@@ -410,12 +410,12 @@ class MP4Tags(Metadata):
                 Atom.render("data", struct.pack(">2I", format, 0) + cover))
         return Atom.render(key, "".join(atom_data))
 
-    def __parse_text(self, atom, data):
+    def __parse_text(self, atom, data, expected_flags=1):
         flags = cdata.uint_be(data[8:12])
-        if flags == 1:
+        if flags == expected_flags:
             self[atom.name] = data[16:].decode('utf-8', 'replace')
-    def __render_text(self, key, value):
-        return self.__render_data(key, 0x1, value.encode('utf-8'))
+    def __render_text(self, key, value, flags=1):
+        return self.__render_data(key, flags, value.encode('utf-8'))
 
     def delete(self, filename):
         self.clear()
@@ -431,6 +431,7 @@ class MP4Tags(Metadata):
         "pgap": (__parse_bool, __render_bool),
         "pcst": (__parse_bool, __render_bool),
         "covr": (__parse_cover, __render_cover),
+        "purl": (__parse_text, __render_text, 0),
         }
 
     def pprint(self):
