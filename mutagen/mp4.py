@@ -40,7 +40,7 @@ class MP4MetadataValueError(ValueError, MP4MetadataError): pass
 # This is not an exhaustive list of container atoms, but just the
 # ones this module needs to peek inside.
 _CONTAINERS = ["moov", "udta", "trak", "mdia", "meta", "ilst",
-               "stbl", "minf", "stsd"]
+               "stbl", "minf"]
 _SKIP_SIZE = { "meta": 4 }
 
 __all__ = ['MP4', 'Open', 'delete', 'MP4Cover']
@@ -98,14 +98,15 @@ class Atom(object):
             return struct.pack(">I4sQ", 1, name, len(data) + 16) + data
     render = staticmethod(render)
 
-    def findall(self, name):
+    def findall(self, name, recursive=False):
         """Recursively find all child atoms by specified name."""
-        if self.name == name:
-            yield self
         if self.children is not None:
             for child in self.children:
-                for atom in child.findall(name):
-                    yield atom
+                if child.name == name:
+                    yield child
+                if recursive:
+                    for atom in child.findall(name, True):
+                        yield atom
 
     def __getitem__(self, remaining):
         """Look up a child atom, potentially recursively.
@@ -196,9 +197,12 @@ class MP4Tags(Metadata):
         'desc' -- description (usually used in podcasts)
         'purd' -- purchase date
         '\xa9grp' -- grouping
-        '\xa9genre' -- genre
+        '\xa9gen' -- genre
         '\xa9lyr' -- lyrics
         'purl' -- podcast URL
+        'egid' -- podcast episode GUID
+        'catg' -- podcast category
+        'keyw' -- podcast keywords
 
     Boolean values:
         'cpil' -- part of a compilation
@@ -210,7 +214,7 @@ class MP4Tags(Metadata):
         'disk' -- disc number, total discs
         
     Others:
-        'tmpo' -- tempo, 16 bit int
+        'tmpo' -- tempo/BPM, 16 bit int
         'covr' -- cover artwork, list of MP4Cover objects (which are
                   tagged strs)
         'gnre' -- ID3v1 genre. Not supported, use '\xa9gen' instead.
@@ -335,11 +339,11 @@ class MP4Tags(Metadata):
         if delta == 0:
             return
         moov = atoms["moov"]
-        for atom in moov.findall('stco'):
+        for atom in moov.findall('stco', True):
             self.__update_offset_table(fileobj, ">%dI", atom, delta, offset)
-        for atom in moov.findall('co64'):
+        for atom in moov.findall('co64', True):
             self.__update_offset_table(fileobj, ">%dQ", atom, delta, offset)
-        for atom in moov.findall('tfhd'):
+        for atom in moov.findall('tfhd', True):
             self.__update_tfhd(fileobj, atom, delta, offset)
 
     def __render_data(self, key, flags, data):
@@ -454,6 +458,7 @@ class MP4Tags(Metadata):
         "pcst": (__parse_bool, __render_bool),
         "covr": (__parse_cover, __render_cover),
         "purl": (__parse_text, __render_text, 0),
+        "egid": (__parse_text, __render_text, 0),
         }
 
     def pprint(self):
@@ -476,13 +481,16 @@ class MP4Info(object):
     bitrate = 0
 
     def __init__(self, atoms, fileobj):
-        hdlr = atoms["moov.trak.mdia.hdlr"]
-        fileobj.seek(hdlr.offset)
-        data = fileobj.read(hdlr.length)
-        if "soun" not in data and "Apple Text Media Handler" not in data:
+        for trak in atoms["moov"].findall("trak"):
+            hdlr = trak["mdia", "hdlr"]
+            fileobj.seek(hdlr.offset)
+            data = fileobj.read(hdlr.length)
+            if data[16:20] == "soun":
+                break
+        else:
             raise MP4StreamInfoError("track has no audio data")
 
-        mdhd = atoms["moov.trak.mdia.mdhd"]
+        mdhd = trak["mdia", "mdhd"]
         fileobj.seek(mdhd.offset)
         data = fileobj.read(mdhd.length)
         if ord(data[8]) == 0:
@@ -496,7 +504,7 @@ class MP4Info(object):
         self.length = float(length) / unit
 
         try:
-            atom = atoms["moov.trak.mdia.minf.stbl.stsd"]
+            atom = trak["mdia", "minf", "stbl", "stsd"]
             fileobj.seek(atom.offset)
             data = fileobj.read(atom.length)
             self.bitrate = cdata.uint_be(data[-17:-13])

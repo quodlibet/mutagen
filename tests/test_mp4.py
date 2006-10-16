@@ -72,16 +72,32 @@ class TMP4Info(TestCase):
 
     def test_no_soun(self):
         self.failUnlessRaises(
-            IOError, self.test_mdhd_version_1, "no so und data here")
+            IOError, self.test_mdhd_version_1, "vide")
 
     def test_mdhd_version_1(self, soun="soun"):
         mdhd = Atom.render("mdhd", ("\x01\x00\x00\x00" + "\x00" * 16 +
                                     "\x00\x00\x00\x02" + # 2 Hz
                                     "\x00\x00\x00\x00\x00\x00\x00\x10"))
-        hdlr = Atom.render("hdlr", soun)
+        hdlr = Atom.render("hdlr", "\x00" * 8 + soun)
         mdia = Atom.render("mdia", mdhd + hdlr)
         trak = Atom.render("trak", mdia)
         moov = Atom.render("moov", trak)
+        fileobj = StringIO(moov)
+        atoms = Atoms(fileobj)
+        info = MP4Info(atoms, fileobj)
+        self.failUnlessEqual(info.length, 8)
+
+    def test_multiple_tracks(self):
+        hdlr = Atom.render("hdlr", "\x00" * 8 + "whee")
+        mdia = Atom.render("mdia", hdlr)
+        trak1 = Atom.render("trak", mdia)
+        mdhd = Atom.render("mdhd", ("\x01\x00\x00\x00" + "\x00" * 16 +
+                                    "\x00\x00\x00\x02" + # 2 Hz
+                                    "\x00\x00\x00\x00\x00\x00\x00\x10"))
+        hdlr = Atom.render("hdlr", "\x00" * 8 + "soun")
+        mdia = Atom.render("mdia", mdhd + hdlr)
+        trak2 = Atom.render("trak", mdia)
+        moov = Atom.render("moov", trak1 + trak2)
         fileobj = StringIO(moov)
         atoms = Atoms(fileobj)
         info = MP4Info(atoms, fileobj)
@@ -247,6 +263,9 @@ class TMP4(TestCase):
     def test_podcast_url(self):
         self.set_key('purl', 'http://pdl.warnerbros.com/wbie/justiceleagueheroes/audio/JLH_EA.xml')
 
+    def test_episode_guid(self):
+        self.set_key('catg', 'falling-star-episode-1')
+
     def test_pprint(self):
         self.audio.pprint()
 
@@ -272,7 +291,7 @@ class TMP4(TestCase):
     def __read_offsets(self, filename):
         fileobj = file(filename, 'rb')
         moov = Atoms(fileobj)['moov']
-        for atom in moov.findall('stco'):
+        for atom in moov.findall('stco', True):
             fileobj.seek(atom.offset + 12)
             data = fileobj.read(atom.length - 12)
             fmt = ">%dI" % cdata.uint_be(data[:4])
