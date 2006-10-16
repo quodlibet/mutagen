@@ -174,11 +174,35 @@ class MP4Tags(Metadata):
     Keys are four byte identifiers, except for freeform ('----')
     keys. Values are usually unicode strings, but some atoms have a
     special structure:
-        cpil -- boolean
-        trkn, disk -- tuple of 16 bit ints (current, total)
-        tmpo -- 16 bit int
-        covr -- list of MP4Cover objects (which are tagged strs)
-        gnre -- not supported. Use '\\xa9gen' instead.
+
+    Text values:
+        '\xa9nam' -- track title
+        '\xa9alb' -- album
+        '\xa9art' -- artist
+        'aART' -- album artist
+        '\xa9wrt' -- composer
+        '\xa9day' -- year
+        '\xa9cmt' -- comment
+        'desc' -- description (usually used in podcasts)
+        'purd' -- purchase date
+        '\xa9grp' -- grouping
+        '\xa9genre' -- genre
+        '\xa9lyr' -- lyrics
+
+    Boolean values:
+        'cpil' -- part of a compilation
+        'pgap' -- part of a gapless album
+        'pcst' -- podcast (iTunes reads this only on import)
+        
+    Tuples of ints:
+        'trkn' -- track number, total tracks
+        'disk' -- disc number, total discs
+        
+    Others:
+        'tmpo' -- tempo, 16 bit int
+        'covr' -- cover artwork, list of MP4Cover objects (which are
+                  tagged strs)
+        'gnre' -- ID3v1 genre. Not supported, use '\xa9gen' instead.
 
     The freeform '----' frames use a key in the format '----:mean:name'
     where 'mean' is usually 'com.apple.iTunes' and 'name' is a unique
@@ -206,8 +230,8 @@ class MP4Tags(Metadata):
         # to copy it as closely as possible.
         order = ["\xa9nam", "\xa9ART", "\xa9wrt", "\xa9alb",
                  "\xa9gen", "gnre", "trkn", "disk",
-                 "\xa9day", "cpil", "tmpo", "\xa9too",
-                 "----", "covr", "\xa9lyr"]
+                 "\xa9day", "cpil", "pgap", "pcst", "tmpo",
+                 "\xa9too", "----", "covr", "\xa9lyr"]
         order = dict(zip(order, range(len(order))))
         last = len(order)
         # If there's no key-based way to distinguish, order by length.
@@ -358,11 +382,10 @@ class MP4Tags(Metadata):
         else:
             raise MP4MetadataValueError("invalid short integer %r" % value)
 
-    def __parse_compilation(self, atom, data):
+    def __parse_bool(self, atom, data):
         try: self[atom.name] = bool(ord(data[16:17]))
         except TypeError: self[atom.name] = False
-
-    def __render_compilation(self, key, value):
+    def __render_bool(self, key, value):
         return self.__render_data(key, 0x15, chr(bool(value)))
 
     def __parse_cover(self, atom, data):
@@ -404,7 +427,9 @@ class MP4Tags(Metadata):
         "disk": (__parse_pair, __render_pair_no_trailing),
         "gnre": (__parse_genre, None),
         "tmpo": (__parse_tempo, __render_tempo),
-        "cpil": (__parse_compilation, __render_compilation),
+        "cpil": (__parse_bool, __render_bool),
+        "pgap": (__parse_bool, __render_bool),
+        "pcst": (__parse_bool, __render_bool),
         "covr": (__parse_cover, __render_cover),
         }
 
@@ -430,7 +455,8 @@ class MP4Info(object):
     def __init__(self, atoms, fileobj):
         hdlr = atoms["moov.trak.mdia.hdlr"]
         fileobj.seek(hdlr.offset)
-        if "soun" not in fileobj.read(hdlr.length):
+        data = fileobj.read(hdlr.length)
+        if "soun" not in data and "Apple Text Media Handler" not in data:
             raise MP4StreamInfoError("track has no audio data")
 
         mdhd = atoms["moov.trak.mdia.mdhd"]

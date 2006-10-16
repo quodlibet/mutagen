@@ -133,6 +133,14 @@ class TMP4Tags(TestCase):
         covr = Atom.render("covr", data)
         self.failUnlessRaises(MP4MetadataError, self.wrap_ilst, covr)
 
+    def test_render_bool(self):
+        self.failUnlessEqual(MP4Tags()._MP4Tags__render_bool('pgap', True),
+                             "\x00\x00\x00\x19pgap\x00\x00\x00\x11data"
+                             "\x00\x00\x00\x15\x00\x00\x00\x00\x01")
+        self.failUnlessEqual(MP4Tags()._MP4Tags__render_bool('pgap', False),
+                             "\x00\x00\x00\x19pgap\x00\x00\x00\x11data"
+                             "\x00\x00\x00\x15\x00\x00\x00\x00\x00")
+
 add(TMP4Tags)
 
 class TMP4(TestCase):
@@ -202,6 +210,18 @@ class TMP4(TestCase):
 
     def test_compilation_false(self):
         self.set_key('cpil', False)
+
+    def test_gapless(self):
+        self.set_key('pgap', True)
+
+    def test_gapless_false(self):
+        self.set_key('pgap', False)
+
+    def test_podcast(self):
+        self.set_key('pcst', True)
+
+    def test_podcast_false(self):
+        self.set_key('pcst', False)
 
     def test_cover(self):
         self.set_key('covr', ['woooo'])
