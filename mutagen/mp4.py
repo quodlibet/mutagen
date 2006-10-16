@@ -15,6 +15,7 @@ There is no official specification for this format. The source code
 for TagLib, FAAD, and various MPEG specifications at
 http://developer.apple.com/documentation/QuickTime/QTFF/,
 http://www.geocities.com/xhelmboyx/quicktime/formats/mp4-layout.txt,
+http://standards.iso.org/ittf/PubliclyAvailableStandards/c041828_ISO_IEC_14496-12_2005(E).zip,
 and http://wiki.multimedia.cx/index.php?title=Apple_QuickTime were all
 consulted.
 
@@ -96,6 +97,15 @@ class Atom(object):
         except OverflowError:
             return struct.pack(">I4sQ", 1, name, len(data) + 16) + data
     render = staticmethod(render)
+
+    def findall(self, name):
+        """Recursively find all child atoms by specified name."""
+        if self.name == name:
+            yield self
+        if self.children is not None:
+            for child in self.children:
+                for atom in child.findall(name):
+                    yield atom
 
     def __getitem__(self, remaining):
         """Look up a child atom, potentially recursively.
@@ -256,69 +266,81 @@ class MP4Tags(Metadata):
         fileobj = file(filename, "rb+")
         try:
             atoms = Atoms(fileobj)
-
-            moov = atoms["moov"]
-
-            if moov != atoms.atoms[-1]:
-                # "Free" the old moov block. Something in the mdat
-                # block is not happy when its offset changes and it
-                # won't play back. So, rather than try to figure that
-                # out, just move the moov atom to the end of the file.
-                offset = self.__move_moov(fileobj, moov)
-            else:
-                offset = 0
-
             try:
                 path = atoms.path("moov", "udta", "meta", "ilst")
             except KeyError:
-                self.__save_new(fileobj, atoms, data, offset)
+                self.__save_new(fileobj, atoms, data)
             else:
-                self.__save_existing(fileobj, atoms, path, data, offset)
+                self.__save_existing(fileobj, atoms, path, data)
         finally:
             fileobj.close()
 
-    def __move_moov(self, fileobj, moov):
-        fileobj.seek(moov.offset)
-        data = fileobj.read(moov.length)
-        fileobj.seek(moov.offset)
-        free = Atom.render("free", "\x00" * (moov.length - 8))
-        fileobj.write(free)
-        fileobj.seek(0, 2)
-        # Figure out how far we have to shift all our successive
-        # seek calls, relative to what the atoms say.
-        old_end = fileobj.tell()
-        fileobj.write(data)
-        return old_end - moov.offset
-
-    def __save_new(self, fileobj, atoms, ilst, offset):
+    def __save_new(self, fileobj, atoms, ilst):
         hdlr = Atom.render("hdlr", "\x00" * 8 + "mdirappl" + "\x00" * 9)
         meta = Atom.render("meta", "\x00\x00\x00\x00" + hdlr + ilst)
         moov, udta = atoms.path("moov", "udta")
-        insert_bytes(fileobj, len(meta), udta.offset + offset + 8)
-        fileobj.seek(udta.offset + offset + 8)
+        offset = udta.offset + 8
+        insert_bytes(fileobj, len(meta), offset)
+        fileobj.seek(offset)
         fileobj.write(meta)
-        self.__update_parents(fileobj, [moov, udta], len(meta), offset)
+        self.__update_parents(fileobj, [moov, udta], len(meta))
+        self.__update_offsets(fileobj, atoms, len(meta), offset)
 
-    def __save_existing(self, fileobj, atoms, path, data, offset):
+    def __save_existing(self, fileobj, atoms, path, data):
         # Replace the old ilst atom.
         ilst = path.pop()
         delta = len(data) - ilst.length
-        fileobj.seek(ilst.offset + offset)
+        offset = ilst.offset
+        fileobj.seek(offset)
         if delta > 0:
-            insert_bytes(fileobj, delta, ilst.offset + offset)
+            insert_bytes(fileobj, delta, offset)
         elif delta < 0:
-            delete_bytes(fileobj, -delta, ilst.offset + offset)
-        fileobj.seek(ilst.offset + offset)
+            delete_bytes(fileobj, -delta, offset)
+        fileobj.seek(offset)
         fileobj.write(data)
-        self.__update_parents(fileobj, path, delta, offset)
+        self.__update_parents(fileobj, path, delta)
+        self.__update_offsets(fileobj, atoms, delta, offset)
 
-    def __update_parents(self, fileobj, path, delta, offset):
-        # Update all parent atoms with the new size.
+    def __update_parents(self, fileobj, path, delta):
+        """Update all parent atoms with the new size."""
         for atom in path:
-            fileobj.seek(atom.offset + offset)
+            fileobj.seek(atom.offset)
             size = cdata.uint_be(fileobj.read(4)) + delta
-            fileobj.seek(atom.offset + offset)
+            fileobj.seek(atom.offset)
             fileobj.write(cdata.to_uint_be(size))
+
+    def __update_offset_table(self, fileobj, fmt, atom, delta, offset):
+        """Update offset table in the specified atom."""
+        fileobj.seek(atom.offset + 12)
+        data = fileobj.read(atom.length - 12)
+        fmt = fmt % cdata.uint_be(data[:4])
+        offsets = struct.unpack(fmt, data[4:])
+        offsets = [o + (0, delta)[offset < o] for o in offsets]
+        fileobj.seek(atom.offset + 16)
+        fileobj.write(struct.pack(fmt, *offsets))
+
+    def __update_tfhd(self, fileobj, atom, delta, offset):
+        fileobj.seek(atom.offset + 9)
+        data = fileobj.read(atom.length - 9)
+        flags = cdata.uint_be("\x00" + data[:3])
+        if flags & 1:
+            o = ulonglong_be(data[7:15])
+            if o > offset:
+                o += delta
+            fileobj.seek(atom.offset + 16)
+            fileobj.write(to_ulonglong_be(o))
+
+    def __update_offsets(self, fileobj, atoms, delta, offset):
+        """Update offset tables in all 'stco' and 'co64' atoms."""
+        if delta == 0:
+            return
+        moov = atoms["moov"]
+        for atom in moov.findall('stco'):
+            self.__update_offset_table(fileobj, ">%dI", atom, delta, offset)
+        for atom in moov.findall('co64'):
+            self.__update_offset_table(fileobj, ">%dQ", atom, delta, offset)
+        for atom in moov.findall('tfhd'):
+            self.__update_tfhd(fileobj, atom, delta, offset)
 
     def __render_data(self, key, flags, data):
         data = struct.pack(">2I", flags, 0) + data

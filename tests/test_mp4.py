@@ -1,11 +1,13 @@
 import os
 import shutil
+import struct
 
 from cStringIO import StringIO
 from tempfile import mkstemp
 from tests import TestCase, add
 from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
     MP4MetadataError)
+from mutagen._util import cdata
 try: from os.path import devnull
 except ImportError: devnull = "/dev/null"
 
@@ -266,6 +268,29 @@ class TMP4(TestCase):
 
     def test_reads_unknown_text(self):
         self.set_key("foob", u"A test")
+
+    def __read_offsets(self, filename):
+        fileobj = file(filename, 'rb')
+        moov = Atoms(fileobj)['moov']
+        for atom in moov.findall('stco'):
+            fileobj.seek(atom.offset + 12)
+            data = fileobj.read(atom.length - 12)
+            fmt = ">%dI" % cdata.uint_be(data[:4])
+            offsets = struct.unpack(fmt, data[4:])
+            samples = []
+            for offset in offsets:
+                fileobj.seek(offset)
+                samples.append(fileobj.read(4))
+            fileobj.close()
+        return samples
+
+    def test_update_offsets(self):
+        aa = self.__read_offsets(self.audio.filename)
+        self.audio["\xa9nam"] = "wheeeeeeee"
+        self.audio.save()
+        bb = self.__read_offsets(self.audio.filename)
+        for a, b in zip(aa, bb):
+            self.failUnlessEqual(a, b)
 
     def tearDown(self):
         os.unlink(self.filename)
