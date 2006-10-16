@@ -133,11 +133,6 @@ class TM4ATags(TestCase):
         covr = Atom.render("covr", data)
         self.failUnlessRaises(M4AMetadataError, self.wrap_ilst, covr)
 
-    def test_bad_covr_format(self):
-        data = Atom.render("data", "\x00" * 8 + "whee")
-        covr = Atom.render("covr", data)
-        self.failUnlessRaises(M4AMetadataError, self.wrap_ilst, covr)
-
 add(TM4ATags)
 
 class TM4A(TestCase):
@@ -209,13 +204,13 @@ class TM4A(TestCase):
         self.set_key('cpil', False)
 
     def test_cover(self):
-        self.set_key('covr', ['woooo'])
+        self.set_key('covr', 'woooo')
 
     def test_cover_png(self):
-        self.set_key('covr', [
-            M4ACover('woooo', M4ACover.FORMAT_PNG),
-            M4ACover('hoooo', M4ACover.FORMAT_JPEG),
-        ])
+        self.set_key('covr', M4ACover('woooo', M4ACover.FORMAT_PNG))
+
+    def test_cover_jpeg(self):
+        self.set_key('covr', M4ACover('hoooo', M4ACover.FORMAT_JPEG))
 
     def test_pprint(self):
         self.audio.pprint()
@@ -261,9 +256,7 @@ class TM4AHasTags(TM4A):
     def test_has_covr(self):
         self.failUnless('covr' in self.audio.tags)
         covr = self.audio.tags['covr']
-        self.failUnlessEqual(len(covr), 2)
-        self.failUnlessEqual(covr[0].format, M4ACover.FORMAT_PNG)
-        self.failUnlessEqual(covr[1].format, M4ACover.FORMAT_JPEG)
+        self.failUnlessEqual(covr.format, M4ACover.FORMAT_PNG)
 
     def test_not_my_file(self):
         self.failUnlessRaises(

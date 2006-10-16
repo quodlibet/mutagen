@@ -366,27 +366,18 @@ class M4ATags(Metadata):
         return self.__render_data(key, 0x15, chr(bool(value)))
 
     def __parse_cover(self, atom, data):
-        self[atom.name] = []
-        pos = 0
-        while pos < atom.length - 8:
-            length, name, format = struct.unpack(">I4sI", data[pos:pos+12])
-            if name != "data":
-                raise M4AMetadataError(
-                    "unexpected atom %r inside 'covr'" % name)
-            if format not in (M4ACover.FORMAT_JPEG, M4ACover.FORMAT_PNG):
-                raise M4AMetadataError(
-                    "unknown cover format %r" % format)
-            cover = M4ACover(data[pos+16:pos+length], format)
-            self[atom.name].append(M4ACover(data[pos+16:pos+length], format))
-            pos += length
+        length, name, format = struct.unpack(">I4sI", data[:12])
+        if name != "data":
+            raise M4AMetadataError(
+                "unexpected atom %r inside 'covr'" % name)
+        if format not in (M4ACover.FORMAT_JPEG, M4ACover.FORMAT_PNG):
+            format = M4ACover.FORMAT_JPEG
+        self[atom.name]= M4ACover(data[16:length], format)
     def __render_cover(self, key, value):
-        atom_data = []
-        for cover in value:
-            try: format = cover.format
-            except AttributeError: format = M4ACover.FORMAT_JPEG
-            atom_data.append(
-                Atom.render("data", struct.pack(">2I", format, 0) + cover))
-        return Atom.render(key, "".join(atom_data))
+        try: format = value.format
+        except AttributeError: format = M4ACover.FORMAT_JPEG
+        data = Atom.render("data", struct.pack(">2I", format, 0) + value)
+        return Atom.render(key, data)
 
     def __parse_text(self, atom, data):
         flags = cdata.uint_be(data[8:12])
