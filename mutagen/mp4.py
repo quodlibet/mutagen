@@ -346,9 +346,19 @@ class MP4Tags(Metadata):
         for atom in moov.findall('tfhd', True):
             self.__update_tfhd(fileobj, atom, delta, offset)
 
-    def __render_data(self, key, flags, data):
-        data = struct.pack(">2I", flags, 0) + data
-        return Atom.render(key, Atom.render("data", data))
+    def __parse_data(self, atom, data):
+        pos = 0
+        while pos < atom.length - 8:
+            length, name, flags = struct.unpack(">I4sI", data[pos:pos+12])
+            if name != "data":
+                raise MP4MetadataError(
+                    "unexpected atom %r inside %r" % (name, atom.name))
+            yield flags, data[pos+16:pos+length]
+            pos += length
+    def __render_data(self, key, flags, value):
+        return Atom.render(key, "".join(
+            Atom.render("data", struct.pack(">2I", flags, 0) + data)
+            for data in value))
 
     def __parse_freeform(self, atom, data):
         try:
@@ -381,7 +391,7 @@ class MP4Tags(Metadata):
         track, total = value
         if 0 <= track < 1 << 16 and 0 <= total < 1 << 16:
             data = struct.pack(">4H", 0, track, total, 0)
-            return self.__render_data(key, 0, data)
+            return self.__render_data(key, 0, [data])
         else:
             raise MP4MetadataValueError("invalid numeric pair %r" % (value,))
 
@@ -389,7 +399,7 @@ class MP4Tags(Metadata):
         track, total = value
         if 0 <= track < 1 << 16 and 0 <= total < 1 << 16:
             data = struct.pack(">3H", 0, track, total)
-            return self.__render_data(key, 0, data)
+            return self.__render_data(key, 0, [data])
         else:
             raise MP4MetadataValueError("invalid numeric pair %r" % (value,))
 
@@ -404,7 +414,7 @@ class MP4Tags(Metadata):
         self[atom.name] = cdata.short_be(data[16:18])
     def __render_tempo(self, key, value):
         if 0 <= value < 1 << 16:
-            return self.__render_data(key, 0x15, cdata.to_ushort_be(value))
+            return self.__render_data(key, 0x15, [cdata.to_ushort_be(value)])
         else:
             raise MP4MetadataValueError("invalid short integer %r" % value)
 
@@ -412,7 +422,7 @@ class MP4Tags(Metadata):
         try: self[atom.name] = bool(ord(data[16:17]))
         except TypeError: self[atom.name] = False
     def __render_bool(self, key, value):
-        return self.__render_data(key, 0x15, chr(bool(value)))
+        return self.__render_data(key, 0x15, [chr(bool(value))])
 
     def __parse_cover(self, atom, data):
         self[atom.name] = []
@@ -437,11 +447,16 @@ class MP4Tags(Metadata):
         return Atom.render(key, "".join(atom_data))
 
     def __parse_text(self, atom, data, expected_flags=1):
-        flags = cdata.uint_be(data[8:12])
-        if flags == expected_flags:
-            self[atom.name] = data[16:].decode('utf-8', 'replace')
+        value = [text.decode('utf-8', 'replace') for flags, text
+                 in self.__parse_data(atom, data)
+                 if flags == expected_flags]
+        if value:
+            self[atom.name] = value
     def __render_text(self, key, value, flags=1):
-        return self.__render_data(key, flags, value.encode('utf-8'))
+        if isinstance(value, basestring):
+            value = [value]
+        return self.__render_data(
+            key, flags, (text.encode('utf-8') for text in value))
 
     def delete(self, filename):
         self.clear()
@@ -465,9 +480,13 @@ class MP4Tags(Metadata):
         values = []
         for key, value in self.iteritems():
             key = key.decode('latin1')
-            try: values.append("%s=%s" % (key, value))
-            except UnicodeDecodeError:
-                values.append("%s=[%d bytes of data]" % (key, len(value)))
+            if key == "covr":
+                values.append("%s=%s" % (key, ", ".join(
+                    "[%d bytes of data]" % len(data) for data in value)))
+            elif isinstance(value, list):
+                values.append("%s=%s" % (key, " / ".join(value)))
+            else:
+                values.append("%s=%s" % (key, value))
         return "\n".join(values)
 
 class MP4Info(object):

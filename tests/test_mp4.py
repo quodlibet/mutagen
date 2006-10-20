@@ -161,13 +161,34 @@ class TMP4Tags(TestCase):
 
     def test_render_text(self):
         self.failUnlessEqual(
-             MP4Tags()._MP4Tags__render_text('purl', 'http://foo/bar.xml', 0),
+             MP4Tags()._MP4Tags__render_text('purl', ['http://foo/bar.xml'], 0),
              "\x00\x00\x00*purl\x00\x00\x00\"data\x00\x00\x00\x00\x00\x00"
              "\x00\x00http://foo/bar.xml")
         self.failUnlessEqual(
-             MP4Tags()._MP4Tags__render_text('aART', 'Album Artist'),
+             MP4Tags()._MP4Tags__render_text('aART', [u'\u0041lbum Artist']),
              "\x00\x00\x00$aART\x00\x00\x00\x1cdata\x00\x00\x00\x01\x00\x00"
-             "\x00\x00Album Artist")
+             "\x00\x00\x41lbum Artist")
+        self.failUnlessEqual(
+             MP4Tags()._MP4Tags__render_text('aART', [u'Album Artist', u'Whee']),
+             "\x00\x00\x008aART\x00\x00\x00\x1cdata\x00\x00\x00\x01\x00\x00"
+             "\x00\x00Album Artist\x00\x00\x00\x14data\x00\x00\x00\x01\x00"
+             "\x00\x00\x00Whee")
+        
+    def test_render_data(self):
+        self.failUnlessEqual(
+             MP4Tags()._MP4Tags__render_data('aART', 1, ['whee']),
+             "\x00\x00\x00\x1caART"
+             "\x00\x00\x00\x14data\x00\x00\x00\x01\x00\x00\x00\x00whee")
+        self.failUnlessEqual(
+             MP4Tags()._MP4Tags__render_data('aART', 2, ['whee', 'wee']),
+             "\x00\x00\x00/aART"
+             "\x00\x00\x00\x14data\x00\x00\x00\x02\x00\x00\x00\x00whee"
+             "\x00\x00\x00\x13data\x00\x00\x00\x02\x00\x00\x00\x00wee")
+
+    def test_bad_text_data(self):
+        data = Atom.render("datA", "\x00\x00\x00\x01\x00\x00\x00\x00whee")
+        data = Atom.render("aART", data)
+        self.failUnlessRaises(MP4MetadataError, self.wrap_ilst, data)
 
 add(TMP4Tags)
 
@@ -200,7 +221,10 @@ class TMP4(TestCase):
         self.faad()
 
     def test_save_text(self):
-        self.set_key('\xa9nam', u"Some test name")
+        self.set_key('\xa9nam', [u"Some test name"])
+
+    def test_save_texts(self):
+        self.set_key('\xa9nam', [u"Some test name", u"One more name"])
 
     def test_freeform(self):
         self.set_key('----:net.sacredchao.Mutagen:test key', "whee")
@@ -261,10 +285,10 @@ class TMP4(TestCase):
         ])
 
     def test_podcast_url(self):
-        self.set_key('purl', 'http://pdl.warnerbros.com/wbie/justiceleagueheroes/audio/JLH_EA.xml')
+        self.set_key('purl', ['http://pdl.warnerbros.com/wbie/justiceleagueheroes/audio/JLH_EA.xml'])
 
     def test_episode_guid(self):
-        self.set_key('catg', 'falling-star-episode-1')
+        self.set_key('catg', ['falling-star-episode-1'])
 
     def test_pprint(self):
         self.audio.pprint()
@@ -286,7 +310,7 @@ class TMP4(TestCase):
         self.faad()
 
     def test_reads_unknown_text(self):
-        self.set_key("foob", u"A test")
+        self.set_key("foob", [u"A test"])
 
     def __read_offsets(self, filename):
         fileobj = file(filename, 'rb')
