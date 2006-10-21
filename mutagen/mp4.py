@@ -26,8 +26,6 @@ work on metadata over 4GB.
 import struct
 import sys
 
-from cStringIO import StringIO
-
 from mutagen import FileType, Metadata
 from mutagen._constants import GENRES
 from mutagen._util import cdata, insert_bytes, delete_bytes
@@ -361,29 +359,31 @@ class MP4Tags(Metadata):
             for data in value))
 
     def __parse_freeform(self, atom, data):
-        try:
-            fileobj = StringIO(data)
-            mean_length = cdata.uint_be(fileobj.read(4))
-            # skip over 8 bytes of atom name, flags
-            mean = fileobj.read(mean_length - 4)[8:]
-            name_length = cdata.uint_be(fileobj.read(4))
-            name = fileobj.read(name_length - 4)[8:]
-            value_length = cdata.uint_be(fileobj.read(4))
-            # Name, flags, and reserved bytes
-            value = fileobj.read(value_length - 4)[12:]
-        except struct.error:
-            # Some ---- atoms have no data atom, I have no clue why
-            # they actually end up in the file.
-            pass
-        else:
+        length = cdata.uint_be(data[:4])
+        mean = data[12:length]
+        pos = length
+        length = cdata.uint_be(data[pos:pos+4])
+        name = data[pos+12:pos+length]
+        pos += length
+        value = []
+        while pos < atom.length - 8:
+            length, atom_name = struct.unpack(">I4s", data[pos:pos+8])
+            if atom_name != "data":
+                raise MP4MetadataError(
+                    "unexpected atom %r inside %r" % (atom_name, atom.name))
+            value.append(data[pos+16:pos+length])
+            pos += length
+        if value:
             self["%s:%s:%s" % (atom.name, mean, name)] = value
     def __render_freeform(self, key, value):
         dummy, mean, name = key.split(":", 2)
         mean = struct.pack(">I4sI", len(mean) + 12, "mean", 0) + mean
         name = struct.pack(">I4sI", len(name) + 12, "name", 0) + name
-        value = struct.pack(">I4s2I", len(value) + 16, "data", 0x1, 0) + value
-        final = mean + name + value
-        return Atom.render("----", mean + name + value)
+        if isinstance(value, basestring):
+            value = [value]
+        return Atom.render("----", mean + name + "".join(
+            struct.pack(">I4s2I", len(data) + 16, "data", 1, 0) + data
+            for data in value))
 
     def __parse_pair(self, atom, data):
         self[atom.name] = struct.unpack(">2H", data[18:22])

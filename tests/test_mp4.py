@@ -114,12 +114,6 @@ class TMP4Tags(TestCase):
         fileobj = StringIO(data)
         return MP4Tags(Atoms(fileobj), fileobj)
         
-    def test_bad_freeform(self):
-        mean = Atom.render("mean", "net.sacredchao.Mutagen")
-        name = Atom.render("name", "empty test key")
-        bad_freeform = Atom.render("----", "\x00" * 4 + mean + name)
-        self.failIf(self.wrap_ilst(bad_freeform))
-
     def test_genre(self):
         data = Atom.render("data", "\x00" * 8 + "\x00\x01")
         genre = Atom.render("gnre", data)
@@ -190,6 +184,22 @@ class TMP4Tags(TestCase):
         data = Atom.render("aART", data)
         self.failUnlessRaises(MP4MetadataError, self.wrap_ilst, data)
 
+    def test_render_freeform(self):
+        self.failUnlessEqual(
+             MP4Tags()._MP4Tags__render_freeform(
+             '----:net.sacredchao.Mutagen:test', ['whee', 'wee']),
+             "\x00\x00\x00a----"
+             "\x00\x00\x00\"mean\x00\x00\x00\x00net.sacredchao.Mutagen"
+             "\x00\x00\x00\x10name\x00\x00\x00\x00test"
+             "\x00\x00\x00\x14data\x00\x00\x00\x01\x00\x00\x00\x00whee"
+             "\x00\x00\x00\x13data\x00\x00\x00\x01\x00\x00\x00\x00wee")
+
+    def test_bad_freeform(self):
+        mean = Atom.render("mean", "net.sacredchao.Mutagen")
+        name = Atom.render("name", "empty test key")
+        bad_freeform = Atom.render("----", "\x00" * 4 + mean + name)
+        self.failUnlessRaises(MP4MetadataError, self.wrap_ilst, bad_freeform)
+
 add(TMP4Tags)
 
 class TMP4(TestCase):
@@ -227,7 +237,10 @@ class TMP4(TestCase):
         self.set_key('\xa9nam', [u"Some test name", u"One more name"])
 
     def test_freeform(self):
-        self.set_key('----:net.sacredchao.Mutagen:test key', "whee")
+        self.set_key('----:net.sacredchao.Mutagen:test key', ["whee"])
+
+    def test_freeforms(self):
+        self.set_key('----:net.sacredchao.Mutagen:test key', ["whee", "uhh"])
 
     def test_tracknumber(self):
         self.set_key('trkn', (1, 10))
