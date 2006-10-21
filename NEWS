@@ -1,6 +1,11 @@
-1.8.1
+1.9
  * Bug Fixes:
-   * Multiple cover images in M4A are supported. (Lukáš Lalinský)
+   * Multiple cover images in M4A are supported.
+  
+ * New Features:
+   * OptimFROG support.
+   * New MP4 module with support for multiple data fields per atom and
+     more compatible tag saving implementation.
 
 1.8 - 2006.10.02
  * New Features:

@@ -13,6 +13,7 @@ from mutagen.trueaudio import TrueAudio
 from mutagen.m4a import M4A
 from mutagen.musepack import Musepack
 from mutagen.monkeysaudio import MonkeysAudio
+from mutagen.optimfrog import OptimFROG
 try: from os.path import devnull
 except ImportError: devnull = "/dev/null"
 
@@ -131,6 +132,12 @@ class TFile(TestCase):
     def test_m4a(self):
         self.failUnless(isinstance(
             File(os.path.join("tests", "data", "has-tags.m4a")), M4A))
+
+    def test_optimfrog(self):
+        self.failUnless(isinstance(
+            File(os.path.join("tests", "data", "empty.ofr")), OptimFROG))
+        self.failUnless(isinstance(
+            File(os.path.join("tests", "data", "empty.ofs")), OptimFROG))
 
 add(TFile)
 

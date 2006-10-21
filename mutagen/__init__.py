@@ -168,9 +168,10 @@ def File(filename, options=None):
         from mutagen.m4a import M4A
         from mutagen.musepack import Musepack
         from mutagen.monkeysaudio import MonkeysAudio
+        from mutagen.optimfrog import OptimFROG
         options = [MP3, TrueAudio, OggTheora, OggSpeex, OggVorbis, OggFLAC,
                    FLAC, APEv2File, M4A, ID3FileType, WavPack, Musepack,
-                   MonkeysAudio]
+                   MonkeysAudio, OptimFROG]
 
     if not options:
         return None
