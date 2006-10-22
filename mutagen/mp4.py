@@ -38,7 +38,7 @@ class MP4MetadataValueError(ValueError, MP4MetadataError): pass
 # This is not an exhaustive list of container atoms, but just the
 # ones this module needs to peek inside.
 _CONTAINERS = ["moov", "udta", "trak", "mdia", "meta", "ilst",
-               "stbl", "minf"]
+               "stbl", "minf", "moof", "traf"]
 _SKIP_SIZE = { "meta": 4 }
 
 __all__ = ['MP4', 'Open', 'delete', 'MP4Cover']
@@ -280,12 +280,17 @@ class MP4Tags(Metadata):
     def __save_new(self, fileobj, atoms, ilst):
         hdlr = Atom.render("hdlr", "\x00" * 8 + "mdirappl" + "\x00" * 9)
         meta = Atom.render("meta", "\x00\x00\x00\x00" + hdlr + ilst)
-        moov, udta = atoms.path("moov", "udta")
-        offset = udta.offset + 8
+        try:
+            path = atoms.path("moov", "udta")
+        except KeyError:
+            # moov.udta not found -- create one
+            path = atoms.path("moov")
+            meta = Atom.render("udta", meta)
+        offset = path[-1].offset + 8
         insert_bytes(fileobj, len(meta), offset)
         fileobj.seek(offset)
         fileobj.write(meta)
-        self.__update_parents(fileobj, [moov, udta], len(meta))
+        self.__update_parents(fileobj, path, len(meta))
         self.__update_offsets(fileobj, atoms, len(meta), offset)
 
     def __save_existing(self, fileobj, atoms, path, data):
@@ -313,6 +318,8 @@ class MP4Tags(Metadata):
 
     def __update_offset_table(self, fileobj, fmt, atom, delta, offset):
         """Update offset table in the specified atom."""
+        if atom.offset > offset:
+            atom.offset += delta
         fileobj.seek(atom.offset + 12)
         data = fileobj.read(atom.length - 12)
         fmt = fmt % cdata.uint_be(data[:4])
@@ -322,15 +329,17 @@ class MP4Tags(Metadata):
         fileobj.write(struct.pack(fmt, *offsets))
 
     def __update_tfhd(self, fileobj, atom, delta, offset):
+        if atom.offset > offset:
+            atom.offset += delta
         fileobj.seek(atom.offset + 9)
         data = fileobj.read(atom.length - 9)
         flags = cdata.uint_be("\x00" + data[:3])
         if flags & 1:
-            o = ulonglong_be(data[7:15])
+            o = cdata.ulonglong_be(data[7:15])
             if o > offset:
                 o += delta
             fileobj.seek(atom.offset + 16)
-            fileobj.write(to_ulonglong_be(o))
+            fileobj.write(cdata.to_ulonglong_be(o))
 
     def __update_offsets(self, fileobj, atoms, delta, offset):
         """Update offset tables in all 'stco' and 'co64' atoms."""
@@ -341,8 +350,11 @@ class MP4Tags(Metadata):
             self.__update_offset_table(fileobj, ">%dI", atom, delta, offset)
         for atom in moov.findall('co64', True):
             self.__update_offset_table(fileobj, ">%dQ", atom, delta, offset)
-        for atom in moov.findall('tfhd', True):
-            self.__update_tfhd(fileobj, atom, delta, offset)
+        try:
+            for atom in atoms["moof"].findall('tfhd', True):
+                self.__update_tfhd(fileobj, atom, delta, offset)
+        except KeyError:
+            pass
 
     def __parse_data(self, atom, data):
         pos = 0
@@ -495,9 +507,15 @@ class MP4Info(object):
     Attributes:
     bitrate -- bitrate in bits per second, as an int
     length -- file length in seconds, as a float
+    channels -- number of audio channels
+    sample_rate -- audio sampling rate in Hz
+    bits_per_sample -- bits per sample
     """
 
     bitrate = 0
+    channels = 0
+    sample_rate = 0
+    bits_per_sample = 0
 
     def __init__(self, atoms, fileobj):
         for trak in atoms["moov"].findall("trak"):
@@ -526,9 +544,31 @@ class MP4Info(object):
             atom = trak["mdia", "minf", "stbl", "stsd"]
             fileobj.seek(atom.offset)
             data = fileobj.read(atom.length)
-            self.bitrate = cdata.uint_be(data[-17:-13])
+            if data[20:24] == "mp4a":
+                length = cdata.uint_be(data[16:20])
+                (self.channels, self.bits_per_sample, _,
+                 self.sample_rate) = struct.unpack(">3HI", data[40:50])
+                # ES descriptor type
+                if data[56:60] == "esds" and ord(data[64:65]) == 0x03:
+                    pos = 65
+                    # skip extended descriptor type tag, length, ES ID
+                    # and stream priority
+                    if data[pos:pos+3] == "\x80\x80\x80":
+                        pos += 3
+                    pos += 4
+                    # decoder config descriptor type
+                    if ord(data[pos]) == 0x04:
+                        pos += 1
+                        # skip extended descriptor type tag, length,
+                        # object type ID, stream type, buffer size
+                        # and maximum bitrate
+                        if data[pos:pos+3] == "\x80\x80\x80":
+                            pos += 3
+                        pos += 10
+                        # average bitrate
+                        self.bitrate = cdata.uint_be(data[pos:pos+4])
         except (ValueError, KeyError):
-            # Bitrate values are optional.
+            # stsd atoms are optional
             pass
 
     def pprint(self):

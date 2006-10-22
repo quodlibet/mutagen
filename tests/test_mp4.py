@@ -216,6 +216,15 @@ class TMP4(TestCase):
                 devnull, devnull))
         self.failIf(value and value != NOTFOUND)
 
+    def test_channels(self):
+        self.failUnlessEqual(self.audio.info.channels, 2)
+
+    def test_sample_rate(self):
+        self.failUnlessEqual(self.audio.info.sample_rate, 44100)
+
+    def test_bits_per_sample(self):
+        self.failUnlessEqual(self.audio.info.bits_per_sample, 16)
+
     def test_bitrate(self):
         self.failUnlessEqual(self.audio.info.bitrate, 2914)
 
@@ -327,7 +336,8 @@ class TMP4(TestCase):
 
     def __read_offsets(self, filename):
         fileobj = file(filename, 'rb')
-        moov = Atoms(fileobj)['moov']
+        atoms = Atoms(fileobj)
+        moov = atoms['moov']
         for atom in moov.findall('stco', True):
             fileobj.seek(atom.offset + 12)
             data = fileobj.read(atom.length - 12)
@@ -337,17 +347,39 @@ class TMP4(TestCase):
             for offset in offsets:
                 fileobj.seek(offset)
                 samples.append(fileobj.read(4))
-            fileobj.close()
+        try:
+            for atom in atoms["moof"].findall('tfhd', True):
+                data = fileobj.read(atom.length - 9)
+                flags = cdata.uint_be("\x00" + data[:3])
+                if flags & 1:
+                    offset = cdata.ulonglong_be(data[7:15])
+                    fileobj.seek(offset)
+                    samples.append(fileobj.read(4))
+        except KeyError:
+            pass
+        fileobj.close()
         return samples
 
-    def test_update_offsets(self):
-        aa = self.__read_offsets(self.audio.filename)
+    def __test_update_offsets(self, filename):
+        aa = self.__read_offsets(filename)
         self.audio["\xa9nam"] = "wheeeeeeee"
         self.audio.save()
-        bb = self.__read_offsets(self.audio.filename)
+        bb = self.__read_offsets(filename)
         for a, b in zip(aa, bb):
             self.failUnlessEqual(a, b)
 
+    def test_update_offsets_1(self):
+        self.__test_update_offsets(
+            os.path.join("tests", "data", "has-tags.m4a"))
+        
+    def test_update_offsets_2(self):
+        self.__test_update_offsets(
+            os.path.join("tests", "data", "no-tags.m4a"))
+        
+    def test_update_offsets_3(self):
+        self.__test_update_offsets(
+            os.path.join("tests", "data", "no-tags.3g2"))
+        
     def tearDown(self):
         os.unlink(self.filename)
 
@@ -380,13 +412,30 @@ class TMP4HasTags(TMP4):
 
 add(TMP4HasTags)
 
-class TMP4NoTags(TMP4):
+class TMP4NoTagsM4A(TMP4):
     original = os.path.join("tests", "data", "no-tags.m4a")
 
     def test_no_tags(self):
         self.failUnless(self.audio.tags is None)
 
-add(TMP4NoTags)
+add(TMP4NoTagsM4A)
+
+class TMP4NoTags3G2(TMP4):
+    original = os.path.join("tests", "data", "no-tags.3g2")
+
+    def test_no_tags(self):
+        self.failUnless(self.audio.tags is None)
+
+    def test_sample_rate(self):
+        self.failUnlessEqual(self.audio.info.sample_rate, 22050)
+
+    def test_bitrate(self):
+        self.failUnlessEqual(self.audio.info.bitrate, 32000)
+
+    def test_length(self):
+        self.failUnlessAlmostEqual(15, self.audio.info.length, 1)
+
+add(TMP4NoTags3G2)
 
 NOTFOUND = os.system("tools/notarealprogram 2> %s" % devnull)
 
