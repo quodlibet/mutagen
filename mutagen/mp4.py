@@ -18,9 +18,6 @@ http://www.geocities.com/xhelmboyx/quicktime/formats/mp4-layout.txt,
 http://standards.iso.org/ittf/PubliclyAvailableStandards/c041828_ISO_IEC_14496-12_2005(E).zip,
 and http://wiki.multimedia.cx/index.php?title=Apple_QuickTime were all
 consulted.
-
-This module does not support 64 bit atom sizes, and so will not
-work on metadata over 4GB.
 """
 
 import struct
@@ -76,7 +73,7 @@ class Atom(object):
         self.offset = fileobj.tell()
         self.length, self.name = struct.unpack(">I4s", fileobj.read(8))
         if self.length == 1:
-            raise error("64 bit atom sizes are not supported")
+            self.length, = struct.unpack(">Q", fileobj.read(8))
         elif self.length < 8:
             return
 

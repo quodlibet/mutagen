@@ -20,8 +20,9 @@ class TAtom(TestCase):
         self.failUnlessRaises(KeyError, atom.__getitem__, "test")
 
     def test_length_1(self):
-        fileobj = StringIO("\x00\x00\x00\x01atom" + "\x00" * 8)
-        self.failUnlessRaises(IOError, Atom, fileobj)
+        fileobj = StringIO("\x00\x00\x00\x01atom"
+                           "\x00\x00\x00\x00\x00\x00\x00\x08" + "\x00" * 8)
+        self.failUnlessEqual(Atom(fileobj).length, 8)
 
     def test_render_too_big(self):
         class TooBig(str):
@@ -145,6 +146,12 @@ class TMP4Tags(TestCase):
         covr = Atom.render("covr", data)
         self.failUnlessRaises(MP4MetadataError, self.wrap_ilst, covr)
 
+    def test_covr_blank_format(self):
+        data = Atom.render("data", "\x00\x00\x00\x00" + "\x00" * 4 + "whee")
+        covr = Atom.render("covr", data)
+        tags = self.wrap_ilst(covr)
+        self.failUnlessEqual(MP4Cover.FORMAT_JPEG, tags["covr"][0].format)
+
     def test_render_bool(self):
         self.failUnlessEqual(MP4Tags()._MP4Tags__render_bool('pgap', True),
                              "\x00\x00\x00\x19pgap\x00\x00\x00\x11data"
@@ -216,6 +223,11 @@ class TMP4(TestCase):
                 devnull, devnull))
         self.failIf(value and value != NOTFOUND)
 
+    def test_score(self):
+        fileobj = file(self.filename)
+        header = fileobj.read(128)
+        self.failUnless(MP4.score(self.filename, fileobj, header))
+
     def test_channels(self):
         self.failUnlessEqual(self.audio.info.channels, 2)
 
@@ -231,12 +243,12 @@ class TMP4(TestCase):
     def test_length(self):
         self.failUnlessAlmostEqual(3.7, self.audio.info.length, 1)
 
-    def set_key(self, key, value):
+    def set_key(self, key, value, result=None):
         self.audio[key] = value
         self.audio.save()
         audio = MP4(self.audio.filename)
         self.failUnless(key in audio)
-        self.failUnlessEqual(audio[key], value)
+        self.failUnlessEqual(audio[key], result or value)
         self.faad()
 
     def test_save_text(self):
@@ -247,6 +259,9 @@ class TMP4(TestCase):
 
     def test_freeform(self):
         self.set_key('----:net.sacredchao.Mutagen:test key', ["whee"])
+
+    def test_freeform_2(self):
+        self.set_key('----:net.sacredchao.Mutagen:test key', "whee", ["whee"])
 
     def test_freeforms(self):
         self.set_key('----:net.sacredchao.Mutagen:test key', ["whee", "uhh"])
@@ -313,11 +328,15 @@ class TMP4(TestCase):
         self.set_key('catg', ['falling-star-episode-1'])
 
     def test_pprint(self):
-        self.audio.pprint()
+        self.failUnless(self.audio.pprint())
 
     def test_pprint_binary(self):
         self.audio["covr"] = "\x00\xa9\garbage"
-        self.audio.pprint()
+        self.failUnless(self.audio.pprint())
+
+    def test_pprint_pair(self):
+        self.audio["cpil"] = (1, 10)
+        self.failUnless("cpil=(1, 10)" in self.audio.pprint())
 
     def test_delete(self):
         self.audio.delete()
@@ -338,15 +357,23 @@ class TMP4(TestCase):
         fileobj = file(filename, 'rb')
         atoms = Atoms(fileobj)
         moov = atoms['moov']
+        samples = []
         for atom in moov.findall('stco', True):
             fileobj.seek(atom.offset + 12)
             data = fileobj.read(atom.length - 12)
             fmt = ">%dI" % cdata.uint_be(data[:4])
             offsets = struct.unpack(fmt, data[4:])
-            samples = []
             for offset in offsets:
                 fileobj.seek(offset)
-                samples.append(fileobj.read(4))
+                samples.append(fileobj.read(8))
+        for atom in moov.findall('co64', True):
+            fileobj.seek(atom.offset + 12)
+            data = fileobj.read(atom.length - 12)
+            fmt = ">%dQ" % cdata.uint_be(data[:4])
+            offsets = struct.unpack(fmt, data[4:])
+            for offset in offsets:
+                fileobj.seek(offset)
+                samples.append(fileobj.read(8))
         try:
             for atom in atoms["moof"].findall('tfhd', True):
                 data = fileobj.read(atom.length - 9)
@@ -354,7 +381,7 @@ class TMP4(TestCase):
                 if flags & 1:
                     offset = cdata.ulonglong_be(data[7:15])
                     fileobj.seek(offset)
-                    samples.append(fileobj.read(4))
+                    samples.append(fileobj.read(8))
         except KeyError:
             pass
         fileobj.close()
@@ -379,6 +406,10 @@ class TMP4(TestCase):
     def test_update_offsets_3(self):
         self.__test_update_offsets(
             os.path.join("tests", "data", "no-tags.3g2"))
+        
+    def test_update_offsets_4(self):
+        self.__test_update_offsets(
+            os.path.join("tests", "data", "truncated-64bit.mp4"))
         
     def tearDown(self):
         os.unlink(self.filename)
@@ -411,6 +442,20 @@ class TMP4HasTags(TMP4):
             IOError, MP4, os.path.join("tests", "data", "empty.ogg"))
 
 add(TMP4HasTags)
+
+class TMP4HasTags64Bit(TMP4HasTags):
+    original = os.path.join("tests", "data", "truncated-64bit.mp4")
+
+    def test_has_covr(self):
+        pass
+
+    def test_bitrate(self):
+        self.failUnlessEqual(self.audio.info.bitrate, 128000)
+
+    def test_length(self):
+        self.failUnlessAlmostEqual(0.325, self.audio.info.length, 3)
+
+add(TMP4HasTags64Bit)
 
 class TMP4NoTagsM4A(TMP4):
     original = os.path.join("tests", "data", "no-tags.m4a")
