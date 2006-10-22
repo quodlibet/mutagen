@@ -10,7 +10,7 @@ from mutagen.apev2 import APEv2File
 from mutagen.flac import FLAC
 from mutagen.wavpack import WavPack
 from mutagen.trueaudio import TrueAudio
-from mutagen.m4a import M4A
+from mutagen.mp4 import MP4
 from mutagen.musepack import Musepack
 from mutagen.monkeysaudio import MonkeysAudio
 from mutagen.optimfrog import OptimFROG
@@ -129,9 +129,15 @@ class TFile(TestCase):
         self.failUnless(isinstance(
             File(os.path.join("tests", "data", "silence-44-s.wv")), WavPack))
 
-    def test_m4a(self):
+    def test_mp4(self):
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "has-tags.m4a")), M4A))
+            File(os.path.join("tests", "data", "has-tags.m4a")), MP4))
+        self.failUnless(isinstance(
+            File(os.path.join("tests", "data", "no-tags.m4a")), MP4))
+        self.failUnless(isinstance(
+            File(os.path.join("tests", "data", "no-tags.3g2")), MP4))
+        self.failUnless(isinstance(
+            File(os.path.join("tests", "data", "truncated-64bit.m4a")), MP4))
 
     def test_optimfrog(self):
         self.failUnless(isinstance(
