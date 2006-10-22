@@ -32,7 +32,7 @@ class TTrueAudio(TestCase):
         self.failIf(self.audio.tags)
 
     def test_pprint(self):
-        self.audio.pprint()
+        self.failUnless(self.audio.pprint())
 
     def test_save_reload(self):
         try:
