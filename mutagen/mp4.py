@@ -274,9 +274,15 @@ class MP4Tags(Metadata):
         finally:
             fileobj.close()
 
+    def __pad_ilst(self, data, length=None):
+        if length is None:
+            length = ((len(data) + 1023) & ~1023) - len(data)
+        return Atom.render("free", "\x00" * length)
+
     def __save_new(self, fileobj, atoms, ilst):
         hdlr = Atom.render("hdlr", "\x00" * 8 + "mdirappl" + "\x00" * 9)
-        meta = Atom.render("meta", "\x00\x00\x00\x00" + hdlr + ilst)
+        meta = Atom.render(
+            "meta", "\x00\x00\x00\x00" + hdlr + ilst + self.__pad_ilst(ilst))
         try:
             path = atoms.path("moov", "udta")
         except KeyError:
@@ -293,13 +299,35 @@ class MP4Tags(Metadata):
     def __save_existing(self, fileobj, atoms, path, data):
         # Replace the old ilst atom.
         ilst = path.pop()
-        delta = len(data) - ilst.length
         offset = ilst.offset
-        fileobj.seek(offset)
-        if delta > 0:
+        length = ilst.length
+
+        # Check for padding "free" atoms
+        meta = path[-1]
+        index = meta.children.index(ilst)
+        try:
+            prev = meta.children[index-1]
+            if prev.name == "free":
+                offset = prev.offset
+                length += prev.length
+        except IndexError:
+            pass
+        try:
+            next = meta.children[index+1]
+            if next.name == "free":
+                length += next.length
+        except IndexError:
+            pass
+
+        delta = len(data) - length
+        if delta > 0 or (delta < 0 and delta > -8):
+            data += self.__pad_ilst(data)
+            delta = len(data) - length
             insert_bytes(fileobj, delta, offset)
         elif delta < 0:
-            delete_bytes(fileobj, -delta, offset)
+            data += self.__pad_ilst(data, -delta - 8)
+            delta = 0
+
         fileobj.seek(offset)
         fileobj.write(data)
         self.__update_parents(fileobj, path, delta)

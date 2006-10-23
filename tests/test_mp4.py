@@ -243,6 +243,54 @@ class TMP4(TestCase):
     def test_length(self):
         self.failUnlessAlmostEqual(3.7, self.audio.info.length, 1)
 
+    def test_padding(self):
+        self.audio["\xa9nam"] = u"wheeee" * 10
+        self.audio.save()
+        size1 = os.path.getsize(self.audio.filename)
+        audio = MP4(self.audio.filename)
+        self.audio["\xa9nam"] = u"wheeee" * 11
+        self.audio.save()
+        size2 = os.path.getsize(self.audio.filename)
+        self.failUnless(size1, size2)
+
+    def test_padding_2(self):
+        self.audio["\xa9nam"] = u"wheeee" * 10
+        self.audio.save()
+        # Reorder "free" and "ilst" atoms
+        fileobj = file(self.audio.filename, "rb+")
+        atoms = Atoms(fileobj)
+        meta = atoms["moov", "udta", "meta"]
+        meta_length1 = meta.length
+        ilst = meta["ilst",]
+        free = meta["free",]
+        self.failUnlessEqual(ilst.offset + ilst.length, free.offset)
+        fileobj.seek(ilst.offset)
+        ilst_data = fileobj.read(ilst.length)
+        fileobj.seek(free.offset)
+        free_data = fileobj.read(free.length)
+        fileobj.seek(ilst.offset)
+        fileobj.write(free_data + ilst_data)
+        fileobj.close()
+        fileobj = file(self.audio.filename, "rb+")
+        atoms = Atoms(fileobj)
+        meta = atoms["moov", "udta", "meta"]
+        ilst = meta["ilst",]
+        free = meta["free",]
+        self.failUnlessEqual(free.offset + free.length, ilst.offset)
+        fileobj.close()
+        # Save the file
+        self.audio["\xa9nam"] = u"wheeee" * 11
+        self.audio.save()
+        # Check the order of "free" and "ilst" atoms
+        fileobj = file(self.audio.filename, "rb+")
+        atoms = Atoms(fileobj)
+        fileobj.close()
+        meta = atoms["moov", "udta", "meta"]
+        ilst = meta["ilst",]
+        free = meta["free",]
+        self.failUnlessEqual(meta.length, meta_length1)
+        self.failUnlessEqual(ilst.offset + ilst.length, free.offset)
+
     def set_key(self, key, value, result=None):
         self.audio[key] = value
         self.audio.save()
