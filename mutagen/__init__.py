@@ -165,12 +165,12 @@ def File(filename, options=None):
         from mutagen.oggvorbis import OggVorbis
         from mutagen.trueaudio import TrueAudio
         from mutagen.wavpack import WavPack
-        from mutagen.m4a import M4A
+        from mutagen.mp4 import MP4
         from mutagen.musepack import Musepack
         from mutagen.monkeysaudio import MonkeysAudio
         from mutagen.optimfrog import OptimFROG
         options = [MP3, TrueAudio, OggTheora, OggSpeex, OggVorbis, OggFLAC,
-                   FLAC, APEv2File, M4A, ID3FileType, WavPack, Musepack,
+                   FLAC, APEv2File, MP4, ID3FileType, WavPack, Musepack,
                    MonkeysAudio, OptimFROG]
 
     if not options:

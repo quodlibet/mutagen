@@ -137,7 +137,7 @@ class TFile(TestCase):
         self.failUnless(isinstance(
             File(os.path.join("tests", "data", "no-tags.3g2")), MP4))
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "truncated-64bit.m4a")), MP4))
+            File(os.path.join("tests", "data", "truncated-64bit.mp4")), MP4))
 
     def test_optimfrog(self):
         self.failUnless(isinstance(
