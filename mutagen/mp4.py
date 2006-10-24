@@ -543,7 +543,7 @@ class MP4Info(object):
     bits_per_sample = 0
 
     def __init__(self, atoms, fileobj):
-        for trak in atoms["moov"].findall("trak"):
+        for trak in list(atoms["moov"].findall("trak")):
             hdlr = trak["mdia", "hdlr"]
             fileobj.seek(hdlr.offset)
             data = fileobj.read(hdlr.length)
