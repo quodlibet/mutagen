@@ -211,7 +211,7 @@ add(TMP4Tags)
 
 class TMP4(TestCase):
     def setUp(self):
-        fd, self.filename = mkstemp(suffix='m4a')
+        fd, self.filename = mkstemp(suffix='.m4a')
         os.close(fd)
         shutil.copy(self.original, self.filename)
         self.audio = MP4(self.filename)
@@ -435,29 +435,13 @@ class TMP4(TestCase):
         fileobj.close()
         return samples
 
-    def __test_update_offsets(self, filename):
-        aa = self.__read_offsets(filename)
+    def test_update_offsets(self):
+        aa = self.__read_offsets(self.original)
         self.audio["\xa9nam"] = "wheeeeeeee"
         self.audio.save()
-        bb = self.__read_offsets(filename)
+        bb = self.__read_offsets(self.filename)
         for a, b in zip(aa, bb):
             self.failUnlessEqual(a, b)
-
-    def test_update_offsets_1(self):
-        self.__test_update_offsets(
-            os.path.join("tests", "data", "has-tags.m4a"))
-        
-    def test_update_offsets_2(self):
-        self.__test_update_offsets(
-            os.path.join("tests", "data", "no-tags.m4a"))
-        
-    def test_update_offsets_3(self):
-        self.__test_update_offsets(
-            os.path.join("tests", "data", "no-tags.3g2"))
-        
-    def test_update_offsets_4(self):
-        self.__test_update_offsets(
-            os.path.join("tests", "data", "truncated-64bit.mp4"))
         
     def tearDown(self):
         os.unlink(self.filename)
