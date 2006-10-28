@@ -20,6 +20,11 @@ class TMP3(TestCase):
         self.mp3 = MP3(self.filename)
         self.mp3_2 = MP3(self.silence_nov2)
 
+    def test_mode(self):
+        from mutagen.mp3 import JOINTSTEREO
+        self.failUnlessEqual(self.mp3.info.mode, JOINTSTEREO)
+        self.failUnlessEqual(self.mp3_2.info.mode, JOINTSTEREO)
+
     def test_id3(self):
         self.failUnlessEqual(self.mp3.tags, ID3(self.silence))
         self.failUnlessEqual(self.mp3_2.tags, ID3(self.silence_nov2))

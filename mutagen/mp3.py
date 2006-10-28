@@ -16,6 +16,9 @@ class error(RuntimeError): pass
 class HeaderNotFoundError(error, IOError): pass
 class InvalidMPEGHeader(error, IOError): pass
 
+# Mode values.
+STEREO, JOINTSTEREO, DUALCHANNEL, MONO = range(4)
+
 class MPEGInfo(object):
     """MPEG audio stream information
 
@@ -121,7 +124,7 @@ class MPEGInfo(object):
                 sample_rate = (frame_data >> 10) & 0x3
                 padding = (frame_data >> 9) & 0x1
                 private = (frame_data >> 8) & 0x1
-                mode = (frame_data >> 6) & 0x3
+                self.mode = (frame_data >> 6) & 0x3
                 mode_extension = (frame_data >> 4) & 0x3
                 copyright = (frame_data >> 3) & 0x1
                 original = (frame_data >> 2) & 0x1
