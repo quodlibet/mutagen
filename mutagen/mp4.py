@@ -391,9 +391,9 @@ class MP4Tags(Metadata):
             yield flags, data[pos+16:pos+length]
             pos += length
     def __render_data(self, key, flags, value):
-        return Atom.render(key, "".join(
+        return Atom.render(key, "".join([
             Atom.render("data", struct.pack(">2I", flags, 0) + data)
-            for data in value))
+            for data in value]))
 
     def __parse_freeform(self, atom, data):
         length = cdata.uint_be(data[:4])
@@ -418,9 +418,9 @@ class MP4Tags(Metadata):
         name = struct.pack(">I4sI", len(name) + 12, "name", 0) + name
         if isinstance(value, basestring):
             value = [value]
-        return Atom.render("----", mean + name + "".join(
+        return Atom.render("----", mean + name + "".join([
             struct.pack(">I4s2I", len(data) + 16, "data", 1, 0) + data
-            for data in value))
+            for data in value]))
 
     def __parse_pair(self, atom, data):
         self[atom.name] = struct.unpack(">2H", data[18:22])
@@ -493,7 +493,7 @@ class MP4Tags(Metadata):
         if isinstance(value, basestring):
             value = [value]
         return self.__render_data(
-            key, flags, (text.encode('utf-8') for text in value))
+            key, flags, [text.encode('utf-8') for text in value])
 
     def delete(self, filename):
         self.clear()
@@ -519,7 +519,7 @@ class MP4Tags(Metadata):
             key = key.decode('latin1')
             if key == "covr":
                 values.append("%s=%s" % (key, ", ".join(
-                    "[%d bytes of data]" % len(data) for data in value)))
+                    ["[%d bytes of data]" % len(data) for data in value])))
             elif isinstance(value, list):
                 values.append("%s=%s" % (key, " / ".join(value)))
             else:

@@ -5,8 +5,8 @@ import struct
 from cStringIO import StringIO
 from tempfile import mkstemp
 from tests import TestCase, add
-from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
-    MP4MetadataError)
+from mutagen.mp4 import MP4, Atom, Atoms, MP4Tags, MP4Info, \
+     delete, MP4Cover, MP4MetadataError
 from mutagen._util import cdata
 try: from os.path import devnull
 except ImportError: devnull = "/dev/null"

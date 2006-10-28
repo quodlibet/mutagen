@@ -45,3 +45,7 @@ above print "False", as the keys are normal strings.
 Still prints "True", however, as __getitem__, __delitem__, and
 __setitem__ (and so any operations on the dict itself) remain
 case-insensitive.
+
+M4A:
+----
+mutagen.m4a is deprecated. You should use mutagen.mp4 instead.

@@ -36,6 +36,7 @@ class MPEGInfo(object):
     Useless attributes:
     version -- MPEG version (1, 2, 2.5)
     layer -- 1, 2, or 3
+    mode -- One of STEREO, JOINTSTEREO, DUALCHANNEL, or MONO (0-3)
     protected -- whether or not the file is "protected"
     padding -- whether or not audio frames are padded
     sample_rate -- audio sample rate, in Hz

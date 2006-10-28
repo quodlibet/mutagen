@@ -4,8 +4,12 @@ import shutil
 from cStringIO import StringIO
 from tempfile import mkstemp
 from tests import TestCase, add
-from mutagen.m4a import (M4A, Atom, Atoms, M4ATags, M4AInfo, delete, M4ACover,
-    M4AMetadataError)
+
+import warnings
+warnings.simplefilter("ignore", DeprecationWarning)
+from mutagen.m4a import M4A, Atom, Atoms, M4ATags, M4AInfo, \
+     delete, M4ACover, M4AMetadataError
+
 try: from os.path import devnull
 except ImportError: devnull = "/dev/null"
 

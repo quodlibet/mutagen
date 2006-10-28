@@ -36,6 +36,10 @@ class M4AMetadataError(error): pass
 class M4AStreamInfoError(error): pass
 class M4AMetadataValueError(ValueError, M4AMetadataError): pass
 
+import warnings
+warnings.warn(
+    "mutagen.m4a is deprecated; use mutagen.mp4 instead.", DeprecationWarning)
+
 # This is not an exhaustive list of container atoms, but just the
 # ones this module needs to peek inside.
 _CONTAINERS = ["moov", "udta", "trak", "mdia", "meta", "ilst",
