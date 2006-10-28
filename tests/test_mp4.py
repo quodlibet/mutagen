@@ -487,6 +487,10 @@ class TMP4HasTags64Bit(TMP4HasTags):
     def test_length(self):
         self.failUnlessAlmostEqual(0.325, self.audio.info.length, 3)
 
+    def faad(self):
+        # This is only half a file, so FAAD segfaults. Can't test. :(
+        pass
+
 add(TMP4HasTags64Bit)
 
 class TMP4NoTagsM4A(TMP4):
