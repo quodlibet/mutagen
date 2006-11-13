@@ -291,13 +291,14 @@ class TMP4(TestCase):
         self.failUnlessEqual(meta.length, meta_length1)
         self.failUnlessEqual(ilst.offset + ilst.length, free.offset)
 
-    def set_key(self, key, value, result=None):
+    def set_key(self, key, value, result=None, faad=True):
         self.audio[key] = value
         self.audio.save()
         audio = MP4(self.audio.filename)
         self.failUnless(key in audio)
         self.failUnlessEqual(audio[key], result or value)
-        self.faad()
+        if faad:
+            self.faad()
 
     def test_save_text(self):
         self.set_key('\xa9nam', [u"Some test name"])
@@ -337,10 +338,15 @@ class TMP4(TestCase):
         self.failUnlessRaises(ValueError, self.set_key, 'disk', (1, 2, 3,))
 
     def test_tempo(self):
-        self.set_key('tmpo', 150)
+        self.set_key('tmpo', [150])
+        self.set_key('tmpo', [])
+
+    def test_tempos(self):
+        self.set_key('tmpo', [160, 200], faad=False)
 
     def test_tempo_invalid(self):
-        self.failUnlessRaises(ValueError, self.set_key, 'tmpo', 100000)
+        for badvalue in [[10000000], [-1], 10, "foo"]:
+            self.failUnlessRaises(ValueError, self.set_key, 'tmpo', badvalue)
 
     def test_compilation(self):
         self.set_key('cpil', True)

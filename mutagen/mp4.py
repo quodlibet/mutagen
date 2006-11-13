@@ -448,12 +448,23 @@ class MP4Tags(Metadata):
             except IndexError: pass
 
     def __parse_tempo(self, atom, data):
-        self[atom.name] = cdata.short_be(data[16:18])
+        self[atom.name] = [cdata.ushort_be(value[1]) for
+                           value in self.__parse_data(atom, data)]
+
     def __render_tempo(self, key, value):
-        if 0 <= value < 1 << 16:
-            return self.__render_data(key, 0x15, [cdata.to_ushort_be(value)])
-        else:
-            raise MP4MetadataValueError("invalid short integer %r" % value)
+        try:
+            if len(value) == 0:
+                return self.__render_data(key, 0x15, "")
+
+            if min(value) < 0 or max(value) >= 2**16:
+                raise MP4MetadataValueError(
+                    "invalid 16 bit integers: %r" % value)
+        except TypeError:
+            raise MP4MetadataValueError(
+                "tmpo must be a list of 16 bit integers")
+
+        values = map(cdata.to_ushort_be, value)
+        return self.__render_data(key, 0x15, values)
 
     def __parse_bool(self, atom, data):
         try: self[atom.name] = bool(ord(data[16:17]))

@@ -49,3 +49,10 @@ case-insensitive.
 M4A:
 ----
 mutagen.m4a is deprecated. You should use mutagen.mp4 instead.
+
+MP4:
+----
+There is no MPEG-4 iTunes metadata standard. Mutagen's features are
+known to lead to problems in other implementations. For example, FAAD
+will crash when reading a file with multiple "tmpo" atoms. iTunes
+itself is our main compatibility target.
