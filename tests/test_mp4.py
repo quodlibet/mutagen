@@ -316,26 +316,32 @@ class TMP4(TestCase):
         self.set_key('----:net.sacredchao.Mutagen:test key', ["whee", "uhh"])
 
     def test_tracknumber(self):
-        self.set_key('trkn', (1, 10))
+        self.set_key('trkn', [(1, 10)])
+        self.set_key('trkn', [(1, 10), (5, 20)], faad=False)
+        self.set_key('trkn', [])
 
     def test_disk(self):
-        self.set_key('disk', (18, 0))
+        self.set_key('disk', [(18, 0)])
+        self.set_key('disk', [(1, 10), (5, 20)], faad=False)
+        self.set_key('disk', [])
 
     def test_tracknumber_too_small(self):
-        self.failUnlessRaises(ValueError, self.set_key, 'trkn', (-1, 0))
-        self.failUnlessRaises(ValueError, self.set_key, 'trkn', (2**18, 1))
+        self.failUnlessRaises(ValueError, self.set_key, 'trkn', [(-1, 0)])
+        self.failUnlessRaises(ValueError, self.set_key, 'trkn', [(2**18, 1)])
 
     def test_disk_too_small(self):
-        self.failUnlessRaises(ValueError, self.set_key, 'disk', (-1, 0))
-        self.failUnlessRaises(ValueError, self.set_key, 'disk', (2**18, 1))
+        self.failUnlessRaises(ValueError, self.set_key, 'disk', [(-1, 0)])
+        self.failUnlessRaises(ValueError, self.set_key, 'disk', [(2**18, 1)])
 
     def test_tracknumber_wrong_size(self):
         self.failUnlessRaises(ValueError, self.set_key, 'trkn', (1,))
         self.failUnlessRaises(ValueError, self.set_key, 'trkn', (1, 2, 3,))
+        self.failUnlessRaises(ValueError, self.set_key, 'trkn', [(1,)])
+        self.failUnlessRaises(ValueError, self.set_key, 'trkn', [(1, 2, 3,)])
 
     def test_disk_wrong_size(self):
-        self.failUnlessRaises(ValueError, self.set_key, 'disk', (1,))
-        self.failUnlessRaises(ValueError, self.set_key, 'disk', (1, 2, 3,))
+        self.failUnlessRaises(ValueError, self.set_key, 'disk', [(1,)])
+        self.failUnlessRaises(ValueError, self.set_key, 'disk', [(1, 2, 3,)])
 
     def test_tempo(self):
         self.set_key('tmpo', [150])

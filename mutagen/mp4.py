@@ -181,7 +181,7 @@ class MP4Tags(Metadata):
     keys. Values are usually unicode strings, but some atoms have a
     special structure:
 
-    Text values:
+    Text values (multiple values per key are supported):
         '\xa9nam' -- track title
         '\xa9alb' -- album
         '\xa9art' -- artist
@@ -204,10 +204,10 @@ class MP4Tags(Metadata):
         'pgap' -- part of a gapless album
         'pcst' -- podcast (iTunes reads this only on import)
         
-    Tuples of ints:
+    Tuples of ints (multiple values per key are supported):
         'trkn' -- track number, total tracks
         'disk' -- disc number, total discs
-        
+
     Others:
         'tmpo' -- tempo/BPM, 16 bit int
         'covr' -- cover artwork, list of MP4Cover objects (which are
@@ -217,7 +217,8 @@ class MP4Tags(Metadata):
     The freeform '----' frames use a key in the format '----:mean:name'
     where 'mean' is usually 'com.apple.iTunes' and 'name' is a unique
     identifier for this frame. The value is a str, but is probably
-    text that can be decoded as UTF-8.
+    text that can be decoded as UTF-8. Multiple values per key are
+    supported.
 
     MP4 tag data cannot exist outside of the structure of an MP4 file,
     so this class should not be manually instantiated.
@@ -258,7 +259,10 @@ class MP4Tags(Metadata):
         items.sort(self.__key_sort)
         for key, value in items:
             info = self.__atoms.get(key[:4], (None, MP4Tags.__render_text))
-            values.append(info[1](self, key, value, *info[2:]))
+            try:
+                values.append(info[1](self, key, value, *info[2:]))
+            except (TypeError, ValueError), s:
+                raise MP4MetadataValueError, s, sys.exc_info()[2]
         data = Atom.render("ilst", "".join(values))
 
         # Find the old atoms.
@@ -423,22 +427,27 @@ class MP4Tags(Metadata):
             for data in value]))
 
     def __parse_pair(self, atom, data):
-        self[atom.name] = struct.unpack(">2H", data[18:22])
+        self[atom.name] = [struct.unpack(">2H", data[2:6]) for
+                           flags, data in self.__parse_data(atom, data)]
     def __render_pair(self, key, value):
-        track, total = value
-        if 0 <= track < 1 << 16 and 0 <= total < 1 << 16:
-            data = struct.pack(">4H", 0, track, total, 0)
-            return self.__render_data(key, 0, [data])
-        else:
-            raise MP4MetadataValueError("invalid numeric pair %r" % (value,))
+        data = []
+        for (track, total) in value:
+            if 0 <= track < 1 << 16 and 0 <= total < 1 << 16:
+                data.append(struct.pack(">4H", 0, track, total, 0))
+            else:
+                raise MP4MetadataValueError(
+                    "invalid numeric pair %r" % ((track, total),))
+        return self.__render_data(key, 0, data)
 
     def __render_pair_no_trailing(self, key, value):
-        track, total = value
-        if 0 <= track < 1 << 16 and 0 <= total < 1 << 16:
-            data = struct.pack(">3H", 0, track, total)
-            return self.__render_data(key, 0, [data])
-        else:
-            raise MP4MetadataValueError("invalid numeric pair %r" % (value,))
+        data = []
+        for (track, total) in value:
+            if 0 <= track < 1 << 16 and 0 <= total < 1 << 16:
+                data.append(struct.pack(">3H", 0, track, total))
+            else:
+                raise MP4MetadataValueError(
+                    "invalid numeric pair %r" % ((track, total),))
+        return self.__render_data(key, 0, data)
 
     def __parse_genre(self, atom, data):
         # Translate to a freeform genre.
