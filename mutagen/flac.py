@@ -488,7 +488,15 @@ class Padding(MetadataBlock):
         return "<%s (%d bytes)>" % (type(self).__name__, self.length)
 
 class FLAC(FileType):
-    """A FLAC audio file."""
+    """A FLAC audio file.
+    
+    Attributes:
+    info -- stream information (length, bitrate, sample rate)
+    tags -- metadata tags, if any
+    cuesheet -- CueSheet object, if any
+    seektable -- SeekTable object, if any
+    pictures -- list of embedded pictures
+    """
 
     METADATA_BLOCKS = [StreamInfo, Padding, None, SeekTable, VCFLACDict,
         CueSheet, Picture]
@@ -568,9 +576,11 @@ class FLAC(FileType):
     info = property(lambda s: s.metadata_blocks[0])
 
     def add_picture(self, picture):
+        """Add a new picture to the file."""
         self.metadata_blocks.append(picture)
 
     def clear_pictures(self):
+        """Delete all pictures from the file."""
         self.metadata_blocks = filter(lambda b: b.code != Picture.code,
                                       self.metadata_blocks)
 
