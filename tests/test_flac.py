@@ -1,8 +1,9 @@
 
 import shutil, os
 from tests import TestCase, add
-from mutagen.flac import to_int_be, Padding, VCFLACDict, MetadataBlock
-from mutagen.flac import StreamInfo, SeekTable, CueSheet, FLAC, delete
+from mutagen.flac import (to_int_be, Padding, VCFLACDict, MetadataBlock,
+                          StreamInfo, SeekTable, CueSheet, FLAC, delete,
+                          Picture)
 from tests.test__vorbis import TVCommentDict, VComment
 try: from os.path import devnull
 except ImportError: devnull = "/dev/null"
@@ -152,6 +153,31 @@ class TCueSheet(TestCase):
         self.failUnlessEqual(CueSheet(self.cs.write()), self.cs)
 add(TCueSheet)
 
+class TPicture(TestCase):
+    SAMPLE = os.path.join("tests", "data", "silence-44-s.flac")
+    uses_mmap = False
+
+    def setUp(self):
+        self.flac = FLAC(self.SAMPLE)
+        self.p = self.flac.pictures[0]
+    def test_count(self):
+        self.failUnlessEqual(len(self.flac.pictures), 1)
+    def test_picture(self):
+        self.failUnlessEqual(self.p.width, 1)
+        self.failUnlessEqual(self.p.height, 1)
+        self.failUnlessEqual(self.p.depth, 24)
+        self.failUnlessEqual(self.p.colors, 0)
+        self.failUnlessEqual(self.p.mime, u'image/png')
+        self.failUnlessEqual(self.p.desc, u'A pixel.')
+        self.failUnlessEqual(self.p.type, 3)
+        self.failUnlessEqual(len(self.p.data), 150)
+    def test_eq(self): self.failUnlessEqual(self.p, self.p)
+    def test_neq(self): self.failIfEqual(self.p, 12)
+    def test_repr(self): repr(self.p)
+    def test_roundtrip(self):
+        self.failUnlessEqual(Picture(self.p.write()), self.p)
+add(TPicture)
+
 class TPadding(TestCase):
     uses_mmap = False
 
@@ -258,9 +284,9 @@ class TFLAC(TestCase):
     def test_load_unknown_block(self):
         self.test_save_unknown_block()
         flac = FLAC(self.NEW)
-        self.failUnlessEqual(len(flac.metadata_blocks), 6)
-        self.failUnlessEqual(flac.metadata_blocks[4].code, 99)
-        self.failUnlessEqual(flac.metadata_blocks[4].data, "test block data")
+        self.failUnlessEqual(len(flac.metadata_blocks), 7)
+        self.failUnlessEqual(flac.metadata_blocks[5].code, 99)
+        self.failUnlessEqual(flac.metadata_blocks[5].data, "test block data")
 
     def test_two_vorbis_blocks(self):
         self.flac.metadata_blocks.append(self.flac.metadata_blocks[1])
@@ -293,6 +319,26 @@ class TFLAC(TestCase):
 
     def test_cuesheet(self):
         self.failUnless(self.flac.cuesheet)
+
+    def test_pictures(self):
+        self.failUnless(self.flac.pictures)
+
+    def test_add_picture(self):
+        f = FLAC(self.NEW)
+        c = len(f.pictures)
+        f.add_picture(Picture())
+        f.save()
+        f = FLAC(self.NEW)
+        self.failUnlessEqual(len(f.pictures), c + 1)
+
+    def test_clear_pictures(self):
+        f = FLAC(self.NEW)
+        c1 = len(f.pictures)
+        c2 = len(f.metadata_blocks)
+        f.clear_pictures()
+        f.save()
+        f = FLAC(self.NEW)
+        self.failUnlessEqual(len(f.metadata_blocks), c2 - c1)
 
     def tearDown(self):
         os.unlink(self.NEW)

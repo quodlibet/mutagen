@@ -403,6 +403,71 @@ class CueSheet(MetadataBlock):
             type(self).__name__, self.media_catalog_number,
             self.lead_in_samples, self.compact_disc, self.tracks)
 
+class Picture(MetadataBlock):
+    """Read and write FLAC embed pictures.
+
+    Attributes:
+    type -- picture type (same as types for ID3 APIC frames)
+    mime -- MIME type of the picture
+    desc -- picture's description
+    width -- width in pixels
+    height -- height in pixels
+    depth -- color depth in bits-per-pixel
+    colors -- number of colors for indexed palettes (like GIF),
+              0 for non-indexed
+    data -- picture data
+    """
+
+    code = 6
+
+    def __init__(self, data=None):
+        self.type = 0
+        self.mime = u''
+        self.desc = u''
+        self.width = 0
+        self.height = 0
+        self.depth = 0
+        self.colors = 0
+        self.data = ''
+        super(Picture, self).__init__(data)
+
+    def __eq__(self, other):
+        try: return (self.type == other.type and
+                     self.mime == other.mime and
+                     self.desc == other.desc and
+                     self.width == other.width and
+                     self.height == other.height and
+                     self.depth == other.depth and
+                     self.colors == other.colors and
+                     self.data == other.data)
+        except (AttributeError, TypeError): return False
+
+    def load(self, data):
+        self.type, length = struct.unpack('>2I', data.read(8))
+        self.mime = data.read(length).decode('UTF-8', 'replace')
+        length, = struct.unpack('>I', data.read(4))
+        self.desc = data.read(length).decode('UTF-8', 'replace')
+        (self.width, self.height, self.depth,
+         self.colors, length) = struct.unpack('>5I', data.read(20))
+        self.data = data.read(length)
+
+    def write(self):
+        f = StringIO()
+        mime = self.mime.encode('UTF-8')
+        f.write(struct.pack('>2I', self.type, len(mime)))
+        f.write(mime)
+        desc = self.desc.encode('UTF-8')
+        f.write(struct.pack('>I', len(desc)))
+        f.write(desc)
+        f.write(struct.pack('>5I', self.width, self.height, self.depth,
+                            self.colors, len(self.data)))
+        f.write(self.data)
+        return f.getvalue()
+
+    def __repr__(self):
+        return "<%s '%s' (%d bytes)>" % (type(self).__name__, self.mime,
+                                         len(self.data))
+
 class Padding(MetadataBlock):
     """Empty padding space for metadata blocks.
 
@@ -426,7 +491,7 @@ class FLAC(FileType):
     """A FLAC audio file."""
 
     METADATA_BLOCKS = [StreamInfo, Padding, None, SeekTable, VCFLACDict,
-        CueSheet]
+        CueSheet, Picture]
     """Known metadata block types, indexed by ID."""
 
     def score(filename, fileobj, header):
@@ -501,6 +566,17 @@ class FLAC(FileType):
             raise FLACNoHeaderError("Stream info block not found")
 
     info = property(lambda s: s.metadata_blocks[0])
+
+    def add_picture(self, picture):
+        self.metadata_blocks.append(picture)
+
+    def clear_pictures(self):
+        self.metadata_blocks = filter(lambda b: b.code != Picture.code,
+                                      self.metadata_blocks)
+
+    def __get_pictures(self):
+        return filter(lambda b: b.code == Picture.code, self.metadata_blocks)
+    pictures = property(__get_pictures, doc="List of embedded pictures")
 
     def save(self, filename=None):
         """Save metadata blocks to a file.

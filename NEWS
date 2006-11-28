@@ -3,6 +3,7 @@
    * OptimFROG support.
    * New mutagen.mp4 module with support for multiple data fields per atom
      and more compatible tag saving implementation.
+   * Support for embedded pictures in FLAC files (new in FLAC 1.1.3).
  * mutagen.m4a is deprecated in favor of mutagen.mp4.
 
 1.8 - 2006.10.02
