@@ -1,9 +1,8 @@
 
 import shutil, os
 from tests import TestCase, add
-from mutagen.flac import (to_int_be, Padding, VCFLACDict, MetadataBlock,
-                          StreamInfo, SeekTable, CueSheet, FLAC, delete,
-                          Picture)
+from mutagen.flac import to_int_be, Padding, VCFLACDict, MetadataBlock
+from mutagen.flac import StreamInfo, SeekTable, CueSheet, FLAC, delete, Picture
 from tests.test__vorbis import TVCommentDict, VComment
 try: from os.path import devnull
 except ImportError: devnull = "/dev/null"
