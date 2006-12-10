@@ -1,4 +1,4 @@
-1.9
+1.9 - 2006.12.09
  * New Features:
    * OptimFROG support.
    * New mutagen.mp4 module with support for multiple data fields per atom
