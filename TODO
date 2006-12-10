@@ -7,3 +7,8 @@ mutagen.id3 needs:
 
 mutagen.apev2 needs:
  * General cleanup to fit the basic structure of the rest of Mutagen.
+
+Profile Hotspots:
+ * __determine_bpi takes 50% of TMP3,TEasyID3; BitPaddedInt takes 25%.
+ * OggPage.replace takes 40% of Ogg tests; OggPage.write takes 10%;
+   the rest is from our mmap fallback.
