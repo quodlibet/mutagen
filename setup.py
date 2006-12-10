@@ -157,6 +157,10 @@ class coverage_cmd(Command):
             count=True, trace=False,
             ignoredirs=[sys.prefix, sys.exec_prefix])
         def run_tests():
+            import mutagen
+            import mutagen._util
+            reload(mutagen._util)
+            reload(mutagen)
             test_cmd(self.distribution).run()
         tracer.runfunc(run_tests)
         results = tracer.results()
