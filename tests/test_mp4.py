@@ -64,6 +64,10 @@ class TAtoms(TestCase):
     def test_no_children(self):
         self.failUnless(self.atoms.atoms[0].children is None)
 
+    def test_extra_trailing_data(self):
+        data = StringIO(Atom.render("data", "whee") + "\x00\x00")
+        self.failUnless(Atoms(data))
+
     def test_repr(self):
         repr(self.atoms)
 add(TAtoms)

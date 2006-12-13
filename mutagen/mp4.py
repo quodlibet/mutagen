@@ -142,7 +142,7 @@ class Atoms(object):
         fileobj.seek(0, 2)
         end = fileobj.tell()
         fileobj.seek(0)
-        while fileobj.tell() < end:
+        while fileobj.tell() + 8 <= end:
             self.atoms.append(Atom(fileobj))
 
     def path(self, *names):
