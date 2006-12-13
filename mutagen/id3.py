@@ -253,6 +253,10 @@ class ID3(mutagen.Metadata):
         return BitPaddedInt
 
     def __read_frames(self, data, frames):
+        if self.version < (2,4,0) and self.f_unsynch:
+            try: data = unsynch.decode(data)
+            except ValueError: pass
+
         if (2,3,0) <= self.version:
             bpi = self.__determine_bpi(data, frames)
             while data:
@@ -291,7 +295,7 @@ class ID3(mutagen.Metadata):
                     except ID3JunkFrameError: pass
 
     def __load_framedata(self, tag, flags, framedata):
-        if self.f_unsynch or flags & 0x40:
+        if (self.version >= (2,4,0) and self.f_unsynch) or flags & 0x40:
             try: framedata = unsynch.decode(framedata)
             except ValueError: pass
             flags &= ~0x40
