@@ -140,7 +140,7 @@ class ID3Loading(TestCase):
             id3._ID3__load_framedata(Frames["TPE2"], 0, badsync), [u"\xffab"])
         id3._ID3__flags = 0x00
         self.assertEquals(id3._ID3__load_framedata(
-            Frames["TPE2"],0x40, badsync), [u"\xffab"])
+            Frames["TPE2"], 0x02, badsync), [u"\xffab"])
         tag = id3._ID3__load_framedata(Frames["TPE2"], 0, badsync)
         self.assertEquals(tag, [u"\xff", u"ab"])
 

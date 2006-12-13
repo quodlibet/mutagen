@@ -295,10 +295,6 @@ class ID3(mutagen.Metadata):
                     except ID3JunkFrameError: pass
 
     def __load_framedata(self, tag, flags, framedata):
-        if (self.version >= (2,4,0) and self.f_unsynch) or flags & 0x40:
-            try: framedata = unsynch.decode(framedata)
-            except ValueError: pass
-            flags &= ~0x40
         return tag.fromData(self, flags, framedata)
             
     f_unsynch = property(lambda s: bool(s.__flags & 0x80))
@@ -974,7 +970,7 @@ class Frame(object):
             if tflags & (Frame.FLAG24_COMPRESS | Frame.FLAG24_DATALEN):
                 usize, = unpack('>L', data[:4])
                 data = data[4:]
-            if tflags & Frame.FLAG24_UNSYNCH and not id3.f_unsynch:
+            if tflags & Frame.FLAG24_UNSYNCH or id3.f_unsynch:
                 try: data = unsynch.decode(data)
                 except ValueError, err:
                     if id3.PEDANTIC:
