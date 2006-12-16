@@ -1226,6 +1226,15 @@ class BrokenButParsed(TestCase):
         self.assertRaises(ID3BadCompressedData, TPE1.fromData, id3,
                           Frame.FLAG24_COMPRESS, '\x03abcdefg')
 
+    def test_zlib_bpi(self):
+        from mutagen.id3 import TPE1, Frame, ID3BadCompressedData
+        id3 = ID3()
+        tpe1 = TPE1(encoding=0, text="a" * (0xFFFF - 2))
+        data = id3._ID3__save_frame(tpe1)
+        datalen_size = data[4 + 4 + 2:4 + 4 + 2 + 4]
+        self.failIf(
+            max(datalen_size) >= '\x80', "data is not syncsafe: %r" % data)
+
     def test_fake_zlib_nopedantic(self):
         from mutagen.id3 import TPE1, Frame, ID3BadCompressedData
         id3 = ID3()

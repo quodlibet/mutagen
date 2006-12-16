@@ -398,7 +398,7 @@ class ID3(mutagen.Metadata):
         framedata = frame._writeData()
         usize = len(framedata)
         if usize > 2048:
-            framedata = pack('>L', usize) + framedata.encode('zlib')
+            framedata = BitPaddedInt.to_str(usize) + framedata.encode('zlib')
             flags |= Frame.FLAG24_COMPRESS | Frame.FLAG24_DATALEN
         datasize = BitPaddedInt.to_str(len(framedata), width=4)
         header = pack('>4s4sH', type(frame).__name__, datasize, flags)
@@ -968,7 +968,11 @@ class Frame(object):
 
         if (2,4,0) <= id3.version:
             if tflags & (Frame.FLAG24_COMPRESS | Frame.FLAG24_DATALEN):
-                usize, = unpack('>L', data[:4])
+                # The data length int is syncsafe in 2.4 (but not 2.3).
+                # However, we don't actually need the data length int,
+                # except to work around a QL 0.12 bug, and in that case
+                # all we need are the raw bytes.
+                datalen_bytes = data[:4]
                 data = data[4:]
             if tflags & Frame.FLAG24_UNSYNCH or id3.f_unsynch:
                 try: data = unsynch.decode(data)
@@ -982,7 +986,7 @@ class Frame(object):
                 except zlibError, err:
                     # the initial mutagen that went out with QL 0.12 did not
                     # write the 4 bytes of uncompressed size. Compensate.
-                    data = pack('>L', usize) + data
+                    data = datalen_bytes + data
                     try: data = data.decode('zlib')
                     except zlibError, err:
                         if id3.PEDANTIC:
