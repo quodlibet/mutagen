@@ -26,6 +26,7 @@ from cStringIO import StringIO
 from _vorbis import VCommentDict
 from mutagen import FileType
 from mutagen._util import insert_bytes
+from mutagen.id3 import BitPaddedInt
 
 class error(IOError): pass
 class FLACNoHeaderError(error): pass
@@ -562,9 +563,7 @@ class FLAC(FileType):
         self.filename = filename
         try:
             fileobj = file(filename, "rb")
-            if fileobj.read(4) != "fLaC":
-                raise FLACNoHeaderError(
-                    "%r is not a valid FLAC file" % filename)
+            self.__check_header(fileobj)
             while self.__read_metadata_block(fileobj): pass
         finally:
             fileobj.close()
@@ -588,7 +587,7 @@ class FLAC(FileType):
         return filter(lambda b: b.code == Picture.code, self.metadata_blocks)
     pictures = property(__get_pictures, doc="List of embedded pictures")
 
-    def save(self, filename=None):
+    def save(self, filename=None, deleteid3=False):
         """Save metadata blocks to a file.
 
         If no filename is given, the one most recently loaded is used.
@@ -602,8 +601,14 @@ class FLAC(FileType):
         self.metadata_blocks.append(Padding('\x00' * 1020))
         MetadataBlock.group_padding(self.metadata_blocks)
 
-        available = self.__find_audio_offset(f) - 4 # "fLaC"
+        header = self.__check_header(f)
+        available = self.__find_audio_offset(f) - header # "fLaC" and maybe ID3
         data = MetadataBlock.writeblocks(self.metadata_blocks)
+
+        # Delete ID3v2
+        if deleteid3 and header > 4:
+            available += header - 4
+            header = 4
 
         if len(data) > available:
             # If we have too much data, see if we can reduce padding.
@@ -623,20 +628,41 @@ class FLAC(FileType):
         if len(data) != available:
             # We couldn't reduce the padding enough.
             diff = (len(data) - available)
-            insert_bytes(f, diff, 4)
+            insert_bytes(f, diff, header)
 
-        f.seek(4)
-        f.write(data)
+        f.seek(header - 4)
+        f.write("fLaC" + data)
+
+        # Delete ID3v1
+        if deleteid3:
+            try: f.seek(-128, 2)
+            except IOError: pass
+            else:
+                if f.read(3) == "TAG":
+                    f.seek(-128, 2)
+                    f.truncate()
 
     def __find_audio_offset(self, fileobj):
-        if fileobj.read(4) != "fLaC":
-            raise FLACNoHeaderError("%r is not a FLAC file" % fileobj.name)
         byte = 0x00
         while not (byte >> 7) & 1:
             byte = ord(fileobj.read(1))
             size = to_int_be(fileobj.read(3))
             fileobj.read(size)
         return fileobj.tell()
+
+    def __check_header(self, fileobj):
+        size = 4
+        header = fileobj.read(4)
+        if header != "fLaC":
+            size = None
+            if header[:3] == "ID3":
+                size = 14 + BitPaddedInt(fileobj.read(6)[2:])
+                fileobj.seek(size - 4)
+                if fileobj.read(4) != "fLaC": size = None
+        if size is None:
+            raise FLACNoHeaderError(
+                "%r is not a valid FLAC file" % fileobj.name)
+        return size
 
 Open = FLAC
 

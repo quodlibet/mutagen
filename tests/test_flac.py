@@ -1,6 +1,7 @@
 
 import shutil, os
 from tests import TestCase, add
+from mutagen.id3 import ID3, TIT2, ID3NoHeaderError
 from mutagen.flac import to_int_be, Padding, VCFLACDict, MetadataBlock
 from mutagen.flac import StreamInfo, SeekTable, CueSheet, FLAC, delete, Picture
 from tests.test__vorbis import TVCommentDict, VComment
@@ -338,6 +339,29 @@ class TFLAC(TestCase):
         f.save()
         f = FLAC(self.NEW)
         self.failUnlessEqual(len(f.metadata_blocks), c2 - c1)
+
+    def test_ignore_id3(self):
+        id3 = ID3()
+        id3.add(TIT2(encoding=0, text='id3 title'))
+        id3.save(self.NEW)
+        f = FLAC(self.NEW)
+        f['title'] = 'vc title'
+        f.save()
+        id3 = ID3(self.NEW)
+        self.failUnlessEqual(id3['TIT2'].text, ['id3 title'])
+        f = FLAC(self.NEW)
+        self.failUnlessEqual(f['title'], ['vc title'])
+
+    def test_delete_id3(self):
+        id3 = ID3()
+        id3.add(TIT2(encoding=0, text='id3 title'))
+        id3.save(self.NEW, v1=2)
+        f = FLAC(self.NEW)
+        f['title'] = 'vc title'
+        f.save(deleteid3=True)
+        self.failUnlessRaises(ID3NoHeaderError, ID3, self.NEW)
+        f = FLAC(self.NEW)
+        self.failUnlessEqual(f['title'], ['vc title'])
 
     def tearDown(self):
         os.unlink(self.NEW)
