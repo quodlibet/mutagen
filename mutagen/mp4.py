@@ -184,7 +184,7 @@ class MP4Tags(Metadata):
     Text values (multiple values per key are supported):
         '\xa9nam' -- track title
         '\xa9alb' -- album
-        '\xa9art' -- artist
+        '\xa9ART' -- artist
         'aART' -- album artist
         '\xa9wrt' -- composer
         '\xa9day' -- year
@@ -203,7 +203,7 @@ class MP4Tags(Metadata):
         'cpil' -- part of a compilation
         'pgap' -- part of a gapless album
         'pcst' -- podcast (iTunes reads this only on import)
-        
+
     Tuples of ints (multiple values per key are supported):
         'trkn' -- track number, total tracks
         'disk' -- disc number, total discs
@@ -541,7 +541,7 @@ class MP4Tags(Metadata):
                 values.append("%s=%s" % (key, ", ".join(
                     ["[%d bytes of data]" % len(data) for data in value])))
             elif isinstance(value, list):
-                values.append("%s=%s" % (key, " / ".join(value)))
+                values.append("%s=%s" % (key, " / ".join(map(unicode, value))))
             else:
                 values.append("%s=%s" % (key, value))
         return "\n".join(values)

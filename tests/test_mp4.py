@@ -211,6 +211,12 @@ class TMP4Tags(TestCase):
         bad_freeform = Atom.render("----", "\x00" * 4 + mean + name)
         self.failUnlessRaises(MP4MetadataError, self.wrap_ilst, bad_freeform)
 
+    def test_pprint_non_text_list(self):
+        tags = MP4Tags()
+        tags["tmpo"] = [120, 121]
+        tags["trck"] = [(1, 2), (3, 4)]
+        tags.pprint()
+
 add(TMP4Tags)
 
 class TMP4(TestCase):
