@@ -626,11 +626,14 @@ class BinaryDataSpec(Spec):
     def validate(self, frame, value): return str(value)
 
 class EncodedTextSpec(Spec):
-    encodings = [ ('latin1', '\x00'), ('utf16', '\x00\x00'),
-                  ('utf_16_be', '\x00\x00'), ('utf8', '\x00') ]
+    # Okay, seriously. This is private and defined explicitly and
+    # completely by the ID3 specification. You can't just add
+    # encodings here however you want.
+    _encodings = ( ('latin1', '\x00'), ('utf16', '\x00\x00'),
+                   ('utf_16_be', '\x00\x00'), ('utf8', '\x00') )
 
     def read(self, frame, data):
-        enc, term = self.encodings[frame.encoding]
+        enc, term = self._encodings[frame.encoding]
         ret = ''
         if len(term) == 1:
             if term in data:
@@ -648,7 +651,7 @@ class EncodedTextSpec(Spec):
         return data.decode(enc), ret
 
     def write(self, frame, value):
-        enc, term = self.encodings[frame.encoding]
+        enc, term = self._encodings[frame.encoding]
         return value.encode(enc) + term
 
     def validate(self, frame, value): return unicode(value)
@@ -798,7 +801,7 @@ class VolumePeakSpec(Spec):
 class SynchronizedTextSpec(EncodedTextSpec):
     def read(self, frame, data):
         texts = []
-        encoding, term = self.encodings[frame.encoding]
+        encoding, term = self._encodings[frame.encoding]
         while data:
             l = len(term)
             value_idx = data.index(term)
@@ -810,7 +813,7 @@ class SynchronizedTextSpec(EncodedTextSpec):
 
     def write(self, frame, value):
         data = []
-        encoding, term = self.encodings[frame.encoding]
+        encoding, term = self._encodings[frame.encoding]
         for text, time in frame.text:
             text = text.encode(encoding) + term
             data.append(text + struct.pack(">I", time))
@@ -1210,7 +1213,7 @@ class TCON(TextFrame):
 
     def __decode(self, value):
         if isinstance(value, str):
-            enc = EncodedTextSpec.encodings[self.encoding][0]
+            enc = EncodedTextSpec._encodings[self.encoding][0]
             return value.decode(enc)
         else: return value
 

@@ -1,6 +1,7 @@
-1.9.1
+1.10 - 2007.XX.XX
  * New Features:
    * FLAC: Skip ID3 tags. Added option to delete them on save.
+   * EncodedTextSpec: Make private members more private.
 
 1.9 - 2006.12.09
  * New Features:

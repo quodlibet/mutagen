@@ -15,6 +15,12 @@ considered public API. These can and do change drastically between
 Mutagen versions. This is the standard Python way of marking a
 function protected or private.
 
+Mutagen's goal is to adhere as closely as possible to published
+specifications. If you try to abuse Mutagen to make it write things in
+a non-standard fashion, Joe will update Mutagen to break your
+program. If you want to do nonstandard things, write your own broken
+library.
+
 FLAC:
 -----
 The 'vc' attribute predates the FileType API and has been deprecated
