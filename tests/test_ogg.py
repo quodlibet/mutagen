@@ -323,9 +323,17 @@ class TOggPage(TestCase):
         data = StringIO("if you think this is an Ogg, you're crazy")
         self.failUnlessRaises(OggError, OggPage.find_last, data, 0)
 
+    # Disabled because GStreamer will write Oggs with bad data,
+    # which we need to make a best guess for.
+    #
+    #def test_find_last_invalid_sync(self):
+    #    data = StringIO("if you think this is an OggS, you're crazy")
+    #    self.failUnlessRaises(OggError, OggPage.find_last, data, 0)
+
     def test_find_last_invalid_sync(self):
         data = StringIO("if you think this is an OggS, you're crazy")
-        self.failUnlessRaises(OggError, OggPage.find_last, data, 0)
+        page = OggPage.find_last(data, 0)
+        self.failIf(page)
 
     def tearDown(self):
         self.fileobj.close()

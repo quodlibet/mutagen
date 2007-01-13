@@ -396,12 +396,16 @@ class OggPage(object):
         except ValueError:
             raise error("unable to find final Ogg header")
         stringobj = StringIO(data[index:])
-        page = OggPage(stringobj)
         best_page = None
-        if page.serial == serial:
-            if page.last: return page
-            else: best_page = page
-        else: best_page = None
+        try:
+            page = OggPage(stringobj)
+        except error:
+            pass
+        else:
+            if page.serial == serial:
+                if page.last: return page
+                else: best_page = page
+            else: best_page = None
 
         # The stream is muxed, so use the slow way.
         fileobj.seek(0)
@@ -413,6 +417,8 @@ class OggPage(object):
                     page = OggPage(fileobj)
                 best_page = page
             return page
+        except error:
+            return best_page
         except EOFError:
             return best_page
     find_last = classmethod(find_last)
@@ -423,6 +429,7 @@ class OggFileType(FileType):
     _Info = None
     _Tags = None
     _Error = None
+    _mimes = ["application/ogg", "application/x-ogg"]
 
     def load(self, filename):
         """Load file information from a filename."""
@@ -442,9 +449,10 @@ class OggFileType(FileType):
                 last_page = OggPage.find_last(fileobj, self.info.serial)
                 samples = last_page.position
                 try:
-                    self.info.length = samples / float(self.info.sample_rate)
+                    denom = self.info.sample_rate
                 except AttributeError:
-                    self.info.length = samples / float(self.info.fps)
+                    denom = self.info.fps
+                self.info.length = samples / float(denom)
 
             except error, e:
                 raise self._Error, e, sys.exc_info()[2]
