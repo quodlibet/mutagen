@@ -50,6 +50,7 @@ class WavPackInfo(object):
 
 class WavPack(APEv2File):
     _Info = WavPackInfo
+    _mimes = ["audio/x-wavpack"]
 
     def score(filename, fileobj, header):
         return header.startswith("wvpk") * 2

@@ -363,6 +363,9 @@ class TFLAC(TestCase):
         f = FLAC(self.NEW)
         self.failUnlessEqual(f['title'], ['vc title'])
 
+    def test_mime(self):
+        self.failUnless("audio/x-flac" in self.flac.mime)
+
     def tearDown(self):
         os.unlink(self.NEW)
 

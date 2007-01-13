@@ -88,6 +88,9 @@ class TOggFLAC(TOggFileType):
         self.failUnlessRaises(IOError, self.audio.save, fn)
         self.failUnlessRaises(IOError, self.audio.delete, fn)
 
+    def test_mime(self):
+        self.failUnless("audio/x-oggflac" in self.audio.mime)
+
 add(TOggFLAC)
 
 NOTFOUND = os.system("tools/notarealprogram 2> %s" % devnull)

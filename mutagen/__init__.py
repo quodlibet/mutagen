@@ -65,6 +65,7 @@ class FileType(mutagen._util.DictMixin):
     info = None
     tags = None
     filename = None
+    _mimes = ["application/octet-stream"]
 
     def __init__(self, filename=None, *args, **kwargs):
         if filename is None:
@@ -135,7 +136,7 @@ class FileType(mutagen._util.DictMixin):
 
     def pprint(self):
         """Print stream information and comment key=value pairs."""
-        stream = self.info.pprint()
+        stream = "%s (%s)" % (self.info.pprint(), self.mime[0])
         try: tags = self.tags.pprint()
         except AttributeError:
             return stream
@@ -143,6 +144,16 @@ class FileType(mutagen._util.DictMixin):
 
     def add_tags(self):
         raise NotImplementedError
+
+    def __get_mime(self):
+        mimes = []
+        for Kind in type(self).__mro__:
+            for mime in getattr(Kind, '_mimes', []):
+                if mime not in mimes:
+                    mimes.append(mime)
+        return mimes
+
+    mime = property(__get_mime)
 
 def File(filename, options=None):
     """Guess the type of the file and try to open it.

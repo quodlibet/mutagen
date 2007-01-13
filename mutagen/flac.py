@@ -499,6 +499,8 @@ class FLAC(FileType):
     pictures -- list of embedded pictures
     """
 
+    _mimes = ["audio/x-flac", "application/x-flac"]
+
     METADATA_BLOCKS = [StreamInfo, Padding, None, SeekTable, VCFLACDict,
         CueSheet, Picture]
     """Known metadata block types, indexed by ID."""

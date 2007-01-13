@@ -197,6 +197,8 @@ class MP3(ID3FileType):
     """An MPEG audio (usually MPEG-1 Layer 3) file."""
 
     _Info = MPEGInfo
+    _mimes = ["audio/mp3", "audio/x-mp3", "audio/mpeg", "audio/mpg",
+              "audio/x-mpeg"]
 
     def score(filename, fileobj, header):
         filename = filename.lower()

@@ -101,6 +101,7 @@ class MusepackInfo(object):
 
 class Musepack(APEv2File):
     _Info = MusepackInfo
+    _mimes = ["audio/x-musepack", "audio/x-mpc"]
 
     def score(filename, fileobj, header):
         return header.startswith("MP+") + filename.endswith(".mpc")

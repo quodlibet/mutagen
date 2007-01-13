@@ -71,6 +71,7 @@ class MonkeysAudioInfo(object):
 
 class MonkeysAudio(APEv2File):
     _Info = MonkeysAudioInfo
+    _mimes = ["audio/ape", "audio/x-ape"]
 
     def score(filename, fileobj, header):
         return header.startswith("MAC ") + filename.lower().endswith(".ape")

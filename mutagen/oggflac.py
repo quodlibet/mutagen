@@ -113,6 +113,7 @@ class OggFLAC(OggFileType):
     _Info = OggFLACStreamInfo
     _Tags = OggFLACVComment
     _Error = OggFLACHeaderError
+    _mimes = ["audio/x-oggflac"]
 
     def score(filename, fileobj, header):
         return (header.startswith("OggS") * (

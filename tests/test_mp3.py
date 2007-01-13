@@ -103,6 +103,9 @@ class TMP3(TestCase):
         self.mp3.tags = None
         self.failUnlessRaises(ValueError, self.mp3.save)
 
+    def test_mime(self):
+        self.failUnless("audio/mp3" in self.mp3.mime)
+
     def tearDown(self):
         os.unlink(self.filename)
 

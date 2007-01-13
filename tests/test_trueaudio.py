@@ -48,4 +48,7 @@ class TTrueAudio(TestCase):
         finally:
             os.unlink(filename)
 
+    def test_mime(self):
+        self.failUnless("audio/x-tta" in self.audio.mime)
+
 add(TTrueAudio)

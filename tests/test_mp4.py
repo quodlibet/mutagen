@@ -465,6 +465,9 @@ class TMP4(TestCase):
         for a, b in zip(aa, bb):
             self.failUnlessEqual(a, b)
         
+    def test_mime(self):
+        self.failUnless("audio/mp4" in self.audio.mime)
+
     def tearDown(self):
         os.unlink(self.filename)
 

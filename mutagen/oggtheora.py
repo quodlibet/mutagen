@@ -97,6 +97,7 @@ class OggTheora(OggFileType):
     _Info = OggTheoraInfo
     _Tags = OggTheoraCommentDict
     _Error = OggTheoraHeaderError
+    _mimes = ["video/x-theora"]
 
     def score(filename, fileobj, header):
         return (header.startswith("OggS") *

@@ -627,6 +627,8 @@ class MP4(FileType):
     Only audio ('soun') tracks will be read.
     """
 
+    _mimes = ["audio/mp4", "audio/x-m4a", "audio/mpeg4", "audio/aac"]
+
     def load(self, filename):
         self.filename = filename
         fileobj = file(filename, "rb")

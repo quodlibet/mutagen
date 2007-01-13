@@ -43,6 +43,9 @@ class TMonkeysAudio(TestCase):
             MonkeysAudioHeaderError, MonkeysAudio,
             os.path.join("tests", "data", "click.mpc"))
 
+    def test_mime(self):
+        self.failUnless("audio/x-ape" in self.mac399.mime)
+
     def test_pprint(self):
         self.failUnless(self.mac399.pprint())
         self.failUnless(self.mac396.pprint())

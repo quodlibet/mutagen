@@ -152,6 +152,9 @@ class TOggVorbis(TOggFileType):
             self.failUnlessEqual(vfc[key], self.audio[key])
         self.ogg_reference(self.filename)
 
+    def test_mime(self):
+        self.failUnless("audio/vorbis" in self.audio.mime)
+
 try: import ogg.vorbis
 except ImportError:
     print "WARNING: Skipping Ogg Vorbis reference tests."

@@ -24,4 +24,8 @@ class TWavPack(TestCase):
 
     def test_pprint(self):
         self.audio.pprint()
+
+    def test_mime(self):
+        self.failUnless("audio/x-wavpack" in self.audio.mime)
+
 add(TWavPack)

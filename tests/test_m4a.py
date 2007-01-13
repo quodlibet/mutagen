@@ -238,6 +238,9 @@ class TM4A(TestCase):
     def test_reads_unknown_text(self):
         self.set_key("foob", u"A test")
 
+    def test_mime(self):
+        self.failUnless("audio/mp4" in self.audio.mime)
+
     def tearDown(self):
         os.unlink(self.filename)
 

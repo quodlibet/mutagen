@@ -480,6 +480,9 @@ class TOggFileType(TestCase):
         self.audio["foobar"] = "foobar" * 1000
         self.audio.save()
         self.ogg_reference(self.filename)
+
+    def test_mime_secondary(self):
+        self.failUnless('application/ogg' in self.audio.mime)
  
     def tearDown(self):
         os.unlink(self.filename)

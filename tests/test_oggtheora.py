@@ -53,4 +53,7 @@ class TOggTheora(TOggFileType):
         self.scan_file()
         self.failIf(OggTheora(self.filename).tags)
 
+    def test_mime(self):
+        self.failUnless("video/x-theora" in self.audio.mime)
+
 add(TOggTheora)

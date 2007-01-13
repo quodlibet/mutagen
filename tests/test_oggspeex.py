@@ -57,4 +57,8 @@ class TOggSpeex(TOggFileType):
         audio.save()
         audio = self.Kind(self.filename)
         self.failUnlessEqual(audio.tags["foo"], ["bar"])
+
+    def test_mime(self):
+        self.failUnless("audio/x-speex" in self.audio.mime)
+
 add(TOggSpeex)

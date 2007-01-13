@@ -55,4 +55,8 @@ class TMusepack(TestCase):
         self.sv7.pprint()
         self.sv5.pprint()
         self.sv4.pprint()
+
+    def test_mime(self):
+        self.failUnless("audio/x-musepack" in self.sv7.mime)
+
 add(TMusepack)
