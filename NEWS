@@ -6,6 +6,10 @@
    * FileTypes have a .mime attribute which is a list of likely MIME types
      for the file.
    * ASF (WMA/WMV) support.
+ * Bug Fixes:
+   * ID3: Fixed reading of v2.3 tags with unsynchronized data.
+   * ID3: The data length indicator for compressed tags is written
+     as a synch-safe integer.
 
 1.9 - 2006.12.09
  * New Features:
