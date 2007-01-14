@@ -14,6 +14,7 @@ from mutagen.mp4 import MP4
 from mutagen.musepack import Musepack
 from mutagen.monkeysaudio import MonkeysAudio
 from mutagen.optimfrog import OptimFROG
+from mutagen.asf import ASF
 try: from os.path import devnull
 except ImportError: devnull = "/dev/null"
 
@@ -144,6 +145,14 @@ class TFile(TestCase):
             File(os.path.join("tests", "data", "empty.ofr")), OptimFROG))
         self.failUnless(isinstance(
             File(os.path.join("tests", "data", "empty.ofs")), OptimFROG))
+
+    def test_asf(self):
+        self.failUnless(isinstance(
+            File(os.path.join("tests", "data", "silence-1.wma")), ASF))
+        self.failUnless(isinstance(
+            File(os.path.join("tests", "data", "silence-2.wma")), ASF))
+        self.failUnless(isinstance(
+            File(os.path.join("tests", "data", "silence-3.wma")), ASF))
 
 add(TFile)
 

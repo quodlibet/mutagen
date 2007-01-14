@@ -166,6 +166,7 @@ def File(filename, options=None):
     """
 
     if options is None:
+        from mutagen.asf import ASF
         from mutagen.apev2 import APEv2File
         from mutagen.flac import FLAC
         from mutagen.id3 import ID3FileType
@@ -182,7 +183,7 @@ def File(filename, options=None):
         from mutagen.optimfrog import OptimFROG
         options = [MP3, TrueAudio, OggTheora, OggSpeex, OggVorbis, OggFLAC,
                    FLAC, APEv2File, MP4, ID3FileType, WavPack, Musepack,
-                   MonkeysAudio, OptimFROG]
+                   MonkeysAudio, OptimFROG, ASF]
 
     if not options:
         return None
