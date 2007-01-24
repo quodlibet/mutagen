@@ -1,3 +1,9 @@
+1.10.1 - 2007.01.23
+ * Bug Fixes:
+   * Documentation mentions ASF support.
+   * APEv2 flags and valid keys are fixed.
+   * Tests pass on Python 2.3 again.
+
 1.10 - 2007.01.21
  * New Features:
    * FLAC: Skip ID3 tags. Added option to delete them on save.

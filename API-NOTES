@@ -52,6 +52,10 @@ Still prints "True", however, as __getitem__, __delitem__, and
 __setitem__ (and so any operations on the dict itself) remain
 case-insensitive.
 
+As of 1.10.1, Mutagen no longer allows non-ASCII keys in APEv2
+tags. This is in accordance with the APEv2 standard. A KeyError is
+raised if you try.
+
 M4A:
 ----
 mutagen.m4a is deprecated. You should use mutagen.mp4 instead.
