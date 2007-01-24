@@ -16,9 +16,10 @@ also have APEv2 tags, but this can cause problems with many MP3
 decoders and taggers.
 
 APEv2 tags, like Vorbis comments, are freeform key=value pairs. APEv2
-keys can be any UTF-8 string, but restricting keys to ASCII is
-strongly recommended. Keys are case-insensitive, but usually stored
-title-cased (e.g. 'Artist' rather than 'artist').
+keys can be any ASCII string with characters from 0x20 to 0x7E. 
+Keys are case-sensitive, but readers are recommended to be case insensitive,
+and it is forbidden to multiple keys which differ only in case.
+Keys are usually stored title-cased (e.g. 'Artist' rather than 'artist').
 
 APEv2 values are slightly more structured than Vorbis comments; values
 are flagged as one of text, binary, or an external reference (usually
@@ -33,6 +34,10 @@ __all__ = ["APEv2", "APEv2File", "Open", "delete"]
 import struct
 from cStringIO import StringIO
 
+def is_valid_apev2_key(key):
+    return (2 <= len(key) <= 255 and min(key) >= ' ' and max(key) <= '~' and
+            key not in ["OggS", "TAG", "ID3", "MP+"])
+
 # There are three different kinds of APE tag values.
 # "0: Item contains text information coded in UTF-8
 #  1: Item contains binary information
@@ -41,7 +46,7 @@ from cStringIO import StringIO
 TEXT, BINARY, EXTERNAL = range(3)
 
 HAS_HEADER = 1L << 31
-HAS_FOOTER = 1L << 30
+HAS_NO_FOOTER = 1L << 30
 IS_HEADER  = 1L << 29
 
 class error(IOError): pass
@@ -233,9 +238,15 @@ class APEv2(DictMixin, Metadata):
             self[key] = APEValue(value, kind)
 
     def __getitem__(self, key):
+        if not is_valid_apev2_key(key):
+            raise KeyError("%r is not a valid APEv2 key" % key)
         return super(APEv2, self).__getitem__(key.lower())
+
     def __delitem__(self, key):
+        if not is_valid_apev2_key(key):
+            raise KeyError("%r is not a valid APEv2 key" % key)
         return super(APEv2, self).__delitem__(key.lower())
+
     def __setitem__(self, key, value):
         """'Magic' value setter.
 
@@ -252,6 +263,9 @@ class APEv2(DictMixin, Metadata):
             from mutagen.apev2 import APEValue, EXTERNAL
             tag['Website'] = APEValue('http://example.org', EXTERNAL)
         """
+
+        if not is_valid_apev2_key(key):
+            raise KeyError("%r is not a valid APEv2 key" % key)
 
         if not isinstance(value, _APEValue):
             # let's guess at the content if we're not already a value...
@@ -310,7 +324,7 @@ class APEv2(DictMixin, Metadata):
         header = "APETAGEX%s%s" %(
             # version, tag size, item count, flags
             struct.pack("<4I", 2000, len(tags) + 32, num_tags,
-                        HAS_HEADER | HAS_FOOTER | IS_HEADER),
+                        HAS_HEADER | IS_HEADER),
             "\0" * 8)
         fileobj.write(header)
 
@@ -319,7 +333,7 @@ class APEv2(DictMixin, Metadata):
         footer = "APETAGEX%s%s" %(
             # version, tag size, item count, flags
             struct.pack("<4I", 2000, len(tags) + 32, num_tags,
-                        HAS_HEADER | HAS_FOOTER),
+                        HAS_HEADER),
             "\0" * 8)
         fileobj.write(footer)
         fileobj.close()

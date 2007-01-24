@@ -10,13 +10,24 @@ from tests import TestCase, add
 
 import mutagen.apev2
 
-from mutagen.apev2 import APEv2File, APEv2
+from mutagen.apev2 import APEv2File, APEv2, is_valid_apev2_key
 
 DIR = os.path.dirname(__file__)
 SAMPLE = os.path.join(DIR, "data", "click.mpc")
 OLD = os.path.join(DIR, "data", "oldtag.apev2")
 BROKEN = os.path.join(DIR, "data", "brokentag.apev2")
 LYRICS2 = os.path.join(DIR, "data", "apev2-lyricsv2.mp3")
+
+class Tis_valid_apev2_key(TestCase):
+    uses_mmap = False
+    def test_yes(self):
+        for key in ["foo", "Foo", "   f ~~~"]:
+            self.failUnless(is_valid_apev2_key(key))
+
+    def test_no(self):
+        for key in ["\x11hi", "ffoo\xFF", u"\u1234", "a", "", "foo" * 100]:
+            self.failIf(is_valid_apev2_key(key))
+add(Tis_valid_apev2_key)
 
 class TAPEWriter(TestCase):
     offset = 0
@@ -145,6 +156,10 @@ class TAPEv2(TestCase):
         os.close(fd)
         shutil.copy(OLD, self.filename)
         self.audio = APEv2(self.filename)
+
+    def test_invalid_key(self):
+        self.failUnlessRaises(
+            KeyError, self.audio.__setitem__, u"\u1234", "foo")
 
     def test_guess_text(self):
         from mutagen.apev2 import APETextValue
