@@ -16,10 +16,11 @@ also have APEv2 tags, but this can cause problems with many MP3
 decoders and taggers.
 
 APEv2 tags, like Vorbis comments, are freeform key=value pairs. APEv2
-keys can be any ASCII string with characters from 0x20 to 0x7E. 
-Keys are case-sensitive, but readers are recommended to be case insensitive,
-and it is forbidden to multiple keys which differ only in case.
-Keys are usually stored title-cased (e.g. 'Artist' rather than 'artist').
+keys can be any ASCII string with characters from 0x20 to 0x7E,
+between 2 and 255 characters long.  Keys are case-sensitive, but
+readers are recommended to be case insensitive, and it is forbidden to
+multiple keys which differ only in case.  Keys are usually stored
+title-cased (e.g. 'Artist' rather than 'artist').
 
 APEv2 values are slightly more structured than Vorbis comments; values
 are flagged as one of text, binary, or an external reference (usually
