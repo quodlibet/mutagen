@@ -1305,7 +1305,7 @@ class PairedTextFrame(Frame):
     Some ID3 frames pair text strings, to associate names with a more
     specific involvement in the song. The 'people' attribute of these
     frames contains a list of pairs:
-        [['trumpet', 'Miles Davis'], ['Paul Chambers', 'bass']]
+        [['trumpet', 'Miles Davis'], ['bass', 'Paul Chambers']]
 
     Like text frames, these frames also have an encoding attribute.
     """
