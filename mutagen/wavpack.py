@@ -43,7 +43,7 @@ class WavPackInfo(object):
         self.version = cdata.short_le(header[8:10])
         self.channels = bool(flags & 4) or 2
         self.sample_rate = RATES[(flags >> 23) & 0xF]
-        self.length = float(samples / self.sample_rate)
+        self.length = float(samples) / self.sample_rate
 
     def pprint(self):
         return "WavPack, %.2f seconds, %d Hz" % (self.length, self.sample_rate)

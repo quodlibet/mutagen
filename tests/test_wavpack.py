@@ -16,7 +16,7 @@ class TWavPack(TestCase):
         self.failUnlessEqual(self.audio.info.sample_rate, 44100)
 
     def test_length(self):
-        self.failUnlessEqual(self.audio.info.length, 3.0)
+        self.failUnlessAlmostEqual(self.audio.info.length, 3.68, 2)
 
     def test_not_my_file(self):
         self.failUnlessRaises(
