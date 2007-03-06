@@ -63,10 +63,9 @@ def update(options, filenames):
             continue
 
         for tag in filter(lambda t: t.startswith("T"), id3):
-            if tag == "TDRC": # non-unicode field
-                continue
-
             frame = id3[tag]
+            if isinstance(frame, mutagen.id3.TimeStampTextFrame): # non-unicode fields
+                continue
 
             try:
                 text = map(conv, frame.text)
