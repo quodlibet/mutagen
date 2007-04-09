@@ -198,6 +198,15 @@ class MP4Tags(Metadata):
         'egid' -- podcast episode GUID
         'catg' -- podcast category
         'keyw' -- podcast keywords
+        '\xa9too' -- encoded by
+        'cprt' -- copyright
+        'soal' -- album sort order
+        'soaa' -- album artist sort order
+        'soar' -- artist sort order
+        'sonm' -- title sort order
+        'soco' -- composer sort order
+        'sosn' -- show sort order
+        'tvsh' -- show name
 
     Boolean values:
         'cpil' -- part of a compilation
