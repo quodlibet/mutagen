@@ -101,6 +101,8 @@ def write_files(edits, filenames):
                     desc, lang = values[0], values[-1]
                 frame = mutagen.id3.COMM(
                     encoding=3, text=value, lang=lang, desc=desc)
+            elif issubclass(mutagen.id3.Frames[frame], mutagen.id3.UrlFrame):
+                frame = mutagen.id3.Frames[frame](encoding=3, url=value)
             else:
                 frame = mutagen.id3.Frames[frame](encoding=3, text=value)
             id3.add(frame)
@@ -187,7 +189,8 @@ def main(argv):
         callback=lambda *args: args[3].edits.append(("--TRCK", args[2])))
 
     for frame in mutagen.id3.Frames:
-        if issubclass(mutagen.id3.Frames[frame], mutagen.id3.TextFrame):
+        if issubclass(mutagen.id3.Frames[frame], mutagen.id3.TextFrame) \
+            or issubclass(mutagen.id3.Frames[frame], mutagen.id3.UrlFrame):
             parser.add_option(
                 "--" + frame, action="callback", help=SUPPRESS_HELP,
                 type='string', metavar="value", # optparse blows up with this

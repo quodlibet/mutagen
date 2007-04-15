@@ -1,3 +1,7 @@
+1.11
+ * New Features:
+   * mid3v2 can now set URL frames. (Vladislav Naumov)
+
 1.10.1 - 2007.01.23
  * Bug Fixes:
    * Documentation mentions ASF support.
