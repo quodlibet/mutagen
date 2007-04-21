@@ -35,7 +35,7 @@ class ASFInfo(object):
         return s
 
 
-class ASFTags(list, DictMixin):
+class ASFTags(list, DictMixin, Metadata):
     """Dictionary containing ASF attributes."""
 
     def pprint(self):

@@ -188,6 +188,7 @@ class APEv2(DictMixin, Metadata):
 
     def __init__(self, *args, **kwargs):
         self.__casemap = {}
+        self.__dict = {}
         super(APEv2, self).__init__(*args, **kwargs)
         # Internally all names are stored as lowercase, but the case
         # they were set with is remembered and used when saving.  This
@@ -241,12 +242,12 @@ class APEv2(DictMixin, Metadata):
     def __getitem__(self, key):
         if not is_valid_apev2_key(key):
             raise KeyError("%r is not a valid APEv2 key" % key)
-        return super(APEv2, self).__getitem__(key.lower())
+        return self.__dict[key.lower()]
 
     def __delitem__(self, key):
         if not is_valid_apev2_key(key):
             raise KeyError("%r is not a valid APEv2 key" % key)
-        return super(APEv2, self).__delitem__(key.lower())
+        del(self.__dict[key.lower()])
 
     def __setitem__(self, key, value):
         """'Magic' value setter.
@@ -285,10 +286,10 @@ class APEv2(DictMixin, Metadata):
                     # valid UTF8, probably text
                     value = APEValue(value, TEXT)
         self.__casemap[key.lower()] = key
-        super(APEv2, self).__setitem__(key.lower(), value)
+        self.__dict[key.lower()] = value
 
     def keys(self):
-        return [self.__casemap.get(key, key) for key in dict.keys(self)]
+        return [self.__casemap.get(key, key) for key in self.__dict.keys()]
 
     def save(self, filename=None):
         """Save changes to a file.

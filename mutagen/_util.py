@@ -98,6 +98,23 @@ class DictMixin(object):
     def __len__(self):
         return len(self.keys())
 
+class DictProxy(DictMixin):
+    def __init__(self, *args, **kwargs):
+        self.__dict = {}
+        super(DictProxy, self).__init__(*args, **kwargs)
+
+    def __getitem__(self, key):
+        return self.__dict[key]
+
+    def __setitem__(self, key, value):
+        self.__dict[key] = value
+
+    def __delitem__(self, key):
+        del(self.__dict[key])
+
+    def keys(self):
+        return self.__dict.keys()
+
 class cdata(object):
     """C character buffer to Python numeric type conversions."""
 

@@ -29,7 +29,7 @@ from cStringIO import StringIO
 
 from mutagen import FileType, Metadata
 from mutagen._constants import GENRES
-from mutagen._util import cdata, insert_bytes, delete_bytes
+from mutagen._util import cdata, insert_bytes, delete_bytes, DictProxy
 
 class error(IOError): pass
 class M4AMetadataError(error): pass
@@ -172,7 +172,7 @@ class Atoms(object):
     def __repr__(self):
         return "\n".join([repr(child) for child in self.atoms])
 
-class M4ATags(Metadata):
+class M4ATags(DictProxy, Metadata):
     """Dictionary containing Apple iTunes metadata list key/values.
 
     Keys are four byte identifiers, except for freeform ('----')

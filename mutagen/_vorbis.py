@@ -40,7 +40,7 @@ class error(IOError): pass
 class VorbisUnsetFrameError(error): pass
 class VorbisEncodingError(error): pass
 
-class VComment(list):
+class VComment(mutagen.Metadata, list):
     """A Vorbis comment parser, accessor, and renderer.
 
     All comment ordering is preserved. A VComment is a list of

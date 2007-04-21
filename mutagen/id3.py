@@ -35,7 +35,7 @@ from zlib import error as zlibError
 from warnings import warn
 
 import mutagen
-from mutagen._util import insert_bytes, delete_bytes
+from mutagen._util import insert_bytes, delete_bytes, DictProxy
 
 class error(Exception): pass
 class ID3NoHeaderError(error, ValueError): pass
@@ -51,7 +51,7 @@ class ID3Warning(error, UserWarning): pass
 def is_valid_frame_id(frame_id):
     return frame_id.isalnum() and frame_id.isupper()
 
-class ID3(mutagen.Metadata):
+class ID3(DictProxy, mutagen.Metadata):
     """A file with an ID3v2 tag.
 
     Attributes:

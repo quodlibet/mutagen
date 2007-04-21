@@ -21,14 +21,14 @@ depending on tag or format. They may also be entirely different objects
 for certain keys, again depending on format.
 """
 
-version = (1, 10, 1, -1)
+version = (1, 11, -1)
 version_string = ".".join(map(str, version))
 
 import warnings
 
 import mutagen._util
 
-class Metadata(dict):
+class Metadata(object):
     """An abstract dict-like object.
 
     Metadata is the base class for many of the tag objects in Mutagen.
