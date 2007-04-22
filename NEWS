@@ -1,6 +1,14 @@
 1.11
  * New Features:
    * mid3v2 can now set URL frames. (Vladislav Naumov)
+ * Bug Fixes:
+   * mid3iconv: Skip all timestamp frames. (Lukáš Lalinský)
+   * WavPack: More accurate length calculation. ('ak')
+   * PairedTextFrame: Fix typo in documentation. (Lukáš Lalinský)
+ * API:
+   * Metadata no longer inherits from dict.
+   * Relatedly, the MRO has changed on several types.
+   * More documentation for MP4 atoms. (Lukáš Lalinský)
 
 1.10.1 - 2007.01.23
  * Bug Fixes:
