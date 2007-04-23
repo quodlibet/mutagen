@@ -1,5 +1,8 @@
 import os
+import shutil
+from tempfile import mkstemp
 
+from mutagen.id3 import ID3, TIT2
 from mutagen.musepack import Musepack, MusepackInfo, MusepackHeaderError
 from cStringIO import StringIO
 from tests import TestCase, add
@@ -60,3 +63,30 @@ class TMusepack(TestCase):
         self.failUnless("audio/x-musepack" in self.sv7.mime)
 
 add(TMusepack)
+
+
+class TMusepackWithID3(TestCase):
+    SAMPLE = os.path.join("tests", "data", "click.mpc")
+
+    def setUp(self):
+        fd, self.NEW = mkstemp(suffix='mpc')
+        os.close(fd)
+        shutil.copy(self.SAMPLE, self.NEW)
+        self.failUnlessEqual(file(self.SAMPLE).read(), file(self.NEW).read())
+
+    def tearDown(self):
+        os.unlink(self.NEW)
+
+    def test_ignore_id3(self):
+        id3 = ID3()
+        id3.add(TIT2(encoding=0, text='id3 title'))
+        id3.save(self.NEW)
+        f = Musepack(self.NEW)
+        f['title'] = 'apev2 title'
+        f.save()
+        id3 = ID3(self.NEW)
+        self.failUnlessEqual(id3['TIT2'], 'id3 title')
+        f = Musepack(self.NEW)
+        self.failUnlessEqual(f['title'], 'apev2 title')
+
+add(TMusepackWithID3)

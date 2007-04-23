@@ -21,6 +21,7 @@ __all__ = ["Musepack", "Open", "delete"]
 import struct
 
 from mutagen.apev2 import APEv2File, error, delete
+from mutagen.id3 import BitPaddedInt
 from mutagen._util import cdata
 
 class MusepackHeaderError(error): pass
@@ -51,6 +52,13 @@ class MusepackInfo(object):
         header = fileobj.read(32)
         if len(header) != 32:
             raise MusepackHeaderError("not a Musepack file")
+        # Skip ID3v2 tags
+        if header[:3] == "ID3":
+            size = 10 + BitPaddedInt(header[6:10])
+            fileobj.seek(size)
+            header = fileobj.read(32)
+            if len(header) != 32:
+                raise MusepackHeaderError("not a Musepack file")
         # SV7
         if header.startswith("MP+"):
             self.version = ord(header[3]) & 0xF

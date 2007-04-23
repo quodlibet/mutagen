@@ -1,6 +1,7 @@
 1.11
  * New Features:
    * mid3v2 can now set URL frames. (Vladislav Naumov)
+   * Musepack: Skip ID3v2 tags. (Lukáš Lalinský)
  * Bug Fixes:
    * mid3iconv: Skip all timestamp frames. (Lukáš Lalinský)
    * WavPack: More accurate length calculation. ('ak')
