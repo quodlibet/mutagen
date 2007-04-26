@@ -6,6 +6,8 @@
    * mid3iconv: Skip all timestamp frames. (Lukáš Lalinský)
    * WavPack: More accurate length calculation. ('ak')
    * PairedTextFrame: Fix typo in documentation. (Lukáš Lalinský)
+   * ID3: Fixed incorrect TDAT conversion. The format is DDMM, not
+     MMDD. (Lukáš Lalinský)
  * API:
    * Metadata no longer inherits from dict.
    * Relatedly, the MRO has changed on several types.

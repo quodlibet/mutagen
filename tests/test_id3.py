@@ -1057,7 +1057,7 @@ class UpdateTo24(TestCase):
         id3.add(TYER(encoding=0, text="2006"))
         id3.add(TDAT(encoding=0, text="0603"))
         id3.update_to_v24()
-        self.failUnlessEqual(id3["TDRC"], "2006-06-03")
+        self.failUnlessEqual(id3["TDRC"], "2006-03-06")
 
     def test_tyer_tdat_time(self):
         from mutagen.id3 import TYER, TDAT, TIME
@@ -1067,7 +1067,7 @@ class UpdateTo24(TestCase):
         id3.add(TDAT(encoding=0, text="0603"))
         id3.add(TIME(encoding=0, text="1127"))
         id3.update_to_v24()
-        self.failUnlessEqual(id3["TDRC"], "2006-06-03 11:27:00")
+        self.failUnlessEqual(id3["TDRC"], "2006-03-06 11:27:00")
 
     def test_tory(self):
         from mutagen.id3 import TORY

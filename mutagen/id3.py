@@ -420,7 +420,7 @@ class ID3(DictProxy, mutagen.Metadata):
             date = str(self.pop("TYER"))
             if str(self.get("TDAT", "")).strip("\x00"):
                 dat = str(self.pop("TDAT"))
-                date = "%s-%s-%s" % (date, dat[:2], dat[2:])
+                date = "%s-%s-%s" % (date, dat[2:], dat[:2])
                 if str(self.get("TIME", "")).strip("\x00"):
                     time = str(self.pop("TIME"))
                     date += "T%s:%s:00" % (time[:2], time[2:])
