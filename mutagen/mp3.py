@@ -202,7 +202,7 @@ class MP3(ID3FileType):
 
     def score(filename, fileobj, header):
         filename = filename.lower()
-        return (header.startswith("ID3") + filename.endswith(".mp3") +
+        return (header.startswith("ID3") * 2 + filename.endswith(".mp3") +
                 filename.endswith(".mp2") + filename.endswith(".mpg") +
                 filename.endswith(".mpeg"))
     score = staticmethod(score)

@@ -1,4 +1,6 @@
 import os
+from StringIO import StringIO
+
 from tests import TestCase, add
 from mutagen import File, Metadata, FileType
 from mutagen.oggvorbis import OggVorbis
@@ -153,6 +155,13 @@ class TFile(TestCase):
             File(os.path.join("tests", "data", "silence-2.wma")), ASF))
         self.failUnless(isinstance(
             File(os.path.join("tests", "data", "silence-3.wma")), ASF))
+
+    def test_id3_indicates_mp3_not_tta(self):
+        header = "ID3 the rest of this is garbage"
+        fileobj = StringIO(header)
+        filename = "not-identifiable.ext"
+        self.failUnless(TrueAudio.score(filename, fileobj, header) <
+                        MP3.score(filename, fileobj, header))
 
 add(TFile)
 
