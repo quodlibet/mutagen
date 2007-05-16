@@ -10,10 +10,6 @@ from distutils.core import setup, Command
 from distutils.command.clean import clean as distutils_clean
 from distutils.command.sdist import sdist as distutils_sdist
 
-def system(cmdline):
-    if os.system(cmdline):
-        raise SystemExit(True)
-
 class release(Command):
     description = "release a new version of Mutagen"
     user_options = [
@@ -38,30 +34,30 @@ class release(Command):
         fileout.close()
 
     def run(self):
-        from mutagen import version
-        test_cmd(self.distribution).run()
+        from mutagen import version, version_string as sversion
+        self.run_command("test")
         if version[-1] >= 0:
-            raise SystemExit("Invalid version number to release.")
-        sversion = ".".join(map(str, version[:-1]))
+            raise SystemExit("%r: version number to release." % version)
         target = "../../releases/mutagen-%s" % sversion
         if os.path.isdir(target):
-            raise SystemExit("Mutagen %s was already released." % sversion)
-        system("svn cp ../mutagen %s" % target)
+            raise SystemExit("%r was already released." % sversion)
+        self.spawn(["svn", "cp", os.getcwd(), target])
 
         self.rewrite_version(target, version[:-1])
 
         if self.all_the_way:
             if os.environ.get("USER") != "piman":
                 print "You're not Joe, so this might not work."
-            system("svn commit -m 'Mutagen %s.' %s ." % (sversion, target))
+            self.spawn(
+                ["svn", "commit", "-m", "Mutagen %s." % sversion, target])
             os.chdir(target)
             if os.environ.get("USER") != "piman":
                 print "You're not Joe, so this definitely won't work."
             print "Copying tarball to kai."
-            system("./setup.py sdist")
-            system("scp dist/mutagen-%s.tar.gz "
-                   "sacredchao.net:~piman/public_html/software" % sversion)
-            system("./setup.py register")
+            self.run_command("sdist")
+            self.spawn(["scp", "dist/mutagen-%s.tar.gz" % sversion,
+                        "sacredchao.net:~piman/public_html/software"])
+            self.run_command("register")
 
 class clean(distutils_clean):
     def run(self):
@@ -96,7 +92,7 @@ class sdist(distutils_sdist):
             raise SystemExit(
                 "Refusing to create a source distribution for a prerelease.")
         else:
-            test_cmd(self.distribution).run()
+            self.run_command("test")
             distutils_sdist.run(self)
 
 class test_cmd(Command):
@@ -161,7 +157,7 @@ class coverage_cmd(Command):
             import mutagen._util
             reload(mutagen._util)
             reload(mutagen)
-            test_cmd(self.distribution).run()
+            self.run_command("test")
         tracer.runfunc(run_tests)
         results = tracer.results()
         coverage = os.path.join(os.path.dirname(__file__), "coverage")
