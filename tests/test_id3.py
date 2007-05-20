@@ -1463,6 +1463,21 @@ class WriteRoundtrip(TestCase):
         ID3(self.newsilence).delete()
         self.assertEquals(open(self.newsilence).read(10), 'abc')
 
+    def test_frame_order(self):
+        from mutagen.id3 import TIT2, APIC, TALB, COMM
+        f = ID3(self.newsilence)
+        f["TIT2"] = TIT2(encoding=0, text="A title!")
+        f["APIC"] = APIC(encoding=0, mime="b", type=3, desc='', data="a")
+        f["TALB"] = TALB(encoding=0, text="c")
+        f["COMM"] = COMM(encoding=0, desc="x", text="y")
+        f.save()
+        data = open(self.newsilence, 'rb').read()
+        self.assert_(data.find("TIT2") < data.find("APIC"))
+        self.assert_(data.find("TIT2") < data.find("COMM"))
+        self.assert_(data.find("TALB") < data.find("APIC"))
+        self.assert_(data.find("TALB") < data.find("COMM"))
+        self.assert_(data.find("TIT2") < data.find("TALB"))
+
     def tearDown(self):
         try: os.unlink(self.newsilence)
         except EnvironmentError: pass
