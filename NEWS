@@ -1,3 +1,7 @@
+1.12 - 2007.08.04
+ * Write important ID3v2 frames near the start. (Lukáš Lalinský)
+ * Clean up distutils functions.
+
 1.11 - 2007.04.26
  * New Features:
    * mid3v2 can now set URL frames. (Vladislav Naumov)
