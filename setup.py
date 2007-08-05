@@ -34,10 +34,11 @@ class release(Command):
         fileout.close()
 
     def run(self):
-        from mutagen import version, version_string as sversion
+        from mutagen import version
         self.run_command("test")
         if version[-1] >= 0:
             raise SystemExit("%r: version number to release." % version)
+        sversion = ".".join(map(str, version[:-1])) 
         target = "../../releases/mutagen-%s" % sversion
         if os.path.isdir(target):
             raise SystemExit("%r was already released." % sversion)
@@ -54,10 +55,10 @@ class release(Command):
             if os.environ.get("USER") != "piman":
                 print "You're not Joe, so this definitely won't work."
             print "Copying tarball to kai."
-            self.run_command("sdist")
+            self.spawn(["./setup.py", "sdist"])
             self.spawn(["scp", "dist/mutagen-%s.tar.gz" % sversion,
                         "sacredchao.net:~piman/public_html/software"])
-            self.run_command("register")
+            self.spawn(["./setup.py", "register"])
 
 class clean(distutils_clean):
     def run(self):
