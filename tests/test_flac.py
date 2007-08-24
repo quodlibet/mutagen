@@ -371,6 +371,17 @@ class TFLAC(TestCase):
 
 add(TFLAC)
 
+class TFLACFile(TestCase):
+    uses_mmap = False
+
+    def test_open_nonexistant(self):
+        """mutagen 1.2 raises UnboundLocalError, then it tries to open
+        non-existant FLAC files"""
+        filename = os.path.join("tests", "data", "doesntexist.flac")
+        self.assertRaises(IOError, FLAC, filename)
+
+add(TFLACFile)
+
 NOTFOUND = os.system("tools/notarealprogram 2> %s" % devnull)
 
 have_flac = True

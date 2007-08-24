@@ -1,3 +1,8 @@
+1.13 - YYYY.MM.DD
+ * Bug Fixes:
+   * FLAC: Raise IOError, instead of UnboundLocalError, when trying
+     to open a non-existant file. (Lukáš Lalinský)
+
 1.12 - 2007.08.04
  * Write important ID3v2 frames near the start. (Lukáš Lalinský)
  * Clean up distutils functions.
