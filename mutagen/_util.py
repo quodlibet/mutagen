@@ -163,6 +163,41 @@ class cdata(object):
 
     test_bit = staticmethod(lambda value, n: bool((value >> n) & 1))
 
+def lock(fileobj):
+    """Lock a file object 'safely'.
+
+    That means a failure to lock because the platform doesn't
+    support fcntl or filesystem locks is not considered a
+    failure. This call does block.
+
+    Returns whether or not the lock was successful, or
+    raises an exception in more extreme circumstances (full
+    lock table, invalid file).
+    """
+    try: import fcntl
+    except ImportError:
+        return False
+    else:
+        try: fcntl.lockf(fileobj, fcntl.LOCK_EX)
+        except IOError:
+            # FIXME: There's possibly a lot of complicated
+            # logic that needs to go here in case the IOError
+            # is EACCES or EAGAIN.
+            return False
+        else:
+            return True
+
+def unlock(fileobj):
+    """Unlock a file object.
+
+    Don't call this on a file object unless a call to lock()
+    returned true.
+    """
+    # If this fails there's a mismatched lock/unlock pair,
+    # so we definitely don't want to ignore errors.
+    import fcntl
+    fcntl.lockf(fileobj, fcntl.LOCK_UN)
+
 def insert_bytes(fobj, size, offset):
     """Insert size bytes of empty space starting at offset.
 
@@ -172,63 +207,77 @@ def insert_bytes(fobj, size, offset):
     """
     assert 0 < size
     assert 0 <= offset
+    locked = False
     fobj.seek(0, 2)
     filesize = fobj.tell()
     movesize = filesize - offset
     fobj.write('\x00' * size)
     fobj.flush()
     try:
-        map = mmap.mmap(fobj.fileno(), filesize + size)
-        try: map.move(offset + size, offset, movesize)
-        finally: map.close()
-    except (ValueError, EnvironmentError): # handle broken mmap scenarios
-        fobj.truncate(filesize)
+        try:
+            map = mmap.mmap(fobj.fileno(), filesize + size)
+            try: map.move(offset + size, offset, movesize)
+            finally: map.close()
+        except (ValueError, EnvironmentError):
+            # handle broken mmap scenarios
+            locked = lock(fobj)
+            fobj.truncate(filesize)
 
-        fobj.seek(offset)
-        backbuf = fobj.read(size)
-        offset += len(backbuf)
-        if len(backbuf) < size:
             fobj.seek(offset)
-            fobj.write('\x00' * (size - len(backbuf)))
-        while len(backbuf) == size:
-            frontbuf = fobj.read(size)
-            fobj.seek(offset)
-            fobj.write(backbuf)
+            backbuf = fobj.read(size)
             offset += len(backbuf)
-            fobj.seek(offset)
-            backbuf = frontbuf
-        fobj.write(backbuf)
+            if len(backbuf) < size:
+                fobj.seek(offset)
+                fobj.write('\x00' * (size - len(backbuf)))
+            while len(backbuf) == size:
+                frontbuf = fobj.read(size)
+                fobj.seek(offset)
+                fobj.write(backbuf)
+                offset += len(backbuf)
+                fobj.seek(offset)
+                backbuf = frontbuf
+            fobj.write(backbuf)
+    finally:
+        if locked:
+            unlock(fobj)
 
-def delete_bytes(fobj, size, offset):
+def delete_bytes(fobj, size, offset, BUFFER_SIZE=2**16):
     """Delete size bytes of empty space starting at offset.
 
     fobj must be an open file object, open rb+ or
     equivalent. Mutagen tries to use mmap to resize the file, but
     falls back to a significantly slower method if mmap fails.
     """
+    locked = False
     assert 0 < size
     assert 0 <= offset
     fobj.seek(0, 2)
     filesize = fobj.tell()
     movesize = filesize - offset - size
     assert 0 <= movesize
-    if movesize > 0:
-        fobj.flush()
-        try:
-            map = mmap.mmap(fobj.fileno(), filesize)
-            try: map.move(offset, offset + size, movesize)
-            finally: map.close()
-        except (ValueError, EnvironmentError): # handle broken mmap scenarios
-            fobj.seek(offset + size)
-            buf = fobj.read(size)
-            while len(buf):
-                fobj.seek(offset)
-                fobj.write(buf)
-                offset += len(buf)
+    try:
+        if movesize > 0:
+            fobj.flush()
+            try:
+                map = mmap.mmap(fobj.fileno(), filesize)
+                try: map.move(offset, offset + size, movesize)
+                finally: map.close()
+            except (ValueError, EnvironmentError):
+                # handle broken mmap scenarios
+                locked = lock(fobj)
                 fobj.seek(offset + size)
-                buf = fobj.read(size)
-    fobj.truncate(filesize - size)
-    fobj.flush()
+                buf = fobj.read(BUFFER_SIZE)
+                while buf:
+                    fobj.seek(offset)
+                    fobj.write(buf)
+                    offset += len(buf)
+                    fobj.seek(offset + size)
+                    buf = fobj.read(BUFFER_SIZE)
+        fobj.truncate(filesize - size)
+        fobj.flush()
+    finally:
+        if locked:
+            unlock(fobj)
 
 def utf8(data):
     """Convert a basestring to a valid UTF-8 str."""

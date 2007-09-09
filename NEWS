@@ -2,6 +2,8 @@
  * Bug Fixes:
    * FLAC: Raise IOError, instead of UnboundLocalError, when trying
      to open a non-existant file. (Lukáš Lalinský)
+ * Faster implementation of file-writing when mmap fails, and
+   exclusive advisory locking when available.
 
 1.12 - 2007.08.04
  * Write important ID3v2 frames near the start. (Lukáš Lalinský)

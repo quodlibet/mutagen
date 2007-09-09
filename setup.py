@@ -131,6 +131,16 @@ class test_cmd(Command):
         print "Running tests with mocked failing mmap.mmap."
         self.__test(uses_mmap)
 
+        try: import fcntl
+        except ImportError:
+            print "Unable to run mocked fcntl.lockf tests."
+        else:
+            def MockLockF(*args, **kwargs):
+                raise IOError
+            fcntl.lockf = MockLockF
+            print "Running tests with mocked failing fcntl.lockf."
+            self.__test(uses_mmap)
+
     def __test(self, filter=None):
         import tests
         if tests.unit(self.to_run, filter):
