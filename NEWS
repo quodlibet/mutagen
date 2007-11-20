@@ -2,6 +2,7 @@
  * Bug Fixes:
    * FLAC: Raise IOError, instead of UnboundLocalError, when trying
      to open a non-existant file. (Lukáš Lalinský)
+   * Throw out invalid frames when upgrading from 2.3 to 2.4.
  * Faster implementation of file-writing when mmap fails, and
    exclusive advisory locking when available.
 

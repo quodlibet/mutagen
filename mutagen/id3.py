@@ -424,27 +424,35 @@ class ID3(DictProxy, mutagen.Metadata):
         # unsafe to write
 
         # TDAT, TYER, and TIME have been turned into TDRC.
-        if str(self.get("TYER", "")).strip("\x00"):
-            date = str(self.pop("TYER"))
-            if str(self.get("TDAT", "")).strip("\x00"):
-                dat = str(self.pop("TDAT"))
-                date = "%s-%s-%s" % (date, dat[2:], dat[:2])
-                if str(self.get("TIME", "")).strip("\x00"):
-                    time = str(self.pop("TIME"))
-                    date += "T%s:%s:00" % (time[:2], time[2:])
-            if "TDRC" not in self:
-                self.add(TDRC(encoding=0, text=date))
+        try:
+            if str(self.get("TYER", "")).strip("\x00"):
+                date = str(self.pop("TYER"))
+                if str(self.get("TDAT", "")).strip("\x00"):
+                    dat = str(self.pop("TDAT"))
+                    date = "%s-%s-%s" % (date, dat[2:], dat[:2])
+                    if str(self.get("TIME", "")).strip("\x00"):
+                        time = str(self.pop("TIME"))
+                        date += "T%s:%s:00" % (time[:2], time[2:])
+                if "TDRC" not in self:
+                    self.add(TDRC(encoding=0, text=date))
+        except UnicodeDecodeError:
+            # Old ID3 tags have *lots* of Unicode problems, so if TYER
+            # is bad, just chuck the frames.
+            pass
 
         # TORY can be the first part of a TDOR.
         if "TORY" in self:
-            date = str(self.pop("TORY"))
+            f = self.pop("TORY")
             if "TDOR" not in self:
-                self.add(TDOR(encoding=0, text=date))
+                try:
+                    self.add(TDOR(encoding=0, text=str(f)))
+                except UnicodeDecodeError:
+                    pass
 
         # IPLS is now TIPL.
         if "IPLS" in self:
+            f = self.pop("IPLS")
             if "TIPL" not in self:
-                f = self.pop("IPLS")
                 self.add(TIPL(encoding=f.encoding, people=f.people))
 
         if "TCON" in self:

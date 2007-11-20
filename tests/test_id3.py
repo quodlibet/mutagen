@@ -1553,6 +1553,20 @@ class FrameIDValidate(TestCase):
         self.failIf(is_valid_frame_id("MP3e"))
         self.failIf(is_valid_frame_id("+ABC"))
 
+class BadTYER(TestCase):
+    filename = join('tests', 'data', 'bad-TYER-frame.mp3')
+    def setUp(self):
+        self.audio = ID3(self.filename)
+
+    def test_no_year(self):
+        self.failIf("TYER" in self.audio)
+
+    def test_has_title(self):
+        self.failUnless("TIT2" in self.audio)
+
+    def tearDown(self):
+        del(self.audio)
+
 add(ID3Loading)
 add(ID3GetSetDel)
 add(BitPaddedIntTest)
@@ -1568,6 +1582,7 @@ add(WriteRoundtrip)
 add(OddWrites)
 add(NoHash)
 add(FrameIDValidate)
+add(BadTYER)
 
 try: import eyeD3
 except ImportError: pass
