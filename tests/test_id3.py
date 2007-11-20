@@ -1554,6 +1554,7 @@ class FrameIDValidate(TestCase):
         self.failIf(is_valid_frame_id("+ABC"))
 
 class BadTYER(TestCase):
+    uses_mmap = False
     filename = join('tests', 'data', 'bad-TYER-frame.mp3')
     def setUp(self):
         self.audio = ID3(self.filename)

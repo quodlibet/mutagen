@@ -382,6 +382,82 @@ class TFLACFile(TestCase):
 
 add(TFLACFile)
 
+class CVE20074619(TestCase):
+    uses_mmap = True
+
+    # Tests to ensure Mutagen is not vulnerable to a number of security
+    # issues found in libFLAC.
+    # http://research.eeye.com/html/advisories/published/AD20071115.html
+
+    def test_1(self):
+        # "Editing any Metadata Block Size value to a large value such
+        # as 0xFFFFFFFF may result in a heap based overflow in the
+        # decoding software."
+        filename = os.path.join("tests", "data", "CVE-2007-4619-1.flac")
+        self.failUnlessRaises(IOError, FLAC, filename)
+
+    def test_2(self):
+        # "The second vulnerability lies within the parsing of any
+        # VORBIS Comment String Size fields. Settings this fields to
+        # an overly large size, such as 0xFFFFFFF, could also result
+        # in another heap-based overflow allowing arbitrary code to
+        # execute in the content of the decoding program."
+        filename = os.path.join("tests", "data", "CVE-2007-4619-2.flac")
+        self.failUnlessRaises(IOError, FLAC, filename)
+
+    # "By inserting an overly long VORBIS Comment data string along
+    # with an large VORBIS Comment data string size value (such as
+    # 0x000061A8 followed by 25,050 A's), applications that do not
+    # properly apply boundary checks will result in a stack-based
+    # buffer overflow."
+    #
+    # This is tested, among other places, in
+    # test_save_grown_split_setup_packet_reference which saves a
+    # comment field of 200K in size.
+
+    # Vulnerabilities 4-10 are the same thing for the picture block.
+
+    # Vulnerability 11 does not apply to Mutagen as it does not
+    # download images when given a redirect MIME type.
+
+    # "An overly large Padding length field value would set the basis
+    # for another heap overflow inside a vulnerable application. By
+    # setting this value to a large value such as 0xFFFFFFFF, a
+    # malformed FLAC file could cause a heap based corruption scenario
+    # when the memory for the Padding length is calculated without
+    # proper bounds checks."
+    # 
+    # We should raise an IOError when trying to write such large
+    # blocks, or when reading blocks with an incorrect padding length.
+    # Although, I do wonder about the correctness of this
+    # vulnerability, since a padding length of 0xFFFFFFFF is
+    # impossible to store in a FLAC file.
+
+    def test_12_read(self):
+        filename = os.path.join("tests", "data", "CVE-2007-4619-12.flac")
+        self.failUnlessRaises(IOError, FLAC, filename)
+
+    def test_12_write_too_big(self):
+        filename = os.path.join("tests", "data", "silence-44-s.flac")
+        f = FLAC(filename)
+        # This size is too big to be an integer.
+        f.metadata_blocks[-1].length = 0xFFFFFFFF
+        self.failUnlessRaises(IOError, f.metadata_blocks[-1].write)
+
+    def test_12_write_too_big_for_flac(self):
+        from mutagen.flac import MetadataBlock
+        filename = os.path.join("tests", "data", "silence-44-s.flac")
+        f = FLAC(filename)
+        # This size is too big to be in a FLAC block but is overwise fine.
+        f.metadata_blocks[-1].length = 0x1FFFFFF
+        self.failUnlessRaises(
+            IOError, MetadataBlock.writeblocks, [f.metadata_blocks[-1]])
+
+    # Vulnerability 13 and 14 are specific to libFLAC and C/C++ memory
+    # management schemes.
+
+add(CVE20074619)
+
 NOTFOUND = os.system("tools/notarealprogram 2> %s" % devnull)
 
 have_flac = True

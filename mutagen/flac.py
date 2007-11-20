@@ -67,6 +67,8 @@ class MetadataBlock(object):
         codes[-1][0] |= 128
         for code, datum in codes:
             byte = chr(code)
+            if len(datum) > 2**24:
+                raise error("block is too long to write")
             length = struct.pack(">I", len(datum))[-3:]
             data.append(byte + length + datum)
         return "".join(data)
@@ -482,7 +484,10 @@ class Padding(MetadataBlock):
 
     def __init__(self, data=""): super(Padding, self).__init__(data)
     def load(self, data): self.length = len(data.read())
-    def write(self): return "\x00" * self.length
+    def write(self):
+        try: return "\x00" * self.length
+        except OverflowError:
+            raise error("cannot write %d bytes" % self.length)
     def __eq__(self, other):
         return isinstance(other, Padding) and self.length == other.length
     def __repr__(self):
@@ -514,6 +519,9 @@ class FLAC(FileType):
         size = to_int_be(file.read(3))
         try:
             data = file.read(size)
+            if len(data) != size:
+                raise error(
+                    "file said %d bytes, read %d bytes" % (size, len(data)))
             block = self.METADATA_BLOCKS[byte & 0x7F](data)
         except (IndexError, TypeError):
             block = MetadataBlock(data)

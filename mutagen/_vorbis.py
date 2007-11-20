@@ -86,7 +86,9 @@ class VComment(mutagen.Metadata, list):
             count = cdata.uint_le(fileobj.read(4))
             for i in range(count):
                 length = cdata.uint_le(fileobj.read(4))
-                string = fileobj.read(length).decode('utf-8', errors)
+                try: string = fileobj.read(length).decode('utf-8', errors)
+                except (OverflowError, MemoryError):
+                    raise error("cannot read %d bytes, too large" % length)
                 try: tag, value = string.split('=', 1)
                 except ValueError, err:
                     if errors == "ignore":
