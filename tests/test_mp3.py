@@ -65,6 +65,10 @@ class TMP3(TestCase):
         self.failUnlessEqual(mp3.info.length, 26122)
         self.failUnlessEqual(mp3.info.bitrate, 306)
 
+    def test_vbri(self):
+        mp3 = MP3(os.path.join("tests", "data", "vbri.mp3"))
+        self.failUnlessEqual(mp3.info.length, 222)
+
     def test_empty_xing(self):
         mp3 = MP3(os.path.join("tests", "data", "bad-xing.mp3"))
 

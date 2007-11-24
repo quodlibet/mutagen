@@ -173,7 +173,20 @@ class MPEGInfo(object):
         data = fileobj.read(32768)
         try:
             xing = data[:-4].index("Xing")
-        except ValueError: pass
+        except ValueError:
+            # Try to find/parse the VBRI header, which trumps the above length
+            # calculation.
+            try:
+                vbri = data[:-24].index("VBRI")
+            except ValueError: pass
+            else:
+                # If a VBRI header was found, this is definitely MPEG audio.
+                self.sketchy = False
+                vbri_version = struct.unpack('>H', data[vbri + 4:vbri + 6])[0]
+                if vbri_version == 1:
+                    frame_count = struct.unpack('>I', data[vbri + 14:vbri + 18])[0]
+                    samples = frame_size * frame_count
+                    self.length = (samples / self.sample_rate) or self.length
         else:
             # If a Xing header was found, this is definitely MPEG audio.
             self.sketchy = False

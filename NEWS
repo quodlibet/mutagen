@@ -7,6 +7,8 @@
    exclusive advisory locking when available.
  * Test cases to ensure Mutagen is not vulnerable to CVE-2007-4619.
    It is not now, nor was it ever.
+ * Use VBRI header to calculate length of VBR MP3 files if the Xing
+   header is not found.
 
 1.12 - 2007.08.04
  * Write important ID3v2 frames near the start. (Lukáš Lalinský)
