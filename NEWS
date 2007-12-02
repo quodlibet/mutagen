@@ -1,8 +1,9 @@
-1.13 - YYYY.MM.DD
+1.13 - 2007.12.01
  * Bug Fixes:
    * FLAC: Raise IOError, instead of UnboundLocalError, when trying
-     to open a non-existant file. (Lukáš Lalinský)
+     to open a non-existant file. (Lukáš Lalinský, Debian #448734)
    * Throw out invalid frames when upgrading from 2.3 to 2.4.
+ * TCP/TCMP support. (Debian #452231)
  * Faster implementation of file-writing when mmap fails, and
    exclusive advisory locking when available.
  * Test cases to ensure Mutagen is not vulnerable to CVE-2007-4619.

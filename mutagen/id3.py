@@ -1240,6 +1240,7 @@ class TCON(TextFrame):
         return " / ".join(self.genres)
 
 class TCOP(TextFrame): "Copyright (c)"
+class TCMP(NumericTextFrame): "iTunes Compilation Flag"
 class TDAT(TextFrame): "Date of recording (DDMM)"
 class TDEN(TimeStampTextFrame): "Encoding Time"
 class TDOR(TimeStampTextFrame): "Original Release Time"
@@ -1763,6 +1764,7 @@ class TRD(TRDA): "Recording Dates"
 class TMT(TMED): "Source Media Type"
 class TFT(TFLT): "File Type"
 class TBP(TBPM): "Beats per minute"
+class TCP(TCMP): "iTunes Compilation Flag"
 class TCR(TCOP): "Copyright (C)"
 class TPB(TPUB): "Publisher"
 class TEN(TENC): "Encoder"

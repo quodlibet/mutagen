@@ -378,6 +378,8 @@ def TestReadTags():
     tests = [
     ['TALB', '\x00a/b', 'a/b', '', dict(encoding=0)],
     ['TBPM', '\x00120', '120', 120, dict(encoding=0)],
+    ['TCMP', '\x001', '1', 1, dict(encoding=0)],
+    ['TCMP', '\x000', '0', 0, dict(encoding=0)],
     ['TCOM', '\x00a/b', 'a/b', '', dict(encoding=0)],
     ['TCON', '\x00(21)Disco', '(21)Disco', '', dict(encoding=0)],
     ['TCOP', '\x001900 c', '1900 c', '', dict(encoding=0)],
@@ -593,6 +595,8 @@ def TestReadTags():
     ['TMT', '\x00DIG/A', 'DIG/A', '', dict(encoding=0)],
     ['TFT', '\x00MPG/3', 'MPG/3', '', dict(encoding=0)],
     ['TBP', '\x00133', '133', 133, dict(encoding=0)],
+    ['TCP', '\x001', '1', 1, dict(encoding=0)],
+    ['TCP', '\x000', '0', 0, dict(encoding=0)],
     ['TCR', '\x00Me', 'Me', '', dict(encoding=0)],
     ['TPB', '\x00Him', 'Him', '', dict(encoding=0)],
     ['TEN', '\x00Lamer', 'Lamer', '', dict(encoding=0)],
