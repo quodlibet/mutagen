@@ -1,6 +1,7 @@
 from mutagen._util import DictMixin, cdata, utf8, insert_bytes, delete_bytes
 from tests import TestCase, add
 import mmap
+import random
 
 class FDict(DictMixin):
     uses_mmap = False
@@ -303,5 +304,49 @@ class FileHandling(TestCase):
         o = self.file(data[:6106+79] + data[79:])
         delete_bytes(o, 6106, 79)
         self.failUnless(data == self.read(o))
+
+    # Generate a bunch of random insertions, apply them, delete them,
+    # and make sure everything is still correct.
+    # 
+    # The num_runs and num_changes values are tuned to take about 10s
+    # on my laptop, or about 30 seconds since we we have 3 variations
+    # on insert/delete_bytes brokenness. If I ever get a faster
+    # laptop, it's probably a good idea to increase them. :)
+    def test_many_changes(self, num_runs=5, num_changes=300,
+                          min_change_size=500, max_change_size=1000,
+                          min_buffer_size=1, max_buffer_size=2000):
+        self.failUnless(min_buffer_size < min_change_size and
+                        max_buffer_size > max_change_size and
+                        min_change_size < max_change_size and
+                        min_buffer_size < max_buffer_size,
+                        "Given testing parameters make this test useless")
+        for j in range(num_runs):
+            data = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" * 1024
+            fobj = self.file(data)
+            filesize = len(data)
+            # Generate the list of changes to apply
+            changes = []
+            for i in range(num_changes):
+                change_size = random.randrange(min_change_size, max_change_size)
+                change_offset = random.randrange(0, filesize)
+                filesize += change_size
+                changes.append((change_offset, change_size))
+
+            # Apply the changes, and make sure they all took.
+            for offset, size in changes:
+                buffer_size = random.randrange(min_buffer_size, max_buffer_size)
+                insert_bytes(fobj, size, offset, BUFFER_SIZE=buffer_size)
+            fobj.seek(0)
+            self.failIfEqual(fobj.read(len(data)), data)
+            fobj.seek(0, 2)
+            self.failUnlessEqual(fobj.tell(), filesize)
+
+            # Then, undo them.
+            changes.reverse()
+            for offset, size in changes:
+                buffer_size = random.randrange(min_buffer_size, max_buffer_size)
+                delete_bytes(fobj, size, offset, BUFFER_SIZE=buffer_size)
+            fobj.seek(0)
+            self.failUnless(fobj.read() == data)
 
 add(FileHandling)

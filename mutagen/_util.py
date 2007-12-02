@@ -13,7 +13,6 @@ intended for internal use in Mutagen only.
 """
 
 import struct
-import mmap
 
 class DictMixin(object):
     """Implement the dict API using keys() and __*item__ methods.
@@ -198,7 +197,7 @@ def unlock(fileobj):
     import fcntl
     fcntl.lockf(fileobj, fcntl.LOCK_UN)
 
-def insert_bytes(fobj, size, offset):
+def insert_bytes(fobj, size, offset, BUFFER_SIZE=2**16):
     """Insert size bytes of empty space starting at offset.
 
     fobj must be an open file object, open rb+ or
@@ -215,28 +214,43 @@ def insert_bytes(fobj, size, offset):
     fobj.flush()
     try:
         try:
+            import mmap
             map = mmap.mmap(fobj.fileno(), filesize + size)
             try: map.move(offset + size, offset, movesize)
             finally: map.close()
-        except (ValueError, EnvironmentError):
+        except (ValueError, EnvironmentError, ImportError):
             # handle broken mmap scenarios
             locked = lock(fobj)
             fobj.truncate(filesize)
 
-            fobj.seek(offset)
-            backbuf = fobj.read(size)
-            offset += len(backbuf)
-            if len(backbuf) < size:
-                fobj.seek(offset)
-                fobj.write('\x00' * (size - len(backbuf)))
-            while len(backbuf) == size:
-                frontbuf = fobj.read(size)
-                fobj.seek(offset)
-                fobj.write(backbuf)
-                offset += len(backbuf)
-                fobj.seek(offset)
-                backbuf = frontbuf
-            fobj.write(backbuf)
+            fobj.seek(0, 2)
+            padsize = size
+            # Don't generate an enormous string if we need to pad
+            # the file out several megs.
+            while padsize:
+                addsize = min(BUFFER_SIZE, padsize)
+                fobj.write("\x00" * addsize)
+                padsize -= addsize
+
+            fobj.seek(filesize, 0)
+            while movesize:
+                # At the start of this loop, fobj is pointing at the end
+                # of the data we need to move, which is of movesize length.
+                thismove = min(BUFFER_SIZE, movesize)
+                # Seek back however much we're going to read this frame.
+                fobj.seek(-thismove, 1)
+                nextpos = fobj.tell()
+                # Read it, so we're back at the end.
+                data = fobj.read(thismove)
+                # Seek back to where we need to write it.
+                fobj.seek(-thismove + size, 1)
+                # Write it.
+                fobj.write(data)
+                # And seek back to the end of the unmoved data.
+                fobj.seek(nextpos)
+                movesize -= thismove
+
+            fobj.flush()
     finally:
         if locked:
             unlock(fobj)
@@ -259,10 +273,11 @@ def delete_bytes(fobj, size, offset, BUFFER_SIZE=2**16):
         if movesize > 0:
             fobj.flush()
             try:
+                import mmap
                 map = mmap.mmap(fobj.fileno(), filesize)
                 try: map.move(offset, offset + size, movesize)
                 finally: map.close()
-            except (ValueError, EnvironmentError):
+            except (ValueError, EnvironmentError, ImportError):
                 # handle broken mmap scenarios
                 locked = lock(fobj)
                 fobj.seek(offset + size)
