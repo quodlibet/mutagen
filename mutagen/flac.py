@@ -486,7 +486,10 @@ class Padding(MetadataBlock):
     def load(self, data): self.length = len(data.read())
     def write(self):
         try: return "\x00" * self.length
-        except OverflowError:
+        # On 64 bit platforms this won't generate a MemoryError
+        # or OverflowError since you might have enough RAM, but it
+        # still generates a ValueError.
+        except (OverflowError, ValueError, MemoryError):
             raise error("cannot write %d bytes" % self.length)
     def __eq__(self, other):
         return isinstance(other, Padding) and self.length == other.length
