@@ -95,6 +95,10 @@ strings, we strongly recommend using Python unicode objects rather
 than str objects. If you use str objects, Mutagen will assume they are
 in UTF-8.
 
+(This does not apply to strings that must be interpreted as bytes, for
+example filenames. Those should be passed as str objectss, and will 
+remain str objects within Mutagen.)
+
 == Multiple Values ==
 
 Most tag formats support multiple values for each key, so when you
