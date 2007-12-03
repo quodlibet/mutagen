@@ -153,7 +153,7 @@ class ASFUnicodeAttribute(ASFBaseAttribute):
     TYPE = 0x0000
 
     def parse(self, data):
-        return data.decode("utf-16").strip("\x00")
+        return data.decode("utf-16-le").strip("\x00")
 
     def _render(self):
         return self.value.encode("utf-16-le") + "\x00\x00"
@@ -356,7 +356,7 @@ class ContentDescriptionObject(BaseObject):
         pos = 10
         for length in lengths:
             end = pos + length
-            texts.append(data[pos:end].decode("utf-16").strip("\x00"))
+            texts.append(data[pos:end].decode("utf-16-le").strip("\x00"))
             pos = end
         (asf.tags["Title"], asf.tags["Author"], asf.tags["Copyright"],
          asf.tags["Description"], asf.tags["Rating"]) = texts
@@ -385,7 +385,7 @@ class ExtendedContentDescriptionObject(BaseObject):
         for i in range(num_attributes):
             name_length, = struct.unpack("<H", data[pos:pos+2])
             pos += 2
-            name = data[pos:pos+name_length].decode("utf-16").strip("\x00")
+            name = data[pos:pos+name_length].decode("utf-16-le").strip("\x00")
             pos += name_length
             value_type, value_length = struct.unpack("<HH", data[pos:pos+4])
             pos += 4
@@ -464,7 +464,7 @@ class MetadataObject(BaseObject):
             (reserved, stream, name_length, value_type,
              value_length) = struct.unpack("<HHHHI", data[pos:pos+12])
             pos += 12
-            name = data[pos:pos+name_length].decode("utf-16").strip("\x00")
+            name = data[pos:pos+name_length].decode("utf-16-le").strip("\x00")
             pos += name_length
             value = data[pos:pos+value_length]
             pos += value_length
@@ -494,7 +494,7 @@ class MetadataLibraryObject(BaseObject):
             (language, stream, name_length, value_type,
              value_length) = struct.unpack("<HHHHI", data[pos:pos+12])
             pos += 12
-            name = data[pos:pos+name_length].decode("utf-16").strip("\x00")
+            name = data[pos:pos+name_length].decode("utf-16-le").strip("\x00")
             pos += name_length
             value = data[pos:pos+value_length]
             pos += value_length
