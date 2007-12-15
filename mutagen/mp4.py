@@ -87,10 +87,12 @@ class Atom(object):
 
     def render(name, data):
         """Render raw atom data."""
-        try:
-            return struct.pack(">I4s", len(data) + 8, name) + data
-        except OverflowError:
-            return struct.pack(">I4sQ", 1, name, len(data) + 16) + data
+        # this raises OverflowError if Py_ssize_t can't handle the atom data
+        size = len(data) + 8
+        if size <= 0xFFFFFFFF:
+            return struct.pack(">I4s", size, name) + data
+        else:
+            return struct.pack(">I4sQ", 1, name, size + 8) + data
     render = staticmethod(render)
 
     def findall(self, name, recursive=False):
