@@ -441,7 +441,7 @@ class CVE20074619(TestCase):
         filename = os.path.join("tests", "data", "silence-44-s.flac")
         f = FLAC(filename)
         # This size is too big to be an integer.
-        f.metadata_blocks[-1].length = 0xFFFFFFFF
+        f.metadata_blocks[-1].length = 0xFFFFFFFFFFFFFFFF
         self.failUnlessRaises(IOError, f.metadata_blocks[-1].write)
 
     def test_12_write_too_big_for_flac(self):

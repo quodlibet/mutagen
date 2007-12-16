@@ -486,9 +486,12 @@ class Padding(MetadataBlock):
     def load(self, data): self.length = len(data.read())
     def write(self):
         try: return "\x00" * self.length
-        # On 64 bit platforms this won't generate a MemoryError
+        # On some 64 bit platforms this won't generate a MemoryError
         # or OverflowError since you might have enough RAM, but it
-        # still generates a ValueError.
+        # still generates a ValueError. On other 64 bit platforms,
+        # this will still succeed for extremely large values.
+        # Those should never happen in the real world, and if they
+        # do, writeblocks will catch it.
         except (OverflowError, ValueError, MemoryError):
             raise error("cannot write %d bytes" % self.length)
     def __eq__(self, other):
