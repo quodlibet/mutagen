@@ -1,6 +1,8 @@
-1.24
+1.14
  * Bug Fixes:
    * MP4/M4A: Fixed saving of atoms with 64-bit size on 64-bit platforms.
+   * MP4: Conversion of 'gnre' atoms to '\xa9gen' text atoms now correctly
+     produces a list of string values, not just a single value.
  * Tests:
    * FLAC: Use 2**64 instead of 2**32 to test overflow behavior.
 

@@ -464,7 +464,7 @@ class MP4Tags(DictProxy, Metadata):
         # Translate to a freeform genre.
         genre = cdata.short_be(data[16:18])
         if "\xa9gen" not in self:
-            try: self["\xa9gen"] = GENRES[genre - 1]
+            try: self["\xa9gen"] = [GENRES[genre - 1]]
             except IndexError: pass
 
     def __parse_tempo(self, atom, data):

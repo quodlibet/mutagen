@@ -118,13 +118,13 @@ class TMP4Tags(TestCase):
         data = Atom.render("moov", Atom.render("udta", meta))
         fileobj = StringIO(data)
         return MP4Tags(Atoms(fileobj), fileobj)
-        
+
     def test_genre(self):
         data = Atom.render("data", "\x00" * 8 + "\x00\x01")
         genre = Atom.render("gnre", data)
         tags = self.wrap_ilst(genre)
         self.failIf("gnre" in tags)
-        self.failUnlessEqual(tags.get("\xa9gen"), "Blues")
+        self.failUnlessEqual(tags["\xa9gen"], ["Blues"])
 
     def test_empty_cpil(self):
         cpil = Atom.render("cpil", Atom.render("data", "\x00" * 8))
