@@ -220,8 +220,15 @@ class ID3(DictProxy, mutagen.Metadata):
                 raise ValueError("'%s' has invalid flags %#02x" % (fn, flags))
 
         if self.f_extended:
-            self.__extsize = BitPaddedInt(self.__fullread(4))
-            self.__extdata = self.__fullread(self.__extsize - 4)
+            if self.version >= (2,4,0):
+                # "Where the 'Extended header size' is the size of the whole
+                # extended header, stored as a 32 bit synchsafe integer."
+                self.__extsize = BitPaddedInt(self.__fullread(4)) - 4
+            else:
+                # "Where the 'Extended header size', currently 6 or 10 bytes,
+                # excludes itself."
+                self.__extsize = unpack('>L', self.__fullread(4))[0]
+            self.__extdata = self.__fullread(self.__extsize)
 
     def __determine_bpi(self, data, frames):
         if self.version < (2,4,0): return int

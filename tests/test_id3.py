@@ -128,8 +128,17 @@ class ID3Loading(TestCase):
         id3._ID3__fileobj = StringIO(
             'ID3\x04\x00\x40\x00\x00\x00\x00\x00\x00\x00\x05\x5a')
         id3._ID3__load_header()
-        self.assertEquals(id3._ID3__extsize, 5)
+        self.assertEquals(id3._ID3__extsize, 1)
         self.assertEquals(id3._ID3__extdata, '\x5a')
+
+    def test_header_2_3_extended(self):
+        id3 = ID3()
+        id3._ID3__fileobj = StringIO(
+            'ID3\x03\x00\x40\x00\x00\x00\x00\x00\x00\x00\x06'
+            '\x00\x00\x56\x78\x9a\xbc')
+        id3._ID3__load_header()
+        self.assertEquals(id3._ID3__extsize, 6)
+        self.assertEquals(id3._ID3__extdata, '\x00\x00\x56\x78\x9a\xbc')
 
     def test_unsynch(self):
         id3 = ID3()
