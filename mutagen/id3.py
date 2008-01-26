@@ -808,6 +808,8 @@ class VolumePeakSpec(Spec):
         peak = 0
         bits = ord(data[0])
         bytes = min(4, (bits + 7) >> 3)
+        # not enough frame data
+        if bytes + 1 > len(data): raise ID3JunkFrameError
         shift = ((8 - (bits & 7)) & 7) + (4 - bytes) * 8
         for i in range(1, bytes+1):
             peak *= 256

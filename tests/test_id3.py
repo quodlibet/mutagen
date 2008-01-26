@@ -1181,6 +1181,11 @@ class BrokenDiscarded(TestCase):
         data = '\x01{\xf0\x10\xff\xff\x00'
         self.assertRaises(ID3JunkFrameError, RVA2.fromData, _24, 0x00, data)
 
+    def test_bad_number_of_bits_RVA2(self):
+        from mutagen.id3 import RVA2, ID3JunkFrameError
+        data = '\x00\x00\x01\xe6\xfc\x10{\xd7'
+        self.assertRaises(ID3JunkFrameError, RVA2.fromData, _24, 0x00, data)
+
     def test_drops_truncated_frames(self):
         from mutagen.id3 import Frames
         id3 = ID3()
