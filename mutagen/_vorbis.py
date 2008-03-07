@@ -179,21 +179,21 @@ class VCommentDict(VComment, DictMixin):
         work.
 
         """
-        key = key.lower()
+        key = key.lower().encode('ascii')
         values = [value for (k, value) in self if k.lower() == key]
         if not values: raise KeyError, key
         else: return values
 
     def __delitem__(self, key):
         """Delete all values associated with the key."""
-        key = key.lower()
+        key = key.lower().encode('ascii')
         to_delete = filter(lambda x: x[0].lower() == key, self)
         if not to_delete:raise KeyError, key
         else: map(self.remove, to_delete)
 
     def __contains__(self, key):
         """Return true if the key has any values."""
-        key = key.lower()
+        key = key.lower().encode('ascii')
         for k, value in self:
             if k.lower() == key: return True
         else: return False
@@ -206,7 +206,7 @@ class VCommentDict(VComment, DictMixin):
         string.
 
         """
-        key = key.lower()
+        key = key.lower().encode('ascii')
         if not isinstance(values, list):
             values = [values]
         try: del(self[key])

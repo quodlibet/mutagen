@@ -4,6 +4,9 @@
    * MP4: Conversion of 'gnre' atoms to '\xa9gen' text atoms now correctly
      produces a list of string values, not just a single value.
    * ID3: Broken RVA2 frames are now discarded. (Vladislav Naumov)
+  * VCommentDict: Raise UnicodeEncodeErrors when trying to use a Unicode
+    key that is not valid ASCII; keys are also normalized to ASCII
+    str objects. (Forest Bond)
  * Tests:
    * FLAC: Use 2**64 instead of 2**32 to test overflow behavior.
 

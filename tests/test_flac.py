@@ -238,6 +238,27 @@ class TFLAC(TestCase):
         f = FLAC(self.NEW)
         self.failUnlessEqual(f["title"][0], "A New Title")
 
+    def test_write_changetitle_unicode_value(self):
+        f = FLAC(self.NEW)
+        f["title"] = u"A Unicode Title \u2022"
+        f.save()
+        f = FLAC(self.NEW)
+        self.failUnlessEqual(f["title"][0], u"A Unicode Title \u2022")
+
+    def test_write_changetitle_unicode_key(self):
+        f = FLAC(self.NEW)
+        f[u"title"] = "A New Title"
+        f.save()
+        f = FLAC(self.NEW)
+        self.failUnlessEqual(f[u"title"][0], "A New Title")
+
+    def test_write_changetitle_unicode_key_and_value(self):
+        f = FLAC(self.NEW)
+        f[u"title"] = u"A Unicode Title \u2022"
+        f.save()
+        f = FLAC(self.NEW)
+        self.failUnlessEqual(f[u"title"][0], u"A Unicode Title \u2022")
+
     def test_force_grow(self):
         f = FLAC(self.NEW)
         f["faketag"] = ["a" * 1000] * 1000
