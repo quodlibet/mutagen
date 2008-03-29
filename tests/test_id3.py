@@ -775,6 +775,17 @@ class BitPaddedIntTest(TestCase):
     def test_65(self):
         self.assertEquals(BitPaddedInt('\x00\x00\x01\x81', 6), 0x41)
 
+    def test_32b(self):
+        self.assertEquals(BitPaddedInt('\xFF\xFF\xFF\xFF', bits=8),
+            0xFFFFFFFF)
+
+    def test_32bi(self):
+        self.assertEquals(BitPaddedInt(0xFFFFFFFF, bits=8), 0xFFFFFFFF)
+
+    def test_s32b(self):
+        self.assertEquals(BitPaddedInt('\xFF\xFF\xFF\xFF', bits=8).as_str(),
+            '\xFF\xFF\xFF\xFF')
+
     def test_s0(self):
         self.assertEquals(BitPaddedInt.to_str(0), '\x00\x00\x00\x00')
 
@@ -810,6 +821,7 @@ class BitPaddedIntTest(TestCase):
         self.assertEquals(len(BitPaddedInt.to_str(100)), 4)
         self.assertEquals(len(BitPaddedInt.to_str(100, width=-1)), 4)
         self.assertEquals(len(BitPaddedInt.to_str(2**32, width=-1)), 5)
+
 
 class SpecSanityChecks(TestCase):
     uses_mmap = False
@@ -1586,6 +1598,37 @@ class BadTYER(TestCase):
     def tearDown(self):
         del(self.audio)
 
+class BadPOPM(TestCase):
+    uses_mmap = False
+    filename = join('tests', 'data', 'bad-POPM-frame.mp3')
+    newfilename = join('tests', 'data', 'bad-POPM-frame-written.mp3')
+
+    def setUp(self):
+        shutil.copy(self.filename, self.newfilename)
+
+    def tearDown(self):
+        try: os.unlink(self.newfilename)
+        except EnvironmentError: pass
+
+    def test_read_popm_long_counter(self):
+        f = ID3(self.newfilename)
+        self.failUnless("POPM:Windows Media Player 9 Series" in f)
+        popm = f["POPM:Windows Media Player 9 Series"]
+        self.assertEquals(popm.rating, 255)
+        self.assertEquals(popm.count, 2709193061)
+
+    def test_write_popm_long_counter(self):
+        from mutagen.id3 import POPM
+        f = ID3(self.newfilename)
+        f.add(POPM(email="foo@example.com", rating=125, count=2**32+1))
+        f.save()
+        f = ID3(self.newfilename)
+        self.failUnless("POPM:foo@example.com" in f)
+        self.failUnless("POPM:Windows Media Player 9 Series" in f)
+        popm = f["POPM:foo@example.com"]
+        self.assertEquals(popm.rating, 125)
+        self.assertEquals(popm.count, 2**32+1)
+
 add(ID3Loading)
 add(ID3GetSetDel)
 add(BitPaddedIntTest)
@@ -1602,6 +1645,7 @@ add(OddWrites)
 add(NoHash)
 add(FrameIDValidate)
 add(BadTYER)
+add(BadPOPM)
 
 try: import eyeD3
 except ImportError: pass

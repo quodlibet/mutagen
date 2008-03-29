@@ -530,14 +530,14 @@ class BitPaddedInt(int):
         numeric_value = 0
         for shift, byte in zip(range(0, len(bytes)*bits, bits), bytes):
             numeric_value += byte << shift
-        return super(BitPaddedInt, cls).__new__(cls, numeric_value)
-
-    def __init__(self, value, bits=7, bigendian=True):
-        "Strips 8-bits bits out of every byte"
+        if isinstance(numeric_value, long):
+            self = long.__new__(BitPaddedLong, numeric_value)
+        else:
+            self = int.__new__(BitPaddedInt, numeric_value)
         self.bits = bits
         self.bigendian = bigendian
-        super(BitPaddedInt, self).__init__(value)
-    
+        return self
+
     def as_str(value, bits=7, bigendian=True, width=4):
         bits = getattr(value, 'bits', bits)
         bigendian = getattr(value, 'bigendian', bigendian)
@@ -554,6 +554,11 @@ class BitPaddedInt(int):
         else: bytes.extend([0] * (width-len(bytes)))
         if bigendian: bytes.reverse()
         return ''.join(map(chr, bytes))
+    to_str = staticmethod(as_str)
+
+class BitPaddedLong(long):
+    def as_str(value, bits=7, bigendian=True, width=4):
+        return BitPaddedInt.to_str(value, bits, bigendian, width)
     to_str = staticmethod(as_str)
 
 class unsynch(object):
