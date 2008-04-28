@@ -571,7 +571,7 @@ class unsynch(object):
                 append(val)
                 safe = val != '\xFF'
             else:
-                if val > '\xE0': raise ValueError('invalid sync-safe string')
+                if val >= '\xE0': raise ValueError('invalid sync-safe string')
                 elif val != '\x00': append(val)
                 safe = True
         if not safe: raise ValueError('string ended unsafe')

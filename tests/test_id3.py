@@ -980,6 +980,7 @@ class FrameSanityChecks(TestCase):
         from mutagen.id3 import unsynch as un
         self.assertRaises(ValueError, un.decode, '\xff\xff\xff\xff')
         self.assertRaises(ValueError, un.decode, '\xff\xf0\x0f\x00')
+        self.assertRaises(ValueError, un.decode, '\xff\xe0')
         self.assertEquals('\xff\x44', un.decode('\xff\x44'))
 
     def test_load_write(self):
