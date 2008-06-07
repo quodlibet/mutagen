@@ -1,4 +1,6 @@
 1.15
+ * Bug Fixes:
+   * mutagen.File: Import order no longer affects what type is returned.
 
 1.14 - 2008.05.31
  * Bug Fixes:
