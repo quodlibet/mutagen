@@ -413,8 +413,12 @@ class ID3(DictProxy, mutagen.Metadata):
         framedata = frame._writeData()
         usize = len(framedata)
         if usize > 2048:
-            framedata = BitPaddedInt.to_str(usize) + framedata.encode('zlib')
-            flags |= Frame.FLAG24_COMPRESS | Frame.FLAG24_DATALEN
+            # Disabled as this causes iTunes and other programs
+            # to fail to find these frames, which usually includes
+            # e.g. APIC.
+            #framedata = BitPaddedInt.to_str(usize) + framedata.encode('zlib')
+            #flags |= Frame.FLAG24_COMPRESS | Frame.FLAG24_DATALEN
+            pass
         datasize = BitPaddedInt.to_str(len(framedata), width=4)
         header = pack('>4s4sH', type(frame).__name__, datasize, flags)
         return header + framedata
