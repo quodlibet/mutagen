@@ -2,7 +2,7 @@
  * Bug Fixes:
    * mutagen.File: Import order no longer affects what type is returned.
    * mutagen.id3: Compression of frames is now disabled.
-   * mutagen.flac.StreamInfo: Fix channel mask (support channels > 2).
+   * mutagen.flac.StreamInfo: Fix channel mask (support channels > 2). [35]
 
 1.14 - 2008.05.31
  * Bug Fixes:
