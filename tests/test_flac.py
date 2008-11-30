@@ -62,9 +62,9 @@ add(TMetadataBlock)
 class TStreamInfo(TestCase):
     uses_mmap = False
 
-    data = ("\x12\x00\x12\x00\x00\x00\x0e\x00\x35\xea\x0a\xc4\x42\xf0"
-            "\x00\xca\x30\x14\x28\x90\xf9\xe1\x29\x32\x13\x01\xd4\xa7"
-            "\xa9\x11\x21\x38\xab\x91")
+    data = ('\x12\x00\x12\x00\x00\x00\x0e\x005\xea\n\xc4H\xf0\x00\xca0'
+            '\x14(\x90\xf9\xe1)2\x13\x01\xd4\xa7\xa9\x11!8\xab\x91')
+
     def setUp(self):
         self.i = StreamInfo(self.data)
 
@@ -77,7 +77,7 @@ class TStreamInfo(TestCase):
         self.failUnlessEqual(self.i.max_framesize, 13802)
         self.failUnless(self.i.min_framesize <= self.i.max_framesize)
     def test_sample_rate(self): self.failUnlessEqual(self.i.sample_rate, 44100)
-    def test_channels(self): self.failUnlessEqual(self.i.channels, 2)
+    def test_channels(self): self.failUnlessEqual(self.i.channels, 5)
     def test_bps(self): self.failUnlessEqual(self.i.bits_per_sample, 16)
     def test_length(self): self.failUnlessAlmostEqual(self.i.length, 300.5, 1)
     def test_total_samples(self):

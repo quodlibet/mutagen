@@ -184,7 +184,8 @@ class MPEGInfo(object):
                 self.sketchy = False
                 vbri_version = struct.unpack('>H', data[vbri + 4:vbri + 6])[0]
                 if vbri_version == 1:
-                    frame_count = struct.unpack('>I', data[vbri + 14:vbri + 18])[0]
+                    frame_count = struct.unpack(
+                        '>I', data[vbri + 14:vbri + 18])[0]
                     samples = frame_size * frame_count
                     self.length = (samples / self.sample_rate) or self.length
         else:
@@ -198,6 +199,14 @@ class MPEGInfo(object):
             if flags & 0x2:
                 bytes = struct.unpack('>I', data[xing + 12:xing + 16])[0]
                 self.bitrate = int((bytes * 8) // self.length)
+
+        # If the bitrate * the length is nowhere near the file
+        # length, recalculate using the bitrate and file length.
+        fileobj.seek(2, 0)
+        size = fileobj.tell()
+        expected = (self.bitrate / 8) * self.length
+        if not (size / 2 < expected < size * 2):
+            self.length = size / float(self.bitrate * 8)
 
     def pprint(self):
         s = "MPEG %s layer %d, %d bps, %s Hz, %.2f seconds" % (

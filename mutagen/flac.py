@@ -153,7 +153,7 @@ class StreamInfo(MetadataBlock):
         f.write(struct.pack(">I", self.sample_rate >> 4)[-2:])
         # 4 bits sample, 3 channel, 1 bps
         byte = (self.sample_rate & 0xF) << 4
-        byte += ((self.channels - 1) & 3) << 1
+        byte += ((self.channels - 1) & 7) << 1
         byte += ((self.bits_per_sample - 1) >> 4) & 1
         f.write(chr(byte))
         # 4 bits of bps, 4 of sample count
