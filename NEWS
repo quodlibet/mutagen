@@ -3,6 +3,7 @@
    * mutagen.File: Import order no longer affects what type is returned.
    * mutagen.id3: Compression of frames is now disabled.
    * mutagen.flac.StreamInfo: Fix channel mask (support channels > 2). [35]
+   * mutagen.mp3: Ignore Xing headers if they are obviously wrong.
 
 1.14 - 2008.05.31
  * Bug Fixes:

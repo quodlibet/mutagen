@@ -202,10 +202,11 @@ class MPEGInfo(object):
 
         # If the bitrate * the length is nowhere near the file
         # length, recalculate using the bitrate and file length.
+        # Don't do this for very small files.
         fileobj.seek(2, 0)
         size = fileobj.tell()
         expected = (self.bitrate / 8) * self.length
-        if not (size / 2 < expected < size * 2):
+        if not (size / 2 < expected < size * 2) and size > 2**16:
             self.length = size / float(self.bitrate * 8)
 
     def pprint(self):
