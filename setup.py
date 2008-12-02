@@ -42,7 +42,7 @@ class release(Command):
         target = "../../releases/mutagen-%s" % sversion
         if os.path.isdir(target):
             raise SystemExit("%r was already released." % sversion)
-        self.spawn(["svn", "cp", os.getcwd(), target])
+        self.spawn(["cp", "-r", os.getcwd(), target])
 
         self.rewrite_version(target, version[:-1])
 
