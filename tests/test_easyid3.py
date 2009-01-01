@@ -26,6 +26,9 @@ class TEasyID3(TestCase):
         self.id3["artist"] = "baz"
         self.id3.pprint()
 
+    def test_has_key(self):
+        self.failIf(self.id3.has_key("foo"))
+
     def test_empty_file(self):
         empty = os.path.join('tests', 'data', 'emptyfile.mp3')
         self.assertRaises(ID3Error, EasyID3, filename=empty)

@@ -20,6 +20,13 @@ from mutagen.id3 import ID3, error, delete
 
 __all__ = ['EasyID3', 'Open', 'delete']
 
+class EasyID3KeyError(KeyError, ValueError):
+    """Raised when trying to get/set an invalid key.
+
+    Subclasses both KeyError and ValueError for API compatibility,
+    catching KeyError is preferred.
+    """
+
 class EasyID3(DictMixin, Metadata):
     """A file with an ID3 tag.
 
@@ -91,7 +98,7 @@ class EasyID3(DictMixin, Metadata):
             frame = self.valid_keys[key]
             getter = self.__mungers.get(frame, self.__default)[0]
             return getter(self, self.__id3[frame])
-        else: raise ValueError("%r is not a valid key" % key)
+        else: raise EasyID3KeyError("%r is not a valid key" % key)
 
     def __setitem__(self, key, value):
         key = key.lower()
@@ -103,13 +110,13 @@ class EasyID3(DictMixin, Metadata):
                 self.__id3.loaded_frame(frame)
             else:
                 setter(self, self.__id3[frame], value)
-        else: raise ValueError("%r is not a valid key" % key)
+        else: raise EasyID3KeyError("%r is not a valid key" % key)
 
     def __delitem__(self, key):
         key = key.lower()
         if key in self.valid_keys:
             del(self.__id3[self.valid_keys[key]])
-        else: raise ValueError("%r is not a valid key" % key)
+        else: raise EasyID3KeyError("%r is not a valid key" % key)
 
     def keys(self):
         return [k for (k, v) in self.valid_keys.items() if v in self.__id3]

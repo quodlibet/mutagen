@@ -1,3 +1,7 @@
+1.16
+ * Bug Fixes:
+   * EasyID3: Invalid keys now raise KeyError (and ValueError). [92]
+
 1.15 - 2008.12.01
  * Bug Fixes:
    * mutagen.File: Import order no longer affects what type is returned.
