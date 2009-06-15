@@ -171,7 +171,7 @@ class TMutagen(TestCase):
     def test_not_prerelease(self):
         from mutagen import version
         from os.path import dirname, basename, abspath
-        trunk = dirname(dirname(dirname(abspath(__file__))))
+        trunk = dirname(dirname(abspath(__file__)))
         definitely_trunk = os.path.join(trunk, "..", "trunk")
         if os.path.isdir(definitely_trunk):
             if basename(trunk) != "trunk":
