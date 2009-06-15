@@ -44,15 +44,15 @@ class MP4Cover(str):
     """A cover artwork.
     
     Attributes:
-    format -- format of the image (either FORMAT_JPEG or FORMAT_PNG)
+    imageformat -- format of the image (either FORMAT_JPEG or FORMAT_PNG)
     """
     FORMAT_JPEG = 0x0D
     FORMAT_PNG = 0x0E
 
-    def __new__(cls, data, format=None):
+    def __new__(cls, data, imageformat=None):
         self = str.__new__(cls, data)
-        if format is None: format= MP4Cover.FORMAT_JPEG
-        self.format = format
+        if imageformat is None: imageformat = MP4Cover.FORMAT_JPEG
+        self.imageformat = imageformat
         return self
 
 class Atom(object):
@@ -496,22 +496,23 @@ class MP4Tags(DictProxy, Metadata):
         self[atom.name] = []
         pos = 0
         while pos < atom.length - 8:
-            length, name, format = struct.unpack(">I4sI", data[pos:pos+12])
+            length, name, imageformat = struct.unpack(">I4sI", data[pos:pos+12])
             if name != "data":
                 raise MP4MetadataError(
                     "unexpected atom %r inside 'covr'" % name)
-            if format not in (MP4Cover.FORMAT_JPEG, MP4Cover.FORMAT_PNG):
-                format = MP4Cover.FORMAT_JPEG
-            cover = MP4Cover(data[pos+16:pos+length], format)
-            self[atom.name].append(MP4Cover(data[pos+16:pos+length], format))
+            if imageformat not in (MP4Cover.FORMAT_JPEG, MP4Cover.FORMAT_PNG):
+                imageformat = MP4Cover.FORMAT_JPEG
+            cover = MP4Cover(data[pos+16:pos+length], imageformat)
+            self[atom.name].append(
+                MP4Cover(data[pos+16:pos+length], imageformat))
             pos += length
     def __render_cover(self, key, value):
         atom_data = []
         for cover in value:
-            try: format = cover.format
-            except AttributeError: format = MP4Cover.FORMAT_JPEG
+            try: imageformat = cover.imageformat
+            except AttributeError: imageformat = MP4Cover.FORMAT_JPEG
             atom_data.append(
-                Atom.render("data", struct.pack(">2I", format, 0) + cover))
+                Atom.render("data", struct.pack(">2I", imageformat, 0) + cover))
         return Atom.render(key, "".join(atom_data))
 
     def __parse_text(self, atom, data, expected_flags=1):
@@ -588,12 +589,12 @@ class MP4Info(object):
         data = fileobj.read(mdhd.length)
         if ord(data[8]) == 0:
             offset = 20
-            format = ">2I"
+            fmt = ">2I"
         else:
             offset = 28
-            format = ">IQ"
-        end = offset + struct.calcsize(format)
-        unit, length = struct.unpack(format, data[offset:end])
+            fmt = ">IQ"
+        end = offset + struct.calcsize(fmt)
+        unit, length = struct.unpack(fmt, data[offset:end])
         self.length = float(length) / unit
 
         try:

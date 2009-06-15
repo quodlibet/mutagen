@@ -52,15 +52,15 @@ class M4ACover(str):
     """A cover artwork.
     
     Attributes:
-    format -- format of the image (either FORMAT_JPEG or FORMAT_PNG)
+    imageformat -- format of the image (either FORMAT_JPEG or FORMAT_PNG)
     """
     FORMAT_JPEG = 0x0D
     FORMAT_PNG = 0x0E
 
-    def __new__(cls, data, format=None):
+    def __new__(cls, data, imageformat=None):
         self = str.__new__(cls, data)
-        if format is None: format= M4ACover.FORMAT_JPEG
-        self.format = format
+        if imageformat is None: imageformat = M4ACover.FORMAT_JPEG
+        self.imageformat = imageformat
         return self
 
 class Atom(object):
@@ -372,17 +372,17 @@ class M4ATags(DictProxy, Metadata):
         return self.__render_data(key, 0x15, chr(bool(value)))
 
     def __parse_cover(self, atom, data):
-        length, name, format = struct.unpack(">I4sI", data[:12])
+        length, name, imageformat = struct.unpack(">I4sI", data[:12])
         if name != "data":
             raise M4AMetadataError(
                 "unexpected atom %r inside 'covr'" % name)
-        if format not in (M4ACover.FORMAT_JPEG, M4ACover.FORMAT_PNG):
-            format = M4ACover.FORMAT_JPEG
-        self[atom.name]= M4ACover(data[16:length], format)
+        if imageformat not in (M4ACover.FORMAT_JPEG, M4ACover.FORMAT_PNG):
+            imageformat = M4ACover.FORMAT_JPEG
+        self[atom.name]= M4ACover(data[16:length], imageformat)
     def __render_cover(self, key, value):
-        try: format = value.format
-        except AttributeError: format = M4ACover.FORMAT_JPEG
-        data = Atom.render("data", struct.pack(">2I", format, 0) + value)
+        try: imageformat = value.imageformat
+        except AttributeError: imageformat = M4ACover.FORMAT_JPEG
+        data = Atom.render("data", struct.pack(">2I", imageformat, 0) + value)
         return Atom.render(key, data)
 
     def __parse_text(self, atom, data):
@@ -436,12 +436,12 @@ class M4AInfo(object):
         data = fileobj.read(mdhd.length)
         if ord(data[8]) == 0:
             offset = 20
-            format = ">2I"
+            fmt = ">2I"
         else:
             offset = 28
-            format = ">IQ"
-        end = offset + struct.calcsize(format)
-        unit, length = struct.unpack(format, data[offset:end])
+            fmt = ">IQ"
+        end = offset + struct.calcsize(fmt)
+        unit, length = struct.unpack(fmt, data[offset:end])
         self.length = float(length) / unit
 
         try:

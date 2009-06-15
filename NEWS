@@ -1,6 +1,10 @@
 1.16
  * Bug Fixes:
    * EasyID3: Invalid keys now raise KeyError (and ValueError). [92]
+ * MAJOR API INCOMPATIBILITY!!!!
+   * Python 2.6 has required us to rename the .format attribute of M4A/MP4
+     cover atoms, because it conflicts with the new str.format method.
+     It has been renamed .imageformat.
 
 1.15 - 2008.12.01
  * Bug Fixes:

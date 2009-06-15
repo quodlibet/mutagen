@@ -154,7 +154,7 @@ class TMP4Tags(TestCase):
         data = Atom.render("data", "\x00\x00\x00\x00" + "\x00" * 4 + "whee")
         covr = Atom.render("covr", data)
         tags = self.wrap_ilst(covr)
-        self.failUnlessEqual(MP4Cover.FORMAT_JPEG, tags["covr"][0].format)
+        self.failUnlessEqual(MP4Cover.FORMAT_JPEG, tags["covr"][0].imageformat)
 
     def test_render_bool(self):
         self.failUnlessEqual(MP4Tags()._MP4Tags__render_bool('pgap', True),
@@ -491,8 +491,8 @@ class TMP4HasTags(TMP4):
         self.failUnless('covr' in self.audio.tags)
         covr = self.audio.tags['covr']
         self.failUnlessEqual(len(covr), 2)
-        self.failUnlessEqual(covr[0].format, MP4Cover.FORMAT_PNG)
-        self.failUnlessEqual(covr[1].format, MP4Cover.FORMAT_JPEG)
+        self.failUnlessEqual(covr[0].imageformat, MP4Cover.FORMAT_PNG)
+        self.failUnlessEqual(covr[1].imageformat, MP4Cover.FORMAT_JPEG)
 
     def test_not_my_file(self):
         self.failUnlessRaises(

@@ -263,7 +263,7 @@ class TM4AHasTags(TM4A):
     def test_has_covr(self):
         self.failUnless('covr' in self.audio.tags)
         covr = self.audio.tags['covr']
-        self.failUnlessEqual(covr.format, M4ACover.FORMAT_PNG)
+        self.failUnlessEqual(covr.imageformat, M4ACover.FORMAT_PNG)
 
     def test_not_my_file(self):
         self.failUnlessRaises(
