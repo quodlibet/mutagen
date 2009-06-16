@@ -517,7 +517,8 @@ class FLAC(FileType):
     """Known metadata block types, indexed by ID."""
 
     def score(filename, fileobj, header):
-        return header.startswith("fLaC")
+        return (header.startswith("fLaC") +
+                filename.lower().endswith(".flac") * 3)
     score = staticmethod(score)
 
     def __read_metadata_block(self, file):

@@ -1,6 +1,8 @@
 1.16
+ * Website / code repository move.
  * Bug Fixes:
-   * EasyID3: Invalid keys now raise KeyError (and ValueError). [92]
+   * EasyID3: Invalid keys now raise KeyError (and ValueError).
+   * mutagen.File: .flac files with an ID3 tag will be opened as FLAC.
  * MAJOR API INCOMPATIBILITY!!!!
    * Python 2.6 has required us to rename the .format attribute of M4A/MP4
      cover atoms, because it conflicts with the new str.format method.
