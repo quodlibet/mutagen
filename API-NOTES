@@ -66,3 +66,9 @@ There is no MPEG-4 iTunes metadata standard. Mutagen's features are
 known to lead to problems in other implementations. For example, FAAD
 will crash when reading a file with multiple "tmpo" atoms. iTunes
 itself is our main compatibility target.
+
+Python 2.6 forced an API change in the MP4 (and M4A) code, by
+introducing the str.format instance method. Previously the cover image
+format was available via the .format attribute; it is now available
+via the .imageformat attribute. On versions of Python prior to 2.6, it
+is also still available as .format.

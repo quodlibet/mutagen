@@ -61,6 +61,9 @@ class M4ACover(str):
         self = str.__new__(cls, data)
         if imageformat is None: imageformat = M4ACover.FORMAT_JPEG
         self.imageformat = imageformat
+        try: self.format
+        except AttributeError:
+            self.format = imageformat
         return self
 
 class Atom(object):

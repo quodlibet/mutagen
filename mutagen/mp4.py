@@ -53,6 +53,9 @@ class MP4Cover(str):
         self = str.__new__(cls, data)
         if imageformat is None: imageformat = MP4Cover.FORMAT_JPEG
         self.imageformat = imageformat
+        try: self.format
+        except AttributeError:
+            self.format = imageformat
         return self
 
 class Atom(object):
