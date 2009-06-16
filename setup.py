@@ -13,7 +13,7 @@ from distutils.command.sdist import sdist as distutils_sdist
 class release(Command):
     description = "release a new version of Mutagen"
     user_options = [
-        ("all-the-way", None, "svn commit and copy release tarball to kai")
+        ("all-the-way", None, "svn commit a new tag")
         ]
 
     def initialize_options(self):
@@ -39,31 +39,25 @@ class release(Command):
         if version[-1] >= 0:
             raise SystemExit("%r: version number to release." % version)
         sversion = ".".join(map(str, version[:-1])) 
-        target = "../../releases/mutagen-%s" % sversion
+        target = "../tags/mutagen-%s" % sversion
         if os.path.isdir(target):
             raise SystemExit("%r was already released." % sversion)
-        self.spawn(["cp", "-r", os.getcwd(), target])
+        self.spawn(["svn", "cp", os.getcwd(), target])
 
         self.rewrite_version(target, version[:-1])
 
         if self.all_the_way:
-            if os.environ.get("USER") != "piman":
-                print "You're not Joe, so this might not work."
             self.spawn(
                 ["svn", "commit", "-m", "Mutagen %s." % sversion, target])
             os.chdir(target)
-            if os.environ.get("USER") != "piman":
-                print "You're not Joe, so this definitely won't work."
-            print "Copying tarball to kai."
+            print "Building release tarball."
             self.spawn(["./setup.py", "sdist"])
-            self.spawn(["scp", "dist/mutagen-%s.tar.gz" % sversion,
-                        "sacredchao.net:~piman/public_html/software"])
             self.spawn(["./setup.py", "register"])
 
 class clean(distutils_clean):
     def run(self):
         # In addition to what the normal clean run does, remove pyc
-        # and pyo files from the source tree.
+        # and pyo and backup files from the source tree.
         distutils_clean.run(self)
         def should_remove(filename):
             if (filename.lower()[-4:] in [".pyc", ".pyo"] or
@@ -200,10 +194,10 @@ if __name__ == "__main__":
     setup(cmdclass={'clean': clean, 'test': test_cmd, 'coverage': coverage_cmd,
                     "sdist": sdist, "release": release},
           name="mutagen", version=version_string,
-          url="http://www.sacredchao.net/quodlibet/wiki/Development/Mutagen",
+          url="http://code.google.com/p/mutagen/",
           description="read and write audio tags for many formats",
           author="Michael Urman",
-          author_email="quodlibet@lists.sacredchao.net",
+          author_email="quod-libet-development@groups.google.com",
           license="GNU GPL v2",
           packages=["mutagen"],
           data_files=data_files,
