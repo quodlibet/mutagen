@@ -1,4 +1,7 @@
-1.16
+1.17
+ * EasyID3: Extension API for defining new "easy" tags at runtime.
+
+1.16 - 2009.06.15
  * Website / code repository move.
  * Bug Fixes:
    * EasyID3: Invalid keys now raise KeyError (and ValueError).

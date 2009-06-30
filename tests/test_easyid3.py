@@ -86,6 +86,12 @@ class TEasyID3(TestCase):
         id3 = EasyID3(self.filename)
         self.failUnlessEqual(self.id3["date"], ["2004"])
 
+    def test_date_delete(self):
+        self.id3["date"] = "2004"
+        self.failUnlessEqual(self.id3["date"], ["2004"])
+        del(self.id3["date"])
+        self.failIf("date" in self.id3)
+        
     def test_write_date_double(self):
         self.id3["date"] = ["2004", "2005"]
         self.id3.save(self.filename)
@@ -103,6 +109,32 @@ class TEasyID3(TestCase):
         self.failUnlessRaises(
             ValueError, self.id3.__setitem__, "notvalid", "tests")
 
+    def test_perfomer(self):
+        self.id3["performer:coder"] = ["piman", "mu"]
+        self.id3.save(self.filename)
+        id3 = EasyID3(self.filename)
+        self.failUnlessEqual(self.id3["performer:coder"], ["piman", "mu"])
+
+    def test_no_performer(self):
+        self.failIf("performer:foo" in self.id3)
+
+    def test_performer_delete(self):
+        self.id3["performer:foo"] = "Joe"
+        self.id3["performer:bar"] = "Joe"
+        self.failUnless("performer:foo" in self.id3)
+        self.failUnless("performer:bar" in self.id3)
+        del(self.id3["performer:foo"])
+        self.failIf("performer:foo" in self.id3)
+        self.failUnless("performer:bar" in self.id3)
+        del(self.id3["performer:bar"])
+        self.failIf("performer:bar" in self.id3)
+        self.failIf("TMCL" in self.id3._EasyID3__id3)
+
+    def test_performer_delete_dne(self):
+        self.failUnlessRaises(KeyError, self.id3.__delitem__, "performer:bar")
+        self.id3["performer:foo"] = "Joe"
+        self.failUnlessRaises(KeyError, self.id3.__delitem__, "performer:bar")
+        
     def tearDown(self):
         os.unlink(self.filename)
 
