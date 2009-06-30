@@ -111,6 +111,17 @@ class test_cmd(Command):
 
         def uses_mmap(Kind):
             return getattr(Kind, 'uses_mmap', True)
+
+        try: import fcntl
+        except ImportError:
+            print "Unable to run mocked fcntl.lockf tests."
+        else:
+            def MockLockF(*args, **kwargs):
+                raise IOError
+            fcntl.lockf = MockLockF
+            print "Running tests with mocked failing fcntl.lockf."
+            self.__test(uses_mmap)
+
         class MockMMap(object):
             def __init__(self, *args, **kwargs): pass
             def move(self, dest, src, count): raise ValueError
@@ -124,16 +135,6 @@ class test_cmd(Command):
         mmap.mmap = MockMMap2
         print "Running tests with mocked failing mmap.mmap."
         self.__test(uses_mmap)
-
-        try: import fcntl
-        except ImportError:
-            print "Unable to run mocked fcntl.lockf tests."
-        else:
-            def MockLockF(*args, **kwargs):
-                raise IOError
-            fcntl.lockf = MockLockF
-            print "Running tests with mocked failing fcntl.lockf."
-            self.__test(uses_mmap)
 
     def __test(self, filter=None):
         import tests
