@@ -93,11 +93,13 @@ class sdist(distutils_sdist):
 class test_cmd(Command):
     description = "run automated tests"
     user_options = [
-        ("to-run=", None, "list of tests to run (default all)")
+        ("to-run=", None, "list of tests to run (default all)"),
+        ("quick", None, "don't run slow mmap-failing tests"),
         ]
 
     def initialize_options(self):
         self.to_run = []
+        self.quick = False
 
     def finalize_options(self):
         if self.to_run:
@@ -108,6 +110,9 @@ class test_cmd(Command):
 
         print "Running tests with real mmap."
         self.__test()
+
+        if self.quick:
+            return
 
         def uses_mmap(Kind):
             return getattr(Kind, 'uses_mmap', True)
