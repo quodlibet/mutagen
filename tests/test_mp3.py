@@ -4,7 +4,7 @@ import shutil
 from unittest import TestCase
 from cStringIO import StringIO
 from tests import add
-from mutagen.mp3 import MP3, error as MP3Error, delete, MPEGInfo
+from mutagen.mp3 import MP3, error as MP3Error, delete, MPEGInfo, EasyMP3
 from mutagen.id3 import ID3
 from tempfile import mkstemp
 
@@ -127,3 +127,20 @@ class TMPEGInfo(TestCase):
         fileobj = StringIO("")
         self.failUnlessRaises(IOError, MPEGInfo, fileobj)
 add(TMPEGInfo)
+
+class TEasyMP3(TestCase):
+    uses_mmap = False
+
+    def setUp(self):
+        original = os.path.join("tests", "data", "silence-44-s.mp3")
+        fd, self.filename = mkstemp(suffix='.mp3')
+        os.close(fd)
+        shutil.copy(original, self.filename)
+        self.mp3 = EasyMP3(self.filename)
+
+    def test_artist(self):
+        self.failUnless("artist" in self.mp3)
+
+    def test_no_composer(self):
+        self.failIf("composer" in self.mp3)
+add(TEasyMP3)

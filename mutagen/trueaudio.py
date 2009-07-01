@@ -14,7 +14,7 @@ http://www.true-audio.com/TTA_Lossless_Audio_Codec_-_Format_Description
 True Audio files use ID3 tags.
 """
 
-__all__ = ["TrueAudio", "Open", "delete"]
+__all__ = ["TrueAudio", "Open", "delete", "EasyTrueAudio"]
 
 from mutagen.id3 import ID3FileType, delete
 from mutagen._util import cdata
@@ -55,3 +55,8 @@ class TrueAudio(ID3FileType):
     score = staticmethod(score)
 
 Open = TrueAudio
+
+class EasyTrueAudio(TrueAudio):
+    """Like MP3, but uses EasyID3 for tags."""
+    from mutagen.easyid3 import EasyID3 as ID3
+

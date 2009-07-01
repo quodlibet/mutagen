@@ -155,7 +155,7 @@ class FileType(mutagen._util.DictMixin):
 
     mime = property(__get_mime)
 
-def File(filename, options=None):
+def File(filename, options=None, easy=False):
     """Guess the type of the file and try to open it.
 
     The file type is decided by several things, such as the first 128
@@ -169,13 +169,22 @@ def File(filename, options=None):
         from mutagen.asf import ASF
         from mutagen.apev2 import APEv2File
         from mutagen.flac import FLAC
-        from mutagen.id3 import ID3FileType
-        from mutagen.mp3 import MP3
+        if easy:
+            from mutagen.id3 import EasyID3FileType as ID3FileType
+        else:
+            from mutagen.id3 import ID3FileType
+        if easy:
+            from mutagen.mp3 import EasyMP3 as MP3
+        else:
+            from mutagen.mp3 import MP3
         from mutagen.oggflac import OggFLAC
         from mutagen.oggspeex import OggSpeex
         from mutagen.oggtheora import OggTheora
         from mutagen.oggvorbis import OggVorbis
-        from mutagen.trueaudio import TrueAudio
+        if easy:
+            from mutagen.trueaudio import EasyTrueAudio as TrueAudio
+        else:
+            from mutagen.trueaudio import TrueAudio
         from mutagen.wavpack import WavPack
         from mutagen.mp4 import MP4
         from mutagen.musepack import Musepack

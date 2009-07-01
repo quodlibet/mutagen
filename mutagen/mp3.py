@@ -12,6 +12,8 @@ import struct
 
 from mutagen.id3 import ID3FileType, BitPaddedInt, delete
 
+__all__ = ["MP3", "Open", "delete", "MP3"]
+
 class error(RuntimeError): pass
 class HeaderNotFoundError(error, IOError): pass
 class InvalidMPEGHeader(error, IOError): pass
@@ -231,3 +233,8 @@ class MP3(ID3FileType):
     score = staticmethod(score)
 
 Open = MP3
+
+class EasyMP3(MP3):
+    """Like MP3, but uses EasyID3 for tags."""
+    from mutagen.easyid3 import EasyID3 as ID3
+

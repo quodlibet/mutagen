@@ -7,11 +7,11 @@ from mutagen.oggvorbis import OggVorbis
 from mutagen.oggflac import OggFLAC
 from mutagen.oggspeex import OggSpeex
 from mutagen.oggtheora import OggTheora
-from mutagen.mp3 import MP3
+from mutagen.mp3 import MP3, EasyMP3
 from mutagen.apev2 import APEv2File
 from mutagen.flac import FLAC
 from mutagen.wavpack import WavPack
-from mutagen.trueaudio import TrueAudio
+from mutagen.trueaudio import TrueAudio, EasyTrueAudio
 from mutagen.mp4 import MP4
 from mutagen.musepack import Musepack
 from mutagen.monkeysaudio import MonkeysAudio
@@ -102,6 +102,11 @@ class TFile(TestCase):
         self.failUnless(isinstance(
             File(os.path.join("tests", "data", "silence-44-s.mp3")), MP3))
 
+    def test_easy_mp3(self):
+        self.failUnless(isinstance(
+            File(os.path.join("tests", "data", "silence-44-s.mp3"), easy=True),
+            EasyMP3))
+
     def test_flac(self):
         self.failUnless(isinstance(
             File(os.path.join("tests", "data", "silence-44-s.flac")), FLAC))
@@ -127,6 +132,11 @@ class TFile(TestCase):
     def test_tta(self):
         self.failUnless(isinstance(
             File(os.path.join("tests", "data", "empty.tta")), TrueAudio))
+
+    def test_easy_tta(self):
+        self.failUnless(isinstance(
+            File(os.path.join("tests", "data", "empty.tta"), easy=True),
+            EasyTrueAudio))
 
     def test_wavpack(self):
         self.failUnless(isinstance(

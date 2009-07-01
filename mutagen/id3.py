@@ -1921,6 +1921,8 @@ def MakeID3v1(id3):
 class ID3FileType(mutagen.FileType):
     """An unknown type of file with ID3 tags."""
 
+    ID3 = ID3
+    
     class _Info(object):
         length = 0
         def __init__(self, fileobj, offset): pass
@@ -1930,23 +1932,27 @@ class ID3FileType(mutagen.FileType):
         return header.startswith("ID3")
     score = staticmethod(score)
 
-    def add_tags(self, ID3=ID3):
+    def add_tags(self, ID3=None):
         """Add an empty ID3 tag to the file.
 
         A custom tag reader may be used in instead of the default
         mutagen.id3.ID3 object, e.g. an EasyID3 reader.
         """
+        if ID3 is None:
+            ID3 = self.ID3
         if self.tags is None:
             self.tags = ID3()
         else:
             raise error("an ID3 tag already exists")
 
-    def load(self, filename, ID3=ID3, **kwargs):
+    def load(self, filename, ID3=None, **kwargs):
         """Load stream and tag information from a file.
 
         A custom tag reader may be used in instead of the default
         mutagen.id3.ID3 object, e.g. an EasyID3 reader.
         """
+        if ID3 is None:
+            ID3 = self.ID3
         self.filename = filename
         try: self.tags = ID3(filename, **kwargs)
         except error: self.tags = None
@@ -1960,3 +1966,5 @@ class ID3FileType(mutagen.FileType):
         finally:
             fileobj.close()
 
+class EasyID3FileType(ID3FileType):
+    from mutagen.easyid3 import EasyID3 as ID3
