@@ -1,4 +1,5 @@
 1.17
+ * ID3: Support for the iTunes non-standard TSO2 and TSOC frames.
  * EasyID3: Extension API for defining new "easy" tags at runtime.
 
 1.16 - 2009.06.15

@@ -251,14 +251,37 @@ def performer_list(id3, key):
         return []
     else:
         return list(set("performer:" + p[0] for p in mcl.people))
-    
-EasyID3.RegisterTextKey("album", "TALB")
-EasyID3.RegisterTextKey("lyricist", "TEXT")
-EasyID3.RegisterTextKey("title", "TIT2")
-EasyID3.RegisterTextKey("version", "TIT3")
-EasyID3.RegisterTextKey("artist", "TPE1")
-EasyID3.RegisterTextKey("tracknumber", "TRCK")
-EasyID3.RegisterTextKey("performer", "TPE2")
+
+for frameid, key in {
+    "TALB": "album",
+    "TBPM": "bpm",
+    "TCMP": "compilation", # iTunes extension
+    "TCOM": "composer",
+    "TCOP": "copyright",
+    "TENC": "encodedby",
+    "TEXT": "lyricist",
+    "TLEN": "length",
+    "TMED": "media",
+    "TMOO": "mood",
+    "TIT2": "title",
+    "TIT3": "version",
+    "TPE1": "artist",
+    "TPE2": "performer", 
+    "TPE3": "conductor",
+    "TPE4": "arranger",
+    "TPOS": "discnumber",
+    "TPUB": "organization",
+    "TRCK": "tracknumber",
+    "TOLY": "author",
+    "TSO2": "albumartistsort", # iTunes extension
+    "TSOA": "albumsort",
+    "TSOC": "composersort", # iTunes extension
+    "TSOP": "artistsort",
+    "TSOT": "titlesort",
+    "TSRC": "isrc",
+    "TSST": "discsubtitle",
+    }.iteritems():
+    EasyID3.RegisterTextKey(key, frameid)
 
 EasyID3.RegisterKey("genre", genre_get, genre_set, genre_delete)
 EasyID3.RegisterKey("date", date_get, date_set, date_delete)
