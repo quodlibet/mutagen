@@ -437,6 +437,8 @@ def TestReadTags():
     ['TSOA', '\x00ab', 'ab', '', dict(encoding=0)],
     ['TSOP', '\x00ab', 'ab', '', dict(encoding=0)],
     ['TSOT', '\x00ab', 'ab', '', dict(encoding=0)],
+    ['TSO2', '\x00ab', 'ab', '', dict(encoding=0)],
+    ['TSOC', '\x00ab', 'ab', '', dict(encoding=0)],
     ['TSRC', '\x0012345', '12345', '', dict(encoding=0)],
     ['TSSE', '\x0012345', '12345', '', dict(encoding=0)],
     ['TSST', '\x0012345', '12345', '', dict(encoding=0)],
