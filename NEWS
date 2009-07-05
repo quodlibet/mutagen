@@ -1,5 +1,7 @@
 1.17
- * ID3: Support for the iTunes non-standard TSO2 and TSOC frames.
+ * ID3: 
+   * Support for the iTunes non-standard TSO2 and TSOC frames.
+   * Fix a bug in ID3v2.4 footer flag detection, (#5)
  * EasyID3: Extension API for defining new "easy" tags at runtime.
  * mutagen.File: New 'easy=True' argument to create new EasyMP3,
    EasyTrueAudio, and EasyID3FileType instances.

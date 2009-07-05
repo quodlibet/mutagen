@@ -216,7 +216,7 @@ class ID3(DictProxy, mutagen.Metadata):
         if self.PEDANTIC:
             if (2,4,0) <= self.version and (flags & 0x0f):
                 raise ValueError("'%s' has invalid flags %#02x" % (fn, flags))
-            elif (2,3,0) <= self.version and (flags & 0x1f):
+            elif (2,3,0) <= self.version < (2,4,0) and (flags & 0x1f):
                 raise ValueError("'%s' has invalid flags %#02x" % (fn, flags))
 
         if self.f_extended:

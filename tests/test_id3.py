@@ -102,9 +102,21 @@ class ID3Loading(TestCase):
         id3._ID3__fileobj = StringIO('ID3\x04\x00\x1f\x00\x00\x00\x00')
         self.assertRaises(ValueError, id3._ID3__load_header)
 
+    def test_header_2_4_invalid_flags(self):
+        id3 = ID3()
+        id3._ID3__fileobj = StringIO('ID3\x04\x00\x1f\x00\x00\x00\x00')
+        self.assertRaises(ValueError, id3._ID3__load_header)
+
+    def test_header_2_4_allow_footer(self):
+        id3 = ID3()
+        id3._ID3__fileobj = StringIO('ID3\x04\x00\x10\x00\x00\x00\x00')
+        id3._ID3__load_header()
+
     def test_header_2_3_invalid_flags(self):
         id3 = ID3()
         id3._ID3__fileobj = StringIO('ID3\x03\x00\x1f\x00\x00\x00\x00')
+        self.assertRaises(ValueError, id3._ID3__load_header)
+        id3._ID3__fileobj = StringIO('ID3\x03\x00\x0f\x00\x00\x00\x00')
         self.assertRaises(ValueError, id3._ID3__load_header)
 
     def test_header_2_2(self):
