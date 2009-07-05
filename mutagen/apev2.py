@@ -1,6 +1,6 @@
 # An APEv2 tag reader
 #
-# Copyright 2005 Joe Wreschnig <piman@sacredchao.net>
+# Copyright 2005 Joe Wreschnig
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
