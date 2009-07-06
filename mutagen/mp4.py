@@ -25,7 +25,7 @@ import sys
 
 from mutagen import FileType, Metadata
 from mutagen._constants import GENRES
-from mutagen._util import cdata, insert_bytes, delete_bytes, DictProxy
+from mutagen._util import cdata, insert_bytes, delete_bytes, DictProxy, utf8
 
 class error(IOError): pass
 class MP4MetadataError(error): pass
@@ -528,7 +528,7 @@ class MP4Tags(DictProxy, Metadata):
         if isinstance(value, basestring):
             value = [value]
         return self.__render_data(
-            key, flags, [text.encode('utf-8') for text in value])
+            key, flags, map(utf8, value))
 
     def delete(self, filename):
         self.clear()

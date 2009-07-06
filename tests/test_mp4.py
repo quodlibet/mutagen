@@ -310,6 +310,10 @@ class TMP4(TestCase):
         if faad:
             self.faad()
 
+    def test_unicode(self):
+        self.set_key('\xa9nam', ['\xe3\x82\x8a\xe3\x81\x8b'],
+                     result=[u'\u308a\u304b'])
+
     def test_save_text(self):
         self.set_key('\xa9nam', [u"Some test name"])
 
