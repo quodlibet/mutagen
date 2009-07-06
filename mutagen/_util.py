@@ -14,6 +14,8 @@ intended for internal use in Mutagen only.
 
 import struct
 
+from fnmatch import fnmatchcase
+
 class DictMixin(object):
     """Implement the dict API using keys() and __*item__ methods.
 
@@ -301,3 +303,12 @@ def utf8(data):
     elif isinstance(data, unicode):
         return data.encode("utf-8")
     else: raise TypeError("only unicode/str types can be converted to UTF-8")
+
+def dict_match(d, key):
+    try:
+        return d[key]
+    except KeyError:
+        for pattern, value in d.iteritems():
+            if fnmatchcase(key, pattern):
+                return value
+    return None

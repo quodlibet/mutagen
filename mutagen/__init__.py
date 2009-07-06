@@ -186,7 +186,10 @@ def File(filename, options=None, easy=False):
         else:
             from mutagen.trueaudio import TrueAudio
         from mutagen.wavpack import WavPack
-        from mutagen.mp4 import MP4
+        if easy:
+            from mutagen.easymp4 import EasyMP4 as MP4
+        else:
+            from mutagen.mp4 import MP4
         from mutagen.musepack import Musepack
         from mutagen.monkeysaudio import MonkeysAudio
         from mutagen.optimfrog import OptimFROG

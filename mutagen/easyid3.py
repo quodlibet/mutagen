@@ -18,19 +18,10 @@ from fnmatch import fnmatchcase
 import mutagen.id3
 
 from mutagen import Metadata
-from mutagen._util import DictMixin
+from mutagen._util import DictMixin, dict_match
 from mutagen.id3 import ID3, error, delete
 
 __all__ = ['EasyID3', 'Open', 'delete']
-
-def dict_match(d, key):
-    try:
-        return d[key]
-    except KeyError:
-        for pattern, value in d.iteritems():
-            if fnmatchcase(key, pattern):
-                return value
-    return None
 
 class EasyID3KeyError(KeyError, ValueError, error):
     """Raised when trying to get/set an invalid key.
@@ -47,9 +38,8 @@ class EasyID3(DictMixin, Metadata):
     EasyID3.RegisterKey and RegisterTextKey to support more.
 
     To use an EasyID3 class with mutagen.mp3.MP3:
-        from mutagen.mp3 import MP3
-        from mutagen.easyid3 import EasyID3
-        MP3(filename, ID3=EasyID3)
+        from mutagen.mp3 import EasyMP3 as MP3
+        MP3(filename)
 
     Because many of the attributes are constructed on the fly, things
     like the following will not work:
@@ -244,7 +234,6 @@ def performer_delete(id3, key):
     else:
         del(id3["TMCL"])
         
-    
 def performer_list(id3, key):
     try: mcl = id3["TMCL"]
     except KeyError:

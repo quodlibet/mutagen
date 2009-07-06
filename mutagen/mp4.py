@@ -247,7 +247,7 @@ class MP4Tags(DictProxy, Metadata):
         for atom in ilst.children:
             fileobj.seek(atom.offset + 8)
             data = fileobj.read(atom.length - 8)
-            info = self.__atoms.get(atom.name, (MP4Tags.__parse_text, None))
+            info = self.__atoms.get(atom.name, (type(self).__parse_text, None))
             info[0](self, atom, data, *info[2:])
 
     def __key_sort((key1, v1), (key2, v2)):
@@ -272,7 +272,7 @@ class MP4Tags(DictProxy, Metadata):
         items = self.items()
         items.sort(self.__key_sort)
         for key, value in items:
-            info = self.__atoms.get(key[:4], (None, MP4Tags.__render_text))
+            info = self.__atoms.get(key[:4], (None, type(self).__render_text))
             try:
                 values.append(info[1](self, key, value, *info[2:]))
             except (TypeError, ValueError), s:
@@ -642,6 +642,8 @@ class MP4(FileType):
     Only audio ('soun') tracks will be read.
     """
 
+    MP4Tags = MP4Tags
+    
     _mimes = ["audio/mp4", "audio/x-m4a", "audio/mpeg4", "audio/aac"]
 
     def load(self, filename):
@@ -652,7 +654,7 @@ class MP4(FileType):
             try: self.info = MP4Info(atoms, fileobj)
             except StandardError, err:
                 raise MP4StreamInfoError, err, sys.exc_info()[2]
-            try: self.tags = MP4Tags(atoms, fileobj)
+            try: self.tags = self.MP4Tags(atoms, fileobj)
             except MP4MetadataError:
                 self.tags = None
             except StandardError, err:
@@ -661,7 +663,7 @@ class MP4(FileType):
             fileobj.close()
 
     def add_tags(self):
-        self.tags = MP4Tags()
+        self.tags = self.MP4Tags()
 
     def score(filename, fileobj, header):
         return ("ftyp" in header) + ("mp4" in header)
