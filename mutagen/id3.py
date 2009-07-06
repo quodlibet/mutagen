@@ -853,7 +853,10 @@ class SynchronizedTextSpec(EncodedTextSpec):
         encoding, term = self._encodings[frame.encoding]
         while data:
             l = len(term)
-            value_idx = data.index(term)
+            try:
+                value_idx = data.index(term)
+            except ValueError:
+                raise ID3JunkFrameError
             value = data[:value_idx].decode(encoding)
             time, = struct.unpack(">I", data[value_idx+l:value_idx+l+4])
             texts.append((value, time))

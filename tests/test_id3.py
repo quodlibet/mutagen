@@ -2,7 +2,7 @@ import os; from os.path import join
 import shutil
 from unittest import TestCase
 from tests import add
-from mutagen.id3 import ID3, BitPaddedInt, COMR, Frames, Frames_2_2, ID3Warning
+from mutagen.id3 import ID3, BitPaddedInt, COMR, Frames, Frames_2_2, ID3Warning, ID3JunkFrameError
 from StringIO import StringIO
 import warnings
 warnings.simplefilter('error', ID3Warning)
@@ -256,6 +256,11 @@ class ID3Tags(TestCase):
 
     def test_junkframe(self):
         self.assertRaises(ValueError, Frames["TPE1"].fromData, _24, 0, "")
+
+    def test_bad_sylt(self):
+        self.assertRaises(
+            ID3JunkFrameError, Frames["SYLT"].fromData, _24, 0x0,
+            "\x00eng\x01description\x00foobar")
 
     def test_extradata(self):
         from mutagen.id3 import RVRB, RBUF
