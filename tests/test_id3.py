@@ -143,6 +143,20 @@ class ID3Loading(TestCase):
         self.assertEquals(id3._ID3__extsize, 1)
         self.assertEquals(id3._ID3__extdata, '\x5a')
 
+    def test_header_2_4_extended_but_not(self):
+        id3 = ID3()
+        id3._ID3__fileobj = StringIO(
+            'ID3\x04\x00\x40\x00\x00\x00\x00TIT1')
+        id3._ID3__load_header()
+        self.assertEquals(id3._ID3__extsize, 0)
+        self.assertEquals(id3._ID3__extdata, '')
+
+    def test_header_2_4_extended_but_not_but_not_tag(self):
+        id3 = ID3()
+        id3._ID3__fileobj = StringIO(
+            'ID3\x04\x00\x40\x00\x00\x00\x00TIT9')
+        self.failUnlessRaises(EOFError, id3._ID3__load_header)
+
     def test_header_2_3_extended(self):
         id3 = ID3()
         id3._ID3__fileobj = StringIO(

@@ -220,15 +220,30 @@ class ID3(DictProxy, mutagen.Metadata):
                 raise ValueError("'%s' has invalid flags %#02x" % (fn, flags))
 
         if self.f_extended:
-            if self.version >= (2,4,0):
+            extsize = self.__fullread(4)
+            if extsize in Frames:
+                # Some tagger sets the extended header flag but
+                # doesn't write an extended header; in this case, the
+                # ID3 data follows immediately. Since no extended
+                # header is going to be long enough to actually match
+                # a frame, and if it's *not* a frame we're going to be
+                # completely lost anyway, this seems to be the most
+                # correct check.
+                # http://code.google.com/p/quodlibet/issues/detail?id=126
+                self.__flags ^= 0x40
+                self.__extsize = 0
+            elif self.version >= (2,4,0):
                 # "Where the 'Extended header size' is the size of the whole
                 # extended header, stored as a 32 bit synchsafe integer."
-                self.__extsize = BitPaddedInt(self.__fullread(4)) - 4
+                self.__extsize = BitPaddedInt(extsize) - 4
             else:
                 # "Where the 'Extended header size', currently 6 or 10 bytes,
                 # excludes itself."
-                self.__extsize = unpack('>L', self.__fullread(4))[0]
-            self.__extdata = self.__fullread(self.__extsize)
+                self.__extsize = unpack('>L', extsize)[0]
+            if self.__extsize:
+                self.__extdata = self.__fullread(self.__extsize)
+            else:
+                self.__extdata = ""
 
     def __determine_bpi(self, data, frames):
         if self.version < (2,4,0): return int
