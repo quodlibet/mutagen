@@ -81,11 +81,17 @@ def check_dir(path):
         for fn in files:
             if not fn.lower().endswith('.mp3'): continue
             ffn = os.path.join(path, fn)
-            try: mp3 = MP3(ffn)
-            except KeyboardInterrupt: raise
-            except Exception, err: rep.error(ffn)
-            if mp3.tags is None: rep.missing(ffn)
-            else: rep.success(mp3.tags)
+            try:
+                mp3 = MP3(ffn)
+            except KeyboardInterrupt:
+                raise
+            except Exception, err:
+                rep.error(ffn)
+            else:
+                if mp3.tags is None:
+                    rep.missing(ffn)
+                else:
+                    rep.success(mp3.tags)
 
     print str(rep)
 
