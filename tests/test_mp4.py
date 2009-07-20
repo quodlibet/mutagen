@@ -228,9 +228,8 @@ class TMP4(TestCase):
 
     def faad(self):
         if not have_faad: return
-        value = os.system(
-            "faad -w %s > %s 2> %s" % (self.filename,
-                devnull, devnull))
+        value = os.system("faad %s -o %s > %s 2> %s" % (
+                self.filename, devnull, devnull, devnull))
         self.failIf(value and value != NOTFOUND)
 
     def test_score(self):

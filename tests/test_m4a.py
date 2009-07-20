@@ -149,8 +149,8 @@ class TM4A(TestCase):
     def faad(self):
         if not have_faad: return
         value = os.system(
-            "faad -w %s > %s 2> %s" % (self.filename,
-                devnull, devnull))
+            "faad %s -o %s > %s 2> %s" % (
+                self.filename, devnull, devnull, devnull))
         self.failIf(value and value != NOTFOUND)
 
     def test_bitrate(self):
