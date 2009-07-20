@@ -59,7 +59,10 @@ class TEasyID3(TestCase):
 
     def test_write_double(self):
         for key in EasyID3.valid_keys:
-            if key == "date": continue
+            if key == "date":
+                continue
+            elif key == "musicbrainz_trackid":
+                continue
 
             self.id3[key] = ["a test", "value"]
             self.id3.save(self.filename)
@@ -79,12 +82,12 @@ class TEasyID3(TestCase):
         self.id3["date"] = "2004"
         self.id3.save(self.filename)
         id3 = EasyID3(self.filename)
-        self.failUnlessEqual(self.id3["date"], ["2004"])
+        self.failUnlessEqual(id3["date"], ["2004"])
 
         self.id3["date"] = "2004"
         self.id3.save(self.filename)
         id3 = EasyID3(self.filename)
-        self.failUnlessEqual(self.id3["date"], ["2004"])
+        self.failUnlessEqual(id3["date"], ["2004"])
 
     def test_date_delete(self):
         self.id3["date"] = "2004"
@@ -96,12 +99,12 @@ class TEasyID3(TestCase):
         self.id3["date"] = ["2004", "2005"]
         self.id3.save(self.filename)
         id3 = EasyID3(self.filename)
-        self.failUnlessEqual(self.id3["date"], ["2004", "2005"])
+        self.failUnlessEqual(id3["date"], ["2004", "2005"])
 
         self.id3["date"] = ["2004", "2005"]
         self.id3.save(self.filename)
         id3 = EasyID3(self.filename)
-        self.failUnlessEqual(self.id3["date"], ["2004", "2005"])
+        self.failUnlessEqual(id3["date"], ["2004", "2005"])
 
     def test_write_invalid(self):
         self.failUnlessRaises(ValueError, self.id3.__getitem__, "notvalid")
@@ -113,7 +116,7 @@ class TEasyID3(TestCase):
         self.id3["performer:coder"] = ["piman", "mu"]
         self.id3.save(self.filename)
         id3 = EasyID3(self.filename)
-        self.failUnlessEqual(self.id3["performer:coder"], ["piman", "mu"])
+        self.failUnlessEqual(id3["performer:coder"], ["piman", "mu"])
 
     def test_no_performer(self):
         self.failIf("performer:foo" in self.id3)
@@ -134,7 +137,38 @@ class TEasyID3(TestCase):
         self.failUnlessRaises(KeyError, self.id3.__delitem__, "performer:bar")
         self.id3["performer:foo"] = "Joe"
         self.failUnlessRaises(KeyError, self.id3.__delitem__, "performer:bar")
-        
+
+    def test_txxx_set_get(self):
+        self.failIf("asin" in self.id3)
+        self.id3["asin"] = "Hello"
+        self.failUnless("asin" in self.id3)
+        self.failUnlessEqual(self.id3["asin"], ["Hello"])
+        self.failUnless("TXXX:ASIN" in self.id3._EasyID3__id3)
+
+    def test_txxx_del_set_del(self):
+        self.failIf("asin" in self.id3)
+        self.failUnlessRaises(KeyError, self.id3.__delitem__, "asin")
+        self.id3["asin"] = "Hello"
+        self.failUnless("asin" in self.id3)
+        self.failUnlessEqual(self.id3["asin"], ["Hello"])
+        del(self.id3["asin"])
+        self.failIf("asin" in self.id3)
+        self.failUnlessRaises(KeyError, self.id3.__delitem__, "asin")
+
+    def test_txxx_save(self):
+        self.id3["asin"] = "Hello"
+        self.id3.save(self.filename)
+        id3 = EasyID3(self.filename)
+        self.failUnlessEqual(id3["asin"], ["Hello"])
+
+    def test_txxx_unicode(self):
+        self.id3["asin"] = u"He\u1234llo"
+        self.failUnlessEqual(self.id3["asin"], [u"He\u1234llo"])
+
+    def test_bad_trackid(self):
+        self.failUnlessRaises(ValueError, self.id3.__setitem__,
+                              "musicbrainz_trackid", ["a", "b"])
+
     def tearDown(self):
         os.unlink(self.filename)
 

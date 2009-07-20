@@ -35,7 +35,14 @@ class EasyID3(DictMixin, Metadata):
 
     Like Vorbis comments, EasyID3 keys are case-insensitive ASCII
     strings. Only a subset of ID3 frames are supported by default. Use
-    EasyID3.RegisterKey and RegisterTextKey to support more.
+    EasyID3.RegisterKey and its wrappers to support more.
+
+    You can also set the GetFallback, SetFallback, and DeleteFallback
+    to generic key getter/setter/deleter functions, which are called
+    if no specific handler is registered for a key. Additionally,
+    ListFallback can be used to supply an arbitrary list of extra
+    keys. These can be set on EasyID3 or on individual instances after
+    creation.
 
     To use an EasyID3 class with mutagen.mp3.MP3:
         from mutagen.mp3 import EasyMP3 as MP3
@@ -48,6 +55,8 @@ class EasyID3(DictMixin, Metadata):
         values = ezid3["performer"]
         values.append("Joe")
         ezid3["performer"] = values
+
+
     """
 
     Set = {}
@@ -57,6 +66,11 @@ class EasyID3(DictMixin, Metadata):
 
     # For compatibility.
     valid_keys = Get
+
+    GetFallback = None
+    SetFallback = None
+    DeleteFallback = None
+    ListFallback = None
     
     def RegisterKey(cls, key,
                     getter=None, setter=None, deleter=None, lister=None):
@@ -112,6 +126,37 @@ class EasyID3(DictMixin, Metadata):
         cls.RegisterKey(key, getter, setter, deleter)
     RegisterTextKey = classmethod(RegisterTextKey)
 
+    def RegisterTXXXKey(cls, key, desc):
+        """Register a user-defined text frame key.
+
+        Some ID3 tags are stored in TXXX frames, which allow a
+        freeform 'description' which acts as a subkey,
+        e.g. TXXX:BARCODE.
+            EasyID3.RegisterTXXXKey('barcode', 'BARCODE').        
+        """
+        frameid = "TXXX:" + desc
+        def getter(id3, key):
+            return list(id3[frameid])
+
+        def setter(id3, key, value):
+            try:
+                frame = id3[frameid]
+            except KeyError:
+                enc = 0
+                # Store 8859-1 if we can, per MusicBrainz spec.
+                for v in value:
+                    if max(v) > u'\x7f':
+                        enc = 3
+                id3.add(mutagen.id3.TXXX(encoding=enc, text=value, desc=desc))
+            else:
+                frame.text = value
+
+        def deleter(id3, key):
+            del(id3[frameid])
+
+        cls.RegisterKey(key, getter, setter, deleter)
+    RegisterTXXXKey = classmethod(RegisterTXXXKey)
+
     def __init__(self, filename=None):
         self.__id3 = ID3()
         self.load = self.__id3.load
@@ -128,7 +173,7 @@ class EasyID3(DictMixin, Metadata):
 
     def __getitem__(self, key):
         key = key.lower()
-        func = dict_match(self.Get, key)
+        func = dict_match(self.Get, key, self.GetFallback)
         if func is not None:
             return func(self.__id3, key)
         else:
@@ -138,7 +183,7 @@ class EasyID3(DictMixin, Metadata):
         key = key.lower()
         if isinstance(value, basestring):
             value = [value]
-        func = dict_match(self.Set, key)
+        func = dict_match(self.Set, key, self.SetFallback)
         if func is not None:
             return func(self.__id3, key, value)
         else:
@@ -146,7 +191,7 @@ class EasyID3(DictMixin, Metadata):
 
     def __delitem__(self, key):
         key = key.lower()
-        func = dict_match(self.Delete, key)
+        func = dict_match(self.Delete, key, self.DeleteFallback)
         if func is not None:
             return func(self.__id3, key)
         else:
@@ -159,6 +204,8 @@ class EasyID3(DictMixin, Metadata):
                 keys.extend(self.List[key](self.__id3, key))
             elif key in self:
                 keys.append(key)
+        if self.ListFallback is not None:
+            keys.extend(self.ListFallback(self.__id3, ""))
         return keys
 
     def pprint(self):
@@ -241,6 +288,39 @@ def performer_list(id3, key):
     else:
         return list(set("performer:" + p[0] for p in mcl.people))
 
+def musicbrainz_trackid_get(id3, key):
+    return [id3["UFID:http://musicbrainz.org"].data.decode('ascii')]
+
+def musicbrainz_trackid_set(id3, key, value):
+    if len(value) != 1:
+        raise ValueError("only one track ID may be set per song")
+    value = value[0].encode('ascii')
+    try:
+        frame = id3["UFID:http://musicbrainz.org"]
+    except KeyError:
+        frame = mutagen.id3.UFID(owner="http://musicbrainz.org", data=value)
+        id3.add(frame)
+    else:
+        frame.data = value
+
+def musicbrainz_trackid_delete(id3, key):
+    del(id3["UFID:http://musicbrainz.org"])
+
+def website_get(id3, key):
+    urls = [frame.url for frame in id3.getall("WOAR")]
+    if urls:
+        return urls
+    else:
+        raise EasyID3KeyError(key)
+
+def website_set(id3, key, value):
+    id3.delall("WOAR")
+    for v in value:
+        id3.add(mutagen.id3.WOAR(url=v))
+
+def website_delete(id3, key):
+    id3.delall("WOAR")
+
 for frameid, key in {
     "TALB": "album",
     "TBPM": "bpm",
@@ -277,3 +357,27 @@ EasyID3.RegisterKey("date", date_get, date_set, date_delete)
 EasyID3.RegisterKey(
     "performer:*", performer_get, performer_set, performer_delete,
     performer_list)
+EasyID3.RegisterKey("musicbrainz_trackid", musicbrainz_trackid_get,
+                    musicbrainz_trackid_set, musicbrainz_trackid_delete)
+EasyID3.RegisterKey("website", website_get, website_set, website_delete)
+
+# At various times, information for this came from
+# http://musicbrainz.org/docs/specs/metadata_tags.html
+# http://bugs.musicbrainz.org/ticket/1383
+# http://musicbrainz.org/doc/MusicBrainzTag
+for desc, key in {
+    u"MusicBrainz Artist Id": "musicbrainz_artistid",
+    u"MusicBrainz Album Id": "musicbrainz_albumid",
+    u"MusicBrainz Album Artist Id": "musicbrainz_albumartistid",
+    u"MusicBrainz TRM Id": "musicbrainz_trmid",
+    u"MusicIP PUID": "musicip_puid",
+    u"MusicMagic Fingerprint": "musicip_fingerprint",
+    u"MusicBrainz Album Status": "musicbrainz_albumstatus",
+    u"MusicBrainz Album Type": "musicbrainz_albumtype",
+    u"MusicBrainz Album Release Country": "releasecountry",
+    u"MusicBrainz Disc Id": "musicbrainz_discid",
+    u"ASIN": "asin",
+    u"ALBUMARTISTSORT": "albumartistsort",
+    u"BARCODE": "barcode",
+    }.iteritems():
+    EasyID3.RegisterTXXXKey(key, desc)
