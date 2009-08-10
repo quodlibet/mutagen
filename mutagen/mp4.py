@@ -355,9 +355,15 @@ class MP4Tags(DictProxy, Metadata):
         """Update all parent atoms with the new size."""
         for atom in path:
             fileobj.seek(atom.offset)
-            size = cdata.uint_be(fileobj.read(4)) + delta
-            fileobj.seek(atom.offset)
-            fileobj.write(cdata.to_uint_be(size))
+            size = cdata.uint_be(fileobj.read(4))
+            if size == 1: # 64bit
+                # skip name (4B) and read size (8B)
+                size = cdata.ulonglong_be(fileobj.read(12)[4:])
+                fileobj.seek(atom.offset + 8)
+                fileobj.write(cdata.to_ulonglong_be(size + delta))
+            else: # 32bit
+                fileobj.seek(atom.offset)
+                fileobj.write(cdata.to_uint_be(size + delta))
 
     def __update_offset_table(self, fileobj, fmt, atom, delta, offset):
         """Update offset table in the specified atom."""

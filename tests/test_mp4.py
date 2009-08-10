@@ -467,7 +467,7 @@ class TMP4(TestCase):
         bb = self.__read_offsets(self.filename)
         for a, b in zip(aa, bb):
             self.failUnlessEqual(a, b)
-        
+
     def test_mime(self):
         self.failUnless("audio/mp4" in self.audio.mime)
 
@@ -545,6 +545,33 @@ class TMP4NoTags3G2(TMP4):
         self.failUnlessAlmostEqual(15, self.audio.info.length, 1)
 
 add(TMP4NoTags3G2)
+
+class TMP4UpdateParents64Bit(TestCase):
+    original = os.path.join("tests", "data", "64bit.mp4")
+
+    def setUp(self):
+        fd, self.filename = mkstemp(suffix='.mp4')
+        os.close(fd)
+        shutil.copy(self.original, self.filename)
+
+    def test_update_parents(self):
+        file = open(self.filename)
+        atoms = Atoms(file)
+        self.assertEqual(77, atoms.atoms[0].length)
+        self.assertEqual(61, atoms.atoms[0].children[0].length)
+        tags = MP4Tags(atoms, file)
+        tags['pgap'] = True
+        tags.save(self.filename)
+        file = open(self.filename)
+        atoms = Atoms(file)
+        # original size + 'pgap' size + padding
+        self.assertEqual(77 + 25 + 974, atoms.atoms[0].length)
+        self.assertEqual(61 + 25 + 974, atoms.atoms[0].children[0].length)
+
+    def tearDown(self):
+        os.unlink(self.filename)
+
+add(TMP4UpdateParents64Bit)
 
 NOTFOUND = os.system("tools/notarealprogram 2> %s" % devnull)
 
