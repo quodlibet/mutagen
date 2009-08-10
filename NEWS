@@ -9,6 +9,7 @@
  * EasyMP4: Like EasyID3, but for iTunes MPEG-4 files.
  * mutagen.File: New 'easy=True' argument to create new EasyMP3, EasyMP4,
    EasyTrueAudio, and EasyID3FileType instances.
+ * mutagen.wav: New RIFF WAVE format loader.
 
 1.16 - 2009.06.15
  * Website / code repository move.

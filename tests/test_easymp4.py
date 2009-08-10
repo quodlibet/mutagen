@@ -32,7 +32,8 @@ class TEasyMP4(TestCase):
 
     def test_write_single(self):
         for key in EasyMP4.Get:
-            if key == "date": continue
+            if key in ["tracknumber", "discnumber", "date", "bpm"]:
+                continue
 
             # Test creation
             self.mp4[key] = "a test value"
@@ -52,7 +53,8 @@ class TEasyMP4(TestCase):
 
     def test_write_double(self):
         for key in EasyMP4.Get:
-            if key == "date": continue
+            if key in ["tracknumber", "discnumber", "date", "bpm"]:
+                continue
 
             self.mp4[key] = ["a test", "value"]
             self.mp4.save(self.filename)
@@ -72,12 +74,12 @@ class TEasyMP4(TestCase):
         self.mp4["date"] = "2004"
         self.mp4.save(self.filename)
         mp4 = EasyMP4(self.filename)
-        self.failUnlessEqual(self.mp4["date"], ["2004"])
+        self.failUnlessEqual(mp4["date"], ["2004"])
 
         self.mp4["date"] = "2004"
         self.mp4.save(self.filename)
         mp4 = EasyMP4(self.filename)
-        self.failUnlessEqual(self.mp4["date"], ["2004"])
+        self.failUnlessEqual(mp4["date"], ["2004"])
 
     def test_date_delete(self):
         self.mp4["date"] = "2004"
@@ -89,19 +91,47 @@ class TEasyMP4(TestCase):
         self.mp4["date"] = ["2004", "2005"]
         self.mp4.save(self.filename)
         mp4 = EasyMP4(self.filename)
-        self.failUnlessEqual(self.mp4["date"], ["2004", "2005"])
+        self.failUnlessEqual(mp4["date"], ["2004", "2005"])
 
         self.mp4["date"] = ["2004", "2005"]
         self.mp4.save(self.filename)
         mp4 = EasyMP4(self.filename)
-        self.failUnlessEqual(self.mp4["date"], ["2004", "2005"])
+        self.failUnlessEqual(mp4["date"], ["2004", "2005"])
 
     def test_write_invalid(self):
         self.failUnlessRaises(ValueError, self.mp4.__getitem__, "notvalid")
         self.failUnlessRaises(ValueError, self.mp4.__delitem__, "notvalid")
         self.failUnlessRaises(
             ValueError, self.mp4.__setitem__, "notvalid", "tests")
+
+    def test_numeric(self):
+        for tag in ["bpm"]:
+            self.mp4[tag] = "3"
+            self.failUnlessEqual(self.mp4[tag], ["3"])
+            self.mp4.save()
+            mp4 = EasyMP4(self.filename)
+            self.failUnlessEqual(mp4[tag], ["3"])
         
+            self.failUnlessRaises(
+                ValueError, self.mp4.__setitem__, tag, "hello")
+
+    def test_numeric_pairs(self):
+        for tag in ["tracknumber", "discnumber"]:
+            self.mp4[tag] = "3"
+            self.failUnlessEqual(self.mp4[tag], ["3"])
+            self.mp4.save()
+            mp4 = EasyMP4(self.filename)
+            self.failUnlessEqual(mp4[tag], ["3"])
+
+            self.mp4[tag] = "3/10"
+            self.failUnlessEqual(self.mp4[tag], ["3/10"])
+            self.mp4.save()
+            mp4 = EasyMP4(self.filename)
+            self.failUnlessEqual(mp4[tag], ["3/10"])
+
+            self.failUnlessRaises(
+                ValueError, self.mp4.__setitem__, tag, "hello")
+
     def tearDown(self):
         os.unlink(self.filename)
 

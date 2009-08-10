@@ -1,7 +1,7 @@
 import mutagen.mp4
 
 from mutagen import Metadata
-from mutagen._util import DictMixin, dict_match
+from mutagen._util import DictMixin, dict_match, utf8
 from mutagen.mp4 import MP4, MP4Tags, error, delete
 
 __all__ = ["EasyMP4Tags", "EasyMP4", "delete", "error"]
@@ -75,11 +75,81 @@ class EasyMP4Tags(DictMixin, Metadata):
         def setter(tags, key, value):
             tags[atomid] = value
 
-        def deleter(mp4, key):
-            del(mp4[atomid])
+        def deleter(tags, key):
+            del(tags[atomid])
 
         cls.RegisterKey(key, getter, setter, deleter)
     RegisterTextKey = classmethod(RegisterTextKey)
+
+    def RegisterIntKey(cls, key, atomid, min_value=0, max_value=2**16-1):
+        """Register a scalar integer key.
+        """
+
+        def getter(tags, key):
+            return map(unicode, tags[atomid])
+
+        def setter(tags, key, value):
+            clamp = lambda x: int(min(max(min_value, x), max_value))
+            tags[atomid] = map(clamp, map(int, value))
+
+        def deleter(tags, key):
+            del(tags[atomid])
+
+        cls.RegisterKey(key, getter, setter, deleter)
+    RegisterIntKey = classmethod(RegisterIntKey)
+
+    def RegisterIntPairKey(cls, key, atomid, min_value=0, max_value=2**16-1):
+        def getter(tags, key):
+            ret = []
+            for (track, total) in tags[atomid]:
+                if total:
+                    ret.append(u"%d/%d" % (track, total))
+                else:
+                    ret.append(unicode(track))
+            return ret
+
+        def setter(tags, key, value):
+            clamp = lambda x: int(min(max(min_value, x), max_value))
+            data = []
+            for v in value:
+                try:
+                    tracks, total = v.split("/")
+                    tracks = clamp(int(tracks))
+                    total = clamp(int(total))
+                except (ValueError, TypeError):
+                    tracks = clamp(int(v))
+                    total = min_value
+                data.append((tracks, total))
+            tags[atomid] = data
+
+        def deleter(tags, key):
+            del(tags[atomid])
+
+        cls.RegisterKey(key, getter, setter, deleter)
+    RegisterIntPairKey = classmethod(RegisterIntPairKey)
+
+    def RegisterFreeformKey(cls, key, name, mean="com.apple.iTunes"):
+        """Register a text key.
+
+        If the key you need to register is a simple one-to-one mapping
+        of MP4 freeform atom (----) and name to EasyMP4Tags key, then
+        you can use this function:
+            EasyMP4Tags.RegisterFreeformKey(
+                "musicbrainz_artistid", "MusicBrainz Artist Id")
+        """
+        atomid = "----:%s:%s" % (mean, name)
+
+        def getter(tags, key):
+            return [s.decode("utf-8", "replace") for s in tags[atomid]]
+
+        def setter(tags, key, value):
+            tags[atomid] = map(utf8, value)
+
+        def deleter(tags, key):
+            del(tags[atomid])
+
+        cls.RegisterKey(key, getter, setter, deleter)
+    RegisterFreeformKey = classmethod(RegisterFreeformKey)
 
     def __getitem__(self, key):
         key = key.lower()
@@ -143,6 +213,29 @@ for atomid, key in {
     'soco': 'composersort',
     }.items():
     EasyMP4Tags.RegisterTextKey(key, atomid)
+
+for name, key in {
+    'MusicBrainz Artist Id': 'musicbrainz_artistid',
+    'MusicBrainz Track Id': 'musicbrainz_trackid',
+    'MusicBrainz Album Id': 'musicbrainz_albumid',
+    'MusicBrainz Album Artist Id': 'musicbrainz_albumartistid',
+    'MusicIP PUID': 'musicip_puid',
+    'MusicBrainz Album Status': 'musicbrainz_albumstatus',
+    'MusicBrainz Album Type': 'musicbrainz_albumtype',
+    'MusicBrainz Release Country': 'releasecountry',
+    }.items():
+    EasyMP4Tags.RegisterFreeformKey(key, name)
+
+for name, key in {
+    "tmpo": "bpm",
+    }.items():
+    EasyMP4Tags.RegisterIntKey(key, name)
+
+for name, key in {
+    "trkn": "tracknumber",
+    "disk": "discnumber",
+    }.items():
+    EasyMP4Tags.RegisterIntPairKey(key, name)
 
 class EasyMP4(MP4):
     """Like MP4, but uses EasyMP4Tags for tags."""
