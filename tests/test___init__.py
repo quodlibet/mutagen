@@ -29,6 +29,10 @@ class TMetadata(TestCase):
     def test_virtual_constructor(self):
         self.failUnlessRaises(NotImplementedError, Metadata, "filename")
 
+    def test_load(self):
+        m = Metadata()
+        self.failUnlessRaises(NotImplementedError, m.load, "filename")
+
     def test_virtual_save(self):
         self.failUnlessRaises(NotImplementedError, self.FakeMeta().save)
         self.failUnlessRaises(
@@ -48,6 +52,9 @@ class TFileType(TestCase):
 
     def test_delitem_not_there(self):
         self.failUnlessRaises(KeyError, self.vorbis.__delitem__, "foobar")
+
+    def test_add_tags(self):
+        self.failUnlessRaises(NotImplementedError, FileType().add_tags)
 
     def test_delitem(self):
         self.vorbis["foobar"] = "quux"

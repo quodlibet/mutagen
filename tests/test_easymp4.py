@@ -111,7 +111,11 @@ class TEasyMP4(TestCase):
             self.mp4.save()
             mp4 = EasyMP4(self.filename)
             self.failUnlessEqual(mp4[tag], ["3"])
-        
+
+            del(mp4[tag])
+            self.failIf(tag in mp4)
+            self.failUnlessRaises(KeyError, mp4.__delitem__, tag)
+
             self.failUnlessRaises(
                 ValueError, self.mp4.__setitem__, tag, "hello")
 
@@ -123,11 +127,19 @@ class TEasyMP4(TestCase):
             mp4 = EasyMP4(self.filename)
             self.failUnlessEqual(mp4[tag], ["3"])
 
+            del(mp4[tag])
+            self.failIf(tag in mp4)
+            self.failUnlessRaises(KeyError, mp4.__delitem__, tag)
+
             self.mp4[tag] = "3/10"
             self.failUnlessEqual(self.mp4[tag], ["3/10"])
             self.mp4.save()
             mp4 = EasyMP4(self.filename)
             self.failUnlessEqual(mp4[tag], ["3/10"])
+
+            del(mp4[tag])
+            self.failIf(tag in mp4)
+            self.failUnlessRaises(KeyError, mp4.__delitem__, tag)
 
             self.failUnlessRaises(
                 ValueError, self.mp4.__setitem__, tag, "hello")

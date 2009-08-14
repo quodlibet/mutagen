@@ -15,6 +15,11 @@ class TMusepack(TestCase):
         self.sv5 = Musepack(os.path.join("tests", "data", "sv5_header.mpc"))
         self.sv4 = Musepack(os.path.join("tests", "data", "sv4_header.mpc"))
 
+    def test_bad_header(self):
+        self.failUnlessRaises(
+            MusepackHeaderError,
+            Musepack, os.path.join("tests", "data", "almostempty.mpc"))
+
     def test_channels(self):
         self.failUnlessEqual(self.sv7.info.channels, 2)
         self.failUnlessEqual(self.sv5.info.channels, 2)

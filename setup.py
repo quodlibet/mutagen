@@ -189,7 +189,7 @@ class coverage_cmd(Command):
         pct = 100.0 * (total_lines - bad_lines) / float(total_lines)
         print "Coverage data written to", coverage, "(%d/%d, %0.2f%%)" % (
             total_lines - bad_lines, total_lines, pct)
-        if pct < 98.6:
+        if pct < 98.66:
             raise SystemExit("Coverage percentage went down; write more tests.")
         if pct > 98.7:
             raise SystemExit("Coverage percentage went up; change setup.py.")

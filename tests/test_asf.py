@@ -72,6 +72,7 @@ class TASF(TestCase):
 
     def set_key(self, key, value, result=None):
         self.audio[key] = value
+        self.failUnless(key in self.audio)
         self.audio.save()
         self.audio = ASF(self.audio.filename)
         self.failUnless(key in self.audio)
