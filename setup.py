@@ -186,9 +186,13 @@ class coverage_cmd(Command):
                 [line for line in lines if
                  (line.startswith(">>>>>>") and
                   "finally:" not in line and '"""' not in line)])
+        pct = 100.0 * (total_lines - bad_lines) / float(total_lines)
         print "Coverage data written to", coverage, "(%d/%d, %0.2f%%)" % (
-            total_lines - bad_lines, total_lines,
-            100.0 * (total_lines - bad_lines) / float(total_lines))
+            total_lines - bad_lines, total_lines, pct)
+        if pct < 98.6:
+            raise SystemExit("Coverage percentage went down; write more tests.")
+        if pct > 98.7:
+            raise SystemExit("Coverage percentage went up; change setup.py.")
 
 if os.name == "posix":
     data_files = [('share/man/man1', glob.glob("man/*.1"))]
