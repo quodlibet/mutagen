@@ -39,7 +39,10 @@ class TEasyID3(TestCase):
 
     def test_write_single(self):
         for key in EasyID3.valid_keys:
-            if key == "date": continue
+            if key == "date":
+                continue
+            elif key.startswith("replaygain_"):
+                continue
 
             # Test creation
             self.id3[key] = "a test value"
@@ -60,6 +63,8 @@ class TEasyID3(TestCase):
     def test_write_double(self):
         for key in EasyID3.valid_keys:
             if key == "date":
+                continue
+            elif key.startswith("replaygain_"):
                 continue
             elif key == "musicbrainz_trackid":
                 continue
@@ -93,7 +98,7 @@ class TEasyID3(TestCase):
         self.id3["date"] = "2004"
         self.failUnlessEqual(self.id3["date"], ["2004"])
         del(self.id3["date"])
-        self.failIf("date" in self.id3)
+        self.failIf("date" in self.id3.keys())
         
     def test_write_date_double(self):
         self.id3["date"] = ["2004", "2005"]
@@ -139,20 +144,20 @@ class TEasyID3(TestCase):
         self.failUnlessRaises(KeyError, self.id3.__delitem__, "performer:bar")
 
     def test_txxx_set_get(self):
-        self.failIf("asin" in self.id3)
+        self.failIf("asin" in self.id3.keys())
         self.id3["asin"] = "Hello"
-        self.failUnless("asin" in self.id3)
+        self.failUnless("asin" in self.id3.keys())
         self.failUnlessEqual(self.id3["asin"], ["Hello"])
         self.failUnless("TXXX:ASIN" in self.id3._EasyID3__id3)
 
     def test_txxx_del_set_del(self):
-        self.failIf("asin" in self.id3)
+        self.failIf("asin" in self.id3.keys())
         self.failUnlessRaises(KeyError, self.id3.__delitem__, "asin")
         self.id3["asin"] = "Hello"
-        self.failUnless("asin" in self.id3)
+        self.failUnless("asin" in self.id3.keys())
         self.failUnlessEqual(self.id3["asin"], ["Hello"])
         del(self.id3["asin"])
-        self.failIf("asin" in self.id3)
+        self.failIf("asin" in self.id3.keys())
         self.failUnlessRaises(KeyError, self.id3.__delitem__, "asin")
 
     def test_txxx_save(self):
@@ -168,6 +173,73 @@ class TEasyID3(TestCase):
     def test_bad_trackid(self):
         self.failUnlessRaises(ValueError, self.id3.__setitem__,
                               "musicbrainz_trackid", ["a", "b"])
+        self.failIf(self.id3._EasyID3__id3.getall("RVA2"))
+
+    def test_gain_bad_key(self):
+        self.failIf("replaygain_foo_gain" in self.id3)
+        self.failIf(self.id3._EasyID3__id3.getall("RVA2"))
+        
+    def test_gain_bad_value(self):
+        self.failUnlessRaises(
+            ValueError, self.id3.__setitem__, "replaygain_foo_gain", [])
+        self.failUnlessRaises(
+            ValueError, self.id3.__setitem__, "replaygain_foo_gain", ["foo"])
+        self.failUnlessRaises(
+            ValueError, self.id3.__setitem__, "replaygain_foo_gain", ["1", "2"])
+        self.failIf(self.id3._EasyID3__id3.getall("RVA2"))
+        
+    def test_peak_bad_key(self):
+        self.failIf("replaygain_foo_peak" in self.id3)
+        self.failIf(self.id3._EasyID3__id3.getall("RVA2"))
+        
+    def test_peak_bad_value(self):
+        self.failUnlessRaises(
+            ValueError, self.id3.__setitem__, "replaygain_foo_peak", [])
+        self.failUnlessRaises(
+            ValueError, self.id3.__setitem__, "replaygain_foo_peak", ["foo"])
+        self.failUnlessRaises(
+            ValueError, self.id3.__setitem__, "replaygain_foo_peak", ["1", "1"])
+        self.failUnlessRaises(
+            ValueError, self.id3.__setitem__, "replaygain_foo_peak", ["3"])
+        self.failIf(self.id3._EasyID3__id3.getall("RVA2"))
+        
+    def test_gain_peak_get(self):
+        self.id3["replaygain_foo_gain"] = "+3.5 dB"
+        self.id3["replaygain_bar_peak"] = "0.5"
+        self.failUnlessEqual(
+            self.id3["replaygain_foo_gain"], ["+3.500000 dB"])
+        self.failUnlessEqual(self.id3["replaygain_foo_peak"], ["0.000000"])
+        self.failUnlessEqual(
+            self.id3["replaygain_bar_gain"], ["+0.000000 dB"])
+        self.failUnlessEqual(self.id3["replaygain_bar_peak"], ["0.500000"])
+
+    def test_gain_peak_set(self):
+        self.id3["replaygain_foo_gain"] = "+3.5 dB"
+        self.id3["replaygain_bar_peak"] = "0.5"
+        self.id3.save(self.filename)
+        id3 = EasyID3(self.filename)
+        self.failUnlessEqual(id3["replaygain_foo_gain"], ["+3.500000 dB"])
+        self.failUnlessEqual(id3["replaygain_foo_peak"], ["0.000000"])
+        self.failUnlessEqual(id3["replaygain_bar_gain"], ["+0.000000 dB"])
+        self.failUnlessEqual(id3["replaygain_bar_peak"], ["0.500000"])
+
+    def test_gain_peak_delete(self):
+        self.id3["replaygain_foo_gain"] = "+3.5 dB"
+        self.id3["replaygain_bar_peak"] = "0.5"
+        del(self.id3["replaygain_bar_gain"])
+        del(self.id3["replaygain_foo_peak"])
+        self.failUnless("replaygain_foo_gain" in self.id3.keys())
+        self.failUnless("replaygain_bar_gain" in self.id3.keys())
+
+        del(self.id3["replaygain_foo_gain"])
+        del(self.id3["replaygain_bar_peak"])
+        self.failIf("replaygain_foo_gain" in self.id3.keys())
+        self.failIf("replaygain_bar_gain" in self.id3.keys())
+
+        del(self.id3["replaygain_foo_gain"])
+        del(self.id3["replaygain_bar_peak"])
+        self.failIf("replaygain_foo_gain" in self.id3.keys())
+        self.failIf("replaygain_bar_gain" in self.id3.keys())
 
     def tearDown(self):
         os.unlink(self.filename)

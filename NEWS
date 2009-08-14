@@ -7,7 +7,9 @@
  * MP4:
    * Don't fail or double-encode UTF-8 strings when given a str.
    * Don't corrupt 64 bit atom sizes when resizing atoms. (#17)
- * EasyID3: Extension API for defining new "easy" tags at runtime.
+ * EasyID3:
+   * Extension API for defining new "easy" tags at runtime.
+   * Support for many, many more tags.
  * EasyMP4: Like EasyID3, but for iTunes MPEG-4 files.
  * mutagen.File: New 'easy=True' argument to create new EasyMP3, EasyMP4,
    EasyTrueAudio, and EasyID3FileType instances.

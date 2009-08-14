@@ -321,6 +321,75 @@ def website_set(id3, key, value):
 def website_delete(id3, key):
     id3.delall("WOAR")
 
+def gain_get(id3, key):
+    try:
+        frame = id3["RVA2:" + key[11:-5]]
+    except KeyError:
+        raise EasyID3KeyError(key)
+    else:
+        return [u"%+f dB" % frame.gain]
+
+def gain_set(id3, key, value):
+    if len(value) != 1:
+        raise ValueError("there must be exactly one gain value, not %r.", value)
+    gain = float(value[0].split()[0])
+    try:
+        frame = id3["RVA2:" + key[11:-5]]
+    except KeyError:
+        frame = mutagen.id3.RVA2(desc=key[11:-5], gain=0, peak=0, channel=1)
+        id3.add(frame)
+    frame.gain = gain
+
+def gain_delete(id3, key):
+    try:
+        frame = id3["RVA2:" + key[11:-5]]
+    except KeyError:
+        pass
+    else:
+        if frame.peak:
+            frame.gain = 0.0
+        else:
+            del(id3["RVA2:" + key[11:-5]])
+
+def peak_get(id3, key):
+    try:
+        frame = id3["RVA2:" + key[11:-5]]
+    except KeyError:
+        raise EasyID3KeyError(key)
+    else:
+        return [u"%f" % frame.peak]
+
+def peak_set(id3, key, value):
+    if len(value) != 1:
+        raise ValueError("there must be exactly one peak value, not %r.", value)
+    peak = float(value[0])
+    if peak >= 2 or peak < 0:
+        raise ValueError("peak must be => 0 and < 2.")
+    try:
+        frame = id3["RVA2:" + key[11:-5]]
+    except KeyError:
+        frame = mutagen.id3.RVA2(desc=key[11:-5], gain=0, peak=0, channel=1)
+        id3.add(frame)
+    frame.peak = peak
+
+def peak_delete(id3, key):
+    try:
+        frame = id3["RVA2:" + key[11:-5]]
+    except KeyError:
+        pass
+    else:
+        if frame.gain:
+            frame.peak = 0.0
+        else:
+            del(id3["RVA2:" + key[11:-5]])
+
+def peakgain_list(id3, key):
+    keys = []
+    for frame in id3.getall("RVA2"):
+        keys.append("replaygain_%s_gain" % frame.desc)
+        keys.append("replaygain_%s_peak" % frame.desc)
+    return keys
+
 for frameid, key in {
     "TALB": "album",
     "TBPM": "bpm",
@@ -360,6 +429,10 @@ EasyID3.RegisterKey(
 EasyID3.RegisterKey("musicbrainz_trackid", musicbrainz_trackid_get,
                     musicbrainz_trackid_set, musicbrainz_trackid_delete)
 EasyID3.RegisterKey("website", website_get, website_set, website_delete)
+EasyID3.RegisterKey("website", website_get, website_set, website_delete)
+EasyID3.RegisterKey(
+    "replaygain_*_gain", gain_get, gain_set, gain_delete, peakgain_list)
+EasyID3.RegisterKey("replaygain_*_peak", peak_get, peak_set, peak_delete)
 
 # At various times, information for this came from
 # http://musicbrainz.org/docs/specs/metadata_tags.html
