@@ -1,4 +1,4 @@
-1.17
+1.17 - 2009.08.25
  * ID3: 
    * Support for the iTunes non-standard TSO2 and TSOC frames.
    * Attempt to recover from bad SYLT frames. (#2)
