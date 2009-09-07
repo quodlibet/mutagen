@@ -146,7 +146,7 @@ class ID3Loading(TestCase):
     def test_header_2_4_extended_but_not(self):
         id3 = ID3()
         id3._ID3__fileobj = StringIO(
-            'ID3\x04\x00\x40\x00\x00\x00\x00TIT1')
+            'ID3\x04\x00\x40\x00\x00\x00\x00TIT1\x00\x00\x00\x01a')
         id3._ID3__load_header()
         self.assertEquals(id3._ID3__extsize, 0)
         self.assertEquals(id3._ID3__extdata, '')
@@ -184,6 +184,26 @@ class ID3Loading(TestCase):
         id3._ID3__filesize = 0
         self.assertRaises(ValueError, id3._ID3__fullread, -3)
         self.assertRaises(EOFError, id3._ID3__fullread, 3)
+
+class Issue21(TestCase):
+    uses_mmap = False
+
+    # Files with bad extended header flags failed to read tags.
+    # Ensure the extended header is turned off, and the frames are
+    # read.
+    def setUp(self):
+        self.id3 = ID3(join('tests', 'data', 'issue_21.id3'))
+
+    def test_no_ext(self):
+        self.failIf(self.id3.f_extended)
+
+    def test_has_tags(self):
+        self.failUnless("TIT2" in self.id3)
+        self.failUnless("TALB" in self.id3)
+
+    def test_tit2_value(self):
+        self.failUnlessEqual(self.id3["TIT2"].text, [u"Punk To Funk"])
+add(Issue21)
 
 class ID3Tags(TestCase):
     uses_mmap = False

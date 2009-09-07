@@ -1,8 +1,8 @@
-1.17 - 2009.08.25
+1.17 - 2009.??.??
  * ID3: 
    * Support for the iTunes non-standard TSO2 and TSOC frames.
    * Attempt to recover from bad SYLT frames. (#2)
-   * Attempt to recover from faulty extended header flags. (#4)
+   * Attempt to recover from faulty extended header flags. (#4, #21)
    * Fix a bug in ID3v2.4 footer flag detection, (#5)
  * MP4:
    * Don't fail or double-encode UTF-8 strings when given a str.

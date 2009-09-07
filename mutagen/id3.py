@@ -232,6 +232,8 @@ class ID3(DictProxy, mutagen.Metadata):
                 # http://code.google.com/p/quodlibet/issues/detail?id=126
                 self.__flags ^= 0x40
                 self.__extsize = 0
+                self.__fileobj.seek(-4, 1)
+                self.__readbytes -= 4
             elif self.version >= (2,4,0):
                 # "Where the 'Extended header size' is the size of the whole
                 # extended header, stored as a 32 bit synchsafe integer."
