@@ -1,4 +1,4 @@
-1.17 - 2009.??.??
+1.17 - 2009.10.07
  * ID3: 
    * Support for the iTunes non-standard TSO2 and TSOC frames.
    * Attempt to recover from bad SYLT frames. (#2)
@@ -14,7 +14,6 @@
  * EasyMP4: Like EasyID3, but for iTunes MPEG-4 files.
  * mutagen.File: New 'easy=True' argument to create new EasyMP3, EasyMP4,
    EasyTrueAudio, and EasyID3FileType instances.
- * 
 
 1.16 - 2009.06.15
  * Website / code repository move.
