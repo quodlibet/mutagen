@@ -10,6 +10,7 @@
  * EasyID3:
    * Extension API for defining new "easy" tags at runtime.
    * Support for many, many more tags.
+ * OggVorbis, OggSpeex: Handle bitrates below 0 as per the spec. (#30)
  * EasyMP4: Like EasyID3, but for iTunes MPEG-4 files.
  * mutagen.File: New 'easy=True' argument to create new EasyMP3, EasyMP4,
    EasyTrueAudio, and EasyID3FileType instances.

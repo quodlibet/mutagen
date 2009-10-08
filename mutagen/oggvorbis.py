@@ -45,8 +45,12 @@ class OggVorbisInfo(object):
             raise OggVorbisHeaderError(
                 "page has ID header, but doesn't start a stream")
         (self.channels, self.sample_rate, max_bitrate, nominal_bitrate,
-         min_bitrate) = struct.unpack("<B4I", page.packets[0][11:28])
+         min_bitrate) = struct.unpack("<B4i", page.packets[0][11:28])
         self.serial = page.serial
+
+        max_bitrate = max(0, max_bitrate)
+        min_bitrate = max(0, min_bitrate)
+        nominal_bitrate = max(0, nominal_bitrate)
 
         if nominal_bitrate == 0:
             self.bitrate = (max_bitrate + min_bitrate) // 2
@@ -58,6 +62,11 @@ class OggVorbisInfo(object):
             self.bitrate = min_bitrate
         else:
             self.bitrate = nominal_bitrate
+
+        if self.bitrate == 0 and self.length > 0:
+            fileobj.seek(0, 2)
+            self.bitrate = int((fileobj.tell() * 8) / self.length)
+                
 
     def pprint(self):
         return "Ogg Vorbis, %.2f seconds, %d bps" % (self.length, self.bitrate)

@@ -65,6 +65,15 @@ class TOggVorbis(TOggFileType):
         info = OggVorbisInfo(StringIO(page.write()))
         self.failUnlessEqual(info.bitrate, 65536)
 
+    def test_negative_bitrate(self):
+        page = OggPage(file(self.filename, "rb"))
+        packet = page.packets[0]
+        packet = (packet[:16] + "\xff\xff\xff\xff" + "\xff\xff\xff\xff" +
+                  "\xff\xff\xff\xff" + packet[28:])
+        page.packets[0] = packet
+        info = OggVorbisInfo(StringIO(page.write()))
+        self.failUnlessEqual(info.bitrate, 0)
+
     def test_vendor(self):
         self.failUnless(
             self.audio.tags.vendor.startswith("Xiph.Org libVorbis"))
