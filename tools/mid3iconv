@@ -73,7 +73,7 @@ def update(options, filenames):
                 continue
             else:
                 frame.text = text
-                if min(map(isascii, text)):
+                if not text or min(map(isascii, text)):
                     frame.encoding = 3
                 else:
                     frame.encoding = 1

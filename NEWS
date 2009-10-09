@@ -1,3 +1,7 @@
+1.18
+ * mid3iconv:
+   * Fix a crash when processing empty (invalid) text frames.
+
 1.17 - 2009.10.07
  * ID3: 
    * Support for the iTunes non-standard TSO2 and TSOC frames.
