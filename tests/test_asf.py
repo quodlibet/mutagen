@@ -195,3 +195,27 @@ add(TASFTags2)
 class TASFTags3(TASF):
     original = os.path.join("tests", "data", "silence-3.wma")
 add(TASFTags3)
+
+class TASFIssue29(TestCase):
+    original = os.path.join("tests", "data", "issue_29.wma")
+    def setUp(self):
+        fd, self.filename = mkstemp(suffix='wma')
+        os.close(fd)
+        shutil.copy(self.original, self.filename)
+        self.audio = ASF(self.filename)
+
+    def tearDown(self):
+        os.unlink(self.filename)
+
+    def test_issue_29_description(self):
+        self.audio["Description"] = "Hello"
+        self.audio.save()
+        audio = ASF(self.filename)
+        self.failUnless("Description" in audio)
+        self.failUnlessEqual(audio["Description"], ["Hello"])
+        del(audio["Description"])
+        self.failIf("Description" in audio)
+        audio.save()
+        audio = ASF(self.filename)
+        self.failIf("Description" in audio)
+add(TASFIssue29)

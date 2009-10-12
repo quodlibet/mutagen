@@ -356,20 +356,30 @@ class ContentDescriptionObject(BaseObject):
         pos = 10
         for length in lengths:
             end = pos + length
-            texts.append(data[pos:end].decode("utf-16-le").strip("\x00"))
+            if length > 0:
+                texts.append(data[pos:end].decode("utf-16-le").strip("\x00"))
+            else:
+                texts.append(None)
             pos = end
-        (asf.tags["Title"], asf.tags["Author"], asf.tags["Copyright"],
-         asf.tags["Description"], asf.tags["Rating"]) = texts
+        title, author, copyright, desc, rating = texts
+        for key, value in dict(
+            Title=title,
+            Author=author,
+            Copyright=copyright,
+            Description=desc,
+            Rating=rating).items():
+            if value is not None:
+                asf.tags[key] = value
 
     def render(self, asf):
         def render_text(name):
             value = asf.tags.get(name, [])
-            if value and value[0]:
+            if value:
                 return value[0].encode("utf-16-le") + "\x00\x00"
             else:
                 return ""
         texts = map(render_text, _standard_attribute_names)
-        data = struct.pack("<HHHHH", *map(str.__len__, texts)) + "".join(texts)
+        data = struct.pack("<HHHHH", *map(len, texts)) + "".join(texts)
         return self.GUID + struct.pack("<Q", 24 + len(data)) + data
 
 

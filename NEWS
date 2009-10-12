@@ -1,4 +1,7 @@
 1.18
+ * ASF:
+   * Distinguish between empty and absent tag values in
+     ContentDescriptionObjects. (#29)
  * mid3iconv:
    * Fix a crash when processing empty (invalid) text frames.
 
