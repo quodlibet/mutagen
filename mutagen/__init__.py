@@ -170,7 +170,7 @@ def File(filename, options=None, easy=False):
         from mutagen.apev2 import APEv2File
         from mutagen.flac import FLAC
         if easy:
-            from mutagen.id3 import EasyID3FileType as ID3FileType
+            from mutagen.easyid3 import EasyID3FileType as ID3FileType
         else:
             from mutagen.id3 import ID3FileType
         if easy:

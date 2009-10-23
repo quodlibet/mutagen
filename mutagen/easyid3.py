@@ -19,7 +19,7 @@ import mutagen.id3
 
 from mutagen import Metadata
 from mutagen._util import DictMixin, dict_match
-from mutagen.id3 import ID3, error, delete
+from mutagen.id3 import ID3, error, delete, ID3FileType
 
 __all__ = ['EasyID3', 'Open', 'delete']
 
@@ -454,3 +454,7 @@ for desc, key in {
     u"BARCODE": "barcode",
     }.iteritems():
     EasyID3.RegisterTXXXKey(key, desc)
+
+class EasyID3FileType(ID3FileType):
+    """Like ID3FileType, but uses EasyID3 for tags."""
+    ID3 = EasyID3

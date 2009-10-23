@@ -1985,6 +1985,3 @@ class ID3FileType(mutagen.FileType):
             self.info = self._Info(fileobj, offset)
         finally:
             fileobj.close()
-
-class EasyID3FileType(ID3FileType):
-    from mutagen.easyid3 import EasyID3 as ID3

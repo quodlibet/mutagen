@@ -1,9 +1,14 @@
-1.18
+1.18 - 2009.10.22
  * ASF:
    * Distinguish between empty and absent tag values in
      ContentDescriptionObjects. (#29)
  * mid3iconv:
    * Fix a crash when processing empty (invalid) text frames.
+ * MAJOR API INCOMPATIBILITY!!!!
+   * EasyID3FileType is now in mutagen.easyid3, not mutagen.id3. This
+     change was necessary to restore API compatibility with 1.16, as
+     1.17 accidentally contained a circular import preventing
+     mutagen.easyid3 from importing by itself. (#32)
 
 1.17 - 2009.10.07
  * ID3: 
