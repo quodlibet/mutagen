@@ -1,3 +1,7 @@
+1.19
+ * ID3:
+   * POPM: 'count' is optional; the attribute may not exist. (#33)
+
 1.18 - 2009.10.22
  * ASF:
    * Distinguish between empty and absent tag values in
