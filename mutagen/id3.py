@@ -1548,7 +1548,7 @@ class PCNT(Frame):
     def __pos__(self): return self.count
     def _pprint(self): return unicode(self.count)
 
-class POPM(Frame):
+class POPM(FrameOpt):
     """Popularimeter.
 
     This frame keys a rating (out of 255) and a play count to an email
@@ -1557,16 +1557,17 @@ class POPM(Frame):
     Attributes:
     email -- email this POPM frame is for
     rating -- rating from 0 to 255
-    count -- number of times the files has been played
+    count -- number of times the files has been played (optional)
     """
-    _framespec = [ Latin1TextSpec('email'), ByteSpec('rating'),
-        IntegerSpec('count') ]
+    _framespec = [ Latin1TextSpec('email'), ByteSpec('rating') ]
+    _optionalspec = [ IntegerSpec('count') ]
+                   
     HashKey = property(lambda s: '%s:%s' % (s.FrameID, s.email))
 
     def __eq__(self, other): return self.rating == other
     def __pos__(self): return self.rating
-    def _pprint(self): return "%s=%s %s/255" % (
-        self.email, self.count, self.rating)
+    def _pprint(self): return "%s=%r %r/255" % (
+        self.email, getattr(self, 'count', None), self.rating)
 
 class GEOB(Frame):
     """General Encapsulated Object.

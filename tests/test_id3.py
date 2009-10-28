@@ -541,6 +541,11 @@ def TestReadTags():
     ['PCNT', '\x00\x00\x00\x11', 17, 17, dict(count=17)],
     ['POPM', 'foo@bar.org\x00\xde\x00\x00\x00\x11', 222, 222,
         dict(email="foo@bar.org", rating=222, count=17)],
+    ['POPM', 'foo@bar.org\x00\xde\x00', 222, 222,
+        dict(email="foo@bar.org", rating=222, count=0)],
+    # Issue #33 - POPM may have no playcount at all.
+    ['POPM', 'foo@bar.org\x00\xde', 222, 222,
+        dict(email="foo@bar.org", rating=222)],
 
     ['UFID', 'own\x00data', 'data', '', dict(data='data', owner='own')],
     ['UFID', 'own\x00\xdd', '\xdd', '', dict(data='\xdd', owner='own')],
