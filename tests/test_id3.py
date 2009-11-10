@@ -102,11 +102,6 @@ class ID3Loading(TestCase):
         id3._ID3__fileobj = StringIO('ID3\x04\x00\x1f\x00\x00\x00\x00')
         self.assertRaises(ValueError, id3._ID3__load_header)
 
-    def test_header_2_4_invalid_flags(self):
-        id3 = ID3()
-        id3._ID3__fileobj = StringIO('ID3\x04\x00\x1f\x00\x00\x00\x00')
-        self.assertRaises(ValueError, id3._ID3__load_header)
-
     def test_header_2_4_allow_footer(self):
         id3 = ID3()
         id3._ID3__fileobj = StringIO('ID3\x04\x00\x10\x00\x00\x00\x00')
@@ -398,10 +393,6 @@ class TestWriteID3v1(TestCase):
     def test_save_delete(self):
         self.audio.save(v1=0)
         self.failIfV1()
-
-    def test_save_add(self):
-        self.audio.save(v1=2)
-        self.failUnlessV1()
 
     def test_save_add(self):
         self.audio.save(v1=2)

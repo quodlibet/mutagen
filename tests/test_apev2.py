@@ -173,12 +173,6 @@ class TAPEv2(TestCase):
         self.failUnlessEqual(self.audio["test"], "foobar\x00quuxbarz")
         self.failUnless(isinstance(self.audio["test"], APETextValue))
 
-    def test_guess_text_list(self):
-        from mutagen.apev2 import APETextValue
-        self.audio["test"] = [u"foobar", "quuxbarz"]
-        self.failUnlessEqual(self.audio["test"], "foobar\x00quuxbarz")
-        self.failUnless(isinstance(self.audio["test"], APETextValue))
-
     def test_guess_utf8(self):
         from mutagen.apev2 import APETextValue
         self.audio["test"] = "foobar"
