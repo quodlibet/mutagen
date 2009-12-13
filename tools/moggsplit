@@ -28,6 +28,9 @@ def main(argv):
     parser.add_option(
         "--pattern", dest="pattern", default="%(base)s-%(stream)d.%(ext)s",
         metavar='pattern', help="name files using this pattern")
+    parser.add_option(
+        "--m3u", dest="m3u", action="store_true", default=False,
+        help="generate an m3u (playlist) file")
 
     (options, args) = parser.parse_args(argv[1:])
     if not args:
@@ -38,6 +41,11 @@ def main(argv):
         fileobjs = {}
         format["base"] = os.path.splitext(os.path.basename(filename))[0]
         fileobj = file(filename, "rb")
+        if options.m3u:
+            m3u = file(format["base"] + ".m3u", "w")
+            fileobjs["m3u"] = m3u
+        else:
+            m3u = None
         while True:
             try: page = OggPage(fileobj)
             except EOFError: break
@@ -47,6 +55,8 @@ def main(argv):
                     new_filename = options.pattern % format
                     new_fileobj = file(new_filename, "wb")
                     fileobjs[page.serial] = new_fileobj
+                    if m3u:
+                        m3u.write(new_filename + "\r\n")
                 fileobjs[page.serial].write(page.write())
         map(file.close, fileobjs.values())
 
