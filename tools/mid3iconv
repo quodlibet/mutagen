@@ -64,9 +64,13 @@ def update(options, filenames):
 
         for tag in filter(lambda t: t.startswith("T"), id3):
             frame = id3[tag]
-            if isinstance(frame, mutagen.id3.TimeStampTextFrame): # non-unicode fields
+            if isinstance(frame, mutagen.id3.TimeStampTextFrame):
+                # non-unicode fields
                 continue
-
+            try:
+                text = frame.text
+            except AttributeError:
+                continue
             try:
                 text = map(conv, frame.text)
             except (UnicodeError, LookupError):
