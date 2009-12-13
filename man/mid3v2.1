@@ -1,4 +1,4 @@
-.TH mid3v2 1 "July 27th, 2006"
+.TH mid3v2 1 "December 12th, 2009"
 .SH NAME
 mid3v2 \- audio tag editor similar to 'id3v2'
 .SH SYNOPSIS
@@ -11,6 +11,12 @@ plague \fBid3v2\fR.
 This program exists mostly for compatibility with programs that want to tag
 files using \fBid3v2\fR. For a more usable interface, we recommend Ex Falso.
 .SH OPTIONS
+.IP \-q,\ \-\-quiet
+Be quiet: do not mention file operations that perform the user's request.
+Warnings will still be printed.
+.IP \-v,\ \-\-verbose
+Be verbose: state all operations performed. This is the opposite of
+--quiet. This is the default.
 .IP \-f,\ \-\-list\-frames
 Display all supported ID3v2.3/2.4 frames and their meanings.
 .IP \-L,\ \-\-list\-genres

@@ -14,7 +14,10 @@ import locale
 
 from optparse import OptionParser, SUPPRESS_HELP
 
-VERSION = (1, 1)
+VERSION = (1, 2)
+
+global verbose
+verbose = True
 
 class ID3OptionParser(OptionParser):
     def __init__(self):
@@ -58,16 +61,19 @@ def list_genres(option, opt, value, parser):
 
 def delete_tags(filenames, v1, v2):
     for filename in filenames:
-        print "deleting ID3 tag info in %s" % filename
+        if verbose:
+            print "deleting ID3 tag info in %s" % filename
         mutagen.id3.delete(filename, v1, v2)
 
 def delete_frames(deletes, filenames):
     frames = deletes.split(",")
     for filename in filenames:
-        print "deleting %s from %s" % (deletes, filename)
+        if verbose:
+            print "deleting %s from %s" % (deletes, filename)
         try: id3 = mutagen.id3.ID3(filename)
         except mutagen.id3.ID3NoHeaderError:
-            print "No ID3 header found; skipping."
+            if verbose:
+                print "No ID3 header found; skipping."
             continue
         except Exception, err:
             print str(err)
@@ -81,10 +87,12 @@ def write_files(edits, filenames):
     edits = [(frame[2:], value.decode(enc)) for (frame, value) in edits]
 
     for filename in filenames:
-        print "Writing", filename
+        if verbose:
+            print "Writing", filename
         try: id3 = mutagen.id3.ID3(filename)
         except mutagen.id3.ID3NoHeaderError:
-            print "No ID3 header found; creating a new tag"
+            if verbose:
+                print "No ID3 header found; creating a new tag"
             id3 = mutagen.id3.ID3()
         except Exception, err:
             print str(err)
@@ -127,6 +135,12 @@ def list_tags_raw(filenames):
 
 def main(argv):
     parser = ID3OptionParser()
+    parser.add_option(
+        "-v", "--verbose", action="store_true", dest="verbose", default=False,
+        help="be verbose")
+    parser.add_option(
+        "-q", "--quiet", action="store_false", dest="verbose",
+        help="be quiet (the default)")
     parser.add_option(
         "-f", "--list-frames", action="callback", callback=list_frames,
         help="Display all possible frames for ID3v2.3 / ID3v2.4")
@@ -198,6 +212,8 @@ def main(argv):
 
     parser.edits = []
     (options, args) = parser.parse_args(argv[1:])
+    global verbose
+    verbose = options.verbose
 
     if args:
         if parser.edits: write_files(parser.edits, args)
