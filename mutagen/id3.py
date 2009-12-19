@@ -1143,8 +1143,7 @@ class TextFrame(Frame):
     def __unicode__(self): return u'\u0000'.join(self.text)
     def __eq__(self, other):
         if isinstance(other, str): return str(self) == other
-        elif isinstance(other, unicode):
-            return u'\u0000'.join(self.text) == other
+        elif isinstance(other, unicode): return unicode(self) == other
         return self.text == other
     def __getitem__(self, item): return self.text[item]
     def __iter__(self): return iter(self.text)

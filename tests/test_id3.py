@@ -1679,6 +1679,15 @@ class BadPOPM(TestCase):
         self.assertEquals(popm.rating, 125)
         self.assertEquals(popm.count, 2**32+1)
 
+class TimeStampTextFrame(TestCase):
+    uses_mmap = False
+
+    from mutagen.id3 import TimeStampTextFrame as Frame
+
+    def test_compare_to_unicode(self):
+        frame = self.Frame(encoding=0, text=[u'1987', u'1988'])
+        self.failUnlessEqual(frame, unicode(frame))
+
 add(ID3Loading)
 add(ID3GetSetDel)
 add(BitPaddedIntTest)
@@ -1696,6 +1705,7 @@ add(NoHash)
 add(FrameIDValidate)
 add(BadTYER)
 add(BadPOPM)
+add(TimeStampTextFrame)
 
 try: import eyeD3
 except ImportError: pass
