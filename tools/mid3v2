@@ -5,8 +5,6 @@
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
-#
-# $Id: mid3v2 4002 2007-04-15 18:49:32Z piman $
 
 import os
 import sys
@@ -14,7 +12,14 @@ import locale
 
 from optparse import OptionParser, SUPPRESS_HELP
 
-VERSION = (1, 2)
+try:
+    import mutagen, mutagen.id3
+except ImportError:
+    # Run as ./mid3v2 out of tools/
+    sys.path.append(os.path.abspath("../"))
+    import mutagen, mutagen.id3
+
+VERSION = (1, 3)
 
 global verbose
 verbose = True
@@ -24,7 +29,8 @@ class ID3OptionParser(OptionParser):
         mutagen_version = ".".join(map(str, mutagen.version))
         my_version = ".".join(map(str, VERSION))
         version = "mid3v2 %s\nUses Mutagen %s" % (my_version, mutagen_version)
-        return OptionParser.__init__(
+        self.edits = []
+        OptionParser.__init__(
             self, version=version,
             usage="%prog [OPTION] [FILE]...",
             description="Mutagen-based replacement for id3lib's id3v2.")
@@ -70,14 +76,13 @@ def delete_frames(deletes, filenames):
     for filename in filenames:
         if verbose:
             print "deleting %s from %s" % (deletes, filename)
-        try: id3 = mutagen.id3.ID3(filename)
+        try:
+            id3 = mutagen.id3.ID3(filename)
         except mutagen.id3.ID3NoHeaderError:
             if verbose:
                 print "No ID3 header found; skipping."
-            continue
-        except Exception, err:
+        except StandardError, err:
             print str(err)
-            continue
         else:
             map(id3.delall, frames)
             id3.save()
@@ -92,21 +97,22 @@ def write_files(edits, filenames):
     tmp = {}
     for frame, value in edits:
         if tmp.has_key(frame):
-           tmp[frame].append(value)
+            tmp[frame].append(value)
         else:
-           tmp[frame] = [value]
+            tmp[frame] = [value]
     # edits is now a dictionary of frame -> [list of values]
     edits = tmp
 
     for filename in filenames:
         if verbose:
             print "Writing", filename
-        try: id3 = mutagen.id3.ID3(filename)
+        try:
+            id3 = mutagen.id3.ID3(filename)
         except mutagen.id3.ID3NoHeaderError:
             if verbose:
                 print "No ID3 header found; creating a new tag"
             id3 = mutagen.id3.ID3()
-        except Exception, err:
+        except StandardError, err:
             print str(err)
             continue
         for frame, vlist in edits:
@@ -133,18 +139,23 @@ def list_tags(filenames):
     enc = locale.getpreferredencoding()
     for filename in filenames:
         print "IDv2 tag info for %s:" % filename
-        try: id3 = mutagen.id3.ID3(filename, translate=False)
-        except Exception, err: print str(err)
-        else: print id3.pprint().encode(enc, "replace")
+        try:
+            id3 = mutagen.id3.ID3(filename, translate=False)
+        except StandardError, err:
+            print str(err)
+        else:
+            print id3.pprint().encode(enc, "replace")
 
 def list_tags_raw(filenames):
-    enc = locale.getpreferredencoding()
     for filename in filenames:
         print "Raw IDv2 tag info for %s:" % filename
-        try: id3 = mutagen.id3.ID3(filename, translate=False)
-        except Exception, err: print str(err)
+        try:
+            id3 = mutagen.id3.ID3(filename, translate=False)
+        except StandardError, err:
+            print str(err)
         else:
-            for frame in id3.values(): print repr(frame)
+            for frame in id3.values():
+                print repr(frame)
 
 def main(argv):
     parser = ID3OptionParser()
@@ -223,27 +234,28 @@ def main(argv):
                 type='string', metavar="value", # optparse blows up with this
                 callback=lambda *args: args[3].edits.append(args[1:3]))
 
-    parser.edits = []
     (options, args) = parser.parse_args(argv[1:])
     global verbose
     verbose = options.verbose
 
     if args:
         if parser.edits or options.deletes:
-           if options.deletes: delete_frames(options.deletes, args)
-           if parser.edits: write_files(parser.edits, args)
-        elif options.action in [None, 'list']: list_tags(args)
-        elif options.action == "list-raw": list_tags_raw(args)
-        elif options.action == "convert": write_files([], args)
+            if options.deletes:
+                delete_frames(options.deletes, args)
+            if parser.edits:
+                write_files(parser.edits, args)
+        elif options.action in [None, 'list']:
+            list_tags(args)
+        elif options.action == "list-raw":
+            list_tags_raw(args)
+        elif options.action == "convert":
+            write_files([], args)
         elif options.action.startswith("delete"):
             delete_tags(args, "v1" in options.action, "v2" in options.action)
-        else: parser.print_help()
-    else: parser.print_help()
+        else:
+            parser.print_help()
+    else:
+        parser.print_help()
 
 if __name__ == "__main__":
-    try: import mutagen, mutagen.id3
-    except ImportError:
-        # Run as ./mid3v2 out of tools/
-        sys.path.append(os.path.abspath("../"))
-        import mutagen, mutagen.id3
     main(sys.argv)
