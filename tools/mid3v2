@@ -86,6 +86,18 @@ def write_files(edits, filenames):
     enc = locale.getpreferredencoding()
     edits = [(frame[2:], value.decode(enc)) for (frame, value) in edits]
 
+    # preprocess:
+    #   for all [frame,value] pairs in the edits list
+    #      gather values for identical frames into a list
+    tmp = {}
+    for frame, value in edits:
+        if tmp.has_key(frame):
+           tmp[frame].append(value)
+        else:
+           tmp[frame] = [value]
+    # edits is now a dictionary of frame -> [list of values]
+    edits = tmp
+
     for filename in filenames:
         if verbose:
             print "Writing", filename
@@ -97,22 +109,23 @@ def write_files(edits, filenames):
         except Exception, err:
             print str(err)
             continue
-        for frame, value in edits:
+        for frame, vlist in edits:
             if frame == "COMM":
-                values = value.split(":")
-                if len(values) == 1:
-                    value, desc, lang = values[0], "", "eng"
-                elif len(values) == 2:
-                    desc, value, lang = values[0], values[1], "eng"
-                else:
-                    value = ":".join(values[1:-1])
-                    desc, lang = values[0], values[-1]
-                frame = mutagen.id3.COMM(
-                    encoding=3, text=value, lang=lang, desc=desc)
+                for value in vlist:
+                    values = value.split(":")
+                    if len(values) == 1:
+                        value, desc, lang = values[0], "", "eng"
+                    elif len(values) == 2:
+                        desc, value, lang = values[0], values[1], "eng"
+                    else:
+                        value = ":".join(values[1:-1])
+                        desc, lang = values[0], values[-1]
+                    frame = mutagen.id3.COMM(
+                        encoding=3, text=value, lang=lang, desc=desc)
             elif issubclass(mutagen.id3.Frames[frame], mutagen.id3.UrlFrame):
-                frame = mutagen.id3.Frames[frame](encoding=3, url=value)
+                frame = mutagen.id3.Frames[frame](encoding=3, url=vlist)
             else:
-                frame = mutagen.id3.Frames[frame](encoding=3, text=value)
+                frame = mutagen.id3.Frames[frame](encoding=3, text=vlist)
             id3.add(frame)
         id3.save(filename)
 
@@ -216,8 +229,9 @@ def main(argv):
     verbose = options.verbose
 
     if args:
-        if parser.edits: write_files(parser.edits, args)
-        elif options.deletes: delete_frames(options.deletes, args)
+        if parser.edits or options.deletes:
+           if options.deletes: delete_frames(options.deletes, args)
+           if parser.edits: write_files(parser.edits, args)
         elif options.action in [None, 'list']: list_tags(args)
         elif options.action == "list-raw": list_tags_raw(args)
         elif options.action == "convert": write_files([], args)
