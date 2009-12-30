@@ -115,7 +115,7 @@ def write_files(edits, filenames):
         except StandardError, err:
             print str(err)
             continue
-        for frame, vlist in edits:
+        for (frame, vlist) in edits.items():
             if frame == "COMM":
                 for value in vlist:
                     values = value.split(":")
