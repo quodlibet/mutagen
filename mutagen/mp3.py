@@ -153,6 +153,9 @@ class MPEGInfo(object):
         if self.layer == 1:
             frame_length = (12 * self.bitrate / self.sample_rate + padding) * 4
             frame_size = 384
+        elif self.version >= 2 and self.layer == 3:
+            frame_length = 72 * self.bitrate / self.sample_rate + padding
+            frame_size = 576
         else:
             frame_length = 144 * self.bitrate / self.sample_rate + padding
             frame_size = 1152
@@ -188,7 +191,7 @@ class MPEGInfo(object):
                 if vbri_version == 1:
                     frame_count = struct.unpack(
                         '>I', data[vbri + 14:vbri + 18])[0]
-                    samples = frame_size * frame_count
+                    samples = float(frame_size * frame_count)
                     self.length = (samples / self.sample_rate) or self.length
         else:
             # If a Xing header was found, this is definitely MPEG audio.
@@ -196,7 +199,7 @@ class MPEGInfo(object):
             flags = struct.unpack('>I', data[xing + 4:xing + 8])[0]
             if flags & 0x1:
                 frame_count = struct.unpack('>I', data[xing + 8:xing + 12])[0]
-                samples = frame_size * frame_count
+                samples = float(frame_size * frame_count)
                 self.length = (samples / self.sample_rate) or self.length
             if flags & 0x2:
                 bytes = struct.unpack('>I', data[xing + 12:xing + 16])[0]

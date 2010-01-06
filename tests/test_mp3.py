@@ -11,6 +11,8 @@ from tempfile import mkstemp
 class TMP3(TestCase):
     silence = os.path.join('tests', 'data', 'silence-44-s.mp3')
     silence_nov2 = os.path.join('tests', 'data', 'silence-44-s-v1.mp3')
+    silence_mpeg2 = os.path.join('tests', 'data', 'silence-44-s-mpeg2.mp3')
+    silence_mpeg25 = os.path.join('tests', 'data', 'silence-44-s-mpeg25.mp3')
 
     def setUp(self):
         original = os.path.join("tests", "data", "silence-44-s.mp3")
@@ -19,11 +21,15 @@ class TMP3(TestCase):
         shutil.copy(original, self.filename)
         self.mp3 = MP3(self.filename)
         self.mp3_2 = MP3(self.silence_nov2)
+        self.mp3_3 = MP3(self.silence_mpeg2)
+        self.mp3_4 = MP3(self.silence_mpeg25)
 
     def test_mode(self):
         from mutagen.mp3 import JOINTSTEREO
         self.failUnlessEqual(self.mp3.info.mode, JOINTSTEREO)
         self.failUnlessEqual(self.mp3_2.info.mode, JOINTSTEREO)
+        self.failUnlessEqual(self.mp3_3.info.mode, JOINTSTEREO)
+        self.failUnlessEqual(self.mp3_4.info.mode, JOINTSTEREO)
 
     def test_id3(self):
         self.failUnlessEqual(self.mp3.tags, ID3(self.silence))
@@ -32,15 +38,23 @@ class TMP3(TestCase):
     def test_length(self):
         self.failUnlessEqual(int(round(self.mp3.info.length)), 4)
         self.failUnlessEqual(int(round(self.mp3_2.info.length)), 4)
+        self.failUnlessEqual(int(round(self.mp3_3.info.length)), 4)
+        self.failUnlessEqual(int(round(self.mp3_4.info.length)), 4)
     def test_version(self):
         self.failUnlessEqual(self.mp3.info.version, 1)
         self.failUnlessEqual(self.mp3_2.info.version, 1)
+        self.failUnlessEqual(self.mp3_3.info.version, 2)
+        self.failUnlessEqual(self.mp3_4.info.version, 2.5)
     def test_layer(self):
         self.failUnlessEqual(self.mp3.info.layer, 3)
         self.failUnlessEqual(self.mp3_2.info.layer, 3)
+        self.failUnlessEqual(self.mp3_3.info.layer, 3)
+        self.failUnlessEqual(self.mp3_4.info.layer, 3)
     def test_bitrate(self):
         self.failUnlessEqual(self.mp3.info.bitrate, 32000)
         self.failUnlessEqual(self.mp3_2.info.bitrate, 32000)
+        self.failUnlessEqual(self.mp3_3.info.bitrate, 18191)
+        self.failUnlessEqual(self.mp3_4.info.bitrate, 9300)
 
     def test_notmp3(self):
         self.failUnlessRaises(MP3Error, MP3, "README")
@@ -48,6 +62,8 @@ class TMP3(TestCase):
     def test_sketchy(self):
         self.failIf(self.mp3.info.sketchy)
         self.failIf(self.mp3_2.info.sketchy)
+        self.failIf(self.mp3_3.info.sketchy)
+        self.failIf(self.mp3_4.info.sketchy)
 
     def test_sketchy_notmp3(self):
         notmp3 = MP3(os.path.join("tests", "data", "silence-44-s.flac"))
@@ -62,12 +78,12 @@ class TMP3(TestCase):
 
     def test_xing(self):
         mp3 = MP3(os.path.join("tests", "data", "xing.mp3"))
-        self.failUnlessEqual(mp3.info.length, 26122)
+        self.failUnlessEqual(int(round(mp3.info.length)), 26122)
         self.failUnlessEqual(mp3.info.bitrate, 306)
 
     def test_vbri(self):
         mp3 = MP3(os.path.join("tests", "data", "vbri.mp3"))
-        self.failUnlessEqual(mp3.info.length, 222)
+        self.failUnlessEqual(int(round(mp3.info.length)), 222)
 
     def test_empty_xing(self):
         mp3 = MP3(os.path.join("tests", "data", "bad-xing.mp3"))
