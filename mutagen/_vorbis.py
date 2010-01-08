@@ -216,11 +216,8 @@ class VCommentDict(VComment, DictMixin):
 
     def keys(self):
         """Return all keys in the comment."""
-        return self and map(str.lower, set(zip(*self)[0]))
+        return self and list(set([k.lower() for k, v in self]))
 
     def as_dict(self):
         """Return a copy of the comment data in a real dict."""
-        d = {}
-        for key, value in self:
-            d.setdefault(key, []).append(value)
-        return d
+        return dict((key, self[key]) for key in self.keys())

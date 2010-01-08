@@ -204,4 +204,12 @@ class TVCommentDict(TestCase):
         self.failUnlessRaises(
             UnicodeError, self.c.__delitem__, u"\u1234")
 
+    def test_duplicate_keys(self):
+        self.c = VCommentDict()
+        keys = ("key", "Key", "KEY")
+        for key in keys:
+            self.c.append((key, "value"))
+        self.failUnlessEqual(len(self.c.keys()), 1)
+        self.failUnlessEqual(len(self.c.as_dict()), 1)
+
 add(TVCommentDict)
