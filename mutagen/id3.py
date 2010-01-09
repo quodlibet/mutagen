@@ -1911,7 +1911,8 @@ def MakeID3v1(id3):
                        "TALB": "album"}.items():
         if v2id in id3:
             text = id3[v2id].text[0].encode('latin1', 'replace')[:30]
-        else: text = ""
+        else:
+            text = ""
         v1[name] = text + ("\x00" * (30 - len(text)))
 
     if "COMM" in id3:
@@ -1932,8 +1933,12 @@ def MakeID3v1(id3):
                 v1["genre"] = chr(TCON.GENRES.index(genre))
     if "genre" not in v1: v1["genre"] = "\xff"
 
-    if "TDRC" in id3: v1["year"] = str(id3["TDRC"])[:4]
-    else: v1["year"] = "\x00\x00\x00\x00"
+    if "TDRC" in id3:
+        v1["year"] = str(id3["TDRC"])[:4]
+    elif "TYER" in id3:
+        v1["year"] = str(id3["TYER"])[:4]
+    else:
+        v1["year"] = "\x00\x00\x00\x00"
 
     return ("TAG%(title)s%(artist)s%(album)s%(year)s%(comment)s"
             "%(track)s%(genre)s") % v1 

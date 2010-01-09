@@ -2,6 +2,7 @@
  * ID3:
    * POPM: 'count' is optional; the attribute may not exist. (#33)
    * TimeStampTextFrame: Fix a TypeError in unicode comparisons. (#43)
+   * MakeID3v1: Translate TYER into ID3v1 year if TDRC is not present. (#42)
  * mid3v2:
    * Allow --delete followed by --frame, and --genre 1 --genre 2. (#37)
    * Add --quiet and --verbose flags. (#40)

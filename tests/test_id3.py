@@ -353,6 +353,15 @@ class ID3v1Tags(TestCase):
         self.assertEquals(
             MakeID3v1({'COMM': COMM(encoding=0, text="")}), empty)
 
+    def test_make_v1_from_tyer(self):
+        from mutagen.id3 import ParseID3v1, MakeID3v1, TYER, TDRC
+        self.assertEquals(
+            MakeID3v1({"TDRC": TDRC(text="2010-10-10")}),
+            MakeID3v1({"TYER": TYER(text="2010")}))
+        self.assertEquals(
+            ParseID3v1(MakeID3v1({"TDRC": TDRC(text="2010-10-10")})),
+            ParseID3v1(MakeID3v1({"TYER": TYER(text="2010")})))
+
     def test_invalid(self):
         from mutagen.id3 import ParseID3v1
         self.failUnless(ParseID3v1("") is None)
