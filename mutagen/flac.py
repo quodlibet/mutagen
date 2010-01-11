@@ -581,11 +581,15 @@ class FLAC(FileType):
         fileobj = file(filename, "rb")
         try:
             self.__check_header(fileobj)
-            while self.__read_metadata_block(fileobj): pass
+            while self.__read_metadata_block(fileobj):
+                pass
+            if fileobj.read(2) != "\xff\xf8":
+                raise FLACNoHeaderError("End of metadata did not start audio")
         finally:
             fileobj.close()
 
-        try: self.metadata_blocks[0].length
+        try:
+            self.metadata_blocks[0].length
         except (AttributeError, IndexError):
             raise FLACNoHeaderError("Stream info block not found")
 
