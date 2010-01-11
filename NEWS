@@ -10,6 +10,7 @@
  * mid3iconv: Fix crash when processing TCML or TIPL frames. (#41)
  * VCommentDict: Correctly normalize key names for .keys() iterator. (#45)
  * MP3: Correct length calculation for MPEG-2 files. (#46)
+ * oggflac: Fix typo in docstring. (#53)
 
 1.18 - 2009.10.22
  * ASF:

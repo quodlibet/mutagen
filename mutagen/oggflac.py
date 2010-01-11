@@ -13,7 +13,7 @@
 This module handles FLAC files wrapped in an Ogg bitstream. The first
 FLAC stream found is used. For 'naked' FLACs, see mutagen.flac.
 
-This module is bsaed off the specification at
+This module is based off the specification at
 http://flac.sourceforge.net/ogg_mapping.html.
 """
 
