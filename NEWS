@@ -11,6 +11,7 @@
  * VCommentDict: Correctly normalize key names for .keys() iterator. (#45)
  * MP3: Correct length calculation for MPEG-2 files. (#46)
  * oggflac: Fix typo in docstring. (#53)
+ * EasyID3: Force UTF-8 encoding. (#54)
 
 1.18 - 2009.10.22
  * ASF:

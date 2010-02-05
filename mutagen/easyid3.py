@@ -118,6 +118,7 @@ class EasyID3(DictMixin, Metadata):
             except KeyError:
                 id3.add(mutagen.id3.Frames[frameid](encoding=3, text=value))
             else:
+                frame.encoding = 3
                 frame.text = value
 
         def deleter(id3, key):
@@ -223,10 +224,12 @@ def genre_get(id3, key):
     return id3["TCON"].genres
 
 def genre_set(id3, key, value):
-    try: frame = id3["TCON"]
+    try:
+        frame = id3["TCON"]
     except KeyError:
         id3.add(mutagen.id3.TCON(encoding=3, text=value))
     else:
+        frame.encoding = 3
         frame.genres = value
 
 def genre_delete(id3, key):
@@ -258,10 +261,12 @@ def performer_get(id3, key):
     
 def performer_set(id3, key, value):
     wanted_role = key.split(":", 1)[1]
-    try: mcl = id3["TMCL"]
+    try:
+        mcl = id3["TMCL"]
     except KeyError:
         mcl = mutagen.id3.TMCL(encoding=3, people=[])
         id3.add(mcl)
+    mcl.encoding = 3
     people = [p for p in mcl.people if p[0] != wanted_role]
     for v in value:
         people.append((wanted_role, v))
