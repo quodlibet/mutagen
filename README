@@ -57,3 +57,25 @@ them all to be fixed.
 Prior to 1.10.1, Mutagen wrote an incorrect flag for APEv2 tags that
 claimed they did not have footers. This has been fixed, however it
 means that all APEv2 tags written before 1.10.1 are corrupt.
+
+Prior to 1.16, the MP4 cover atom used a .format attribute to indicate
+the image format (JPEG/PNG). Python 2.6 added a str.format method
+which conflicts with this. 1.17 provides .imageformat when running on
+any version, and still provides .format when running on a version
+before 2.6.
+
+Mutagen 1.18 moved EasyID3FileType to mutagen.easyid3, rather than
+mutagen.id3, which was used in 1.17. Keeping in mutagen.id3 caused
+circular import problems. To import EasyID3FileType correctly in 1.17
+and 1.18 or later:
+
+    import mutagen.id3
+    try:
+        from mutagen.easyid3 import EasyID3FileType
+    except ImportError:
+        # Mutagen 1.17.
+        from mutagen.id3 import EasyID3FileType
+
+Mutagen 1.19 made it possible for POPM to have no 'count'
+attribute. Previously, files that generated POPM frames of this type
+would fail to load at all.
