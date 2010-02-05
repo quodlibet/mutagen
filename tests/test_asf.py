@@ -70,12 +70,14 @@ class TASF(TestCase):
     def test_pprint(self):
         self.failUnless(self.audio.pprint())
 
-    def set_key(self, key, value, result=None):
+    def set_key(self, key, value, result=None, expected=True):
         self.audio[key] = value
-        self.failUnless(key in self.audio)
         self.audio.save()
         self.audio = ASF(self.audio.filename)
         self.failUnless(key in self.audio)
+        self.failUnless(key in self.audio.tags)
+        self.failUnless(key in self.audio.tags.keys())
+        self.failUnless(key in self.audio.tags.as_dict().keys())
         newvalue = self.audio[key]
         if isinstance(newvalue, list):
             for a, b in zip(sorted(newvalue), sorted(result or value)):
@@ -149,6 +151,8 @@ class TASF(TestCase):
         self.failUnlessEqual(self.audio["QL/AllHaveStream"][1].stream, 2)
 
     def test_language(self):
+        self.failIf("QL/OneHasLang" in self.audio)
+        self.failIf("QL/AllHaveLang" in self.audio)
         self.audio["QL/OneHasLang"] = [
             ASFValue("Whee", UNICODE, language=2),
             ASFValue("Whee", UNICODE),
