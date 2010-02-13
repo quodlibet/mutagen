@@ -204,7 +204,7 @@ for atomid, key in {
     '\xa9cmt': 'comment',
     'desc': 'description',
     '\xa9grp': 'grouping',
-    '\xa9grn': 'genre',
+    '\xa9gen': 'genre',
     'cprt': 'copyright',
     'soal': 'albumsort',
     'soaa': 'albumartistsort',

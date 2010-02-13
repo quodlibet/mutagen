@@ -12,6 +12,7 @@
  * MP3: Correct length calculation for MPEG-2 files. (#46)
  * oggflac: Fix typo in docstring. (#53)
  * EasyID3: Force UTF-8 encoding. (#54)
+ * EasyMP4: Fix 'genre' translation. (#56)
 
 1.18 - 2009.10.22
  * ASF:
