@@ -1,4 +1,4 @@
-1.19
+1.19 - 2010.02.18
  * ID3:
    * POPM: 'count' is optional; the attribute may not exist. (#33)
    * TimeStampTextFrame: Fix a TypeError in unicode comparisons. (#43)
