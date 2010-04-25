@@ -1,3 +1,7 @@
+1.20
+ * ASF: Don't store blocks over 64K in the MetadataObject block;
+   use the MetadataLibraryBlock instead. (#60, Lukáš Lalinský)
+
 1.19 - 2010.02.18
  * ID3:
    * POPM: 'count' is optional; the attribute may not exist. (#33)

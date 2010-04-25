@@ -3,7 +3,7 @@ import shutil
 from tempfile import mkstemp
 from tests import TestCase, add
 from mutagen.asf import ASF, ASFHeaderError, ASFValue, UNICODE, DWORD, QWORD
-from mutagen.asf import BOOL, WORD
+from mutagen.asf import BOOL, WORD, BYTEARRAY
 
 class TASFFile(TestCase):
 
@@ -223,3 +223,50 @@ class TASFIssue29(TestCase):
         audio = ASF(self.filename)
         self.failIf("Description" in audio)
 add(TASFIssue29)
+
+class TASFLargeValue(TestCase):
+
+    original = os.path.join("tests", "data", "silence-1.wma")
+
+    def setUp(self):
+        fd, self.filename = mkstemp(suffix='wma')
+        os.close(fd)
+        shutil.copy(self.original, self.filename)
+
+    def tearDown(self):
+        os.unlink(self.filename)
+
+    def test_save_small_bytearray(self):
+        audio = ASF(self.filename)
+        audio["QL/LargeObject"] = [ASFValue("." * 0xFFFF, BYTEARRAY)]
+        audio.save()
+        self.failIf("QL/LargeObject" not in audio.to_extended_content_description)
+        self.failIf("QL/LargeObject" in audio.to_metadata)
+        self.failIf("QL/LargeObject" in dict(audio.to_metadata_library))
+
+    def test_save_large_bytearray(self):
+        audio = ASF(self.filename)
+        audio["QL/LargeObject"] = [ASFValue("." * (0xFFFF + 1), BYTEARRAY)]
+        audio.save()
+        self.failIf("QL/LargeObject" in audio.to_extended_content_description)
+        self.failIf("QL/LargeObject" in audio.to_metadata)
+        self.failIf("QL/LargeObject" not in dict(audio.to_metadata_library))
+
+    def test_save_small_string(self):
+        audio = ASF(self.filename)
+        audio["QL/LargeObject"] = [ASFValue("." * (0x7FFF - 1), UNICODE)]
+        audio.save()
+        self.failIf("QL/LargeObject" not in audio.to_extended_content_description)
+        self.failIf("QL/LargeObject" in audio.to_metadata)
+        self.failIf("QL/LargeObject" in dict(audio.to_metadata_library))
+
+    def test_save_large_string(self):
+        audio = ASF(self.filename)
+        audio["QL/LargeObject"] = [ASFValue("." * 0x7FFF, UNICODE)]
+        audio.save()
+        self.failIf("QL/LargeObject" in audio.to_extended_content_description)
+        self.failIf("QL/LargeObject" in audio.to_metadata)
+        self.failIf("QL/LargeObject" not in dict(audio.to_metadata_library))
+
+add(TASFLargeValue)
+
