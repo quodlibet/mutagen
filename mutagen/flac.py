@@ -583,7 +583,7 @@ class FLAC(FileType):
             self.__check_header(fileobj)
             while self.__read_metadata_block(fileobj):
                 pass
-            if fileobj.read(2) != "\xff\xf8":
+            if fileobj.read(2) not in ["\xff\xf8", "\xff\xf9"]:
                 raise FLACNoHeaderError("End of metadata did not start audio")
         finally:
             fileobj.close()
