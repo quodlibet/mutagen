@@ -1,6 +1,7 @@
 1.20
  * ASF: Don't store blocks over 64K in the MetadataObject block;
    use the MetadataLibraryBlock instead. (#60, Lukáš Lalinský)
+ * ID3: Faster parsing of files with lots of padding. (#65, Christop Reiter)
  * FLAC: Correct check for audio data start. (#67)
 
 1.19 - 2010.02.18

@@ -247,29 +247,42 @@ class ID3(DictProxy, mutagen.Metadata):
             else:
                 self.__extdata = ""
 
-    def __determine_bpi(self, data, frames):
-        if self.version < (2,4,0): return int
+    def __determine_bpi(self, data, frames, EMPTY="\x00" * 10):
+        if self.version < (2, 4, 0):
+            return int
         # have to special case whether to use bitpaddedints here
         # spec says to use them, but iTunes has it wrong
 
         # count number of tags found as BitPaddedInt and how far past
         o = 0
         asbpi = 0
-        while o < len(data)-10:
-            name, size, flags = unpack('>4sLH', data[o:o+10])
+        while o < len(data) - 10:
+            part = data[o:o + 10]
+            if part == EMPTY:
+                bpioff = -((len(data) - o) % 10)
+                break
+            name, size, flags = unpack('>4sLH', part)
             size = BitPaddedInt(size)
-            o += 10+size
-            if name in frames: asbpi += 1
-        bpioff = o - len(data)
+            o += 10 + size
+            if name in frames:
+                asbpi += 1
+        else:
+            bpioff = o - len(data)
 
         # count number of tags found as int and how far past
         o = 0
         asint = 0
-        while o < len(data)-10:
-            name, size, flags = unpack('>4sLH', data[o:o+10])
-            o += 10+size
-            if name in frames: asint += 1
-        intoff = o - len(data)
+        while o < len(data) - 10:
+            part = data[o:o + 10]
+            if part == EMPTY:
+                intoff = -((len(data) - o) % 10)
+                break
+            name, size, flags = unpack('>4sLH', part)
+            o += 10 + size
+            if name in frames:
+                asint += 1
+        else:
+            intoff = o - len(data)
 
         # if more tags as int, or equal and bpi is past and int is not
         if asint > asbpi or (asint == asbpi and (bpioff >= 1 and intoff <= 1)):
