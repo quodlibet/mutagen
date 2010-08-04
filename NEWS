@@ -1,4 +1,4 @@
-1.20
+1.20 - 2010.08.04
  * ASF: Don't store blocks over 64K in the MetadataObject block;
    use the MetadataLibraryBlock instead. (#60, Lukáš Lalinský)
  * ID3: Faster parsing of files with lots of padding. (#65, Christoph Reiter)
