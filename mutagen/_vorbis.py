@@ -220,4 +220,4 @@ class VCommentDict(VComment, DictMixin):
 
     def as_dict(self):
         """Return a copy of the comment data in a real dict."""
-        return dict((key, self[key]) for key in self.keys())
+        return dict([(key, self[key]) for key in self.keys()])
