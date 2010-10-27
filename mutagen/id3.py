@@ -30,7 +30,9 @@ interested in the 'ID3' class to start with.
 
 __all__ = ['ID3', 'ID3FileType', 'Frames', 'Open', 'delete']
 
-import struct; from struct import unpack, pack
+import struct
+
+from struct import unpack, pack, error as StructError
 from zlib import error as zlibError
 from warnings import warn
 
@@ -407,17 +409,30 @@ class ID3(DictProxy, mutagen.Metadata):
             try:
                 f.seek(-128, 2)
             except IOError, err:
+                # If the file is too small, that's OK - it just means
+                # we're certain it doesn't have a v1 tag.
                 from errno import EINVAL
-                if err.errno != EINVAL: raise
-                f.seek(0, 2) # ensure read won't get "TAG"
-
-            if f.read(3) == "TAG":
-                f.seek(-128, 2)
-                if v1 > 0: f.write(MakeID3v1(self))
-                else: f.truncate()
-            elif v1 == 2:
+                if err.errno != EINVAL:
+                    # If we failed to see for some other reason, bail out.
+                    raise
+                # Since we're sure this isn't a v1 tag, don't read it.
                 f.seek(0, 2)
+
+            data = f.read(128)
+            try:
+                idx = data.index("TAG")
+            except ValueError:
+                offset = 0
+                has_v1 = False
+            else:
+                offset = idx - len(data)
+                has_v1 = True
+                
+            f.seek(offset, 2)
+            if v1 == 1 and has_v1 or v1 == 2:
                 f.write(MakeID3v1(self))
+            else:
+                f.truncate()
 
         finally:
             f.close()
@@ -1889,19 +1904,37 @@ Open = ID3
 # ID3v1.1 support.
 def ParseID3v1(string):
     """Parse an ID3v1 tag, returning a list of ID3v2.4 frames."""
-    from struct import error as StructError
-    frames = {}
+
+    try:
+        string = string[string.index("TAG"):]
+    except ValueError:
+        return None
+    if 128 < len(string) or len(string) < 124:
+        return None
+
+    # Issue #69 - Previous versions of Mutagen, when encountering
+    # out-of-spec TDRC and TYER frames of less than four characters,
+    # wrote only the characters available - e.g. "1" or "" - into the
+    # year field. To parse those, reduce the size of the year field.
+    # Amazingly, "0s" works as a struct format string.
+    unpack_fmt = "3s30s30s30s%ds29sBB" % (len(string) - 124)
+
     try:
         tag, title, artist, album, year, comment, track, genre = unpack(
-            "3s30s30s30s4s29sBB", string)
-    except StructError: return None
+            unpack_fmt, string)
+    except StructError:
+        return None
 
-    if tag != "TAG": return None
+    if tag != "TAG":
+        return None
+
     def fix(string):
         return string.split("\x00")[0].strip().decode('latin1')
+
     title, artist, album, year, comment = map(
         fix, [title, artist, album, year, comment])
 
+    frames = {}
     if title: frames["TIT2"] = TIT2(encoding=0, text=title)
     if artist: frames["TPE1"] = TPE1(encoding=0, text=[artist])
     if album: frames["TALB"] = TALB(encoding=0, text=album)
@@ -1930,7 +1963,8 @@ def MakeID3v1(id3):
 
     if "COMM" in id3:
         cmnt = id3["COMM"].text[0].encode('latin1', 'replace')[:28]
-    else: cmnt = ""
+    else:
+        cmnt = ""
     v1["comment"] = cmnt + ("\x00" * (29 - len(cmnt)))
 
     if "TRCK" in id3:
@@ -1944,14 +1978,16 @@ def MakeID3v1(id3):
         else:
             if genre in TCON.GENRES:
                 v1["genre"] = chr(TCON.GENRES.index(genre))
-    if "genre" not in v1: v1["genre"] = "\xff"
+    if "genre" not in v1:
+        v1["genre"] = "\xff"
 
     if "TDRC" in id3:
-        v1["year"] = str(id3["TDRC"])[:4]
+        year = str(id3["TDRC"])
     elif "TYER" in id3:
-        v1["year"] = str(id3["TYER"])[:4]
+        year = str(id3["TYER"])
     else:
-        v1["year"] = "\x00\x00\x00\x00"
+        year = ""
+    v1["year"] = (year + "\x00\x00\x00\x00")[:4]
 
     return ("TAG%(title)s%(artist)s%(album)s%(year)s%(comment)s"
             "%(track)s%(genre)s") % v1 

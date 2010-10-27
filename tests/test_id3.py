@@ -1697,6 +1697,48 @@ class TimeStampTextFrame(TestCase):
         frame = self.Frame(encoding=0, text=[u'1987', u'1988'])
         self.failUnlessEqual(frame, unicode(frame))
 
+class Issue69_BadV1Year(TestCase):
+    uses_mmap = False
+
+    def test_missing_year(self):
+        from mutagen.id3 import ParseID3v1
+        tag = ParseID3v1('ABCTAGhello world\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff')
+        self.failUnlessEqual(tag["TIT2"], "hello world")
+
+    def test_short_year(self):
+        from mutagen.id3 import ParseID3v1
+        tag = ParseID3v1('XTAGhello world\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x001\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff')
+        self.failUnlessEqual(tag["TIT2"], "hello world")
+        self.failUnlessEqual(tag["TDRC"], "0001")
+
+    def test_none(self):
+        from mutagen.id3 import ParseID3v1, MakeID3v1, TDRC
+        s = MakeID3v1(dict())
+        self.failUnlessEqual(len(s), 128)
+        tag = ParseID3v1(s)
+        self.failIf("TDRC" in tag)
+
+    def test_empty(self):
+        from mutagen.id3 import ParseID3v1, MakeID3v1, TDRC
+        s = MakeID3v1(dict(TDRC=""))
+        self.failUnlessEqual(len(s), 128)
+        tag = ParseID3v1(s)
+        self.failIf("TDRC" in tag)
+
+    def test_short(self):
+        from mutagen.id3 import ParseID3v1, MakeID3v1, TDRC
+        s = MakeID3v1(dict(TDRC="1"))
+        self.failUnlessEqual(len(s), 128)
+        tag = ParseID3v1(s)
+        self.failUnlessEqual(tag["TDRC"], "0001")
+
+    def test_long(self):
+        from mutagen.id3 import ParseID3v1, MakeID3v1, TDRC
+        s = MakeID3v1(dict(TDRC="123456789"))
+        self.failUnlessEqual(len(s), 128)
+        tag = ParseID3v1(s)
+        self.failUnlessEqual(tag["TDRC"], "1234")
+
 add(ID3Loading)
 add(ID3GetSetDel)
 add(BitPaddedIntTest)
@@ -1715,6 +1757,7 @@ add(FrameIDValidate)
 add(BadTYER)
 add(BadPOPM)
 add(TimeStampTextFrame)
+add(Issue69_BadV1Year)
 
 try: import eyeD3
 except ImportError: pass
