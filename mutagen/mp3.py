@@ -164,7 +164,11 @@ class MPEGInfo(object):
             possible = frame_1 + frame_length
             if possible > len(data) + 4:
                 raise HeaderNotFoundError("can't sync to second MPEG frame")
-            frame_data = struct.unpack(">H", data[possible:possible + 2])[0]
+            try:
+                frame_data = struct.unpack(
+                    ">H", data[possible:possible + 2])[0]
+            except struct.error:
+                raise HeaderNotFoundError("can't sync to second MPEG frame")
             if frame_data & 0xFFE0 != 0xFFE0:
                 raise HeaderNotFoundError("can't sync to second MPEG frame")
 

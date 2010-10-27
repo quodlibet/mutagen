@@ -160,3 +160,10 @@ class TEasyMP3(TestCase):
     def test_no_composer(self):
         self.failIf("composer" in self.mp3)
 add(TEasyMP3)
+
+class Issue72_TooShortFile(TestCase):
+    def test_load(self):
+        mp3 = MP3(os.path.join('tests', 'data', 'too-short.mp3'))
+        self.failUnlessEqual(mp3["TIT2"], "Track 10")
+        self.failUnlessAlmostEqual(mp3.info.length, 0.03, 2)
+add(Issue72_TooShortFile)
