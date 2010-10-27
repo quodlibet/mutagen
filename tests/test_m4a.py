@@ -49,7 +49,7 @@ class TAtoms(TestCase):
     filename = os.path.join("tests", "data", "has-tags.m4a")
 
     def setUp(self):
-        self.atoms = Atoms(file(self.filename, "rb"))
+        self.atoms = Atoms(open(self.filename, "rb"))
 
     def test___contains__(self):
         self.failUnless(self.atoms["moov"])

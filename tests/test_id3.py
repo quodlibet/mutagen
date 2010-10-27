@@ -87,12 +87,12 @@ class ID3Loading(TestCase):
 
     def test_header_empty(self):
         id3 = ID3()
-        id3._ID3__fileobj = file(self.empty, 'rb')
+        id3._ID3__fileobj = open(self.empty, 'rb')
         self.assertRaises(EOFError, id3._ID3__load_header)
 
     def test_header_silence(self):
         id3 = ID3()
-        id3._ID3__fileobj = file(self.silence, 'rb')
+        id3._ID3__fileobj = open(self.silence, 'rb')
         id3._ID3__load_header()
         self.assertEquals(id3.version, (2,3,0))
         self.assertEquals(id3.size, 1314)
@@ -390,12 +390,12 @@ class TestWriteID3v1(TestCase):
         self.audio = ID3(self.filename)
 
     def failIfV1(self):
-        fileobj = file(self.filename, "rb")
+        fileobj = open(self.filename, "rb")
         fileobj.seek(-128, 2)
         self.failIf(fileobj.read(3) == "TAG")
 
     def failUnlessV1(self):
-        fileobj = file(self.filename, "rb")
+        fileobj = open(self.filename, "rb")
         fileobj.seek(-128, 2)
         self.failUnless(fileobj.read(3) == "TAG")
 
@@ -1442,7 +1442,7 @@ class OddWrites(TestCase):
 
     def test_toemptyfile(self):
         os.unlink(self.newsilence)
-        file(self.newsilence, "wb").close()
+        open(self.newsilence, "wb").close()
         ID3(self.silence).save(self.newsilence)
 
     def test_tononfile(self):
@@ -1451,12 +1451,12 @@ class OddWrites(TestCase):
 
     def test_1bfile(self):
         os.unlink(self.newsilence)
-        f = file(self.newsilence, "wb")
+        f = open(self.newsilence, "wb")
         f.write("!")
         f.close()
         ID3(self.silence).save(self.newsilence)
         self.assert_(os.path.getsize(self.newsilence) > 1)
-        self.assertEquals(file(self.newsilence, "rb").read()[-1], "!")
+        self.assertEquals(open(self.newsilence, "rb").read()[-1], "!")
 
     def tearDown(self):
         try: os.unlink(self.newsilence)
@@ -1577,7 +1577,7 @@ class WriteForEyeD3(TestCase):
     def setUp(self):
         shutil.copy(self.silence, self.newsilence)
         # remove ID3v1 tag
-        f = file(self.newsilence, "rb+")
+        f = open(self.newsilence, "rb+")
         f.seek(-128, 2)
         f.truncate()
         f.close()

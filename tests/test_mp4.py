@@ -48,7 +48,7 @@ class TAtoms(TestCase):
     filename = os.path.join("tests", "data", "has-tags.m4a")
 
     def setUp(self):
-        self.atoms = Atoms(file(self.filename, "rb"))
+        self.atoms = Atoms(open(self.filename, "rb"))
 
     def test___contains__(self):
         self.failUnless(self.atoms["moov"])
@@ -233,7 +233,7 @@ class TMP4(TestCase):
         self.failIf(value and value != NOTFOUND)
 
     def test_score(self):
-        fileobj = file(self.filename)
+        fileobj = open(self.filename)
         header = fileobj.read(128)
         self.failUnless(MP4.score(self.filename, fileobj, header))
 
@@ -266,7 +266,7 @@ class TMP4(TestCase):
         self.audio["\xa9nam"] = u"wheeee" * 10
         self.audio.save()
         # Reorder "free" and "ilst" atoms
-        fileobj = file(self.audio.filename, "rb+")
+        fileobj = open(self.audio.filename, "rb+")
         atoms = Atoms(fileobj)
         meta = atoms["moov", "udta", "meta"]
         meta_length1 = meta.length
@@ -280,7 +280,7 @@ class TMP4(TestCase):
         fileobj.seek(ilst.offset)
         fileobj.write(free_data + ilst_data)
         fileobj.close()
-        fileobj = file(self.audio.filename, "rb+")
+        fileobj = open(self.audio.filename, "rb+")
         atoms = Atoms(fileobj)
         meta = atoms["moov", "udta", "meta"]
         ilst = meta["ilst",]
@@ -291,7 +291,7 @@ class TMP4(TestCase):
         self.audio["\xa9nam"] = u"wheeee" * 11
         self.audio.save()
         # Check the order of "free" and "ilst" atoms
-        fileobj = file(self.audio.filename, "rb+")
+        fileobj = open(self.audio.filename, "rb+")
         atoms = Atoms(fileobj)
         fileobj.close()
         meta = atoms["moov", "udta", "meta"]
@@ -427,7 +427,7 @@ class TMP4(TestCase):
         self.set_key("foob", [u"A test"])
 
     def __read_offsets(self, filename):
-        fileobj = file(filename, 'rb')
+        fileobj = open(filename, 'rb')
         atoms = Atoms(fileobj)
         moov = atoms['moov']
         samples = []

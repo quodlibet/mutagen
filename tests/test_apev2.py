@@ -45,7 +45,7 @@ class TAPEWriter(TestCase):
         tag.save(SAMPLE + ".new")
         tag.save(SAMPLE + ".justtag")
         tag.save(SAMPLE + ".tag_at_start")
-        fileobj = file(SAMPLE + ".tag_at_start", "ab")
+        fileobj = open(SAMPLE + ".tag_at_start", "ab")
         fileobj.write("tag garbage" * 1000)
         fileobj.close()
         self.tag = mutagen.apev2.APEv2(SAMPLE + ".new")
@@ -133,13 +133,13 @@ class TAPEv2ThenID3v1Writer(TAPEWriter):
 
     def setUp(self):
         super(TAPEv2ThenID3v1Writer, self).setUp()
-        f = file(SAMPLE + ".new", "ab+")
+        f = open(SAMPLE + ".new", "ab+")
         f.write("TAG" + "\x00" * 125)
         f.close()
-        f = file(BROKEN + ".new", "ab+")
+        f = open(BROKEN + ".new", "ab+")
         f.write("TAG" + "\x00" * 125)
         f.close()
-        f = file(SAMPLE + ".justtag", "ab+")
+        f = open(SAMPLE + ".justtag", "ab+")
         f.write("TAG" + "\x00" * 125)
         f.close()
 
@@ -247,7 +247,7 @@ class TAPEv2ThenID3v1(TAPEv2):
 
     def setUp(self):
         super(TAPEv2ThenID3v1, self).setUp()
-        f = file(self.filename, "ab+")
+        f = open(self.filename, "ab+")
         f.write("TAG" + "\x00" * 125)
         f.close()
         self.audio = APEv2(self.filename)

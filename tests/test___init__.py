@@ -73,7 +73,7 @@ class TFile(TestCase):
 
     def test_empty(self):
         filename = os.path.join("tests", "data", "empty")
-        file(filename, "wb").close()
+        open(filename, "wb").close()
         try: self.failUnless(File(filename) is None)
         finally: os.unlink(filename)
 

@@ -1,5 +1,6 @@
 1.21
  * Fix Python 2.3 compatibility (broken in 1.19).
+ * Use 'open' rather than 'file' everywhere. (#74, Dan Callahan)
 
 1.20 - 2010.08.04
  * ASF: Don't store blocks over 64K in the MetadataObject block;

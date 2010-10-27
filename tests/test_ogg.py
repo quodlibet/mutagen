@@ -13,7 +13,7 @@ class TOggPage(TestCase):
     uses_mmap = False
 
     def setUp(self):
-        self.fileobj = file(os.path.join("tests", "data", "empty.ogg"), "rb")
+        self.fileobj = open(os.path.join("tests", "data", "empty.ogg"), "rb")
         self.page = OggPage(self.fileobj)
 
         pages = [OggPage(), OggPage(), OggPage()]
@@ -126,10 +126,10 @@ class TOggPage(TestCase):
             os.close(fd)
             shutil.copy(os.path.join("tests", "data", "multipagecomment.ogg"),
                         filename)
-            fileobj = file(filename, "rb+")
+            fileobj = open(filename, "rb+")
             OggPage.renumber(fileobj, 1002429366L, 20)
             fileobj.close()
-            fileobj = file(filename, "rb+")
+            fileobj = open(filename, "rb+")
             OggPage.renumber(fileobj, 1002429366L, 0)
             fileobj.close()
         finally:
@@ -205,7 +205,7 @@ class TOggPage(TestCase):
         self.failUnlessEqual(OggPage.to_packets(pages), packets)
 
     def test_random_data_roundtrip(self):
-        try: random_file = file("/dev/urandom", "rb")
+        try: random_file = open("/dev/urandom", "rb")
         except (IOError, OSError):
             print "WARNING: Random data round trip test disabled."
             return
@@ -341,7 +341,7 @@ add(TOggPage)
 
 class TOggFileType(TestCase):
     def scan_file(self):
-        fileobj = file(self.filename, "rb")
+        fileobj = open(self.filename, "rb")
         try:
             try:
                 while True:

@@ -34,7 +34,7 @@ class TOggSpeex(TOggFileType):
         self.failUnlessEqual(0, self.audio.info.bitrate)
 
     def test_invalid_not_first(self):
-        page = OggPage(file(self.filename, "rb"))
+        page = OggPage(open(self.filename, "rb"))
         page.first = False
         self.failUnlessRaises(IOError, OggSpeexInfo, StringIO(page.write()))
 

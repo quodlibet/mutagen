@@ -21,7 +21,7 @@ class TOggTheora(TOggFileType):
         self.audio = OggTheora(self.filename)
 
     def test_theora_bad_version(self):
-        page = OggPage(file(self.filename, "rb"))
+        page = OggPage(open(self.filename, "rb"))
         packet = page.packets[0]
         packet = packet[:7] + "\x03\x00" + packet[9:]
         page.packets = [packet]
@@ -29,7 +29,7 @@ class TOggTheora(TOggFileType):
         self.failUnlessRaises(IOError, OggTheoraInfo, fileobj)
 
     def test_theora_not_first_page(self):
-        page = OggPage(file(self.filename, "rb"))
+        page = OggPage(open(self.filename, "rb"))
         page.first = False
         fileobj = StringIO(page.write())
         self.failUnlessRaises(IOError, OggTheoraInfo, fileobj)

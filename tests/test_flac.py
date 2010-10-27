@@ -196,7 +196,7 @@ class TFLAC(TestCase):
     NEW = SAMPLE + ".new"
     def setUp(self):
         shutil.copy(self.SAMPLE, self.NEW)
-        self.failUnlessEqual(file(self.SAMPLE).read(), file(self.NEW).read())
+        self.failUnlessEqual(open(self.SAMPLE).read(), open(self.NEW).read())
         self.flac = FLAC(self.NEW)
 
     def test_delete(self):
@@ -229,7 +229,7 @@ class TFLAC(TestCase):
     def test_write_nochange(self):
         f = FLAC(self.NEW)
         f.save()
-        self.failUnlessEqual(file(self.SAMPLE).read(), file(self.NEW).read())
+        self.failUnlessEqual(open(self.SAMPLE).read(), open(self.NEW).read())
 
     def test_write_changetitle(self):
         f = FLAC(self.NEW)

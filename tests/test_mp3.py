@@ -136,7 +136,7 @@ class TMPEGInfo(TestCase):
 
     def test_not_real_file(self):
         filename = os.path.join("tests", "data", "silence-44-s-v1.mp3")
-        fileobj = StringIO(file(filename, "rb").read(20))
+        fileobj = StringIO(open(filename, "rb").read(20))
         MPEGInfo(fileobj)
 
     def test_empty(self):

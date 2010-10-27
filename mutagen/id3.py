@@ -106,7 +106,7 @@ class ID3(DictProxy, mutagen.Metadata):
         from os.path import getsize
         self.filename = filename
         self.__known_frames = known_frames
-        self.__fileobj = file(filename, 'rb')
+        self.__fileobj = open(filename, 'rb')
         self.__filesize = getsize(filename)
         try:
             try:
@@ -1999,7 +1999,7 @@ class ID3FileType(mutagen.FileType):
             except AttributeError: offset = None
         else: offset = None
         try:
-            fileobj = file(filename, "rb")
+            fileobj = open(filename, "rb")
             self.info = self._Info(fileobj, offset)
         finally:
             fileobj.close()

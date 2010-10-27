@@ -200,7 +200,7 @@ def File(filename, options=None, easy=False):
     if not options:
         return None
 
-    fileobj = file(filename, "rb")
+    fileobj = open(filename, "rb")
     try:
         header = fileobj.read(128)
         # Sort by name after score. Otherwise import order affects

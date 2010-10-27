@@ -578,7 +578,7 @@ class FLAC(FileType):
         self.cuesheet = None
         self.seektable = None
         self.filename = filename
-        fileobj = file(filename, "rb")
+        fileobj = open(filename, "rb")
         try:
             self.__check_header(fileobj)
             while self.__read_metadata_block(fileobj):

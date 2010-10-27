@@ -564,7 +564,7 @@ class ASF(FileType):
 
     def load(self, filename):
         self.filename = filename
-        fileobj = file(filename, "rb")
+        fileobj = open(filename, "rb")
         try:
             self.size = 0
             self.size1 = 0
@@ -625,7 +625,7 @@ class ASF(FileType):
                 struct.pack("<QL", len(data) + 30, len(self.objects)) +
                 "\x01\x02" + data)
 
-        fileobj = file(self.filename, "rb+")
+        fileobj = open(self.filename, "rb+")
         try:
             size = len(data)
             if size > self.size:

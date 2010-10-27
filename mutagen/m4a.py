@@ -238,7 +238,7 @@ class M4ATags(DictProxy, Metadata):
         data = Atom.render("ilst", "".join(values))
 
         # Find the old atoms.
-        fileobj = file(filename, "rb+")
+        fileobj = open(filename, "rb+")
         try:
             atoms = Atoms(fileobj)
 
@@ -471,7 +471,7 @@ class M4A(FileType):
 
     def load(self, filename):
         self.filename = filename
-        fileobj = file(filename, "rb")
+        fileobj = open(filename, "rb")
         try:
             atoms = Atoms(fileobj)
             try: self.info = M4AInfo(atoms, fileobj)

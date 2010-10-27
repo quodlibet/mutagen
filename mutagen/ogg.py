@@ -435,7 +435,7 @@ class OggFileType(FileType):
         """Load file information from a filename."""
 
         self.filename = filename
-        fileobj = file(filename, "rb")
+        fileobj = open(filename, "rb")
         try:
             try:
                 self.info = self._Info(fileobj)
@@ -470,7 +470,7 @@ class OggFileType(FileType):
             filename = self.filename
 
         self.tags.clear()
-        fileobj = file(filename, "rb+")
+        fileobj = open(filename, "rb+")
         try:
             try: self.tags._inject(fileobj)
             except error, e:
@@ -487,7 +487,7 @@ class OggFileType(FileType):
         """
         if filename is None:
             filename = self.filename
-        fileobj = file(filename, "rb+")
+        fileobj = open(filename, "rb+")
         try:
             try: self.tags._inject(fileobj)
             except error, e:

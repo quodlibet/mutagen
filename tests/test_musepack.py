@@ -77,7 +77,7 @@ class TMusepackWithID3(TestCase):
         fd, self.NEW = mkstemp(suffix='mpc')
         os.close(fd)
         shutil.copy(self.SAMPLE, self.NEW)
-        self.failUnlessEqual(file(self.SAMPLE).read(), file(self.NEW).read())
+        self.failUnlessEqual(open(self.SAMPLE).read(), open(self.NEW).read())
 
     def tearDown(self):
         os.unlink(self.NEW)

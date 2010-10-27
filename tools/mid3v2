@@ -176,10 +176,10 @@ def main(argv):
         help="Lists all ID3v1 genres")
     parser.add_option(
         "-l", "--list", action="store_const", dest="action", const="list",
-        help="Lists the tag(s) on the file(s)")
+        help="Lists the tag(s) on the open(s)")
     parser.add_option(
         "--list-raw", action="store_const", dest="action", const="list-raw",
-        help="Lists the tag(s) on the file(s) in Python format")
+        help="Lists the tag(s) on the open(s) in Python format")
     parser.add_option(
         "-d", "--delete-v2", action="store_const", dest="action",
         const="delete-v2", help="Deletes ID3v2 tags")

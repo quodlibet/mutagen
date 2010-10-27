@@ -206,7 +206,7 @@ class APEv2(DictMixin, Metadata):
     def load(self, filename):
         """Load tags from a filename."""
         self.filename = filename
-        fileobj = file(filename, "rb")
+        fileobj = open(filename, "rb")
         try:
             data = _APEv2Data(fileobj)
         finally:
@@ -302,9 +302,9 @@ class APEv2(DictMixin, Metadata):
 
         filename = filename or self.filename
         try:
-            fileobj = file(filename, "r+b")
+            fileobj = open(filename, "r+b")
         except IOError:
-            fileobj = file(filename, "w+b")
+            fileobj = open(filename, "w+b")
         data = _APEv2Data(fileobj)
 
         if data.is_at_start:
@@ -343,7 +343,7 @@ class APEv2(DictMixin, Metadata):
     def delete(self, filename=None):
         """Remove tags from a file."""
         filename = filename or self.filename
-        fileobj = file(filename, "r+b")
+        fileobj = open(filename, "r+b")
         try:
             data = _APEv2Data(fileobj)
             if data.start is not None and data.size is not None:
@@ -445,7 +445,7 @@ class APEv2File(FileType):
 
     def load(self, filename):
         self.filename = filename
-        self.info = self._Info(file(filename, "rb"))
+        self.info = self._Info(open(filename, "rb"))
         try: self.tags = APEv2(filename)
         except error: self.tags = None
 

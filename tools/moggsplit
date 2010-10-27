@@ -40,9 +40,9 @@ def main(argv):
     for filename in args:
         fileobjs = {}
         format["base"] = os.path.splitext(os.path.basename(filename))[0]
-        fileobj = file(filename, "rb")
+        fileobj = open(filename, "rb")
         if options.m3u:
-            m3u = file(format["base"] + ".m3u", "w")
+            m3u = open(format["base"] + ".m3u", "w")
             fileobjs["m3u"] = m3u
         else:
             m3u = None
@@ -53,7 +53,7 @@ def main(argv):
                 format["stream"] = page.serial
                 if page.serial not in fileobjs:
                     new_filename = options.pattern % format
-                    new_fileobj = file(new_filename, "wb")
+                    new_fileobj = open(new_filename, "wb")
                     fileobjs[page.serial] = new_fileobj
                     if m3u:
                         m3u.write(new_filename + "\r\n")
