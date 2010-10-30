@@ -186,7 +186,9 @@ class ID3(DictProxy, mutagen.Metadata):
         However, ID3 frames can have multiple keys:
             POPM=user@example.org=3 128/255
         """
-        return "\n".join(map(Frame.pprint, self.values()))
+        frames = list(map(Frame.pprint, self.values()))
+        frames.sort()
+        return "\n".join(frames)
 
     def loaded_frame(self, tag):
         """Deprecated; use the add method."""
