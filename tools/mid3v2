@@ -89,7 +89,8 @@ def delete_frames(deletes, filenames):
 
 def write_files(edits, filenames):
     enc = locale.getpreferredencoding()
-    edits = [(frame[2:], value.decode(enc)) for (frame, value) in edits]
+    edits = [(frame[2:], value.decode(enc)) for (frame, value) in edits
+             if value]
 
     # preprocess:
     #   for all [frame,value] pairs in the edits list
@@ -128,11 +129,22 @@ def write_files(edits, filenames):
                         desc, lang = values[0], values[-1]
                     frame = mutagen.id3.COMM(
                         encoding=3, text=value, lang=lang, desc=desc)
+                    id3.add(frame)
+            elif frame == "TXXX":
+                for value in vlist:
+                    values = value.split(":", 1)
+                    if len(values) == 1:
+                        desc, value = "", values[0]
+                    else:
+                        desc, value = values[0], values[1]
+                    frame = mutagen.id3.TXXX(encoding=3, text=value, desc=desc)
+                    id3.add(frame)
             elif issubclass(mutagen.id3.Frames[frame], mutagen.id3.UrlFrame):
                 frame = mutagen.id3.Frames[frame](encoding=3, url=vlist)
+                id3.add(frame)
             else:
                 frame = mutagen.id3.Frames[frame](encoding=3, text=vlist)
-            id3.add(frame)
+                id3.add(frame)
         id3.save(filename)
 
 def list_tags(filenames):

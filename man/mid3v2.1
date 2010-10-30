@@ -1,4 +1,4 @@
-.TH mid3v2 1 "December 12th, 2009"
+.TH mid3v2 1 "October 30th, 2010"
 .SH NAME
 mid3v2 \- audio tag editor similar to 'id3v2'
 .SH SYNOPSIS
@@ -60,6 +60,11 @@ Set the track number (TRCK).
 Any text or URL frame (those beginning with T or W) can be modified or 
 added by prefixing the name of the frame with "\-\-". For example,
 \fB\-\-TIT3 "Monkey!"\fR will set the TIT3 (subtitle) frame to \fBMonkey!\fR.
+.PP
+The TXXX frame requires a colon-separated description key; many TXXX
+frames may be set in the file as long as they have different keys. To
+set this key, just separate the text with a colon, e.g.
+\fB\-\-TXXX "ALBUMARTISTSORT:Examples,\ The"\fR.
 .SH BUGS
 No sanity checking is done on the editing operations you perform, so
 mid3v2 will happily accept \-\-TSIZ when editing an ID3v2.4 frame. However,
