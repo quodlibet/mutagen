@@ -10,6 +10,7 @@
    * pprint: Sort frames by name.
  * MP3: Fix error when loading extremely small MP3s. (#72)
  * Use 'open' rather than 'file' everywhere. (#74, Dan Callahan)
+ * mid3iconv: Accurately copy QL-style frame encoding behavior. (#75)
 
 1.20 - 2010.08.04
  * ASF: Don't store blocks over 64K in the MetadataObject block;

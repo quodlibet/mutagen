@@ -13,10 +13,10 @@ import locale
 
 from optparse import OptionParser
 
-VERSION = (0, 1)
+VERSION = (0, 2)
 
 def isascii(string):
-    return not string or min(string) < '\x127'
+    return not string or ord(max(string)) < 128
 
 class ID3OptionParser(OptionParser):
     def __init__(self):
