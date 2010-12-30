@@ -13,7 +13,7 @@ import locale
 
 from optparse import OptionParser
 
-VERSION = (0, 2)
+VERSION = (0, 3)
 
 def isascii(string):
     return not string or ord(max(string)) < 128
@@ -58,8 +58,7 @@ def update(options, filenames):
                 print "No ID3 header found; skipping..."
             continue
         except Exception, err:
-            if verbose != "quiet":
-                print str(err)
+            print >>sys.stderr, str(err)
             continue
 
         for tag in filter(lambda t: t.startswith("T"), id3):
@@ -91,10 +90,12 @@ def update(options, filenames):
             else: id3.save(filename)
 
 def has_id3v1(filename):
-    f = open(filename, 'rb+')
-    try: f.seek(-128, 2)
-    except IOError: pass
-    else: return (f.read(3) == "TAG")
+    try:
+        f = open(filename, 'rb+')
+        f.seek(-128, 2)
+        return f.read(3) == "TAG"
+    except IOError:
+        return False
 
 def main(argv):
     parser = ID3OptionParser()
