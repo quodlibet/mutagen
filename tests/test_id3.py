@@ -7,9 +7,6 @@ from StringIO import StringIO
 import warnings
 warnings.simplefilter('error', ID3Warning)
 
-try: from sets import Set as set
-except ImportError: pass
-
 _22 = ID3(); _22.version = (2,2,0)
 _23 = ID3(); _23.version = (2,3,0)
 _24 = ID3(); _24.version = (2,4,0)
