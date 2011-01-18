@@ -124,9 +124,11 @@ class test_cmd(Command):
         else:
             def MockLockF(*args, **kwargs):
                 raise IOError
+            lockf = fcntl.lockf
             fcntl.lockf = MockLockF
             print "Running tests with mocked failing fcntl.lockf."
             self.__test(uses_mmap)
+            fcntl.lockf = lockf
 
         class MockMMap(object):
             def __init__(self, *args, **kwargs): pass
