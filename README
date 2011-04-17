@@ -79,3 +79,8 @@ and 1.18 or later:
 Mutagen 1.19 made it possible for POPM to have no 'count'
 attribute. Previously, files that generated POPM frames of this type
 would fail to load at all.
+
+When given date frames less than four characters long (which are
+already outside the ID3v2 specification), Mutagen 1.20 and earlier
+would write invalid ID3v1 tags that were too short. Mutagen 1.21 will
+parse these and fix them if it finds them while saving.
