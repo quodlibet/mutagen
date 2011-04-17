@@ -507,6 +507,9 @@ class MP4Tags(DictProxy, Metadata):
         while pos < atom.length - 8:
             length, name, imageformat = struct.unpack(">I4sI", data[pos:pos+12])
             if name != "data":
+                if name == "name":
+                    pos += length
+                    continue
                 raise MP4MetadataError(
                     "unexpected atom %r inside 'covr'" % name)
             if imageformat not in (MP4Cover.FORMAT_JPEG, MP4Cover.FORMAT_PNG):

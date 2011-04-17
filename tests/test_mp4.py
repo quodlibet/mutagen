@@ -503,6 +503,19 @@ class TMP4HasTags(TMP4):
 
 add(TMP4HasTags)
 
+class TMP4CovrWithName(TMP4):
+    # http://bugs.musicbrainz.org/ticket/5894
+    original = os.path.join("tests", "data", "covr-with-name.m4a")
+
+    def test_has_covr(self):
+        self.failUnless('covr' in self.audio.tags)
+        covr = self.audio.tags['covr']
+        self.failUnlessEqual(len(covr), 2)
+        self.failUnlessEqual(covr[0].imageformat, MP4Cover.FORMAT_PNG)
+        self.failUnlessEqual(covr[1].imageformat, MP4Cover.FORMAT_JPEG)
+
+add(TMP4CovrWithName)
+
 class TMP4HasTags64Bit(TMP4HasTags):
     original = os.path.join("tests", "data", "truncated-64bit.mp4")
 
