@@ -117,7 +117,21 @@ def write_files(edits, filenames):
             print str(err)
             continue
         for (frame, vlist) in edits.items():
-            if frame == "COMM":
+            if frame == "POPM":
+                for value in vlist:
+                    values = value.split(":")
+                    if len(values) == 1:
+                        email, rating, count = values[0], 0, 0
+                    elif len(values) == 2:
+                        email, rating, count = values[0], values[1], 0
+                    else:
+                        email, rating, count = values
+
+                    frame = mutagen.id3.POPM(
+                        email=email, rating=int(rating), count=int(count))
+                    id3.add(frame)
+
+            elif frame == "COMM":
                 for value in vlist:
                     values = value.split(":")
                     if len(values) == 1:
@@ -239,8 +253,9 @@ def main(argv):
         callback=lambda *args: args[3].edits.append(("--TRCK", args[2])))
 
     for frame in mutagen.id3.Frames:
-        if issubclass(mutagen.id3.Frames[frame], mutagen.id3.TextFrame) \
-            or issubclass(mutagen.id3.Frames[frame], mutagen.id3.UrlFrame):
+        if (issubclass(mutagen.id3.Frames[frame], mutagen.id3.TextFrame)
+            or issubclass(mutagen.id3.Frames[frame], mutagen.id3.UrlFrame)
+            or issubclass(mutagen.id3.Frames[frame], mutagen.id3.POPM)):
             parser.add_option(
                 "--" + frame, action="callback", help=SUPPRESS_HELP,
                 type='string', metavar="value", # optparse blows up with this

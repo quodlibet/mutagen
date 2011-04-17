@@ -65,6 +65,10 @@ The TXXX frame requires a colon-separated description key; many TXXX
 frames may be set in the file as long as they have different keys. To
 set this key, just separate the text with a colon, e.g.
 \fB\-\-TXXX "ALBUMARTISTSORT:Examples,\ The"\fR.
+.PP
+The special POPM frame can be set in a similar way: \fB\-\-POPM
+"bob@example.com:128:2"\fR to set Bob's rating to 128/255 with 2
+plays.
 .SH BUGS
 No sanity checking is done on the editing operations you perform, so
 mid3v2 will happily accept \-\-TSIZ when editing an ID3v2.4 frame. However,
