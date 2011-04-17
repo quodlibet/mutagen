@@ -416,6 +416,8 @@ class APETextValue(_APEValue):
     def __cmp__(self, other):
         return cmp(unicode(self), other)
 
+    __hash__ = _APEValue.__hash__
+
     def __setitem__(self, index, value):
         values = list(self)
         values[index] = value.encode("utf-8")

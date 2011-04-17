@@ -829,6 +829,7 @@ class ID3TimeStamp(object):
     def __str__(self): return self.text
     def __repr__(self): return repr(self.text)
     def __cmp__(self, other): return cmp(self.text, other.text)
+    __hash__ = object.__hash__
     def encode(self, *args): return self.text.encode(*args)
 
 class TimeStampSpec(EncodedTextSpec):
@@ -1175,6 +1176,7 @@ class TextFrame(Frame):
         if isinstance(other, str): return str(self) == other
         elif isinstance(other, unicode): return unicode(self) == other
         return self.text == other
+    __hash__ = Frame.__hash__
     def __getitem__(self, item): return self.text[item]
     def __iter__(self): return iter(self.text)
     def append(self, value): return self.text.append(value)
@@ -1240,6 +1242,7 @@ class UrlFrame(Frame):
     def __str__(self): return self.url.encode('utf-8')
     def __unicode__(self): return self.url
     def __eq__(self, other): return self.url == other
+    __hash__ = Frame.__hash__
     def _pprint(self): return self.url
 
 class UrlFrameU(UrlFrame):
@@ -1400,6 +1403,7 @@ class PairedTextFrame(Frame):
         EncodedTextSpec('involvement'), EncodedTextSpec('person')) ]
     def __eq__(self, other):
         return self.people == other
+    __hash__ = Frame.__hash__
 
 class TIPL(PairedTextFrame): "Involved People List"
 class TMCL(PairedTextFrame): "Musicians Credits List"
@@ -1412,11 +1416,13 @@ class MCDI(Frame):
     """
     _framespec = [ BinaryDataSpec('data') ]
     def __eq__(self, other): return self.data == other
+    __hash__ = Frame.__hash__
 
 class ETCO(Frame):
     """Event timing codes."""
     _framespec = [ ByteSpec("format"), KeyEventSpec("events") ]
     def __eq__(self, other): return self.events == other
+    __hash__ = Frame.__hash__
 
 class MLLT(Frame):
     """MPEG location lookup table.
@@ -1431,6 +1437,7 @@ class MLLT(Frame):
                    ByteSpec('bits_for_milliseconds'),
                    BinaryDataSpec('data') ]
     def __eq__(self, other): return self.data == other
+    __hash__ = Frame.__hash__
 
 class SYTC(Frame):
     """Synchronised tempo codes.
@@ -1440,6 +1447,7 @@ class SYTC(Frame):
     """
     _framespec = [ ByteSpec("format"), BinaryDataSpec("data") ]
     def __eq__(self, other): return self.data == other
+    __hash__ = Frame.__hash__
 
 class USLT(Frame):
     """Unsynchronised lyrics/text transcription.
@@ -1455,6 +1463,7 @@ class USLT(Frame):
     def __str__(self): return self.text.encode('utf-8')
     def __unicode__(self): return self.text
     def __eq__(self, other): return self.text == other
+    __hash__ = Frame.__hash__
     
 class SYLT(Frame):
     """Synchronised lyrics/text."""
@@ -1466,6 +1475,7 @@ class SYLT(Frame):
 
     def __eq__(self, other):
         return str(self) == other
+    __hash__ = Frame.__hash__
 
     def __str__(self):
         return "".join([text for (text, time) in self.text]).encode('utf-8')
@@ -1512,6 +1522,7 @@ class RVA2(Frame):
                  self.channel == other.channel and
                  self.gain == other.gain and
                  self.peak == other.peak))
+    __hash__ = Frame.__hash__
 
     def __str__(self):
         return "%s: %+0.4f dB/%0.4f" % (
@@ -1528,6 +1539,7 @@ class EQU2(Frame):
     _framespec = [ ByteSpec("method"), Latin1TextSpec("desc"),
                    VolumeAdjustmentsSpec("adjustments") ]
     def __eq__(self, other): return self.adjustments == other
+    __hash__ = Frame.__hash__
     HashKey = property(lambda s: '%s:%s' % (s.FrameID, s.desc))
 
 # class RVAD: unsupported
@@ -1542,6 +1554,7 @@ class RVRB(Frame):
                    ByteSpec('premix_ltr'), ByteSpec('premix_rtl') ]
 
     def __eq__(self, other): return (self.left, self.right) == other
+    __hash__ = Frame.__hash__
 
 class APIC(Frame):
     """Attached (or linked) Picture.
@@ -1558,6 +1571,7 @@ class APIC(Frame):
     _framespec = [ EncodingSpec('encoding'), Latin1TextSpec('mime'),
         ByteSpec('type'), EncodedTextSpec('desc'), BinaryDataSpec('data') ]
     def __eq__(self, other): return self.data == other
+    __hash__ = Frame.__hash__
     HashKey = property(lambda s: '%s:%s' % (s.FrameID, s.desc))
     def _pprint(self):
         return "%s (%s, %d bytes)" % (
@@ -1574,6 +1588,7 @@ class PCNT(Frame):
     _framespec = [ IntegerSpec('count') ]
 
     def __eq__(self, other): return self.count == other
+    __hash__ = Frame.__hash__
     def __pos__(self): return self.count
     def _pprint(self): return unicode(self.count)
 
@@ -1594,6 +1609,7 @@ class POPM(FrameOpt):
     HashKey = property(lambda s: '%s:%s' % (s.FrameID, s.email))
 
     def __eq__(self, other): return self.rating == other
+    __hash__ = FrameOpt.__hash__
     def __pos__(self): return self.rating
     def _pprint(self): return "%s=%r %r/255" % (
         self.email, getattr(self, 'count', None), self.rating)
@@ -1616,6 +1632,7 @@ class GEOB(Frame):
     HashKey = property(lambda s: '%s:%s' % (s.FrameID, s.desc))
 
     def __eq__(self, other): return self.data == other
+    __hash__ = Frame.__hash__
 
 class RBUF(FrameOpt):
     """Recommended buffer size.
@@ -1631,6 +1648,7 @@ class RBUF(FrameOpt):
     _optionalspec = [ ByteSpec('info'), SizedIntegerSpec('offset', 4) ]
 
     def __eq__(self, other): return self.size == other
+    __hash__ = FrameOpt.__hash__
     def __pos__(self): return self.size
 
 class AENC(FrameOpt):
@@ -1653,6 +1671,7 @@ class AENC(FrameOpt):
     def __str__(self): return self.owner.encode('utf-8')
     def __unicode__(self): return self.owner
     def __eq__(self, other): return self.owner == other
+    __hash__ = FrameOpt.__hash__
 
 class LINK(FrameOpt):
     """Linked information.
@@ -1675,6 +1694,7 @@ class LINK(FrameOpt):
     def __eq__(self, other):
         try: return (self.frameid, self.url, self.data) == other
         except AttributeError: return (self.frameid, self.url) == other
+    __hash__ = FrameOpt.__hash__
 
 class POSS(Frame):
     """Position synchronisation frame
@@ -1687,6 +1707,7 @@ class POSS(Frame):
 
     def __pos__(self): return self.position
     def __eq__(self, other): return self.position == other
+    __hash__ = Frame.__hash__
 
 class UFID(Frame):
     """Unique file identifier.
@@ -1701,6 +1722,7 @@ class UFID(Frame):
     def __eq__(s, o):
         if isinstance(o, UFI): return s.owner == o.owner and s.data == o.data
         else: return s.data == o
+    __hash__ = Frame.__hash__
     def _pprint(self):
         isascii = ord(max(self.data)) < 128
         if isascii: return "%s=%s" % (self.owner, self.data)
@@ -1721,6 +1743,7 @@ class USER(Frame):
     def __str__(self): return self.text.encode('utf-8')
     def __unicode__(self): return self.text
     def __eq__(self, other): return self.text == other
+    __hash__ = Frame.__hash__
     def _pprint(self): return "%r=%s" % (self.lang, self.text)
 
 class OWNE(Frame):
@@ -1731,6 +1754,7 @@ class OWNE(Frame):
     def __str__(self): return self.seller.encode('utf-8')
     def __unicode__(self): return self.seller
     def __eq__(self, other): return self.seller == other
+    __hash__ = Frame.__hash__
 
 class COMR(FrameOpt):
     """Commercial frame."""
@@ -1741,6 +1765,7 @@ class COMR(FrameOpt):
     _optionalspec = [ Latin1TextSpec('mime'), BinaryDataSpec('logo') ]
     HashKey = property(lambda s: '%s:%s' % (s.FrameID, s._writeData()))
     def __eq__(self, other): return self._writeData() == other._writeData()
+    __hash__ = FrameOpt.__hash__
 
 class ENCR(Frame):
     """Encryption method registration.
@@ -1753,6 +1778,7 @@ class ENCR(Frame):
     HashKey = property(lambda s: "%s:%s" % (s.FrameID, s.owner))
     def __str__(self): return self.data
     def __eq__(self, other): return self.data == other
+    __hash__ = Frame.__hash__
 
 class GRID(FrameOpt):
     """Group identification registration."""
@@ -1763,6 +1789,7 @@ class GRID(FrameOpt):
     def __str__(self): return self.owner.encode('utf-8')
     def __unicode__(self): return self.owner
     def __eq__(self, other): return self.owner == other or self.group == other
+    __hash__ = FrameOpt.__hash__
     
 
 class PRIV(Frame):
@@ -1776,6 +1803,7 @@ class PRIV(Frame):
         isascii = ord(max(self.data)) < 128
         if isascii: return "%s=%s" % (self.owner, self.data)
         else: return "%s (%d bytes)" % (self.owner, len(self.data))
+    __hash__ = Frame.__hash__
 
 class SIGN(Frame):
     """Signature frame."""
@@ -1783,6 +1811,7 @@ class SIGN(Frame):
     HashKey = property(lambda s: '%s:%c:%s' % (s.FrameID, s.group, s.sig))
     def __str__(self): return self.sig
     def __eq__(self, other): return self.sig == other
+    __hash__ = Frame.__hash__
 
 class SEEK(Frame):
     """Seek frame.
@@ -1792,6 +1821,7 @@ class SEEK(Frame):
     _framespec = [ IntegerSpec('offset') ]
     def __pos__(self): return self.offset
     def __eq__(self, other): return self.offset == other
+    __hash__ = Frame.__hash__
 
 class ASPI(Frame):
     """Audio seek point index.
@@ -1803,6 +1833,7 @@ class ASPI(Frame):
                    SizedIntegerSpec("N", 2), ByteSpec("b"),
                    ASPIIndexSpec("Fi") ]
     def __eq__(self, other): return self.Fi == other
+    __hash__ = Frame.__hash__
 
 Frames = dict([(k,v) for (k,v) in globals().items()
         if len(k)==4 and isinstance(v, type) and issubclass(v, Frame)])
@@ -1889,6 +1920,7 @@ class CRM(Frame):
     _framespec = [ Latin1TextSpec('owner'), Latin1TextSpec('desc'),
                    BinaryDataSpec('data') ]
     def __eq__(self, other): return self.data == other
+    __hash__ = Frame.__hash__
 
 class CRA(AENC): "Audio encryption"
 

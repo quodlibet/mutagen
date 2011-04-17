@@ -27,6 +27,9 @@ from _vorbis import VCommentDict
 from mutagen import FileType
 from mutagen._util import insert_bytes
 from mutagen.id3 import BitPaddedInt
+import sys
+if sys.version_info >= (2, 6):
+    from functools import reduce
 
 class error(IOError): pass
 class FLACNoHeaderError(error): pass
@@ -118,6 +121,7 @@ class StreamInfo(MetadataBlock):
                      self.bits_per_sample == other.bits_per_sample and
                      self.total_samples == other.total_samples)
         except: return False
+    __hash__ = MetadataBlock.__hash__
 
     def load(self, data):
         self.min_blocksize = int(to_int_be(data.read(2)))
@@ -214,6 +218,7 @@ class SeekTable(MetadataBlock):
     def __eq__(self, other):
         try: return (self.seekpoints == other.seekpoints)
         except (AttributeError, TypeError): return False
+    __hash__ = MetadataBlock.__hash__
 
     def load(self, data):
         self.seekpoints = []
@@ -304,6 +309,7 @@ class CueSheetTrack(object):
                      self.pre_emphasis == other.pre_emphasis and
                      self.indexes == other.indexes)
         except (AttributeError, TypeError): return False
+    __hash__ = object.__hash__
 
     def __repr__(self):
         return ("<%s number=%r, offset=%d, isrc=%r, type=%r, "
@@ -350,6 +356,7 @@ class CueSheet(MetadataBlock):
                      self.compact_disc == other.compact_disc and
                      self.tracks == other.tracks)
         except (AttributeError, TypeError): return False
+    __hash__ = MetadataBlock.__hash__
 
     def load(self, data):
         header = data.read(self.__CUESHEET_SIZE)
@@ -444,6 +451,7 @@ class Picture(MetadataBlock):
                      self.colors == other.colors and
                      self.data == other.data)
         except (AttributeError, TypeError): return False
+    __hash__ = MetadataBlock.__hash__
 
     def load(self, data):
         self.type, length = struct.unpack('>2I', data.read(8))
@@ -496,6 +504,7 @@ class Padding(MetadataBlock):
             raise error("cannot write %d bytes" % self.length)
     def __eq__(self, other):
         return isinstance(other, Padding) and self.length == other.length
+    __hash__ = MetadataBlock.__hash__
     def __repr__(self):
         return "<%s (%d bytes)>" % (type(self).__name__, self.length)
 

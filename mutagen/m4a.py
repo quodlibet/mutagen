@@ -210,7 +210,9 @@ class M4ATags(DictProxy, Metadata):
             parse = self.__atoms.get(atom.name, (M4ATags.__parse_text,))[0]
             parse(self, atom, data)
 
-    def __key_sort((key1, v1), (key2, v2)):
+    def __key_sort(item1, item2):
+        (key1, v1) = item1
+        (key2, v2) = item2
         # iTunes always writes the tags in order of "relevance", try
         # to copy it as closely as possible.
         order = ["\xa9nam", "\xa9ART", "\xa9wrt", "\xa9alb",

@@ -114,6 +114,8 @@ class OggPage(object):
         except AttributeError:
             return False
 
+    __hash__ = object.__hash__
+
     def __repr__(self):
         attrs = ['version', 'position', 'serial', 'sequence', 'offset',
                  'complete', 'continued', 'first', 'last']

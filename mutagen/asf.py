@@ -170,6 +170,8 @@ class ASFUnicodeAttribute(ASFBaseAttribute):
     def __cmp__(self, other):
         return cmp(unicode(self), other)
 
+    __hash__ = ASFBaseAttribute.__hash__
+
 
 class ASFByteArrayAttribute(ASFBaseAttribute):
     """Byte array attribute."""
@@ -189,6 +191,8 @@ class ASFByteArrayAttribute(ASFBaseAttribute):
 
     def __cmp__(self, other):
         return cmp(str(self), other)
+
+    __hash__ = ASFBaseAttribute.__hash__
 
 
 class ASFBoolAttribute(ASFBaseAttribute):
@@ -219,6 +223,8 @@ class ASFBoolAttribute(ASFBaseAttribute):
     def __cmp__(self, other):
         return cmp(bool(self), other)
 
+    __hash__ = ASFBaseAttribute.__hash__
+
 
 class ASFDWordAttribute(ASFBaseAttribute):
     """DWORD attribute."""
@@ -241,6 +247,8 @@ class ASFDWordAttribute(ASFBaseAttribute):
 
     def __cmp__(self, other):
         return cmp(int(self), other)
+
+    __hash__ = ASFBaseAttribute.__hash__
 
 
 class ASFQWordAttribute(ASFBaseAttribute):
@@ -265,6 +273,8 @@ class ASFQWordAttribute(ASFBaseAttribute):
     def __cmp__(self, other):
         return cmp(int(self), other)
 
+    __hash__ = ASFBaseAttribute.__hash__
+
 
 class ASFWordAttribute(ASFBaseAttribute):
     """WORD attribute."""
@@ -288,6 +298,8 @@ class ASFWordAttribute(ASFBaseAttribute):
     def __cmp__(self, other):
         return cmp(int(self), other)
 
+    __hash__ = ASFBaseAttribute.__hash__
+
 
 class ASFGUIDAttribute(ASFBaseAttribute):
     """GUID attribute."""
@@ -307,6 +319,8 @@ class ASFGUIDAttribute(ASFBaseAttribute):
 
     def __cmp__(self, other):
         return cmp(str(self), other)
+
+    __hash__ = ASFBaseAttribute.__hash__
 
 
 UNICODE = ASFUnicodeAttribute.TYPE

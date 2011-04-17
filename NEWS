@@ -1,7 +1,9 @@
 1.21
  * Fix Python 2.3 compatibility (broken in 1.19).
+ * Fix many warnings triggered by -3. (#27)
  * mid3v2:
    * Add --TXXX support. (#62, Tim Phipps)
+   * Add --POPM support. (#71)
    * Allow setting multiple COMM or TXXX frames with one command line.
  * ID3:
    * MakeID3v1: Do not generate bad tags when given short dates. (#69)

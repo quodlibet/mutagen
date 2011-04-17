@@ -96,6 +96,8 @@ class DictMixin(object):
         if other is None: return 1
         else: return cmp(dict(self.items()), other)
 
+    __hash__ = object.__hash__
+
     def __len__(self):
         return len(self.keys())
 
