@@ -2049,6 +2049,7 @@ class ID3FileType(mutagen.FileType):
         if ID3 is None:
             ID3 = self.ID3
         if self.tags is None:
+            self.ID3 = ID3
             self.tags = ID3()
         else:
             raise error("an ID3 tag already exists")
@@ -2061,6 +2062,10 @@ class ID3FileType(mutagen.FileType):
         """
         if ID3 is None:
             ID3 = self.ID3
+        else:
+            # If this was initialized with EasyID3, remember that for
+            # when tags are auto-instantiated in add_tags.
+            self.ID3 = ID3
         self.filename = filename
         try: self.tags = ID3(filename, **kwargs)
         except error: self.tags = None

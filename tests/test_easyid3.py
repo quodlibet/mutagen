@@ -2,6 +2,7 @@ import os
 import sys
 import shutil
 from tests import add, TestCase
+from mutagen.id3 import ID3FileType
 from mutagen.easyid3 import EasyID3, error as ID3Error, delete
 from tempfile import mkstemp
 
@@ -13,6 +14,15 @@ class TEasyID3(TestCase):
         empty = os.path.join('tests', 'data', 'emptyfile.mp3')
         shutil.copy(empty, self.filename)
         self.id3 = EasyID3()
+
+    def test_remember_ctr(self):
+        empty = os.path.join('tests', 'data', 'emptyfile.mp3')
+        mp3 = ID3FileType(empty, ID3=EasyID3)
+        self.failIf(mp3.tags)
+        mp3["artist"] = ["testing"]
+        self.failUnless(mp3.tags)
+        mp3.pprint()
+        self.failUnless(isinstance(mp3.tags, EasyID3))
 
     def test_delete(self):
         self.id3["artist"] = "foobar"
