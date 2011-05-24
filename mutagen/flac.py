@@ -530,31 +530,46 @@ class FLAC(FileType):
                 filename.lower().endswith(".flac") * 3)
     score = staticmethod(score)
 
-    def __read_metadata_block(self, file):
-        byte = ord(file.read(1))
-        size = to_int_be(file.read(3))
+    def __read_metadata_block(self, fileobj):
+        byte = ord(fileobj.read(1))
+        size = to_int_be(fileobj.read(3))
         try:
-            data = file.read(size)
-            if len(data) != size:
-                raise error(
-                    "file said %d bytes, read %d bytes" % (size, len(data)))
-            block = self.METADATA_BLOCKS[byte & 0x7F](data)
+            if (byte & 0x7F) == VCFLACDict.code:
+                # Some jackass is writing broken Metadata block length
+                # for Vorbis comment blocks, and the FLAC reference
+                # implementaton can parse them (mostly by accident),
+                # so we have to too.  Instead of parsing the size
+                # given, parse an actual Vorbis comment, leaving
+                # fileobj in the right position.
+                # http://code.google.com/p/mutagen/issues/detail?id=52
+                block = VCFLACDict(fileobj)
+            else:
+                data = fileobj.read(size)
+                if len(data) != size:
+                    raise error("file said %d bytes, read %d bytes" %(
+                            size, len(data)))
+                block = self.METADATA_BLOCKS[byte & 0x7F](data)
         except (IndexError, TypeError):
             block = MetadataBlock(data)
             block.code = byte & 0x7F
-            self.metadata_blocks.append(block)
-        else:
-            self.metadata_blocks.append(block)
-            if block.code == VCFLACDict.code:
-                if self.tags is None: self.tags = block
-                else: raise FLACVorbisError("> 1 Vorbis comment block found")
-            elif block.code == CueSheet.code:
-                if self.cuesheet is None: self.cuesheet = block
-                else: raise error("> 1 CueSheet block found")
-            elif block.code == SeekTable.code:
-                if self.seektable is None: self.seektable = block
-                else: raise error("> 1 SeekTable block found")
-        return (byte >> 7) ^ 1
+
+        if block.code == VCFLACDict.code:
+            if self.tags is None:
+                self.tags = block
+            else:
+                raise FLACVorbisError("> 1 Vorbis comment block found")
+        elif block.code == CueSheet.code:
+            if self.cuesheet is None:
+                self.cuesheet = block
+            else:
+                raise error("> 1 CueSheet block found")
+        elif block.code == SeekTable.code:
+            if self.seektable is None:
+                self.seektable = block
+            else:
+                raise error("> 1 SeekTable block found")
+        self.metadata_blocks.append(block)
+        return not (byte & 0x80);
 
     def add_tags(self):
         """Add a Vorbis comment block to the file."""
@@ -592,8 +607,6 @@ class FLAC(FileType):
             self.__check_header(fileobj)
             while self.__read_metadata_block(fileobj):
                 pass
-            if fileobj.read(2) not in ["\xff\xf8", "\xff\xf9"]:
-                raise FLACNoHeaderError("End of metadata did not start audio")
         finally:
             fileobj.close()
 
@@ -674,10 +687,15 @@ class FLAC(FileType):
 
     def __find_audio_offset(self, fileobj):
         byte = 0x00
-        while not (byte >> 7) & 1:
+        while not (byte & 0x80):
             byte = ord(fileobj.read(1))
             size = to_int_be(fileobj.read(3))
-            fileobj.read(size)
+            if (byte & 0x7F) == VCFLACDict.code:
+                # See comments in read_metadata_block; the size can't
+                # be trusted for Vorbis comment blocks.
+                VCFLACDict(fileobj)
+            else:
+                fileobj.read(size)
         return fileobj.tell()
 
     def __check_header(self, fileobj):

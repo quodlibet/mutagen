@@ -406,6 +406,43 @@ class TFLACFile(TestCase):
 
 add(TFLACFile)
 
+class TFLACBadBlockSize(TestCase):
+    uses_mmap = False
+    TOO_SHORT = os.path.join("tests", "data", "52-too-short-block-size.flac")
+    OVERWRITTEN = os.path.join("tests", "data", "52-overwritten-metadata.flac")
+
+    def test_too_short_read(self):
+        flac = FLAC(self.TOO_SHORT)
+        self.failUnlessEqual(flac["artist"], ["Tunng"])
+
+    def test_overwritten_read(self):
+        flac = FLAC(self.OVERWRITTEN)
+        self.failUnlessEqual(flac["artist"], ["Giora Feidman"])
+
+add(TFLACBadBlockSize)
+
+class TFLACBadBlockSizeWrite(TestCase):
+    uses_mmap = False
+    TOO_SHORT = os.path.join("tests", "data", "52-too-short-block-size.flac")
+    NEW = TOO_SHORT + ".new"
+
+    def setUp(self):
+        shutil.copy(self.TOO_SHORT, self.NEW)
+
+    def test_write_reread(self):
+        flac = FLAC(self.NEW)
+        del(flac["artist"])
+        flac.save()
+        flac2 = FLAC(self.NEW)
+        self.failUnlessEqual(flac["title"], flac2["title"])
+        data = open(self.NEW, "rb").read(1024)
+        self.failIf("Tunng" in data)
+
+    def tearDown(self):
+        os.unlink(self.NEW)
+        
+add(TFLACBadBlockSizeWrite)
+
 class CVE20074619(TestCase):
     uses_mmap = True
 
