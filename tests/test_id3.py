@@ -1545,7 +1545,9 @@ class WriteRoundtrip(TestCase):
         self.assertEquals(open(self.newsilence).read(10), '')
 
     def test_delete_invalid_zero(self):
-        open(self.newsilence, 'wb').write('ID3\x04\x00\x00\x00\x00\x00\x00abc')
+        f = open(self.newsilence, 'wb')
+        f.write('ID3\x04\x00\x00\x00\x00\x00\x00abc')
+        f.close()
         ID3(self.newsilence).delete()
         self.assertEquals(open(self.newsilence).read(10), 'abc')
 

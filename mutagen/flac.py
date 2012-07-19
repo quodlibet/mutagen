@@ -639,51 +639,54 @@ class FLAC(FileType):
         if filename is None: filename = self.filename
         f = open(filename, 'rb+')
 
-        # Ensure we've got padding at the end, and only at the end.
-        # If adding makes it too large, we'll scale it down later.
-        self.metadata_blocks.append(Padding('\x00' * 1020))
-        MetadataBlock.group_padding(self.metadata_blocks)
+        try:
+            # Ensure we've got padding at the end, and only at the end.
+            # If adding makes it too large, we'll scale it down later.
+            self.metadata_blocks.append(Padding('\x00' * 1020))
+            MetadataBlock.group_padding(self.metadata_blocks)
 
-        header = self.__check_header(f)
-        available = self.__find_audio_offset(f) - header # "fLaC" and maybe ID3
-        data = MetadataBlock.writeblocks(self.metadata_blocks)
+            header = self.__check_header(f)
+            available = self.__find_audio_offset(f) - header # "fLaC" and maybe ID3
+            data = MetadataBlock.writeblocks(self.metadata_blocks)
 
-        # Delete ID3v2
-        if deleteid3 and header > 4:
-            available += header - 4
-            header = 4
+            # Delete ID3v2
+            if deleteid3 and header > 4:
+                available += header - 4
+                header = 4
 
-        if len(data) > available:
-            # If we have too much data, see if we can reduce padding.
-            padding = self.metadata_blocks[-1]
-            newlength = padding.length - (len(data) - available)
-            if newlength > 0:
-                padding.length = newlength
+            if len(data) > available:
+                # If we have too much data, see if we can reduce padding.
+                padding = self.metadata_blocks[-1]
+                newlength = padding.length - (len(data) - available)
+                if newlength > 0:
+                    padding.length = newlength
+                    data = MetadataBlock.writeblocks(self.metadata_blocks)
+                    assert len(data) == available
+
+            elif len(data) < available:
+                # If we have too little data, increase padding.
+                self.metadata_blocks[-1].length += (available - len(data))
                 data = MetadataBlock.writeblocks(self.metadata_blocks)
                 assert len(data) == available
 
-        elif len(data) < available:
-            # If we have too little data, increase padding.
-            self.metadata_blocks[-1].length += (available - len(data))
-            data = MetadataBlock.writeblocks(self.metadata_blocks)
-            assert len(data) == available
+            if len(data) != available:
+                # We couldn't reduce the padding enough.
+                diff = (len(data) - available)
+                insert_bytes(f, diff, header)
 
-        if len(data) != available:
-            # We couldn't reduce the padding enough.
-            diff = (len(data) - available)
-            insert_bytes(f, diff, header)
+            f.seek(header - 4)
+            f.write("fLaC" + data)
 
-        f.seek(header - 4)
-        f.write("fLaC" + data)
-
-        # Delete ID3v1
-        if deleteid3:
-            try: f.seek(-128, 2)
-            except IOError: pass
-            else:
-                if f.read(3) == "TAG":
-                    f.seek(-128, 2)
-                    f.truncate()
+            # Delete ID3v1
+            if deleteid3:
+                try: f.seek(-128, 2)
+                except IOError: pass
+                else:
+                    if f.read(3) == "TAG":
+                        f.seek(-128, 2)
+                        f.truncate()
+        finally:
+            f.close()
 
     def __find_audio_offset(self, fileobj):
         byte = 0x00
