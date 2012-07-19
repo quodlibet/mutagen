@@ -84,7 +84,7 @@ class VComment(mutagen.Metadata, list):
             vendor_length = cdata.uint_le(fileobj.read(4))
             self.vendor = fileobj.read(vendor_length).decode('utf-8', errors)
             count = cdata.uint_le(fileobj.read(4))
-            for i in range(count):
+            for i in xrange(count):
                 length = cdata.uint_le(fileobj.read(4))
                 try: string = fileobj.read(length).decode('utf-8', errors)
                 except (OverflowError, MemoryError):

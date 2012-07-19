@@ -288,6 +288,12 @@ class TFLAC(TestCase):
         self.failUnless(f.tags == [("foo", "bar")])
         self.failUnlessRaises(ValueError, f.add_tags)
 
+    def test_ooming_vc_header(self):
+        # issue 112: Malformed FLAC Vorbis header causes out of memory error
+        # http://code.google.com/p/mutagen/issues/detail?id=112
+        self.assertRaises(IOError, FLAC, os.path.join('tests', 'data',
+                                                      'ooming-header.flac'))
+
     def test_with_real_flac(self):
         if not have_flac: return
         self.flac["faketag"] = "foobar" * 1000
