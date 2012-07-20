@@ -1169,6 +1169,64 @@ class UpdateTo24(TestCase):
 
 add(UpdateTo24)
 
+
+class Issue97_UpgradeUnknown23(TestCase):
+    SILENCE = os.path.join("tests", "data", "97-unknown-23-update.mp3")
+    def setUp(self):
+        from tempfile import mkstemp
+        fd, self.filename = mkstemp(suffix='.mp3')
+        os.close(fd)
+        shutil.copy(self.SILENCE, self.filename)
+
+    def test_unknown(self):
+        from mutagen.id3 import TPE1
+        orig = ID3(self.filename)
+        self.failUnlessEqual(orig.version, (2, 3, 0))
+
+        # load a 2.3 file and pretend we don't support TIT2
+        unknown = ID3(self.filename, known_frames={"TPE1": TPE1},
+                      translate=False)
+
+        # TIT2 ends up in unknown_frames
+        self.failUnlessEqual(unknown.unknown_frames[0][:4], "TIT2")
+
+         # frame should be different now
+        orig_unknown = unknown.unknown_frames[0]
+        unknown.update_to_v24()
+        self.failIfEqual(unknown.unknown_frames[0], orig_unknown)
+
+        # save as 2.4
+        unknown.save()
+
+        # load again with support for TIT2, all should be there again
+        new = ID3(self.filename)
+        self.failUnlessEqual(new.version, (2, 4, 0))
+        self.failUnlessEqual(new["TIT2"].text, orig["TIT2"].text)
+        self.failUnlessEqual(new["TPE1"].text, orig["TPE1"].text)
+
+    def test_double_update(self):
+        from mutagen.id3 import TPE1
+        orig = ID3(self.filename)
+        unknown = ID3(self.filename, known_frames={"TPE1": TPE1})
+        # Make sure the data doesn't get updated again
+        unknown.update_to_v24()
+        unknown.unknown_frames = ["foobar"]
+        unknown.update_to_v24()
+        self.failUnless(unknown.unknown_frames)
+
+    def test_unkown_invalid(self):
+        f = ID3(self.filename, translate=False)
+        f.unknown_frames = ["foobar", "\xff"*50]
+        # throw away invalid frames
+        f.update_to_v24()
+        self.failIf(f.unknown_frames)
+
+    def tearDown(self):
+        os.unlink(self.filename)
+
+add(Issue97_UpgradeUnknown23)
+
+
 class Genres(TestCase):
     uses_mmap = False
 

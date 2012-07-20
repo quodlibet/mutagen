@@ -70,6 +70,7 @@ class ID3(DictProxy, mutagen.Metadata):
     __flags = 0
     __readbytes = 0
     __crc = None
+    __unknown_updated = False
 
     def __init__(self, *args, **kwargs):
         self.unknown_frames = []
@@ -453,7 +454,7 @@ class ID3(DictProxy, mutagen.Metadata):
         delete(filename, delete_v1, delete_v2)
         self.clear()
 
-    def __save_frame(self, frame):
+    def __save_frame(self, frame, name=None):
         flags = 0
         if self.PEDANTIC and isinstance(frame, TextFrame):
             if len(str(frame)) == 0: return ''
@@ -467,7 +468,7 @@ class ID3(DictProxy, mutagen.Metadata):
             #flags |= Frame.FLAG24_COMPRESS | Frame.FLAG24_DATALEN
             pass
         datasize = BitPaddedInt.to_str(len(framedata), width=4)
-        header = pack('>4s4sH', type(frame).__name__, datasize, flags)
+        header = pack('>4s4sH', name or type(frame).__name__, datasize, flags)
         return header + framedata
 
     def update_to_v24(self):
@@ -478,8 +479,21 @@ class ID3(DictProxy, mutagen.Metadata):
         at some point; it is called by default when loading the tag.
         """
 
-        if self.version < (2,3,0): del self.unknown_frames[:]
-        # unsafe to write
+        if self.version < (2,3,0):
+            # unsafe to write
+            del self.unknown_frames[:]
+        elif self.version == (2,3,0) and not self.__unknown_updated:
+            # convert unknown 2.3 frames (flags/size) to 2.4
+            converted = []
+            for frame in self.unknown_frames:
+                try:
+                    name, size, flags = unpack('>4sLH', frame[:10])
+                    frame = BinaryFrame.fromData(self, flags, frame[10:])
+                except (struct.error, error):
+                    continue
+                converted.append(self.__save_frame(frame, name=name))
+            self.unknown_frames[:] = converted
+            self.__unknown_updated = True
 
         # TDAT, TYER, and TIME have been turned into TDRC.
         try:
@@ -1409,14 +1423,16 @@ class TIPL(PairedTextFrame): "Involved People List"
 class TMCL(PairedTextFrame): "Musicians Credits List"
 class IPLS(TIPL): "Involved People List"
 
-class MCDI(Frame):
-    """Binary dump of CD's TOC.
+class BinaryFrame(Frame):
+    """Binary data
 
     The 'data' attribute contains the raw byte string.
     """
     _framespec = [ BinaryDataSpec('data') ]
     def __eq__(self, other): return self.data == other
     __hash__ = Frame.__hash__
+
+class MCDI(BinaryFrame): "Binary dump of CD's TOC"
 
 class ETCO(Frame):
     """Event timing codes."""
