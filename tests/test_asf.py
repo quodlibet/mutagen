@@ -270,3 +270,26 @@ class TASFLargeValue(TestCase):
 
 add(TASFLargeValue)
 
+# http://code.google.com/p/mutagen/issues/detail?id=81#c4
+class TASFUpdateSize(TestCase):
+
+    original = os.path.join("tests", "data", "silence-1.wma")
+
+    def setUp(self):
+        fd, self.filename = mkstemp(suffix='wma')
+        os.close(fd)
+        shutil.copy(self.original, self.filename)
+        audio = ASF(self.filename)
+        audio["large_value1"] = "#"*50000
+        audio.save()
+
+    def tearDown(self):
+        os.unlink(self.filename)
+
+    def test_multiple_delete(self):
+        audio = ASF(self.filename)
+        for tag in audio.keys():
+            del(audio[tag])
+            audio.save()
+
+add(TASFUpdateSize)

@@ -651,6 +651,9 @@ class ASF(FileType):
         finally:
             fileobj.close()
 
+        self.size = size
+        self.num_objects = len(self.objects)
+
     def __read_file(self, fileobj):
         header = fileobj.read(30)
         if len(header) != 30 or header[:16] != HeaderObject.GUID:

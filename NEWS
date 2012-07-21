@@ -23,6 +23,7 @@
    * Remember which tag type load() was called with even if the file
      doesn't yet have any ID3 tags. (#89)
  * VComment: Prevent MemoryError when parsing invalid header (#112)
+ * ASF: Don't corrupt files on the second save() call (#81, Christoph Reiter)
 
 1.20 - 2010.08.04
  * ASF: Don't store blocks over 64K in the MetadataObject block;
