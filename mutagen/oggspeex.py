@@ -54,6 +54,10 @@ class OggSpeexInfo(object):
         self.bitrate = max(0, cdata.int_le(page.packets[0][52:56]))
         self.serial = page.serial
 
+    def _post_tags(self, fileobj):
+        page = OggPage.find_last(fileobj, self.serial)
+        self.length = page.position / float(self.sample_rate)
+
     def pprint(self):
         return "Ogg Speex, %.2f seconds" % self.length
 

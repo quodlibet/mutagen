@@ -60,6 +60,12 @@ class OggFLACStreamInfo(StreamInfo):
         stringobj = StringIO(page.packets[0][17:])
         super(OggFLACStreamInfo, self).load(StringIO(page.packets[0][17:]))
 
+    def _post_tags(self, fileobj):
+        if self.length:
+            return
+        page = OggPage.find_last(fileobj, self.serial)
+        self.length = page.position / float(self.sample_rate)
+
     def pprint(self):
         return "Ogg " + super(OggFLACStreamInfo, self).pprint()
 

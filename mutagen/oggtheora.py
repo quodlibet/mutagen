@@ -21,6 +21,7 @@ __all__ = ["OggTheora", "Open", "delete"]
 import struct
 
 from mutagen._vorbis import VCommentDict
+from mutagen._util import cdata
 from mutagen.ogg import OggPage, OggFileType, error as OggError
 
 class error(OggError): pass
@@ -50,8 +51,16 @@ class OggTheoraInfo(object):
                 "found Theora version %d.%d != 3.2" % (vmaj, vmin))
         fps_num, fps_den = struct.unpack(">2I", data[22:30])
         self.fps = fps_num / float(fps_den)
-        self.bitrate = struct.unpack(">I", data[37:40] + "\x00")[0]
+        self.bitrate = cdata.uint_be("\x00" + data[37:40])
+        self.granule_shift = (cdata.ushort_be(data[40:42]) >> 5) & 0x1F
         self.serial = page.serial
+
+    def _post_tags(self, fileobj):
+        page = OggPage.find_last(fileobj, self.serial)
+        position = page.position
+        mask = (1 << self.granule_shift) - 1
+        frames = (position >> self.granule_shift) + (position & mask)
+        self.length = frames / float(self.fps)
 
     def pprint(self):
         return "Ogg Theora, %.2f seconds, %d bps" % (self.length, self.bitrate)

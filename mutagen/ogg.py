@@ -442,20 +442,7 @@ class OggFileType(FileType):
             try:
                 self.info = self._Info(fileobj)
                 self.tags = self._Tags(fileobj, self.info)
-
-                if self.info.length:
-                    # The streaminfo gave us real length information,
-                    # don't waste time scanning the Ogg.
-                    return
-
-                last_page = OggPage.find_last(fileobj, self.info.serial)
-                samples = last_page.position
-                try:
-                    denom = self.info.sample_rate
-                except AttributeError:
-                    denom = self.info.fps
-                self.info.length = samples / float(denom)
-
+                self.info._post_tags(fileobj)
             except error, e:
                 raise self._Error, e, sys.exc_info()[2]
             except EOFError:

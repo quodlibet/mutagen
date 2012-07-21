@@ -19,6 +19,10 @@ class TOggTheora(TOggFileType):
         os.close(fd)
         shutil.copy(original, self.filename)
         self.audio = OggTheora(self.filename)
+        self.audio2 = OggTheora(
+            os.path.join("tests", "data", "sample_length.oggtheora"))
+        self.audio3 = OggTheora(
+            os.path.join("tests", "data", "sample_bitrate.oggtheora"))
 
     def test_theora_bad_version(self):
         page = OggPage(open(self.filename, "rb"))
@@ -47,6 +51,10 @@ class TOggTheora(TOggFileType):
 
     def test_length(self):
         self.failUnlessAlmostEqual(5.5, self.audio.info.length, 1)
+        self.failUnlessAlmostEqual(0.75, self.audio2.info.length, 2)
+
+    def test_bitrate(self):
+        self.failUnlessEqual(16777215, self.audio3.info.bitrate)
 
     def test_module_delete(self):
         delete(self.filename)

@@ -63,10 +63,9 @@ class OggVorbisInfo(object):
         else:
             self.bitrate = nominal_bitrate
 
-        if self.bitrate == 0 and self.length > 0:
-            fileobj.seek(0, 2)
-            self.bitrate = int((fileobj.tell() * 8) / self.length)
-                
+    def _post_tags(self, fileobj):
+        page = OggPage.find_last(fileobj, self.serial)
+        self.length = page.position / float(self.sample_rate)
 
     def pprint(self):
         return "Ogg Vorbis, %.2f seconds, %d bps" % (self.length, self.bitrate)
