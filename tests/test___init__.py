@@ -1,5 +1,7 @@
 import os
 from StringIO import StringIO
+from tempfile import mkstemp
+import shutil
 
 from tests import TestCase, add
 from mutagen import File, Metadata, FileType
@@ -181,6 +183,34 @@ class TFile(TestCase):
                         MP3.score(filename, fileobj, header))
 
 add(TFile)
+
+class TFileUpperExt(TestCase):
+    FILES = [(os.path.join("tests", "data", "empty.ofr"), OptimFROG),
+             (os.path.join("tests", "data", "sv5_header.mpc"), Musepack),
+             (os.path.join("tests", "data", "silence-3.wma"), ASF),
+             (os.path.join("tests", "data", "truncated-64bit.mp4"), MP4),
+             (os.path.join("tests", "data", "silence-44-s.flac"), FLAC),
+             ]
+             
+    def setUp(self):
+        checks = []
+        for (original, instance) in self.FILES:
+            ext = original.rsplit(".", 1)[-1]
+            fd, filename = mkstemp(suffix='.'+ext.upper())
+            os.close(fd)
+            shutil.copy(original, filename)
+            checks.append((filename, instance))
+        self.checks = checks
+
+    def test_case_insensitive_ext(self):
+        for (path, instance) in self.checks:
+            self.failUnless(isinstance(File(path, options=[instance]), instance))
+
+    def tearDown(self):
+        for (path, instance) in self.checks:
+            os.unlink(path)
+
+add(TFileUpperExt)
 
 class TMutagen(TestCase):
     uses_mmap = False
