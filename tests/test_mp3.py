@@ -36,10 +36,10 @@ class TMP3(TestCase):
         self.failUnlessEqual(self.mp3_2.tags, ID3(self.silence_nov2))
 
     def test_length(self):
-        self.failUnlessEqual(int(round(self.mp3.info.length)), 4)
-        self.failUnlessEqual(int(round(self.mp3_2.info.length)), 4)
-        self.failUnlessEqual(int(round(self.mp3_3.info.length)), 4)
-        self.failUnlessEqual(int(round(self.mp3_4.info.length)), 4)
+        self.assertAlmostEquals(self.mp3.info.length, 3.77, 2)
+        self.assertAlmostEquals(self.mp3_2.info.length, 3.77, 2)
+        self.assertAlmostEquals(self.mp3_3.info.length, 3.77, 2)
+        self.assertAlmostEquals(self.mp3_4.info.length, 3.84, 2)
     def test_version(self):
         self.failUnlessEqual(self.mp3.info.version, 1)
         self.failUnlessEqual(self.mp3_2.info.version, 1)

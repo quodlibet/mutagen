@@ -172,9 +172,7 @@ class MPEGInfo(object):
             if frame_data & 0xFFE0 != 0xFFE0:
                 raise HeaderNotFoundError("can't sync to second MPEG frame")
 
-        frame_count = real_size / float(frame_length)
-        samples = frame_size * frame_count
-        self.length = samples / self.sample_rate
+        self.length = 8 * real_size / float(self.bitrate)
 
         # Try to find/parse the Xing header, which trumps the above length
         # and bitrate calculation.

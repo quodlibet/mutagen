@@ -14,7 +14,9 @@
      implementations of MakeID3v1, and tags with garbage on the front.
    * pprint: Sort frames by name.
    * Upgrade unknown 2.3 frames (#97, Christoph Reiter)
- * MP3: Fix error when loading extremely small MP3s. (#72)
+ * MP3:
+   * Fix error when loading extremely small MP3s. (#72)
+   * Fix rounding error in CBR length calculation (#93, Christoph Reiter)
  * Use 'open' rather than 'file' everywhere. (#74, Dan Callahan)
  * mid3iconv:
    * Accurately copy QL-style frame encoding behavior. (#75)
