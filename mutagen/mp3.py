@@ -209,15 +209,6 @@ class MPEGInfo(object):
                 bytes = struct.unpack('>I', data[xing + 12:xing + 16])[0]
                 self.bitrate = int((bytes * 8) // self.length)
 
-        # If the bitrate * the length is nowhere near the file
-        # length, recalculate using the bitrate and file length.
-        # Don't do this for very small files.
-        fileobj.seek(2, 0)
-        size = fileobj.tell()
-        expected = (self.bitrate / 8) * self.length
-        if not (size / 2 < expected < size * 2) and size > 2**16:
-            self.length = size / float(self.bitrate * 8)
-
     def pprint(self):
         s = "MPEG %s layer %d, %d bps, %s Hz, %.2f seconds" % (
             self.version, self.layer, self.bitrate, self.sample_rate,
