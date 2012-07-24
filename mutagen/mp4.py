@@ -72,19 +72,29 @@ class Atom(object):
 
     children = None
 
-    def __init__(self, fileobj):
+    def __init__(self, fileobj, level=0):
         self.offset = fileobj.tell()
         self.length, self.name = struct.unpack(">I4s", fileobj.read(8))
         if self.length == 1:
             self.length, = struct.unpack(">Q", fileobj.read(8))
+        elif self.length == 0:
+            if level != 0:
+                raise MP4MetadataError(
+                    "only a top-level atom can have zero length")
+            # Only the last atom is supposed to have a zero-length, meaning it
+            # extends to the end of file.
+            fileobj.seek(0, 2)
+            self.length = fileobj.tell() - self.offset
+            fileobj.seek(self.offset + 8, 0)
         elif self.length < 8:
-            return
+            raise MP4MetadataError(
+                "atom length can only be 0, 1 or 8 and higher")
 
         if self.name in _CONTAINERS:
             self.children = []
             fileobj.seek(_SKIP_SIZE.get(self.name, 0), 1)
             while fileobj.tell() < self.offset + self.length:
-                self.children.append(Atom(fileobj))
+                self.children.append(Atom(fileobj, level + 1))
         else:
             fileobj.seek(self.offset + self.length, 0)
 

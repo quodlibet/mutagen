@@ -24,6 +24,10 @@ class TAtom(TestCase):
                            "\x00\x00\x00\x00\x00\x00\x00\x08" + "\x00" * 8)
         self.failUnlessEqual(Atom(fileobj).length, 8)
 
+    def test_length_less_than_8(self):
+        fileobj = StringIO("\x00\x00\x00\x02atom")
+        self.assertRaises(MP4MetadataError, Atom, fileobj)
+
     def test_render_too_big(self):
         class TooBig(str):
             def __len__(self):
@@ -37,10 +41,24 @@ class TAtom(TestCase):
             data = Atom.render("data", data)
             self.failUnlessEqual(len(data), 4 + 4 + 8 + 4)
 
+    def test_non_top_level_length_0_is_invalid(self):
+        data = StringIO(struct.pack(">I4s", 0, "whee"))
+        self.assertRaises(MP4MetadataError, Atom, data, level=1)
+
     def test_length_0(self):
-        fileobj = StringIO("\x00\x00\x00\x00atom")
-        Atom(fileobj)
-        self.failUnlessEqual(fileobj.tell(), 8)
+        fileobj = StringIO("\x00\x00\x00\x00atom" + 40 * "\x00")
+        atom = Atom(fileobj)
+        self.failUnlessEqual(fileobj.tell(), 48)
+        self.failUnlessEqual(atom.length, 48)
+
+    def test_length_0_container(self):
+        data = StringIO(struct.pack(">I4s", 0, "moov") +
+                        Atom.render("data", "whee"))
+        atom = Atom(data)
+        self.failUnlessEqual(len(atom.children), 1)
+        self.failUnlessEqual(atom.length, 20)
+        self.failUnlessEqual(atom.children[-1].length, 12)
+
 add(TAtom)
 
 class TAtoms(TestCase):
