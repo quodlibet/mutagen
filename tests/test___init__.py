@@ -132,6 +132,8 @@ class TFile(TestCase):
             File(os.path.join("tests", "data", "sv4_header.mpc")), Musepack))
         self.failUnless(isinstance(
             File(os.path.join("tests", "data", "sv5_header.mpc")), Musepack))
+        self.failUnless(isinstance(
+            File(os.path.join("tests", "data", "sv8_header.mpc")), Musepack))
 
     def test_monkeysaudio(self):
         self.failUnless(isinstance(
