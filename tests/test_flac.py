@@ -2,7 +2,7 @@
 import shutil, os
 from tests import TestCase, add
 from mutagen.id3 import ID3, TIT2, ID3NoHeaderError
-from mutagen.flac import to_int_be, Padding, VCFLACDict, MetadataBlock
+from mutagen.flac import to_int_be, Padding, VCFLACDict, MetadataBlock, error
 from mutagen.flac import StreamInfo, SeekTable, CueSheet, FLAC, delete, Picture
 from tests.test__vorbis import TVCommentDict, VComment
 try: from os.path import devnull
@@ -416,6 +416,7 @@ class TFLACBadBlockSize(TestCase):
     uses_mmap = False
     TOO_SHORT = os.path.join("tests", "data", "52-too-short-block-size.flac")
     OVERWRITTEN = os.path.join("tests", "data", "52-overwritten-metadata.flac")
+    INVAL_INFO = os.path.join("tests", "data", "106-invalid-streaminfo.flac")
 
     def test_too_short_read(self):
         flac = FLAC(self.TOO_SHORT)
@@ -424,6 +425,9 @@ class TFLACBadBlockSize(TestCase):
     def test_overwritten_read(self):
         flac = FLAC(self.OVERWRITTEN)
         self.failUnlessEqual(flac["artist"], ["Giora Feidman"])
+
+    def test_inval_streaminfo(self):
+        self.assertRaises(error, FLAC, self.INVAL_INFO)
 
 add(TFLACBadBlockSize)
 

@@ -40,6 +40,26 @@ def to_int_be(string):
     byte order."""
     return reduce(lambda a, b: (a << 8) + ord(b), string, 0L)
 
+class StrictFileObject(object):
+    """Wraps a file-like object and raises an exception if the requested
+    amount of data to read isn't returned."""
+
+    def __init__(self, fileobj):
+        self._fileobj = fileobj
+        for m in ["close", "tell", "seek", "write", "name"]:
+            if hasattr(fileobj, m):
+                setattr(self, m, getattr(fileobj, m))
+
+    def read(self, size=-1):
+        data = self._fileobj.read(size)
+        if size >= 0 and len(data) != size:
+            raise error("file said %d bytes, read %d bytes" %(
+                        size, len(data)))
+        return data
+
+    def tryread(self, *args):
+        return self._fileobj.read(*args)
+
 class MetadataBlock(object):
     """A generic block of FLAC metadata.
 
@@ -54,10 +74,13 @@ class MetadataBlock(object):
         """Parse the given data string or file-like as a metadata block.
         The metadata header should not be included."""
         if data is not None:
-            if isinstance(data, str): data = StringIO(data)
-            elif not hasattr(data, 'read'):
-                raise TypeError(
-                    "StreamInfo requires string data or a file-like")
+            if not isinstance(data, StrictFileObject):
+                if isinstance(data, str):
+                    data = StringIO(data)
+                elif not hasattr(data, 'read'):
+                    raise TypeError(
+                        "StreamInfo requires string data or a file-like")
+                data = StrictFileObject(data)
             self.load(data)
 
     def load(self, data): self.data = data.read()
@@ -222,11 +245,11 @@ class SeekTable(MetadataBlock):
 
     def load(self, data):
         self.seekpoints = []
-        sp = data.read(self.__SEEKPOINT_SIZE)
+        sp = data.tryread(self.__SEEKPOINT_SIZE)
         while len(sp) == self.__SEEKPOINT_SIZE:
             self.seekpoints.append(SeekPoint(
                 *struct.unpack(self.__SEEKPOINT_FORMAT, sp)))
-            sp = data.read(self.__SEEKPOINT_SIZE)
+            sp = data.tryread(self.__SEEKPOINT_SIZE)
 
     def write(self):
         f = StringIO()
@@ -545,9 +568,6 @@ class FLAC(FileType):
                 block = VCFLACDict(fileobj)
             else:
                 data = fileobj.read(size)
-                if len(data) != size:
-                    raise error("file said %d bytes, read %d bytes" %(
-                            size, len(data)))
                 block = self.METADATA_BLOCKS[byte & 0x7F](data)
         except (IndexError, TypeError):
             block = MetadataBlock(data)
@@ -602,7 +622,7 @@ class FLAC(FileType):
         self.cuesheet = None
         self.seektable = None
         self.filename = filename
-        fileobj = open(filename, "rb")
+        fileobj = StrictFileObject(open(filename, "rb"))
         try:
             self.__check_header(fileobj)
             while self.__read_metadata_block(fileobj):
