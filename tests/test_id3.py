@@ -273,6 +273,9 @@ class ID3Tags(TestCase):
         self.assertRaises(
             ID3JunkFrameError, Frames["SYLT"].fromData, _24, 0x0,
             "\x00eng\x01description\x00foobar")
+        self.assertRaises(
+            ID3JunkFrameError, Frames["SYLT"].fromData, _24, 0x0,
+            "\x00eng\x01description\x00foobar\x00\xFF\xFF\xFF")
 
     def test_extradata(self):
         from mutagen.id3 import RVRB, RBUF

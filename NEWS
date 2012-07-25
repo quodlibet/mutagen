@@ -15,6 +15,7 @@
      implementations of MakeID3v1, and tags with garbage on the front.
    * pprint: Sort frames by name.
    * Upgrade unknown 2.3 frames (#97, Christoph Reiter)
+   * Fix handling of invalid SYLT frames (#105, Christoph Reiter)
  * MP3:
    * Fix error when loading extremely small MP3s. (#72)
    * Fix rounding error in CBR length calculation (#93, Christoph Reiter)

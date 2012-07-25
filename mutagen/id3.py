@@ -905,6 +905,8 @@ class SynchronizedTextSpec(EncodedTextSpec):
             except ValueError:
                 raise ID3JunkFrameError
             value = data[:value_idx].decode(encoding)
+            if len(data) < value_idx + l + 4:
+                raise ID3JunkFrameError
             time, = struct.unpack(">I", data[value_idx+l:value_idx+l+4])
             texts.append((value, time))
             data = data[value_idx+l+4:]
