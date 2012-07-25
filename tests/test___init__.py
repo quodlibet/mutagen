@@ -9,6 +9,7 @@ from mutagen.oggvorbis import OggVorbis
 from mutagen.oggflac import OggFLAC
 from mutagen.oggspeex import OggSpeex
 from mutagen.oggtheora import OggTheora
+from mutagen.oggopus import OggOpus
 from mutagen.mp3 import MP3, EasyMP3
 from mutagen.apev2 import APEv2File
 from mutagen.flac import FLAC
@@ -102,6 +103,10 @@ class TFile(TestCase):
     def test_oggtheora(self):
         self.failUnless(isinstance(File(
             os.path.join("tests", "data", "sample.oggtheora")), OggTheora))
+
+    def test_oggopus(self):
+        self.failUnless(isinstance(File(
+            os.path.join("tests", "data", "example.opus")), OggOpus))
 
     def test_mp3(self):
         self.failUnless(isinstance(
