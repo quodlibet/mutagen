@@ -96,7 +96,7 @@ class MusepackInfo(object):
         self.length = float(frames * 1152 - 576) / self.sample_rate
         if not self.bitrate and self.length != 0:
             fileobj.seek(0, 2)
-            self.bitrate = int(fileobj.tell() * 8 / (self.length * 1000) + 0.5)
+            self.bitrate = int(round(fileobj.tell() * 8 / self.length))
 
     def pprint(self):
         if self.version >= 7:

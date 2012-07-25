@@ -31,9 +31,9 @@ class TMusepack(TestCase):
         self.failUnlessEqual(self.sv4.info.sample_rate, 44100)
 
     def test_bitrate(self):
-        self.failUnlessEqual(self.sv7.info.bitrate, 195)
-        self.failUnlessEqual(self.sv5.info.bitrate, 0)
-        self.failUnlessEqual(self.sv4.info.bitrate, 0)
+        self.failUnlessEqual(self.sv7.info.bitrate, 194530)
+        self.failUnlessEqual(self.sv5.info.bitrate, 39)
+        self.failUnlessEqual(self.sv4.info.bitrate, 39)
 
     def test_length(self):
         self.failUnlessAlmostEqual(self.sv7.info.length, 0.07, 2)
