@@ -70,6 +70,8 @@ class MetadataBlock(object):
     data -- raw binary data for this block
     """
 
+    _distrust_size = False
+
     def __init__(self, data):
         """Parse the given data string or file-like as a metadata block.
         The metadata header should not be included."""
@@ -271,6 +273,7 @@ class VCFLACDict(VCommentDict):
     """
 
     code = 4
+    _distrust_size = True
 
     def load(self, data, errors='replace', framing=False):
         super(VCFLACDict, self).load(data, errors=errors, framing=framing)
@@ -452,6 +455,7 @@ class Picture(MetadataBlock):
     """
 
     code = 6
+    _distrust_size = True
 
     def __init__(self, data=None):
         self.type = 0
@@ -557,7 +561,12 @@ class FLAC(FileType):
         byte = ord(fileobj.read(1))
         size = to_int_be(fileobj.read(3))
         try:
-            if (byte & 0x7F) == VCFLACDict.code:
+            block_type = self.METADATA_BLOCKS[byte & 0x7F]
+        except IndexError:
+            block_type = None
+
+        try:
+            if block_type and block_type._distrust_size:
                 # Some jackass is writing broken Metadata block length
                 # for Vorbis comment blocks, and the FLAC reference
                 # implementaton can parse them (mostly by accident),
@@ -565,11 +574,13 @@ class FLAC(FileType):
                 # given, parse an actual Vorbis comment, leaving
                 # fileobj in the right position.
                 # http://code.google.com/p/mutagen/issues/detail?id=52
-                block = VCFLACDict(fileobj)
+                # ..same for the Picture block:
+                # http://code.google.com/p/mutagen/issues/detail?id=106
+                block = block_type(fileobj)
             else:
                 data = fileobj.read(size)
-                block = self.METADATA_BLOCKS[byte & 0x7F](data)
-        except (IndexError, TypeError):
+                block = block_type(data)
+        except TypeError:
             block = MetadataBlock(data)
             block.code = byte & 0x7F
 
@@ -713,10 +724,15 @@ class FLAC(FileType):
         while not (byte & 0x80):
             byte = ord(fileobj.read(1))
             size = to_int_be(fileobj.read(3))
-            if (byte & 0x7F) == VCFLACDict.code:
+            try:
+                block_type = self.METADATA_BLOCKS[byte & 0x7F]
+            except IndexError:
+                block_type = None
+
+            if block_type and block_type._distrust_size:
                 # See comments in read_metadata_block; the size can't
-                # be trusted for Vorbis comment blocks.
-                VCFLACDict(fileobj)
+                # be trusted for Vorbis comment blocks and Picture block
+                block_type(fileobj)
             else:
                 fileobj.read(size)
         return fileobj.tell()

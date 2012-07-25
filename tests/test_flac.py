@@ -415,12 +415,18 @@ add(TFLACFile)
 class TFLACBadBlockSize(TestCase):
     uses_mmap = False
     TOO_SHORT = os.path.join("tests", "data", "52-too-short-block-size.flac")
+    TOO_SHORT_2 = os.path.join("tests", "data",
+                               "106-short-picture-block-size.flac")
     OVERWRITTEN = os.path.join("tests", "data", "52-overwritten-metadata.flac")
     INVAL_INFO = os.path.join("tests", "data", "106-invalid-streaminfo.flac")
 
     def test_too_short_read(self):
         flac = FLAC(self.TOO_SHORT)
         self.failUnlessEqual(flac["artist"], ["Tunng"])
+
+    def test_too_short_read_picture(self):
+        flac = FLAC(self.TOO_SHORT_2)
+        self.failUnlessEqual(flac.pictures[0].width, 10)
 
     def test_overwritten_read(self):
         flac = FLAC(self.OVERWRITTEN)

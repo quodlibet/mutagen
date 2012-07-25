@@ -7,6 +7,7 @@
    * Allow setting multiple COMM or TXXX frames with one command line.
  * FLAC:
    * Try to handle corrupt Vorbis comment block sizes. (#52)
+   * Try to handle corrupt Picture block sizes (#106, Christoph Reiter)
    * Don't leak file handle with PyPy (#111, Marien Zwart)
  * ID3:
    * MakeID3v1: Do not generate bad tags when given short dates. (#69)
