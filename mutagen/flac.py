@@ -560,29 +560,29 @@ class FLAC(FileType):
     def __read_metadata_block(self, fileobj):
         byte = ord(fileobj.read(1))
         size = to_int_be(fileobj.read(3))
-        try:
-            block_type = self.METADATA_BLOCKS[byte & 0x7F]
-        except IndexError:
-            block_type = None
+        code = byte & 0x7F
+        last_block = bool(byte & 0x80)
 
         try:
-            if block_type and block_type._distrust_size:
-                # Some jackass is writing broken Metadata block length
-                # for Vorbis comment blocks, and the FLAC reference
-                # implementaton can parse them (mostly by accident),
-                # so we have to too.  Instead of parsing the size
-                # given, parse an actual Vorbis comment, leaving
-                # fileobj in the right position.
-                # http://code.google.com/p/mutagen/issues/detail?id=52
-                # ..same for the Picture block:
-                # http://code.google.com/p/mutagen/issues/detail?id=106
-                block = block_type(fileobj)
-            else:
-                data = fileobj.read(size)
-                block = block_type(data)
-        except TypeError:
-            block = MetadataBlock(data)
-            block.code = byte & 0x7F
+            block_type = self.METADATA_BLOCKS[code]
+        except IndexError:
+            block_type = MetadataBlock
+
+        if block_type._distrust_size:
+            # Some jackass is writing broken Metadata block length
+            # for Vorbis comment blocks, and the FLAC reference
+            # implementaton can parse them (mostly by accident),
+            # so we have to too.  Instead of parsing the size
+            # given, parse an actual Vorbis comment, leaving
+            # fileobj in the right position.
+            # http://code.google.com/p/mutagen/issues/detail?id=52
+            # ..same for the Picture block:
+            # http://code.google.com/p/mutagen/issues/detail?id=106
+            block = block_type(fileobj)
+        else:
+            data = fileobj.read(size)
+            block = block_type(data)
+        block.code = code
 
         if block.code == VCFLACDict.code:
             if self.tags is None:
@@ -600,7 +600,7 @@ class FLAC(FileType):
             else:
                 raise error("> 1 SeekTable block found")
         self.metadata_blocks.append(block)
-        return not (byte & 0x80);
+        return not last_block
 
     def add_tags(self):
         """Add a Vorbis comment block to the file."""
