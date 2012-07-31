@@ -26,7 +26,8 @@
  * ID3FileType:
    * Remember which tag type load() was called with even if the file
      doesn't yet have any ID3 tags. (#89)
- * VComment: Prevent MemoryError when parsing invalid header (#112)
+ * VComment:
+   * Prevent MemoryError when parsing invalid header (#112, Jyrki Pulliainen)
  * ASF: Don't corrupt files on the second save() call (#81, Christoph Reiter)
  * OggTheora: Fix length/bitrate calculation. (#99, Christoph Reiter)
  * MP4:
