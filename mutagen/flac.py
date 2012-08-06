@@ -162,6 +162,8 @@ class StreamInfo(MetadataBlock):
 
         sample_tail = sample_channels_bps >> 4
         self.sample_rate = int((sample_first << 4) + sample_tail)
+        if not self.sample_rate:
+            raise error("A sample rate value of 0 is invalid")
         self.channels = int(((sample_channels_bps >> 1) & 7) + 1)
         bps_tail = bps_total >> 36
         bps_head = (sample_channels_bps & 1) << 4

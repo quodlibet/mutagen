@@ -64,9 +64,14 @@ class TStreamInfo(TestCase):
 
     data = ('\x12\x00\x12\x00\x00\x00\x0e\x005\xea\n\xc4H\xf0\x00\xca0'
             '\x14(\x90\xf9\xe1)2\x13\x01\xd4\xa7\xa9\x11!8\xab\x91')
+    data_invalid = len(data) * '\x00'
 
     def setUp(self):
         self.i = StreamInfo(self.data)
+
+    def test_invalid(self):
+        # http://code.google.com/p/mutagen/issues/detail?id=117
+        self.failUnlessRaises(error, StreamInfo, self.data_invalid)
 
     def test_blocksize(self):
         self.failUnlessEqual(self.i.max_blocksize, 4608)
