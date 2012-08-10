@@ -401,6 +401,9 @@ class TFLAC(TestCase):
     def test_variable_block_size(self):
         FLAC(os.path.join("tests", "data", "variable-block.flac"))
 
+    def test_load_flac_with_application_block(self):
+        FLAC(os.path.join("tests", "data", "flac_application.flac"))
+
     def tearDown(self):
         os.unlink(self.NEW)
 

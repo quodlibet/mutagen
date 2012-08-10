@@ -566,7 +566,7 @@ class FLAC(FileType):
         last_block = bool(byte & 0x80)
 
         try:
-            block_type = self.METADATA_BLOCKS[code]
+            block_type = self.METADATA_BLOCKS[code] or MetadataBlock
         except IndexError:
             block_type = MetadataBlock
 
