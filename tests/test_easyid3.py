@@ -1,6 +1,7 @@
 import os
 import sys
 import shutil
+import pickle
 from tests import add, TestCase
 from mutagen.id3 import ID3FileType
 from mutagen.easyid3 import EasyID3, error as ID3Error, delete
@@ -250,6 +251,10 @@ class TEasyID3(TestCase):
         del(self.id3["replaygain_bar_peak"])
         self.failIf("replaygain_foo_gain" in self.id3.keys())
         self.failIf("replaygain_bar_gain" in self.id3.keys())
+
+    def test_pickle(self):
+        # http://code.google.com/p/mutagen/issues/detail?id=102
+        pickle.dumps(self.id3)
 
     def tearDown(self):
         os.unlink(self.filename)
