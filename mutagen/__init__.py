@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-#
 # mutagen aims to be an all purpose media tagging library
 # Copyright (C) 2005  Michael Urman
 #
