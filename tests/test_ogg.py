@@ -5,6 +5,7 @@ import shutil
 from StringIO import StringIO
 from tests import TestCase, add
 from mutagen.ogg import OggPage, error as OggError
+from mutagen._util import cdata
 from tempfile import mkstemp
 try: from os.path import devnull
 except ImportError: devnull = "/dev/null"
@@ -334,6 +335,31 @@ class TOggPage(TestCase):
         data = StringIO("if you think this is an OggS, you're crazy")
         page = OggPage.find_last(data, 0)
         self.failIf(page)
+
+    def test_crc_py25(self):
+        # Make sure page.write can handle both signed/unsigned int
+        # return values of crc32.
+        # http://code.google.com/p/mutagen/issues/detail?id=63
+        # http://docs.python.org/library/zlib.html#zlib.crc32
+
+        import zlib
+        old_crc = zlib.crc32
+        def zlib_uint(*args):
+            return (old_crc(*args) & 0xffffffff)
+        def zlib_int(*args):
+            return cdata.int_be(cdata.to_uint_be(old_crc(*args) & 0xffffffff))
+
+        try:
+            page = OggPage()
+            page.packets = ["abc"]
+            zlib.crc32 = zlib_uint
+            uint_data = page.write()
+            zlib.crc32 = zlib_int
+            int_data  = page.write()
+        finally:
+            zlib.crc32 = old_crc
+
+        self.failUnlessEqual(uint_data, int_data)
 
     def tearDown(self):
         self.fileobj.close()

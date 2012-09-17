@@ -149,10 +149,11 @@ class OggPage(object):
         data = "".join(data)
 
         # Python's CRC is swapped relative to Ogg's needs.
-        crc = ~zlib.crc32(data.translate(cdata.bitswap), -1)
-        # Although we're using to_int_be, this actually makes the CRC
+        # crc32 returns uint prior to py2.6 on some platforms, so force uint
+        crc = (~zlib.crc32(data.translate(cdata.bitswap), -1)) & 0xffffffff
+        # Although we're using to_uint_be, this actually makes the CRC
         # a proper le integer, since Python's CRC is byteswapped.
-        crc = cdata.to_int_be(crc).translate(cdata.bitswap)
+        crc = cdata.to_uint_be(crc).translate(cdata.bitswap)
         data = data[:22] + crc + data[26:]
         return data
 
