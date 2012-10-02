@@ -159,6 +159,20 @@ class TEasyMP3(TestCase):
 
     def test_no_composer(self):
         self.failIf("composer" in self.mp3)
+
+    def test_length(self):
+        # http://code.google.com/p/mutagen/issues/detail?id=125
+        # easyid3, normal id3 and mpeg loading without tags should skip
+        # the tags and get the right offset of the first frame
+        easy = self.mp3.info
+        noneasy = MP3(self.filename).info
+        nonid3 = MPEGInfo(open(self.filename, "rb"))
+
+        self.failUnlessEqual(easy.length, noneasy.length)
+        self.failUnlessEqual(noneasy.length, nonid3.length)
+
+    def tearDown(self):
+        os.unlink(self.filename)
 add(TEasyMP3)
 
 class Issue72_TooShortFile(TestCase):

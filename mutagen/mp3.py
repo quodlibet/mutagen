@@ -87,7 +87,7 @@ class MPEGInfo(object):
             except struct.error: id3, insize = '', 0
             insize = BitPaddedInt(insize)
             if id3 == 'ID3' and insize > 0:
-                offset = insize
+                offset = insize + 10
             else: offset = 0
 
         # Try to find two valid headers (meaning, very likely MPEG data)
