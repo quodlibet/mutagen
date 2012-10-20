@@ -120,6 +120,13 @@ class TAPEWriter(TestCase):
         self.failUnless("FoObaR" in tag.keys())
         self.failIf("foobar" in tag.keys())
 
+    def test_unicode_key(self):
+        # http://code.google.com/p/mutagen/issues/detail?id=123
+        tag = mutagen.apev2.APEv2(SAMPLE + ".new")
+        tag["abc"] = u'\xf6\xe4\xfc'
+        tag[u"cba"] = "abc"
+        tag.save()
+
     def tearDown(self):
         os.unlink(SAMPLE + ".new")
         os.unlink(BROKEN + ".new")

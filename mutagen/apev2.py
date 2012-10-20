@@ -242,11 +242,13 @@ class APEv2(DictMixin, Metadata):
     def __getitem__(self, key):
         if not is_valid_apev2_key(key):
             raise KeyError("%r is not a valid APEv2 key" % key)
+        key = key.encode('ascii')
         return self.__dict[key.lower()]
 
     def __delitem__(self, key):
         if not is_valid_apev2_key(key):
             raise KeyError("%r is not a valid APEv2 key" % key)
+        key = key.encode('ascii')
         del(self.__dict[key.lower()])
 
     def __setitem__(self, key, value):
@@ -268,6 +270,7 @@ class APEv2(DictMixin, Metadata):
 
         if not is_valid_apev2_key(key):
             raise KeyError("%r is not a valid APEv2 key" % key)
+        key = key.encode('ascii')
 
         if not isinstance(value, _APEValue):
             # let's guess at the content if we're not already a value...
