@@ -38,7 +38,7 @@ _CONTAINERS = ["moov", "udta", "trak", "mdia", "meta", "ilst",
                "stbl", "minf", "moof", "traf"]
 _SKIP_SIZE = { "meta": 4 }
 
-__all__ = ['MP4', 'Open', 'delete', 'MP4Cover']
+__all__ = ['MP4', 'Open', 'delete', 'MP4Cover', 'MP4FreeForm']
 
 class MP4Cover(str):
     """A cover artwork.
@@ -57,6 +57,24 @@ class MP4Cover(str):
         except AttributeError:
             self.format = imageformat
         return self
+
+
+class MP4FreeForm(str):
+    """A freeform value.
+    
+    Attributes:
+    dataformat -- format of the data (either FORMAT_TEXT or FORMAT_DATA)
+    """
+    FORMAT_DATA = 0x0
+    FORMAT_TEXT = 0x1
+
+    def __new__(cls, data, dataformat=None):
+        self = str.__new__(cls, data)
+        if dataformat is None:
+            dataformat = MP4FreeForm.FORMAT_TEXT
+        self.dataformat = dataformat
+        return self
+
 
 class Atom(object):
     """An individual atom.
@@ -444,19 +462,32 @@ class MP4Tags(DictProxy, Metadata):
             if atom_name != "data":
                 raise MP4MetadataError(
                     "unexpected atom %r inside %r" % (atom_name, atom.name))
-            value.append(data[pos+16:pos+length])
+
+            version = ord(data[pos+8])
+            if version != 0:
+                raise MP4MetadataError("Unsupported version: %r" % version)
+
+            flags = struct.unpack(">I", "\x00" + data[pos+9:pos+12])[0]
+            value.append(MP4FreeForm(data[pos+16:pos+length],
+                                     dataformat=flags))
             pos += length
         if value:
             self["%s:%s:%s" % (atom.name, mean, name)] = value
+
     def __render_freeform(self, key, value):
         dummy, mean, name = key.split(":", 2)
         mean = struct.pack(">I4sI", len(mean) + 12, "mean", 0) + mean
         name = struct.pack(">I4sI", len(name) + 12, "name", 0) + name
         if isinstance(value, basestring):
             value = [value]
-        return Atom.render("----", mean + name + "".join([
-            struct.pack(">I4s2I", len(data) + 16, "data", 1, 0) + data
-            for data in value]))
+        data = ""
+        for v in value:
+            flags = MP4FreeForm.FORMAT_TEXT
+            if isinstance(v, MP4FreeForm):
+                flags = v.dataformat
+            data += struct.pack(">I4s2I", len(v) + 16, "data", flags, 0)
+            data += v
+        return Atom.render("----", mean + name + data)
 
     def __parse_pair(self, atom, data):
         self[atom.name] = [struct.unpack(">2H", data[2:6]) for

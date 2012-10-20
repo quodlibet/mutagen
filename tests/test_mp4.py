@@ -6,7 +6,7 @@ from cStringIO import StringIO
 from tempfile import mkstemp
 from tests import TestCase, add
 from mutagen.mp4 import MP4, Atom, Atoms, MP4Tags, MP4Info, \
-     delete, MP4Cover, MP4MetadataError
+     delete, MP4Cover, MP4MetadataError, MP4FreeForm
 from mutagen._util import cdata
 try: from os.path import devnull
 except ImportError: devnull = "/dev/null"
@@ -235,6 +235,30 @@ class TMP4Tags(TestCase):
         tags["trck"] = [(1, 2), (3, 4)]
         tags.pprint()
 
+    def test_freeform_data(self):
+        # http://code.google.com/p/mutagen/issues/detail?id=103
+        key = "----:com.apple.iTunes:Encoding Params"
+        value = ("vers\x00\x00\x00\x01acbf\x00\x00\x00\x01brat\x00\x01\xf4"
+                 "\x00cdcv\x00\x01\x05\x04")
+
+        data = ("\x00\x00\x00\x1cmean\x00\x00\x00\x00com.apple.iTunes\x00\x00"
+                "\x00\x1bname\x00\x00\x00\x00Encoding Params\x00\x00\x000data"
+                "\x00\x00\x00\x00\x00\x00\x00\x00vers\x00\x00\x00\x01acbf\x00"
+                "\x00\x00\x01brat\x00\x01\xf4\x00cdcv\x00\x01\x05\x04")
+
+        tags = self.wrap_ilst(Atom.render("----", data))
+        v = tags[key][0]
+        self.failUnlessEqual(v, value)
+        self.failUnlessEqual(v.dataformat, MP4FreeForm.FORMAT_DATA)
+
+        data = MP4Tags()._MP4Tags__render_freeform(key, v)
+        v = self.wrap_ilst(data)[key][0]
+        self.failUnlessEqual(v.dataformat, MP4FreeForm.FORMAT_DATA)
+
+        data = MP4Tags()._MP4Tags__render_freeform(key, value)
+        v = self.wrap_ilst(data)[key][0]
+        self.failUnlessEqual(v.dataformat, MP4FreeForm.FORMAT_TEXT)
+
 add(TMP4Tags)
 
 class TMP4(TestCase):
@@ -345,6 +369,13 @@ class TMP4(TestCase):
 
     def test_freeforms(self):
         self.set_key('----:net.sacredchao.Mutagen:test key', ["whee", "uhh"])
+
+    def test_freeform_bin(self):
+        self.set_key('----:net.sacredchao.Mutagen:test key', [
+            MP4FreeForm('woooo', MP4FreeForm.FORMAT_TEXT),
+            MP4FreeForm('hoooo', MP4FreeForm.FORMAT_DATA),
+            MP4FreeForm('boooo'),
+        ])
 
     def test_tracknumber(self):
         self.set_key('trkn', [(1, 10)])
@@ -492,9 +523,8 @@ class TMP4(TestCase):
     def tearDown(self):
         os.unlink(self.filename)
 
-class TMP4HasTags(TMP4):
-    original = os.path.join("tests", "data", "has-tags.m4a")
 
+class TMP4HasTags(TMP4):
     def test_save_simple(self):
         self.audio.save()
         self.faad()
@@ -508,6 +538,20 @@ class TMP4HasTags(TMP4):
     def test_has_tags(self):
         self.failUnless(self.audio.tags)
 
+    def test_not_my_file(self):
+        self.failUnlessRaises(
+            IOError, MP4, os.path.join("tests", "data", "empty.ogg"))
+
+
+class TMP4Datatypes(TMP4HasTags):
+    original = os.path.join("tests", "data", "has-tags.m4a")
+
+    def test_has_freeform(self):
+        key = "----:com.apple.iTunes:iTunNORM"
+        self.failUnless(key in self.audio.tags)
+        ff = self.audio.tags[key]
+        self.failUnlessEqual(ff[0].dataformat, MP4FreeForm.FORMAT_TEXT)
+
     def test_has_covr(self):
         self.failUnless('covr' in self.audio.tags)
         covr = self.audio.tags['covr']
@@ -515,11 +559,8 @@ class TMP4HasTags(TMP4):
         self.failUnlessEqual(covr[0].imageformat, MP4Cover.FORMAT_PNG)
         self.failUnlessEqual(covr[1].imageformat, MP4Cover.FORMAT_JPEG)
 
-    def test_not_my_file(self):
-        self.failUnlessRaises(
-            IOError, MP4, os.path.join("tests", "data", "empty.ogg"))
+add(TMP4Datatypes)
 
-add(TMP4HasTags)
 
 class TMP4CovrWithName(TMP4):
     # http://bugs.musicbrainz.org/ticket/5894

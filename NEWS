@@ -33,6 +33,7 @@
  * MP4:
    * Less strict MP4 covr atom parsing. (#86, Lukáš Lalinský)
    * Support atoms that extend to the end of the file. (#109, Sidnei da Silva)
+   * Preserve freeform format flags (#103, Christoph Reiter)
  * OggOpus support. (#115, Christoph Reiter)
  * Musepack:
    * Fix SV7 bitrate calculation (#7, Christoph Reiter)
