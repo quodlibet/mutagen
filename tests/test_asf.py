@@ -3,7 +3,7 @@ import shutil
 from tempfile import mkstemp
 from tests import TestCase, add
 from mutagen.asf import ASF, ASFHeaderError, ASFValue, UNICODE, DWORD, QWORD
-from mutagen.asf import BOOL, WORD, BYTEARRAY
+from mutagen.asf import BOOL, WORD, BYTEARRAY, GUID
 
 class TASFFile(TestCase):
 
@@ -85,6 +85,19 @@ class TASF(TestCase):
         else:
             self.failUnlessEqual(audio[key], result or value)
 
+    def test_contains(self):
+        self.failUnlessEqual("notatag" in self.audio.tags, False)
+
+    def test_inval_type(self):
+        self.failUnlessRaises(ValueError, ASFValue, "", 4242)
+
+    def test_repr(self):
+        repr(ASFValue(u"foo", UNICODE, stream=1, language=2))
+
+    def test_auto_guuid(self):
+        value = ASFValue('\x9eZl}\x89\xa2\xb5D\xb8\xa30\xfe', GUID)
+        self.set_key(u"WM/WMCollectionGroupID", value, [value])
+
     def test_auto_unicode(self):
         self.set_key(u"WM/AlbumTitle", u"foo",
                      [ASFValue(u"foo", UNICODE)])
@@ -92,6 +105,9 @@ class TASF(TestCase):
     def test_auto_unicode_list(self):
         self.set_key(u"WM/AlbumTitle", [u"foo", u"bar"],
                      [ASFValue(u"foo", UNICODE), ASFValue(u"bar", UNICODE)])
+
+    def test_word(self):
+        self.set_key(u"WM/Track", ASFValue(24, WORD), [ASFValue(24, WORD)])
 
     def test_auto_word(self):
         self.set_key(u"WM/Track", 12,

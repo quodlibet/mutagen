@@ -66,6 +66,8 @@ class TMusepack(TestCase):
 
     def test_almost_my_file(self):
         self.failUnlessRaises(
+            MusepackHeaderError, MusepackInfo, StringIO("MP+" + "\x00" * 32))
+        self.failUnlessRaises(
             MusepackHeaderError, MusepackInfo, StringIO("MP+" + "\x00" * 100))
         self.failUnlessRaises(
             MusepackHeaderError, MusepackInfo, StringIO("MPCK" + "\x00" * 100))

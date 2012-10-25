@@ -219,6 +219,11 @@ class TAPEv2(TestCase):
         self.failUnlessEqual(
             self.audio.items(), zip(self.audio.keys(), self.audio.values()))
 
+    def test_invalid_keys(self):
+        self.failUnlessRaises(KeyError, self.audio.__getitem__, "\x00")
+        self.failUnlessRaises(KeyError, self.audio.__setitem__, "\x00", "")
+        self.failUnlessRaises(KeyError, self.audio.__delitem__, "\x00")
+
     def test_dictlike(self):
         self.failUnless(self.audio.get("track"))
         self.failUnless(self.audio.get("Track"))
