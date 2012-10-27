@@ -162,7 +162,7 @@ class ASFUnicodeAttribute(ASFBaseAttribute):
         return self.value.encode("utf-16-le") + "\x00\x00"
 
     def data_size(self):
-        return len(self.value) * 2 + 2
+        return len(self._render())
 
     def __str__(self):
         return self.value

@@ -204,6 +204,10 @@ class TASF(TestCase):
         self.failUnlessEqual(self.audio["QL/Mix"][3].language, None)
         self.failUnlessEqual(self.audio["QL/Mix"][3].stream, None)
 
+    def test_data_size(self):
+        v = ASFValue("", UNICODE, data='4\xd8\x1e\xdd\x00\x00')
+        self.failUnlessEqual(v.data_size(), len(v._render()))
+
 class TASFTags1(TASF):
     original = os.path.join("tests", "data", "silence-1.wma")
 add(TASFTags1)
