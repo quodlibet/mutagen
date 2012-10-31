@@ -28,7 +28,9 @@
      doesn't yet have any ID3 tags. (#89)
  * VComment:
    * Prevent MemoryError when parsing invalid header (#112, Jyrki Pulliainen)
- * ASF: Don't corrupt files on the second save() call (#81, Christoph Reiter)
+ * ASF:
+   * Don't corrupt files on the second save() call (#81, Christoph Reiter)
+   * Always store GUID objects in the MetadataLibraryBlock (#81)
  * OggTheora: Fix length/bitrate calculation. (#99, Christoph Reiter)
  * MP4:
    * Less strict MP4 covr atom parsing. (#86, Lukáš Lalinský)

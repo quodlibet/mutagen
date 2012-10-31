@@ -288,6 +288,15 @@ class TASFLargeValue(TestCase):
         self.failIf("QL/LargeObject" in audio.to_metadata)
         self.failIf("QL/LargeObject" not in dict(audio.to_metadata_library))
 
+    def test_save_guid(self):
+        # http://code.google.com/p/mutagen/issues/detail?id=81
+        audio = ASF(self.filename)
+        audio["QL/GuidObject"] = [ASFValue(" "*16, GUID)]
+        audio.save()
+        self.failIf("QL/GuidObject" in audio.to_extended_content_description)
+        self.failIf("QL/GuidObject" in audio.to_metadata)
+        self.failIf("QL/GuidObject" not in dict(audio.to_metadata_library))
+
 add(TASFLargeValue)
 
 # http://code.google.com/p/mutagen/issues/detail?id=81#c4

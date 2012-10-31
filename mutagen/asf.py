@@ -600,13 +600,13 @@ class ASF(FileType):
         for name, value in self.tags:
             if name in _standard_attribute_names:
                 continue
-            large_value = value.data_size() > 0xFFFF
+            library_only = (value.data_size() > 0xFFFF or value.TYPE == GUID)
             if (value.language is None and value.stream is None and
                 name not in self.to_extended_content_description and
-                not large_value):
+                not library_only):
                 self.to_extended_content_description[name] = value
             elif (value.language is None and value.stream is not None and
-                  name not in self.to_metadata and not large_value):
+                  name not in self.to_metadata and not library_only):
                 self.to_metadata[name] = value
             else:
                 self.to_metadata_library.append((name, value))
