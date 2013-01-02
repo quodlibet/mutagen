@@ -7,7 +7,7 @@
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
 #
-# $Id$
+# $Id: __init__.py 4348 2008-12-02 02:41:15Z piman $
 #
 
 """Mutagen aims to be an all purpose tagging library.

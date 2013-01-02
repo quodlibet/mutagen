@@ -6,7 +6,7 @@
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
 #
-# $Id$
+# $Id: mid3v2 4002 2007-04-15 18:49:32Z piman $
 
 import os
 import sys

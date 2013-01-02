@@ -6,7 +6,7 @@
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.
 #
-# $Id$
+# $Id: optimfrog.py 3923 2006-10-21 15:07:13Z luks $
 
 """OptimFROG audio streams with APEv2 tags.
 

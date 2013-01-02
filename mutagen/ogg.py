@@ -4,7 +4,7 @@
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.
 #
-# $Id$
+# $Id: ogg.py 3975 2007-01-13 21:51:17Z piman $
 
 """Read and write Ogg bitstreams and pages.
 

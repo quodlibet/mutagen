@@ -6,7 +6,7 @@
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.
 #
-# $Id$
+# $Id: wavpack.py 3997 2007-02-25 21:44:53Z piman $
 
 """WavPack reading and writing.
 

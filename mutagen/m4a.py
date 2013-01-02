@@ -4,7 +4,7 @@
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.
 #
-# $Id$
+# $Id: m4a.py 4231 2007-12-15 08:13:53Z luks $
 
 """Read and write MPEG-4 audio files with iTunes metadata.
 

@@ -5,7 +5,7 @@
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.
 #
-# $Id$
+# $Id: asf.py 4224 2007-12-03 09:01:49Z luks $
 
 """Read and write ASF (Window Media Audio) files."""
 

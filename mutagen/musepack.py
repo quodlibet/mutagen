@@ -6,7 +6,7 @@
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.
 #
-# $Id$
+# $Id: musepack.py 4013 2007-04-23 09:18:22Z luks $
 
 """Musepack audio streams with APEv2 tags.
 

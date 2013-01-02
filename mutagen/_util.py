@@ -4,7 +4,7 @@
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.
 #
-# $Id$
+# $Id: _util.py 4218 2007-12-02 06:11:20Z piman $
 
 """Utility classes for Mutagen.
 

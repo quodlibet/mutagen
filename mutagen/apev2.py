@@ -6,7 +6,7 @@
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.
 #
-# $Id$
+# $Id: apev2.py 4008 2007-04-21 04:02:07Z piman $
 
 """APEv2 reading and writing.
 

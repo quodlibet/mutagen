@@ -6,7 +6,7 @@
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.
 #
-# $Id$
+# $Id: oggtheora.py 3976 2007-01-13 22:00:14Z piman $
 
 """Read and write Ogg Theora comments.
 

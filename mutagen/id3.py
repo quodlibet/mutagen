@@ -5,7 +5,7 @@
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
 #
-# $Id$
+# $Id: id3.py 4285 2008-09-06 08:01:31Z piman $
 
 """ID3v2 reading and writing.
 
