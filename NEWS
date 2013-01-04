@@ -1,4 +1,4 @@
-1.16
+1.16 - 2009.06.15
  * Website / code repository move.
  * Bug Fixes:
    * EasyID3: Invalid keys now raise KeyError (and ValueError).
