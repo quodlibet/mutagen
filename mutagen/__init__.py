@@ -19,7 +19,7 @@ depending on tag or format. They may also be entirely different objects
 for certain keys, again depending on format.
 """
 
-version = (1, 20, -1)
+version = (1, 21)
 version_string = ".".join(map(str, version))
 
 import warnings
