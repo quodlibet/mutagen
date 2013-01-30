@@ -10,50 +10,6 @@ from distutils.core import setup, Command
 from distutils.command.clean import clean as distutils_clean
 from distutils.command.sdist import sdist as distutils_sdist
 
-class release(Command):
-    description = "release a new version of Mutagen"
-    user_options = [
-        ("all-the-way", None, "svn commit a new tag")
-        ]
-
-    def initialize_options(self):
-        self.all_the_way = False
-
-    def finalize_options(self):
-        pass
-
-    def rewrite_version(self, target, version):
-        filename = os.path.join(target, "mutagen", "__init__.py")
-        lines = file(filename, "rU").readlines()
-        fileout = file(filename, "w")
-        for line in lines:
-            if line.startswith("version ="):
-                fileout.write("version = %s\n" % repr(version))
-            else:
-                fileout.write(line)
-        fileout.close()
-
-    def run(self):
-        from mutagen import version
-        self.run_command("test")
-        if version[-1] >= 0:
-            raise SystemExit("%r: version number to release." % version)
-        sversion = ".".join(map(str, version[:-1])) 
-        target = "../tags/mutagen-%s" % sversion
-        if os.path.isdir(target):
-            raise SystemExit("%r was already released." % sversion)
-        self.spawn(["svn", "export", os.getcwd(), target])
-        self.spawn(["svn", "add", target])
-
-        self.rewrite_version(target, version[:-1])
-
-        if self.all_the_way:
-            self.spawn(
-                ["svn", "commit", "-m", "Mutagen %s." % sversion, target])
-            os.chdir(target)
-            print "Building release tarball."
-            self.spawn(["./setup.py", "sdist"])
-            self.spawn(["./setup.py", "register"])
 
 class clean(distutils_clean):
     def run(self):
@@ -205,7 +161,7 @@ else:
 if __name__ == "__main__":
     from mutagen import version_string
     setup(cmdclass={'clean': clean, 'test': test_cmd, 'coverage': coverage_cmd,
-                    "sdist": sdist, "release": release},
+                    "sdist": sdist},
           name="mutagen", version=version_string,
           url="http://code.google.com/p/mutagen/",
           description="read and write audio tags for many formats",
