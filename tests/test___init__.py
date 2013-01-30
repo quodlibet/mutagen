@@ -218,23 +218,3 @@ class TFileUpperExt(TestCase):
             os.unlink(path)
 
 add(TFileUpperExt)
-
-class TMutagen(TestCase):
-    uses_mmap = False
-
-    def test_not_prerelease(self):
-        from mutagen import version
-        from os.path import dirname, basename, abspath
-        trunk = dirname(dirname(abspath(__file__)))
-        definitely_trunk = os.path.join(trunk, "..", "trunk")
-        if os.path.isdir(definitely_trunk):
-            if basename(trunk) != "trunk":
-                self.failIf(
-                    version[-1] < 0, "mutagen.version is a prerelease.")
-            else:
-                self.failIf(
-                    version[-1] >= 0, "mutagen.version is not a prerelease.")
-        else:
-            print "WARNING: Unable to check version correctness."
-            print "WARNING: %r does not exist." % definitely_trunk
-add(TMutagen)
