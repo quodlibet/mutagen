@@ -477,6 +477,8 @@ class TOggFileType(TestCase):
             self.failIf(value and value != NOTFOUND,
                         "ogginfo failed on %s" % filename)
         if have_oggz_validate:
+            if filename.endswith(".opus") and not have_oggz_validate_opus:
+                return
             value = os.system(
                 "oggz-validate %s > %s" % (filename, devnull))
             self.failIf(value and value != NOTFOUND,
@@ -520,6 +522,18 @@ if os.system("ogginfo 2> %s > %s" % (devnull, devnull)) == NOTFOUND:
     have_ogginfo = False
     print "WARNING: Skipping ogginfo reference tests."
 have_oggz_validate = True
+have_oggz_validate_opus = True
 if os.system("oggz-validate 2> %s > %s" % (devnull, devnull)) == NOTFOUND:
     have_oggz_validate = False
     print "WARNING: Skipping oggz-validate reference tests."
+else:
+    f = os.popen("oggz-validate --version")
+    try:
+        version_string = f.read()
+        version_part = version_string.split()[-1]
+        version = tuple(map(int, version_part.split(".")))
+        if version <= (0, 9, 9):
+            have_oggz_validate_opus = False
+            print "WARNING: Skipping oggz-validate reference tests for opus"
+    finally:
+        f.close()
