@@ -1,3 +1,5 @@
+1.22
+
 1.21 - 2013.01.30
  * Fix Python 2.3 compatibility (broken in 1.19).
  * Fix many warnings triggered by -3. (#27)
