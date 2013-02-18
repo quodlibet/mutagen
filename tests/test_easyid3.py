@@ -154,6 +154,10 @@ class TEasyID3(TestCase):
         self.id3["performer:foo"] = "Joe"
         self.failUnlessRaises(KeyError, self.id3.__delitem__, "performer:bar")
 
+    def test_txxx_empty(self):
+        # http://code.google.com/p/mutagen/issues/detail?id=135
+        self.id3["asin"] = ""
+
     def test_txxx_set_get(self):
         self.failIf("asin" in self.id3.keys())
         self.id3["asin"] = "Hello"
