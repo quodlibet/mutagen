@@ -26,8 +26,9 @@ class OggOpusInfo(object):
     """Ogg Opus stream information.
 
     Attributes:
-    length - file length in seconds, as a float
-    channels - number of channels
+
+    * length - file length in seconds, as a float
+    * channels - number of channels
     """
 
     length = 0

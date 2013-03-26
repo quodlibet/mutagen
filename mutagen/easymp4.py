@@ -66,7 +66,8 @@ class EasyMP4Tags(DictMixin, Metadata):
 
         If the key you need to register is a simple one-to-one mapping
         of MP4 atom name to EasyMP4Tags key, then you can use this
-        function:
+        function::
+
             EasyMP4Tags.RegisterTextKey("artist", "\xa9ART")
         """
         def getter(tags, key):
@@ -133,7 +134,8 @@ class EasyMP4Tags(DictMixin, Metadata):
 
         If the key you need to register is a simple one-to-one mapping
         of MP4 freeform atom (----) and name to EasyMP4Tags key, then
-        you can use this function:
+        you can use this function::
+
             EasyMP4Tags.RegisterFreeformKey(
                 "musicbrainz_artistid", "MusicBrainz Artist Id")
         """

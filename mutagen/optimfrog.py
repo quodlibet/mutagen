@@ -31,9 +31,10 @@ class OptimFROGInfo(object):
     """OptimFROG stream information.
 
     Attributes:
-    channels - number of audio channels
-    length - file length in seconds, as a float
-    sample_rate - audio sampling rate in Hz
+
+    * channels - number of audio channels
+    * length - file length in seconds, as a float
+    * sample_rate - audio sampling rate in Hz
     """
 
     def __init__(self, fileobj):

@@ -10,6 +10,8 @@
 
 """Mutagen aims to be an all purpose tagging library.
 
+::
+
     import mutagen.[format]
     metadata = mutagen.[format].Open(filename)
 
@@ -49,8 +51,9 @@ class FileType(mutagen._util.DictMixin):
     """An abstract object wrapping tags and audio stream information.
 
     Attributes:
-    info -- stream information (length, bitrate, sample rate)
-    tags -- metadata tags, if any
+
+    * info -- stream information (length, bitrate, sample rate)
+    * tags -- metadata tags, if any
 
     Each file format has different potential tags and stream
     information.

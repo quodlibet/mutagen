@@ -28,10 +28,11 @@ class WavPackInfo(object):
     """WavPack stream information.
 
     Attributes:
-    channels - number of audio channels (1 or 2)
-    length - file length in seconds, as a float
-    sample_rate - audio sampling rate in Hz
-    version - WavPack stream version
+
+    * channels - number of audio channels (1 or 2)
+    * length - file length in seconds, as a float
+    * sample_rate - audio sampling rate in Hz
+    * version - WavPack stream version
     """
 
     def __init__(self, fileobj):

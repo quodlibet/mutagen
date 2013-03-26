@@ -36,8 +36,9 @@ class OggFLACStreamInfo(StreamInfo):
     block, as well as the Ogg codec setup that precedes it.
 
     Attributes (in addition to StreamInfo's):
-    packets -- number of metadata packets
-    serial -- Ogg logical stream serial number
+
+    * packets -- number of metadata packets
+    * serial -- Ogg logical stream serial number
     """
 
     packets = 0

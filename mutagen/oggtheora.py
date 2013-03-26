@@ -31,8 +31,9 @@ class OggTheoraInfo(object):
     """Ogg Theora stream information.
 
     Attributes:
-    length - file length in seconds, as a float
-    fps - video frames per second, as a float
+
+    * length - file length in seconds, as a float
+    * fps - video frames per second, as a float
     """
 
     length = 0

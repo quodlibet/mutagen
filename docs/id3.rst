@@ -8,7 +8,7 @@ ID3
 ---
 
 .. autoclass:: mutagen.id3.ID3
-    :show-inheritance: mutagen.Metadata
+    :show-inheritance:
     :members:
 
 .. autoclass:: mutagen.id3.ID3FileType
@@ -46,6 +46,7 @@ MP3
 .. autoclass:: mutagen.mp3.EasyMP3
     :show-inheritance:
     :members:
+    :exclude-members: ID3
 
 
 TrueAudio
@@ -63,3 +64,4 @@ TrueAudio
 .. autoclass:: mutagen.trueaudio.EasyTrueAudio
     :show-inheritance:
     :members:
+    :exclude-members: ID3

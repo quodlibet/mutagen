@@ -44,18 +44,21 @@ class EasyID3(DictMixin, Metadata):
     keys. These can be set on EasyID3 or on individual instances after
     creation.
 
-    To use an EasyID3 class with mutagen.mp3.MP3:
+    To use an EasyID3 class with mutagen.mp3.MP3::
+
         from mutagen.mp3 import EasyMP3 as MP3
         MP3(filename)
 
     Because many of the attributes are constructed on the fly, things
-    like the following will not work:
+    like the following will not work::
+
         ezid3["performer"].append("Joe")
-    Instead, you must do:
+
+    Instead, you must do::
+
         values = ezid3["performer"]
         values.append("Joe")
         ezid3["performer"] = values
-
 
     """
 
@@ -106,7 +109,8 @@ class EasyID3(DictMixin, Metadata):
 
         If the key you need to register is a simple one-to-one mapping
         of ID3 frame name to EasyID3 key, then you can use this
-        function:
+        function::
+
             EasyID3.RegisterTextKey("title", "TIT2")
         """
         def getter(id3, key):
@@ -132,8 +136,9 @@ class EasyID3(DictMixin, Metadata):
 
         Some ID3 tags are stored in TXXX frames, which allow a
         freeform 'description' which acts as a subkey,
-        e.g. TXXX:BARCODE.
-            EasyID3.RegisterTXXXKey('barcode', 'BARCODE').        
+        e.g. TXXX:BARCODE.::
+
+            EasyID3.RegisterTXXXKey('barcode', 'BARCODE').
         """
         frameid = "TXXX:" + desc
         def getter(id3, key):

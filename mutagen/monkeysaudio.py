@@ -29,11 +29,12 @@ class MonkeysAudioInfo(object):
     """Monkey's Audio stream information.
 
     Attributes:
-    channels -- number of audio channels
-    length -- file length in seconds, as a float
-    sample_rate -- audio sampling rate in Hz
-    bits_per_sample -- bits per sample
-    version -- Monkey's Audio stream version, as a float (eg: 3.99)
+
+    * channels -- number of audio channels
+    * length -- file length in seconds, as a float
+    * sample_rate -- audio sampling rate in Hz
+    * bits_per_sample -- bits per sample
+    * version -- Monkey's Audio stream version, as a float (eg: 3.99)
     """
 
     def __init__(self, fileobj):

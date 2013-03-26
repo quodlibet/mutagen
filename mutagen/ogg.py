@@ -40,13 +40,14 @@ class OggPage(object):
     to the start of the next page.
 
     Attributes:
-    version -- stream structure version (currently always 0)
-    position -- absolute stream position (default -1)
-    serial -- logical stream serial number (default 0)
-    sequence -- page sequence number within logical stream (default 0)
-    offset -- offset this page was read from (default None)
-    complete -- if the last packet on this page is complete (default True)
-    packets -- list of raw packet data (default [])
+
+    * version -- stream structure version (currently always 0)
+    * position -- absolute stream position (default -1)
+    * serial -- logical stream serial number (default 0)
+    * sequence -- page sequence number within logical stream (default 0)
+    * offset -- offset this page was read from (default None)
+    * complete -- if the last packet on this page is complete (default True)
+    * packets -- list of raw packet data (default [])
 
     Note that if 'complete' is false, the next page's 'continued'
     property must be true (so set both when constructing pages).

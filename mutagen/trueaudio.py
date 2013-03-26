@@ -26,8 +26,9 @@ class TrueAudioInfo(object):
     """True Audio stream information.
 
     Attributes:
-    length - audio length, in seconds
-    sample_rate - audio sample rate, in Hz
+
+    * length - audio length, in seconds
+    * sample_rate - audio sample rate, in Hz
     """
 
     def __init__(self, fileobj, offset):

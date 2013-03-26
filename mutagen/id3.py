@@ -10,11 +10,12 @@
 """ID3v2 reading and writing.
 
 This is based off of the following references:
-   http://www.id3.org/id3v2.4.0-structure.txt
-   http://www.id3.org/id3v2.4.0-frames.txt
-   http://www.id3.org/id3v2.3.0.html
-   http://www.id3.org/id3v2-00.txt
-   http://www.id3.org/id3v1.html
+
+* http://www.id3.org/id3v2.4.0-structure.txt
+* http://www.id3.org/id3v2.4.0-frames.txt
+* http://www.id3.org/id3v2.3.0.html
+* http://www.id3.org/id3v2-00.txt
+* http://www.id3.org/id3v1.html
 
 Its largest deviation from the above (versions 2.3 and 2.2) is that it
 will not interpret the / characters as a separator, and will almost
@@ -57,9 +58,10 @@ class ID3(DictProxy, mutagen.Metadata):
     """A file with an ID3v2 tag.
 
     Attributes:
-    version -- ID3 tag version as a tuple
-    unknown_frames -- raw frame data of any unknown frames found
-    size -- the total size of the ID3 tag, including the header
+
+    * version -- ID3 tag version as a tuple
+    * unknown_frames -- raw frame data of any unknown frames found
+    * size -- the total size of the ID3 tag, including the header
     """
 
     PEDANTIC = True
@@ -93,13 +95,15 @@ class ID3(DictProxy, mutagen.Metadata):
         """Load tags from a filename.
 
         Keyword arguments:
-        filename -- filename to load tag data from
-        known_frames -- dict mapping frame IDs to Frame objects
-        translate -- Update all tags to ID3v2.4 internally. Mutagen is
-                     only capable of writing ID3v2.4 tags, so if you
-                     intend to save, this must be true.
 
-        Example of loading a custom frame:
+        * filename -- filename to load tag data from
+        * known_frames -- dict mapping frame IDs to Frame objects
+        * translate -- Update all tags to ID3v2.4 internally. Mutagen is
+                       only capable of writing ID3v2.4 tags, so if you
+                       intend to save, this must be true.
+
+        Example of loading a custom frame::
+
             my_frames = dict(mutagen.id3.Frames)
             class XMYF(Frame): ...
             my_frames["XMYF"] = XMYF
@@ -149,7 +153,8 @@ class ID3(DictProxy, mutagen.Metadata):
     def getall(self, key):
         """Return all frames with a given name (the list may be empty).
 
-        This is best explained by examples:
+        This is best explained by examples::
+
             id3.getall('TIT2') == [id3['TIT2']]
             id3.getall('TTTT') == []
             id3.getall('TXXX') == [TXXX(desc='woo', text='bar'),
@@ -157,7 +162,7 @@ class ID3(DictProxy, mutagen.Metadata):
 
         Since this is based on the frame's HashKey, which is
         colon-separated, you can use it to do things like
-        getall('COMM:MusicMatch') or getall('TXXX:QuodLibet:').
+        ``getall('COMM:MusicMatch')`` or ``getall('TXXX:QuodLibet:')``.
         """
         if key in self: return [self[key]]
         else:
@@ -183,9 +188,10 @@ class ID3(DictProxy, mutagen.Metadata):
 
         "Human-readable" is used loosely here. The format is intended
         to mirror that used for Vorbis or APEv2 output, e.g.
-            TIT2=My Title
+            ``TIT2=My Title``
+
         However, ID3 frames can have multiple keys:
-            POPM=user@example.org=3 128/255
+            ``POPM=user@example.org=3 128/255``
         """
         frames = list(map(Frame.pprint, self.values()))
         frames.sort()
@@ -352,6 +358,7 @@ class ID3(DictProxy, mutagen.Metadata):
         If no filename is given, the one most recently loaded is used.
 
         Keyword arguments:
+
         v1 -- if 0, ID3v1 tags will be removed
               if 1, ID3v1 tags will be updated but not added
               if 2, ID3v1 tags will be created and/or updated
@@ -446,8 +453,9 @@ class ID3(DictProxy, mutagen.Metadata):
         If no filename is given, the one most recently loaded is used.
 
         Keyword arguments:
-        delete_v1 -- delete any ID3v1 tag
-        delete_v2 -- delete any ID3v2 tag
+
+        * delete_v1 -- delete any ID3v1 tag
+        * delete_v2 -- delete any ID3v2 tag
         """
         if filename is None:
             filename = self.filename
@@ -554,8 +562,9 @@ def delete(filename, delete_v1=True, delete_v2=True):
     """Remove tags from a file.
 
     Keyword arguments:
-    delete_v1 -- delete any ID3v1 tag
-    delete_v2 -- delete any ID3v2 tag
+
+    * delete_v1 -- delete any ID3v1 tag
+    * delete_v2 -- delete any ID3v2 tag
     """
 
     f = open(filename, 'rb+')

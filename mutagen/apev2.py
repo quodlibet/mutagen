@@ -263,7 +263,8 @@ class APEv2(DictMixin, Metadata):
         If you need to force a specific type of value (e.g. binary
         data that also happens to be valid UTF-8, or an external
         reference), use the APEValue factory and set the value to the
-        result of that:
+        result of that::
+
             from mutagen.apev2 import APEValue, EXTERNAL
             tag['Website'] = APEValue('http://example.org', EXTERNAL)
         """

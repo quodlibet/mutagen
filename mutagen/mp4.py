@@ -13,11 +13,13 @@ as found in Apple's MP4 (aka M4A, M4B, M4P) files.
 
 There is no official specification for this format. The source code
 for TagLib, FAAD, and various MPEG specifications at
-http://developer.apple.com/documentation/QuickTime/QTFF/,
-http://www.geocities.com/xhelmboyx/quicktime/formats/mp4-layout.txt,
-http://standards.iso.org/ittf/PubliclyAvailableStandards/c041828_ISO_IEC_14496-12_2005(E).zip,
-and http://wiki.multimedia.cx/index.php?title=Apple_QuickTime were all
-consulted.
+
+* http://developer.apple.com/documentation/QuickTime/QTFF/
+* http://www.geocities.com/xhelmboyx/quicktime/formats/mp4-layout.txt
+* http://standards.iso.org/ittf/PubliclyAvailableStandards/c041828_ISO_IEC_14496-12_2005(E).zip
+* http://wiki.multimedia.cx/index.php?title=Apple_QuickTime
+
+were all consulted.
 """
 
 import struct
@@ -44,7 +46,8 @@ class MP4Cover(str):
     """A cover artwork.
     
     Attributes:
-    imageformat -- format of the image (either FORMAT_JPEG or FORMAT_PNG)
+
+    * imageformat -- format of the image (either FORMAT_JPEG or FORMAT_PNG)
     """
     FORMAT_JPEG = 0x0D
     FORMAT_PNG = 0x0E
@@ -63,7 +66,8 @@ class MP4FreeForm(str):
     """A freeform value.
     
     Attributes:
-    dataformat -- format of the data (either FORMAT_TEXT or FORMAT_DATA)
+
+    * dataformat -- format of the data (either FORMAT_TEXT or FORMAT_DATA)
     """
     FORMAT_DATA = 0x0
     FORMAT_TEXT = 0x1
@@ -617,11 +621,12 @@ class MP4Info(object):
     """MPEG-4 stream information.
 
     Attributes:
-    bitrate -- bitrate in bits per second, as an int
-    length -- file length in seconds, as a float
-    channels -- number of audio channels
-    sample_rate -- audio sampling rate in Hz
-    bits_per_sample -- bits per sample
+
+    * bitrate -- bitrate in bits per second, as an int
+    * length -- file length in seconds, as a float
+    * channels -- number of audio channels
+    * sample_rate -- audio sampling rate in Hz
+    * bits_per_sample -- bits per sample
     """
 
     bitrate = 0

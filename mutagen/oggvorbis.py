@@ -31,8 +31,9 @@ class OggVorbisInfo(object):
     """Ogg Vorbis stream information.
 
     Attributes:
-    length - file length in seconds, as a float
-    bitrate - nominal ('average') bitrate in bits per second, as an int
+
+    * length - file length in seconds, as a float
+    * bitrate - nominal ('average') bitrate in bits per second, as an int
     """
 
     length = 0

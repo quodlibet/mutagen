@@ -20,6 +20,10 @@ MP4
 .. autoclass:: mutagen.mp4.MP4FreeForm
     :members:
 
+.. autofunction:: mutagen.mp4.Open
+
+.. autofunction:: mutagen.mp4.delete
+
 EasyMP4
 -------
 

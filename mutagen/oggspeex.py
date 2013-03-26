@@ -32,9 +32,10 @@ class OggSpeexInfo(object):
     """Ogg Speex stream information.
 
     Attributes:
-    bitrate - nominal bitrate in bits per second
-    channels - number of channels
-    length - file length in seconds, as a float
+
+    * bitrate - nominal bitrate in bits per second
+    * channels - number of channels
+    * length - file length in seconds, as a float
 
     The reference encoder does not set the bitrate; in this case,
     the bitrate will be 0.

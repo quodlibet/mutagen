@@ -31,17 +31,19 @@ class MPEGInfo(object):
     http://www.dv.co.yu/mpgscript/mpeghdr.htm.
 
     Useful attributes:
-    length -- audio length, in seconds
-    bitrate -- audio bitrate, in bits per second
-    sketchy -- if true, the file may not be valid MPEG audio
+
+    * length -- audio length, in seconds
+    * bitrate -- audio bitrate, in bits per second
+    * sketchy -- if true, the file may not be valid MPEG audio
 
     Useless attributes:
-    version -- MPEG version (1, 2, 2.5)
-    layer -- 1, 2, or 3
-    mode -- One of STEREO, JOINTSTEREO, DUALCHANNEL, or MONO (0-3)
-    protected -- whether or not the file is "protected"
-    padding -- whether or not audio frames are padded
-    sample_rate -- audio sample rate, in Hz
+
+    * version -- MPEG version (1, 2, 2.5)
+    * layer -- 1, 2, or 3
+    * mode -- One of STEREO, JOINTSTEREO, DUALCHANNEL, or MONO (0-3)
+    * protected -- whether or not the file is "protected"
+    * padding -- whether or not audio frames are padded
+    * sample_rate -- audio sample rate, in Hz
     """
 
     # Map (version, layer) tuples to bitrates.
