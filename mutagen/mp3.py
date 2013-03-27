@@ -28,7 +28,7 @@ class MPEGInfo(object):
     Xing VBR header format.
 
     This code was implemented based on the format documentation at
-    http://www.dv.co.yu/mpgscript/mpeghdr.htm.
+    http://mpgedit.org/mpgedit/mpeg_format/mpeghdr.htm.
 
     Useful attributes:
 

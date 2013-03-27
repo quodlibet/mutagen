@@ -6,7 +6,8 @@ Ogg bitstreams and pages
 ------------------------
 
 .. automodule:: mutagen.ogg
-    :members: error
+
+.. autoclass:: mutagen.ogg.error
 
 .. autoclass:: mutagen.ogg.OggFileType
     :show-inheritance:

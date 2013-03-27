@@ -11,11 +11,11 @@
 
 This is based off of the following references:
 
-* http://www.id3.org/id3v2.4.0-structure.txt
-* http://www.id3.org/id3v2.4.0-frames.txt
-* http://www.id3.org/id3v2.3.0.html
-* http://www.id3.org/id3v2-00.txt
-* http://www.id3.org/id3v1.html
+* http://id3.org/id3v2.4.0-structure
+* http://id3.org/id3v2.4.0-frames
+* http://id3.org/id3v2.3.0
+* http://id3.org/id3v2-00
+* http://id3.org/ID3v1
 
 Its largest deviation from the above (versions 2.3 and 2.2) is that it
 will not interpret the / characters as a separator, and will almost
@@ -188,9 +188,11 @@ class ID3(DictProxy, mutagen.Metadata):
 
         "Human-readable" is used loosely here. The format is intended
         to mirror that used for Vorbis or APEv2 output, e.g.
+
             ``TIT2=My Title``
 
         However, ID3 frames can have multiple keys:
+
             ``POPM=user@example.org=3 128/255``
         """
         frames = list(map(Frame.pprint, self.values()))
@@ -1211,7 +1213,8 @@ class TextFrame(Frame):
 class NumericTextFrame(TextFrame):
     """Numerical text strings.
 
-    The numeric value of these frames can be gotten with unary plus, e.g.
+    The numeric value of these frames can be gotten with unary plus, e.g.::
+
         frame = TLEN('12345')
         length = +frame
     """
@@ -1227,7 +1230,8 @@ class NumericPartTextFrame(TextFrame):
     """Multivalue numerical text strings.
 
     These strings indicate 'part (e.g. track) X of Y', and unary plus
-    returns the first value:
+    returns the first value::
+
         frame = TRCK('4/15')
         track = +frame # track == 4
     """
@@ -1418,7 +1422,8 @@ class PairedTextFrame(Frame):
 
     Some ID3 frames pair text strings, to associate names with a more
     specific involvement in the song. The 'people' attribute of these
-    frames contains a list of pairs:
+    frames contains a list of pairs::
+
         [['trumpet', 'Miles Davis'], ['bass', 'Paul Chambers']]
 
     Like text frames, these frames also have an encoding attribute.
@@ -1527,10 +1532,11 @@ class RVA2(Frame):
     particular, normalization using ReplayGain.
 
     Attributes:
-    desc -- description or context of this adjustment
-    channel -- audio channel to adjust (master is 1)
-    gain -- a + or - dB gain relative to some reference level
-    peak -- peak of the audio as a floating point number, [0, 1]
+
+    * desc -- description or context of this adjustment
+    * channel -- audio channel to adjust (master is 1)
+    * gain -- a + or - dB gain relative to some reference level
+    * peak -- peak of the audio as a floating point number, [0, 1]
 
     When storing ReplayGain tags, use descriptions of 'album' and
     'track' on channel 1.
@@ -1587,11 +1593,12 @@ class APIC(Frame):
     """Attached (or linked) Picture.
 
     Attributes:
-    encoding -- text encoding for the description
-    mime -- a MIME type (e.g. image/jpeg) or '-->' if the data is a URI
-    type -- the source of the image (3 is the album front cover)
-    desc -- a text description of the image
-    data -- raw image data, as a byte string
+
+    * encoding -- text encoding for the description
+    * mime -- a MIME type (e.g. image/jpeg) or '-->' if the data is a URI
+    * type -- the source of the image (3 is the album front cover)
+    * desc -- a text description of the image
+    * data -- raw image data, as a byte string
 
     Mutagen will automatically compress large images when saving tags.
     """
@@ -1626,9 +1633,10 @@ class POPM(FrameOpt):
     address.
 
     Attributes:
-    email -- email this POPM frame is for
-    rating -- rating from 0 to 255
-    count -- number of times the files has been played (optional)
+
+    * email -- email this POPM frame is for
+    * rating -- rating from 0 to 255
+    * count -- number of times the files has been played (optional)
     """
     _framespec = [ Latin1TextSpec('email'), ByteSpec('rating') ]
     _optionalspec = [ IntegerSpec('count') ]
@@ -1647,11 +1655,12 @@ class GEOB(Frame):
     A blob of binary data, that is not a picture (those go in APIC).
 
     Attributes:
-    encoding -- encoding of the description
-    mime -- MIME type of the data or '-->' if the data is a URI
-    filename -- suggested filename if extracted
-    desc -- text description of the data
-    data -- raw data, as a byte string
+
+    * encoding -- encoding of the description
+    * mime -- MIME type of the data or '-->' if the data is a URI
+    * filename -- suggested filename if extracted
+    * desc -- text description of the data
+    * data -- raw data, as a byte string
     """
     _framespec = [ EncodingSpec('encoding'), Latin1TextSpec('mime'),
         EncodedTextSpec('filename'), EncodedTextSpec('desc'), 
@@ -1665,9 +1674,10 @@ class RBUF(FrameOpt):
     """Recommended buffer size.
 
     Attributes:
-    size -- recommended buffer size in bytes
-    info -- if ID3 tags may be elsewhere in the file (optional)
-    offset -- the location of the next ID3 tag, if any
+
+    * size -- recommended buffer size in bytes
+    * info -- if ID3 tags may be elsewhere in the file (optional)
+    * offset -- the location of the next ID3 tag, if any
 
     Mutagen will not find the next tag itself.
     """
@@ -1682,10 +1692,11 @@ class AENC(FrameOpt):
     """Audio encryption.
 
     Attributes:
-    owner -- key identifying this encryption type
-    preview_start -- unencrypted data block offset
-    preview_length -- number of unencrypted blocks
-    data -- data required for decryption (optional)
+
+    * owner -- key identifying this encryption type
+    * preview_start -- unencrypted data block offset
+    * preview_length -- number of unencrypted blocks
+    * data -- data required for decryption (optional)
 
     Mutagen cannot decrypt files.
     """
@@ -1704,9 +1715,10 @@ class LINK(FrameOpt):
     """Linked information.
 
     Attributes:
-    frameid -- the ID of the linked frame
-    url -- the location of the linked frame
-    data -- further ID information for the frame
+
+    * frameid -- the ID of the linked frame
+    * url -- the location of the linked frame
+    * data -- further ID information for the frame
     """
 
     _framespec = [ StringSpec('frameid', 4), Latin1TextSpec('url') ]
@@ -1727,8 +1739,9 @@ class POSS(Frame):
     """Position synchronisation frame
 
     Attribute:
-    format -- format of the position attribute (frames or milliseconds)
-    position -- current position of the file
+
+    * format -- format of the position attribute (frames or milliseconds)
+    * position -- current position of the file
     """
     _framespec = [ ByteSpec('format'), IntegerSpec('position') ]
 
@@ -1740,8 +1753,9 @@ class UFID(Frame):
     """Unique file identifier.
 
     Attributes:
-    owner -- format/type of identifier
-    data -- identifier
+
+    * owner -- format/type of identifier
+    * data -- identifier
     """
 
     _framespec = [ Latin1TextSpec('owner'), BinaryDataSpec('data') ]
@@ -1759,9 +1773,10 @@ class USER(Frame):
     """Terms of use.
 
     Attributes:
-    encoding -- text encoding
-    lang -- ISO three letter language code
-    text -- licensing terms for the audio
+
+    * encoding -- text encoding
+    * lang -- ISO three letter language code
+    * text -- licensing terms for the audio
     """
     _framespec = [ EncodingSpec('encoding'), StringSpec('lang', 3),
         EncodedTextSpec('text') ]

@@ -4,6 +4,15 @@ ID3v2
 .. automodule:: mutagen.id3
 
 
+ID3 Frames
+----------
+
+.. toctree::
+    :titlesonly:
+
+    id3_frames
+
+
 ID3
 ---
 
