@@ -1,138 +1,88 @@
-Welcome to mutagen's documentation!
-===================================
-
-.. automodule:: mutagen
-
-.. autofunction:: mutagen.File
-
-Modules
--------
+Mutagen Documentation
+=====================
 
 .. toctree::
-    base
-    id3
-    ogg
-    ape
-    mp4
-    musepack
-    asf
+    :titlesonly:
+    :maxdepth: 2
 
-Mutagen Tutorial
+    tutorial
+    api_notes
+    bugs
+    api/index
+
+What is Mutagen?
 ----------------
 
-There are two different ways to load files in Mutagen, but both
-provide similar interfaces. The first is the :class:`Metadata` API, which deals
-only in metadata tags. The second is the :class:`FileType` API, which is a
-superset of the :class:`Metadata` API, and contains information about the audio
-data itself.
+Mutagen is a Python module to handle audio metadata. It supports ASF, FLAC, 
+M4A, Monkey's Audio, MP3, Musepack, Ogg Opus, Ogg FLAC, Ogg Speex, Ogg 
+Theora, Ogg Vorbis, True Audio, WavPack and OptimFROG audio files. All 
+versions of ID3v2 are supported, and all standard ID3v2.4 frames are 
+parsed. It can read Xing headers to accurately calculate the bitrate and 
+length of MP3s. ID3 and APEv2 tags can be edited regardless of audio 
+format. It can also manipulate Ogg streams on an individual packet/page 
+level.
 
-Both :class:`Metadata` and :class:`FileType` objects present a dict-like interface to
-edit tags. :class:`FileType` objects also have an 'info' attribute that gives
-information about the song length, as well as per-format
-information. In addition, both support the load(filename),
-save(filename), and delete(filename) instance methods; if no filename
-is given to save or delete, the last loaded filename is used.
+Mutagen works on Python 2.3+ / PyPy and has no dependencies outside the
+CPython standard library.
 
-This tutorial is only an outline of Mutagen's API. For the full
-details, you should read the docstrings (pydoc mutagen) or source
-code.
+There is a :doc:`brief tutorial with several API examples. 
+<tutorial>`
 
-Easy Examples
-^^^^^^^^^^^^^
+Where do I get it?
+------------------
 
-The following code loads a file, sets its title, prints all tag data,
-then saves the file, first on a FLAC file, then on a Musepack
-file. The code is almost identical.
+Mutagen is hosted on `Google Code <http://code.google.com/p/mutagen/>`_ and 
+`Bitbucket <http://bitbucket.org/lazka/mutagen>`_. The `download page 
+<http://code.google.com/p/mutagen/downloads>`_ will have the latest version 
+or check out the Mercurial repository::
 
-::
+    $ hg clone https://code.google.com/p/mutagen
+    $ hg clone https://bitbucket.org/lazka/mutagen
 
-      from mutagen.flac import FLAC
-      audio = FLAC("example.flac")
-      audio["title"] = "An example"
-      audio.pprint()
-      audio.save()
+Why Mutagen?
+------------
 
-::
+Quod Libet has more strenuous requirements in a tagging library than most 
+programs that deal with tags. Furthermore, most tagging libraries suck. 
+Therefore we felt it was necessary to write our own.
 
-      from mutagen.apev2 import APEv2
-      audio = APEv2("example.mpc")
-      audio["title"] = "An example"
-      audio.pprint()
-      audio.save()
+* Mutagen has a simple API, that is roughly the same across all tag formats
+  and versions and integrates into Python's builtin types and interfaces.
+* New frame types and file formats are easily added, and the behavior of the
+  current formats can be changed by extending them.
+* Freeform keys, multiple values, Unicode, and other advanced features were
+  considered from the start and are fully supported.
+* All ID3v2 versions and all ID3v2.4 frames are covered, including rare ones
+  like POPM or RVA2.
+* We take automated testing very seriously. All bug fixes are commited with a
+  test that prevents them from recurring, and new features are committed with
+  a full test suite. 
 
-The following example gets the length and bitrate of an MP3 file::
+Real World Use
+--------------
 
-    from mutagen.mp3 import MP3
-    audio = MP3("example.mp3")
-    print audio.info.length, audio.info.bitrate
+Mutagen can load nearly every MP3 we have thrown at it (when it hasn't, we 
+make it do so). Scripts are included so you can run the same tests on your 
+collection.
 
-The following deletes an ID3 tag from an MP3 file::
+The following software projects are using Mutagen for tagging:
 
-    from mutagen.id3 import ID3
-    audio = ID3("example.mp3")
-    audio.delete()
+* `Ex Falso and Quod Libet <http://code.google.com/p/quodlibet/>`_, a flexible tagger and player
+* `Beets <http://beets.radbox.org/>`_, a music library manager and MusicBrainz tagger
+* `Picard <http://musicbrainz.org/doc/PicardQt>`_, cross-platform MusicBrainz tagger
+* `Puddletag <http://puddletag.sourceforge.net/>`_, an audio tag editor
+* `Listen <http://listengnome.free.fr/>`_, a music player for GNOME
+* `Exaile <http://www.exaile.org/>`_, a media player aiming to be similar to KDE's AmaroK, but for GTK+
+* `ZOMG <http://zomg.alioth.debian.org/>`_, a command-line player for ZSH
+* `pytagsfs <http://www.pytagsfs.org/>`_, virtual file system for organizing media files by metadata
+* Debian's version of `JACK <http://jack.sourceforge.net/>`_, an audio CD ripper, uses Mutagen to tag FLACs
+* Amarok's replaygain `script <http://www.kde-apps.org/content/show.php?content=26073>`_
 
-Hard Examples: ID3
-^^^^^^^^^^^^^^^^^^
+Contact
+-------
 
-Unlike Vorbis, FLAC, and APEv2 comments, ID3 data is highly
-structured. Because of this, the interface for ID3 tags is very
-different from the APEv2 or Vorbis/FLAC interface. For example, to set
-the title of an ID3 tag, you need to do the following::
-
-    from mutagen.id3 import ID3, TIT2
-    audio = ID3("example.mp3")
-    audio.add(TIT2(encoding=3, text=u"An example"))
-    audio.save()
-
-If you use the ID3 module, you should familiarize yourself with how
-ID3v2 tags are stored, by reading the the details of the ID3v2
-standard at http://www.id3.org/develop.html.
-
-
-Easy ID3
-^^^^^^^^
-
-Since reading standards is hard, Mutagen also provides a simpler ID3
-interface.
-
-::
-
-    from mutagen.easyid3 import EasyID3
-    audio = EasyID3("example.mp3")
-    audio["title"] = u"An example"
-    audio.save()
-
-Because of the simpler interface, only a few keys can be edited by
-EasyID3; to see them, use::
-
-    from mutagen.easyid3 import EasyID3
-    print EasyID3.valid_keys.keys()
-
-By default, mutagen.mp3.MP3 uses the real ID3 class. You can make it
-use EasyID3 as follows::
-
-    from mutagen.easyid3 import EasyID3
-    from mutagen.mp3 import MP3
-    audio = MP3("example.mp3", ID3=EasyID3)
-    audio.pprint()
-
-Unicode
-^^^^^^^
-
-Mutagen has full Unicode support for all formats. When you assign text
-strings, we strongly recommend using Python unicode objects rather
-than str objects. If you use str objects, Mutagen will assume they are
-in UTF-8.
-
-(This does not apply to strings that must be interpreted as bytes, for
-example filenames. Those should be passed as str objectss, and will
-remain str objects within Mutagen.)
-
-Multiple Values
-^^^^^^^^^^^^^^^
-
-Most tag formats support multiple values for each key, so when you
-access then (e.g. ``audio["title"]``) you will get a list of strings
-rather than a single one (``[u"An example"]`` rather than ``u"An example"``).
-Similarly, you can assign a list of strings rather than a single one.
+For historical and practical reasons, Mutagen shares a `mailing list 
+<http://groups.google.com/group/quod-libet-development/>`_ and IRC channel 
+(#quodlibet on irc.oftc.net) with Quod Libet. If you need help using 
+Mutagen or would like to discuss the library, please use the mailing list. 
+Bugs and patches should go to the `issue tracker <http://code.google.com/p/mutagen/issues>`_.

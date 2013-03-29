@@ -1,5 +1,12 @@
+Main Module
+-----------
+
+.. automodule:: mutagen
+
+.. autofunction:: mutagen.File
+
 Base Classes
-------------
+~~~~~~~~~~~~
 
 .. autoclass:: mutagen.FileType
     :members:
@@ -8,8 +15,8 @@ Base Classes
     :members:
     :undoc-members:
 
-Internal
-~~~~~~~~
+Internal Classes
+~~~~~~~~~~~~~~~~
 
 .. automodule:: mutagen._util
 

@@ -1,2 +1,7 @@
 all:
-	sphinx-build . _build
+	sphinx-build -n . _build
+
+clean:
+	rm -rf _build
+
+.PHONY: clean

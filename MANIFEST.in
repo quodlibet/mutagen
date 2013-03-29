@@ -1,10 +1,11 @@
-include API-NOTES
 include COPYING
 include NEWS
 include README
 include TODO
-include TUTORIAL
 include tests/data/*
 include tests/*.py
 include man/*.1
-
+include docs/Makefile
+include docs/conf.py
+include docs/*.rst
+include docs/api/*.rst
