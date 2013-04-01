@@ -67,7 +67,8 @@ class MetadataBlock(object):
     blocks, and also as a container for data blobs of unknown blocks.
 
     Attributes:
-    data -- raw binary data for this block
+
+    * data -- raw binary data for this block
     """
 
     _distrust_size = False
@@ -127,13 +128,14 @@ class StreamInfo(MetadataBlock):
     attributes of this block.
 
     Attributes:
-    min_blocksize -- minimum audio block size
-    max_blocksize -- maximum audio block size
-    sample_rate -- audio sample rate in Hz
-    channels -- audio channels (1 for mono, 2 for stereo)
-    bits_per_sample -- bits per sample
-    total_samples -- total samples in file
-    length -- audio length in seconds
+
+    * min_blocksize -- minimum audio block size
+    * max_blocksize -- maximum audio block size
+    * sample_rate -- audio sample rate in Hz
+    * channels -- audio channels (1 for mono, 2 for stereo)
+    * bits_per_sample -- bits per sample
+    * total_samples -- total samples in file
+    * length -- audio length in seconds
     """
 
     code = 0
@@ -214,9 +216,10 @@ class SeekPoint(tuple):
     may be any number of them.
 
     Attributes:
-    first_sample -- sample number of first sample in the target frame
-    byte_offset -- offset from first frame to target frame
-    num_samples -- number of samples in target frame
+
+    * first_sample -- sample number of first sample in the target frame
+    * byte_offset -- offset from first frame to target frame
+    * num_samples -- number of samples in target frame
     """
 
     def __new__(cls, first_sample, byte_offset, num_samples):
@@ -230,7 +233,8 @@ class SeekTable(MetadataBlock):
     """Read and write FLAC seek tables.
 
     Attributes:
-    seekpoints -- list of SeekPoint objects
+
+    * seekpoints -- list of SeekPoint objects
     """
 
     __SEEKPOINT_FORMAT = '>QQH'
@@ -293,8 +297,9 @@ class CueSheetTrackIndex(tuple):
     divisible by 588 samples.
 
     Attributes:
-    index_number -- index point number
-    index_offset -- offset in samples from track start
+
+    * index_number -- index point number
+    * index_offset -- offset in samples from track start
     """
     
     def __new__(cls, index_number, index_offset):
@@ -312,12 +317,13 @@ class CueSheetTrack(object):
     which must have none.
 
     Attributes:
-    track_number -- track number
-    start_offset -- track offset in samples from start of FLAC stream
-    isrc -- ISRC code
-    type -- 0 for audio, 1 for digital data
-    pre_emphasis -- true if the track is recorded with pre-emphasis
-    indexes -- list of CueSheetTrackIndex objects
+
+    * track_number -- track number
+    * start_offset -- track offset in samples from start of FLAC stream
+    * isrc -- ISRC code
+    * type -- 0 for audio, 1 for digital data
+    * pre_emphasis -- true if the track is recorded with pre-emphasis
+    * indexes -- list of CueSheetTrackIndex objects
     """
 
     def __init__(self, track_number, start_offset, isrc='', type_=0,
@@ -353,11 +359,12 @@ class CueSheet(MetadataBlock):
     in the cue sheet.
 
     Attributes:
-    media_catalog_number -- media catalog number in ASCII
-    lead_in_samples -- number of lead-in samples
-    compact_disc -- true if the cuesheet corresponds to a compact disc
-    tracks -- list of CueSheetTrack objects
-    lead_out -- lead-out as CueSheetTrack or None if lead-out was not found
+
+    * media_catalog_number -- media catalog number in ASCII
+    * lead_in_samples -- number of lead-in samples
+    * compact_disc -- true if the cuesheet corresponds to a compact disc
+    * tracks -- list of CueSheetTrack objects
+    * lead_out -- lead-out as CueSheetTrack or None if lead-out was not found
     """
 
     __CUESHEET_FORMAT = '>128sQB258xB'
@@ -445,15 +452,16 @@ class Picture(MetadataBlock):
     """Read and write FLAC embed pictures.
 
     Attributes:
-    type -- picture type (same as types for ID3 APIC frames)
-    mime -- MIME type of the picture
-    desc -- picture's description
-    width -- width in pixels
-    height -- height in pixels
-    depth -- color depth in bits-per-pixel
-    colors -- number of colors for indexed palettes (like GIF),
-              0 for non-indexed
-    data -- picture data
+
+    * type -- picture type (same as types for ID3 APIC frames)
+    * mime -- MIME type of the picture
+    * desc -- picture's description
+    * width -- width in pixels
+    * height -- height in pixels
+    * depth -- color depth in bits-per-pixel
+    * colors -- number of colors for indexed palettes (like GIF),
+      0 for non-indexed
+    * data -- picture data
     """
 
     code = 6
@@ -541,11 +549,12 @@ class FLAC(FileType):
     """A FLAC audio file.
     
     Attributes:
-    info -- stream information (length, bitrate, sample rate)
-    tags -- metadata tags, if any
-    cuesheet -- CueSheet object, if any
-    seektable -- SeekTable object, if any
-    pictures -- list of embedded pictures
+
+    * info -- stream information (length, bitrate, sample rate)
+    * tags -- metadata tags, if any
+    * cuesheet -- CueSheet object, if any
+    * seektable -- SeekTable object, if any
+    * pictures -- list of embedded pictures
     """
 
     _mimes = ["audio/x-flac", "application/x-flac"]

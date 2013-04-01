@@ -5,6 +5,7 @@ API
 
     base
     id3
+    flac
     ogg
     ape
     mp4
