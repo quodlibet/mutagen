@@ -6,7 +6,7 @@ from cStringIO import StringIO
 from tempfile import mkstemp
 from tests import TestCase, add
 from mutagen.mp4 import MP4, Atom, Atoms, MP4Tags, MP4Info, \
-     delete, MP4Cover, MP4MetadataError, MP4FreeForm
+     delete, MP4Cover, MP4MetadataError, MP4FreeForm, error
 from mutagen._util import cdata
 try: from os.path import devnull
 except ImportError: devnull = "/dev/null"
@@ -609,6 +609,10 @@ class TMP4NoTagsM4A(TMP4):
 
     def test_no_tags(self):
         self.failUnless(self.audio.tags is None)
+
+    def test_add_tags(self):
+        self.audio.add_tags()
+        self.failUnlessRaises(error, self.audio.add_tags)
 
 add(TMP4NoTagsM4A)
 

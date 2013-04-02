@@ -722,7 +722,10 @@ class MP4(FileType):
             fileobj.close()
 
     def add_tags(self):
-        self.tags = self.MP4Tags()
+        if self.tags is None:
+            self.tags = self.MP4Tags()
+        else:
+            raise error("an MP4 tag already exists")
 
     def score(filename, fileobj, header):
         return ("ftyp" in header) + ("mp4" in header)
