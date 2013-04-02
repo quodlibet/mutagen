@@ -535,6 +535,17 @@ class TMP4HasTags(TMP4):
         audio = MP4(self.audio.filename)
         self.failIf(self.audio.tags)
 
+    def test_too_short(self):
+        fileobj = open(self.audio.filename, "rb")
+        try:
+            atoms = Atoms(fileobj)
+            ilst = atoms["moov.udta.meta.ilst"]
+            # fake a too long atom length
+            ilst.children[0].length += 10000000
+            self.failUnlessRaises(MP4MetadataError, MP4Tags, atoms, fileobj)
+        finally:
+            fileobj.close()
+
     def test_has_tags(self):
         self.failUnless(self.audio.tags)
 

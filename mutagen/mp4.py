@@ -279,6 +279,8 @@ class MP4Tags(DictProxy, Metadata):
         for atom in ilst.children:
             fileobj.seek(atom.offset + 8)
             data = fileobj.read(atom.length - 8)
+            if len(data) != atom.length - 8:
+                raise MP4MetadataError("Not enough data")
             info = self.__atoms.get(atom.name, (type(self).__parse_text, None))
             info[0](self, atom, data, *info[2:])
 
