@@ -284,6 +284,14 @@ class MP4Tags(DictProxy, Metadata):
             info = self.__atoms.get(atom.name, (type(self).__parse_text, None))
             info[0](self, atom, data, *info[2:])
 
+    def _can_load(cls, atoms):
+        try:
+            atoms["moov.udta.meta.ilst"]
+        except KeyError, key:
+            return False
+        return True
+    _can_load = classmethod(_can_load)
+
     def __key_sort(item1, item2):
         (key1, v1) = item1
         (key2, v2) = item2
@@ -713,11 +721,14 @@ class MP4(FileType):
             try: self.info = MP4Info(atoms, fileobj)
             except StandardError, err:
                 raise MP4StreamInfoError, err, sys.exc_info()[2]
-            try: self.tags = self.MP4Tags(atoms, fileobj)
-            except MP4MetadataError:
+
+            if not MP4Tags._can_load(atoms):
                 self.tags = None
-            except StandardError, err:
-                raise MP4MetadataError, err, sys.exc_info()[2]
+            else:
+                try:
+                    self.tags = self.MP4Tags(atoms, fileobj)
+                except StandardError, err:
+                    raise MP4MetadataError, err, sys.exc_info()[2]
         finally:
             fileobj.close()
 
