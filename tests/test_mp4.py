@@ -68,10 +68,15 @@ class TAtoms(TestCase):
     def setUp(self):
         self.atoms = Atoms(open(self.filename, "rb"))
 
-    def test___contains__(self):
+    def test_getitem(self):
         self.failUnless(self.atoms["moov"])
         self.failUnless(self.atoms["moov.udta"])
         self.failUnlessRaises(KeyError, self.atoms.__getitem__, "whee")
+
+    def test_contains(self):
+        self.failUnless("moov" in self.atoms)
+        self.failUnless("moov.udta" in self.atoms)
+        self.failUnless("whee" not in self.atoms)
 
     def test_name(self):
         self.failUnlessEqual(self.atoms.atoms[0].name, "ftyp")
@@ -550,8 +555,9 @@ class TMP4HasTags(TMP4):
         self.failUnless(self.audio.tags)
 
     def test_not_my_file(self):
-        self.failUnlessRaises(
-            IOError, MP4, os.path.join("tests", "data", "empty.ogg"))
+        # should raise something like "Not a MP4 file"
+        self.failUnlessRaisesRegexp(
+            error, "MP4", MP4, os.path.join("tests", "data", "empty.ogg"))
 
 
 class TMP4Datatypes(TMP4HasTags):

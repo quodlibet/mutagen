@@ -194,6 +194,13 @@ class Atoms(object):
             path.append(path[-1][name,])
         return path[1:]
 
+    def __contains__(self, names):
+        try:
+            self[names]
+        except KeyError:
+            return False
+        return True
+
     def __getitem__(self, names):
         """Look up a child atom.
 
@@ -285,12 +292,9 @@ class MP4Tags(DictProxy, Metadata):
             info[0](self, atom, data, *info[2:])
 
     def _can_load(cls, atoms):
-        try:
-            atoms["moov.udta.meta.ilst"]
-        except KeyError, key:
-            return False
-        return True
+        return "moov.udta.meta.ilst" in atoms
     _can_load = classmethod(_can_load)
+
 
     def __key_sort(item1, item2):
         (key1, v1) = item1
@@ -718,6 +722,11 @@ class MP4(FileType):
         fileobj = open(filename, "rb")
         try:
             atoms = Atoms(fileobj)
+
+            # ftyp is always the first atom in a valid MP4 file
+            if not atoms.atoms or atoms.atoms[0].name != "ftyp":
+                raise error("Not a MP4 file")
+
             try: self.info = MP4Info(atoms, fileobj)
             except StandardError, err:
                 raise MP4StreamInfoError, err, sys.exc_info()[2]

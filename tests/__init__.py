@@ -1,14 +1,28 @@
 from __future__ import division
 
+import re
 import glob
 import os
 import sys
 import unittest
 
-from unittest import TestCase
-TestCase.uses_mmap = True
+from unittest import TestCase as BaseTestCase
+BaseTestCase.uses_mmap = True
 suites = []
 add = suites.append
+
+
+class TestCase(BaseTestCase):
+
+    def failUnlessRaisesRegexp(self, exc, re_, fun, *args, **kwargs):
+        def wrapped(*args, **kwargs):
+            try:
+                fun(*args, **kwargs)
+            except Exception, e:
+                self.failUnless(re.search(re_, str(e)))
+                raise
+        self.failUnlessRaises(exc, wrapped, *args, **kwargs)
+
 
 for name in glob.glob(os.path.join(os.path.dirname(__file__), "test_*.py")):
     module = "tests." + os.path.basename(name)
