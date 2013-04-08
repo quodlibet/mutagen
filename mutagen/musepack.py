@@ -61,15 +61,17 @@ class MusepackInfo(object):
     """Musepack stream information.
 
     Attributes:
-    channels -- number of audio channels
-    length -- file length in seconds, as a float
-    sample_rate -- audio sampling rate in Hz
-    bitrate -- audio bitrate, in bits per second 
-    version -- Musepack stream version
+
+    * channels -- number of audio channels
+    * length -- file length in seconds, as a float
+    * sample_rate -- audio sampling rate in Hz
+    * bitrate -- audio bitrate, in bits per second
+    * version -- Musepack stream version
 
     Optional Attributes:
-    title_gain, title_peak -- Replay Gain and peak data for this song
-    album_gain, album_peak -- Replay Gain and peak data for this album
+
+    * title_gain, title_peak -- Replay Gain and peak data for this song
+    * album_gain, album_peak -- Replay Gain and peak data for this album
 
     These attributes are only available in stream version 7/8. The
     gains are a float, +/- some dB. The peaks are a percentage [0..1] of
