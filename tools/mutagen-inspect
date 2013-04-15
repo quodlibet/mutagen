@@ -8,7 +8,6 @@
 #
 # $Id: mutagen-inspect 3839 2006-09-11 03:34:43Z piman $
 
-import os
 import sys
 import locale
 
@@ -36,6 +35,4 @@ def main(argv):
         print
 
 if __name__ == "__main__":
-    import mutagen
-
     main(sys.argv)

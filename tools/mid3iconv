@@ -7,7 +7,6 @@
 # published by the Free Software Foundation.
 #
 
-import os
 import sys
 import locale
 
