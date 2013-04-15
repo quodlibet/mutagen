@@ -61,8 +61,6 @@ def main(argv):
         map(file.close, fileobjs.values())
 
 if __name__ == "__main__":
-    try: import mutagen.ogg
-    except ImportError:
-        sys.path.append(os.path.abspath("../"))
-        import mutagen.ogg
+    import mutagen.ogg
+
     main(sys.argv)

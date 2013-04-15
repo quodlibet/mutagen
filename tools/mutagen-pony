@@ -96,10 +96,8 @@ def check_dir(path):
     print str(rep)
 
 if __name__ == "__main__":
-    try: from mutagen.id3 import ID3
-    except ImportError:
-        sys.path.append(os.path.abspath("../"))
-        from mutagen.id3 import ID3
+    from mutagen.id3 import ID3
+
     if len(sys.argv) == 1: print "Usage: %s directory ..." % sys.argv[0]
     else:
         for path in sys.argv[1:]: check_dir(path)

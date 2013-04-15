@@ -36,9 +36,6 @@ def main(argv):
         print
 
 if __name__ == "__main__":
-    try: import mutagen
-    except ImportError:
-        # Run as ./mid3v2 out of tools/
-        sys.path.append(os.path.abspath("../"))
-        import mutagen
+    import mutagen
+
     main(sys.argv)

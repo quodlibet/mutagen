@@ -12,12 +12,8 @@ import locale
 
 from optparse import OptionParser, SUPPRESS_HELP
 
-try:
-    import mutagen, mutagen.id3
-except ImportError:
-    # Run as ./mid3v2 out of tools/
-    sys.path.append(os.path.abspath("../"))
-    import mutagen, mutagen.id3
+import mutagen, mutagen.id3
+
 
 VERSION = (1, 3)
 

@@ -132,9 +132,6 @@ def main(argv):
         parser.print_help()
 
 if __name__ == "__main__":
-    try: import mutagen, mutagen.id3
-    except ImportError:
-        # Run out of tools/
-        sys.path.append(os.path.abspath("../"))
-        import mutagen, mutagen.id3
+    import mutagen, mutagen.id3
+
     main(sys.argv)
