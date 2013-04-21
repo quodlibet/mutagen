@@ -1,77 +1,140 @@
-.TH mid3v2 1 "October 30th, 2010"
+.\" Man page generated from reStructeredText.
+.
+.TH MID3V2 1 "October 30th, 2010" "" ""
 .SH NAME
 mid3v2 \- audio tag editor similar to 'id3v2'
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
 .SH SYNOPSIS
-\fBmid3v2\fR [\fIoptions\fR] \fIfilename\fR ...
+.sp
+\fBmid3v2\fP [\fIoptions\fP] \fIfilename\fP ...
 .SH DESCRIPTION
-mid3v2 is a Mutagen-based replacement for id3lib's \fBid3v2\fR. It supports
+.sp
+mid3v2 is a Mutagen\-based replacement for id3lib\(aqs \fBid3v2\fP. It supports
 ID3v2.4 and more frames; it also does not have the numerous bugs that
-plague \fBid3v2\fR.
-.PP
-This program exists mostly for compatibility with programs that want to tag
-files using \fBid3v2\fR. For a more usable interface, we recommend Ex Falso.
+plague \fBid3v2\fP.
+.sp
+This program exists mostly for compatibility with programs that want
+to tag files using \fBid3v2\fP. For a more usable interface, we recommend Ex
+Falso.
 .SH OPTIONS
-.IP \-q,\ \-\-quiet
-Be quiet: do not mention file operations that perform the user's request.
-Warnings will still be printed.
-.IP \-v,\ \-\-verbose
+.INDENT 0.0
+.TP
+.B \-q,  \-\-quiet
+Be quiet: do not mention file operations that perform the user\(aqs
+request. Warnings will still be printed.
+.TP
+.B \-v,  \-\-verbose
 Be verbose: state all operations performed. This is the opposite of
---quiet. This is the default.
-.IP \-f,\ \-\-list\-frames
+\-\-quiet. This is the default.
+.TP
+.B \-f,  \-\-list\-frames
 Display all supported ID3v2.3/2.4 frames and their meanings.
-.IP \-L,\ \-\-list\-genres
+.TP
+.B \-L,  \-\-list\-genres
 List all ID3v1 numeric genres. These can be used to set TCON frames,
 but it is not recommended.
-.IP \-l,\ \-\-list
-List all tags in the files. The output format is \fInot\fR the same as
-\fBid3v2\fR's; instead, it is easily parsable and readable. Some tags
-may not have human-readable representations.
-.IP \-\-list\-raw
+.TP
+.B \-l,  \-\-list
+List all tags in the files. The output format is \fInot\fP the same as
+\fBid3v2\fP\(aqs; instead, it is easily parsable and readable. Some tags may not
+have human\-readable representations.
+.TP
+.B \-\-list\-raw
 List all tags in the files, in raw format. Although this format is
-nominally human-readable, it may be very long if the tag contains
+nominally human\-readable, it may be very long if the tag contains
 embedded binary data.
-.IP \-d,\ \-\-delete\-v2
+.TP
+.B \-d,  \-\-delete\-v2
 Delete ID3v2 tags.
-.IP \-s,\ \-\-delete\-v1
+.TP
+.B \-s,  \-\-delete\-v1
 Delete ID3v1 tags.
-.IP \-D,\ \-\-delete\-all
+.TP
+.B \-D,  \-\-delete\-all
 Delete all ID3 tags.
-.IP \-\-delete\-frames=\fIFID1,FID2,...
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-delete\-frames=FID1,FID2,...
 Delete specific ID3v2 frames (or groups of frames) from the files.
-.IP \-C,\ \-\-convert
-Convert ID3v1 tags to ID3v2 tags. This will also happen automatically
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-C,  \-\-convert
+Convert ID3v1 tags to ID3v2 tags. This  will also happen automatically
 during any editing.
-.IP \-a,\ \-\-artist=\fIartist
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-a, \-\-artist=artist
 Set the artist information (TPE1).
-.IP \-A,\ \-\-album=\fIalbum
+.TP
+.B \-A, \-\-album=album
 Set the album information (TALB).
-.IP \-t,\ \-\-song=\fItitle
+.TP
+.B \-t, \-\-song=title
 Set the title information (TIT2).
-.IP \-c,\ \-\-comment=\fIDESCRIPTION:COMMENT:LANGUAGE
-Set a comment (COMM). The language and description may be omitted, in which
-case the language defaults to English, and the description to an empty string.
-.IP \-g,\ \-\-genre=\fIgenre
+.TP
+.B \-c, \-\-comment=DESCRIPTION:COMMENT:LANGUAGE
+Set a comment (COMM). The language and description may be omitted, in
+which case the language defaults to English, and the description to an
+empty string.
+.TP
+.B \-g, \-\-genre=genre
 Set the genre information (TCON).
-.IP \-y,\ \-\-year=,\ \-\-date=\fIYYYY\-[MM-DD]
+.TP
+.B \-y, \-\-year=, \-\-date=YYYY\-[MM\-DD]
 Set the year/date information (TDRC).
-.IP \-Tnum/num,\ \-\-track=\fInum/num
+.TP
+.B \-Tnum/num, \-\-track=num/num
 Set the track number (TRCK).
-.PP
-Any text or URL frame (those beginning with T or W) can be modified or 
-added by prefixing the name of the frame with "\-\-". For example,
-\fB\-\-TIT3 "Monkey!"\fR will set the TIT3 (subtitle) frame to \fBMonkey!\fR.
-.PP
-The TXXX frame requires a colon-separated description key; many TXXX
-frames may be set in the file as long as they have different keys. To
-set this key, just separate the text with a colon, e.g.
-\fB\-\-TXXX "ALBUMARTISTSORT:Examples,\ The"\fR.
-.PP
+.UNINDENT
+.sp
+Any text or URL frame (those beginning with T or W) can be modified or
+added by prefixing the name of the frame with "\-\-". For example, \fB\-\-TIT3
+"Monkey!"\fP will set the TIT3 (subtitle) frame to \fBMonkey!\fP.
+.sp
+The TXXX frame requires a colon\-separated description key; many TXXX frames
+may be set in the file as long as they have different keys. To set this
+key, just separate the text with a colon, e.g. \fB\-\-TXXX
+"ALBUMARTISTSORT:Examples, The"\fP.
+.sp
 The special POPM frame can be set in a similar way: \fB\-\-POPM
-"bob@example.com:128:2"\fR to set Bob's rating to 128/255 with 2
-plays.
+"bob@example.com:128:2"\fP to set Bob\(aqs rating to 128/255 with 2 plays.
 .SH BUGS
-No sanity checking is done on the editing operations you perform, so
-mid3v2 will happily accept \-\-TSIZ when editing an ID3v2.4 frame. However,
-it will also automatically throw it out during the next edit operation.
+.sp
+No sanity checking is done on the editing operations you perform, so mid3v2
+will happily accept \-\-TSIZ when editing an ID3v2.4 frame. However, it will
+also automatically throw it out during the next edit operation.
 .SH AUTHOR
-Joe Wreschnig is the author of mid3v2, but he doesn't like to admit it.
+.sp
+Joe Wreschnig is the author of mid3v2, but he doesn\(aqt like to admit it.
+.\" Generated by docutils manpage writer.
+.\" 
+.

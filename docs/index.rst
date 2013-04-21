@@ -9,6 +9,7 @@ Mutagen Documentation
     api_notes
     bugs
     api/index
+    man/index
 
 What is Mutagen?
 ----------------
