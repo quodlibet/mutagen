@@ -17,6 +17,7 @@ SAMPLE = os.path.join(DIR, "data", "click.mpc")
 OLD = os.path.join(DIR, "data", "oldtag.apev2")
 BROKEN = os.path.join(DIR, "data", "brokentag.apev2")
 LYRICS2 = os.path.join(DIR, "data", "apev2-lyricsv2.mp3")
+INVAL_ITEM_COUNT = os.path.join(DIR, "data", "145-invalid-item-count.apev2")
 
 class Tis_valid_apev2_key(TestCase):
     uses_mmap = False
@@ -28,6 +29,18 @@ class Tis_valid_apev2_key(TestCase):
         for key in ["\x11hi", "ffoo\xFF", u"\u1234", "a", "", "foo" * 100]:
             self.failIf(is_valid_apev2_key(key))
 add(Tis_valid_apev2_key)
+
+
+class TAPEInvalidItemCount(TestCase):
+    uses_mmap = False
+    # http://code.google.com/p/mutagen/issues/detail?id=145
+
+    def test_load(self):
+        x = mutagen.apev2.APEv2(INVAL_ITEM_COUNT)
+        self.failUnlessEqual(len(x.keys()), 17)
+
+add(TAPEInvalidItemCount)
+
 
 class TAPEWriter(TestCase):
     offset = 0

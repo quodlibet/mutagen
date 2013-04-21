@@ -159,6 +159,10 @@ class _APEv2Data(object):
                 self.header = self.data
         else: raise APENoHeaderError("No APE tag found")
 
+        # exclude the footer from size
+        if self.footer is not None:
+            self.size -= 32
+
     def __fix_brokenness(self, fileobj):
         # Fix broken tags written with PyMusepack.
         if self.header is not None: start = self.header
@@ -222,7 +226,11 @@ class APEv2(DictMixin, Metadata):
         fileobj = StringIO(tag)
 
         for i in range(count):
-            size = cdata.uint_le(fileobj.read(4))
+            size_data = fileobj.read(4)
+            # someone writes wrong item counts
+            if not size_data:
+                break
+            size = cdata.uint_le(size_data)
             flags = cdata.uint_le(fileobj.read(4))
 
             # Bits 1 and 2 bits are flags, 0-3
