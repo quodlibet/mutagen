@@ -1,6 +1,5 @@
 import os
 import shutil
-import sys
 
 from tempfile import mkstemp
 from cStringIO import StringIO

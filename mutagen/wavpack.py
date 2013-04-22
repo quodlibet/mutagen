@@ -56,3 +56,6 @@ class WavPack(APEv2File):
     def score(filename, fileobj, header):
         return header.startswith("wvpk") * 2
     score = staticmethod(score)
+
+
+Open = WavPack

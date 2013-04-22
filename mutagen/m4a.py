@@ -334,7 +334,7 @@ class M4ATags(DictProxy, Metadata):
         name = struct.pack(">I4sI", len(name) + 12, "name", 0) + name
         value = struct.pack(">I4s2I", len(value) + 16, "data", 0x1, 0) + value
         final = mean + name + value
-        return Atom.render("----", mean + name + value)
+        return Atom.render("----", final)
 
     def __parse_pair(self, atom, data):
         self[atom.name] = struct.unpack(">2H", data[18:22])

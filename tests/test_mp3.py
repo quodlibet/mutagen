@@ -86,7 +86,7 @@ class TMP3(TestCase):
         self.failUnlessEqual(int(round(mp3.info.length)), 222)
 
     def test_empty_xing(self):
-        mp3 = MP3(os.path.join("tests", "data", "bad-xing.mp3"))
+        MP3(os.path.join("tests", "data", "bad-xing.mp3"))
 
     def test_delete(self):
         self.mp3.delete()

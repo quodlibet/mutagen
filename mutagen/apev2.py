@@ -290,7 +290,7 @@ class APEv2(DictMixin, Metadata):
                 # list? text.
                 value = APEValue("\0".join(map(utf8, value)), TEXT)
             else:
-                try: dummy = value.decode("utf-8")
+                try: value.decode("utf-8")
                 except UnicodeError:
                     # invalid UTF8 text, probably binary
                     value = APEValue(value, BINARY)

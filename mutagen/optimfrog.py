@@ -64,3 +64,5 @@ class OptimFROG(APEv2File):
         return (header.startswith("OFR") + filename.endswith(".ofr") +
                 filename.endswith(".ofs"))
     score = staticmethod(score)
+
+Open = OptimFROG

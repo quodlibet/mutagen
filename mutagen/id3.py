@@ -1289,6 +1289,7 @@ class TCON(TextFrame):
     """
 
     from mutagen._constants import GENRES
+    GENRES = GENRES
 
     def __get_genres(self):
         genres = []

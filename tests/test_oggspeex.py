@@ -1,11 +1,10 @@
 import os
 import shutil
-import sys
 
 from cStringIO import StringIO
 from mutagen.ogg import OggPage
 from mutagen.oggspeex import OggSpeex, OggSpeexInfo, delete
-from tests import TestCase, add
+from tests import add
 from tests.test_ogg import TOggFileType
 from tempfile import mkstemp
 

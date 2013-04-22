@@ -255,7 +255,7 @@ class TM4AHasTags(TM4A):
         map(self.audio.__delitem__, self.audio.keys())
         self.audio.save()
         audio = M4A(self.audio.filename)
-        self.failIf(self.audio.tags)
+        self.failIf(audio.tags)
 
     def test_has_tags(self):
         self.failUnless(self.audio.tags)

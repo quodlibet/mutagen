@@ -60,4 +60,5 @@ Open = TrueAudio
 class EasyTrueAudio(TrueAudio):
     """Like MP3, but uses EasyID3 for tags."""
     from mutagen.easyid3 import EasyID3 as ID3
+    ID3 = ID3
 

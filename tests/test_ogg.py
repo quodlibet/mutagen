@@ -110,8 +110,6 @@ class TOggPage(TestCase):
             fileobj.write(page.write())
         fileobj.write("left over data")
         fileobj.seek(0)
-        orig_data = fileobj.read()
-        fileobj.seek(0)
         # Trying to rewrite should raise an error...
         self.failUnlessRaises(Exception, OggPage.renumber, fileobj, 1, 10)
         fileobj.seek(0)
@@ -371,7 +369,7 @@ class TOggFileType(TestCase):
         try:
             try:
                 while True:
-                    page = OggPage(fileobj)
+                    OggPage(fileobj)
             except EOFError:
                 pass
         finally:

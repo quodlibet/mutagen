@@ -1,10 +1,9 @@
 import os
-import sys
 import shutil
 import pickle
 from tests import add, TestCase
 from mutagen.id3 import ID3FileType
-from mutagen.easyid3 import EasyID3, error as ID3Error, delete
+from mutagen.easyid3 import EasyID3, error as ID3Error
 from tempfile import mkstemp
 
 class TEasyID3(TestCase):

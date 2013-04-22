@@ -303,7 +303,6 @@ class TMP4(TestCase):
         self.audio["\xa9nam"] = u"wheeee" * 10
         self.audio.save()
         size1 = os.path.getsize(self.audio.filename)
-        audio = MP4(self.audio.filename)
         self.audio["\xa9nam"] = u"wheeee" * 11
         self.audio.save()
         size2 = os.path.getsize(self.audio.filename)
@@ -538,7 +537,7 @@ class TMP4HasTags(TMP4):
         map(self.audio.__delitem__, self.audio.keys())
         self.audio.save()
         audio = MP4(self.audio.filename)
-        self.failIf(self.audio.tags)
+        self.failIf(audio.tags)
 
     def test_too_short(self):
         fileobj = open(self.audio.filename, "rb")

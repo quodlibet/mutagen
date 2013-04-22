@@ -27,7 +27,7 @@ import sys
 
 from mutagen import FileType, Metadata
 from mutagen._constants import GENRES
-from mutagen._util import cdata, insert_bytes, delete_bytes, DictProxy, utf8
+from mutagen._util import cdata, insert_bytes, DictProxy, utf8
 
 class error(IOError): pass
 class MP4MetadataError(error): pass
@@ -508,8 +508,8 @@ class MP4Tags(DictProxy, Metadata):
         return Atom.render("----", mean + name + data)
 
     def __parse_pair(self, atom, data):
-        self[atom.name] = [struct.unpack(">2H", data[2:6]) for
-                           flags, data in self.__parse_data(atom, data)]
+        self[atom.name] = [struct.unpack(">2H", d[2:6]) for
+                           flags, d in self.__parse_data(atom, data)]
     def __render_pair(self, key, value):
         data = []
         for (track, total) in value:
@@ -576,8 +576,7 @@ class MP4Tags(DictProxy, Metadata):
             if imageformat not in (MP4Cover.FORMAT_JPEG, MP4Cover.FORMAT_PNG):
                 imageformat = MP4Cover.FORMAT_JPEG
             cover = MP4Cover(data[pos+16:pos+length], imageformat)
-            self[atom.name].append(
-                MP4Cover(data[pos+16:pos+length], imageformat))
+            self[atom.name].append(cover)
             pos += length
     def __render_cover(self, key, value):
         atom_data = []

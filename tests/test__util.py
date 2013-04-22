@@ -1,6 +1,5 @@
 from mutagen._util import DictMixin, cdata, utf8, insert_bytes, delete_bytes
 from tests import TestCase, add
-import mmap
 import random
 
 class FDict(DictMixin):

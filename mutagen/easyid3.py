@@ -13,8 +13,6 @@ EasyID3 is a wrapper around mutagen.id3.ID3 to make ID3 tags appear
 more like Vorbis or APEv2 tags.
 """
 
-from fnmatch import fnmatchcase
-
 import mutagen.id3
 
 from mutagen import Metadata
@@ -181,7 +179,7 @@ class EasyID3(DictMixin, Metadata):
                         lambda s, fn: setattr(s.__id3, 'filename', fn))
 
     size = property(lambda s: s.__id3.size,
-                    lambda s, fn: setattr(s.__id3, 'size', v))
+                    lambda s, fn: setattr(s.__id3, 'size', s))
 
     def __getitem__(self, key):
         key = key.lower()

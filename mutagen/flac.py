@@ -110,10 +110,10 @@ class MetadataBlock(object):
         this adds several bytes of padding for each merged block."""
         paddings = filter(lambda x: isinstance(x, Padding), blocks)
         map(blocks.remove, paddings)
-        padding = Padding()
         # total padding size is the sum of padding sizes plus 4 bytes
         # per removed header.
         size = sum([padding.length for padding in paddings])
+        padding = Padding()
         padding.length = size + 4 * (len(paddings) - 1)
         blocks.append(padding)
     group_padding = staticmethod(group_padding)

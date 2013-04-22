@@ -46,7 +46,6 @@ class TAPEWriter(TestCase):
     offset = 0
 
     def setUp(self):
-        import shutil
         shutil.copy(SAMPLE, SAMPLE + ".new")
         shutil.copy(BROKEN, BROKEN + ".new")
         tag = mutagen.apev2.APEv2()
@@ -296,6 +295,7 @@ class TAPEBinaryValue(TestCase):
     uses_mmap = False
 
     from mutagen.apev2 import APEBinaryValue as BV
+    BV = BV
 
     def setUp(self):
         self.sample = "\x12\x45\xde"
@@ -316,6 +316,8 @@ class TAPETextValue(TestCase):
     uses_mmap = False
 
     from mutagen.apev2 import APETextValue as TV
+    TV = TV
+
     def setUp(self):
         self.sample = ["foo", "bar", "baz"]
         self.value = mutagen.apev2.APEValue(
@@ -346,6 +348,7 @@ class TAPEExtValue(TestCase):
     uses_mmap = False
 
     from mutagen.apev2 import APEExtValue as EV
+    EV = EV
 
     def setUp(self):
         self.sample = "http://foo"

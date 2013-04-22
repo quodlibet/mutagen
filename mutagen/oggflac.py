@@ -59,7 +59,7 @@ class OggFLACStreamInfo(StreamInfo):
 
         # Skip over the block header.
         stringobj = StringIO(page.packets[0][17:])
-        super(OggFLACStreamInfo, self).load(StringIO(page.packets[0][17:]))
+        super(OggFLACStreamInfo, self).load(stringobj)
 
     def _post_tags(self, fileobj):
         if self.length:

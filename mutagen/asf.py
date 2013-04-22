@@ -367,7 +367,6 @@ class BaseObject(object):
 
     def render(self, asf):
         data = self.GUID + struct.pack("<Q", len(self.data) + 24) + self.data
-        size = len(data)
         return data
 
 

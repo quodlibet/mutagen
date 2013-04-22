@@ -1,7 +1,6 @@
 import os
 
 from mutagen.optimfrog import OptimFROG, OptimFROGHeaderError
-from cStringIO import StringIO
 from tests import TestCase, add
 
 class TOptimFROG(TestCase):

@@ -122,6 +122,7 @@ class cdata(object):
     """C character buffer to Python numeric type conversions."""
 
     from struct import error
+    error = error
 
     short_le = staticmethod(lambda data: struct.unpack('<h', data)[0])
     ushort_le = staticmethod(lambda data: struct.unpack('<H', data)[0])

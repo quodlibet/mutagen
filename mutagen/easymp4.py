@@ -1,5 +1,3 @@
-import mutagen.mp4
-
 from mutagen import Metadata
 from mutagen._util import DictMixin, dict_match, utf8
 from mutagen.mp4 import MP4, MP4Tags, error, delete

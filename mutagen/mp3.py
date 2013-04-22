@@ -97,7 +97,7 @@ class MPEGInfo(object):
         # and 90% through the file.
         for i in [offset, 0.3 * size, 0.6 * size, 0.9 * size]:
             try: self.__try(fileobj, int(i), size - offset)
-            except error, e: pass
+            except error: pass
             else: break
         # If we can't find any two consecutive frames, try to find just
         # one frame back at the original offset given.
@@ -128,12 +128,12 @@ class MPEGInfo(object):
                 bitrate = (frame_data >> 12) & 0xF
                 sample_rate = (frame_data >> 10) & 0x3
                 padding = (frame_data >> 9) & 0x1
-                private = (frame_data >> 8) & 0x1
+                #private = (frame_data >> 8) & 0x1
                 self.mode = (frame_data >> 6) & 0x3
-                mode_extension = (frame_data >> 4) & 0x3
-                copyright = (frame_data >> 3) & 0x1
-                original = (frame_data >> 2) & 0x1
-                emphasis = (frame_data >> 0) & 0x3
+                #mode_extension = (frame_data >> 4) & 0x3
+                #copyright = (frame_data >> 3) & 0x1
+                #original = (frame_data >> 2) & 0x1
+                #emphasis = (frame_data >> 0) & 0x3
                 if (version == 1 or layer == 0 or sample_rate == 0x3 or
                     bitrate == 0 or bitrate == 0xF):
                     frame_1 = data.find("\xff", frame_1 + 2)
@@ -235,4 +235,4 @@ Open = MP3
 class EasyMP3(MP3):
     """Like MP3, but uses EasyID3 for tags."""
     from mutagen.easyid3 import EasyID3 as ID3
-
+    ID3 = ID3

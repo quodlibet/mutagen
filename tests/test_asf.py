@@ -83,7 +83,7 @@ class TASF(TestCase):
             for a, b in zip(sorted(newvalue), sorted(result or value)):
                 self.failUnlessEqual(a, b)
         else:
-            self.failUnlessEqual(audio[key], result or value)
+            self.failUnlessEqual(self.audio[key], result or value)
 
     def test_contains(self):
         self.failUnlessEqual("notatag" in self.audio.tags, False)

@@ -798,7 +798,6 @@ def TestReadTags():
     testcase.uses_mmap = False
     add(testcase)
 
-    test_tests = {}
     from mutagen.id3 import Frames, Frames_2_2
     check = dict.fromkeys(Frames.keys() + Frames_2_2.keys())
     tested_tags = dict.fromkeys([row[0] for row in tests])
@@ -1053,7 +1052,7 @@ class FrameSanityChecks(TestCase):
         self.assertEquals(artist.text, tag.text)
 
     def test_22_to_24(self):
-        from mutagen.id3 import TT1, TIT1
+        from mutagen.id3 import TT1
         id3 = ID3()
         tt1 = TT1(encoding=0, text=u'whatcha staring at?')
         id3.loaded_frame(tt1)
@@ -1209,7 +1208,6 @@ class Issue97_UpgradeUnknown23(TestCase):
 
     def test_double_update(self):
         from mutagen.id3 import TPE1
-        orig = ID3(self.filename)
         unknown = ID3(self.filename, known_frames={"TPE1": TPE1})
         # Make sure the data doesn't get updated again
         unknown.update_to_v24()
@@ -1234,7 +1232,9 @@ class Genres(TestCase):
     uses_mmap = False
 
     from mutagen.id3 import TCON
+    TCON = TCON
     from mutagen._constants import GENRES
+    GENRES = GENRES
 
     def _g(self, s): return self.TCON(text=s).genres
 
@@ -1374,7 +1374,7 @@ class BrokenButParsed(TestCase):
                           Frame.FLAG24_COMPRESS, '\x03abcdefg')
 
     def test_zlib_bpi(self):
-        from mutagen.id3 import TPE1, Frame, ID3BadCompressedData
+        from mutagen.id3 import TPE1
         id3 = ID3()
         tpe1 = TPE1(encoding=0, text="a" * (0xFFFF - 2))
         data = id3._ID3__save_frame(tpe1)
@@ -1383,7 +1383,7 @@ class BrokenButParsed(TestCase):
             max(datalen_size) >= '\x80', "data is not syncsafe: %r" % data)
 
     def test_fake_zlib_nopedantic(self):
-        from mutagen.id3 import TPE1, Frame, ID3BadCompressedData
+        from mutagen.id3 import TPE1, Frame
         id3 = ID3()
         id3.PEDANTIC = False
         tpe1 = TPE1.fromData(id3, Frame.FLAG24_COMPRESS, '\x03abcdefg')
@@ -1429,6 +1429,7 @@ class TimeStamp(TestCase):
     uses_mmap = False
 
     from mutagen.id3 import ID3TimeStamp as Stamp
+    Stamp = Stamp
 
     def test_Y(self):
         s = self.Stamp('1234')
@@ -1544,7 +1545,6 @@ class WriteRoundtrip(TestCase):
         self.assertEquals(id3["TIT3"], "A subtitle!")
 
     def test_changeframe(self):
-        from mutagen.id3 import TIT2
         f = ID3(self.newsilence)
         self.assertEquals(f["TIT2"], "Silence")
         f["TIT2"].text = [u"The sound of silence."]
@@ -1665,7 +1665,6 @@ class WriteForEyeD3(TestCase):
         self.assertEquals(id3.frames["TIT3"][0].text, "A subtitle!")
 
     def test_changeframe(self):
-        from mutagen.id3 import TIT2
         f = ID3(self.newsilence)
         self.assertEquals(f["TIT2"], "Silence")
         f["TIT2"].text = [u"The sound of silence."]
@@ -1752,6 +1751,7 @@ class TimeStampTextFrame(TestCase):
     uses_mmap = False
 
     from mutagen.id3 import TimeStampTextFrame as Frame
+    Frame = Frame
 
     def test_compare_to_unicode(self):
         frame = self.Frame(encoding=0, text=[u'1987', u'1988'])
@@ -1772,28 +1772,28 @@ class Issue69_BadV1Year(TestCase):
         self.failUnlessEqual(tag["TDRC"], "0001")
 
     def test_none(self):
-        from mutagen.id3 import ParseID3v1, MakeID3v1, TDRC
+        from mutagen.id3 import ParseID3v1, MakeID3v1
         s = MakeID3v1(dict())
         self.failUnlessEqual(len(s), 128)
         tag = ParseID3v1(s)
         self.failIf("TDRC" in tag)
 
     def test_empty(self):
-        from mutagen.id3 import ParseID3v1, MakeID3v1, TDRC
+        from mutagen.id3 import ParseID3v1, MakeID3v1
         s = MakeID3v1(dict(TDRC=""))
         self.failUnlessEqual(len(s), 128)
         tag = ParseID3v1(s)
         self.failIf("TDRC" in tag)
 
     def test_short(self):
-        from mutagen.id3 import ParseID3v1, MakeID3v1, TDRC
+        from mutagen.id3 import ParseID3v1, MakeID3v1
         s = MakeID3v1(dict(TDRC="1"))
         self.failUnlessEqual(len(s), 128)
         tag = ParseID3v1(s)
         self.failUnlessEqual(tag["TDRC"], "0001")
 
     def test_long(self):
-        from mutagen.id3 import ParseID3v1, MakeID3v1, TDRC
+        from mutagen.id3 import ParseID3v1, MakeID3v1
         s = MakeID3v1(dict(TDRC="123456789"))
         self.failUnlessEqual(len(s), 128)
         tag = ParseID3v1(s)
