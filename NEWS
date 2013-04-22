@@ -1,4 +1,13 @@
 1.22
+ * Minimum supported Python version is now 2.4
+ * Online documentation at https://mutagen.readthedocs.org/
+ * EasyID3:
+   * Fix crash with empty TXXX values. (#135)
+ * MP4:
+   * add_tags() will not replace existing tags. (#101)
+   * Don't ignore tags if parsing them fails.
+ * APEv2:
+   * Handle invalid tag item count. (#145, Dawid Zamirski)
 
 1.21 - 2013.01.30
  * Fix Python 2.3 compatibility (broken in 1.19).
