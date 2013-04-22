@@ -9,5 +9,4 @@ API
     ogg
     ape
     mp4
-    musepack
     asf
