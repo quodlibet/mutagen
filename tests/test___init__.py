@@ -218,3 +218,20 @@ class TFileUpperExt(TestCase):
             os.unlink(path)
 
 add(TFileUpperExt)
+
+
+class TModuleImportAll(TestCase):
+    uses_mmap = False
+
+    def test_all(self):
+        import mutagen
+        files = os.listdir(mutagen.__path__[0])
+        modules = [os.path.splitext(f)[0] for f in files]
+        modules = [f for f in modules if not f.startswith("_")]
+
+        for module in modules:
+            mod = getattr(__import__("mutagen." + module), module)
+            for attr in getattr(mod, "__all__", []):
+                getattr(mod, attr)
+
+add(TModuleImportAll)
