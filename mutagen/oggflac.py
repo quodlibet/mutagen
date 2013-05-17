@@ -23,7 +23,7 @@ import struct
 
 from cStringIO import StringIO
 
-from mutagen.flac import StreamInfo, VCFLACDict
+from mutagen.flac import StreamInfo, VCFLACDict, StrictFileObject
 from mutagen.ogg import OggPage, OggFileType, error as OggError
 
 class error(OggError): pass
@@ -45,6 +45,10 @@ class OggFLACStreamInfo(StreamInfo):
     serial = 0
 
     def load(self, data):
+        # Ogg expects file objects that don't raise on read
+        if isinstance(data, StrictFileObject):
+            data = data._fileobj
+
         page = OggPage(data)
         while not page.packets[0].startswith("\x7FFLAC"):
             page = OggPage(data)
@@ -58,7 +62,7 @@ class OggFLACStreamInfo(StreamInfo):
         self.serial = page.serial
 
         # Skip over the block header.
-        stringobj = StringIO(page.packets[0][17:])
+        stringobj = StrictFileObject(StringIO(page.packets[0][17:]))
         super(OggFLACStreamInfo, self).load(stringobj)
 
     def _post_tags(self, fileobj):

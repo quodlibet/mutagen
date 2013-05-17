@@ -5,7 +5,7 @@ from tempfile import mkstemp
 from cStringIO import StringIO
 
 from mutagen.oggflac import OggFLAC, OggFLACStreamInfo, delete
-from mutagen.ogg import OggPage
+from mutagen.ogg import OggPage, error as OggError
 from tests import add
 from tests.test_ogg import TOggFileType
 try: from os.path import devnull
@@ -30,6 +30,10 @@ class TOggFLAC(TOggFileType):
         page = OggPage(open(self.filename, "rb")).write()
         page = page.replace("fLaC", "!fLa", 1)
         self.failUnlessRaises(IOError, OggFLACStreamInfo, StringIO(page))
+
+    def test_streaminfo_too_short(self):
+        page = OggPage(open(self.filename, "rb")).write()
+        self.failUnlessRaises(OggError, OggFLACStreamInfo, StringIO(page[:10]))
 
     def test_streaminfo_bad_version(self):
         page = OggPage(open(self.filename, "rb")).write()
