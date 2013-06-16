@@ -4,8 +4,6 @@
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.
-#
-# $Id: asf.py 4224 2007-12-03 09:01:49Z luks $
 
 """Read and write ASF (Window Media Audio) files."""
 
@@ -15,9 +13,17 @@ import struct
 from mutagen import FileType, Metadata
 from mutagen._util import insert_bytes, delete_bytes, DictMixin
 
-class error(IOError): pass
-class ASFError(error): pass
-class ASFHeaderError(error): pass
+
+class error(IOError):
+    pass
+
+
+class ASFError(error):
+    pass
+
+
+class ASFHeaderError(error):
+    pass
 
 
 class ASFInfo(object):
@@ -49,20 +55,26 @@ class ASFTags(list, DictMixin, Metadata):
 
         """
         values = [value for (k, value) in self if k == key]
-        if not values: raise KeyError, key
-        else: return values
+        if not values:
+            raise KeyError(key)
+        else:
+            return values
 
     def __delitem__(self, key):
         """Delete all values associated with the key."""
         to_delete = filter(lambda x: x[0] == key, self)
-        if not to_delete: raise KeyError, key
-        else: map(self.remove, to_delete)
+        if not to_delete:
+            raise KeyError(key)
+        else:
+            map(self.remove, to_delete)
 
     def __contains__(self, key):
         """Return true if the key has any values."""
         for k, value in self:
-            if k == key: return True
-        else: return False
+            if k == key:
+                return True
+        else:
+            return False
 
     def __setitem__(self, key, values):
         """Set a key's value or values.
@@ -74,8 +86,10 @@ class ASFTags(list, DictMixin, Metadata):
         """
         if not isinstance(values, list):
             values = [values]
-        try: del(self[key])
-        except KeyError: pass
+        try:
+            del(self[key])
+        except KeyError:
+            pass
         for value in values:
             if key in _standard_attribute_names:
                 value = unicode(value)
@@ -150,6 +164,7 @@ class ASFBaseAttribute(object):
             data = self._render()
         return (struct.pack("<HHHHI", self.language or 0, self.stream or 0,
                             len(name), self.TYPE, len(data)) + name + data)
+
 
 class ASFUnicodeAttribute(ASFBaseAttribute):
     """Unicode string attribute."""
@@ -331,6 +346,7 @@ QWORD = ASFQWordAttribute.TYPE
 WORD = ASFWordAttribute.TYPE
 GUID = ASFGUIDAttribute.TYPE
 
+
 def ASFValue(value, kind, **kwargs):
     for t, c in _attribute_types.items():
         if kind == t:
@@ -404,7 +420,8 @@ class ContentDescriptionObject(BaseObject):
             Author=author,
             Copyright=copyright,
             Description=desc,
-            Rating=rating).items():
+            Rating=rating
+        ).items():
             if value is not None:
                 asf.tags[key] = value
 
@@ -425,7 +442,8 @@ class ExtendedContentDescriptionObject(BaseObject):
     GUID = "\x40\xA4\xD0\xD2\x07\xE3\xD2\x11\x97\xF0\x00\xA0\xC9\x5E\xA8\x50"
 
     def parse(self, asf, data, fileobj, size):
-        super(ExtendedContentDescriptionObject, self).parse(asf, data, fileobj, size)
+        super(ExtendedContentDescriptionObject, self).parse(
+            asf, data, fileobj, size)
         asf.extended_content_description_obj = self
         num_attributes, = struct.unpack("<H", data[0:2])
         pos = 2
@@ -601,8 +619,8 @@ class ASF(FileType):
                 continue
             library_only = (value.data_size() > 0xFFFF or value.TYPE == GUID)
             if (value.language is None and value.stream is None and
-                name not in self.to_extended_content_description and
-                not library_only):
+                    name not in self.to_extended_content_description and
+                    not library_only):
                 self.to_extended_content_description[name] = value
             elif (value.language is None and value.stream is not None and
                   name not in self.to_metadata and not library_only):
@@ -656,7 +674,7 @@ class ASF(FileType):
     def __read_file(self, fileobj):
         header = fileobj.read(30)
         if len(header) != 30 or header[:16] != HeaderObject.GUID:
-            raise ASFHeaderError, "Not an ASF file."
+            raise ASFHeaderError("Not an ASF file.")
 
         self.extended_content_description_obj = None
         self.content_description_obj = None
@@ -679,8 +697,8 @@ class ASF(FileType):
         obj.parse(self, data, fileobj, size)
         self.objects.append(obj)
 
+    @staticmethod
     def score(filename, fileobj, header):
         return header.startswith(HeaderObject.GUID) * 2
-    score = staticmethod(score)
 
 Open = ASF

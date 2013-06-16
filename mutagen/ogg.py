@@ -3,8 +3,6 @@
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.
-#
-# $Id: ogg.py 3975 2007-01-13 21:51:17Z piman $
 
 """Read and write Ogg bitstreams and pages.
 
@@ -25,9 +23,12 @@ from cStringIO import StringIO
 from mutagen import FileType
 from mutagen._util import cdata, insert_bytes, delete_bytes
 
+
 class error(IOError):
     """Ogg stream parsing errors."""
+
     pass
+
 
 class OggPage(object):
     """A single Ogg page (not necessarily a single encoded packet).
@@ -79,7 +80,7 @@ class OggPage(object):
         try:
             (oggs, self.version, self.__type_flags, self.position,
              self.serial, self.sequence, crc, segments) = struct.unpack(
-                "<4sBBqIIiB", header)
+                 "<4sBBqIIiB", header)
         except struct.error:
             raise error("unable to read full header; got %r" % header)
 
@@ -135,7 +136,7 @@ class OggPage(object):
         data = [
             struct.pack("<4sBBqIIi", "OggS", self.version, self.__type_flags,
                         self.position, self.serial, self.sequence, 0)
-            ]
+        ]
 
         lacing_data = []
         for datum in self.packets:
@@ -158,8 +159,11 @@ class OggPage(object):
         data = data[:22] + crc + data[26:]
         return data
 
-    def __size(self):
-        size = 27 # Initial header size
+    @property
+    def size(self):
+        """Total frame size."""
+
+        size = 27  # Initial header size
         for datum in self.packets:
             quot, rem = divmod(len(datum), 255)
             size += quot + 1
@@ -170,12 +174,12 @@ class OggPage(object):
         size += sum(map(len, self.packets))
         return size
 
-    size = property(__size, doc="Total frame size.")
-
     def __set_flag(self, bit, val):
         mask = 1 << bit
-        if val: self.__type_flags |= mask
-        else: self.__type_flags &= ~mask
+        if val:
+            self.__type_flags |= mask
+        else:
+            self.__type_flags &= ~mask
 
     continued = property(
         lambda self: cdata.test_bit(self.__type_flags, 0),
@@ -192,6 +196,7 @@ class OggPage(object):
         lambda self, v: self.__set_flag(2, v),
         doc="This is the last page of a logical bitstream.")
 
+    @classmethod
     def renumber(klass, fileobj, serial, start):
         """Renumber pages belonging to a specified logical stream.
 
@@ -214,7 +219,8 @@ class OggPage(object):
 
         number = start
         while True:
-            try: page = OggPage(fileobj)
+            try:
+                page = OggPage(fileobj)
             except EOFError:
                 break
             else:
@@ -228,8 +234,8 @@ class OggPage(object):
             fileobj.write(page.write())
             fileobj.seek(page.offset + page.size, 0)
             number += 1
-    renumber = classmethod(renumber)
 
+    @classmethod
     def to_packets(klass, pages, strict=False):
         """Construct a list of packet data from a list of Ogg pages.
 
@@ -254,15 +260,18 @@ class OggPage(object):
                 raise ValueError("invalid serial number in %r" % page)
             elif sequence != page.sequence:
                 raise ValueError("bad sequence number in %r" % page)
-            else: sequence += 1
+            else:
+                sequence += 1
 
-            if page.continued: packets[-1] += page.packets[0]
-            else: packets.append(page.packets[0])
+            if page.continued:
+                packets[-1] += page.packets[0]
+            else:
+                packets.append(page.packets[0])
             packets.extend(page.packets[1:])
 
         return packets
-    to_packets = classmethod(to_packets)
 
+    @classmethod
     def from_packets(klass, packets, sequence=0,
                      default_size=4096, wiggle_room=2048):
         """Construct a list of Ogg pages from a list of packet data.
@@ -322,8 +331,8 @@ class OggPage(object):
             pages.append(page)
 
         return pages
-    from_packets = classmethod(from_packets)
 
+    @classmethod
     def replace(klass, fileobj, old_pages, new_pages):
         """Replace old_pages with new_pages within fileobj.
 
@@ -378,8 +387,8 @@ class OggPage(object):
             serial = new_pages[-1].serial
             sequence = new_pages[-1].sequence + 1
             klass.renumber(fileobj, serial, sequence)
-    replace = classmethod(replace)
 
+    @classmethod
     def find_last(klass, fileobj, serial):
         """Find the last page of the stream 'serial'.
 
@@ -391,12 +400,14 @@ class OggPage(object):
         """
 
         # For non-muxed streams, look at the last page.
-        try: fileobj.seek(-256*256, 2)
+        try:
+            fileobj.seek(-256*256, 2)
         except IOError:
             # The file is less than 64k in length.
             fileobj.seek(0)
         data = fileobj.read()
-        try: index = data.rindex("OggS")
+        try:
+            index = data.rindex("OggS")
         except ValueError:
             raise error("unable to find final Ogg header")
         stringobj = StringIO(data[index:])
@@ -407,9 +418,12 @@ class OggPage(object):
             pass
         else:
             if page.serial == serial:
-                if page.last: return page
-                else: best_page = page
-            else: best_page = None
+                if page.last:
+                    return page
+                else:
+                    best_page = page
+            else:
+                best_page = None
 
         # The stream is muxed, so use the slow way.
         fileobj.seek(0)
@@ -425,7 +439,7 @@ class OggPage(object):
             return best_page
         except EOFError:
             return best_page
-    find_last = classmethod(find_last)
+
 
 class OggFileType(FileType):
     """An generic Ogg file."""
@@ -457,13 +471,15 @@ class OggFileType(FileType):
 
         If no filename is given, the one most recently loaded is used.
         """
+
         if filename is None:
             filename = self.filename
 
         self.tags.clear()
         fileobj = open(filename, "rb+")
         try:
-            try: self.tags._inject(fileobj)
+            try:
+                self.tags._inject(fileobj)
             except error, e:
                 raise self._Error, e, sys.exc_info()[2]
             except EOFError:
@@ -476,11 +492,13 @@ class OggFileType(FileType):
 
         If no filename is given, the one most recently loaded is used.
         """
+
         if filename is None:
             filename = self.filename
         fileobj = open(filename, "rb+")
         try:
-            try: self.tags._inject(fileobj)
+            try:
+                self.tags._inject(fileobj)
             except error, e:
                 raise self._Error, e, sys.exc_info()[2]
             except EOFError:

@@ -4,8 +4,6 @@
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
-#
-# $Id: id3.py 3086 2006-04-04 02:13:21Z piman $
 
 """Easier access to ID3 tags.
 
@@ -19,7 +17,9 @@ from mutagen import Metadata
 from mutagen._util import DictMixin, dict_match
 from mutagen.id3 import ID3, error, delete, ID3FileType
 
+
 __all__ = ['EasyID3', 'Open', 'delete']
+
 
 class EasyID3KeyError(KeyError, ValueError, error):
     """Raised when trying to get/set an invalid key.
@@ -27,6 +27,7 @@ class EasyID3KeyError(KeyError, ValueError, error):
     Subclasses both KeyError and ValueError for API compatibility,
     catching KeyError is preferred.
     """
+
 
 class EasyID3(DictMixin, Metadata):
     """A file with an ID3 tag.
@@ -72,7 +73,8 @@ class EasyID3(DictMixin, Metadata):
     SetFallback = None
     DeleteFallback = None
     ListFallback = None
-    
+
+    @classmethod
     def RegisterKey(cls, key,
                     getter=None, setter=None, deleter=None, lister=None):
         """Register a new key mapping.
@@ -100,8 +102,8 @@ class EasyID3(DictMixin, Metadata):
             cls.Delete[key] = deleter
         if lister is not None:
             cls.List[key] = lister
-    RegisterKey = classmethod(RegisterKey)
 
+    @classmethod
     def RegisterTextKey(cls, key, frameid):
         """Register a text key.
 
@@ -127,8 +129,8 @@ class EasyID3(DictMixin, Metadata):
             del(id3[frameid])
 
         cls.RegisterKey(key, getter, setter, deleter)
-    RegisterTextKey = classmethod(RegisterTextKey)
 
+    @classmethod
     def RegisterTXXXKey(cls, key, desc):
         """Register a user-defined text frame key.
 
@@ -139,6 +141,7 @@ class EasyID3(DictMixin, Metadata):
             EasyID3.RegisterTXXXKey('barcode', 'BARCODE').
         """
         frameid = "TXXX:" + desc
+
         def getter(id3, key):
             return list(id3[frameid])
 
@@ -159,7 +162,6 @@ class EasyID3(DictMixin, Metadata):
             del(id3[frameid])
 
         cls.RegisterKey(key, getter, setter, deleter)
-    RegisterTXXXKey = classmethod(RegisterTXXXKey)
 
     def __init__(self, filename=None):
         self.__id3 = ID3()
@@ -227,10 +229,13 @@ class EasyID3(DictMixin, Metadata):
                 strings.append("%s=%s" % (key, value))
         return "\n".join(strings)
 
+
 Open = EasyID3
+
 
 def genre_get(id3, key):
     return id3["TCON"].genres
+
 
 def genre_set(id3, key, value):
     try:
@@ -241,17 +246,22 @@ def genre_set(id3, key, value):
         frame.encoding = 3
         frame.genres = value
 
+
 def genre_delete(id3, key):
     del(id3["TCON"])
+
 
 def date_get(id3, key):
     return [stamp.text for stamp in id3["TDRC"].text]
 
+
 def date_set(id3, key, value):
     id3.add(mutagen.id3.TDRC(encoding=3, text=value))
 
+
 def date_delete(id3, key):
     del(id3["TDRC"])
+
 
 def performer_get(id3, key):
     people = []
@@ -267,7 +277,8 @@ def performer_get(id3, key):
         return people
     else:
         raise KeyError(key)
-    
+
+
 def performer_set(id3, key, value):
     wanted_role = key.split(":", 1)[1]
     try:
@@ -280,6 +291,7 @@ def performer_set(id3, key, value):
     for v in value:
         people.append((wanted_role, v))
     mcl.people = people
+
 
 def performer_delete(id3, key):
     wanted_role = key.split(":", 1)[1]
@@ -294,16 +306,20 @@ def performer_delete(id3, key):
         mcl.people = people
     else:
         del(id3["TMCL"])
-        
+
+
 def performer_list(id3, key):
-    try: mcl = id3["TMCL"]
+    try:
+        mcl = id3["TMCL"]
     except KeyError:
         return []
     else:
         return list(set("performer:" + p[0] for p in mcl.people))
 
+
 def musicbrainz_trackid_get(id3, key):
     return [id3["UFID:http://musicbrainz.org"].data.decode('ascii')]
+
 
 def musicbrainz_trackid_set(id3, key, value):
     if len(value) != 1:
@@ -317,8 +333,10 @@ def musicbrainz_trackid_set(id3, key, value):
     else:
         frame.data = value
 
+
 def musicbrainz_trackid_delete(id3, key):
     del(id3["UFID:http://musicbrainz.org"])
+
 
 def website_get(id3, key):
     urls = [frame.url for frame in id3.getall("WOAR")]
@@ -327,13 +345,16 @@ def website_get(id3, key):
     else:
         raise EasyID3KeyError(key)
 
+
 def website_set(id3, key, value):
     id3.delall("WOAR")
     for v in value:
         id3.add(mutagen.id3.WOAR(url=v))
 
+
 def website_delete(id3, key):
     id3.delall("WOAR")
+
 
 def gain_get(id3, key):
     try:
@@ -343,9 +364,11 @@ def gain_get(id3, key):
     else:
         return [u"%+f dB" % frame.gain]
 
+
 def gain_set(id3, key, value):
     if len(value) != 1:
-        raise ValueError("there must be exactly one gain value, not %r.", value)
+        raise ValueError(
+            "there must be exactly one gain value, not %r.", value)
     gain = float(value[0].split()[0])
     try:
         frame = id3["RVA2:" + key[11:-5]]
@@ -353,6 +376,7 @@ def gain_set(id3, key, value):
         frame = mutagen.id3.RVA2(desc=key[11:-5], gain=0, peak=0, channel=1)
         id3.add(frame)
     frame.gain = gain
+
 
 def gain_delete(id3, key):
     try:
@@ -365,6 +389,7 @@ def gain_delete(id3, key):
         else:
             del(id3["RVA2:" + key[11:-5]])
 
+
 def peak_get(id3, key):
     try:
         frame = id3["RVA2:" + key[11:-5]]
@@ -373,9 +398,11 @@ def peak_get(id3, key):
     else:
         return [u"%f" % frame.peak]
 
+
 def peak_set(id3, key, value):
     if len(value) != 1:
-        raise ValueError("there must be exactly one peak value, not %r.", value)
+        raise ValueError(
+            "there must be exactly one peak value, not %r.", value)
     peak = float(value[0])
     if peak >= 2 or peak < 0:
         raise ValueError("peak must be => 0 and < 2.")
@@ -385,6 +412,7 @@ def peak_set(id3, key, value):
         frame = mutagen.id3.RVA2(desc=key[11:-5], gain=0, peak=0, channel=1)
         id3.add(frame)
     frame.peak = peak
+
 
 def peak_delete(id3, key):
     try:
@@ -397,6 +425,7 @@ def peak_delete(id3, key):
         else:
             del(id3["RVA2:" + key[11:-5]])
 
+
 def peakgain_list(id3, key):
     keys = []
     for frame in id3.getall("RVA2"):
@@ -407,7 +436,7 @@ def peakgain_list(id3, key):
 for frameid, key in {
     "TALB": "album",
     "TBPM": "bpm",
-    "TCMP": "compilation", # iTunes extension
+    "TCMP": "compilation",  # iTunes extension
     "TCOM": "composer",
     "TCOP": "copyright",
     "TENC": "encodedby",
@@ -418,21 +447,21 @@ for frameid, key in {
     "TIT2": "title",
     "TIT3": "version",
     "TPE1": "artist",
-    "TPE2": "performer", 
+    "TPE2": "performer",
     "TPE3": "conductor",
     "TPE4": "arranger",
     "TPOS": "discnumber",
     "TPUB": "organization",
     "TRCK": "tracknumber",
     "TOLY": "author",
-    "TSO2": "albumartistsort", # iTunes extension
+    "TSO2": "albumartistsort",  # iTunes extension
     "TSOA": "albumsort",
-    "TSOC": "composersort", # iTunes extension
+    "TSOC": "composersort",  # iTunes extension
     "TSOP": "artistsort",
     "TSOT": "titlesort",
     "TSRC": "isrc",
     "TSST": "discsubtitle",
-    }.iteritems():
+}.iteritems():
     EasyID3.RegisterTextKey(key, frameid)
 
 EasyID3.RegisterKey("genre", genre_get, genre_set, genre_delete)
@@ -466,8 +495,9 @@ for desc, key in {
     u"ASIN": "asin",
     u"ALBUMARTISTSORT": "albumartistsort",
     u"BARCODE": "barcode",
-    }.iteritems():
+}.iteritems():
     EasyID3.RegisterTXXXKey(key, desc)
+
 
 class EasyID3FileType(ID3FileType):
     """Like ID3FileType, but uses EasyID3 for tags."""

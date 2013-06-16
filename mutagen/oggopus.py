@@ -19,8 +19,14 @@ import struct
 from mutagen._vorbis import VCommentDict
 from mutagen.ogg import OggPage, OggFileType, error as OggError
 
-class error(OggError): pass
-class OggOpusHeaderError(error): pass
+
+class error(OggError):
+    pass
+
+
+class OggOpusHeaderError(error):
+    pass
+
 
 class OggOpusInfo(object):
     """Ogg Opus stream information.
@@ -61,6 +67,7 @@ class OggOpusInfo(object):
     def pprint(self):
         return "Ogg Opus, %.2f seconds" % (self.length)
 
+
 class OggOpusVComment(VCommentDict):
     """Opus comments embedded in an Ogg bitstream."""
 
@@ -82,7 +89,7 @@ class OggOpusVComment(VCommentDict):
 
     def __init__(self, fileobj, info):
         pages = self.__get_comment_pages(fileobj, info)
-        data = OggPage.to_packets(pages)[0][8:] # Strip OpusTags
+        data = OggPage.to_packets(pages)[0][8:]  # Strip OpusTags
         super(OggOpusVComment, self).__init__(data, framing=False)
 
     def _inject(self, fileobj):
@@ -95,6 +102,7 @@ class OggOpusVComment(VCommentDict):
         new_pages = OggPage.from_packets(packets, old_pages[0].sequence)
         OggPage.replace(fileobj, old_pages, new_pages)
 
+
 class OggOpus(OggFileType):
     """An Ogg Opus file."""
 
@@ -103,12 +111,15 @@ class OggOpus(OggFileType):
     _Error = OggOpusHeaderError
     _mimes = ["audio/ogg", "audio/ogg; codecs=opus"]
 
+    @staticmethod
     def score(filename, fileobj, header):
         return (header.startswith("OggS") * ("OpusHead" in header))
-    score = staticmethod(score)
+
 
 Open = OggOpus
 
+
 def delete(filename):
     """Remove tags from a file."""
+
     OggOpus(filename).delete()

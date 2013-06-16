@@ -19,8 +19,14 @@ __all__ = ["TrueAudio", "Open", "delete", "EasyTrueAudio"]
 from mutagen.id3 import ID3FileType, delete
 from mutagen._util import cdata
 
-class error(RuntimeError): pass
-class TrueAudioHeaderError(error, IOError): pass
+
+class error(RuntimeError):
+    pass
+
+
+class TrueAudioHeaderError(error, IOError):
+    pass
+
 
 class TrueAudioInfo(object):
     """True Audio stream information.
@@ -44,21 +50,24 @@ class TrueAudioInfo(object):
         return "True Audio, %.2f seconds, %d Hz." % (
             self.length, self.sample_rate)
 
+
 class TrueAudio(ID3FileType):
     """A True Audio file."""
 
     _Info = TrueAudioInfo
     _mimes = ["audio/x-tta"]
 
+    @staticmethod
     def score(filename, fileobj, header):
         return (header.startswith("ID3") + header.startswith("TTA") +
                 filename.lower().endswith(".tta") * 2)
-    score = staticmethod(score)
+
 
 Open = TrueAudio
 
+
 class EasyTrueAudio(TrueAudio):
     """Like MP3, but uses EasyID3 for tags."""
+
     from mutagen.easyid3 import EasyID3 as ID3
     ID3 = ID3
-

@@ -5,8 +5,6 @@
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.
-#
-# $Id: oggflac.py 3976 2007-01-13 22:00:14Z piman $
 
 """Read and write Ogg FLAC comments.
 
@@ -26,8 +24,14 @@ from cStringIO import StringIO
 from mutagen.flac import StreamInfo, VCFLACDict, StrictFileObject
 from mutagen.ogg import OggPage, OggFileType, error as OggError
 
-class error(OggError): pass
-class OggFLACHeaderError(error): pass
+
+class error(OggError):
+    pass
+
+
+class OggFLACHeaderError(error):
+    pass
+
 
 class OggFLACStreamInfo(StreamInfo):
     """Ogg FLAC general header and stream info.
@@ -74,6 +78,7 @@ class OggFLACStreamInfo(StreamInfo):
     def pprint(self):
         return "Ogg " + super(OggFLACStreamInfo, self).pprint()
 
+
 class OggFLACVComment(VCFLACDict):
     def load(self, data, info, errors='replace'):
         # data should be pointing at the start of an Ogg page, after
@@ -118,6 +123,7 @@ class OggFLACVComment(VCFLACDict):
         new_pages = OggPage.from_packets(packets, old_pages[0].sequence)
         OggPage.replace(fileobj, old_pages, new_pages)
 
+
 class OggFLAC(OggFileType):
     """An Ogg FLAC file."""
 
@@ -126,13 +132,16 @@ class OggFLAC(OggFileType):
     _Error = OggFLACHeaderError
     _mimes = ["audio/x-oggflac"]
 
+    @staticmethod
     def score(filename, fileobj, header):
         return (header.startswith("OggS") * (
             ("FLAC" in header) + ("fLaC" in header)))
-    score = staticmethod(score)
+
 
 Open = OggFLAC
 
+
 def delete(filename):
     """Remove tags from a file."""
+
     OggFLAC(filename).delete()

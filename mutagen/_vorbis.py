@@ -21,9 +21,6 @@ from cStringIO import StringIO
 import mutagen
 from mutagen._util import DictMixin, cdata
 
-try: set
-except NameError:
-    from sets import Set as set
 
 def is_valid_key(key):
     """Return true if a string is a valid Vorbis comment key.
@@ -32,13 +29,25 @@ def is_valid_key(key):
     and 0x7D ('}'), excluding '='.
     """
     for c in key:
-        if c < " " or c > "}" or c == "=": return False
-    else: return bool(key)
+        if c < " " or c > "}" or c == "=":
+            return False
+    else:
+        return bool(key)
+
 istag = is_valid_key
 
-class error(IOError): pass
-class VorbisUnsetFrameError(error): pass
-class VorbisEncodingError(error): pass
+
+class error(IOError):
+    pass
+
+
+class VorbisUnsetFrameError(error):
+    pass
+
+
+class VorbisEncodingError(error):
+    pass
+
 
 class VComment(mutagen.Metadata, list):
     """A Vorbis comment parser, accessor, and renderer.
@@ -86,22 +95,26 @@ class VComment(mutagen.Metadata, list):
             count = cdata.uint_le(fileobj.read(4))
             for i in xrange(count):
                 length = cdata.uint_le(fileobj.read(4))
-                try: string = fileobj.read(length).decode('utf-8', errors)
+                try:
+                    string = fileobj.read(length).decode('utf-8', errors)
                 except (OverflowError, MemoryError):
                     raise error("cannot read %d bytes, too large" % length)
-                try: tag, value = string.split('=', 1)
+                try:
+                    tag, value = string.split('=', 1)
                 except ValueError, err:
                     if errors == "ignore":
                         continue
                     elif errors == "replace":
                         tag, value = u"unknown%d" % i, string
                     else:
-                        raise VorbisEncodingError, str(err), sys.exc_info()[2]
-                try: tag = tag.encode('ascii', errors)
+                        raise VorbisEncodingError, err, sys.exc_info()[2]
+                try:
+                    tag = tag.encode('ascii', errors)
                 except UnicodeEncodeError:
-                    raise VorbisEncodingError, "invalid tag name %r" % tag
+                    raise VorbisEncodingError("invalid tag name %r" % tag)
                 else:
-                    if is_valid_key(tag): self.append((tag, value))
+                    if is_valid_key(tag):
+                        self.append((tag, value))
             if framing and not ord(fileobj.read(1)) & 0x01:
                 raise VorbisUnsetFrameError("framing bit was unset")
         except (cdata.error, TypeError):
@@ -116,17 +129,24 @@ class VComment(mutagen.Metadata, list):
         """
 
         if not isinstance(self.vendor, unicode):
-            try: self.vendor.decode('utf-8')
-            except UnicodeDecodeError: raise ValueError
+            try:
+                self.vendor.decode('utf-8')
+            except UnicodeDecodeError:
+                raise ValueError
 
         for key, value in self:
             try:
-                if not is_valid_key(key): raise ValueError
-            except: raise ValueError("%r is not a valid key" % key)
+                if not is_valid_key(key):
+                    raise ValueError
+            except:
+                raise ValueError("%r is not a valid key" % key)
             if not isinstance(value, unicode):
-                try: value.encode("utf-8")
-                except: raise ValueError("%r is not a valid value" % value)
-        else: return True
+                try:
+                    value.encode("utf-8")
+                except:
+                    raise ValueError("%r is not a valid value" % value)
+        else:
+            return True
 
     def clear(self):
         """Clear all keys from the comment."""
@@ -152,11 +172,13 @@ class VComment(mutagen.Metadata, list):
             comment = "%s=%s" % (tag, value.encode('utf-8'))
             f.write(cdata.to_uint_le(len(comment)))
             f.write(comment)
-        if framing: f.write("\x01")
+        if framing:
+            f.write("\x01")
         return f.getvalue()
 
     def pprint(self):
         return "\n".join(["%s=%s" % (k.lower(), v) for k, v in self])
+
 
 class VCommentDict(VComment, DictMixin):
     """A VComment that looks like a dictionary.
@@ -181,22 +203,28 @@ class VCommentDict(VComment, DictMixin):
         """
         key = key.lower().encode('ascii')
         values = [value for (k, value) in self if k.lower() == key]
-        if not values: raise KeyError, key
-        else: return values
+        if not values:
+            raise KeyError(key)
+        else:
+            return values
 
     def __delitem__(self, key):
         """Delete all values associated with the key."""
         key = key.lower().encode('ascii')
         to_delete = filter(lambda x: x[0].lower() == key, self)
-        if not to_delete:raise KeyError, key
-        else: map(self.remove, to_delete)
+        if not to_delete:
+            raise KeyError(key)
+        else:
+            map(self.remove, to_delete)
 
     def __contains__(self, key):
         """Return true if the key has any values."""
         key = key.lower().encode('ascii')
         for k, value in self:
-            if k.lower() == key: return True
-        else: return False
+            if k.lower() == key:
+                return True
+        else:
+            return False
 
     def __setitem__(self, key, values):
         """Set a key's value or values.
@@ -209,8 +237,10 @@ class VCommentDict(VComment, DictMixin):
         key = key.lower().encode('ascii')
         if not isinstance(values, list):
             values = [values]
-        try: del(self[key])
-        except KeyError: pass
+        try:
+            del(self[key])
+        except KeyError:
+            pass
         for value in values:
             self.append((key, value))
 

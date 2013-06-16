@@ -149,5 +149,5 @@ GENRES = [
     u"Anime",
     u"Jpop",
     u"Synthpop"
-    ]
+]
 """The ID3v1 genre list."""
