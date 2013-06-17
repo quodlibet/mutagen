@@ -9,6 +9,7 @@ import glob
 import os
 import shutil
 import sys
+import subprocess
 
 from distutils.core import setup, Command
 
@@ -49,13 +50,28 @@ class clean(distutils_clean):
 
 class sdist(distutils_sdist):
     def run(self):
-        import mutagen
-        if mutagen.version[-1] < 0:
-            raise SystemExit(
-                "Refusing to create a source distribution for a prerelease.")
-        else:
-            self.run_command("test")
-            distutils_sdist.run(self)
+        self.run_command("test")
+
+        distutils_sdist.run(self)
+
+        # make sure MANIFEST.in includes all tracked files
+        if subprocess.call(["hg", "status"],
+                           stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE) == 0:
+            # contains the packaged files after run() is finished
+            included_files = self.filelist.files
+
+            process = subprocess.Popen(["hg", "locate"],
+                                       stdout=subprocess.PIPE)
+            out, err = process.communicate()
+            assert process.returncode == 0
+
+            tracked_files = out.splitlines()
+            for ignore in [".hgignore", ".hgtags"]:
+                tracked_files.remove(ignore)
+
+            assert not set(tracked_files) - set(included_files), \
+                "Not all tracked files included in tarball, update MANIFEST.in"
 
 
 class test_cmd(Command):
