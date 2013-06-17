@@ -1,3 +1,6 @@
 syntax: glob
 *.pyc
 docs/_build
+dist/*.tar.gz
+coverage/*.cover
+MANIFEST
