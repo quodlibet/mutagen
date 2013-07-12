@@ -9,7 +9,7 @@
 
 True Audio is a lossless format designed for real-time encoding and
 decoding. This module is based on the documentation at
-http://www.true-audio.com/TTA_Lossless_Audio_Codec_-_Format_Description
+http://www.true-audio.com/TTA_Lossless_Audio_Codec\_-_Format_Description
 
 True Audio files use ID3 tags.
 """
@@ -52,7 +52,11 @@ class TrueAudioInfo(object):
 
 
 class TrueAudio(ID3FileType):
-    """A True Audio file."""
+    """A True Audio file.
+
+    :ivar info: :class:`TrueAudioInfo`
+    :ivar tags: :class:`ID3 <mutagen.id3.ID3>`
+    """
 
     _Info = TrueAudioInfo
     _mimes = ["audio/x-tta"]
@@ -67,7 +71,11 @@ Open = TrueAudio
 
 
 class EasyTrueAudio(TrueAudio):
-    """Like MP3, but uses EasyID3 for tags."""
+    """Like MP3, but uses EasyID3 for tags.
+
+    :ivar info: :class:`TrueAudioInfo`
+    :ivar tags: :class:`EasyID3 <mutagen.easyid3.EasyID3>`
+    """
 
     from mutagen.easyid3 import EasyID3 as ID3
     ID3 = ID3

@@ -7,9 +7,9 @@ Ogg bitstreams and pages
 
 .. automodule:: mutagen.ogg
 
-.. autoclass:: mutagen.ogg.error
+.. autoexception:: mutagen.ogg.error
 
-.. autoclass:: mutagen.ogg.OggFileType
+.. autoclass:: mutagen.ogg.OggFileType(filename)
     :show-inheritance:
 
 .. autoclass:: mutagen.ogg.OggPage
@@ -21,13 +21,13 @@ Ogg Vorbis
 
 .. automodule:: mutagen.oggvorbis
 
-.. autoclass:: mutagen.oggvorbis.error
+.. autoexception:: mutagen.oggvorbis.error
     :show-inheritance:
 
-.. autoclass:: mutagen.oggvorbis.OggVorbisHeaderError
+.. autoexception:: mutagen.oggvorbis.OggVorbisHeaderError
     :show-inheritance:
 
-.. autoclass:: mutagen.oggvorbis.OggVorbis
+.. autoclass:: mutagen.oggvorbis.OggVorbis(filename)
     :show-inheritance:
 
 .. autoclass:: mutagen.oggvorbis.OggVorbisInfo
@@ -38,13 +38,13 @@ Ogg Opus
 
 .. automodule:: mutagen.oggopus
 
-.. autoclass:: mutagen.oggopus.error
+.. autoexception:: mutagen.oggopus.error
     :show-inheritance:
 
-.. autoclass:: mutagen.oggopus.OggOpusHeaderError
+.. autoexception:: mutagen.oggopus.OggOpusHeaderError
     :show-inheritance:
 
-.. autoclass:: mutagen.oggopus.OggOpus
+.. autoclass:: mutagen.oggopus.OggOpus(filename)
     :show-inheritance:
 
 .. autoclass:: mutagen.oggopus.OggOpusInfo
@@ -56,13 +56,13 @@ Ogg Speex
 
 .. automodule:: mutagen.oggspeex
 
-.. autoclass:: mutagen.oggspeex.error
+.. autoexception:: mutagen.oggspeex.error
     :show-inheritance:
 
-.. autoclass:: mutagen.oggspeex.OggSpeexHeaderError
+.. autoexception:: mutagen.oggspeex.OggSpeexHeaderError
     :show-inheritance:
 
-.. autoclass:: mutagen.oggspeex.OggSpeex
+.. autoclass:: mutagen.oggspeex.OggSpeex(filename)
     :show-inheritance:
 
 .. autoclass:: mutagen.oggspeex.OggSpeexInfo
@@ -74,13 +74,13 @@ Ogg Theora
 
 .. automodule:: mutagen.oggtheora
 
-.. autoclass:: mutagen.oggtheora.error
+.. autoexception:: mutagen.oggtheora.error
     :show-inheritance:
 
-.. autoclass:: mutagen.oggtheora.OggTheoraHeaderError
+.. autoexception:: mutagen.oggtheora.OggTheoraHeaderError
     :show-inheritance:
 
-.. autoclass:: mutagen.oggtheora.OggTheora
+.. autoclass:: mutagen.oggtheora.OggTheora(filename)
     :show-inheritance:
 
 .. autoclass:: mutagen.oggtheora.OggTheoraInfo
@@ -92,13 +92,13 @@ Ogg FLAC
 
 .. automodule:: mutagen.oggflac
 
-.. autoclass:: mutagen.oggflac.error
+.. autoexception:: mutagen.oggflac.error
     :show-inheritance:
 
-.. autoclass:: mutagen.oggflac.OggFLACHeaderError
+.. autoexception:: mutagen.oggflac.OggFLACHeaderError
     :show-inheritance:
 
-.. autoclass:: mutagen.oggflac.OggFLAC
+.. autoclass:: mutagen.oggflac.OggFLAC(filename)
     :show-inheritance:
 
 .. autoclass:: mutagen.oggflac.OggFLACStreamInfo

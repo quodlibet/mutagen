@@ -1,11 +1,12 @@
 Mutagen Tutorial
 ----------------
 
-There are two different ways to load files in Mutagen, but both
-provide similar interfaces. The first is the :class:`Metadata <mutagen.Metadata>` API, which deals
-only in metadata tags. The second is the :class:`FileType <mutagen.FileType>` API, which is a
-superset of the :class:`Metadata` API, and contains information about the audio
-data itself.
+There are two different ways to load files in Mutagen, but both provide 
+similar interfaces. The first is the :class:`Metadata <mutagen.Metadata>` 
+API, which deals only in metadata tags. The second is the :class:`FileType 
+<mutagen.FileType>` API, which is a superset of the :class:`mutagen 
+<mutagen.Metadata>` API, and contains information about the audio data 
+itself.
 
 Both Metadata and FileType objects present a dict-like interface to
 edit tags. FileType objects also have an 'info' attribute that gives

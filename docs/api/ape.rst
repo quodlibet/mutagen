@@ -7,19 +7,15 @@ APEv2
 APEv2
 -----
 
-.. autoclass:: mutagen.apev2.error
-    :show-inheritance:
+.. autoexception:: mutagen.apev2.error
 
-.. autoclass:: mutagen.apev2.APENoHeaderError
-    :show-inheritance:
+.. autoexception:: mutagen.apev2.APENoHeaderError
 
-.. autoclass:: mutagen.apev2.APEUnsupportedVersionError
-    :show-inheritance:
+.. autoexception:: mutagen.apev2.APEUnsupportedVersionError
 
-.. autoclass:: mutagen.apev2.APEBadItemError
-    :show-inheritance:
+.. autoexception:: mutagen.apev2.APEBadItemError
 
-.. autoclass:: mutagen.apev2.APEv2File
+.. autoclass:: mutagen.apev2.APEv2File(filename)
     :show-inheritance:
     :members:
     :undoc-members:

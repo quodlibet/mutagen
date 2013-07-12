@@ -3,7 +3,7 @@ FLAC
 
 .. automodule:: mutagen.flac
 
-.. autoclass:: mutagen.flac.FLAC
+.. autoclass:: mutagen.flac.FLAC(filename)
     :show-inheritance:
     :members:
     :exclude-members: vc, METADATA_BLOCKS

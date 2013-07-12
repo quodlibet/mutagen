@@ -64,16 +64,15 @@ class MP4Cover(str):
     FORMAT_JPEG = 0x0D
     FORMAT_PNG = 0x0E
 
-    def __new__(cls, data, imageformat=None):
-        self = str.__new__(cls, data)
-        if imageformat is None:
-            imageformat = MP4Cover.FORMAT_JPEG
+    def __new__(cls, data, *args, **kwargs):
+        return str.__new__(cls, data)
+
+    def __init__(self, data, imageformat=FORMAT_JPEG):
         self.imageformat = imageformat
         try:
             self.format
         except AttributeError:
             self.format = imageformat
-        return self
 
 
 class MP4FreeForm(str):
@@ -87,12 +86,11 @@ class MP4FreeForm(str):
     FORMAT_DATA = 0x0
     FORMAT_TEXT = 0x1
 
-    def __new__(cls, data, dataformat=None):
-        self = str.__new__(cls, data)
-        if dataformat is None:
-            dataformat = MP4FreeForm.FORMAT_TEXT
+    def __new__(cls, data, *args, **kwargs):
+        return str.__new__(cls, data)
+
+    def __init__(self, data, dataformat=FORMAT_TEXT):
         self.dataformat = dataformat
-        return self
 
 
 class Atom(object):
@@ -239,53 +237,57 @@ class Atoms(object):
 
 
 class MP4Tags(DictProxy, Metadata):
-    """Dictionary containing Apple iTunes metadata list key/values.
+    r"""Dictionary containing Apple iTunes metadata list key/values.
 
     Keys are four byte identifiers, except for freeform ('----')
     keys. Values are usually unicode strings, but some atoms have a
     special structure:
 
     Text values (multiple values per key are supported):
-        '\xa9nam' -- track title
-        '\xa9alb' -- album
-        '\xa9ART' -- artist
-        'aART' -- album artist
-        '\xa9wrt' -- composer
-        '\xa9day' -- year
-        '\xa9cmt' -- comment
-        'desc' -- description (usually used in podcasts)
-        'purd' -- purchase date
-        '\xa9grp' -- grouping
-        '\xa9gen' -- genre
-        '\xa9lyr' -- lyrics
-        'purl' -- podcast URL
-        'egid' -- podcast episode GUID
-        'catg' -- podcast category
-        'keyw' -- podcast keywords
-        '\xa9too' -- encoded by
-        'cprt' -- copyright
-        'soal' -- album sort order
-        'soaa' -- album artist sort order
-        'soar' -- artist sort order
-        'sonm' -- title sort order
-        'soco' -- composer sort order
-        'sosn' -- show sort order
-        'tvsh' -- show name
+
+    * '\\xa9nam' -- track title
+    * '\\xa9alb' -- album
+    * '\\xa9ART' -- artist
+    * 'aART' -- album artist
+    * '\\xa9wrt' -- composer
+    * '\\xa9day' -- year
+    * '\\xa9cmt' -- comment
+    * 'desc' -- description (usually used in podcasts)
+    * 'purd' -- purchase date
+    * '\\xa9grp' -- grouping
+    * '\\xa9gen' -- genre
+    * '\\xa9lyr' -- lyrics
+    * 'purl' -- podcast URL
+    * 'egid' -- podcast episode GUID
+    * 'catg' -- podcast category
+    * 'keyw' -- podcast keywords
+    * '\\xa9too' -- encoded by
+    * 'cprt' -- copyright
+    * 'soal' -- album sort order
+    * 'soaa' -- album artist sort order
+    * 'soar' -- artist sort order
+    * 'sonm' -- title sort order
+    * 'soco' -- composer sort order
+    * 'sosn' -- show sort order
+    * 'tvsh' -- show name
 
     Boolean values:
-        'cpil' -- part of a compilation
-        'pgap' -- part of a gapless album
-        'pcst' -- podcast (iTunes reads this only on import)
+
+    * 'cpil' -- part of a compilation
+    * 'pgap' -- part of a gapless album
+    * 'pcst' -- podcast (iTunes reads this only on import)
 
     Tuples of ints (multiple values per key are supported):
-        'trkn' -- track number, total tracks
-        'disk' -- disc number, total discs
+
+    * 'trkn' -- track number, total tracks
+    * 'disk' -- disc number, total discs
 
     Others:
-        'tmpo' -- tempo/BPM, 16 bit int
-        'covr' -- cover artwork, list of MP4Cover objects (which are
-                  tagged strs)
-        'gnre' -- ID3v1 genre. Not supported, use '\xa9gen' instead.
+
+    * 'tmpo' -- tempo/BPM, 16 bit int
+    * 'covr' -- cover artwork, list of MP4Cover objects (which are
+      tagged strs)
+    * 'gnre' -- ID3v1 genre. Not supported, use '\\xa9gen' instead.
 
     The freeform '----' frames use a key in the format '----:mean:name'
     where 'mean' is usually 'com.apple.iTunes' and 'name' is a unique
@@ -632,6 +634,8 @@ class MP4Tags(DictProxy, Metadata):
             key, flags, map(utf8, value))
 
     def delete(self, filename):
+        """Remove the metadata from the given filename."""
+
         self.clear()
         self.save(filename)
 
@@ -744,6 +748,9 @@ class MP4(FileType):
 
     If more than one track is present in the file, the first is used.
     Only audio ('soun') tracks will be read.
+
+    :ivar info: :class:`MP4Info`
+    :ivar tags: :class:`MP4Tags`
     """
 
     MP4Tags = MP4Tags

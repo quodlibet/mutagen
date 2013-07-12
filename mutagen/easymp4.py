@@ -20,8 +20,10 @@ class EasyMP4Tags(DictMixin, Metadata):
 
     Like Vorbis comments, EasyMP4Tags keys are case-insensitive ASCII
     strings, and values are a list of Unicode strings (and these lists
-    are always of length 0 or 1). If you need access to the full MP4
-    metadata feature set, you should use MP4, not EasyMP4.
+    are always of length 0 or 1).
+
+    If you need access to the full MP4 metadata feature set, you should use 
+    MP4, not EasyMP4.
     """
 
     Set = {}
@@ -247,7 +249,13 @@ for name, key in {
 
 
 class EasyMP4(MP4):
-    """Like MP4, but uses EasyMP4Tags for tags."""
+    """Like :class:`MP4 <mutagen.mp4.MP4>`,
+    but uses :class:`EasyMP4Tags` for tags.
+
+    :ivar info: :class:`MP4Info <mutagen.mp4.MP4Info>`
+    :ivar tags: :class:`EasyMP4Tags`
+    """
+
     MP4Tags = EasyMP4Tags
 
     Get = EasyMP4Tags.Get

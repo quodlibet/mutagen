@@ -243,7 +243,11 @@ class MPEGInfo(object):
 
 
 class MP3(ID3FileType):
-    """An MPEG audio (usually MPEG-1 Layer 3) file."""
+    """An MPEG audio (usually MPEG-1 Layer 3) file.
+
+    :ivar info: :class:`MPEGInfo`
+    :ivar tags: :class:`ID3 <mutagen.id3.ID3>`
+    """
 
     _Info = MPEGInfo
     _mimes = ["audio/mp3", "audio/x-mp3", "audio/mpeg", "audio/mpg",
@@ -261,7 +265,11 @@ Open = MP3
 
 
 class EasyMP3(MP3):
-    """Like MP3, but uses EasyID3 for tags."""
+    """Like MP3, but uses EasyID3 for tags.
+
+    :ivar info: :class:`MPEGInfo`
+    :ivar tags: :class:`EasyID3 <mutagen.easyid3.EasyID3>`
+    """
 
     from mutagen.easyid3 import EasyID3 as ID3
     ID3 = ID3

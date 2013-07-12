@@ -24,7 +24,7 @@ implemented as a different class (e.g. TIT2 as mutagen.id3.TIT2). Each
 frame's documentation contains a list of its attributes.
 
 Since this file's documentation is a little unwieldy, you are probably
-interested in the 'ID3' class to start with.
+interested in the :class:`ID3` class to start with.
 """
 
 __all__ = ['ID3', 'ID3FileType', 'Frames', 'Open', 'delete']

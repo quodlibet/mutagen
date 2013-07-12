@@ -13,14 +13,18 @@
     import mutagen.[format]
     metadata = mutagen.[format].Open(filename)
 
-metadata acts like a dictionary of tags in the file. Tags are generally a
+`metadata` acts like a dictionary of tags in the file. Tags are generally a
 list of string-like values, but may have additional methods available
 depending on tag or format. They may also be entirely different objects
 for certain keys, again depending on format.
 """
 
 version = (1, 21, -1)
+"""Version tuple."""
+
 version_string = ".".join(map(str, version))
+"""Version string."""
+
 
 import warnings
 
@@ -41,9 +45,13 @@ class Metadata(object):
         raise NotImplementedError
 
     def save(self, filename=None):
+        """Save changes to a file."""
+
         raise NotImplementedError
 
     def delete(self, filename=None):
+        """Remove tags from a file."""
+
         raise NotImplementedError
 
 
@@ -160,16 +168,27 @@ class FileType(mutagen._util.DictMixin):
             return stream + ((tags and "\n" + tags) or "")
 
     def add_tags(self):
+        """Adds new tags to the file.
+
+        Raises if tags already exist.
+        """
+
         raise NotImplementedError
 
     @property
     def mime(self):
+        """A list of mime types"""
+
         mimes = []
         for Kind in type(self).__mro__:
             for mime in getattr(Kind, '_mimes', []):
                 if mime not in mimes:
                     mimes.append(mime)
         return mimes
+
+    @staticmethod
+    def score(filename, fileobj, header):
+        raise NotImplementedError
 
 
 def File(filename, options=None, easy=False):
@@ -180,6 +199,13 @@ def File(filename, options=None, easy=False):
     filename extension, and the presence of existing tags.
 
     If no appropriate type could be found, None is returned.
+
+    :param options: Sequence of :class:`FileType` implementations, defaults to
+                    all included ones.
+
+    :param easy: If the easy wrappers should be returnd if available.
+                 For example :class:`EasyMP3 <mp3.EasyMP3>` instead
+                 of :class:`MP3 <mp3.MP3>`.
     """
 
     if options is None:

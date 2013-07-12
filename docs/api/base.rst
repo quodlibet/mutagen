@@ -2,18 +2,27 @@ Main Module
 -----------
 
 .. automodule:: mutagen
+    :members: File, version, version_string
 
-.. autofunction:: mutagen.File
 
 Base Classes
 ~~~~~~~~~~~~
 
-.. autoclass:: mutagen.FileType
-    :members:
+.. autoclass:: mutagen.FileType(filename)
+    :members: pprint, add_tags, mime
+    :show-inheritance:
+
+    .. automethod:: delete()
+
+    .. automethod:: save()
+
 
 .. autoclass:: mutagen.Metadata
-    :members:
-    :undoc-members:
+
+    .. automethod:: delete()
+
+    .. automethod:: save()
+
 
 Internal Classes
 ~~~~~~~~~~~~~~~~
