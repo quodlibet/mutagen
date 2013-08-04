@@ -168,6 +168,12 @@ class TMP4Tags(TestCase):
         tags = self.wrap_ilst(foob)
         self.failIf(tags)
 
+    def test_strips_bad_unknown_types(self):
+        data = Atom.render("datA", "\x00" * 8 + "whee")
+        foob = Atom.render("foob", data)
+        tags = self.wrap_ilst(foob)
+        self.failIf(tags)
+
     def test_bad_covr(self):
         data = Atom.render("foob", "\x00\x00\x00\x0E" + "\x00" * 4 + "whee")
         covr = Atom.render("covr", data)

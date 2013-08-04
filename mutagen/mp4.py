@@ -311,8 +311,17 @@ class MP4Tags(DictProxy, Metadata):
             data = fileobj.read(atom.length - 8)
             if len(data) != atom.length - 8:
                 raise MP4MetadataError("Not enough data")
-            info = self.__atoms.get(atom.name, (type(self).__parse_text, None))
-            info[0](self, atom, data, *info[2:])
+
+            if atom.name in self.__atoms:
+                info = self.__atoms[atom.name]
+                info[0](self, atom, data, *info[2:])
+            else:
+                # unknown atom, try as text and skip if it fails
+                # FIXME: keep them somehow
+                try:
+                    self.__parse_text(atom, data)
+                except MP4MetadataError:
+                    continue
 
     @classmethod
     def _can_load(cls, atoms):
@@ -652,6 +661,14 @@ class MP4Tags(DictProxy, Metadata):
         "purl": (__parse_text, __render_text, 0),
         "egid": (__parse_text, __render_text, 0),
     }
+
+    # the text atoms we know about which should make loading fail if parsing
+    # any of them fails
+    for name in ["\xa9nam", "\xa9alb", "\xa9ART", "aART", "\xa9wrt", "\xa9day",
+                 "\xa9cmt", "desc", "purd", "\xa9grp", "\xa9gen", "\xa9lyr",
+                 "catg", "keyw", "\xa9too", "cprt", "soal", "soaa", "soar",
+                 "sonm", "soco", "sosn", "tvsh"]:
+        __atoms[name] = (__parse_text, __render_text)
 
     def pprint(self):
         values = []
