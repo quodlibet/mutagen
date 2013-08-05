@@ -253,7 +253,7 @@ class OggPage(object):
             if not pages[-1].complete:
                 raise ValueError("last packet does not complete")
         elif pages and pages[0].continued:
-            packets.append("")
+            packets.append([""])
 
         for page in pages:
             if serial != page.serial:
@@ -264,12 +264,12 @@ class OggPage(object):
                 sequence += 1
 
             if page.continued:
-                packets[-1] += page.packets[0]
+                packets[-1].append(page.packets[0])
             else:
-                packets.append(page.packets[0])
-            packets.extend(page.packets[1:])
+                packets.append([page.packets[0]])
+            packets.extend([[p] for p in page.packets[1:]])
 
-        return packets
+        return ["".join(p) for p in packets]
 
     @classmethod
     def from_packets(klass, packets, sequence=0,
