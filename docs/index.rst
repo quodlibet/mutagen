@@ -6,6 +6,7 @@ Mutagen Documentation
     :maxdepth: 2
 
     tutorial
+    changelog
     api_notes
     bugs
     api/index
