@@ -5,7 +5,7 @@
    * Fix crash with empty TXXX values. (#135)
  * MP4:
    * add_tags() will not replace existing tags. (#101)
-   * Don't ignore tags if parsing them fails.
+   * Don't ignore tags if parsing unknown atoms fails.
  * APEv2:
    * Handle invalid tag item count. (#145, Dawid Zamirski)
 
