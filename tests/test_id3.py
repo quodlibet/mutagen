@@ -1,6 +1,6 @@
 import os; from os.path import join
 import shutil
-from unittest import TestCase
+from tests import TestCase
 from tests import add
 from mutagen.id3 import ID3, BitPaddedInt, COMR, Frames, Frames_2_2, ID3Warning, ID3JunkFrameError
 from StringIO import StringIO

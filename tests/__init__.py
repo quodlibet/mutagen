@@ -23,6 +23,15 @@ class TestCase(BaseTestCase):
                 raise
         self.failUnlessRaises(exc, wrapped, *args, **kwargs)
 
+    # silence deprec warnings about useless renames
+    failUnless = BaseTestCase.assertTrue
+    failIf = BaseTestCase.assertFalse
+    failUnlessEqual = BaseTestCase.assertEqual
+    failUnlessRaises = BaseTestCase.assertRaises
+    failUnlessAlmostEqual = BaseTestCase.assertAlmostEqual
+    failIfEqual = BaseTestCase.assertNotEqual
+    failIfAlmostEqual = BaseTestCase.assertNotAlmostEqual
+
 
 for name in glob.glob(os.path.join(os.path.dirname(__file__), "test_*.py")):
     module = "tests." + os.path.basename(name)
