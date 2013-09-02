@@ -12,6 +12,12 @@ Mutagen Documentation
     api/index
     man/index
 
+.. note::
+
+    This documentation is still incomplete and it's recommended to read the
+    `source <https://bitbucket.org/lazka/mutagen/src/default/mutagen>`__
+    for the full details.
+
 What is Mutagen?
 ----------------
 
