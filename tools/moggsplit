@@ -21,7 +21,7 @@ def main(argv):
         description="Split Ogg logical streams using Mutagen.",
         version="Mutagen %s" % ".".join(map(str, mutagen.version))
         )
-        
+
     parser.add_option(
         "--extension", dest="extension", default="ogg", metavar='ext',
         help="use this extension (default 'ogg')")
@@ -36,7 +36,7 @@ def main(argv):
     if not args:
         raise SystemExit(parser.print_help() or 1)
 
-    format = { 'ext': options.extension }
+    format = {'ext': options.extension}
     for filename in args:
         fileobjs = {}
         format["base"] = os.path.splitext(os.path.basename(filename))[0]
@@ -47,8 +47,10 @@ def main(argv):
         else:
             m3u = None
         while True:
-            try: page = OggPage(fileobj)
-            except EOFError: break
+            try:
+                page = OggPage(fileobj)
+            except EOFError:
+                break
             else:
                 format["stream"] = page.serial
                 if page.serial not in fileobjs:

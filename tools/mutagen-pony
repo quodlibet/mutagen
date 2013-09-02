@@ -5,7 +5,8 @@
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
 
-import os, sys
+import os
+import sys
 import traceback
 
 
@@ -34,13 +35,14 @@ class Report(object):
         self.versions.setdefault(id3.version, 0)
         self.versions[id3.version] += 1
         self.files += 1
-        if id3.f_unsynch: self.unsync += 1
+        if id3.f_unsynch:
+            self.unsync += 1
 
     def __str__(self):
         strings = ["-- Report for %s --" % self.name]
         if self.files == 0:
             return strings[0] + "\n" + "No MP3 files found.\n"
-        
+
         good = self.files - len(self.errors)
         strings.append("Loaded %d/%d files (%d%%)" % (
             good, self.files, (float(good)/self.files) * 100))
@@ -48,13 +50,15 @@ class Report(object):
         strings.append("%d files without tags." % self.missings)
 
         strings.append("\nID3 Versions:")
-        items = self.versions.items(); items.sort()
-        for v,i in items:
+        items = self.versions.items()
+        items.sort()
+        for v, i in items:
             strings.append("  %s\t%d" % (".".join(map(str, v)), i))
 
         if self.exceptions:
             strings.append("\nExceptions:")
-            items = self.exceptions.items(); items.sort()
+            items = self.exceptions.items()
+            items.sort()
             for Ex, i in items:
                 strings.append("  %-20s\t%d" % (Ex.__name__, i))
 
@@ -64,9 +68,11 @@ class Report(object):
                 strings.append("\nReading %s:" % filename)
                 strings.append(
                     "".join(traceback.format_exception(Ex, value, trace)[1:]))
-        else: strings.append("\nNo errors!")
+        else:
+            strings.append("\nNo errors!")
 
         return "\n".join(strings)
+
 
 def check_dir(path):
     from mutagen.id3 import ID3
@@ -80,7 +86,8 @@ def check_dir(path):
     for path, dirs, files in os.walk(path):
         files.sort()
         for fn in files:
-            if not fn.lower().endswith('.mp3'): continue
+            if not fn.lower().endswith('.mp3'):
+                continue
             ffn = os.path.join(path, fn)
             try:
                 mp3 = MP3(ffn, ID3=ID3Custom)

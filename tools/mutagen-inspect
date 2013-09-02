@@ -11,6 +11,7 @@ import locale
 
 from optparse import OptionParser
 
+
 def main(argv):
     from mutagen import File
 
@@ -26,11 +27,16 @@ def main(argv):
     enc = locale.getpreferredencoding()
     for filename in args:
         print "--", filename
-        try: print "- " + File(filename).pprint().encode(enc, 'replace')
-        except AttributeError: print "- Unknown file type"
-        except KeyboardInterrupt: raise
-        except Exception, err: print str(err)
+        try:
+            print "- " + File(filename).pprint().encode(enc, 'replace')
+        except AttributeError:
+            print "- Unknown file type"
+        except KeyboardInterrupt:
+            raise
+        except Exception, err:
+            print str(err)
         print
+
 
 if __name__ == "__main__":
     main(sys.argv)
