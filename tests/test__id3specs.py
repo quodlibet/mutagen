@@ -4,7 +4,6 @@ from mutagen.id3 import BitPaddedInt
 
 
 class SpecSanityChecks(TestCase):
-    uses_mmap = False
 
     def test_bytespec(self):
         from mutagen.id3 import ByteSpec
@@ -70,7 +69,6 @@ add(SpecSanityChecks)
 
 
 class NoHashSpec(TestCase):
-    uses_mmap = False
 
     def test_spec(self):
         from mutagen.id3 import Spec
@@ -80,7 +78,6 @@ add(NoHashSpec)
 
 
 class BitPaddedIntTest(TestCase):
-    uses_mmap = False
 
     def test_zero(self):
         self.assertEquals(BitPaddedInt('\x00\x00\x00\x00'), 0)

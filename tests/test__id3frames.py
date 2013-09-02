@@ -8,7 +8,6 @@ _24 = ID3(); _24.version = (2,4,0)
 
 
 class FrameSanityChecks(TestCase):
-    uses_mmap = False
 
     def test_TF(self):
         from mutagen.id3 import TextFrame
@@ -180,7 +179,6 @@ add(FrameSanityChecks)
 
 
 class Genres(TestCase):
-    uses_mmap = False
 
     from mutagen.id3 import TCON
     TCON = TCON
@@ -253,7 +251,6 @@ add(Genres)
 
 
 class TimeStamp(TestCase):
-    uses_mmap = False
 
     from mutagen.id3 import ID3TimeStamp as Stamp
     Stamp = Stamp
@@ -324,7 +321,6 @@ add(TimeStamp)
 
 
 class NoHashFrame(TestCase):
-    uses_mmap = False
 
     def test_frame(self):
         from mutagen.id3 import TIT1
@@ -335,7 +331,6 @@ add(NoHashFrame)
 
 
 class FrameIDValidate(TestCase):
-    uses_mmap = False
 
     def test_valid(self):
         from mutagen.id3 import is_valid_frame_id
@@ -351,7 +346,6 @@ add(FrameIDValidate)
 
 
 class TimeStampTextFrame(TestCase):
-    uses_mmap = False
 
     from mutagen.id3 import TimeStampTextFrame as Frame
     Frame = Frame

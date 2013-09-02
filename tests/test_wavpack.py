@@ -4,7 +4,6 @@ from mutagen.wavpack import WavPack
 from tests import TestCase, add
 
 class TWavPack(TestCase):
-    uses_mmap = False
 
     def setUp(self):
         self.audio = WavPack(os.path.join("tests", "data", "silence-44-s.wv"))

@@ -20,7 +20,7 @@ LYRICS2 = os.path.join(DIR, "data", "apev2-lyricsv2.mp3")
 INVAL_ITEM_COUNT = os.path.join(DIR, "data", "145-invalid-item-count.apev2")
 
 class Tis_valid_apev2_key(TestCase):
-    uses_mmap = False
+
     def test_yes(self):
         for key in ["foo", "Foo", "   f ~~~"]:
             self.failUnless(is_valid_apev2_key(key))
@@ -32,7 +32,6 @@ add(Tis_valid_apev2_key)
 
 
 class TAPEInvalidItemCount(TestCase):
-    uses_mmap = False
     # http://code.google.com/p/mutagen/issues/detail?id=145
 
     def test_load(self):
@@ -168,7 +167,6 @@ class TAPEv2ThenID3v1Writer(TAPEWriter):
 add(TAPEv2ThenID3v1Writer)
 
 class TAPEv2(TestCase):
-    uses_mmap = False
 
     def setUp(self):
         fd, self.filename = mkstemp(".apev2")
@@ -267,7 +265,6 @@ class TAPEv2(TestCase):
 add(TAPEv2)
 
 class TAPEv2ThenID3v1(TAPEv2):
-    uses_mmap = False
 
     def setUp(self):
         super(TAPEv2ThenID3v1, self).setUp()
@@ -279,7 +276,6 @@ class TAPEv2ThenID3v1(TAPEv2):
 add(TAPEv2ThenID3v1)
 
 class TAPEv2WithLyrics2(TestCase):
-    uses_mmap = False
 
     def setUp(self):
         self.tag = mutagen.apev2.APEv2(LYRICS2)
@@ -292,7 +288,6 @@ class TAPEv2WithLyrics2(TestCase):
 add(TAPEv2WithLyrics2)
 
 class TAPEBinaryValue(TestCase):
-    uses_mmap = False
 
     from mutagen.apev2 import APEBinaryValue as BV
     BV = BV
@@ -313,7 +308,6 @@ class TAPEBinaryValue(TestCase):
 add(TAPEBinaryValue)
 
 class TAPETextValue(TestCase):
-    uses_mmap = False
 
     from mutagen.apev2 import APETextValue as TV
     TV = TV
@@ -345,7 +339,6 @@ class TAPETextValue(TestCase):
 add(TAPETextValue)
 
 class TAPEExtValue(TestCase):
-    uses_mmap = False
 
     from mutagen.apev2 import APEExtValue as EV
     EV = EV
@@ -367,7 +360,6 @@ class TAPEExtValue(TestCase):
 add(TAPEExtValue)
 
 class TAPEv2File(TestCase):
-    uses_mmap = False
 
     def setUp(self):
         self.audio = APEv2File("tests/data/click.mpc")

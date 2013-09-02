@@ -4,7 +4,6 @@ from mutagen.monkeysaudio import MonkeysAudio, MonkeysAudioHeaderError
 from tests import TestCase, add
 
 class TMonkeysAudio(TestCase):
-    uses_mmap = False
 
     def setUp(self):
         self.mac399 = MonkeysAudio(os.path.join("tests", "data",

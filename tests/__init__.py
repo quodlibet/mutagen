@@ -7,7 +7,6 @@ import sys
 import unittest
 
 from unittest import TestCase as BaseTestCase
-BaseTestCase.uses_mmap = True
 suites = []
 add = suites.append
 
@@ -79,11 +78,71 @@ class Runner(object):
         result.printErrors()
         return bool(result.failures + result.errors)
 
-def unit(run=[], filter_func=None):
+
+def unit(run=[], quick=False):
+    import mmap
+
     runner = Runner()
     failures = False
-    use_suites = filter(filter_func, suites)
-    for test in use_suites:
-        if not run or test.__name__ in run:
+    tests = [t for t in suites if not run or t.__name__ in run]
+
+    # normal run, trace mmap calls
+    orig_mmap = mmap.mmap
+    uses_mmap = []
+    print "Running tests with real mmap."
+    for test in tests:
+        def new_mmap(*args, **kwargs):
+            if test not in uses_mmap:
+                uses_mmap.append(test)
+            return orig_mmap(*args, **kwargs)
+        mmap.mmap = new_mmap
+        failures |= runner.run(test)
+    mmap.mmap = orig_mmap
+
+    # make sure the above works
+    assert len(uses_mmap) > 1
+
+    if quick:
+        return failures
+
+    # run mmap using tests with mocked lockf
+    try:
+        import fcntl
+    except ImportError:
+        print "Unable to run mocked fcntl.lockf tests."
+    else:
+        def MockLockF(*args, **kwargs):
+            raise IOError
+        lockf = fcntl.lockf
+        fcntl.lockf = MockLockF
+        print "Running tests with mocked failing fcntl.lockf."
+        for test in uses_mmap:
             failures |= runner.run(test)
+        fcntl.lockf = lockf
+
+    # failing mmap.move
+    class MockMMap(object):
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def move(self, dest, src, count):
+            raise ValueError
+
+        def close(self):
+            pass
+
+    print "Running tests with mocked failing mmap.move."
+    mmap.mmap = MockMMap
+    for test in uses_mmap:
+        failures |= runner.run(test)
+
+    # failing mmap.mmap
+    def MockMMap2(*args, **kwargs):
+        raise EnvironmentError
+
+    mmap.mmap = MockMMap2
+    print "Running tests with mocked failing mmap.mmap."
+    for test in uses_mmap:
+        failures |= runner.run(test)
+
     return failures

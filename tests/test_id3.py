@@ -12,7 +12,6 @@ _23 = ID3(); _23.version = (2,3,0)
 _24 = ID3(); _24.version = (2,4,0)
 
 class ID3GetSetDel(TestCase):
-    uses_mmap = False
 
     def setUp(self):
         self.i = ID3()
@@ -63,8 +62,6 @@ class ID3GetSetDel(TestCase):
         self.assert_(self.i.getall("FOOB") in [[t, t2], [t2, t]])
 
 class ID3Loading(TestCase):
-    uses_mmap = False
-
 
     empty = join('tests', 'data', 'emptyfile.mp3')
     silence = join('tests', 'data', 'silence-44-s.mp3')
@@ -178,7 +175,6 @@ class ID3Loading(TestCase):
         self.assertRaises(EOFError, id3._ID3__fullread, 3)
 
 class Issue21(TestCase):
-    uses_mmap = False
 
     # Files with bad extended header flags failed to read tags.
     # Ensure the extended header is turned off, and the frames are
@@ -198,7 +194,6 @@ class Issue21(TestCase):
 add(Issue21)
 
 class ID3Tags(TestCase):
-    uses_mmap = False
 
     def setUp(self):
         self.silence = join('tests', 'data', 'silence-44-s.mp3')
@@ -285,7 +280,6 @@ class ID3Tags(TestCase):
                 RBUF()._readData, '\x00\x01\x00\x01\x00\x00\x00\x00#xyz')
 
 class ID3v1Tags(TestCase):
-    uses_mmap = False
 
     def setUp(self):
         self.silence = join('tests', 'data', 'silence-44-s-v1.mp3')
@@ -423,7 +417,6 @@ class TestWriteID3v1(TestCase):
 add(TestWriteID3v1)
 
 class TestV22Tags(TestCase):
-    uses_mmap = False
 
     def setUp(self):
         filename = os.path.join("tests", "data", "id3v22-test.mp3")
@@ -789,13 +782,10 @@ def TestReadTags():
         write_tests['test_write_%s_%d' % (tag, i)] = test_tag_write
 
     testcase = type('TestReadTags', (TestCase,), load_tests)
-    testcase.uses_mmap = False
     add(testcase)
     testcase = type('TestReadReprTags', (TestCase,), repr_tests)
-    testcase.uses_mmap = False
     add(testcase)
     testcase = type('TestReadWriteTags', (TestCase,), write_tests)
-    testcase.uses_mmap = False
     add(testcase)
 
     from mutagen.id3 import Frames, Frames_2_2
@@ -805,7 +795,6 @@ def TestReadTags():
         def check(self, tag=tag): self.assert_(tag in tested_tags)
         tested_tags['test_' + tag + '_tested'] = check
     testcase = type('TestTestedTags', (TestCase,), tested_tags)
-    testcase.uses_mmap = False
     add(testcase)
 
 TestReadTags()
@@ -815,7 +804,6 @@ del TestReadTags
 
 
 class UpdateTo24(TestCase):
-    uses_mmap = False
 
     def test_pic(self):
         from mutagen.id3 import PIC
@@ -929,7 +917,6 @@ add(Issue97_UpgradeUnknown23)
 
 
 class BrokenDiscarded(TestCase):
-    uses_mmap = False
 
     def test_empty(self):
         from mutagen.id3 import TPE1, ID3JunkFrameError
@@ -970,7 +957,6 @@ class BrokenDiscarded(TestCase):
         self.assertRaises(ID3JunkFrameError, COMM.fromData, _24, 0x00, data)
 
 class BrokenButParsed(TestCase):
-    uses_mmap = False
 
     def test_missing_encoding(self):
         from mutagen.id3 import TIT2
@@ -1240,8 +1226,9 @@ class WriteForEyeD3(TestCase):
 
 
 class BadTYER(TestCase):
-    uses_mmap = False
+
     filename = join('tests', 'data', 'bad-TYER-frame.mp3')
+
     def setUp(self):
         self.audio = ID3(self.filename)
 
@@ -1255,7 +1242,7 @@ class BadTYER(TestCase):
         del(self.audio)
 
 class BadPOPM(TestCase):
-    uses_mmap = False
+
     filename = join('tests', 'data', 'bad-POPM-frame.mp3')
     newfilename = join('tests', 'data', 'bad-POPM-frame-written.mp3')
 
@@ -1287,7 +1274,6 @@ class BadPOPM(TestCase):
 
 
 class Issue69_BadV1Year(TestCase):
-    uses_mmap = False
 
     def test_missing_year(self):
         from mutagen.id3 import ParseID3v1

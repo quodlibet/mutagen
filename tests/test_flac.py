@@ -9,7 +9,6 @@ try: from os.path import devnull
 except ImportError: devnull = "/dev/null"
 
 class Tto_int_be(TestCase):
-    uses_mmap = False
 
     def test_empty(self): self.failUnlessEqual(to_int_be(""), 0)
     def test_0(self): self.failUnlessEqual(to_int_be("\x00"), 0)
@@ -20,7 +19,6 @@ class Tto_int_be(TestCase):
 add(Tto_int_be)
 
 class TVCFLACDict(TVCommentDict):
-    uses_mmap = False
 
     Kind = VCFLACDict
 
@@ -29,7 +27,6 @@ class TVCFLACDict(TVCommentDict):
 add(TVCFLACDict)
 
 class TMetadataBlock(TestCase):
-    uses_mmap = False
 
     def test_empty(self):
         self.failUnlessEqual(MetadataBlock("").write(), "")
@@ -60,7 +57,6 @@ class TMetadataBlock(TestCase):
 add(TMetadataBlock)
 
 class TStreamInfo(TestCase):
-    uses_mmap = False
 
     data = ('\x12\x00\x12\x00\x00\x00\x0e\x005\xea\n\xc4H\xf0\x00\xca0'
             '\x14(\x90\xf9\xe1)2\x13\x01\xd4\xa7\xa9\x11!8\xab\x91')
@@ -97,7 +93,6 @@ add(TStreamInfo)
         
 class TSeekTable(TestCase):
     SAMPLE = os.path.join("tests", "data", "silence-44-s.flac")
-    uses_mmap = False
 
     def setUp(self):
         self.flac = FLAC(self.SAMPLE)
@@ -119,7 +114,6 @@ add(TSeekTable)
 
 class TCueSheet(TestCase):
     SAMPLE = os.path.join("tests", "data", "silence-44-s.flac")
-    uses_mmap = False
 
     def setUp(self):
         self.flac = FLAC(self.SAMPLE)
@@ -160,7 +154,6 @@ add(TCueSheet)
 
 class TPicture(TestCase):
     SAMPLE = os.path.join("tests", "data", "silence-44-s.flac")
-    uses_mmap = False
 
     def setUp(self):
         self.flac = FLAC(self.SAMPLE)
@@ -184,7 +177,6 @@ class TPicture(TestCase):
 add(TPicture)
 
 class TPadding(TestCase):
-    uses_mmap = False
 
     def setUp(self): self.b = Padding("\x00" * 100)
     def test_padding(self): self.failUnlessEqual(self.b.write(), "\x00" * 100)
@@ -410,7 +402,6 @@ class TFLAC(TestCase):
 add(TFLAC)
 
 class TFLACFile(TestCase):
-    uses_mmap = False
 
     def test_open_nonexistant(self):
         """mutagen 1.2 raises UnboundLocalError, then it tries to open
@@ -421,7 +412,6 @@ class TFLACFile(TestCase):
 add(TFLACFile)
 
 class TFLACBadBlockSize(TestCase):
-    uses_mmap = False
     TOO_SHORT = os.path.join("tests", "data", "52-too-short-block-size.flac")
     TOO_SHORT_2 = os.path.join("tests", "data",
                                "106-short-picture-block-size.flac")
@@ -446,7 +436,6 @@ class TFLACBadBlockSize(TestCase):
 add(TFLACBadBlockSize)
 
 class TFLACBadBlockSizeWrite(TestCase):
-    uses_mmap = False
     TOO_SHORT = os.path.join("tests", "data", "52-too-short-block-size.flac")
     NEW = TOO_SHORT + ".new"
 
@@ -468,7 +457,6 @@ class TFLACBadBlockSizeWrite(TestCase):
 add(TFLACBadBlockSizeWrite)
 
 class CVE20074619(TestCase):
-    uses_mmap = True
 
     # Tests to ensure Mutagen is not vulnerable to a number of security
     # issues found in libFLAC.

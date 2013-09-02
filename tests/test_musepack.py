@@ -8,7 +8,6 @@ from cStringIO import StringIO
 from tests import TestCase, add
 
 class TMusepack(TestCase):
-    uses_mmap = False
 
     def setUp(self):
         self.sv8 = Musepack(os.path.join("tests", "data", "sv8_header.mpc"))

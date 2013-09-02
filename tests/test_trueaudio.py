@@ -6,7 +6,6 @@ from tests import TestCase, add
 from tempfile import mkstemp
 
 class TTrueAudio(TestCase):
-    uses_mmap = False
 
     def setUp(self):
         self.audio = TrueAudio(os.path.join("tests", "data", "empty.tta"))

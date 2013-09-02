@@ -11,7 +11,6 @@ try: from os.path import devnull
 except ImportError: devnull = "/dev/null"
 
 class TOggPage(TestCase):
-    uses_mmap = False
 
     def setUp(self):
         self.fileobj = open(os.path.join("tests", "data", "empty.ogg"), "rb")

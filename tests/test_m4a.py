@@ -14,7 +14,6 @@ try: from os.path import devnull
 except ImportError: devnull = "/dev/null"
 
 class TAtom(TestCase):
-    uses_mmap = False
 
     def test_no_children(self):
         fileobj = StringIO("\x00\x00\x00\x08atom")
@@ -45,7 +44,6 @@ class TAtom(TestCase):
 add(TAtom)
 
 class TAtoms(TestCase):
-    uses_mmap = False
     filename = os.path.join("tests", "data", "has-tags.m4a")
 
     def setUp(self):
@@ -70,7 +68,6 @@ class TAtoms(TestCase):
 add(TAtoms)
 
 class TM4AInfo(TestCase):
-    uses_mmap = False
 
     def test_no_soun(self):
         self.failUnlessRaises(
@@ -91,7 +88,6 @@ class TM4AInfo(TestCase):
 add(TM4AInfo)
 
 class TM4ATags(TestCase):
-    uses_mmap = False
 
     def wrap_ilst(self, data):
         ilst = Atom.render("ilst", data)

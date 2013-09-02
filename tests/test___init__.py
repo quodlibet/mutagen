@@ -24,7 +24,6 @@ try: from os.path import devnull
 except ImportError: devnull = "/dev/null"
 
 class TMetadata(TestCase):
-    uses_mmap = False
 
     class FakeMeta(Metadata):
         def __init__(self): pass
@@ -48,7 +47,6 @@ class TMetadata(TestCase):
 add(TMetadata)
 
 class TFileType(TestCase):
-    uses_mmap = False
 
     def setUp(self):
         self.vorbis = File(os.path.join("tests", "data", "empty.ogg"))
@@ -66,7 +64,6 @@ class TFileType(TestCase):
 add(TFileType)
 
 class TFile(TestCase):
-    uses_mmap = False
 
     def test_bad(self):
         try: self.failUnless(File(devnull) is None)
@@ -221,7 +218,6 @@ add(TFileUpperExt)
 
 
 class TModuleImportAll(TestCase):
-    uses_mmap = False
 
     def test_all(self):
         import mutagen
