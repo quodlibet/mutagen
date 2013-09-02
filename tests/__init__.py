@@ -100,7 +100,8 @@ def unit(run=[], quick=False):
     mmap.mmap = orig_mmap
 
     # make sure the above works
-    assert len(uses_mmap) > 1
+    if not run:
+        assert len(uses_mmap) > 1
 
     if quick:
         return failures
