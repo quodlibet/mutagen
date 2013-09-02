@@ -11,6 +11,8 @@ import locale
 
 from optparse import OptionParser
 
+import mutagen, mutagen.id3
+
 VERSION = (0, 3)
 
 def isascii(string):
@@ -130,6 +132,4 @@ def main(argv):
         parser.print_help()
 
 if __name__ == "__main__":
-    import mutagen, mutagen.id3
-
     main(sys.argv)
