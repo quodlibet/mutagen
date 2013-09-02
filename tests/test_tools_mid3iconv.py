@@ -1,13 +1,10 @@
 import os
-import sys
-import StringIO
 from tempfile import mkstemp
 import shutil
 
-import mutagen
 from mutagen.id3 import ID3
 
-from tests import TestCase, add
+from tests import add
 from tests.test_tools import _TTools
 
 

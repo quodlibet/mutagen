@@ -8,6 +8,7 @@
 import os, sys
 import traceback
 
+
 class Report(object):
     def __init__(self, pathname):
         self.name = pathname
@@ -68,8 +69,12 @@ class Report(object):
         return "\n".join(strings)
 
 def check_dir(path):
+    from mutagen.id3 import ID3
     from mutagen.mp3 import MP3
-    ID3.PEDANTIC = False
+
+    class ID3Custom(ID3):
+        PEDANTIC = False
+
     rep = Report(path)
     print "Scanning", path
     for path, dirs, files in os.walk(path):
@@ -78,7 +83,7 @@ def check_dir(path):
             if not fn.lower().endswith('.mp3'): continue
             ffn = os.path.join(path, fn)
             try:
-                mp3 = MP3(ffn)
+                mp3 = MP3(ffn, ID3=ID3Custom)
             except KeyboardInterrupt:
                 raise
             except Exception:
@@ -91,9 +96,14 @@ def check_dir(path):
 
     print str(rep)
 
-if __name__ == "__main__":
-    from mutagen.id3 import ID3
 
-    if len(sys.argv) == 1: print "Usage: %s directory ..." % sys.argv[0]
+def main(argv):
+    if len(argv) == 1:
+        print "Usage: %s directory ..." % argv[0]
     else:
-        for path in sys.argv[1:]: check_dir(path)
+        for path in argv[1:]:
+            check_dir(path)
+
+
+if __name__ == "__main__":
+    main(sys.argv)
