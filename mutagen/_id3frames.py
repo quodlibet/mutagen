@@ -272,9 +272,13 @@ class TextFrame(Frame):
         return iter(self.text)
 
     def append(self, value):
+        """Append a string."""
+
         return self.text.append(value)
 
     def extend(self, value):
+        """Extend the list by appending all strings from the given list."""
+
         return self.text.extend(value)
 
     def _pprint(self):
@@ -1796,3 +1800,6 @@ class LNK(LINK):
 Frames_2_2 = dict([(k, v) for (k, v) in globals().items()
                    if len(k) == 3 and isinstance(v, type) and
                    issubclass(v, Frame)])
+
+del k
+del v
