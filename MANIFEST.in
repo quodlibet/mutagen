@@ -7,7 +7,7 @@ include tests/data/*
 include tests/*.py
 include man/*.1
 include docs/Makefile
-include docs/conf.py
+include docs/*.py
 include docs/*.rst
 include docs/api/*.rst
 include docs/man/*.rst
