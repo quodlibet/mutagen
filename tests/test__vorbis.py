@@ -158,6 +158,12 @@ class TVCommentDict(TestCase):
         self.c["TITLE"] = "another fake"
         self.failUnlessEqual(self.c["title"], ["another fake"])
 
+    def test_set_preserve_case(self):
+        del(self.c["title"])
+        self.c["TiTlE"] = "blah"
+        self.failUnless(("TiTlE", "blah") in list(self.c))
+        self.failUnless("title" in self.c)
+
     def test_contains_case(self):
         self.failUnless("TITLE" in self.c)
 

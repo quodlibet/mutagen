@@ -234,7 +234,8 @@ class VCommentDict(VComment, DictMixin):
         string.
 
         """
-        key = key.lower().encode('ascii')
+
+        key = key.encode('ascii')
         if not isinstance(values, list):
             values = [values]
         try:
