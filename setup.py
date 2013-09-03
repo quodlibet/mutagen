@@ -74,6 +74,24 @@ class sdist(distutils_sdist):
                 "Not all tracked files included in tarball, update MANIFEST.in"
 
 
+class build_sphinx(Command):
+    description = "build sphinx documentation"
+    user_options = [
+        ("build-dir=", "d", "build directory"),
+    ]
+
+    def initialize_options(self):
+        self.build_dir = None
+
+    def finalize_options(self):
+        self.build_dir = self.build_dir or "build"
+
+    def run(self):
+        docs = "docs"
+        target = os.path.join(self.build_dir, "sphinx")
+        self.spawn(["sphinx-build", "-b", "html", "-n", docs, target])
+
+
 class test_cmd(Command):
     description = "run automated tests"
     user_options = [
@@ -153,8 +171,16 @@ else:
 
 if __name__ == "__main__":
     from mutagen import version_string
-    setup(cmdclass={'clean': clean, 'test': test_cmd, 'coverage': coverage_cmd,
-                    "sdist": sdist},
+
+    cmd_classes = {
+        "clean": clean,
+        "test": test_cmd,
+        "coverage": coverage_cmd,
+        "sdist": sdist,
+        "build_sphinx": build_sphinx,
+    }
+
+    setup(cmdclass=cmd_classes,
           name="mutagen", version=version_string,
           url="http://code.google.com/p/mutagen/",
           description="read and write audio tags for many formats",
