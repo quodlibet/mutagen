@@ -131,7 +131,7 @@ class FrameSanityChecks(TestCase):
 
     def test_multi_RVA2(self):
         from mutagen.id3 import RVA2
-        self.assertEquals(RVA2(gain="1").HashKey, RVA2(gain="2").HashKey)
+        self.assertEquals(RVA2(gain=1).HashKey, RVA2(gain=2).HashKey)
         self.assertNotEquals(RVA2(desc="a").HashKey, RVA2(desc="b").HashKey)
 
     def test_multi_APIC(self):

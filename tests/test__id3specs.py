@@ -70,6 +70,26 @@ class SpecSanityChecks(TestCase):
 add(SpecSanityChecks)
 
 
+class SpecValidateChecks(TestCase):
+
+    def test_volumeadjustmentspec(self):
+        from mutagen.id3 import VolumeAdjustmentSpec
+        s = VolumeAdjustmentSpec('gain')
+        self.assertRaises(ValueError, s.validate, None, 65)
+
+    def test_volumepeakspec(self):
+        from mutagen.id3 import VolumePeakSpec
+        s = VolumePeakSpec('peak')
+        self.assertRaises(ValueError, s.validate, None, 2)
+
+    def test_bytespec(self):
+        from mutagen.id3 import ByteSpec
+        s = ByteSpec('byte')
+        self.assertRaises(ValueError, s.validate, None, 1000)
+
+add(SpecValidateChecks)
+
+
 class NoHashSpec(TestCase):
 
     def test_spec(self):

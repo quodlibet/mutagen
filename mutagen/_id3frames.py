@@ -53,14 +53,22 @@ class Frame(object):
                 isinstance(args[0], type(self)):
             other = args[0]
             for checker in self._framespec:
-                val = checker.validate(self, getattr(other, checker.name))
+                try:
+                    val = checker.validate(self, getattr(other, checker.name))
+                except ValueError as e:
+                    e.message = "%s: %s" % (checker.name, e.message)
+                    raise
                 setattr(self, checker.name, val)
         else:
             for checker, val in zip(self._framespec, args):
                 setattr(self, checker.name, checker.validate(self, val))
             for checker in self._framespec[len(args):]:
-                validated = checker.validate(
-                    self, kwargs.get(checker.name, None))
+                try:
+                    validated = checker.validate(
+                        self, kwargs.get(checker.name, None))
+                except ValueError as e:
+                    e.message = "%s: %s" % (checker.name, e.message)
+                    raise
                 setattr(self, checker.name, validated)
 
     @property

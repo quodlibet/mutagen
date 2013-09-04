@@ -27,6 +27,8 @@ class ByteSpec(Spec):
         return chr(value)
 
     def validate(self, frame, value):
+        if value is not None:
+            chr(value)
         return value
 
 
@@ -299,6 +301,11 @@ class VolumeAdjustmentSpec(Spec):
         return pack('>h', int(round(value * 512)))
 
     def validate(self, frame, value):
+        if value is not None:
+            try:
+                self.write(frame, value)
+            except struct.error:
+                raise ValueError("out of range")
         return value
 
 
@@ -323,6 +330,11 @@ class VolumePeakSpec(Spec):
         return "\x10" + pack('>H', int(round(value * 32768)))
 
     def validate(self, frame, value):
+        if value is not None:
+            try:
+                self.write(frame, value)
+            except struct.error:
+                raise ValueError("out of range")
         return value
 
 
