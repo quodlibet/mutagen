@@ -416,7 +416,8 @@ class TCON(TextFrame):
         import re
         genre_re = re.compile(r"((?:\((?P<id>[0-9]+|RX|CR)\))*)(?P<str>.+)?")
         for value in self.text:
-            if value.isdigit():
+            # 255 possible entries in id3v1
+            if value.isdigit() and int(value) < 256:
                 try:
                     genres.append(self.GENRES[int(value)])
                 except IndexError:

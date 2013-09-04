@@ -185,6 +185,7 @@ class Genres(TestCase):
     def test_unknown(self):
         self.assertEquals(self._g("(255)"), ["Unknown"])
         self.assertEquals(self._g("199"), ["Unknown"])
+        self.assertNotEqual(self._g("256"), ["Unknown"])
 
     def test_parened_multi(self):
         self.assertEquals(self._g("(00)(02)"), ["Blues", "Country"])
