@@ -1,3 +1,6 @@
+Mutagen
+=======
+
 Mutagen is a Python module to handle audio metadata. It supports ASF, FLAC, 
 M4A, Monkey's Audio, MP3, Musepack, Ogg Opus, Ogg FLAC, Ogg Speex, Ogg 
 Theora, Ogg Vorbis, True Audio, WavPack and OptimFROG audio files. All 
@@ -7,7 +10,7 @@ length of MP3s. ID3 and APEv2 tags can be edited regardless of audio
 format. It can also manipulate Ogg streams on an individual packet/page 
 level.
 
-Mutagen works on Python 2.4+ / PyPy and has no dependencies outside the 
+Mutagen works on Python 2.6+ / PyPy and has no dependencies outside the 
 CPython standard library.
 
 
@@ -26,8 +29,7 @@ the source code and the sphinx documentation in the docs/ directory.
 
 To build the docs (needs sphinx):
 
- $ cd docs
- $ make
+ $ ./setup.py build_sphinx
 
 The tools/ directory contains several useful examples.
 

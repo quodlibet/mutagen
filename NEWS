@@ -1,5 +1,5 @@
 1.22
- * Minimum supported Python version is now 2.4
+ * Minimum supported Python version is now 2.6
  * Online documentation at https://mutagen.readthedocs.org/
  * EasyID3:
    * Fix crash with empty TXXX values. (#135)
