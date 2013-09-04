@@ -20,8 +20,13 @@ class TAtom(TestCase):
 
     def test_length_1(self):
         fileobj = StringIO("\x00\x00\x00\x01atom"
+                           "\x00\x00\x00\x00\x00\x00\x00\x10" + "\x00" * 16)
+        self.failUnlessEqual(Atom(fileobj).length, 16)
+
+    def test_length_64bit_less_than_16(self):
+        fileobj = StringIO("\x00\x00\x00\x01atom"
                            "\x00\x00\x00\x00\x00\x00\x00\x08" + "\x00" * 8)
-        self.failUnlessEqual(Atom(fileobj).length, 8)
+        self.assertRaises(error, Atom, fileobj)
 
     def test_length_less_than_8(self):
         fileobj = StringIO("\x00\x00\x00\x02atom")

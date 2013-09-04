@@ -112,6 +112,9 @@ class Atom(object):
         self.length, self.name = struct.unpack(">I4s", fileobj.read(8))
         if self.length == 1:
             self.length, = struct.unpack(">Q", fileobj.read(8))
+            if self.length < 16:
+                raise MP4MetadataError(
+                    "64 bit atom length can only be 16 and higher")
         elif self.length == 0:
             if level != 0:
                 raise MP4MetadataError(
