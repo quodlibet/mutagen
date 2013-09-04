@@ -76,4 +76,99 @@ class TMid3v2(_TTools):
     def test_genre(self):
         self._test_text_frame("-g", "--genre", "TCON")
 
+    def test_convert(self):
+        res, out = self.call("--convert", self.filename)
+        self.failUnlessEqual((res, out), (0, ""))
+
+    def test_split_escape(self):
+        split_escape = self.get_var("split_escape")
+
+        inout = [
+            (("", ":"), [""]),
+            ((":", ":"), ["", ""]),
+            ((":", ":", 0), [":"]),
+            ((":b:c:", ":", 0), [":b:c:"]),
+            ((":b:c:", ":", 1), ["", "b:c:"]),
+            ((":b:c:", ":", 2), ["", "b", "c:"]),
+            ((":b:c:", ":", 3), ["", "b", "c", ""]),
+            (("a\\:b:c", ":"), ["a:b", "c"]),
+            (("a\\\\:b:c", ":"), ["a\\", "b", "c"]),
+            (("a\\\\\\:b:c\\:", ":"), ["a\\:b", "c:"]),
+            (("\\", ":"), [""]),
+            (("\\\\", ":"), ["\\"]),
+            (("\\\\a\\b", ":"), ["\\a\\b"]),
+        ]
+
+        for inargs, out in inout:
+            self.assertEqual(split_escape(*inargs), out)
+
+    def test_unescape(self):
+        unescape_string = self.get_var("unescape_string")
+        self.assertEqual(unescape_string(u"\\n"), u"\n")
+
+    def test_artist_escape(self):
+        res, out = self.call("-e", "-a", "foo\\nbar", self.filename)
+        self.failUnlessEqual(res, 0)
+        self.failIf(out)
+        f = ID3(self.filename)
+        self.failUnlessEqual(f["TPE1"][0], "foo\nbar")
+
+    def test_txxx_escape(self):
+        res, out = self.call(
+            "-e", "--TXXX", "EscapeTest\\:\\:albumartist:Ex\\:ample",
+            self.filename)
+        self.failUnlessEqual(res, 0)
+        self.failIf(out)
+
+        f = ID3(self.filename)
+        frame = f.getall("TXXX")[0]
+        self.failUnlessEqual(frame.desc, "EscapeTest::albumartist")
+        self.failUnlessEqual(frame.text, ["Ex:ample"])
+
+    def test_txxx(self):
+        res, out = self.call("--TXXX", "A\\:B:C", self.filename)
+        self.failUnlessEqual((res, out), (0, ""))
+
+        f = ID3(self.filename)
+        frame = f.getall("TXXX")[0]
+        self.failUnlessEqual(frame.desc, "A\\")
+        self.failUnlessEqual(frame.text, ["B:C"])
+
+    def test_comm1(self):
+        res, out = self.call("--COMM", "A", self.filename)
+        self.failUnlessEqual((res, out), (0, ""))
+
+        f = ID3(self.filename)
+        frame = f.getall("COMM:")[0]
+        self.failUnlessEqual(frame.desc, "")
+        self.failUnlessEqual(frame.text, ["A"])
+
+    def test_comm2(self):
+        res, out = self.call("--COMM", "Y:B", self.filename)
+        self.failUnlessEqual((res, out), (0, ""))
+
+        f = ID3(self.filename)
+        frame = f.getall("COMM:Y")[0]
+        self.failUnlessEqual(frame.desc, "Y")
+        self.failUnlessEqual(frame.text, ["B"])
+
+    def test_comm2_escape(self):
+        res, out = self.call("-e", "--COMM", "Y\\:B\\nG", self.filename)
+        self.failUnlessEqual((res, out), (0, ""))
+
+        f = ID3(self.filename)
+        frame = f.getall("COMM:")[0]
+        self.failUnlessEqual(frame.desc, "")
+        self.failUnlessEqual(frame.text, ["Y:B\nG"])
+
+    def test_comm3(self):
+        res, out = self.call("--COMM", "Z:B:C:D:ger", self.filename)
+        self.failUnlessEqual((res, out), (0, ""))
+
+        f = ID3(self.filename)
+        frame = f.getall("COMM:Z")[0]
+        self.failUnlessEqual(frame.desc, "Z")
+        self.failUnlessEqual(frame.text, ["B:C:D"])
+        self.failUnlessEqual(frame.lang, "ger")
+
 add(TMid3v2)

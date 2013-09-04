@@ -39,6 +39,11 @@ OPTIONS
     Be verbose: state all operations performed. This is the opposite of
     --quiet. This is the default.
 
+-e, --escape
+    Enable interpretation of backslash escapes for tag values.
+    Makes it possible to escape the colon-separator in TXXX, COMM
+    values like '\\:' and insert escape sequences like '\\n', '\\t' etc.
+
 -f, --list-frames
     Display all supported ID3v2.3/2.4 frames and their meanings.
 

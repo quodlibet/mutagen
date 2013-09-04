@@ -5,7 +5,7 @@ import StringIO
 from tests import TestCase
 
 
-def get_main(tool_name, entry="main"):
+def get_var(tool_name, entry="main"):
     tool_path = os.path.join("tools", tool_name)
     env = {}
     execfile(tool_path, env)
@@ -16,7 +16,10 @@ class _TTools(TestCase):
     TOOL_NAME = None
 
     def setUp(self):
-        self._main = get_main(self.TOOL_NAME)
+        self._main = get_var(self.TOOL_NAME)
+
+    def get_var(self, name):
+        return get_var(self.TOOL_NAME, name)
 
     def call(self, *args):
         for arg in args:
