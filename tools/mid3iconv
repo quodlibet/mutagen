@@ -67,7 +67,7 @@ def update(options, filenames):
             print >>sys.stderr, str(err)
             continue
 
-        for tag in filter(lambda t: t.startswith("T"), id3):
+        for tag in filter(lambda t: t.startswith(("T", "COMM")), id3):
             frame = id3[tag]
             if isinstance(frame, mutagen.id3.TimeStampTextFrame):
                 # non-unicode fields

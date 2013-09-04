@@ -11,6 +11,7 @@ from tests.test_tools import _TTools
 AMBIGUOUS = "\xc3\xae\xc3\xa5\xc3\xb4\xc3\xb2 \xc3\xa0\xc3\xa9\xc3\xa7\xc3" \
             "\xa5\xc3\xa3 \xc3\xb9\xc3\xac \xc3\xab\xc3\xa5\xc3\xa5\xc3\xb8" \
             "\xc3\xba"
+CODECS = ["utf8", "latin-1", "Windows-1255", "gbk"]
 
 
 class TMid3Iconv(_TTools):
@@ -45,22 +46,14 @@ class TMid3Iconv(_TTools):
 
     def test_test_data(self):
         results = set()
-        codecs = ["utf8", "latin-1", "Windows-1255", "gbk"]
-        for codec in codecs:
+        for codec in CODECS:
             results.add(AMBIGUOUS.decode(codec))
-        self.failUnlessEqual(len(results), len(codecs))
+        self.failUnlessEqual(len(results), len(CODECS))
 
     def test_conv_basic(self):
         from mutagen.id3 import TALB
 
-        # first make sure they all map to different code points
-        results = set()
-        codecs = ["utf8", "latin-1", "Windows-1255", "gbk"]
-        for codec in codecs:
-            results.add(AMBIGUOUS.decode(codec))
-        self.failUnlessEqual(len(results), len(codecs))
-
-        for codec in codecs:
+        for codec in CODECS:
             f = ID3(self.filename)
             f.add(TALB(text=[AMBIGUOUS.decode("latin-1")], encoding=0))
             f.save()
@@ -68,6 +61,21 @@ class TMid3Iconv(_TTools):
             f = ID3(self.filename)
             self.failUnlessEqual(f["TALB"].encoding, 1)
             self.failUnlessEqual(f["TALB"].text[0] , AMBIGUOUS.decode(codec))
+
+    def test_comm(self):
+        from mutagen.id3 import COMM
+
+        for codec in CODECS:
+            f = ID3(self.filename)
+            frame = COMM(desc="", lang="eng",  encoding=0,
+                         text=[AMBIGUOUS.decode("latin-1")])
+            f.add(frame)
+            f.save()
+            res, out = self.call("-d", "-e", codec, self.filename)
+            f = ID3(self.filename)
+            new_frame = f[frame.HashKey]
+            self.failUnlessEqual(new_frame.encoding, 1)
+            self.failUnlessEqual(new_frame.text[0] , AMBIGUOUS.decode(codec))
 
     def test_remove_v1(self):
         from mutagen.id3 import ParseID3v1
