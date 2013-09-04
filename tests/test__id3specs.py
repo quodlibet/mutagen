@@ -158,6 +158,22 @@ class BitPaddedIntTest(TestCase):
         self.assertTrue(isinstance(l, long))
         self.assertEqual(BitPaddedInt(l.as_str(width=-1)), l)
 
+    def test_has_valid_padding(self):
+        self.failUnless(BitPaddedInt.has_valid_padding("\xff\xff", bits=8))
+        self.failIf(BitPaddedInt.has_valid_padding("\xff"))
+        self.failIf(BitPaddedInt.has_valid_padding("\x00\xff"))
+        self.failUnless(BitPaddedInt.has_valid_padding("\x7f\x7f"))
+        self.failIf(BitPaddedInt.has_valid_padding("\x7f", bits=6))
+        self.failIf(BitPaddedInt.has_valid_padding("\x9f", bits=6))
+        self.failUnless(BitPaddedInt.has_valid_padding("\x3f", bits=6))
+
+        self.failUnless(BitPaddedInt.has_valid_padding(0xff, bits=8))
+        self.failIf(BitPaddedInt.has_valid_padding(0xff))
+        self.failIf(BitPaddedInt.has_valid_padding(0xff << 8))
+        self.failUnless(BitPaddedInt.has_valid_padding(0x7f << 8))
+        self.failIf(BitPaddedInt.has_valid_padding(0x9f << 32, bits=6))
+        self.failUnless(BitPaddedInt.has_valid_padding(0x3f << 16, bits=6))
+
 add(BitPaddedIntTest)
 
 

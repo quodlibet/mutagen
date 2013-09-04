@@ -227,6 +227,9 @@ class ID3(DictProxy, mutagen.Metadata):
                                              % (fn, vmaj))
 
         if self.PEDANTIC:
+            if not BitPaddedInt.has_valid_padding(size):
+                raise ValueError("Header size not synchsafe")
+
             if (2, 4, 0) <= self.version and (flags & 0x0f):
                 raise ValueError("'%s' has invalid flags %#02x" % (fn, flags))
             elif (2, 3, 0) <= self.version < (2, 4, 0) and (flags & 0x1f):
@@ -251,6 +254,9 @@ class ID3(DictProxy, mutagen.Metadata):
                 # "Where the 'Extended header size' is the size of the whole
                 # extended header, stored as a 32 bit synchsafe integer."
                 self.__extsize = BitPaddedInt(extsize) - 4
+                if self.PEDANTIC:
+                    if not BitPaddedInt.has_valid_padding(extsize):
+                        raise ValueError("Extended header size not synchsafe")
             else:
                 # "Where the 'Extended header size', currently 6 or 10 bytes,
                 # excludes itself."

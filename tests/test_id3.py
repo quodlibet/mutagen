@@ -96,6 +96,11 @@ class ID3Loading(TestCase):
         id3._ID3__fileobj = StringIO('ID3\x04\x00\x1f\x00\x00\x00\x00')
         self.assertRaises(ValueError, id3._ID3__load_header)
 
+    def test_header_2_4_unsynch_size(self):
+        id3 = ID3()
+        id3._ID3__fileobj = StringIO('ID3\x04\x00\x10\x00\x00\x00\xFF')
+        self.assertRaises(ValueError, id3._ID3__load_header)
+
     def test_header_2_4_allow_footer(self):
         id3 = ID3()
         id3._ID3__fileobj = StringIO('ID3\x04\x00\x10\x00\x00\x00\x00')
@@ -131,6 +136,12 @@ class ID3Loading(TestCase):
         id3._ID3__load_header()
         self.assertEquals(id3._ID3__extsize, 1)
         self.assertEquals(id3._ID3__extdata, '\x5a')
+
+    def test_header_2_4_extended_unsynch_size(self):
+        id3 = ID3()
+        id3._ID3__fileobj = StringIO(
+            'ID3\x04\x00\x40\x00\x00\x00\x00\x00\x00\x00\xFF\x5a')
+        self.assertRaises(ValueError, id3._ID3__load_header)
 
     def test_header_2_4_extended_but_not(self):
         id3 = ID3()

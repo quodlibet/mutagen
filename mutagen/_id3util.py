@@ -117,6 +117,28 @@ class _BitPaddedMixin(object):
             bytes_.reverse()
         return str(bytes_)
 
+    @staticmethod
+    def has_valid_padding(value, bits=7):
+        """Whether the padding bits are all zero"""
+
+        assert bits <= 8
+
+        mask = (((1 << (8 - bits)) - 1) << bits)
+
+        if isinstance(value, (int, long)):
+            while value:
+                if value & mask:
+                    return False
+                value >>= 8
+        elif isinstance(value, str):
+            for byte in value:
+                if ord(byte) & mask:
+                    return False
+        else:
+            raise TypeError
+
+        return True
+
 
 class BitPaddedInt(int, _BitPaddedMixin):
 
