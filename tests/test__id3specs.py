@@ -1,3 +1,5 @@
+import sys
+
 from tests import TestCase, add
 
 from mutagen.id3 import BitPaddedInt
@@ -144,4 +146,37 @@ class BitPaddedIntTest(TestCase):
         self.assertEquals(len(BitPaddedInt.to_str(100, width=-1)), 4)
         self.assertEquals(len(BitPaddedInt.to_str(2**32, width=-1)), 5)
 
+    def test_minwidth(self):
+        self.assertEquals(
+            len(BitPaddedInt.to_str(100, width=-1, minwidth=6)), 6)
+
+    def test_inval_input(self):
+        self.assertRaises(TypeError, BitPaddedInt, None)
+
+    def test_promote_long(self):
+        l = BitPaddedInt(sys.maxint ** 2)
+        self.assertTrue(isinstance(l, long))
+        self.assertEqual(BitPaddedInt(l.as_str(width=-1)), l)
+
 add(BitPaddedIntTest)
+
+
+class TestUnsynch(TestCase):
+
+    def test_unsync_encode(self):
+        from mutagen.id3 import unsynch as un
+        for d in ('\xff\xff\xff\xff', '\xff\xf0\x0f\x00', '\xff\x00\x0f\xf0'):
+            self.assertEquals(d, un.decode(un.encode(d)))
+            self.assertNotEqual(d, un.encode(d))
+        self.assertEquals('\xff\x44', un.encode('\xff\x44'))
+        self.assertEquals('\xff\x00\x00', un.encode('\xff\x00'))
+
+    def test_unsync_decode(self):
+        from mutagen.id3 import unsynch as un
+        self.assertRaises(ValueError, un.decode, '\xff\xff\xff\xff')
+        self.assertRaises(ValueError, un.decode, '\xff\xf0\x0f\x00')
+        self.assertRaises(ValueError, un.decode, '\xff\xe0')
+        self.assertRaises(ValueError, un.decode, '\xff')
+        self.assertEquals('\xff\x44', un.decode('\xff\x44'))
+
+add(TestUnsynch)
