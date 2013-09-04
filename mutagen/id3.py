@@ -61,6 +61,11 @@ class ID3(DictProxy, mutagen.Metadata):
     __crc = None
     __unknown_version = None
 
+    _V24 = (2, 4, 0)
+    _V23 = (2, 3, 0)
+    _V22 = (2, 2, 0)
+    _V11 = (1, 1)
+
     def __init__(self, *args, **kwargs):
         self.unknown_frames = []
         super(ID3, self).__init__(*args, **kwargs)
@@ -123,16 +128,16 @@ class ID3(DictProxy, mutagen.Metadata):
                 else:
                     frames = ParseID3v1(self.__fileobj.read(128))
                     if frames is not None:
-                        self.version = (1, 1)
+                        self.version = self._V11
                         map(self.add, frames.values())
                     else:
                         raise err, None, stack
             else:
                 frames = self.__known_frames
                 if frames is None:
-                    if (2, 3, 0) <= self.version:
+                    if self._V23 <= self.version:
                         frames = Frames
-                    elif (2, 2, 0) <= self.version:
+                    elif self._V22 <= self.version:
                         frames = Frames_2_2
                 data = self.__fullread(self.size - 10)
                 for frame in self.__read_frames(data, frames=frames):
@@ -231,9 +236,9 @@ class ID3(DictProxy, mutagen.Metadata):
             if not BitPaddedInt.has_valid_padding(size):
                 raise ValueError("Header size not synchsafe")
 
-            if (2, 4, 0) <= self.version and (flags & 0x0f):
+            if self._V24 <= self.version and (flags & 0x0f):
                 raise ValueError("'%s' has invalid flags %#02x" % (fn, flags))
-            elif (2, 3, 0) <= self.version < (2, 4, 0) and (flags & 0x1f):
+            elif self._V23 <= self.version < self._V24 and (flags & 0x1f):
                 raise ValueError("'%s' has invalid flags %#02x" % (fn, flags))
 
         if self.f_extended:
@@ -251,7 +256,7 @@ class ID3(DictProxy, mutagen.Metadata):
                 self.__extsize = 0
                 self.__fileobj.seek(-4, 1)
                 self.__readbytes -= 4
-            elif self.version >= (2, 4, 0):
+            elif self.version >= self._V24:
                 # "Where the 'Extended header size' is the size of the whole
                 # extended header, stored as a 32 bit synchsafe integer."
                 self.__extsize = BitPaddedInt(extsize) - 4
@@ -268,7 +273,7 @@ class ID3(DictProxy, mutagen.Metadata):
                 self.__extdata = ""
 
     def __determine_bpi(self, data, frames, EMPTY="\x00" * 10):
-        if self.version < (2, 4, 0):
+        if self.version < self._V24:
             return int
         # have to special case whether to use bitpaddedints here
         # spec says to use them, but iTunes has it wrong
@@ -310,13 +315,13 @@ class ID3(DictProxy, mutagen.Metadata):
         return BitPaddedInt
 
     def __read_frames(self, data, frames):
-        if self.version < (2, 4, 0) and self.f_unsynch:
+        if self.version < self._V24 and self.f_unsynch:
             try:
                 data = unsynch.decode(data)
             except ValueError:
                 pass
 
-        if (2, 3, 0) <= self.version:
+        if self._V23 <= self.version:
             bpi = self.__determine_bpi(data, frames)
             while data:
                 header = data[:10]
@@ -344,7 +349,7 @@ class ID3(DictProxy, mutagen.Metadata):
                     except ID3JunkFrameError:
                         pass
 
-        elif (2, 2, 0) <= self.version:
+        elif self._V22 <= self.version:
             while data:
                 header = data[0:6]
                 try:
@@ -580,7 +585,7 @@ class ID3(DictProxy, mutagen.Metadata):
             # Get rid of "(xx)Foobr" format.
             self["TCON"].genres = self["TCON"].genres
 
-        if self.version < (2, 3):
+        if self.version < self._V23:
             # ID3v2.2 PIC frames are slightly different.
             pics = self.getall("APIC")
             mimes = {"PNG": "image/png", "JPG": "image/jpeg"}
