@@ -59,7 +59,7 @@ class ID3(DictProxy, mutagen.Metadata):
     __flags = 0
     __readbytes = 0
     __crc = None
-    __unknown_updated = False
+    __unknown_version = None
 
     def __init__(self, *args, **kwargs):
         self.unknown_frames = []
@@ -140,6 +140,7 @@ class ID3(DictProxy, mutagen.Metadata):
                         self.add(frame)
                     else:
                         self.unknown_frames.append(frame)
+                self.__unknown_version = self.version
         finally:
             self.__fileobj.close()
             del self.__fileobj
@@ -403,8 +404,13 @@ class ID3(DictProxy, mutagen.Metadata):
                                      order.get(b[0][:4], last)))
 
         framedata = [self.__save_frame(frame) for (key, frame) in frames]
-        framedata.extend([data for data in self.unknown_frames
-                          if len(data) > 10])
+
+        # only write unknown frames if they were loaded from the version
+        # we are saving with or upgraded to it
+        if self.__unknown_version == (2, 4, 0):
+            framedata.extend([data for data in self.unknown_frames
+                              if len(data) > 10])
+
         if not framedata:
             try:
                 self.delete(filename)
@@ -525,10 +531,7 @@ class ID3(DictProxy, mutagen.Metadata):
         at some point; it is called by default when loading the tag.
         """
 
-        if self.version < (2, 3, 0):
-            # unsafe to write
-            del self.unknown_frames[:]
-        elif self.version == (2, 3, 0) and not self.__unknown_updated:
+        if self.__unknown_version == (2, 3, 0):
             # convert unknown 2.3 frames (flags/size) to 2.4
             converted = []
             for frame in self.unknown_frames:
@@ -539,7 +542,7 @@ class ID3(DictProxy, mutagen.Metadata):
                     continue
                 converted.append(self.__save_frame(frame, name=name))
             self.unknown_frames[:] = converted
-            self.__unknown_updated = True
+            self.__unknown_version = (2, 4, 0)
 
         # TDAT, TYER, and TIME have been turned into TDRC.
         try:
