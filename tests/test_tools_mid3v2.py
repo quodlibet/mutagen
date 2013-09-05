@@ -178,4 +178,18 @@ class TMid3v2(_TTools):
         res, out = self.call("-e", "-a", text.encode(enc), self.filename)
         self.failUnlessEqual((res, out), (0, ""))
 
+    def test_invalid_encoding(self):
+        res, out = self.call("--TALB", '\\xff', '-e', self.filename)
+        self.failIfEqual(res, 0)
+        self.failUnless("TALB" in out)
+
+    def test_invalid_escape(self):
+        res, out = self.call("--TALB", '\\xaz', '-e', self.filename)
+        self.failIfEqual(res, 0)
+        self.failUnless("TALB" in out)
+
+        res, out = self.call("--TALB", '\\', '-e', self.filename)
+        self.failIfEqual(res, 0)
+        self.failUnless("TALB" in out)
+
 add(TMid3v2)

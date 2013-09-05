@@ -127,13 +127,30 @@ def delete_frames(deletes, filenames):
 
 
 def write_files(edits, filenames, escape):
-    # unescape escape sequences
-    if escape:
-        edits = [(f, unescape_string(v)) for (f, v) in edits]
-
     enc = locale.getpreferredencoding()
-    edits = [(frame[2:], value.decode(enc)) for (frame, value) in edits
-             if value]
+
+    # unescape escape sequences and decode values
+    encoded_edits = []
+    for frame, value in edits:
+        if not value:
+            continue
+        frame = frame[2:]
+
+        if escape:
+            try:
+                value = unescape_string(value)
+            except ValueError as err:
+                print "%s: %s" % (frame, str(err))
+                raise SystemExit(1)
+
+        try:
+            value = value.decode(enc)
+        except UnicodeDecodeError as err:
+            print "%s: %s" % (frame, str(err))
+            raise SystemExit(1)
+
+        encoded_edits.append((frame, value))
+    edits = encoded_edits
 
     # preprocess:
     #   for all [frame,value] pairs in the edits list
