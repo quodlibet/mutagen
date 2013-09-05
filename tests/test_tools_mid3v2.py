@@ -104,7 +104,7 @@ class TMid3v2(_TTools):
 
     def test_unescape(self):
         unescape_string = self.get_var("unescape_string")
-        self.assertEqual(unescape_string(u"\\n"), u"\n")
+        self.assertEqual(unescape_string("\\n"), "\n")
 
     def test_artist_escape(self):
         res, out = self.call("-e", "-a", "foo\\nbar", self.filename)
@@ -170,5 +170,12 @@ class TMid3v2(_TTools):
         self.failUnlessEqual(frame.desc, "Z")
         self.failUnlessEqual(frame.text, ["B:C:D"])
         self.failUnlessEqual(frame.lang, "ger")
+
+    def test_encoding_with_escape(self):
+        import locale
+        text = u'\xe4\xf6\xfc'
+        enc = locale.getpreferredencoding()
+        res, out = self.call("-e", "-a", text.encode(enc), self.filename)
+        self.failUnlessEqual((res, out), (0, ""))
 
 add(TMid3v2)

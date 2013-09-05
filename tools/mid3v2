@@ -75,9 +75,9 @@ def split_escape(string, sep, maxsplit=None, escape_char=u"\\"):
 
 
 def unescape_string(string):
-    assert isinstance(string, unicode)
+    assert isinstance(string, str)
 
-    return string.decode("unicode_escape")
+    return string.decode("string_escape")
 
 
 def list_frames(option, opt, value, parser):
@@ -127,6 +127,10 @@ def delete_frames(deletes, filenames):
 
 
 def write_files(edits, filenames, escape):
+    # unescape escape sequences
+    if escape:
+        edits = [(f, unescape_string(v)) for (f, v) in edits]
+
     enc = locale.getpreferredencoding()
     edits = [(frame[2:], value.decode(enc)) for (frame, value) in edits
              if value]
@@ -142,10 +146,6 @@ def write_files(edits, filenames, escape):
             tmp[frame] = [value]
     # edits is now a dictionary of frame -> [list of values]
     edits = tmp
-
-    # unescape escape sequences
-    if escape:
-        edits = dict((k, map(unescape_string, v)) for (k, v) in edits.items())
 
     # escape also enables escaping of the split separator
     if escape:
