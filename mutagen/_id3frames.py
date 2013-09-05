@@ -501,6 +501,10 @@ class TDEN(TimeStampTextFrame):
     "Encoding Time"
 
 
+class TDES(TextFrame):
+    "iTunes Podcast Description"
+
+
 class TDOR(TimeStampTextFrame):
     "Original Release Time"
 
@@ -531,6 +535,10 @@ class TEXT(TextFrame):
 
 class TFLT(TextFrame):
     "File type"
+
+
+class TGID(TextFrame):
+    "iTunes Podcast Identifier"
 
 
 class TIME(TextFrame):
@@ -705,6 +713,10 @@ class WCOM(UrlFrameU):
 
 class WCOP(UrlFrame):
     "Copyright Information"
+
+
+class WFED(UrlFrame):
+    "iTunes Podcast Feed"
 
 
 class WOAF(UrlFrame):

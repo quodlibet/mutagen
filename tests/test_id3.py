@@ -640,6 +640,11 @@ def TestReadTags():
      dict(frameid='COMM', url='http://www.example.org/COMM.txt',
           data='engfoo')],
 
+    # iTunes podcast frames
+    ['TGID', '\x00i', u'i', '', dict(encoding=0)],
+    ['TDES', '\x00ii', u'ii', '', dict(encoding=0)],
+    ['WFED', 'http://zzz', 'http://zzz', '', {}],
+
     # 2.2 tags
     ['UFI', 'own\x00data', 'data', '', dict(data='data', owner='own')],
     ['SLT', ('\x00eng\x02\x01some lyrics\x00foo\x00\x00\x00\x00\x01bar'
