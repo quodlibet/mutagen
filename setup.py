@@ -116,13 +116,15 @@ class test_cmd(Command):
 
 class coverage_cmd(Command):
     description = "generate test coverage data"
-    user_options = []
+    user_options = [
+        ("quick", None, "don't run slow mmap-failing tests"),
+    ]
 
     def initialize_options(self):
-        pass
+        self.quick = None
 
     def finalize_options(self):
-        pass
+        self.quick = bool(self.quick)
 
     def run(self):
         import trace
@@ -135,7 +137,11 @@ class coverage_cmd(Command):
             import mutagen._util
             reload(mutagen._util)
             reload(mutagen)
-            self.run_command("test")
+            cmd = self.reinitialize_command("test")
+            cmd.quick = self.quick
+            cmd.ensure_finalized()
+            cmd.run()
+
         tracer.runfunc(run_tests)
         results = tracer.results()
         coverage = os.path.join(os.path.dirname(__file__), "coverage")
