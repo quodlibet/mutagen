@@ -71,6 +71,19 @@ class Frame(object):
                     raise
                 setattr(self, checker.name, validated)
 
+    def _get_v23_frame(self, **kwargs):
+        """Returns a frame copy which is suitable for writing into a v2.3 tag.
+
+        kwargs get passed to the specs.
+        """
+
+        new_kwargs = {}
+        for checker in self._framespec:
+            name = checker.name
+            value = getattr(self, name)
+            new_kwargs[name] = checker._validate23(self, value, **kwargs)
+        return type(self)(**new_kwargs)
+
     @property
     def HashKey(self):
         """An internal key used to ensure frame uniqueness in a tag"""

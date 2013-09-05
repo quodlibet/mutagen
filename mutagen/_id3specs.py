@@ -18,6 +18,13 @@ class Spec(object):
     def __hash__(self):
         raise TypeError("Spec objects are unhashable")
 
+    def _validate23(self, frame, value, **kwargs):
+        """Return a possibly modified value which, if written,
+        results in valid id3v2.3 data.
+        """
+
+        return value
+
 
 class ByteSpec(Spec):
     def read(self, frame, data):
@@ -71,6 +78,10 @@ class EncodingSpec(ByteSpec):
         if value is None:
             return None
         raise ValueError('Invalid Encoding: %r' % value)
+
+    def _validate23(self, frame, value, **kwargs):
+        # only 0, 1 are valid in v2.3, default to utf-16
+        return min(1, value)
 
 
 class StringSpec(Spec):
@@ -190,6 +201,25 @@ class MultiSpec(Spec):
                     [s.validate(frame, v) for (v, s) in zip(val, self.specs)]
                     for val in value]
         raise ValueError('Invalid MultiSpec data: %r' % value)
+
+    def _validate23(self, frame, value, **kwargs):
+        if len(self.specs) != 1:
+            return [[s._validate23(frame, v, **kwargs)
+                     for (v, s) in zip(val, self.specs)]
+                    for val in value]
+
+        spec = self.specs[0]
+
+        # Merge single text spec multispecs only.
+        # (TimeStampSpec beeing the exception, but it's not a valid v2.3 frame)
+        if not isinstance(spec, EncodedTextSpec) or \
+                isinstance(spec, TimeStampSpec):
+            return value
+
+        value = [spec._validate23(frame, v, **kwargs) for v in value]
+        if kwargs.get("sep") is not None:
+            return [spec.validate(frame, kwargs["sep"].join(value))]
+        return value
 
 
 class EncodedNumericTextSpec(EncodedTextSpec):

@@ -2,6 +2,7 @@ import os; from os.path import join
 import shutil
 from tests import TestCase
 from tests import add
+from mutagen import id3
 from mutagen.id3 import ID3, COMR, Frames, Frames_2_2, ID3Warning, ID3JunkFrameError
 from StringIO import StringIO
 import warnings
@@ -1094,6 +1095,16 @@ class WriteRoundtrip(TestCase):
         self.assertEquals(id3["TIT2"], "Silence")
         self.assertEquals(id3["TPE1"], ["jzig"])
 
+    def test_same_v23(self):
+        id3 = ID3(self.newsilence, v2_version=3)
+        id3.save(v2_version=3)
+        id3 = ID3(self.newsilence)
+        self.assertEqual(id3.version, (2, 3, 0))
+        self.assertEquals(id3["TALB"], "Quod Libet Test Data")
+        self.assertEquals(id3["TCON"], "Silence")
+        self.assertEquals(id3["TIT2"], "Silence")
+        self.assertEquals(id3["TPE1"], "jzig")
+
     def test_addframe(self):
         from mutagen.id3 import TIT3
         f = ID3(self.newsilence)
@@ -1325,6 +1336,135 @@ class Issue69_BadV1Year(TestCase):
         tag = ParseID3v1(s)
         self.failUnlessEqual(tag["TDRC"], "1234")
 
+
+class UpdateTo23(TestCase):
+
+    def test_tdrc(self):
+        tags = ID3()
+        tags.add(id3.TDRC(encoding=1, text="2003-04-05 12:03"))
+        tags.update_to_v23()
+        self.failUnlessEqual(tags["TYER"].text, ["2003"])
+        self.failUnlessEqual(tags["TDAT"].text, ["0504"])
+        self.failUnlessEqual(tags["TIME"].text, ["1203"])
+
+    def test_tdor(self):
+        tags = ID3()
+        tags.add(id3.TDOR(encoding=1, text="2003-04-05 12:03"))
+        tags.update_to_v23()
+        self.failUnlessEqual(tags["TORY"].text, ["2003"])
+
+    def test_genre_from_v24_1(self):
+        tags = ID3()
+        tags.add(id3.TCON(encoding=1, text=["4","Rock"]))
+        tags.update_to_v23()
+        self.failUnlessEqual(tags["TCON"].text, ["Disco", "Rock"])
+
+    def test_genre_from_v24_2(self):
+        tags = ID3()
+        tags.add(id3.TCON(encoding=1, text=["RX", "3", "CR"]))
+        tags.update_to_v23()
+        self.failUnlessEqual(tags["TCON"].text, ["Remix", "Dance", "Cover"])
+
+    def test_genre_from_v23_1(self):
+        tags = ID3()
+        tags.add(id3.TCON(encoding=1, text=["(4)Rock"]))
+        tags.update_to_v23()
+        self.failUnlessEqual(tags["TCON"].text, ["Disco", "Rock"])
+
+    def test_genre_from_v23_2(self):
+        tags = ID3()
+        tags.add(id3.TCON(encoding=1, text=["(RX)(3)(CR)"]))
+        tags.update_to_v23()
+        self.failUnlessEqual(tags["TCON"].text, ["Remix", "Dance", "Cover"])
+
+    def test_ipls(self):
+        tags = ID3()
+        tags.version = (2, 3)
+        tags.add(id3.TIPL(encoding=0, people=[["a", "b"], ["c", "d"]]))
+        tags.add(id3.TMCL(encoding=0, people=[["e", "f"], ["g", "h"]]))
+        tags.update_to_v23()
+        self.failUnlessEqual(tags["IPLS"], [["a", "b"], ["c", "d"],
+                                            ["e", "f"], ["g", "h"]])
+
+class WriteTo23(TestCase):
+
+    SILENCE = os.path.join("tests", "data", "silence-44-s.mp3")
+
+    def setUp(self):
+        from tempfile import mkstemp
+        fd, self.filename = mkstemp(suffix='.mp3')
+        os.close(fd)
+        shutil.copy(self.SILENCE, self.filename)
+        self.audio = ID3(self.filename)
+
+    def tearDown(self):
+        os.unlink(self.filename)
+
+    def test_update_to_v23_on_load(self):
+        from mutagen.id3 import TSOT
+        self.audio.add(TSOT(text=["Ha"], encoding=3))
+        self.audio.save()
+
+        # update_to_v23 called
+        id3 = ID3(self.filename, v2_version=3)
+        self.assertFalse(id3.getall("TSOT"))
+
+        # update_to_v23 not called
+        id3 = ID3(self.filename, v2_version=3, translate=False)
+        self.assertTrue(id3.getall("TSOT"))
+
+    def test_load_save_inval_version(self):
+        self.assertRaises(ValueError, self.audio.save, v2_version=5)
+        self.assertRaises(ValueError, ID3, self.filename, v2_version=5)
+
+    def test_save(self):
+        strings = ["one", "two", "three"]
+        from mutagen.id3 import TPE1
+        self.audio.add(TPE1(text=strings, encoding=3))
+        self.audio.save(v2_version=3)
+
+        frame = self.audio["TPE1"]
+        self.assertEqual(frame.encoding, 3)
+        self.assertEqual(frame.text, strings)
+
+        id3 = ID3(self.filename, translate=False)
+        self.assertEqual(id3.version, (2, 3, 0))
+        frame = id3["TPE1"]
+        self.assertEqual(frame.encoding, 1)
+        self.assertEqual(frame.text, ["/".join(strings)])
+
+        # null separator, mutagen can still read it
+        self.audio.save(v2_version=3, v23_sep=None)
+
+        id3 = ID3(self.filename, translate=False)
+        self.assertEqual(id3.version, (2, 3, 0))
+        frame = id3["TPE1"]
+        self.assertEqual(frame.encoding, 1)
+        self.assertEqual(frame.text, strings)
+
+    def test_save_off_spec_frames(self):
+        # These are not defined in v2.3 and shouldn't be written.
+        # Still make sure reading them again works and the encoding
+        # is at least changed
+
+        from mutagen.id3 import TDEN, TIPL
+        dates = ["2013", "2014"]
+        frame = TDEN(text=dates, encoding=3)
+        self.audio.add(frame)
+        tipl_frame = TIPL(people=[("a", "b"), ("c", "d")], encoding=2)
+        self.audio.add(tipl_frame)
+        self.audio.save(v2_version=3)
+
+        id3 = ID3(self.filename, translate=False)
+        self.assertEqual(id3.version, (2, 3, 0))
+
+        self.assertEqual([stamp.text for stamp in id3["TDEN"].text], dates)
+        self.assertEqual(id3["TDEN"].encoding, 1)
+
+        self.assertEqual(id3["TIPL"].people, tipl_frame.people)
+        self.assertEqual(id3["TIPL"].encoding, 1)
+
+
 add(ID3Loading)
 add(ID3GetSetDel)
 add(ID3Tags)
@@ -1336,6 +1476,8 @@ add(OddWrites)
 add(BadTYER)
 add(BadPOPM)
 add(Issue69_BadV1Year)
+add(UpdateTo23)
+add(WriteTo23)
 
 try: import eyeD3
 except ImportError: pass
