@@ -228,6 +228,11 @@ class Genres(TestCase):
         gen.genres = ["a genre", "another"]
         self.assertEquals(gen.genres, ["a genre", "another"])
 
+    def test_set_string(self):
+        gen = self.TCON(encoding=0, text="")
+        gen.genres = "foo"
+        self.assertEquals(gen.genres, ["foo"])
+
     def test_nodoubledecode(self):
         gen = self.TCON(encoding=1, text=u"(255)genre")
         gen.genres = gen.genres
@@ -341,3 +346,27 @@ class TimeStampTextFrame(TestCase):
         self.failUnlessEqual(frame, unicode(frame))
 
 add(TimeStampTextFrame)
+
+
+class TTextFrame(TestCase):
+
+    def test_list_iface(self):
+        from mutagen.id3 import TextFrame
+
+        frame = TextFrame()
+        frame.append("a")
+        frame.extend(["b", "c"])
+        self.assertEqual(frame.text, ["a", "b", "c"])
+
+add(TTextFrame)
+
+
+class TRVA2(TestCase):
+
+    def test_basic(self):
+        from mutagen.id3 import RVA2
+        r = RVA2(gain=1, channel=1, peak=1)
+        self.assertReallyEqual(r, r)
+        self.assertReallyNotEqual(r, 42)
+
+add(TRVA2)

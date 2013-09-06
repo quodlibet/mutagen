@@ -305,6 +305,9 @@ class TAPEBinaryValue(TestCase):
     def test_repr(self):
         repr(self.value)
 
+    def test_pprint(self):
+        self.value.pprint()
+
 add(TAPEBinaryValue)
 
 class TAPETextValue(TestCase):
@@ -357,6 +360,9 @@ class TAPEExtValue(TestCase):
     def test_repr(self):
         repr(self.value)
 
+    def test_pprint(self):
+        self.value.pprint()
+
 add(TAPEExtValue)
 
 class TAPEv2File(TestCase):
@@ -369,4 +375,9 @@ class TAPEv2File(TestCase):
         self.audio.add_tags()
         self.failUnless(self.audio.tags is not None)
         self.failUnlessRaises(ValueError, self.audio.add_tags)
+
+    def test_unknown_info(self):
+        info = self.audio.info
+        info.pprint()
+
 add(TAPEv2File)

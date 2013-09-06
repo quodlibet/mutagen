@@ -979,11 +979,14 @@ class RVA2(Frame):
         return '%s:%s' % (self.FrameID, self.desc)
 
     def __eq__(self, other):
-        return ((str(self) == other) or
-                (self.desc == other.desc and
-                 self.channel == other.channel and
-                 self.gain == other.gain and
-                 self.peak == other.peak))
+        try:
+            return ((str(self) == other) or
+                    (self.desc == other.desc and
+                     self.channel == other.channel and
+                     self.gain == other.gain and
+                     self.peak == other.peak))
+        except AttributeError:
+            return False
 
     __hash__ = Frame.__hash__
 

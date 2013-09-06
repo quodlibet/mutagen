@@ -145,8 +145,18 @@ class TCueSheet(TestCase):
         self.failUnlessEqual(self.cs.tracks[-1].type, 0)
         self.failUnlessEqual(self.cs.tracks[-1].pre_emphasis, False)
         self.failUnlessEqual(self.cs.tracks[-1].indexes, [])
-    def test_eq(self): self.failUnlessEqual(self.cs, self.cs)
-    def test_neq(self): self.failIfEqual(self.cs, 12)
+
+    def test_track_eq(self):
+        track = self.cs.tracks[-1]
+        self.assertReallyEqual(track, track)
+        self.assertReallyNotEqual(track, 42)
+
+    def test_eq(self):
+        self.assertReallyEqual(self.cs, self.cs)
+
+    def test_neq(self):
+        self.assertReallyNotEqual(self.cs, 12)
+
     def test_repr(self): repr(self.cs)
     def test_roundtrip(self):
         self.failUnlessEqual(CueSheet(self.cs.write()), self.cs)

@@ -66,6 +66,7 @@ class ID3Loading(TestCase):
 
     empty = join('tests', 'data', 'emptyfile.mp3')
     silence = join('tests', 'data', 'silence-44-s.mp3')
+    unsynch = join('tests', 'data', 'id3v23_unsynch.id3')
 
     def test_empty_file(self):
         name = self.empty
@@ -179,6 +180,10 @@ class ID3Loading(TestCase):
             Frames["TPE2"], 0x02, badsync), [u"\xffab"])
         tag = id3._ID3__load_framedata(Frames["TPE2"], 0, badsync)
         self.assertEquals(tag, [u"\xff", u"ab"])
+
+    def test_load_v23_unsynch(self):
+        id3 = ID3(self.unsynch)
+        self.assertEquals(id3["TPE1"], ["Nina Simone"])
 
     def test_insane__ID3__fullread(self):
         id3 = ID3()
@@ -785,6 +790,12 @@ def TestReadTags():
             for spec in TAG._framespec:
                 attr = spec.name
                 self.assertEquals(getattr(tag, attr), getattr(tag2, attr))
+
+            # test __str__, __unicode__
+            self.assertTrue(isinstance(tag.__str__(), str))
+            if hasattr(tag, "__unicode__"):
+                self.assertTrue(isinstance(tag.__unicode__(), unicode))
+
         repr_tests['test_repr_%s_%d' % (tag, i)] = test_tag_repr
 
         def test_tag_write(self, tag=tag, data=data):
@@ -873,6 +884,13 @@ class UpdateTo24(TestCase):
         id3.update_to_v24()
         self.failUnlessEqual(id3["TIPL"], [["a", "b"], ["c", "d"]])
 
+    def test_dropped(self):
+        from mutagen.id3 import TIME
+        id3 = ID3()
+        id3.version = (2, 3)
+        id3.add(TIME(encoding=0, text=["1155"]))
+        id3.update_to_v24()
+        self.assertFalse(id3.getall("TIME"))
 
 add(UpdateTo24)
 

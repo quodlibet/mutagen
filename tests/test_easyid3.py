@@ -259,6 +259,49 @@ class TEasyID3(TestCase):
         # http://code.google.com/p/mutagen/issues/detail?id=102
         pickle.dumps(self.id3)
 
+    def test_get_fallback(self):
+        called = []
+
+        def get_func(id3, key):
+            id3.getall("")
+            self.failUnlessEqual(key, "nope")
+            called.append(1)
+        self.id3.GetFallback = get_func
+        self.id3["nope"]
+        self.failUnless(called)
+
+    def test_set_fallback(self):
+        called = []
+
+        def set_func(id3, key, value):
+            id3.getall("")
+            self.failUnlessEqual(key, "nope")
+            self.failUnlessEqual(value, ["foo"])
+            called.append(1)
+        self.id3.SetFallback = set_func
+        self.id3["nope"] = "foo"
+        self.failUnless(called)
+
+    def test_del_fallback(self):
+        called = []
+
+        def del_func(id3, key):
+            id3.getall("")
+            self.failUnlessEqual(key, "nope")
+            called.append(1)
+        self.id3.DeleteFallback = del_func
+        del self.id3["nope"]
+        self.failUnless(called)
+
+    def test_list_fallback(self):
+        def list_func(id3, key):
+            id3.getall("")
+            self.failIf(key)
+            return ["somekey"]
+
+        self.id3.ListFallback = list_func
+        self.failUnlessEqual(self.id3.keys(), ["somekey"])
+
     def tearDown(self):
         os.unlink(self.filename)
 

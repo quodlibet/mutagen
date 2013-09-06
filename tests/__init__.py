@@ -31,6 +31,26 @@ class TestCase(BaseTestCase):
     failIfEqual = BaseTestCase.assertNotEqual
     failIfAlmostEqual = BaseTestCase.assertNotAlmostEqual
 
+    def assertReallyEqual(self, a, b):
+        self.assertEqual(a, b)
+        self.assertEqual(b, a)
+        self.assertTrue(a == b)
+        self.assertTrue(b == a)
+        self.assertFalse(a != b)
+        self.assertFalse(b != a)
+        self.assertEqual(0, cmp(a, b))
+        self.assertEqual(0, cmp(b, a))
+
+    def assertReallyNotEqual(self, a, b):
+        self.assertNotEqual(a, b)
+        self.assertNotEqual(b, a)
+        self.assertFalse(a == b)
+        self.assertFalse(b == a)
+        self.assertTrue(a != b)
+        self.assertTrue(b != a)
+        self.assertNotEqual(0, cmp(a, b))
+        self.assertNotEqual(0, cmp(b, a))
+
 
 for name in glob.glob(os.path.join(os.path.dirname(__file__), "test_*.py")):
     module = "tests." + os.path.basename(name)
