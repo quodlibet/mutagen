@@ -18,6 +18,7 @@ __all__ = ["MonkeysAudio", "Open", "delete"]
 
 import struct
 
+from mutagen import StreamInfo
 from mutagen.apev2 import APEv2File, error, delete
 from mutagen._util import cdata
 
@@ -26,7 +27,7 @@ class MonkeysAudioHeaderError(error):
     pass
 
 
-class MonkeysAudioInfo(object):
+class MonkeysAudioInfo(StreamInfo):
     """Monkey's Audio stream information.
 
     Attributes:

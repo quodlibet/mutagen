@@ -191,6 +191,20 @@ class FileType(mutagen._util.DictMixin):
         raise NotImplementedError
 
 
+class StreamInfo(object):
+    """Abstract stream information object.
+
+    Provides attributes for length, bitrate, sample rate etc.
+
+    See the implementations for details.
+    """
+
+    def pprint(self):
+        """Print stream information"""
+
+        raise NotImplementedError
+
+
 def File(filename, options=None, easy=False):
     """Guess the type of the file and try to open it.
 

@@ -24,7 +24,8 @@ __all__ = ["FLAC", "Open", "delete"]
 import struct
 from cStringIO import StringIO
 from _vorbis import VCommentDict
-from mutagen import FileType
+import mutagen
+
 from mutagen._util import insert_bytes
 from mutagen.id3 import BitPaddedInt
 import sys
@@ -133,7 +134,7 @@ class MetadataBlock(object):
         blocks.append(padding)
 
 
-class StreamInfo(MetadataBlock):
+class StreamInfo(MetadataBlock, mutagen.StreamInfo):
     """FLAC stream information.
 
     This contains information about the audio data in the FLAC file.
@@ -596,7 +597,7 @@ class Padding(MetadataBlock):
         return "<%s (%d bytes)>" % (type(self).__name__, self.length)
 
 
-class FLAC(FileType):
+class FLAC(mutagen.FileType):
     """A FLAC audio file.
 
     Attributes:

@@ -22,6 +22,7 @@ __all__ = ["OptimFROG", "Open", "delete"]
 
 import struct
 
+from mutagen import StreamInfo
 from mutagen.apev2 import APEv2File, error, delete
 
 
@@ -29,7 +30,7 @@ class OptimFROGHeaderError(error):
     pass
 
 
-class OptimFROGInfo(object):
+class OptimFROGInfo(StreamInfo):
     """OptimFROG stream information.
 
     Attributes:

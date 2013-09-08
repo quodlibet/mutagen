@@ -16,6 +16,7 @@ True Audio files use ID3 tags.
 
 __all__ = ["TrueAudio", "Open", "delete", "EasyTrueAudio"]
 
+from mutagen import StreamInfo
 from mutagen.id3 import ID3FileType, delete
 from mutagen._util import cdata
 
@@ -28,7 +29,7 @@ class TrueAudioHeaderError(error, IOError):
     pass
 
 
-class TrueAudioInfo(object):
+class TrueAudioInfo(StreamInfo):
     """True Audio stream information.
 
     Attributes:

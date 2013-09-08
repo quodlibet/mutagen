@@ -16,6 +16,7 @@ __all__ = ["OggOpus", "Open", "delete"]
 
 import struct
 
+from mutagen import StreamInfo
 from mutagen._vorbis import VCommentDict
 from mutagen.ogg import OggPage, OggFileType, error as OggError
 
@@ -28,7 +29,7 @@ class OggOpusHeaderError(error):
     pass
 
 
-class OggOpusInfo(object):
+class OggOpusInfo(StreamInfo):
     """Ogg Opus stream information.
 
     Attributes:

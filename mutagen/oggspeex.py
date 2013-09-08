@@ -19,6 +19,7 @@ http://lists.xiph.org/pipermail/speex-dev/2006-July/004676.html.
 
 __all__ = ["OggSpeex", "Open", "delete"]
 
+from mutagen import StreamInfo
 from mutagen._vorbis import VCommentDict
 from mutagen.ogg import OggPage, OggFileType, error as OggError
 from mutagen._util import cdata
@@ -32,7 +33,7 @@ class OggSpeexHeaderError(error):
     pass
 
 
-class OggSpeexInfo(object):
+class OggSpeexInfo(StreamInfo):
     """Ogg Speex stream information.
 
     Attributes:

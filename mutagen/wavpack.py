@@ -14,6 +14,7 @@ http://www.wavpack.com/ for more information.
 
 __all__ = ["WavPack", "Open", "delete"]
 
+from mutagen import StreamInfo
 from mutagen.apev2 import APEv2File, error, delete
 from mutagen._util import cdata
 
@@ -25,7 +26,7 @@ RATES = [6000, 8000, 9600, 11025, 12000, 16000, 22050, 24000, 32000, 44100,
          48000, 64000, 88200, 96000, 192000]
 
 
-class WavPackInfo(object):
+class WavPackInfo(StreamInfo):
     """WavPack stream information.
 
     Attributes:

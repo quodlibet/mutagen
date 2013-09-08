@@ -24,7 +24,7 @@ were all consulted.
 import struct
 import sys
 
-from mutagen import FileType, Metadata
+from mutagen import FileType, Metadata, StreamInfo
 from mutagen._constants import GENRES
 from mutagen._util import cdata, insert_bytes, DictProxy, utf8
 
@@ -687,7 +687,7 @@ class MP4Tags(DictProxy, Metadata):
         return "\n".join(values)
 
 
-class MP4Info(object):
+class MP4Info(StreamInfo):
     """MPEG-4 stream information.
 
     Attributes:

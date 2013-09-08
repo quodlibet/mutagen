@@ -10,7 +10,7 @@
 __all__ = ["ASF", "Open"]
 
 import struct
-from mutagen import FileType, Metadata
+from mutagen import FileType, Metadata, StreamInfo
 from mutagen._util import insert_bytes, delete_bytes, DictMixin
 
 
@@ -26,7 +26,7 @@ class ASFHeaderError(error):
     pass
 
 
-class ASFInfo(object):
+class ASFInfo(StreamInfo):
     """ASF stream information."""
 
     def __init__(self):

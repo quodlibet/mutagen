@@ -859,7 +859,7 @@ class ID3FileType(mutagen.FileType):
 
     ID3 = ID3
 
-    class _Info(object):
+    class _Info(mutagen.StreamInfo):
         length = 0
 
         def __init__(self, fileobj, offset):

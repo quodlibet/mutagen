@@ -19,6 +19,7 @@ __all__ = ["Musepack", "Open", "delete"]
 
 import struct
 
+from mutagen import StreamInfo
 from mutagen.apev2 import APEv2File, error, delete
 from mutagen.id3 import BitPaddedInt
 from mutagen._util import cdata
@@ -63,7 +64,7 @@ def _calc_sv8_peak(peak):
     return (10 ** (peak / (256.0 * 20.0)) / 65535.0)
 
 
-class MusepackInfo(object):
+class MusepackInfo(StreamInfo):
     """Musepack stream information.
 
     Attributes:

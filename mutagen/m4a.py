@@ -25,7 +25,7 @@ import sys
 
 from cStringIO import StringIO
 
-from mutagen import FileType, Metadata
+from mutagen import FileType, Metadata, StreamInfo
 from mutagen._constants import GENRES
 from mutagen._util import cdata, insert_bytes, delete_bytes, DictProxy
 
@@ -451,7 +451,7 @@ class M4ATags(DictProxy, Metadata):
         return "\n".join(values)
 
 
-class M4AInfo(object):
+class M4AInfo(StreamInfo):
     """MPEG-4 stream information.
 
     Attributes:

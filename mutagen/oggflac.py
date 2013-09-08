@@ -21,7 +21,8 @@ import struct
 
 from cStringIO import StringIO
 
-from mutagen.flac import StreamInfo, VCFLACDict, StrictFileObject
+from mutagen import flac
+from mutagen.flac import VCFLACDict, StrictFileObject
 from mutagen.ogg import OggPage, OggFileType, error as OggError
 
 
@@ -33,7 +34,7 @@ class OggFLACHeaderError(error):
     pass
 
 
-class OggFLACStreamInfo(StreamInfo):
+class OggFLACStreamInfo(flac.StreamInfo):
     """Ogg FLAC general header and stream info.
 
     This encompasses the Ogg wrapper for the FLAC STREAMINFO metadata

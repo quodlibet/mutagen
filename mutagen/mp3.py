@@ -10,6 +10,7 @@
 import os
 import struct
 
+from mutagen import StreamInfo
 from mutagen.id3 import ID3FileType, BitPaddedInt, delete
 
 __all__ = ["MP3", "Open", "delete", "MP3"]
@@ -31,7 +32,7 @@ class InvalidMPEGHeader(error, IOError):
 STEREO, JOINTSTEREO, DUALCHANNEL, MONO = range(4)
 
 
-class MPEGInfo(object):
+class MPEGInfo(StreamInfo):
     """MPEG audio stream information
 
     Parse information about an MPEG audio file. This also reads the

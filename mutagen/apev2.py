@@ -33,7 +33,7 @@ __all__ = ["APEv2", "APEv2File", "Open", "delete"]
 import struct
 from cStringIO import StringIO
 
-from mutagen import Metadata, FileType
+from mutagen import Metadata, FileType, StreamInfo
 from mutagen._util import DictMixin, cdata, utf8, delete_bytes
 
 
@@ -489,7 +489,7 @@ class APEExtValue(_APEValue):
 
 
 class APEv2File(FileType):
-    class _Info(object):
+    class _Info(StreamInfo):
         length = 0
         bitrate = 0
 
