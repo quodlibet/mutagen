@@ -19,7 +19,7 @@ __all__ = ["OggFLAC", "Open", "delete"]
 
 import struct
 
-from cStringIO import StringIO
+from ._compat import cBytesIO
 
 from mutagen import flac
 from mutagen.flac import VCFLACDict, StrictFileObject
@@ -67,7 +67,7 @@ class OggFLACStreamInfo(flac.StreamInfo):
         self.serial = page.serial
 
         # Skip over the block header.
-        stringobj = StrictFileObject(StringIO(page.packets[0][17:]))
+        stringobj = StrictFileObject(cBytesIO(page.packets[0][17:]))
         super(OggFLACStreamInfo, self).load(stringobj)
 
     def _post_tags(self, fileobj):
@@ -91,7 +91,7 @@ class OggFLACVComment(VCFLACDict):
             if page.serial == info.serial:
                 pages.append(page)
                 complete = page.complete or (len(page.packets) > 1)
-        comment = StringIO(OggPage.to_packets(pages)[0][4:])
+        comment = cBytesIO(OggPage.to_packets(pages)[0][4:])
         super(OggFLACVComment, self).load(comment, errors=errors)
 
     def _inject(self, fileobj):

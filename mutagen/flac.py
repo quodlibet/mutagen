@@ -22,10 +22,10 @@ http://flac.sourceforge.net/format.html
 __all__ = ["FLAC", "Open", "delete"]
 
 import struct
-from cStringIO import StringIO
-from _vorbis import VCommentDict
+from ._vorbis import VCommentDict
 import mutagen
 
+from ._compat import cBytesIO
 from mutagen._util import insert_bytes
 from mutagen.id3 import BitPaddedInt
 import sys
@@ -48,7 +48,7 @@ class FLACVorbisError(ValueError, error):
 def to_int_be(string):
     """Convert an arbitrarily-long string to a long using big-endian
     byte order."""
-    return reduce(lambda a, b: (a << 8) + ord(b), string, 0L)
+    return reduce(lambda a, b: (a << 8) + ord(b), string, 0)
 
 
 class StrictFileObject(object):
@@ -91,7 +91,7 @@ class MetadataBlock(object):
         if data is not None:
             if not isinstance(data, StrictFileObject):
                 if isinstance(data, str):
-                    data = StringIO(data)
+                    data = cBytesIO(data)
                 elif not hasattr(data, 'read'):
                     raise TypeError(
                         "StreamInfo requires string data or a file-like")
@@ -189,13 +189,13 @@ class StreamInfo(MetadataBlock, mutagen.StreamInfo):
         bps_tail = bps_total >> 36
         bps_head = (sample_channels_bps & 1) << 4
         self.bits_per_sample = int(bps_head + bps_tail + 1)
-        self.total_samples = bps_total & 0xFFFFFFFFFL
+        self.total_samples = bps_total & 0xFFFFFFFFF
         self.length = self.total_samples / float(self.sample_rate)
 
         self.md5_signature = to_int_be(data.read(16))
 
     def write(self):
-        f = StringIO()
+        f = cBytesIO()
         f.write(struct.pack(">I", self.min_blocksize)[-2:])
         f.write(struct.pack(">I", self.max_blocksize)[-2:])
         f.write(struct.pack(">I", self.min_framesize)[-3:])
@@ -213,12 +213,12 @@ class StreamInfo(MetadataBlock, mutagen.StreamInfo):
         byte += (self.total_samples >> 32) & 0xF
         f.write(chr(byte))
         # last 32 of sample count
-        f.write(struct.pack(">I", self.total_samples & 0xFFFFFFFFL))
+        f.write(struct.pack(">I", self.total_samples & 0xFFFFFFFF))
         # MD5 signature
         sig = self.md5_signature
         f.write(struct.pack(
-            ">4I", (sig >> 96) & 0xFFFFFFFFL, (sig >> 64) & 0xFFFFFFFFL,
-            (sig >> 32) & 0xFFFFFFFFL, sig & 0xFFFFFFFFL))
+            ">4I", (sig >> 96) & 0xFFFFFFFF, (sig >> 64) & 0xFFFFFFFF,
+            (sig >> 32) & 0xFFFFFFFF, sig & 0xFFFFFFFF))
         return f.getvalue()
 
     def pprint(self):
@@ -285,7 +285,7 @@ class SeekTable(MetadataBlock):
             sp = data.tryread(self.__SEEKPOINT_SIZE)
 
     def write(self):
-        f = StringIO()
+        f = cBytesIO()
         for seekpoint in self.seekpoints:
             packed = struct.pack(
                 self.__SEEKPOINT_FORMAT,
@@ -455,7 +455,7 @@ class CueSheet(MetadataBlock):
             self.tracks.append(val)
 
     def write(self):
-        f = StringIO()
+        f = cBytesIO()
         flags = 0
         if self.compact_disc:
             flags |= 0x80
@@ -542,7 +542,7 @@ class Picture(MetadataBlock):
         self.data = data.read(length)
 
     def write(self):
-        f = StringIO()
+        f = cBytesIO()
         mime = self.mime.encode('UTF-8')
         f.write(struct.pack('>2I', self.type, len(mime)))
         f.write(mime)

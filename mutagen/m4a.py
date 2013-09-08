@@ -4,6 +4,11 @@
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.
 
+import sys
+
+if sys.version_info[0] != 2:
+    raise ImportError("No longer available with Python 3, use mutagen.mp4")
+
 """Read and write MPEG-4 audio files with iTunes metadata.
 
 This module will read MPEG-4 audio information and metadata,
@@ -25,6 +30,7 @@ import sys
 
 from cStringIO import StringIO
 
+from ._compat import reraise
 from mutagen import FileType, Metadata, StreamInfo
 from mutagen._constants import GENRES
 from mutagen._util import cdata, insert_bytes, delete_bytes, DictProxy
@@ -220,7 +226,7 @@ class M4ATags(DictProxy, Metadata):
     def load(self, atoms, fileobj):
         try:
             ilst = atoms["moov.udta.meta.ilst"]
-        except KeyError, key:
+        except KeyError as key:
             raise M4AMetadataError(key)
         for atom in ilst.children:
             fileobj.seek(atom.offset + 8)
@@ -510,14 +516,14 @@ class M4A(FileType):
             atoms = Atoms(fileobj)
             try:
                 self.info = M4AInfo(atoms, fileobj)
-            except StandardError, err:
-                raise M4AStreamInfoError, err, sys.exc_info()[2]
+            except StandardError as err:
+                reraise(M4AStreamInfoError, err, sys.exc_info()[2])
             try:
                 self.tags = M4ATags(atoms, fileobj)
             except M4AMetadataError:
                 self.tags = None
-            except StandardError, err:
-                raise M4AMetadataError, err, sys.exc_info()[2]
+            except StandardError as err:
+                reraise(M4AMetadataError, err, sys.exc_info()[2])
         finally:
             fileobj.close()
 

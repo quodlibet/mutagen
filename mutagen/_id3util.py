@@ -5,6 +5,8 @@
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
 
+from ._compat import long_, integer_types
+
 
 class error(Exception):
     pass
@@ -125,7 +127,7 @@ class _BitPaddedMixin(object):
 
         mask = (((1 << (8 - bits)) - 1) << bits)
 
-        if isinstance(value, (int, long)):
+        if isinstance(value, integer_types):
             while value:
                 if value & mask:
                     return False
@@ -148,7 +150,7 @@ class BitPaddedInt(int, _BitPaddedMixin):
         numeric_value = 0
         shift = 0
 
-        if isinstance(value, (int, long)):
+        if isinstance(value, integer_types):
             while value:
                 numeric_value += (value & mask) << shift
                 value >>= 8
@@ -162,15 +164,15 @@ class BitPaddedInt(int, _BitPaddedMixin):
         else:
             raise TypeError
 
-        if isinstance(numeric_value, long):
-            self = long.__new__(BitPaddedLong, numeric_value)
-        else:
+        if isinstance(numeric_value, int):
             self = int.__new__(BitPaddedInt, numeric_value)
+        else:
+            self = long_.__new__(BitPaddedLong, numeric_value)
 
         self.bits = bits
         self.bigendian = bigendian
         return self
 
 
-class BitPaddedLong(long, _BitPaddedMixin):
+class BitPaddedLong(long_, _BitPaddedMixin):
     pass

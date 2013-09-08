@@ -132,7 +132,7 @@ class TCueSheet(TestCase):
         self.failUnlessEqual(self.cs.tracks[0].indexes, [(1, 0)])
     def test_second_track(self):
         self.failUnlessEqual(self.cs.tracks[1].track_number, 2)
-        self.failUnlessEqual(self.cs.tracks[1].start_offset, 44100L)
+        self.failUnlessEqual(self.cs.tracks[1].start_offset, 44100)
         self.failUnlessEqual(self.cs.tracks[1].isrc, '')
         self.failUnlessEqual(self.cs.tracks[1].type, 1)
         self.failUnlessEqual(self.cs.tracks[1].pre_emphasis, True)
@@ -546,4 +546,4 @@ NOTFOUND = os.system("tools/notarealprogram 2> %s" % devnull)
 have_flac = True
 if os.system("flac 2> %s > %s" % (devnull, devnull)) == NOTFOUND:
     have_flac = False
-    print "WARNING: Skipping FLAC reference tests."
+    print("WARNING: Skipping FLAC reference tests.")

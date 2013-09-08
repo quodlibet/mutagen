@@ -1,9 +1,9 @@
 import os
-from StringIO import StringIO
 from tempfile import mkstemp
 import shutil
 
 from tests import TestCase, add
+from mutagen._compat import cBytesIO
 from mutagen import File, Metadata, FileType
 from mutagen.oggvorbis import OggVorbis
 from mutagen.oggflac import OggFLAC
@@ -68,7 +68,7 @@ class TFile(TestCase):
     def test_bad(self):
         try: self.failUnless(File(devnull) is None)
         except (OSError, IOError):
-            print "WARNING: Unable to open %s." % devnull
+            print("WARNING: Unable to open %s." % devnull)
         self.failUnless(File(__file__) is None)
 
     def test_empty(self):
@@ -181,7 +181,7 @@ class TFile(TestCase):
 
     def test_id3_indicates_mp3_not_tta(self):
         header = "ID3 the rest of this is garbage"
-        fileobj = StringIO(header)
+        fileobj = cBytesIO(header)
         filename = "not-identifiable.ext"
         self.failUnless(TrueAudio.score(filename, fileobj, header) <
                         MP3.score(filename, fileobj, header))

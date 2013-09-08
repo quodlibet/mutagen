@@ -16,9 +16,8 @@ The specification is at http://www.xiph.org/vorbis/doc/v-comment.html.
 
 import sys
 
-from cStringIO import StringIO
-
 import mutagen
+from ._compat import reraise, StringIO
 from mutagen._util import DictMixin, cdata
 
 
@@ -101,13 +100,13 @@ class VComment(mutagen.Metadata, list):
                     raise error("cannot read %d bytes, too large" % length)
                 try:
                     tag, value = string.split('=', 1)
-                except ValueError, err:
+                except ValueError as err:
                     if errors == "ignore":
                         continue
                     elif errors == "replace":
                         tag, value = u"unknown%d" % i, string
                     else:
-                        raise VorbisEncodingError, err, sys.exc_info()[2]
+                        reraise(VorbisEncodingError, err, sys.exc_info()[2])
                 try:
                     tag = tag.encode('ascii', errors)
                 except UnicodeEncodeError:

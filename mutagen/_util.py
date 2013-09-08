@@ -176,8 +176,12 @@ class cdata(object):
 
     bitswap = ''.join([chr(sum([((val >> i) & 1) << (7-i) for i in range(8)]))
                        for val in range(256)])
-    del(i)
-    del(val)
+
+    try:
+        del(i)
+        del(val)
+    except NameError:
+        pass
 
     test_bit = staticmethod(lambda value, n: bool((value >> n) & 1))
 

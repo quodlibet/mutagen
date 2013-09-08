@@ -151,7 +151,7 @@ class Frame(object):
             if tflags & Frame.FLAG24_UNSYNCH or id3.f_unsynch:
                 try:
                     data = unsynch.decode(data)
-                except ValueError, err:
+                except ValueError as err:
                     if id3.PEDANTIC:
                         raise ID3BadUnsynchData('%s: %r' % (err, data))
             if tflags & Frame.FLAG24_ENCRYPT:
@@ -159,13 +159,13 @@ class Frame(object):
             if tflags & Frame.FLAG24_COMPRESS:
                 try:
                     data = data.decode('zlib')
-                except zlibError, err:
+                except zlibError as err:
                     # the initial mutagen that went out with QL 0.12 did not
                     # write the 4 bytes of uncompressed size. Compensate.
                     data = datalen_bytes + data
                     try:
                         data = data.decode('zlib')
-                    except zlibError, err:
+                    except zlibError as err:
                         if id3.PEDANTIC:
                             raise ID3BadCompressedData('%s: %r' % (err, data))
 
@@ -178,7 +178,7 @@ class Frame(object):
             if tflags & Frame.FLAG23_COMPRESS:
                 try:
                     data = data.decode('zlib')
-                except zlibError, err:
+                except zlibError as err:
                     if id3.PEDANTIC:
                         raise ID3BadCompressedData('%s: %r' % (err, data))
 
@@ -1562,8 +1562,11 @@ Frames = dict([(k, v) for (k, v) in globals().items()
                issubclass(v, Frame)])
 """All supported ID3v2 frames, keyed by frame name."""
 
-del(k)
-del(v)
+try:
+    del(k)
+    del(v)
+except NameError:
+    pass
 
 
 # ID3v2.2 frames
@@ -1838,5 +1841,8 @@ Frames_2_2 = dict([(k, v) for (k, v) in globals().items()
                    if len(k) == 3 and isinstance(v, type) and
                    issubclass(v, Frame)])
 
-del k
-del v
+try:
+    del k
+    del v
+except NameError:
+    pass

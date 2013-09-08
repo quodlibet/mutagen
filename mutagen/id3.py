@@ -37,6 +37,7 @@ from struct import unpack, pack, error as StructError
 
 import mutagen
 from mutagen._util import insert_bytes, delete_bytes, DictProxy
+from ._compat import reraise
 
 from mutagen._id3util import *
 from mutagen._id3frames import *
@@ -123,21 +124,21 @@ class ID3(DictProxy, mutagen.Metadata):
                 self.size = 0
                 raise ID3NoHeaderError("%s: too small (%d bytes)" % (
                     filename, self.__filesize))
-            except (ID3NoHeaderError, ID3UnsupportedVersionError), err:
+            except (ID3NoHeaderError, ID3UnsupportedVersionError) as err:
                 self.size = 0
                 import sys
                 stack = sys.exc_info()[2]
                 try:
                     self.__fileobj.seek(-128, 2)
                 except EnvironmentError:
-                    raise err, None, stack
+                    reraise(err, None, stack)
                 else:
                     frames = ParseID3v1(self.__fileobj.read(128))
                     if frames is not None:
                         self.version = self._V11
                         map(self.add, frames.values())
                     else:
-                        raise err, None, stack
+                        reraise(err, None, stack)
             else:
                 frames = self.__known_frames
                 if frames is None:
@@ -443,7 +444,7 @@ class ID3(DictProxy, mutagen.Metadata):
         if not framedata:
             try:
                 self.delete(filename)
-            except EnvironmentError, err:
+            except EnvironmentError as err:
                 from errno import ENOENT
                 if err.errno != ENOENT:
                     raise
@@ -456,7 +457,7 @@ class ID3(DictProxy, mutagen.Metadata):
             filename = self.filename
         try:
             f = open(filename, 'rb+')
-        except IOError, err:
+        except IOError as err:
             from errno import ENOENT
             if err.errno != ENOENT:
                 raise
@@ -490,7 +491,7 @@ class ID3(DictProxy, mutagen.Metadata):
 
             try:
                 f.seek(-128, 2)
-            except IOError, err:
+            except IOError as err:
                 # If the file is too small, that's OK - it just means
                 # we're certain it doesn't have a v1 tag.
                 from errno import EINVAL

@@ -2,7 +2,7 @@ import os
 import random
 import shutil
 
-from StringIO import StringIO
+from mutagen._compat import BytesIO
 from tests import TestCase, add
 from mutagen.ogg import OggPage, error as OggError
 from mutagen._util import cdata
@@ -58,7 +58,7 @@ class TOggPage(TestCase):
 
     def test_single_page_roundtrip(self):
         self.failUnlessEqual(
-            self.page, OggPage(StringIO(self.page.write())))
+            self.page, OggPage(BytesIO(self.page.write())))
 
     def test_at_least_one_audio_page(self):
         page = OggPage(self.fileobj)
@@ -88,7 +88,7 @@ class TOggPage(TestCase):
     def test_renumber(self):
         self.failUnlessEqual(
             [page.sequence for page in self.pages], [0, 1, 2])
-        fileobj = StringIO()
+        fileobj = BytesIO()
         for page in self.pages:
             fileobj.write(page.write())
         fileobj.seek(0)
@@ -104,7 +104,7 @@ class TOggPage(TestCase):
         self.failUnlessEqual([page.sequence for page in pages], [20, 21, 22])
 
     def test_renumber_extradata(self):
-        fileobj = StringIO()
+        fileobj = BytesIO()
         for page in self.pages:
             fileobj.write(page.write())
         fileobj.write("left over data")
@@ -125,10 +125,10 @@ class TOggPage(TestCase):
             shutil.copy(os.path.join("tests", "data", "multipagecomment.ogg"),
                         filename)
             fileobj = open(filename, "rb+")
-            OggPage.renumber(fileobj, 1002429366L, 20)
+            OggPage.renumber(fileobj, 1002429366, 20)
             fileobj.close()
             fileobj = open(filename, "rb+")
-            OggPage.renumber(fileobj, 1002429366L, 0)
+            OggPage.renumber(fileobj, 1002429366, 0)
             fileobj.close()
         finally:
             try: os.unlink(filename)
@@ -141,7 +141,7 @@ class TOggPage(TestCase):
             page.sequence = seq
         pages[1].serial = 2
         pages[1].sequence = 100
-        data = StringIO("".join([page.write() for page in pages]))
+        data = BytesIO("".join([page.write() for page in pages]))
         OggPage.renumber(data, 0, 20)
         data.seek(0)
         pages = [OggPage(data) for i in range(10)]
@@ -205,7 +205,7 @@ class TOggPage(TestCase):
     def test_random_data_roundtrip(self):
         try: random_file = open("/dev/urandom", "rb")
         except (IOError, OSError):
-            print "WARNING: Random data round trip test disabled."
+            print("WARNING: Random data round trip test disabled.")
             return
         for i in range(10):
             num_packets = random.randrange(2, 100)
@@ -246,7 +246,7 @@ class TOggPage(TestCase):
     def test_complete_zero_length(self):
         packets = [""] * 20
         page = OggPage.from_packets(packets)[0]
-        new_page = OggPage(StringIO(page.write()))
+        new_page = OggPage(BytesIO(page.write()))
         self.failUnlessEqual(new_page, page)
         self.failUnlessEqual(OggPage.to_packets([new_page]), packets)
 
@@ -265,24 +265,24 @@ class TOggPage(TestCase):
         page2.sequence = 1
         page2.continued = True
         data = page.write() + page2.write()
-        fileobj = StringIO(data)
+        fileobj = BytesIO(data)
         self.failUnlessEqual(OggPage(fileobj), page)
         self.failUnlessEqual(OggPage(fileobj), page2)
         self.failUnlessRaises(EOFError, OggPage, fileobj)
 
     def test_invalid_version(self):
         page = OggPage()
-        OggPage(StringIO(page.write()))
+        OggPage(BytesIO(page.write()))
         page.version = 1
-        self.failUnlessRaises(OggError, OggPage, StringIO(page.write()))
+        self.failUnlessRaises(OggError, OggPage, BytesIO(page.write()))
 
     def test_not_enough_lacing(self):
         data = OggPage().write()[:-1] + "\x10"
-        self.failUnlessRaises(OggError, OggPage, StringIO(data))
+        self.failUnlessRaises(OggError, OggPage, BytesIO(data))
 
     def test_not_enough_data(self):
         data = OggPage().write()[:-1] + "\x01\x10"
-        self.failUnlessRaises(OggError, OggPage, StringIO(data))
+        self.failUnlessRaises(OggError, OggPage, BytesIO(data))
 
     def test_not_equal(self):
         self.failIfEqual(OggPage(), 12)
@@ -290,7 +290,7 @@ class TOggPage(TestCase):
     def test_find_last(self):
         pages = [OggPage() for i in range(10)]
         for i, page in enumerate(pages): page.sequence = i
-        data = StringIO("".join([page.write() for page in pages]))
+        data = BytesIO("".join([page.write() for page in pages]))
         self.failUnlessEqual(
             OggPage.find_last(data, pages[0].serial), pages[-1])
 
@@ -298,7 +298,7 @@ class TOggPage(TestCase):
         pages = [OggPage() for i in range(10)]
         pages[-1].last = True
         for i, page in enumerate(pages): page.sequence = i
-        data = StringIO("".join([page.write() for page in pages]))
+        data = BytesIO("".join([page.write() for page in pages]))
         self.failUnlessEqual(
             OggPage.find_last(data, pages[0].serial), pages[-1])
 
@@ -307,29 +307,29 @@ class TOggPage(TestCase):
         for i, page in enumerate(pages): page.sequence = i
         pages[-2].last = True
         pages[-1].serial = pages[0].serial + 1
-        data = StringIO("".join([page.write() for page in pages]))
+        data = BytesIO("".join([page.write() for page in pages]))
         self.failUnlessEqual(
             OggPage.find_last(data, pages[0].serial), pages[-2])
 
     def test_find_last_no_serial(self):
         pages = [OggPage() for i in range(10)]
         for i, page in enumerate(pages): page.sequence = i
-        data = StringIO("".join([page.write() for page in pages]))
+        data = BytesIO("".join([page.write() for page in pages]))
         self.failUnless(OggPage.find_last(data, pages[0].serial + 1) is None)
 
     def test_find_last_invalid(self):
-        data = StringIO("if you think this is an Ogg, you're crazy")
+        data = BytesIO("if you think this is an Ogg, you're crazy")
         self.failUnlessRaises(OggError, OggPage.find_last, data, 0)
 
     # Disabled because GStreamer will write Oggs with bad data,
     # which we need to make a best guess for.
     #
     #def test_find_last_invalid_sync(self):
-    #    data = StringIO("if you think this is an OggS, you're crazy")
+    #    data = BytesIO("if you think this is an OggS, you're crazy")
     #    self.failUnlessRaises(OggError, OggPage.find_last, data, 0)
 
     def test_find_last_invalid_sync(self):
-        data = StringIO("if you think this is an OggS, you're crazy")
+        data = BytesIO("if you think this is an OggS, you're crazy")
         page = OggPage.find_last(data, 0)
         self.failIf(page)
 
@@ -517,12 +517,12 @@ NOTFOUND = os.system("tools/notarealprogram 2> %s" % devnull)
 have_ogginfo = True
 if os.system("ogginfo 2> %s > %s" % (devnull, devnull)) == NOTFOUND:
     have_ogginfo = False
-    print "WARNING: Skipping ogginfo reference tests."
+    print("WARNING: Skipping ogginfo reference tests.")
 have_oggz_validate = True
 have_oggz_validate_opus = True
 if os.system("oggz-validate 2> %s > %s" % (devnull, devnull)) == NOTFOUND:
     have_oggz_validate = False
-    print "WARNING: Skipping oggz-validate reference tests."
+    print("WARNING: Skipping oggz-validate reference tests.")
 else:
     f = os.popen("oggz-validate --version")
     try:
@@ -531,6 +531,6 @@ else:
         version = tuple(map(int, version_part.split(".")))
         if version <= (0, 9, 9):
             have_oggz_validate_opus = False
-            print "WARNING: Skipping oggz-validate reference tests for opus"
+            print("WARNING: Skipping oggz-validate reference tests for opus")
     finally:
         f.close()

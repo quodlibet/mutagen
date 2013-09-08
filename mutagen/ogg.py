@@ -18,10 +18,9 @@ import struct
 import sys
 import zlib
 
-from cStringIO import StringIO
-
 from mutagen import FileType
 from mutagen._util import cdata, insert_bytes, delete_bytes
+from ._compat import cBytesIO, reraise
 
 
 class error(IOError):
@@ -59,7 +58,7 @@ class OggPage(object):
 
     version = 0
     __type_flags = 0
-    position = 0L
+    position = 0
     serial = 0
     sequence = 0
     offset = None
@@ -314,7 +313,7 @@ class OggPage(object):
                     if page.packets[-1]:
                         page.complete = False
                         if len(page.packets) == 1:
-                            page.position = -1L
+                            page.position = -1
                     else:
                         page.packets.pop(-1)
                     pages.append(page)
@@ -359,7 +358,7 @@ class OggPage(object):
         new_pages[-1].last = old_pages[-1].last
         new_pages[-1].complete = old_pages[-1].complete
         if not new_pages[-1].complete and len(new_pages[-1].packets) == 1:
-            new_pages[-1].position = -1L
+            new_pages[-1].position = -1
 
         new_data = "".join(map(klass.write, new_pages))
 
@@ -410,7 +409,7 @@ class OggPage(object):
             index = data.rindex("OggS")
         except ValueError:
             raise error("unable to find final Ogg header")
-        stringobj = StringIO(data[index:])
+        stringobj = cBytesIO(data[index:])
         best_page = None
         try:
             page = OggPage(stringobj)
@@ -459,10 +458,10 @@ class OggFileType(FileType):
                 self.info = self._Info(fileobj)
                 self.tags = self._Tags(fileobj, self.info)
                 self.info._post_tags(fileobj)
-            except error, e:
-                raise self._Error, e, sys.exc_info()[2]
+            except error as e:
+                reraise(self._Error, e, sys.exc_info()[2])
             except EOFError:
-                raise self._Error, "no appropriate stream found"
+                raise self._Error("no appropriate stream found")
         finally:
             fileobj.close()
 
@@ -480,10 +479,10 @@ class OggFileType(FileType):
         try:
             try:
                 self.tags._inject(fileobj)
-            except error, e:
-                raise self._Error, e, sys.exc_info()[2]
+            except error as e:
+                reraise(self._Error, e, sys.exc_info()[2])
             except EOFError:
-                raise self._Error, "no appropriate stream found"
+                raise self._Error("no appropriate stream found")
         finally:
             fileobj.close()
 
@@ -499,9 +498,9 @@ class OggFileType(FileType):
         try:
             try:
                 self.tags._inject(fileobj)
-            except error, e:
-                raise self._Error, e, sys.exc_info()[2]
+            except error as e:
+                reraise(self._Error, e, sys.exc_info()[2])
             except EOFError:
-                raise self._Error, "no appropriate stream found"
+                raise self._Error("no appropriate stream found")
         finally:
             fileobj.close()

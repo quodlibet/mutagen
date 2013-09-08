@@ -2,8 +2,8 @@ import os
 import shutil
 
 from tempfile import mkstemp
-from cStringIO import StringIO
 
+from mutagen._compat import cBytesIO
 from mutagen.oggflac import OggFLAC, OggFLACStreamInfo, delete
 from mutagen.ogg import OggPage, error as OggError
 from tests import add
@@ -29,16 +29,16 @@ class TOggFLAC(TOggFileType):
     def test_streaminfo_bad_marker(self):
         page = OggPage(open(self.filename, "rb")).write()
         page = page.replace("fLaC", "!fLa", 1)
-        self.failUnlessRaises(IOError, OggFLACStreamInfo, StringIO(page))
+        self.failUnlessRaises(IOError, OggFLACStreamInfo, cBytesIO(page))
 
     def test_streaminfo_too_short(self):
         page = OggPage(open(self.filename, "rb")).write()
-        self.failUnlessRaises(OggError, OggFLACStreamInfo, StringIO(page[:10]))
+        self.failUnlessRaises(OggError, OggFLACStreamInfo, cBytesIO(page[:10]))
 
     def test_streaminfo_bad_version(self):
         page = OggPage(open(self.filename, "rb")).write()
         page = page.replace("\x01\x00", "\x02\x00", 1)
-        self.failUnlessRaises(IOError, OggFLACStreamInfo, StringIO(page))
+        self.failUnlessRaises(IOError, OggFLACStreamInfo, cBytesIO(page))
 
     def test_flac_reference_simple_save(self):
         if not have_flac: return
@@ -101,4 +101,4 @@ NOTFOUND = os.system("tools/notarealprogram 2> %s" % devnull)
 have_flac = True
 if os.system("flac 2> %s > %s" % (devnull, devnull)) == NOTFOUND:
     have_flac = False
-    print "WARNING: Skipping Ogg FLAC reference tests."
+    print("WARNING: Skipping Ogg FLAC reference tests.")

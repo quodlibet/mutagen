@@ -34,8 +34,8 @@ class clean(distutils_clean):
             for filename in filter(should_remove, files):
                 try:
                     os.unlink(os.path.join(pathname, filename))
-                except EnvironmentError, err:
-                    print str(err)
+                except EnvironmentError as err:
+                    print(str(err))
 
         try:
             os.unlink("MANIFEST")
@@ -162,8 +162,8 @@ class coverage_cmd(Command):
                  (line.startswith(">>>>>>") and
                   "finally:" not in line and '"""' not in line)])
         pct = 100.0 * (total_lines - bad_lines) / float(total_lines)
-        print "Coverage data written to", coverage, "(%d/%d, %0.2f%%)" % (
-            total_lines - bad_lines, total_lines, pct)
+        print("Coverage data written to", coverage, "(%d/%d, %0.2f%%)" % (
+            total_lines - bad_lines, total_lines, pct))
         if pct < 98.66:
             raise SystemExit(
                 "Coverage percentage went down; write more tests.")

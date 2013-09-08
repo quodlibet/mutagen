@@ -4,7 +4,7 @@ from tests import TestCase
 from tests import add
 from mutagen import id3
 from mutagen.id3 import ID3, COMR, Frames, Frames_2_2, ID3Warning, ID3JunkFrameError
-from StringIO import StringIO
+from mutagen._compat import cBytesIO
 import warnings
 warnings.simplefilter('error', ID3Warning)
 
@@ -95,45 +95,45 @@ class ID3Loading(TestCase):
 
     def test_header_2_4_invalid_flags(self):
         id3 = ID3()
-        id3._ID3__fileobj = StringIO('ID3\x04\x00\x1f\x00\x00\x00\x00')
+        id3._ID3__fileobj = cBytesIO('ID3\x04\x00\x1f\x00\x00\x00\x00')
         self.assertRaises(ValueError, id3._ID3__load_header)
 
     def test_header_2_4_unsynch_size(self):
         id3 = ID3()
-        id3._ID3__fileobj = StringIO('ID3\x04\x00\x10\x00\x00\x00\xFF')
+        id3._ID3__fileobj = cBytesIO('ID3\x04\x00\x10\x00\x00\x00\xFF')
         self.assertRaises(ValueError, id3._ID3__load_header)
 
     def test_header_2_4_allow_footer(self):
         id3 = ID3()
-        id3._ID3__fileobj = StringIO('ID3\x04\x00\x10\x00\x00\x00\x00')
+        id3._ID3__fileobj = cBytesIO('ID3\x04\x00\x10\x00\x00\x00\x00')
         id3._ID3__load_header()
 
     def test_header_2_3_invalid_flags(self):
         id3 = ID3()
-        id3._ID3__fileobj = StringIO('ID3\x03\x00\x1f\x00\x00\x00\x00')
+        id3._ID3__fileobj = cBytesIO('ID3\x03\x00\x1f\x00\x00\x00\x00')
         self.assertRaises(ValueError, id3._ID3__load_header)
-        id3._ID3__fileobj = StringIO('ID3\x03\x00\x0f\x00\x00\x00\x00')
+        id3._ID3__fileobj = cBytesIO('ID3\x03\x00\x0f\x00\x00\x00\x00')
         self.assertRaises(ValueError, id3._ID3__load_header)
 
     def test_header_2_2(self):
         id3 = ID3()
-        id3._ID3__fileobj = StringIO('ID3\x02\x00\x00\x00\x00\x00\x00')
+        id3._ID3__fileobj = cBytesIO('ID3\x02\x00\x00\x00\x00\x00\x00')
         id3._ID3__load_header()
         self.assertEquals(id3.version, (2,2,0))
 
     def test_header_2_1(self):
         id3 = ID3()
-        id3._ID3__fileobj = StringIO('ID3\x01\x00\x00\x00\x00\x00\x00')
+        id3._ID3__fileobj = cBytesIO('ID3\x01\x00\x00\x00\x00\x00\x00')
         self.assertRaises(NotImplementedError, id3._ID3__load_header)
 
     def test_header_too_small(self):
         id3 = ID3()
-        id3._ID3__fileobj = StringIO('ID3\x01\x00\x00\x00\x00\x00')
+        id3._ID3__fileobj = cBytesIO('ID3\x01\x00\x00\x00\x00\x00')
         self.assertRaises(EOFError, id3._ID3__load_header)
 
     def test_header_2_4_extended(self):
         id3 = ID3()
-        id3._ID3__fileobj = StringIO(
+        id3._ID3__fileobj = cBytesIO(
             'ID3\x04\x00\x40\x00\x00\x00\x00\x00\x00\x00\x05\x5a')
         id3._ID3__load_header()
         self.assertEquals(id3._ID3__extsize, 1)
@@ -141,13 +141,13 @@ class ID3Loading(TestCase):
 
     def test_header_2_4_extended_unsynch_size(self):
         id3 = ID3()
-        id3._ID3__fileobj = StringIO(
+        id3._ID3__fileobj = cBytesIO(
             'ID3\x04\x00\x40\x00\x00\x00\x00\x00\x00\x00\xFF\x5a')
         self.assertRaises(ValueError, id3._ID3__load_header)
 
     def test_header_2_4_extended_but_not(self):
         id3 = ID3()
-        id3._ID3__fileobj = StringIO(
+        id3._ID3__fileobj = cBytesIO(
             'ID3\x04\x00\x40\x00\x00\x00\x00TIT1\x00\x00\x00\x01a')
         id3._ID3__load_header()
         self.assertEquals(id3._ID3__extsize, 0)
@@ -155,13 +155,13 @@ class ID3Loading(TestCase):
 
     def test_header_2_4_extended_but_not_but_not_tag(self):
         id3 = ID3()
-        id3._ID3__fileobj = StringIO(
+        id3._ID3__fileobj = cBytesIO(
             'ID3\x04\x00\x40\x00\x00\x00\x00TIT9')
         self.failUnlessRaises(EOFError, id3._ID3__load_header)
 
     def test_header_2_3_extended(self):
         id3 = ID3()
-        id3._ID3__fileobj = StringIO(
+        id3._ID3__fileobj = cBytesIO(
             'ID3\x03\x00\x40\x00\x00\x00\x00\x00\x00\x00\x06'
             '\x00\x00\x56\x78\x9a\xbc')
         id3._ID3__load_header()

@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, print_function
 
 import re
 import glob
@@ -17,7 +17,7 @@ class TestCase(BaseTestCase):
         def wrapped(*args, **kwargs):
             try:
                 fun(*args, **kwargs)
-            except Exception, e:
+            except Exception as e:
                 self.failUnless(re.search(re_, str(e)))
                 raise
         self.failUnlessRaises(exc, wrapped, *args, **kwargs)
@@ -92,7 +92,7 @@ class Runner(object):
     def run(self, test):
         suite = unittest.makeSuite(test)
         pref = '%s (%d): ' % (test.__name__, len(suite._tests))
-        print pref + " " * (25 - len(pref)),
+        print (pref + " " * (25 - len(pref)), end="")
         result = Result()
         suite(result)
         result.printErrors()
@@ -109,7 +109,7 @@ def unit(run=[], quick=False):
     # normal run, trace mmap calls
     orig_mmap = mmap.mmap
     uses_mmap = []
-    print "Running tests with real mmap."
+    print("Running tests with real mmap.")
     for test in tests:
         def new_mmap(*args, **kwargs):
             if test not in uses_mmap:
@@ -130,13 +130,13 @@ def unit(run=[], quick=False):
     try:
         import fcntl
     except ImportError:
-        print "Unable to run mocked fcntl.lockf tests."
+        print("Unable to run mocked fcntl.lockf tests.")
     else:
         def MockLockF(*args, **kwargs):
             raise IOError
         lockf = fcntl.lockf
         fcntl.lockf = MockLockF
-        print "Running tests with mocked failing fcntl.lockf."
+        print("Running tests with mocked failing fcntl.lockf.")
         for test in uses_mmap:
             failures |= runner.run(test)
         fcntl.lockf = lockf
@@ -152,7 +152,7 @@ def unit(run=[], quick=False):
         def close(self):
             pass
 
-    print "Running tests with mocked failing mmap.move."
+    print("Running tests with mocked failing mmap.move.")
     mmap.mmap = MockMMap
     for test in uses_mmap:
         failures |= runner.run(test)
@@ -162,7 +162,7 @@ def unit(run=[], quick=False):
         raise EnvironmentError
 
     mmap.mmap = MockMMap2
-    print "Running tests with mocked failing mmap.mmap."
+    print("Running tests with mocked failing mmap.mmap.")
     for test in uses_mmap:
         failures |= runner.run(test)
 

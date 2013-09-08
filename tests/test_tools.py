@@ -1,6 +1,7 @@
 import os
 import sys
-import StringIO
+
+from mutagen._compat import StringIO
 
 from tests import TestCase
 
@@ -26,11 +27,11 @@ class _TTools(TestCase):
             assert isinstance(arg, str)
         old_stdout = sys.stdout
         try:
-            out = StringIO.StringIO()
+            out = StringIO()
             sys.stdout = out
             try:
                 ret = self._main([self.TOOL_NAME] + list(args))
-            except SystemExit, e:
+            except SystemExit as e:
                 ret = e.code
             ret = ret or 0
             return (ret,  out.getvalue())

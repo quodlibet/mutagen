@@ -31,8 +31,8 @@ http://wiki.hydrogenaudio.org/index.php?title=APEv2_specification.
 __all__ = ["APEv2", "APEv2File", "Open", "delete"]
 
 import struct
-from cStringIO import StringIO
 
+from ._compat import cBytesIO
 from mutagen import Metadata, FileType, StreamInfo
 from mutagen._util import DictMixin, cdata, utf8, delete_bytes
 
@@ -48,9 +48,9 @@ def is_valid_apev2_key(key):
 #  3: reserved"
 TEXT, BINARY, EXTERNAL = range(3)
 
-HAS_HEADER = 1L << 31
-HAS_NO_FOOTER = 1L << 30
-IS_HEADER = 1L << 29
+HAS_HEADER = 1 << 31
+HAS_NO_FOOTER = 1 << 30
+IS_HEADER = 1 << 29
 
 
 class error(IOError):
@@ -243,7 +243,7 @@ class APEv2(DictMixin, Metadata):
             raise APENoHeaderError("No APE tag found")
 
     def __parse_tag(self, tag, count):
-        fileobj = StringIO(tag)
+        fileobj = cBytesIO(tag)
 
         for i in range(count):
             size_data = fileobj.read(4)

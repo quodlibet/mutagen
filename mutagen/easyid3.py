@@ -13,6 +13,7 @@ more like Vorbis or APEv2 tags.
 
 import mutagen.id3
 
+from ._compat import iteritems
 from mutagen import Metadata
 from mutagen._util import DictMixin, dict_match
 from mutagen.id3 import ID3, error, delete, ID3FileType
@@ -433,7 +434,7 @@ def peakgain_list(id3, key):
         keys.append("replaygain_%s_peak" % frame.desc)
     return keys
 
-for frameid, key in {
+for frameid, key in iteritems({
     "TALB": "album",
     "TBPM": "bpm",
     "TCMP": "compilation",  # iTunes extension
@@ -461,7 +462,7 @@ for frameid, key in {
     "TSOT": "titlesort",
     "TSRC": "isrc",
     "TSST": "discsubtitle",
-}.iteritems():
+}):
     EasyID3.RegisterTextKey(key, frameid)
 
 EasyID3.RegisterKey("genre", genre_get, genre_set, genre_delete)
@@ -481,7 +482,7 @@ EasyID3.RegisterKey("replaygain_*_peak", peak_get, peak_set, peak_delete)
 # http://musicbrainz.org/docs/specs/metadata_tags.html
 # http://bugs.musicbrainz.org/ticket/1383
 # http://musicbrainz.org/doc/MusicBrainzTag
-for desc, key in {
+for desc, key in iteritems({
     u"MusicBrainz Artist Id": "musicbrainz_artistid",
     u"MusicBrainz Album Id": "musicbrainz_albumid",
     u"MusicBrainz Album Artist Id": "musicbrainz_albumartistid",
@@ -495,7 +496,7 @@ for desc, key in {
     u"ASIN": "asin",
     u"ALBUMARTISTSORT": "albumartistsort",
     u"BARCODE": "barcode",
-}.iteritems():
+}):
     EasyID3.RegisterTXXXKey(key, desc)
 
 

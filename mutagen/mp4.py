@@ -27,6 +27,7 @@ import sys
 from mutagen import FileType, Metadata, StreamInfo
 from mutagen._constants import GENRES
 from mutagen._util import cdata, insert_bytes, DictProxy, utf8
+from mutagen._compat import reraise
 
 
 class error(IOError):
@@ -307,7 +308,7 @@ class MP4Tags(DictProxy, Metadata):
     def load(self, atoms, fileobj):
         try:
             ilst = atoms["moov.udta.meta.ilst"]
-        except KeyError, key:
+        except KeyError as key:
             raise MP4MetadataError(key)
         for atom in ilst.children:
             fileobj.seek(atom.offset + 8)
@@ -357,8 +358,8 @@ class MP4Tags(DictProxy, Metadata):
             info = self.__atoms.get(key[:4], (None, type(self).__render_text))
             try:
                 values.append(info[1](self, key, value, *info[2:]))
-            except (TypeError, ValueError), s:
-                raise MP4MetadataValueError, s, sys.exc_info()[2]
+            except (TypeError, ValueError) as s:
+                reraise(MP4MetadataValueError, s, sys.exc_info()[2])
         data = Atom.render("ilst", "".join(values))
 
         # Find the old atoms.
@@ -789,16 +790,16 @@ class MP4(FileType):
 
             try:
                 self.info = MP4Info(atoms, fileobj)
-            except StandardError, err:
-                raise MP4StreamInfoError, err, sys.exc_info()[2]
+            except StandardError as err:
+                reraise(MP4StreamInfoError, err, sys.exc_info()[2])
 
             if not MP4Tags._can_load(atoms):
                 self.tags = None
             else:
                 try:
                     self.tags = self.MP4Tags(atoms, fileobj)
-                except StandardError, err:
-                    raise MP4MetadataError, err, sys.exc_info()[2]
+                except StandardError as err:
+                    reraise(MP4MetadataError, err, sys.exc_info()[2])
         finally:
             fileobj.close()
 
