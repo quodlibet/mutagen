@@ -817,7 +817,7 @@ def TestReadTags():
     add(testcase)
 
     from mutagen.id3 import Frames, Frames_2_2
-    check = dict.fromkeys(Frames.keys() + Frames_2_2.keys())
+    check = dict.fromkeys(list(Frames.keys()) + list(Frames_2_2.keys()))
     tested_tags = dict.fromkeys([row[0] for row in tests])
     for tag in check:
         def check(self, tag=tag): self.assert_(tag in tested_tags)

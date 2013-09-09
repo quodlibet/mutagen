@@ -4,7 +4,7 @@ from tempfile import mkstemp
 
 from mutagen.id3 import ID3, TIT2
 from mutagen.musepack import Musepack, MusepackInfo, MusepackHeaderError
-from cStringIO import StringIO
+from mutagen._compat import cBytesIO
 from tests import TestCase, add
 
 class TMusepack(TestCase):
@@ -65,11 +65,11 @@ class TMusepack(TestCase):
 
     def test_almost_my_file(self):
         self.failUnlessRaises(
-            MusepackHeaderError, MusepackInfo, StringIO("MP+" + "\x00" * 32))
+            MusepackHeaderError, MusepackInfo, cBytesIO("MP+" + "\x00" * 32))
         self.failUnlessRaises(
-            MusepackHeaderError, MusepackInfo, StringIO("MP+" + "\x00" * 100))
+            MusepackHeaderError, MusepackInfo, cBytesIO("MP+" + "\x00" * 100))
         self.failUnlessRaises(
-            MusepackHeaderError, MusepackInfo, StringIO("MPCK" + "\x00" * 100))
+            MusepackHeaderError, MusepackInfo, cBytesIO("MPCK" + "\x00" * 100))
 
     def test_pprint(self):
         self.sv8.pprint()

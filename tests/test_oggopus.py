@@ -1,8 +1,8 @@
 import os
 import shutil
 from tempfile import mkstemp
-from cStringIO import StringIO
 
+from mutagen._compat import cBytesIO
 from mutagen.oggopus import OggOpus, OggOpusInfo, delete
 from mutagen.ogg import OggPage
 from tests import add
@@ -37,7 +37,7 @@ class TOggOpus(TOggFileType):
     def test_invalid_not_first(self):
         page = OggPage(open(self.filename, "rb"))
         page.first = False
-        self.failUnlessRaises(IOError, OggOpusInfo, StringIO(page.write()))
+        self.failUnlessRaises(IOError, OggOpusInfo, cBytesIO(page.write()))
 
     def test_unsupported_version(self):
         page = OggPage(open(self.filename, "rb"))
@@ -45,10 +45,10 @@ class TOggOpus(TOggFileType):
 
         data[8] = "\x03"
         page.packets[0] = "".join(data)
-        OggOpusInfo(StringIO(page.write()))
+        OggOpusInfo(cBytesIO(page.write()))
 
         data[8] = "\x10"
         page.packets[0] = "".join(data)
-        self.failUnlessRaises(IOError, OggOpusInfo, StringIO(page.write()))
+        self.failUnlessRaises(IOError, OggOpusInfo, cBytesIO(page.write()))
 
 add(TOggOpus)

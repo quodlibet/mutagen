@@ -2,7 +2,7 @@ import os
 import shutil
 
 from tests import TestCase
-from cStringIO import StringIO
+from mutagen._compat import cBytesIO
 from tests import add
 from mutagen.mp3 import MP3, error as MP3Error, delete, MPEGInfo, EasyMP3
 from mutagen.id3 import ID3
@@ -135,11 +135,11 @@ class TMPEGInfo(TestCase):
 
     def test_not_real_file(self):
         filename = os.path.join("tests", "data", "silence-44-s-v1.mp3")
-        fileobj = StringIO(open(filename, "rb").read(20))
+        fileobj = cBytesIO(open(filename, "rb").read(20))
         MPEGInfo(fileobj)
 
     def test_empty(self):
-        fileobj = StringIO("")
+        fileobj = cBytesIO("")
         self.failUnlessRaises(IOError, MPEGInfo, fileobj)
 add(TMPEGInfo)
 

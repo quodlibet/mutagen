@@ -17,6 +17,7 @@ if PY2:
 
     long_ = long
     integer_types = (int, long)
+    text_type = unicode
 
     iteritems = lambda d: d.iteritems()
 
@@ -29,6 +30,7 @@ elif PY3:
 
     long_ = int
     integer_types = (int,)
+    text_type = str
 
     iteritems = lambda d: iter(d.items())
 

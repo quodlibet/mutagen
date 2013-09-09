@@ -126,11 +126,11 @@ class TASF(TestCase):
                      [ASFValue(12, DWORD), ASFValue(13, DWORD)])
 
     def test_auto_qword(self):
-        self.set_key(u"WM/Track", 12L,
+        self.set_key(u"WM/Track", 12,
                      [ASFValue(12, QWORD)])
 
     def test_auto_qword_list(self):
-        self.set_key(u"WM/Track", [12L, 13L],
+        self.set_key(u"WM/Track", [12, 13],
                      [ASFValue(12, QWORD), ASFValue(13, QWORD)])
 
     def test_auto_bool(self):

@@ -2,8 +2,8 @@ import os
 import shutil
 
 from tempfile import mkstemp
-from cStringIO import StringIO
 
+from mutagen._compat import cBytesIO
 from mutagen.oggtheora import OggTheora, OggTheoraInfo, delete
 from mutagen.ogg import OggPage
 from tests import add
@@ -28,13 +28,13 @@ class TOggTheora(TOggFileType):
         packet = page.packets[0]
         packet = packet[:7] + "\x03\x00" + packet[9:]
         page.packets = [packet]
-        fileobj = StringIO(page.write())
+        fileobj = cBytesIO(page.write())
         self.failUnlessRaises(IOError, OggTheoraInfo, fileobj)
 
     def test_theora_not_first_page(self):
         page = OggPage(open(self.filename, "rb"))
         page.first = False
-        fileobj = StringIO(page.write())
+        fileobj = cBytesIO(page.write())
         self.failUnlessRaises(IOError, OggTheoraInfo, fileobj)
 
     def test_vendor(self):

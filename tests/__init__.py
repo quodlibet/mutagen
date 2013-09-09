@@ -53,6 +53,9 @@ class TestCase(BaseTestCase):
 
 
 for name in glob.glob(os.path.join(os.path.dirname(__file__), "test_*.py")):
+    # skip m4a in py3k
+    if sys.version_info[0] != 2 and "test_m4a" in name:
+        continue
     module = "tests." + os.path.basename(name)
     __import__(module[:-3], {}, {}, [])
 

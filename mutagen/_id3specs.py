@@ -8,6 +8,7 @@ import struct
 from struct import unpack, pack
 from warnings import warn
 
+from ._compat import text_type
 from mutagen._id3util import ID3JunkFrameError, ID3Warning, BitPaddedInt
 
 
@@ -94,14 +95,18 @@ class StringSpec(Spec):
 
     def write(s, frame, value):
         if value is None:
-            return '\x00' * s.len
+            return b'\x00' * s.len
         else:
-            return (str(value) + '\x00' * s.len)[:s.len]
+            return (bytes(value) + b'\x00' * s.len)[:s.len]
 
     def validate(s, frame, value):
         if value is None:
             return None
-        if isinstance(value, basestring) and len(value) == s.len:
+
+        if not isinstance(value, bytes):
+            value = value.encode("ascii")
+
+        if len(value) == s.len:
             return value
         raise ValueError('Invalid StringSpec[%d] data: %r' % (s.len, value))
 
@@ -155,7 +160,7 @@ class EncodedTextSpec(Spec):
         return value.encode(enc) + term
 
     def validate(self, frame, value):
-        return unicode(value)
+        return text_type(value)
 
 
 class MultiSpec(Spec):
@@ -242,7 +247,7 @@ class Latin1TextSpec(EncodedTextSpec):
         return value.encode('latin1') + '\x00'
 
     def validate(self, frame, value):
-        return unicode(value)
+        return text_type(value)
 
 
 class ID3TimeStamp(object):

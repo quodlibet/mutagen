@@ -2,7 +2,7 @@ import os
 import shutil
 import struct
 
-from cStringIO import StringIO
+from mutagen._compat import cBytesIO
 from tempfile import mkstemp
 from tests import TestCase, add
 from mutagen.mp4 import MP4, Atom, Atoms, MP4Tags, MP4Info, \
@@ -14,28 +14,28 @@ except ImportError: devnull = "/dev/null"
 class TAtom(TestCase):
 
     def test_no_children(self):
-        fileobj = StringIO("\x00\x00\x00\x08atom")
+        fileobj = cBytesIO("\x00\x00\x00\x08atom")
         atom = Atom(fileobj)
         self.failUnlessRaises(KeyError, atom.__getitem__, "test")
 
     def test_length_1(self):
-        fileobj = StringIO("\x00\x00\x00\x01atom"
+        fileobj = cBytesIO("\x00\x00\x00\x01atom"
                            "\x00\x00\x00\x00\x00\x00\x00\x10" + "\x00" * 16)
         self.failUnlessEqual(Atom(fileobj).length, 16)
 
     def test_length_64bit_less_than_16(self):
-        fileobj = StringIO("\x00\x00\x00\x01atom"
+        fileobj = cBytesIO("\x00\x00\x00\x01atom"
                            "\x00\x00\x00\x00\x00\x00\x00\x08" + "\x00" * 8)
         self.assertRaises(error, Atom, fileobj)
 
     def test_length_less_than_8(self):
-        fileobj = StringIO("\x00\x00\x00\x02atom")
+        fileobj = cBytesIO("\x00\x00\x00\x02atom")
         self.assertRaises(MP4MetadataError, Atom, fileobj)
 
     def test_render_too_big(self):
         class TooBig(str):
             def __len__(self):
-                return 1L << 32
+                return 1 << 32
         data = TooBig("test")
         try: len(data)
         except OverflowError:
@@ -46,17 +46,17 @@ class TAtom(TestCase):
             self.failUnlessEqual(len(data), 4 + 4 + 8 + 4)
 
     def test_non_top_level_length_0_is_invalid(self):
-        data = StringIO(struct.pack(">I4s", 0, "whee"))
+        data = cBytesIO(struct.pack(">I4s", 0, "whee"))
         self.assertRaises(MP4MetadataError, Atom, data, level=1)
 
     def test_length_0(self):
-        fileobj = StringIO("\x00\x00\x00\x00atom" + 40 * "\x00")
+        fileobj = cBytesIO("\x00\x00\x00\x00atom" + 40 * "\x00")
         atom = Atom(fileobj)
         self.failUnlessEqual(fileobj.tell(), 48)
         self.failUnlessEqual(atom.length, 48)
 
     def test_length_0_container(self):
-        data = StringIO(struct.pack(">I4s", 0, "moov") +
+        data = cBytesIO(struct.pack(">I4s", 0, "moov") +
                         Atom.render("data", "whee"))
         atom = Atom(data)
         self.failUnlessEqual(len(atom.children), 1)
@@ -91,7 +91,7 @@ class TAtoms(TestCase):
         self.failUnless(self.atoms.atoms[0].children is None)
 
     def test_extra_trailing_data(self):
-        data = StringIO(Atom.render("data", "whee") + "\x00\x00")
+        data = cBytesIO(Atom.render("data", "whee") + "\x00\x00")
         self.failUnless(Atoms(data))
 
     def test_repr(self):
@@ -112,7 +112,7 @@ class TMP4Info(TestCase):
         mdia = Atom.render("mdia", mdhd + hdlr)
         trak = Atom.render("trak", mdia)
         moov = Atom.render("moov", trak)
-        fileobj = StringIO(moov)
+        fileobj = cBytesIO(moov)
         atoms = Atoms(fileobj)
         info = MP4Info(atoms, fileobj)
         self.failUnlessEqual(info.length, 8)
@@ -128,7 +128,7 @@ class TMP4Info(TestCase):
         mdia = Atom.render("mdia", mdhd + hdlr)
         trak2 = Atom.render("trak", mdia)
         moov = Atom.render("moov", trak1 + trak2)
-        fileobj = StringIO(moov)
+        fileobj = cBytesIO(moov)
         atoms = Atoms(fileobj)
         info = MP4Info(atoms, fileobj)
         self.failUnlessEqual(info.length, 8)
@@ -140,7 +140,7 @@ class TMP4Tags(TestCase):
         ilst = Atom.render("ilst", data)
         meta = Atom.render("meta", "\x00" * 4 + ilst)
         data = Atom.render("moov", Atom.render("udta", meta))
-        fileobj = StringIO(data)
+        fileobj = cBytesIO(data)
         return MP4Tags(Atoms(fileobj), fileobj)
 
     def test_genre(self):
@@ -677,4 +677,4 @@ NOTFOUND = os.system("tools/notarealprogram 2> %s" % devnull)
 have_faad = True
 if os.system("faad 2> %s > %s" % (devnull, devnull)) == NOTFOUND:
     have_faad = False
-    print "WARNING: Skipping FAAD reference tests."
+    print("WARNING: Skipping FAAD reference tests.")
