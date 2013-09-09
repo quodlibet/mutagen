@@ -25,7 +25,7 @@ import struct
 from ._vorbis import VCommentDict
 import mutagen
 
-from ._compat import cBytesIO
+from ._compat import cBytesIO, endswith
 from mutagen._util import insert_bytes
 from mutagen.id3 import BitPaddedInt
 import sys
@@ -617,8 +617,8 @@ class FLAC(mutagen.FileType):
 
     @staticmethod
     def score(filename, fileobj, header):
-        return (header.startswith("fLaC") +
-                filename.lower().endswith(".flac") * 3)
+        return (header.startswith(b"fLaC") +
+                endswith(filename.lower(), ".flac") * 3)
 
     def __read_metadata_block(self, fileobj):
         byte = ord(fileobj.read(1))

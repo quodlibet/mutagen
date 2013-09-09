@@ -22,6 +22,7 @@ __all__ = ["OptimFROG", "Open", "delete"]
 
 import struct
 
+from ._compat import endswith
 from mutagen import StreamInfo
 from mutagen.apev2 import APEv2File, error, delete
 
@@ -42,7 +43,7 @@ class OptimFROGInfo(StreamInfo):
 
     def __init__(self, fileobj):
         header = fileobj.read(76)
-        if (len(header) != 76 or not header.startswith("OFR ") or
+        if (len(header) != 76 or not header.startswith(b"OFR ") or
                 struct.unpack("<I", header[4:8])[0] not in [12, 15]):
             raise OptimFROGHeaderError("not an OptimFROG file")
         (total_samples, total_samples_high, sample_type, self.channels,
@@ -66,7 +67,8 @@ class OptimFROG(APEv2File):
     @staticmethod
     def score(filename, fileobj, header):
         filename = filename.lower()
-        return (header.startswith("OFR") + filename.endswith(".ofr") +
-                filename.endswith(".ofs"))
+
+        return (header.startswith(b"OFR") + endswith(filename, b".ofr") +
+                endswith(filename, b".ofs"))
 
 Open = OptimFROG

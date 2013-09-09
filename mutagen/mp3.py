@@ -10,6 +10,7 @@
 import os
 import struct
 
+from ._compat import endswith
 from mutagen import StreamInfo
 from mutagen.id3 import ID3FileType, BitPaddedInt, delete
 
@@ -257,9 +258,10 @@ class MP3(ID3FileType):
     @staticmethod
     def score(filename, fileobj, header):
         filename = filename.lower()
-        return (header.startswith("ID3") * 2 + filename.endswith(".mp3") +
-                filename.endswith(".mp2") + filename.endswith(".mpg") +
-                filename.endswith(".mpeg"))
+
+        return (header.startswith(b"ID3") * 2 + endswith(filename, b".mp3") +
+                endswith(filename, b".mp2") + endswith(filename, b".mpg") +
+                endswith(filename, b".mpeg"))
 
 
 Open = MP3

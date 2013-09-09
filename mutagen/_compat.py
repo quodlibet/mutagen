@@ -19,6 +19,9 @@ if PY2:
     integer_types = (int, long)
     text_type = unicode
 
+    def endswith(text, end):
+        return text.endswith(end)
+
     iteritems = lambda d: d.iteritems()
 
     exec("def reraise(tp, value, tb):\n raise tp, value, tb")
@@ -31,6 +34,16 @@ elif PY3:
     long_ = int
     integer_types = (int,)
     text_type = str
+
+    def endswith(text, end):
+        # usefull for paths which can be both, str and bytes
+        if isinstance(text, str):
+            if not isinstance(end, str):
+                end = end.decode("ascii")
+        else:
+            if not isinstance(end, bytes):
+                end = end.encode("ascii")
+        return text.endswith(end)
 
     iteritems = lambda d: iter(d.items())
 

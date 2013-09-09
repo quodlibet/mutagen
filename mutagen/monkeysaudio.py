@@ -18,6 +18,7 @@ __all__ = ["MonkeysAudio", "Open", "delete"]
 
 import struct
 
+from ._compat import endswith
 from mutagen import StreamInfo
 from mutagen.apev2 import APEv2File, error, delete
 from mutagen._util import cdata
@@ -79,7 +80,7 @@ class MonkeysAudio(APEv2File):
 
     @staticmethod
     def score(filename, fileobj, header):
-        return header.startswith("MAC ") + filename.lower().endswith(".ape")
+        return header.startswith(b"MAC ") + endswith(filename.lower(), ".ape")
 
 
 Open = MonkeysAudio

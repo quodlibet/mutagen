@@ -268,7 +268,7 @@ def File(filename, options=None, easy=False):
                    for Kind in options]
     finally:
         fileobj.close()
-    results = zip(results, options)
+    results = list(zip(results, options))
     results.sort()
     (score, name), Kind = results[-1]
     if score > 0:

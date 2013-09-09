@@ -83,9 +83,9 @@ class OggPage(object):
         except struct.error:
             raise error("unable to read full header; got %r" % header)
 
-        if oggs != "OggS":
+        if oggs != b"OggS":
             raise error("read %r, expected %r, at 0x%x" % (
-                oggs, "OggS", fileobj.tell() - 27))
+                oggs, b"OggS", fileobj.tell() - 27))
 
         if self.version != 0:
             raise error("version %r unsupported" % self.version)

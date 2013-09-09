@@ -16,6 +16,7 @@ True Audio files use ID3 tags.
 
 __all__ = ["TrueAudio", "Open", "delete", "EasyTrueAudio"]
 
+from ._compat import endswith
 from mutagen import StreamInfo
 from mutagen.id3 import ID3FileType, delete
 from mutagen._util import cdata
@@ -64,8 +65,8 @@ class TrueAudio(ID3FileType):
 
     @staticmethod
     def score(filename, fileobj, header):
-        return (header.startswith("ID3") + header.startswith("TTA") +
-                filename.lower().endswith(".tta") * 2)
+        return (header.startswith(b"ID3") + header.startswith(b"TTA") +
+                endswith(filename.lower(), b".tta") * 2)
 
 
 Open = TrueAudio

@@ -114,7 +114,7 @@ class OggOpus(OggFileType):
 
     @staticmethod
     def score(filename, fileobj, header):
-        return (header.startswith("OggS") * ("OpusHead" in header))
+        return (header.startswith(b"OggS") * (b"OpusHead" in header))
 
 
 Open = OggOpus

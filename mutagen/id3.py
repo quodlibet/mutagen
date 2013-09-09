@@ -872,7 +872,7 @@ class ID3FileType(mutagen.FileType):
 
     @staticmethod
     def score(filename, fileobj, header):
-        return header.startswith("ID3")
+        return header.startswith(b"ID3")
 
     def add_tags(self, ID3=None):
         """Add an empty ID3 tag to the file.

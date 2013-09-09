@@ -19,6 +19,7 @@ __all__ = ["Musepack", "Open", "delete"]
 
 import struct
 
+from ._compat import endswith
 from mutagen import StreamInfo
 from mutagen.apev2 import APEv2File, error, delete
 from mutagen.id3 import BitPaddedInt
@@ -251,8 +252,8 @@ class Musepack(APEv2File):
 
     @staticmethod
     def score(filename, fileobj, header):
-        return (header.startswith("MP+") + header.startswith("MPCK") +
-                filename.lower().endswith(".mpc"))
+        return (header.startswith(b"MP+") + header.startswith(b"MPCK") +
+                endswith(filename.lower(), b".mpc"))
 
 
 Open = Musepack
