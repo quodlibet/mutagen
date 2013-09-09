@@ -333,7 +333,11 @@ class VolumeAdjustmentSpec(Spec):
         return value/512.0, data[2:]
 
     def write(self, frame, value):
-        return pack('>h', int(round(value * 512)))
+        number = int(round(value * 512))
+        # pack only fails in 2.7, do it manually in 2.6
+        if not -32768 <= number <= 32767:
+            raise struct.error
+        return pack('>h', number)
 
     def validate(self, frame, value):
         if value is not None:
@@ -361,8 +365,12 @@ class VolumePeakSpec(Spec):
         return (float(peak) / (2**31-1)), data[1+bytes:]
 
     def write(self, frame, value):
+        number = int(round(value * 32768))
+        # pack only fails in 2.7, do it manually in 2.6
+        if not 0 <= number <= 65535:
+            raise struct.error
         # always write as 16 bits for sanity.
-        return "\x10" + pack('>H', int(round(value * 32768)))
+        return "\x10" + pack('>H', number)
 
     def validate(self, frame, value):
         if value is not None:
