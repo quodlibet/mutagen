@@ -1,22 +1,33 @@
+import shutil
+import os
+from os.path import devnull
 
-import shutil, os
 from tests import TestCase, add
+
 from mutagen.id3 import ID3, TIT2, ID3NoHeaderError
 from mutagen.flac import to_int_be, Padding, VCFLACDict, MetadataBlock, error
 from mutagen.flac import StreamInfo, SeekTable, CueSheet, FLAC, delete, Picture
 from tests.test__vorbis import TVCommentDict, VComment
-try: from os.path import devnull
-except ImportError: devnull = "/dev/null"
+
 
 class Tto_int_be(TestCase):
 
-    def test_empty(self): self.failUnlessEqual(to_int_be(b""), 0)
-    def test_0(self): self.failUnlessEqual(to_int_be(b"\x00"), 0)
-    def test_1(self): self.failUnlessEqual(to_int_be(b"\x01"), 1)
-    def test_256(self): self.failUnlessEqual(to_int_be(b"\x01\x00"), 256)
+    def test_empty(self):
+        self.failUnlessEqual(to_int_be(b""), 0)
+
+    def test_0(self):
+        self.failUnlessEqual(to_int_be(b"\x00"), 0)
+
+    def test_1(self):
+        self.failUnlessEqual(to_int_be(b"\x01"), 1)
+
+    def test_256(self):
+        self.failUnlessEqual(to_int_be(b"\x01\x00"), 256)
+
     def test_long(self):
         self.failUnlessEqual(to_int_be(b"\x01\x00\x00\x00\x00"), 2**32)
 add(Tto_int_be)
+
 
 class TVCFLACDict(TVCommentDict):
 
@@ -26,10 +37,12 @@ class TVCFLACDict(TVCommentDict):
         self.failUnlessEqual(self.c, VComment(self.c.write() + b"\x01"))
 add(TVCFLACDict)
 
+
 class TMetadataBlock(TestCase):
 
     def test_empty(self):
         self.failUnlessEqual(MetadataBlock(b"").write(), b"")
+
     def test_not_empty(self):
         self.failUnlessEqual(MetadataBlock(b"foobar").write(), b"foobar")
 
@@ -56,6 +69,7 @@ class TMetadataBlock(TestCase):
         self.failUnlessEqual(len(blocks), 2)
 add(TMetadataBlock)
 
+
 class TStreamInfo(TestCase):
 
     data = (b'\x12\x00\x12\x00\x00\x00\x0e\x005\xea\n\xc4H\xf0\x00\xca0'
@@ -73,30 +87,46 @@ class TStreamInfo(TestCase):
         self.failUnlessEqual(self.i.max_blocksize, 4608)
         self.failUnlessEqual(self.i.min_blocksize, 4608)
         self.failUnless(self.i.min_blocksize <= self.i.max_blocksize)
+
     def test_framesize(self):
         self.failUnlessEqual(self.i.min_framesize, 14)
         self.failUnlessEqual(self.i.max_framesize, 13802)
         self.failUnless(self.i.min_framesize <= self.i.max_framesize)
-    def test_sample_rate(self): self.failUnlessEqual(self.i.sample_rate, 44100)
-    def test_channels(self): self.failUnlessEqual(self.i.channels, 5)
-    def test_bps(self): self.failUnlessEqual(self.i.bits_per_sample, 16)
-    def test_length(self): self.failUnlessAlmostEqual(self.i.length, 300.5, 1)
+
+    def test_sample_rate(self):
+        self.failUnlessEqual(self.i.sample_rate, 44100)
+
+    def test_channels(self):
+        self.failUnlessEqual(self.i.channels, 5)
+
+    def test_bps(self):
+        self.failUnlessEqual(self.i.bits_per_sample, 16)
+
+    def test_length(self):
+        self.failUnlessAlmostEqual(self.i.length, 300.5, 1)
+
     def test_total_samples(self):
         self.failUnlessEqual(self.i.total_samples, 13250580)
+
     def test_md5_signature(self):
         self.failUnlessEqual(self.i.md5_signature,
                              int("2890f9e129321301d4a7a9112138ab91", 16))
-    def test_eq(self): self.failUnlessEqual(self.i, self.i)
+
+    def test_eq(self):
+        self.failUnlessEqual(self.i, self.i)
+
     def test_roundtrip(self):
         self.failUnlessEqual(StreamInfo(self.i.write()), self.i)
 add(TStreamInfo)
-        
+
+
 class TSeekTable(TestCase):
     SAMPLE = os.path.join("tests", "data", "silence-44-s.flac")
 
     def setUp(self):
         self.flac = FLAC(self.SAMPLE)
         self.st = self.flac.seektable
+
     def test_seektable(self):
         self.failUnlessEqual(self.st.seekpoints,
                              [(0, 0, 4608),
@@ -105,12 +135,20 @@ class TSeekTable(TestCase):
                               (87552, 25022, 4608),
                               (105984, 30284, 4608),
                               (0xFFFFFFFFFFFFFFFF, 0, 0)])
-    def test_eq(self): self.failUnlessEqual(self.st, self.st)
-    def test_neq(self): self.failIfEqual(self.st, 12)
-    def test_repr(self): repr(self.st)
+
+    def test_eq(self):
+        self.failUnlessEqual(self.st, self.st)
+
+    def test_neq(self):
+        self.failIfEqual(self.st, 12)
+
+    def test_repr(self):
+        repr(self.st)
+
     def test_roundtrip(self):
         self.failUnlessEqual(SeekTable(self.st.write()), self.st)
 add(TSeekTable)
+
 
 class TCueSheet(TestCase):
     SAMPLE = os.path.join("tests", "data", "silence-44-s.flac")
@@ -118,11 +156,13 @@ class TCueSheet(TestCase):
     def setUp(self):
         self.flac = FLAC(self.SAMPLE)
         self.cs = self.flac.cuesheet
+
     def test_cuesheet(self):
         self.failUnlessEqual(self.cs.media_catalog_number, "1234567890123")
         self.failUnlessEqual(self.cs.lead_in_samples, 88200)
         self.failUnlessEqual(self.cs.compact_disc, True)
         self.failUnlessEqual(len(self.cs.tracks), 4)
+
     def test_first_track(self):
         self.failUnlessEqual(self.cs.tracks[0].track_number, 1)
         self.failUnlessEqual(self.cs.tracks[0].start_offset, 0)
@@ -130,6 +170,7 @@ class TCueSheet(TestCase):
         self.failUnlessEqual(self.cs.tracks[0].type, 0)
         self.failUnlessEqual(self.cs.tracks[0].pre_emphasis, False)
         self.failUnlessEqual(self.cs.tracks[0].indexes, [(1, 0)])
+
     def test_second_track(self):
         self.failUnlessEqual(self.cs.tracks[1].track_number, 2)
         self.failUnlessEqual(self.cs.tracks[1].start_offset, 44100)
@@ -138,6 +179,7 @@ class TCueSheet(TestCase):
         self.failUnlessEqual(self.cs.tracks[1].pre_emphasis, True)
         self.failUnlessEqual(self.cs.tracks[1].indexes, [(1, 0),
                                                          (2, 588)])
+
     def test_lead_out(self):
         self.failUnlessEqual(self.cs.tracks[-1].track_number, 170)
         self.failUnlessEqual(self.cs.tracks[-1].start_offset, 162496)
@@ -157,10 +199,13 @@ class TCueSheet(TestCase):
     def test_neq(self):
         self.assertReallyNotEqual(self.cs, 12)
 
-    def test_repr(self): repr(self.cs)
+    def test_repr(self):
+        repr(self.cs)
+
     def test_roundtrip(self):
         self.failUnlessEqual(CueSheet(self.cs.write()), self.cs)
 add(TCueSheet)
+
 
 class TPicture(TestCase):
     SAMPLE = os.path.join("tests", "data", "silence-44-s.flac")
@@ -168,8 +213,10 @@ class TPicture(TestCase):
     def setUp(self):
         self.flac = FLAC(self.SAMPLE)
         self.p = self.flac.pictures[0]
+
     def test_count(self):
         self.failUnlessEqual(len(self.flac.pictures), 1)
+
     def test_picture(self):
         self.failUnlessEqual(self.p.width, 1)
         self.failUnlessEqual(self.p.height, 1)
@@ -179,28 +226,48 @@ class TPicture(TestCase):
         self.failUnlessEqual(self.p.desc, u'A pixel.')
         self.failUnlessEqual(self.p.type, 3)
         self.failUnlessEqual(len(self.p.data), 150)
-    def test_eq(self): self.failUnlessEqual(self.p, self.p)
-    def test_neq(self): self.failIfEqual(self.p, 12)
-    def test_repr(self): repr(self.p)
+
+    def test_eq(self):
+        self.failUnlessEqual(self.p, self.p)
+
+    def test_neq(self):
+        self.failIfEqual(self.p, 12)
+
+    def test_repr(self):
+        repr(self.p)
+
     def test_roundtrip(self):
         self.failUnlessEqual(Picture(self.p.write()), self.p)
 add(TPicture)
 
+
 class TPadding(TestCase):
 
-    def setUp(self): self.b = Padding(b"\x00" * 100)
-    def test_padding(self): self.failUnlessEqual(self.b.write(), b"\x00" * 100)
-    def test_blank(self): self.failIf(Padding().write())
-    def test_empty(self): self.failIf(Padding(b"").write())
-    def test_repr(self): repr(Padding())
+    def setUp(self):
+        self.b = Padding(b"\x00" * 100)
+
+    def test_padding(self):
+        self.failUnlessEqual(self.b.write(), b"\x00" * 100)
+
+    def test_blank(self):
+        self.failIf(Padding().write())
+
+    def test_empty(self):
+        self.failIf(Padding(b"").write())
+
+    def test_repr(self):
+        repr(Padding())
+
     def test_change(self):
         self.b.length = 20
         self.failUnlessEqual(self.b.write(), b"\x00" * 20)
 add(TPadding)
 
+
 class TFLAC(TestCase):
     SAMPLE = os.path.join("tests", "data", "silence-44-s.flac")
     NEW = SAMPLE + ".new"
+
     def setUp(self):
         shutil.copy(self.SAMPLE, self.NEW)
         self.failUnlessEqual(open(self.SAMPLE, "rb").read(),
@@ -304,7 +371,8 @@ class TFLAC(TestCase):
                                                       'ooming-header.flac'))
 
     def test_with_real_flac(self):
-        if not have_flac: return
+        if not have_flac:
+            return
         self.flac["faketag"] = "foobar" * 1000
         self.flac.save()
         badval = os.system("tools/notarealprogram 2> %s" % devnull)
@@ -410,8 +478,8 @@ class TFLAC(TestCase):
 
     def tearDown(self):
         os.unlink(self.NEW)
-
 add(TFLAC)
+
 
 class TFLACFile(TestCase):
 
@@ -422,6 +490,7 @@ class TFLACFile(TestCase):
         self.assertRaises(IOError, FLAC, filename)
 
 add(TFLACFile)
+
 
 class TFLACBadBlockSize(TestCase):
     TOO_SHORT = os.path.join("tests", "data", "52-too-short-block-size.flac")
@@ -444,8 +513,8 @@ class TFLACBadBlockSize(TestCase):
 
     def test_inval_streaminfo(self):
         self.assertRaises(error, FLAC, self.INVAL_INFO)
-
 add(TFLACBadBlockSize)
+
 
 class TFLACBadBlockSizeWrite(TestCase):
     TOO_SHORT = os.path.join("tests", "data", "52-too-short-block-size.flac")
@@ -465,8 +534,9 @@ class TFLACBadBlockSizeWrite(TestCase):
 
     def tearDown(self):
         os.unlink(self.NEW)
-        
+
 add(TFLACBadBlockSizeWrite)
+
 
 class CVE20074619(TestCase):
 
@@ -511,7 +581,7 @@ class CVE20074619(TestCase):
     # malformed FLAC file could cause a heap based corruption scenario
     # when the memory for the Padding length is calculated without
     # proper bounds checks."
-    # 
+
     # We should raise an IOError when trying to write such large
     # blocks, or when reading blocks with an incorrect padding length.
     # Although, I do wonder about the correctness of this
