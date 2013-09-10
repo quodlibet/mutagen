@@ -40,8 +40,8 @@ class TOggVorbis(TOggFileType):
     def test_avg_bitrate(self):
         page = OggPage(open(self.filename, "rb"))
         packet = page.packets[0]
-        packet = (packet[:16] + "\x00\x00\x01\x00" + "\x00\x00\x00\x00" +
-                  "\x00\x00\x00\x00" + packet[28:])
+        packet = (packet[:16] + b"\x00\x00\x01\x00" + b"\x00\x00\x00\x00" +
+                  b"\x00\x00\x00\x00" + packet[28:])
         page.packets[0] = packet
         info = OggVorbisInfo(cBytesIO(page.write()))
         self.failUnlessEqual(info.bitrate, 32768)
@@ -49,8 +49,8 @@ class TOggVorbis(TOggFileType):
     def test_overestimated_bitrate(self):
         page = OggPage(open(self.filename, "rb"))
         packet = page.packets[0]
-        packet = (packet[:16] + "\x00\x00\x01\x00" + "\x00\x00\x00\x01" +
-                  "\x00\x00\x00\x00" + packet[28:])
+        packet = (packet[:16] + b"\x00\x00\x01\x00" + b"\x00\x00\x00\x01" +
+                  b"\x00\x00\x00\x00" + packet[28:])
         page.packets[0] = packet
         info = OggVorbisInfo(cBytesIO(page.write()))
         self.failUnlessEqual(info.bitrate, 65536)
@@ -58,8 +58,8 @@ class TOggVorbis(TOggFileType):
     def test_underestimated_bitrate(self):
         page = OggPage(open(self.filename, "rb"))
         packet = page.packets[0]
-        packet = (packet[:16] + "\x00\x00\x01\x00" + "\x01\x00\x00\x00" +
-                  "\x00\x00\x01\x00" + packet[28:])
+        packet = (packet[:16] + b"\x00\x00\x01\x00" + b"\x01\x00\x00\x00" +
+                  b"\x00\x00\x01\x00" + packet[28:])
         page.packets[0] = packet
         info = OggVorbisInfo(cBytesIO(page.write()))
         self.failUnlessEqual(info.bitrate, 65536)
@@ -67,8 +67,8 @@ class TOggVorbis(TOggFileType):
     def test_negative_bitrate(self):
         page = OggPage(open(self.filename, "rb"))
         packet = page.packets[0]
-        packet = (packet[:16] + "\xff\xff\xff\xff" + "\xff\xff\xff\xff" +
-                  "\xff\xff\xff\xff" + packet[28:])
+        packet = (packet[:16] + b"\xff\xff\xff\xff" + b"\xff\xff\xff\xff" +
+                  b"\xff\xff\xff\xff" + packet[28:])
         page.packets[0] = packet
         info = OggVorbisInfo(cBytesIO(page.write()))
         self.failUnlessEqual(info.bitrate, 0)
