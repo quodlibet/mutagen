@@ -45,7 +45,7 @@ class OggTheoraInfo(StreamInfo):
 
     def __init__(self, fileobj):
         page = OggPage(fileobj)
-        while not page.packets[0].startswith("\x80theora"):
+        while not page.packets[0].startswith(b"\x80theora"):
             page = OggPage(fileobj)
         if not page.first:
             raise OggTheoraHeaderError(
@@ -57,7 +57,7 @@ class OggTheoraInfo(StreamInfo):
                 "found Theora version %d.%d != 3.2" % (vmaj, vmin))
         fps_num, fps_den = struct.unpack(">2I", data[22:30])
         self.fps = fps_num / float(fps_den)
-        self.bitrate = cdata.uint_be("\x00" + data[37:40])
+        self.bitrate = cdata.uint_be(b"\x00" + data[37:40])
         self.granule_shift = (cdata.ushort_be(data[40:42]) >> 5) & 0x1F
         self.serial = page.serial
 
@@ -84,14 +84,14 @@ class OggTheoraCommentDict(VCommentDict):
                 pages.append(page)
                 complete = page.complete or (len(page.packets) > 1)
         data = OggPage.to_packets(pages)[0][7:]
-        super(OggTheoraCommentDict, self).__init__(data + "\x01")
+        super(OggTheoraCommentDict, self).__init__(data + b"\x01")
 
     def _inject(self, fileobj):
         """Write tag data into the Theora comment packet/page."""
 
         fileobj.seek(0)
         page = OggPage(fileobj)
-        while not page.packets[0].startswith("\x81theora"):
+        while not page.packets[0].startswith(b"\x81theora"):
             page = OggPage(fileobj)
 
         old_pages = [page]
@@ -102,7 +102,7 @@ class OggTheoraCommentDict(VCommentDict):
 
         packets = OggPage.to_packets(old_pages, strict=False)
 
-        packets[0] = "\x81theora" + self.write(framing=False)
+        packets[0] = b"\x81theora" + self.write(framing=False)
 
         new_pages = OggPage.from_packets(packets, old_pages[0].sequence)
         OggPage.replace(fileobj, old_pages, new_pages)

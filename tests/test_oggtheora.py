@@ -26,7 +26,7 @@ class TOggTheora(TOggFileType):
     def test_theora_bad_version(self):
         page = OggPage(open(self.filename, "rb"))
         packet = page.packets[0]
-        packet = packet[:7] + "\x03\x00" + packet[9:]
+        packet = packet[:7] + b"\x03\x00" + packet[9:]
         page.packets = [packet]
         fileobj = cBytesIO(page.write())
         self.failUnlessRaises(IOError, OggTheoraInfo, fileobj)
