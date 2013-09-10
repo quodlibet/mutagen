@@ -1,4 +1,4 @@
-# Copyright 2012 Christoph Reiter
+# Copyright 2012, 2013 Christoph Reiter
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -42,7 +42,7 @@ class OggOpusInfo(StreamInfo):
 
     def __init__(self, fileobj):
         page = OggPage(fileobj)
-        while not page.packets[0].startswith("OpusHead"):
+        while not page.packets[0].startswith(b"OpusHead"):
             page = OggPage(fileobj)
 
         self.serial = page.serial
@@ -66,7 +66,7 @@ class OggOpusInfo(StreamInfo):
         self.length = (page.position - self.__pre_skip) / float(48000)
 
     def pprint(self):
-        return "Ogg Opus, %.2f seconds" % (self.length)
+        return u"Ogg Opus, %.2f seconds" % (self.length)
 
 
 class OggOpusVComment(VCommentDict):
@@ -76,7 +76,7 @@ class OggOpusVComment(VCommentDict):
         # find the first tags page with the right serial
         page = OggPage(fileobj)
         while info.serial != page.serial or \
-                not page.packets[0].startswith("OpusTags"):
+                not page.packets[0].startswith(b"OpusTags"):
             page = OggPage(fileobj)
 
         # get all comment pages
@@ -99,7 +99,7 @@ class OggOpusVComment(VCommentDict):
         old_pages = self.__get_comment_pages(fileobj, info)
 
         packets = OggPage.to_packets(old_pages)
-        packets[0] = "OpusTags" + self.write(framing=False)
+        packets[0] = b"OpusTags" + self.write(framing=False)
         new_pages = OggPage.from_packets(packets, old_pages[0].sequence)
         OggPage.replace(fileobj, old_pages, new_pages)
 
