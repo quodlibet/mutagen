@@ -10,6 +10,8 @@ from unittest import TestCase as BaseTestCase
 suites = []
 add = suites.append
 
+from mutagen._compat import cmp
+
 
 class TestCase(BaseTestCase):
 

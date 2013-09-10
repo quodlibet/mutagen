@@ -19,6 +19,9 @@ if PY2:
     integer_types = (int, long)
     text_type = unicode
 
+    xrange = xrange
+    cmp = cmp
+
     def endswith(text, end):
         return text.endswith(end)
 
@@ -35,6 +38,9 @@ elif PY3:
     integer_types = (int,)
     text_type = str
 
+    xrange = range
+    cmp = lambda a, b: (a > b) - (a < b)
+
     def endswith(text, end):
         # usefull for paths which can be both, str and bytes
         if isinstance(text, str):
@@ -48,4 +54,4 @@ elif PY3:
     iteritems = lambda d: iter(d.items())
 
     def reraise(tp, value, tb):
-        raise value.with_traceback(tb)
+        raise tp(value).with_traceback(tb)

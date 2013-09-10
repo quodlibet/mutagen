@@ -1,5 +1,6 @@
 from tests import add, TestCase
 from mutagen._vorbis import VComment, VCommentDict, istag
+from mutagen._compat import text_type, PY3
 
 
 class Tistag(TestCase):
@@ -28,6 +29,13 @@ class Tistag(TestCase):
     def test_ugly(self):
         self.failUnless(istag("!{}[]-_()*&"))
 
+    def test_unicode(self):
+        self.failUnless(istag(u"ti tle"))
+
+    if PY3:
+        def test_py3(self):
+            self.failUnlessRaises(ValueError, istag, b"abc")
+
 add(Tistag)
 
 
@@ -46,14 +54,14 @@ class TVComment(TestCase):
         self.failUnlessEqual(self.c, self.c)
 
     def test_not_header(self):
-        self.failUnlessRaises(IOError, VComment, "foo")
+        self.failUnlessRaises(IOError, VComment, b"foo")
 
     def test_unset_framing_bit(self):
         self.failUnlessRaises(
-            IOError, VComment, "\x00\x00\x00\x00" * 2 + "\x00")
+            IOError, VComment, b"\x00\x00\x00\x00" * 2 + b"\x00")
 
     def test_empty_valid(self):
-        self.failIf(VComment("\x00\x00\x00\x00" * 2 + "\x01"))
+        self.failIf(VComment(b"\x00\x00\x00\x00" * 2 + b"\x01"))
 
     def test_validate(self):
         self.failUnless(self.c.validate())
@@ -64,65 +72,82 @@ class TVComment(TestCase):
         self.failUnlessRaises(ValueError, self.c.write)
 
     def test_validate_broken_value(self):
-        self.c.append(("valid", 1))
+        self.c.append((u"valid", 1))
         self.failUnlessRaises(ValueError, self.c.validate)
         self.failUnlessRaises(ValueError, self.c.write)
 
     def test_validate_nonunicode_value(self):
-        self.c.append(("valid", "wt\xff"))
+        self.c.append(("uvalid", b"wt\xff"))
         self.failUnlessRaises(ValueError, self.c.validate)
         self.failUnlessRaises(ValueError, self.c.write)
 
     def test_vendor_default(self):
-        self.failUnless(self.c.vendor.startswith("Mutagen"))
+        self.failUnless(self.c.vendor.startswith(u"Mutagen"))
 
     def test_vendor_set(self):
-        self.c.vendor = "Not Mutagen"
-        self.failUnless(self.c.write()[4:].startswith("Not Mutagen"))
+        self.c.vendor = u"Not Mutagen"
+        self.failUnless(self.c.write()[4:].startswith(b"Not Mutagen"))
 
     def test_vendor_invalid(self):
-        self.c.vendor = "\xffNot Mutagen"
+        self.c.vendor = b"\xffNot Mutagen"
         self.failUnlessRaises(ValueError, self.c.validate)
         self.failUnlessRaises(ValueError, self.c.write)
 
     def test_invalid_format_strict(self):
-        data = ('\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x03\x00\x00'
-                '\x00abc\x01')
+        data = (b'\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x03\x00\x00'
+                b'\x00abc\x01')
         self.failUnlessRaises(IOError, VComment, data, errors='strict')
 
     def test_invalid_format_replace(self):
-        data = ('\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x03\x00\x00'
-                '\x00abc\x01')
+        data = (b'\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x03\x00\x00'
+                b'\x00abc\x01')
         comment = VComment(data)
-        self.failUnlessEqual("abc", comment[0][1])
+        self.failUnlessEqual(u"abc", comment[0][1])
+
+    def test_python_key_value_type(self):
+        data = (b'\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x03\x00\x00'
+                b'\x00abc\x01')
+        comment = VComment(data)
+        self.assertTrue(isinstance(comment[0][0], type('')))
+        self.assertTrue(isinstance(comment[0][1], text_type))
+
+    if PY3:
+        def test_python3_strict_str(self):
+            comment = VComment()
+            comment.append((u"abc", u"test"))
+            comment.validate()
+            comment[0] = (u"abc", b"test")
+            self.failUnlessRaises(ValueError, comment.validate)
+            comment[0] = (b"abc", u"test")
+            self.failUnlessRaises(ValueError, comment.validate)
 
     def test_invalid_format_ignore(self):
-        data = ('\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x03\x00\x00'
-                '\x00abc\x01')
+        data = (b'\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x03\x00\x00'
+                b'\x00abc\x01')
         comment = VComment(data, errors='ignore')
         self.failIf(len(comment))
 
     # Slightly different test data than above, we want the tag name
     # to be valid UTF-8 but not valid ASCII.
     def test_invalid_tag_strict(self):
-        data = ('\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x04\x00\x00'
-                '\x00\xc2\xaa=c\x01')
+        data = (b'\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x04\x00\x00'
+                b'\x00\xc2\xaa=c\x01')
         self.failUnlessRaises(IOError, VComment, data, errors='strict')
 
     def test_invalid_tag_replace(self):
-        data = ('\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x04\x00\x00'
-                '\x00\xc2\xaa=c\x01')
+        data = (b'\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x04\x00\x00'
+                b'\x00\xc2\xaa=c\x01')
         comment = VComment(data)
-        self.failUnlessEqual("?=c", comment.pprint())
+        self.failUnlessEqual(u"?=c", comment.pprint())
 
     def test_invalid_tag_ignore(self):
-        data = ('\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x04\x00\x00'
-                '\x00\xc2\xaa=c\x01')
+        data = (b'\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x04\x00\x00'
+                b'\x00\xc2\xaa=c\x01')
         comment = VComment(data, errors='ignore')
         self.failIf(len(comment))
 
     def test_roundtrip(self):
-        self.failUnlessEqual(self.c, VComment(self.c.write()))
+        self.assertReallyEqual(self.c, VComment(self.c.write()))
 add(TVComment)
 
 
@@ -207,9 +232,9 @@ class TVCommentDict(TestCase):
 
     def test_empty(self):
         self.c = VCommentDict()
-        self.failIf(self.c.keys())
-        self.failIf(self.c.values())
-        self.failIf(self.c.items())
+        self.failIf(list(self.c.keys()))
+        self.failIf(list(self.c.values()))
+        self.failIf(list(self.c.items()))
 
     def test_as_dict(self):
         d = self.c.as_dict()
@@ -219,11 +244,19 @@ class TVCommentDict(TestCase):
         self.failUnlessEqual(d["title"], self.c["title"])
 
     def test_bad_key(self):
-        self.failUnlessRaises(UnicodeError, self.c.get, u"\u1234")
+        self.failUnlessRaises(ValueError, self.c.get, u"\u1234")
         self.failUnlessRaises(
-            UnicodeError, self.c.__setitem__, u"\u1234", "foo")
+            ValueError, self.c.__setitem__, u"\u1234", "foo")
         self.failUnlessRaises(
-            UnicodeError, self.c.__delitem__, u"\u1234")
+            ValueError, self.c.__delitem__, u"\u1234")
+
+    if PY3:
+        def test_py3_bad_key(self):
+            self.failUnlessRaises(ValueError, self.c.get, b"a")
+            self.failUnlessRaises(
+                ValueError, self.c.__setitem__, b"a", "foo")
+            self.failUnlessRaises(
+                ValueError, self.c.__delitem__, b"a")
 
     def test_duplicate_keys(self):
         self.c = VCommentDict()
