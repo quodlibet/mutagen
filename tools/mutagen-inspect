@@ -24,7 +24,7 @@ def main(argv):
     if not args:
         raise SystemExit(parser.print_help() or 1)
 
-    enc = locale.getpreferredencoding()
+    enc = locale.getpreferredencoding() or "utf-8"
     for filename in args:
         print "--", filename
         try:

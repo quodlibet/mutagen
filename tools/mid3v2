@@ -21,6 +21,10 @@ global verbose
 verbose = True
 
 
+def getpreferredencoding(*args):
+    return locale.getpreferredencoding(*args) or "utf-8"
+
+
 class ID3OptionParser(OptionParser):
     def __init__(self):
         mutagen_version = ".".join(map(str, mutagen.version))
@@ -127,7 +131,7 @@ def delete_frames(deletes, filenames):
 
 
 def write_files(edits, filenames, escape):
-    enc = locale.getpreferredencoding()
+    enc = getpreferredencoding()
 
     # unescape escape sequences and decode values
     encoded_edits = []
@@ -229,7 +233,7 @@ def write_files(edits, filenames, escape):
 
 
 def list_tags(filenames):
-    enc = locale.getpreferredencoding()
+    enc = getpreferredencoding()
     for filename in filenames:
         print "IDv2 tag info for %s:" % filename
         try:
