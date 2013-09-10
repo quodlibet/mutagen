@@ -14,7 +14,7 @@ import struct
 
 from fnmatch import fnmatchcase
 
-from ._compat import chr_
+from ._compat import chr_, text_type
 
 
 class DictMixin(object):
@@ -340,9 +340,9 @@ def delete_bytes(fobj, size, offset, BUFFER_SIZE=2**16):
 def utf8(data):
     """Convert a basestring to a valid UTF-8 str."""
 
-    if isinstance(data, str):
+    if isinstance(data, bytes):
         return data.decode("utf-8", "replace").encode("utf-8")
-    elif isinstance(data, unicode):
+    elif isinstance(data, text_type):
         return data.encode("utf-8")
     else:
         raise TypeError("only unicode/str types can be converted to UTF-8")
@@ -356,3 +356,15 @@ def dict_match(d, key, default=None):
             if fnmatchcase(key, pattern):
                 return value
     return default
+
+
+def total_ordering(cls):
+    assert hasattr(cls, "__eq__")
+    assert hasattr(cls, "__lt__")
+
+    cls.__le__ = lambda self, other: self == other or self < other
+    cls.__gt__ = lambda self, other: not (self == other or self < other)
+    cls.__ge__ = lambda self, other: not self < other
+    cls.__ne__ = lambda self, other: not self.__eq__(other)
+
+    return cls

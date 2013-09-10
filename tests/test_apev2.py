@@ -198,7 +198,7 @@ class TAPEv2(TestCase):
 
     def test_guess_not_utf8(self):
         from mutagen.apev2 import APEBinaryValue
-        self.audio["test"] = "\xa4woo"
+        self.audio["test"] = b"\xa4woo"
         self.failUnless(isinstance(self.audio["test"], APEBinaryValue))
         self.failUnlessEqual(4, len(self.audio["test"]))
 
@@ -227,7 +227,8 @@ class TAPEv2(TestCase):
         self.failUnless("AnArtist" in self.audio.values())
 
         self.failUnlessEqual(
-            self.audio.items(), zip(self.audio.keys(), self.audio.values()))
+            self.audio.items(),
+            list(zip(self.audio.keys(), self.audio.values())))
 
     def test_invalid_keys(self):
         self.failUnlessRaises(KeyError, self.audio.__getitem__, "\x00")

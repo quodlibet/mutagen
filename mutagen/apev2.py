@@ -30,14 +30,18 @@ http://wiki.hydrogenaudio.org/index.php?title=APEv2_specification.
 
 __all__ = ["APEv2", "APEv2File", "Open", "delete"]
 
+import sys
 import struct
 
-from ._compat import cBytesIO
+from ._compat import cBytesIO, PY3, text_type, PY2, reraise
 from mutagen import Metadata, FileType, StreamInfo
-from mutagen._util import DictMixin, cdata, utf8, delete_bytes
+from mutagen._util import DictMixin, cdata, utf8, delete_bytes, total_ordering
 
 
 def is_valid_apev2_key(key):
+    if PY3 and not isinstance(key, text_type):
+        raise TypeError
+
     return (2 <= len(key) <= 255 and min(key) >= ' ' and max(key) <= '~' and
             key not in ["OggS", "TAG", "ID3", "MP+"])
 
@@ -89,9 +93,16 @@ class _APEv2Data(object):
 
     def __init__(self, fileobj):
         self.__find_metadata(fileobj)
-        self.metadata = max(self.header, self.footer)
+
+        if self.header is None:
+            self.metadata = self.footer
+        elif self.footer is None:
+            self.metadata = self.header
+        else:
+            self.metadata = max(self.header, self.footer)
         if self.metadata is None:
             return
+
         self.__fill_missing(fileobj)
         self.__fix_brokenness(fileobj)
         if self.data is not None:
@@ -107,7 +118,7 @@ class _APEv2Data(object):
         except IOError:
             fileobj.seek(0, 2)
             return
-        if fileobj.read(8) == "APETAGEX":
+        if fileobj.read(8) == b"APETAGEX":
             fileobj.seek(-8, 1)
             self.footer = self.metadata = fileobj.tell()
             return
@@ -115,10 +126,10 @@ class _APEv2Data(object):
         # Check for an APEv2 tag followed by an ID3v1 tag at the end.
         try:
             fileobj.seek(-128, 2)
-            if fileobj.read(3) == "TAG":
+            if fileobj.read(3) == b"TAG":
 
                 fileobj.seek(-35, 1)  # "TAG" + header length
-                if fileobj.read(8) == "APETAGEX":
+                if fileobj.read(8) == b"APETAGEX":
                     fileobj.seek(-8, 1)
                     self.footer = fileobj.tell()
                     return
@@ -127,7 +138,7 @@ class _APEv2Data(object):
                 # (http://www.id3.org/lyrics3200.html)
                 # (header length - "APETAGEX") - "LYRICS200"
                 fileobj.seek(15, 1)
-                if fileobj.read(9) == 'LYRICS200':
+                if fileobj.read(9) == b'LYRICS200':
                     fileobj.seek(-15, 1)  # "LYRICS200" + size tag
                     try:
                         offset = int(fileobj.read(6))
@@ -135,7 +146,7 @@ class _APEv2Data(object):
                         raise IOError
 
                     fileobj.seek(-32 - offset - 6, 1)
-                    if fileobj.read(8) == "APETAGEX":
+                    if fileobj.read(8) == b"APETAGEX":
                         fileobj.seek(-8, 1)
                         self.footer = fileobj.tell()
                         return
@@ -145,7 +156,7 @@ class _APEv2Data(object):
 
         # Check for a tag at the start.
         fileobj.seek(0, 0)
-        if fileobj.read(8) == "APETAGEX":
+        if fileobj.read(8) == b"APETAGEX":
             self.is_at_start = True
             self.header = 0
 
@@ -162,7 +173,7 @@ class _APEv2Data(object):
             # offset + the size, which includes the footer.
             self.end = self.data + self.size
             fileobj.seek(self.end - 32, 0)
-            if fileobj.read(8) == "APETAGEX":
+            if fileobj.read(8) == b"APETAGEX":
                 self.footer = self.end - 32
         elif self.footer is not None:
             self.end = self.footer + 32
@@ -194,7 +205,7 @@ class _APEv2Data(object):
             except IOError:
                 break
             else:
-                if fileobj.read(8) == "APETAGEX":
+                if fileobj.read(8) == b"APETAGEX":
                     fileobj.seek(-8, 1)
                     start = fileobj.tell()
                 else:
@@ -223,12 +234,14 @@ class APEv2(DictMixin, Metadata):
 
     def pprint(self):
         """Return tag key=value pairs in a human-readable format."""
+
         items = self.items()
         items.sort()
         return "\n".join(["%s=%s" % (k, v.pprint()) for k, v in items])
 
     def load(self, filename):
         """Load tags from a filename."""
+
         self.filename = filename
         fileobj = open(filename, "rb")
         try:
@@ -259,24 +272,31 @@ class APEv2(DictMixin, Metadata):
             if kind == 3:
                 raise APEBadItemError("value type must be 0, 1, or 2")
             key = value = fileobj.read(1)
-            while key[-1:] != '\x00' and value:
+            while key[-1:] != b'\x00' and value:
                 value = fileobj.read(1)
                 key += value
-            if key[-1:] == "\x00":
+            if key[-1:] == b"\x00":
                 key = key[:-1]
+            if PY3:
+                try:
+                    key = key.decode("ascii")
+                except UnicodeError as err:
+                    reraise(APEBadItemError, err, sys.exc_info()[2])
             value = fileobj.read(size)
             self[key] = APEValue(value, kind)
 
     def __getitem__(self, key):
         if not is_valid_apev2_key(key):
             raise KeyError("%r is not a valid APEv2 key" % key)
-        key = key.encode('ascii')
+        if PY2:
+            key = key.encode('ascii')
         return self.__dict[key.lower()]
 
     def __delitem__(self, key):
         if not is_valid_apev2_key(key):
             raise KeyError("%r is not a valid APEv2 key" % key)
-        key = key.encode('ascii')
+        if PY2:
+            key = key.encode('ascii')
         del(self.__dict[key.lower()])
 
     def __setitem__(self, key, value):
@@ -287,6 +307,9 @@ class APEv2(DictMixin, Metadata):
         treats it as a text value. If you pass in a list, it treats it
         as a list of string/Unicode values.  If you pass in a string
         that is not valid UTF-8, it assumes it is a binary value.
+
+        Python 3: all strings will be assumed to be a text value, even
+        if they are valid utf-8 data.
 
         If you need to force a specific type of value (e.g. binary
         data that also happens to be valid UTF-8, or an external
@@ -299,25 +322,30 @@ class APEv2(DictMixin, Metadata):
 
         if not is_valid_apev2_key(key):
             raise KeyError("%r is not a valid APEv2 key" % key)
-        key = key.encode('ascii')
+
+        if PY2:
+            key = key.encode('ascii')
 
         if not isinstance(value, _APEValue):
             # let's guess at the content if we're not already a value...
-            if isinstance(value, unicode):
+            if isinstance(value, text_type):
                 # unicode? we've got to be text.
                 value = APEValue(utf8(value), TEXT)
             elif isinstance(value, list):
                 # list? text.
-                value = APEValue("\0".join(map(utf8, value)), TEXT)
+                value = APEValue(b"\0".join(map(utf8, value)), TEXT)
             else:
-                try:
-                    value.decode("utf-8")
-                except UnicodeError:
-                    # invalid UTF8 text, probably binary
+                if PY3:
                     value = APEValue(value, BINARY)
                 else:
-                    # valid UTF8, probably text
-                    value = APEValue(value, TEXT)
+                    try:
+                        value.decode("utf-8")
+                    except UnicodeError:
+                        # invalid UTF8 text, probably binary
+                        value = APEValue(value, BINARY)
+                    else:
+                        # valid UTF8, probably text
+                        value = APEValue(value, TEXT)
         self.__casemap[key.lower()] = key
         self.__dict[key.lower()] = value
 
@@ -360,7 +388,7 @@ class APEv2(DictMixin, Metadata):
             # version, tag size, item count, flags
             struct.pack("<4I", 2000, len(tags) + 32, num_tags,
                         HAS_HEADER | IS_HEADER),
-            "\0" * 8)
+            b"\0" * 8)
         fileobj.write(header)
 
         fileobj.write(tags)
@@ -369,7 +397,7 @@ class APEv2(DictMixin, Metadata):
             # version, tag size, item count, flags
             struct.pack("<4I", 2000, len(tags) + 32, num_tags,
                         HAS_HEADER),
-            "\0" * 8)
+            b"\0" * 8)
         fileobj.write(footer)
         fileobj.close()
 
@@ -421,8 +449,9 @@ class _APEValue(object):
     def __len__(self):
         return len(self.value)
 
-    def __str__(self):
-        return self.value
+    if PY2:
+        def __str__(self):
+            return self.value
 
     # Packed format for an item:
     # 4B: Value length
@@ -439,34 +468,43 @@ class _APEValue(object):
         return "%s(%r, %d)" % (type(self).__name__, self.value, self.kind)
 
 
+@total_ordering
 class APETextValue(_APEValue):
     """An APEv2 text value.
 
     Text values are Unicode/UTF-8 strings. They can be accessed like
     strings (with a null seperating the values), or arrays of strings."""
 
-    def __unicode__(self):
-        return unicode(str(self), "utf-8")
+    if PY2:
+        def __unicode__(self):
+            return unicode(str(self), "utf-8")
+    else:
+        def __str__(self):
+            return self.value.decode("utf-8")
 
     def __iter__(self):
         """Iterate over the strings of the value (not the characters)"""
-        return iter(unicode(self).split("\0"))
+
+        return iter(text_type(self).split("\0"))
 
     def __getitem__(self, index):
-        return unicode(self).split("\0")[index]
+        return text_type(self).split("\0")[index]
 
     def __len__(self):
-        return self.value.count("\0") + 1
+        return self.value.count(b"\0") + 1
 
-    def __cmp__(self, other):
-        return cmp(unicode(self), other)
+    def __eq__(self, other):
+        return text_type(self) == other
+
+    def __lt__(self, other):
+        return text_type(self) < other
 
     __hash__ = _APEValue.__hash__
 
     def __setitem__(self, index, value):
         values = list(self)
         values[index] = value.encode("utf-8")
-        self.value = "\0".join(values).encode("utf-8")
+        self.value = b"\0".join(values).encode("utf-8")
 
     def pprint(self):
         return " / ".join(self)
@@ -484,8 +522,9 @@ class APEExtValue(_APEValue):
 
     External values are usually URI or IRI strings.
     """
+
     def pprint(self):
-        return "[External] %s" % unicode(self)
+        return "[External] %s" % text_type(self)
 
 
 class APEv2File(FileType):
