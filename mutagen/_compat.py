@@ -17,6 +17,7 @@ if PY2:
 
     long_ = long
     integer_types = (int, long)
+    string_types = (str, unicode)
     text_type = unicode
 
     xrange = xrange
@@ -37,6 +38,7 @@ elif PY3:
 
     long_ = int
     integer_types = (int,)
+    string_types = (str,)
     text_type = str
 
     xrange = range

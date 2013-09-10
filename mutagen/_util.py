@@ -47,11 +47,13 @@ class DictMixin(object):
     iterkeys = lambda self: iter(self.keys())
 
     def values(self):
-        return map(self.__getitem__, self.keys())
+        return [self[k] for k in self.keys()]
+
     itervalues = lambda self: iter(self.values())
 
     def items(self):
-        return zip(self.keys(), self.values())
+        return list(zip(self.keys(), self.values()))
+
     iteritems = lambda s: iter(s.items())
 
     def clear(self):

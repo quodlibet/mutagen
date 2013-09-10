@@ -25,7 +25,7 @@ import struct
 from ._vorbis import VCommentDict
 import mutagen
 
-from ._compat import cBytesIO, endswith
+from ._compat import cBytesIO, endswith, chr_
 from mutagen._util import insert_bytes
 from mutagen.id3 import BitPaddedInt
 import sys
@@ -48,7 +48,7 @@ class FLACVorbisError(ValueError, error):
 def to_int_be(string):
     """Convert an arbitrarily-long string to a long using big-endian
     byte order."""
-    return reduce(lambda a, b: (a << 8) + ord(b), string, 0)
+    return reduce(lambda a, b: (a << 8) + b, bytearray(string), 0)
 
 
 class StrictFileObject(object):
@@ -90,7 +90,7 @@ class MetadataBlock(object):
         The metadata header should not be included."""
         if data is not None:
             if not isinstance(data, StrictFileObject):
-                if isinstance(data, str):
+                if isinstance(data, bytes):
                     data = cBytesIO(data)
                 elif not hasattr(data, 'read'):
                     raise TypeError(
@@ -111,21 +111,24 @@ class MetadataBlock(object):
         codes = [[block.code, block.write()] for block in blocks]
         codes[-1][0] |= 128
         for code, datum in codes:
-            byte = chr(code)
+            byte = chr_(code)
             if len(datum) > 2**24:
                 raise error("block is too long to write")
             length = struct.pack(">I", len(datum))[-3:]
             data.append(byte + length + datum)
-        return "".join(data)
+        return b"".join(data)
 
     @staticmethod
     def group_padding(blocks):
         """Consolidate FLAC padding metadata blocks.
 
         The overall size of the rendered blocks does not change, so
-        this adds several bytes of padding for each merged block."""
-        paddings = filter(lambda x: isinstance(x, Padding), blocks)
-        map(blocks.remove, paddings)
+        this adds several bytes of padding for each merged block.
+        """
+
+        paddings = [b for b in blocks if isinstance(b, Padding)]
+        for p in paddings:
+            blocks.remove(p)
         # total padding size is the sum of padding sizes plus 4 bytes
         # per removed header.
         size = sum([padding.length for padding in paddings])
@@ -207,11 +210,11 @@ class StreamInfo(MetadataBlock, mutagen.StreamInfo):
         byte = (self.sample_rate & 0xF) << 4
         byte += ((self.channels - 1) & 7) << 1
         byte += ((self.bits_per_sample - 1) >> 4) & 1
-        f.write(chr(byte))
+        f.write(chr_(byte))
         # 4 bits of bps, 4 of sample count
         byte = ((self.bits_per_sample - 1) & 0xF) << 4
         byte += (self.total_samples >> 32) & 0xF
-        f.write(chr(byte))
+        f.write(chr_(byte))
         # last 32 of sample count
         f.write(struct.pack(">I", self.total_samples & 0xFFFFFFFF))
         # MD5 signature
@@ -410,7 +413,7 @@ class CueSheet(MetadataBlock):
 
     code = 5
 
-    media_catalog_number = ''
+    media_catalog_number = b''
     lead_in_samples = 88200
     compact_disc = True
 
@@ -433,7 +436,7 @@ class CueSheet(MetadataBlock):
         header = data.read(self.__CUESHEET_SIZE)
         media_catalog_number, lead_in_samples, flags, num_tracks = \
             struct.unpack(self.__CUESHEET_FORMAT, header)
-        self.media_catalog_number = media_catalog_number.rstrip('\0')
+        self.media_catalog_number = media_catalog_number.rstrip(b'\0')
         self.lead_in_samples = lead_in_samples
         self.compact_disc = bool(flags & 0x80)
         self.tracks = []
@@ -441,7 +444,7 @@ class CueSheet(MetadataBlock):
             track = data.read(self.__CUESHEET_TRACK_SIZE)
             start_offset, track_number, isrc_padded, flags, num_indexes = \
                 struct.unpack(self.__CUESHEET_TRACK_FORMAT, track)
-            isrc = isrc_padded.rstrip('\0')
+            isrc = isrc_padded.rstrip(b'\0')
             type_ = (flags & 0x80) >> 7
             pre_emphasis = bool(flags & 0x40)
             val = CueSheetTrack(
@@ -514,7 +517,7 @@ class Picture(MetadataBlock):
         self.height = 0
         self.depth = 0
         self.colors = 0
-        self.data = ''
+        self.data = b''
         super(Picture, self).__init__(data)
 
     def __eq__(self, other):
@@ -570,7 +573,7 @@ class Padding(MetadataBlock):
 
     code = 1
 
-    def __init__(self, data=""):
+    def __init__(self, data=b""):
         super(Padding, self).__init__(data)
 
     def load(self, data):
@@ -578,7 +581,7 @@ class Padding(MetadataBlock):
 
     def write(self):
         try:
-            return "\x00" * self.length
+            return b"\x00" * self.length
         # On some 64 bit platforms this won't generate a MemoryError
         # or OverflowError since you might have enough RAM, but it
         # still generates a ValueError. On other 64 bit platforms,
@@ -722,13 +725,15 @@ class FLAC(mutagen.FileType):
 
     def clear_pictures(self):
         """Delete all pictures from the file."""
-        self.metadata_blocks = filter(lambda b: b.code != Picture.code,
-                                      self.metadata_blocks)
+
+        blocks = [b for b in self.metadata_blocks if b.code != Picture.code]
+        self.metadata_blocks = blocks
 
     @property
     def pictures(self):
         """List of embedded pictures"""
-        return filter(lambda b: b.code == Picture.code, self.metadata_blocks)
+
+        return [b for b in self.metadata_blocks if b.code == Picture.code]
 
     def save(self, filename=None, deleteid3=False):
         """Save metadata blocks to a file.
@@ -743,7 +748,7 @@ class FLAC(mutagen.FileType):
         try:
             # Ensure we've got padding at the end, and only at the end.
             # If adding makes it too large, we'll scale it down later.
-            self.metadata_blocks.append(Padding('\x00' * 1020))
+            self.metadata_blocks.append(Padding(b'\x00' * 1020))
             MetadataBlock.group_padding(self.metadata_blocks)
 
             header = self.__check_header(f)
@@ -777,7 +782,7 @@ class FLAC(mutagen.FileType):
                 insert_bytes(f, diff, header)
 
             f.seek(header - 4)
-            f.write("fLaC" + data)
+            f.write(b"fLaC" + data)
 
             # Delete ID3v1
             if deleteid3:
@@ -786,7 +791,7 @@ class FLAC(mutagen.FileType):
                 except IOError:
                     pass
                 else:
-                    if f.read(3) == "TAG":
+                    if f.read(3) == b"TAG":
                         f.seek(-128, 2)
                         f.truncate()
         finally:
@@ -813,12 +818,12 @@ class FLAC(mutagen.FileType):
     def __check_header(self, fileobj):
         size = 4
         header = fileobj.read(4)
-        if header != "fLaC":
+        if header != b"fLaC":
             size = None
-            if header[:3] == "ID3":
+            if header[:3] == b"ID3":
                 size = 14 + BitPaddedInt(fileobj.read(6)[2:])
                 fileobj.seek(size - 4)
-                if fileobj.read(4) != "fLaC":
+                if fileobj.read(4) != b"fLaC":
                     size = None
         if size is None:
             raise FLACNoHeaderError(

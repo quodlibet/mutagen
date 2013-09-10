@@ -10,12 +10,12 @@ except ImportError: devnull = "/dev/null"
 
 class Tto_int_be(TestCase):
 
-    def test_empty(self): self.failUnlessEqual(to_int_be(""), 0)
-    def test_0(self): self.failUnlessEqual(to_int_be("\x00"), 0)
-    def test_1(self): self.failUnlessEqual(to_int_be("\x01"), 1)
-    def test_256(self): self.failUnlessEqual(to_int_be("\x01\x00"), 256)
+    def test_empty(self): self.failUnlessEqual(to_int_be(b""), 0)
+    def test_0(self): self.failUnlessEqual(to_int_be(b"\x00"), 0)
+    def test_1(self): self.failUnlessEqual(to_int_be(b"\x01"), 1)
+    def test_256(self): self.failUnlessEqual(to_int_be(b"\x01\x00"), 256)
     def test_long(self):
-        self.failUnlessEqual(to_int_be("\x01\x00\x00\x00\x00"), 2**32)
+        self.failUnlessEqual(to_int_be(b"\x01\x00\x00\x00\x00"), 2**32)
 add(Tto_int_be)
 
 class TVCFLACDict(TVCommentDict):
@@ -23,31 +23,31 @@ class TVCFLACDict(TVCommentDict):
     Kind = VCFLACDict
 
     def test_roundtrip_vc(self):
-        self.failUnlessEqual(self.c, VComment(self.c.write() + "\x01"))
+        self.failUnlessEqual(self.c, VComment(self.c.write() + b"\x01"))
 add(TVCFLACDict)
 
 class TMetadataBlock(TestCase):
 
     def test_empty(self):
-        self.failUnlessEqual(MetadataBlock("").write(), "")
+        self.failUnlessEqual(MetadataBlock(b"").write(), b"")
     def test_not_empty(self):
-        self.failUnlessEqual(MetadataBlock("foobar").write(), "foobar")
+        self.failUnlessEqual(MetadataBlock(b"foobar").write(), b"foobar")
 
     def test_change(self):
-        b = MetadataBlock("foobar")
-        b.data = "quux"
-        self.failUnlessEqual(b.write(), "quux")
+        b = MetadataBlock(b"foobar")
+        b.data = b"quux"
+        self.failUnlessEqual(b.write(), b"quux")
 
     def test_writeblocks(self):
-        blocks = [Padding("\x00" * 20), Padding("\x00" * 30)]
+        blocks = [Padding(b"\x00" * 20), Padding(b"\x00" * 30)]
         self.failUnlessEqual(len(MetadataBlock.writeblocks(blocks)), 58)
 
     def test_ctr_garbage(self):
         self.failUnlessRaises(TypeError, StreamInfo, 12)
 
     def test_group_padding(self):
-        blocks = [Padding("\x00" * 20), Padding("\x00" * 30),
-                  MetadataBlock("foobar")]
+        blocks = [Padding(b"\x00" * 20), Padding(b"\x00" * 30),
+                  MetadataBlock(b"foobar")]
         blocks[-1].code = 0
         length1 = len(MetadataBlock.writeblocks(blocks))
         MetadataBlock.group_padding(blocks)
@@ -58,9 +58,9 @@ add(TMetadataBlock)
 
 class TStreamInfo(TestCase):
 
-    data = ('\x12\x00\x12\x00\x00\x00\x0e\x005\xea\n\xc4H\xf0\x00\xca0'
-            '\x14(\x90\xf9\xe1)2\x13\x01\xd4\xa7\xa9\x11!8\xab\x91')
-    data_invalid = len(data) * '\x00'
+    data = (b'\x12\x00\x12\x00\x00\x00\x0e\x005\xea\n\xc4H\xf0\x00\xca0'
+            b'\x14(\x90\xf9\xe1)2\x13\x01\xd4\xa7\xa9\x11!8\xab\x91')
+    data_invalid = len(data) * b'\x00'
 
     def setUp(self):
         self.i = StreamInfo(self.data)
@@ -188,14 +188,14 @@ add(TPicture)
 
 class TPadding(TestCase):
 
-    def setUp(self): self.b = Padding("\x00" * 100)
-    def test_padding(self): self.failUnlessEqual(self.b.write(), "\x00" * 100)
+    def setUp(self): self.b = Padding(b"\x00" * 100)
+    def test_padding(self): self.failUnlessEqual(self.b.write(), b"\x00" * 100)
     def test_blank(self): self.failIf(Padding().write())
-    def test_empty(self): self.failIf(Padding("").write())
+    def test_empty(self): self.failIf(Padding(b"").write())
     def test_repr(self): repr(Padding())
     def test_change(self):
         self.b.length = 20
-        self.failUnlessEqual(self.b.write(), "\x00" * 20)
+        self.failUnlessEqual(self.b.write(), b"\x00" * 20)
 add(TPadding)
 
 class TFLAC(TestCase):
@@ -203,7 +203,8 @@ class TFLAC(TestCase):
     NEW = SAMPLE + ".new"
     def setUp(self):
         shutil.copy(self.SAMPLE, self.NEW)
-        self.failUnlessEqual(open(self.SAMPLE).read(), open(self.NEW).read())
+        self.failUnlessEqual(open(self.SAMPLE, "rb").read(),
+                             open(self.NEW, "rb").read())
         self.flac = FLAC(self.NEW)
 
     def test_delete(self):
@@ -236,7 +237,8 @@ class TFLAC(TestCase):
     def test_write_nochange(self):
         f = FLAC(self.NEW)
         f.save()
-        self.failUnlessEqual(open(self.SAMPLE).read(), open(self.NEW).read())
+        self.failUnlessEqual(open(self.SAMPLE, "rb").read(),
+                             open(self.NEW, "rb").read())
 
     def test_write_changetitle(self):
         f = FLAC(self.NEW)
@@ -310,7 +312,7 @@ class TFLAC(TestCase):
         self.failIf(value and value != badval)
 
     def test_save_unknown_block(self):
-        block = MetadataBlock("test block data")
+        block = MetadataBlock(b"test block data")
         block.code = 99
         self.flac.metadata_blocks.append(block)
         self.flac.save()
@@ -320,7 +322,7 @@ class TFLAC(TestCase):
         flac = FLAC(self.NEW)
         self.failUnlessEqual(len(flac.metadata_blocks), 7)
         self.failUnlessEqual(flac.metadata_blocks[5].code, 99)
-        self.failUnlessEqual(flac.metadata_blocks[5].data, "test block data")
+        self.failUnlessEqual(flac.metadata_blocks[5].data, b"test block data")
 
     def test_two_vorbis_blocks(self):
         self.flac.metadata_blocks.append(self.flac.metadata_blocks[1])
@@ -459,7 +461,7 @@ class TFLACBadBlockSizeWrite(TestCase):
         flac2 = FLAC(self.NEW)
         self.failUnlessEqual(flac["title"], flac2["title"])
         data = open(self.NEW, "rb").read(1024)
-        self.failIf("Tunng" in data)
+        self.failIf(b"Tunng" in data)
 
     def tearDown(self):
         os.unlink(self.NEW)
