@@ -17,9 +17,9 @@ class TOggPage(TestCase):
         self.page = OggPage(self.fileobj)
 
         pages = [OggPage(), OggPage(), OggPage()]
-        pages[0].packets = ["foo"]
-        pages[1].packets = ["bar"]
-        pages[2].packets = ["baz"]
+        pages[0].packets = [b"foo"]
+        pages[1].packets = [b"bar"]
+        pages[2].packets = [b"baz"]
         for i in range(len(pages)):
             pages[i].sequence = i
         for page in pages:
@@ -67,19 +67,19 @@ class TOggPage(TestCase):
         self.failUnless(page.last)
 
     def test_crappy_fragmentation(self):
-        packets = ["1" * 511, "2" * 511, "3" * 511]
+        packets = [b"1" * 511, b"2" * 511, b"3" * 511]
         pages = OggPage.from_packets(packets, default_size=510, wiggle_room=0)
         self.failUnless(len(pages) > 3)
         self.failUnlessEqual(OggPage.to_packets(pages), packets)
 
     def test_wiggle_room(self):
-        packets = ["1" * 511, "2" * 511, "3" * 511]
+        packets = [b"1" * 511, b"2" * 511, b"3" * 511]
         pages = OggPage.from_packets(packets, default_size=510, wiggle_room=100)
         self.failUnlessEqual(len(pages), 3)
         self.failUnlessEqual(OggPage.to_packets(pages), packets)
 
     def test_one_packet_per_wiggle(self):
-        packets = ["1" * 511, "2" * 511, "3" * 511]
+        packets = [b"1" * 511, b"2" * 511, b"3" * 511]
         pages = OggPage.from_packets(
             packets, default_size=1000, wiggle_room=1000000)
         self.failUnlessEqual(len(pages), 2)
@@ -107,7 +107,7 @@ class TOggPage(TestCase):
         fileobj = BytesIO()
         for page in self.pages:
             fileobj.write(page.write())
-        fileobj.write("left over data")
+        fileobj.write(b"left over data")
         fileobj.seek(0)
         # Trying to rewrite should raise an error...
         self.failUnlessRaises(Exception, OggPage.renumber, fileobj, 1, 10)
@@ -116,7 +116,7 @@ class TOggPage(TestCase):
         pages = [OggPage(fileobj) for i in range(3)]
         self.failUnlessEqual([page.sequence for page in pages], [10, 11, 12])
         # And the garbage that caused the error should be okay too.
-        self.failUnlessEqual(fileobj.read(), "left over data")
+        self.failUnlessEqual(fileobj.read(), b"left over data")
 
     def test_renumber_reread(self):
         try:
@@ -141,22 +141,23 @@ class TOggPage(TestCase):
             page.sequence = seq
         pages[1].serial = 2
         pages[1].sequence = 100
-        data = BytesIO("".join([page.write() for page in pages]))
+        data = BytesIO(b"".join([page.write() for page in pages]))
         OggPage.renumber(data, 0, 20)
         data.seek(0)
         pages = [OggPage(data) for i in range(10)]
         self.failUnlessEqual(pages[1].serial, 2)
         self.failUnlessEqual(pages[1].sequence, 100)
         pages.pop(1)
-        self.failUnlessEqual([page.sequence for page in pages], range(20, 29))
+        self.failUnlessEqual(
+            [page.sequence for page in pages], list(range(20, 29)))
 
     def test_to_packets(self):
         self.failUnlessEqual(
-            ["foo", "bar", "baz"], OggPage.to_packets(self.pages))
+            [b"foo", b"bar", b"baz"], OggPage.to_packets(self.pages))
         self.pages[0].complete = False
         self.pages[1].continued = True
         self.failUnlessEqual(
-            ["foobar", "baz"], OggPage.to_packets(self.pages))
+            [b"foobar", b"baz"], OggPage.to_packets(self.pages))
 
     def test_to_packets_mixed_stream(self):
         self.pages[0].serial = 3
@@ -169,7 +170,7 @@ class TOggPage(TestCase):
     def test_to_packets_continued(self):
         self.pages[0].continued = True
         self.failUnlessEqual(
-            OggPage.to_packets(self.pages), ["foo", "bar", "baz"])
+            OggPage.to_packets(self.pages), [b"foo", b"bar", b"baz"])
 
     def test_to_packets_continued_strict(self):
         self.pages[0].continued = True
@@ -183,12 +184,12 @@ class TOggPage(TestCase):
             ValueError, OggPage.to_packets, self.pages, strict=True)
 
     def test_from_packets_short_enough(self):
-        packets = ["1" * 200, "2" * 200, "3" * 200]
+        packets = [b"1" * 200, b"2" * 200, b"3" * 200]
         pages = OggPage.from_packets(packets)
         self.failUnlessEqual(OggPage.to_packets(pages), packets)
 
     def test_from_packets_position(self):
-        packets = ["1" * 100000]
+        packets = [b"1" * 100000]
         pages = OggPage.from_packets(packets)
         self.failUnless(len(pages) > 1)
         for page in pages[:-1]:
@@ -196,7 +197,7 @@ class TOggPage(TestCase):
         self.failUnlessEqual(0, pages[-1].position)
 
     def test_from_packets_long(self):
-        packets = ["1" * 100000, "2" * 100000, "3" * 100000]
+        packets = [b"1" * 100000, b"2" * 100000, b"3" * 100000]
         pages = OggPage.from_packets(packets)
         self.failIf(pages[0].complete)
         self.failUnless(pages[1].continued)
@@ -211,57 +212,57 @@ class TOggPage(TestCase):
             num_packets = random.randrange(2, 100)
             lengths = [random.randrange(10, 10000)
                        for i in range(num_packets)]
-            packets = map(random_file.read, lengths)
+            packets = list(map(random_file.read, lengths))
             self.failUnlessEqual(
                 packets, OggPage.to_packets(OggPage.from_packets(packets)))
 
     def test_packet_exactly_255(self):
         page = OggPage()
-        page.packets = ["1" * 255]
+        page.packets = [b"1" * 255]
         page.complete = False
         page2 = OggPage()
-        page2.packets = [""]
+        page2.packets = [b""]
         page2.sequence = 1
         page2.continued = True
         self.failUnlessEqual(
-            ["1" * 255], OggPage.to_packets([page, page2]))
+            [b"1" * 255], OggPage.to_packets([page, page2]))
 
     def test_page_max_size_alone_too_big(self):
         page = OggPage()
-        page.packets = ["1" * 255 * 255]
+        page.packets = [b"1" * 255 * 255]
         page.complete = True
         self.failUnlessRaises(ValueError, page.write)
 
     def test_page_max_size(self):
         page = OggPage()
-        page.packets = ["1" * 255 * 255]
+        page.packets = [b"1" * 255 * 255]
         page.complete = False
         page2 = OggPage()
-        page2.packets = [""]
+        page2.packets = [b""]
         page2.sequence = 1
         page2.continued = True
         self.failUnlessEqual(
-            ["1" * 255 * 255], OggPage.to_packets([page, page2]))
+            [b"1" * 255 * 255], OggPage.to_packets([page, page2]))
 
     def test_complete_zero_length(self):
-        packets = [""] * 20
+        packets = [b""] * 20
         page = OggPage.from_packets(packets)[0]
         new_page = OggPage(BytesIO(page.write()))
         self.failUnlessEqual(new_page, page)
         self.failUnlessEqual(OggPage.to_packets([new_page]), packets)
 
     def test_too_many_packets(self):
-        packets = ["1"] * 3000
+        packets = [b"1"] * 3000
         pages = OggPage.from_packets(packets)
         map(OggPage.write, pages)
         self.failUnless(len(pages) > 3000/255)
 
     def test_read_max_size(self):
         page = OggPage()
-        page.packets = ["1" * 255 * 255]
+        page.packets = [b"1" * 255 * 255]
         page.complete = False
         page2 = OggPage()
-        page2.packets = ["", "foo"]
+        page2.packets = [b"", b"foo"]
         page2.sequence = 1
         page2.continued = True
         data = page.write() + page2.write()
@@ -277,11 +278,11 @@ class TOggPage(TestCase):
         self.failUnlessRaises(OggError, OggPage, BytesIO(page.write()))
 
     def test_not_enough_lacing(self):
-        data = OggPage().write()[:-1] + "\x10"
+        data = OggPage().write()[:-1] + b"\x10"
         self.failUnlessRaises(OggError, OggPage, BytesIO(data))
 
     def test_not_enough_data(self):
-        data = OggPage().write()[:-1] + "\x01\x10"
+        data = OggPage().write()[:-1] + b"\x01\x10"
         self.failUnlessRaises(OggError, OggPage, BytesIO(data))
 
     def test_not_equal(self):
@@ -290,7 +291,7 @@ class TOggPage(TestCase):
     def test_find_last(self):
         pages = [OggPage() for i in range(10)]
         for i, page in enumerate(pages): page.sequence = i
-        data = BytesIO("".join([page.write() for page in pages]))
+        data = BytesIO(b"".join([page.write() for page in pages]))
         self.failUnlessEqual(
             OggPage.find_last(data, pages[0].serial), pages[-1])
 
@@ -298,7 +299,7 @@ class TOggPage(TestCase):
         pages = [OggPage() for i in range(10)]
         pages[-1].last = True
         for i, page in enumerate(pages): page.sequence = i
-        data = BytesIO("".join([page.write() for page in pages]))
+        data = BytesIO(b"".join([page.write() for page in pages]))
         self.failUnlessEqual(
             OggPage.find_last(data, pages[0].serial), pages[-1])
 
@@ -307,18 +308,18 @@ class TOggPage(TestCase):
         for i, page in enumerate(pages): page.sequence = i
         pages[-2].last = True
         pages[-1].serial = pages[0].serial + 1
-        data = BytesIO("".join([page.write() for page in pages]))
+        data = BytesIO(b"".join([page.write() for page in pages]))
         self.failUnlessEqual(
             OggPage.find_last(data, pages[0].serial), pages[-2])
 
     def test_find_last_no_serial(self):
         pages = [OggPage() for i in range(10)]
         for i, page in enumerate(pages): page.sequence = i
-        data = BytesIO("".join([page.write() for page in pages]))
+        data = BytesIO(b"".join([page.write() for page in pages]))
         self.failUnless(OggPage.find_last(data, pages[0].serial + 1) is None)
 
     def test_find_last_invalid(self):
-        data = BytesIO("if you think this is an Ogg, you're crazy")
+        data = BytesIO(b"if you think this is an Ogg, you're crazy")
         self.failUnlessRaises(OggError, OggPage.find_last, data, 0)
 
     # Disabled because GStreamer will write Oggs with bad data,
@@ -329,7 +330,7 @@ class TOggPage(TestCase):
     #    self.failUnlessRaises(OggError, OggPage.find_last, data, 0)
 
     def test_find_last_invalid_sync(self):
-        data = BytesIO("if you think this is an OggS, you're crazy")
+        data = BytesIO(b"if you think this is an OggS, you're crazy")
         page = OggPage.find_last(data, 0)
         self.failIf(page)
 
@@ -348,7 +349,7 @@ class TOggPage(TestCase):
 
         try:
             page = OggPage()
-            page.packets = ["abc"]
+            page.packets = [b"abc"]
             zlib.crc32 = zlib_uint
             uint_data = page.write()
             zlib.crc32 = zlib_int

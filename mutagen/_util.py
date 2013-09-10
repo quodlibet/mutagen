@@ -14,6 +14,8 @@ import struct
 
 from fnmatch import fnmatchcase
 
+from ._compat import chr_
+
 
 class DictMixin(object):
     """Implement the dict API using keys() and __*item__ methods.
@@ -174,8 +176,9 @@ class cdata(object):
     to_longlong_be = staticmethod(lambda data: struct.pack('>q', data))
     to_ulonglong_be = staticmethod(lambda data: struct.pack('>Q', data))
 
-    bitswap = ''.join([chr(sum([((val >> i) & 1) << (7-i) for i in range(8)]))
-                       for val in range(256)])
+    bitswap = b''.join([chr_(sum([((val >> i) & 1) << (7-i)
+                        for i in range(8)]))
+                        for val in range(256)])
 
     try:
         del(i)

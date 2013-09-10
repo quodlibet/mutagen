@@ -21,6 +21,7 @@ if PY2:
 
     xrange = xrange
     cmp = cmp
+    chr_ = chr
 
     def endswith(text, end):
         return text.endswith(end)
@@ -40,6 +41,7 @@ elif PY3:
 
     xrange = range
     cmp = lambda a, b: (a > b) - (a < b)
+    chr_ = lambda x: bytes([x])
 
     def endswith(text, end):
         # usefull for paths which can be both, str and bytes
