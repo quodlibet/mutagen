@@ -1,18 +1,35 @@
 from tests import add, TestCase
 from mutagen._vorbis import VComment, VCommentDict, istag
 
+
 class Tistag(TestCase):
 
-    def test_empty(self): self.failIf(istag(""))
-    def test_tilde(self): self.failIf(istag("ti~tle"))
-    def test_equals(self): self.failIf(istag("ti=tle"))
-    def test_less(self): self.failIf(istag("ti\x19tle"))
-    def test_greater(self): self.failIf(istag("ti\xa0tle"))
+    def test_empty(self):
+        self.failIf(istag(""))
 
-    def test_simple(self): self.failUnless(istag("title"))
-    def test_space(self): self.failUnless(istag("ti tle"))
-    def test_ugly(self): self.failUnless(istag("!{}[]-_()*&"))
+    def test_tilde(self):
+        self.failIf(istag("ti~tle"))
+
+    def test_equals(self):
+        self.failIf(istag("ti=tle"))
+
+    def test_less(self):
+        self.failIf(istag("ti\x19tle"))
+
+    def test_greater(self):
+        self.failIf(istag("ti\xa0tle"))
+
+    def test_simple(self):
+        self.failUnless(istag("title"))
+
+    def test_space(self):
+        self.failUnless(istag("ti tle"))
+
+    def test_ugly(self):
+        self.failUnless(istag("!{}[]-_()*&"))
+
 add(Tistag)
+
 
 class TVComment(TestCase):
 
@@ -107,6 +124,7 @@ class TVComment(TestCase):
     def test_roundtrip(self):
         self.failUnlessEqual(self.c, VComment(self.c.write()))
 add(TVComment)
+
 
 class TVCommentDict(TestCase):
 
