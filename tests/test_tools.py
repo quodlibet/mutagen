@@ -1,5 +1,6 @@
 import os
 import sys
+import imp
 
 from mutagen._compat import StringIO
 
@@ -8,9 +9,8 @@ from tests import TestCase
 
 def get_var(tool_name, entry="main"):
     tool_path = os.path.join("tools", tool_name)
-    env = {}
-    execfile(tool_path, env)
-    return env[entry]
+    mod = imp.load_source(tool_name, tool_path)
+    return getattr(mod, entry)
 
 
 class _TTools(TestCase):

@@ -56,7 +56,7 @@ def update(options, filenames):
 
     for filename in filenames:
         if verbose != "quiet":
-            print "Updating", filename
+            print("Updating", filename)
 
         if has_id3v1(filename) and not noupdate and force_v1:
             mutagen.id3.delete(filename, False, True)
@@ -65,9 +65,9 @@ def update(options, filenames):
             id3 = mutagen.id3.ID3(filename)
         except mutagen.id3.ID3NoHeaderError:
             if verbose != "quiet":
-                print "No ID3 header found; skipping..."
+                print("No ID3 header found; skipping...")
             continue
-        except Exception, err:
+        except Exception as err:
             print >>sys.stderr, str(err)
             continue
 
@@ -93,7 +93,7 @@ def update(options, filenames):
 
         enc = getpreferredencoding()
         if verbose == "debug":
-            print id3.pprint().encode(enc, "replace")
+            print(id3.pprint().encode(enc, "replace"))
 
         if not noupdate:
             if remove_v1:

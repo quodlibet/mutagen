@@ -26,15 +26,15 @@ def main(argv):
 
     enc = locale.getpreferredencoding() or "utf-8"
     for filename in args:
-        print "--", filename
+        print("--", filename)
         try:
-            print "- " + File(filename).pprint().encode(enc, 'replace')
+            print("- " + File(filename).pprint().encode(enc, 'replace'))
         except AttributeError:
-            print "- Unknown file type"
+            print("- Unknown file type")
         except KeyboardInterrupt:
             raise
-        except Exception, err:
-            print str(err)
+        except Exception as err:
+            print(str(err))
         print
 
 

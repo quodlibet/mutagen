@@ -108,7 +108,8 @@ def unit(run=[], quick=False):
     import mmap
 
     runner = Runner()
-    failures = False
+    failures = 0
+    count = 0
     tests = [t for t in suites if not run or t.__name__ in run]
 
     # normal run, trace mmap calls
@@ -121,15 +122,16 @@ def unit(run=[], quick=False):
                 uses_mmap.append(test)
             return orig_mmap(*args, **kwargs)
         mmap.mmap = new_mmap
-        failures |= runner.run(test)
+        failures += runner.run(test)
     mmap.mmap = orig_mmap
+    count += len(tests)
 
     # make sure the above works
     if not run:
         assert len(uses_mmap) > 1
 
     if quick:
-        return failures
+        return count, failures
 
     # run mmap using tests with mocked lockf
     try:
@@ -143,8 +145,9 @@ def unit(run=[], quick=False):
         fcntl.lockf = MockLockF
         print("Running tests with mocked failing fcntl.lockf.")
         for test in uses_mmap:
-            failures |= runner.run(test)
+            failures += runner.run(test)
         fcntl.lockf = lockf
+        count += len(uses_mmap)
 
     # failing mmap.move
     class MockMMap(object):
@@ -160,7 +163,8 @@ def unit(run=[], quick=False):
     print("Running tests with mocked failing mmap.move.")
     mmap.mmap = MockMMap
     for test in uses_mmap:
-        failures |= runner.run(test)
+        failures += runner.run(test)
+    count += len(uses_mmap)
 
     # failing mmap.mmap
     def MockMMap2(*args, **kwargs):
@@ -169,6 +173,7 @@ def unit(run=[], quick=False):
     mmap.mmap = MockMMap2
     print("Running tests with mocked failing mmap.mmap.")
     for test in uses_mmap:
-        failures |= runner.run(test)
+        failures += runner.run(test)
+    count += len(uses_mmap)
 
-    return failures
+    return count, failures

@@ -155,11 +155,11 @@ class BitPaddedInt(int, _BitPaddedMixin):
                 numeric_value += (value & mask) << shift
                 value >>= 8
                 shift += bits
-        elif isinstance(value, str):
+        elif isinstance(value, bytes):
             if bigendian:
                 value = reversed(value)
-            for byte in value:
-                numeric_value += (ord(byte) & mask) << shift
+            for byte in bytearray(value):
+                numeric_value += (byte & mask) << shift
                 shift += bits
         else:
             raise TypeError

@@ -108,7 +108,7 @@ class MPEGInfo(StreamInfo):
             except struct.error:
                 id3, insize = '', 0
             insize = BitPaddedInt(insize)
-            if id3 == 'ID3' and insize > 0:
+            if id3 == b'ID3' and insize > 0:
                 offset = insize + 10
             else:
                 offset = 0
@@ -140,11 +140,11 @@ class MPEGInfo(StreamInfo):
         # is assuming the offset didn't lie.
         data = fileobj.read(32768)
 
-        frame_1 = data.find("\xff")
+        frame_1 = data.find(b"\xff")
         while 0 <= frame_1 <= len(data) - 4:
             frame_data = struct.unpack(">I", data[frame_1:frame_1 + 4])[0]
             if (frame_data >> 16) & 0xE0 != 0xE0:
-                frame_1 = data.find("\xff", frame_1 + 2)
+                frame_1 = data.find(b"\xff", frame_1 + 2)
             else:
                 version = (frame_data >> 19) & 0x3
                 layer = (frame_data >> 17) & 0x3
@@ -160,7 +160,7 @@ class MPEGInfo(StreamInfo):
                 #emphasis = (frame_data >> 0) & 0x3
                 if (version == 1 or layer == 0 or sample_rate == 0x3 or
                         bitrate == 0 or bitrate == 0xF):
-                    frame_1 = data.find("\xff", frame_1 + 2)
+                    frame_1 = data.find(b"\xff", frame_1 + 2)
                 else:
                     break
         else:
@@ -188,7 +188,7 @@ class MPEGInfo(StreamInfo):
             frame_size = 1152
 
         if check_second:
-            possible = frame_1 + frame_length
+            possible = int(frame_1 + frame_length)
             if possible > len(data) + 4:
                 raise HeaderNotFoundError("can't sync to second MPEG frame")
             try:
@@ -206,12 +206,12 @@ class MPEGInfo(StreamInfo):
         fileobj.seek(offset, 0)
         data = fileobj.read(32768)
         try:
-            xing = data[:-4].index("Xing")
+            xing = data[:-4].index(b"Xing")
         except ValueError:
             # Try to find/parse the VBRI header, which trumps the above length
             # calculation.
             try:
-                vbri = data[:-24].index("VBRI")
+                vbri = data[:-24].index(b"VBRI")
             except ValueError:
                 pass
             else:

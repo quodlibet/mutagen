@@ -88,7 +88,7 @@ def list_frames(option, opt, value, parser):
     items = mutagen.id3.Frames.items()
     items.sort()
     for name, frame in items:
-        print "    --%s    %s" % (name, frame.__doc__.split("\n")[0])
+        print("    --%s    %s" % (name, frame.__doc__.split("\n")[0]))
     raise SystemExit
 
 
@@ -96,20 +96,20 @@ def list_frames_2_2(option, opt, value, parser):
     items = mutagen.id3.Frames_2_2.items()
     items.sort()
     for name, frame in items:
-        print "    --%s    %s" % (name, frame.__doc__.split("\n")[0])
+        print("    --%s    %s" % (name, frame.__doc__.split("\n")[0]))
     raise SystemExit
 
 
 def list_genres(option, opt, value, parser):
     for i, genre in enumerate(mutagen.id3.TCON.GENRES):
-        print "%3d: %s" % (i, genre)
+        print("%3d: %s" % (i, genre))
     raise SystemExit
 
 
 def delete_tags(filenames, v1, v2):
     for filename in filenames:
         if verbose:
-            print "deleting ID3 tag info in %s" % filename
+            print("deleting ID3 tag info in %s" % filename)
         mutagen.id3.delete(filename, v1, v2)
 
 
@@ -117,14 +117,14 @@ def delete_frames(deletes, filenames):
     frames = deletes.split(",")
     for filename in filenames:
         if verbose:
-            print "deleting %s from %s" % (deletes, filename)
+            print("deleting %s from %s" % (deletes, filename))
         try:
             id3 = mutagen.id3.ID3(filename)
         except mutagen.id3.ID3NoHeaderError:
             if verbose:
-                print "No ID3 header found; skipping."
-        except StandardError, err:
-            print str(err)
+                print("No ID3 header found; skipping.")
+        except StandardError as err:
+            print(str(err))
         else:
             map(id3.delall, frames)
             id3.save()
@@ -144,13 +144,13 @@ def write_files(edits, filenames, escape):
             try:
                 value = unescape_string(value)
             except ValueError as err:
-                print "%s: %s" % (frame, str(err))
+                print("%s: %s" % (frame, str(err)))
                 raise SystemExit(1)
 
         try:
             value = value.decode(enc)
         except UnicodeDecodeError as err:
-            print "%s: %s" % (frame, str(err))
+            print("%s: %s" % (frame, str(err)))
             raise SystemExit(1)
 
         encoded_edits.append((frame, value))
@@ -176,15 +176,15 @@ def write_files(edits, filenames, escape):
 
     for filename in filenames:
         if verbose:
-            print "Writing", filename
+            print("Writing", filename)
         try:
             id3 = mutagen.id3.ID3(filename)
         except mutagen.id3.ID3NoHeaderError:
             if verbose:
-                print "No ID3 header found; creating a new tag"
+                print("No ID3 header found; creating a new tag")
             id3 = mutagen.id3.ID3()
-        except StandardError, err:
-            print str(err)
+        except StandardError as err:
+            print(str(err))
             continue
         for (frame, vlist) in edits.items():
             if frame == "POPM":
@@ -235,25 +235,25 @@ def write_files(edits, filenames, escape):
 def list_tags(filenames):
     enc = getpreferredencoding()
     for filename in filenames:
-        print "IDv2 tag info for %s:" % filename
+        print("IDv2 tag info for %s:" % filename)
         try:
             id3 = mutagen.id3.ID3(filename, translate=False)
-        except StandardError, err:
-            print str(err)
+        except StandardError as err:
+            print(str(err))
         else:
-            print id3.pprint().encode(enc, "replace")
+            print(id3.pprint().encode(enc, "replace"))
 
 
 def list_tags_raw(filenames):
     for filename in filenames:
-        print "Raw IDv2 tag info for %s:" % filename
+        print("Raw IDv2 tag info for %s:" % filename)
         try:
             id3 = mutagen.id3.ID3(filename, translate=False)
-        except StandardError, err:
-            print str(err)
+        except StandardError as err:
+            print(str(err))
         else:
             for frame in id3.values():
-                print repr(frame)
+                print(repr(frame))
 
 
 def main(argv):

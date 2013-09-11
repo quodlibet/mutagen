@@ -138,7 +138,7 @@ class ID3(DictProxy, mutagen.Metadata):
                         self.version = self._V11
                         map(self.add, frames.values())
                     else:
-                        reraise(err, None, stack)
+                        reraise(type(err), None, stack)
             else:
                 frames = self.__known_frames
                 if frames is None:
@@ -756,7 +756,7 @@ def ParseID3v1(string):
     """Parse an ID3v1 tag, returning a list of ID3v2.4 frames."""
 
     try:
-        string = string[string.index("TAG"):]
+        string = string[string.index(b"TAG"):]
     except ValueError:
         return None
     if 128 < len(string) or len(string) < 124:

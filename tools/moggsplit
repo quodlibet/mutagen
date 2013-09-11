@@ -60,7 +60,8 @@ def main(argv):
                     if m3u:
                         m3u.write(new_filename + "\r\n")
                 fileobjs[page.serial].write(page.write())
-        map(file.close, fileobjs.values())
+        for f in fileobjs.values():
+            f.close()
 
 if __name__ == "__main__":
     main(sys.argv)

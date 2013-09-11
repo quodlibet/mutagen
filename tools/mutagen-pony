@@ -50,14 +50,14 @@ class Report(object):
         strings.append("%d files without tags." % self.missings)
 
         strings.append("\nID3 Versions:")
-        items = self.versions.items()
+        items = list(self.versions.items())
         items.sort()
         for v, i in items:
             strings.append("  %s\t%d" % (".".join(map(str, v)), i))
 
         if self.exceptions:
             strings.append("\nExceptions:")
-            items = self.exceptions.items()
+            items = list(self.exceptions.items())
             items.sort()
             for Ex, i in items:
                 strings.append("  %-20s\t%d" % (Ex.__name__, i))
@@ -71,7 +71,7 @@ class Report(object):
         else:
             strings.append("\nNo errors!")
 
-        return "\n".join(strings)
+        return("\n".join(strings))
 
 
 def check_dir(path):
@@ -82,7 +82,7 @@ def check_dir(path):
         PEDANTIC = False
 
     rep = Report(path)
-    print "Scanning", path
+    print("Scanning", path)
     for path, dirs, files in os.walk(path):
         files.sort()
         for fn in files:
@@ -101,12 +101,12 @@ def check_dir(path):
                 else:
                     rep.success(mp3.tags)
 
-    print str(rep)
+    print(str(rep))
 
 
 def main(argv):
     if len(argv) == 1:
-        print "Usage: %s directory ..." % argv[0]
+        print("Usage: %s directory ..." % argv[0])
     else:
         for path in argv[1:]:
             check_dir(path)
