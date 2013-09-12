@@ -9,8 +9,9 @@ from tempfile import mkstemp
 from tests import TestCase, add
 
 import mutagen.apev2
-
+from mutagen._compat import PY3, text_type
 from mutagen.apev2 import APEv2File, APEv2, is_valid_apev2_key
+
 
 DIR = os.path.dirname(__file__)
 SAMPLE = os.path.join(DIR, "data", "click.mpc")
@@ -28,6 +29,11 @@ class Tis_valid_apev2_key(TestCase):
     def test_no(self):
         for key in ["\x11hi", "ffoo\xFF", u"\u1234", "a", "", "foo" * 100]:
             self.failIf(is_valid_apev2_key(key))
+
+    if PY3:
+        def test_py3(self):
+            self.assertRaises(TypeError, is_valid_apev2_key, b"abc")
+
 add(Tis_valid_apev2_key)
 
 
@@ -57,7 +63,7 @@ class TAPEWriter(TestCase):
         tag.save(SAMPLE + ".justtag")
         tag.save(SAMPLE + ".tag_at_start")
         fileobj = open(SAMPLE + ".tag_at_start", "ab")
-        fileobj.write("tag garbage" * 1000)
+        fileobj.write(b"tag garbage" * 1000)
         fileobj.close()
         self.tag = mutagen.apev2.APEv2(SAMPLE + ".new")
 
@@ -152,13 +158,13 @@ class TAPEv2ThenID3v1Writer(TAPEWriter):
     def setUp(self):
         super(TAPEv2ThenID3v1Writer, self).setUp()
         f = open(SAMPLE + ".new", "ab+")
-        f.write("TAG" + "\x00" * 125)
+        f.write(b"TAG" + b"\x00" * 125)
         f.close()
         f = open(BROKEN + ".new", "ab+")
-        f.write("TAG" + "\x00" * 125)
+        f.write(b"TAG" + b"\x00" * 125)
         f.close()
         f = open(SAMPLE + ".justtag", "ab+")
-        f.write("TAG" + "\x00" * 125)
+        f.write(b"TAG" + b"\x00" * 125)
         f.close()
 
     def test_tag_at_start_write(self):
@@ -230,6 +236,13 @@ class TAPEv2(TestCase):
             self.audio.items(),
             list(zip(self.audio.keys(), self.audio.values())))
 
+    def test_key_type(self):
+        key = self.audio.keys()[0]
+        if PY3:
+            self.assertTrue(isinstance(key, text_type))
+        else:
+            self.assertTrue(isinstance(key, bytes))
+
     def test_invalid_keys(self):
         self.failUnlessRaises(KeyError, self.audio.__getitem__, "\x00")
         self.failUnlessRaises(KeyError, self.audio.__setitem__, "\x00", "")
@@ -270,7 +283,7 @@ class TAPEv2ThenID3v1(TAPEv2):
     def setUp(self):
         super(TAPEv2ThenID3v1, self).setUp()
         f = open(self.filename, "ab+")
-        f.write("TAG" + "\x00" * 125)
+        f.write(b"TAG" + b"\x00" * 125)
         f.close()
         self.audio = APEv2(self.filename)
 
@@ -294,20 +307,24 @@ class TAPEBinaryValue(TestCase):
     BV = BV
 
     def setUp(self):
-        self.sample = "\x12\x45\xde"
+        self.sample = b"\x12\x45\xde"
         self.value = mutagen.apev2.APEValue(self.sample,mutagen.apev2.BINARY)
 
     def test_type(self):
         self.failUnless(isinstance(self.value, self.BV))
 
     def test_const(self):
-        self.failUnlessEqual(self.sample, str(self.value))
+        self.failUnlessEqual(self.sample, bytes(self.value))
 
     def test_repr(self):
         repr(self.value)
 
     def test_pprint(self):
         self.value.pprint()
+
+    def test_type(self):
+        self.assertRaises(TypeError,
+                          mutagen.apev2.APEValue, u"abc", mutagen.apev2.BINARY)
 
 add(TAPEBinaryValue)
 
@@ -337,6 +354,12 @@ class TAPETextValue(TestCase):
         for i in range(len(self.value)):
             self.failUnlessEqual(self.sample[i], self.value[i])
 
+    if PY3:
+        def test_py3(self):
+            self.assertRaises(TypeError, self.value.__setitem__, 2, b"abc")
+            self.assertRaises(
+                TypeError, mutagen.apev2.APEValue, b"abc", mutagen.apev2.TEXT)
+
     def test_repr(self):
         repr(self.value)
 
@@ -356,10 +379,16 @@ class TAPEExtValue(TestCase):
         self.failUnless(isinstance(self.value, self.EV))
 
     def test_const(self):
-        self.failUnlessEqual(self.sample, str(self.value))
+        self.failUnlessEqual(self.sample, self.value)
 
     def test_repr(self):
         repr(self.value)
+
+    if PY3:
+        def test_py3(self):
+            self.assertRaises(
+                TypeError, mutagen.apev2.APEValue, b"abc",
+                mutagen.apev2.EXTERNAL)
 
     def test_pprint(self):
         self.value.pprint()

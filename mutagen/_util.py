@@ -14,7 +14,7 @@ import struct
 
 from fnmatch import fnmatchcase
 
-from ._compat import chr_, text_type
+from ._compat import chr_, text_type, PY2
 
 
 class DictMixin(object):
@@ -57,7 +57,8 @@ class DictMixin(object):
     iteritems = lambda s: iter(s.items())
 
     def clear(self):
-        map(self.__delitem__, self.keys())
+        for key in self.keys():
+            self.__delitem__(key)
 
     def pop(self, key, *args):
         if len(args) > 1:
@@ -85,7 +86,8 @@ class DictMixin(object):
             other = {}
 
         try:
-            map(self.__setitem__, other.keys(), other.values())
+            for key, value in other.items():
+                self.__setitem__(key, value)
         except AttributeError:
             for key, value in other:
                 self[key] = value
@@ -366,5 +368,18 @@ def total_ordering(cls):
     cls.__gt__ = lambda self, other: not (self == other or self < other)
     cls.__ge__ = lambda self, other: not self < other
     cls.__ne__ = lambda self, other: not self.__eq__(other)
+
+    return cls
+
+
+def swap_to_string(cls):
+    if not PY2:
+        return cls
+
+    if hasattr(cls, '__str__'):
+        cls.__unicode__ = cls.__str__
+
+    if hasattr(cls, '__bytes__'):
+        cls.__str__ = cls.__bytes__
 
     return cls

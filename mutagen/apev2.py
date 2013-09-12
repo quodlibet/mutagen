@@ -35,12 +35,13 @@ import struct
 
 from ._compat import cBytesIO, PY3, text_type, PY2, reraise
 from mutagen import Metadata, FileType, StreamInfo
-from mutagen._util import DictMixin, cdata, utf8, delete_bytes, total_ordering
+from mutagen._util import DictMixin, cdata, delete_bytes, total_ordering
+from mutagen._util import swap_to_string
 
 
 def is_valid_apev2_key(key):
     if PY3 and not isinstance(key, text_type):
-        raise TypeError
+        raise TypeError("Keys have to be str")
 
     return (2 <= len(key) <= 255 and min(key) >= ' ' and max(key) <= '~' and
             key not in ["OggS", "TAG", "ID3", "MP+"])
@@ -213,18 +214,12 @@ class _APEv2Data(object):
         self.start = start
 
 
-class APEv2(DictMixin, Metadata):
-    """A file with an APEv2 tag.
-
-    ID3v1 tags are silently ignored and overwritten.
-    """
-
-    filename = None
+class _CIDictProxy(DictMixin):
 
     def __init__(self, *args, **kwargs):
         self.__casemap = {}
         self.__dict = {}
-        super(APEv2, self).__init__(*args, **kwargs)
+        super(_CIDictProxy, self).__init__(*args, **kwargs)
         # Internally all names are stored as lowercase, but the case
         # they were set with is remembered and used when saving.  This
         # is roughly in line with the standard, which says that keys
@@ -232,12 +227,36 @@ class APEv2(DictMixin, Metadata):
         # not allowed, and recommends case-insensitive
         # implementations.
 
+    def __getitem__(self, key):
+        return self.__dict[key.lower()]
+
+    def __setitem__(self, key, value):
+        lower = key.lower()
+        self.__casemap[lower] = key
+        self.__dict[lower] = value
+
+    def __delitem__(self, key):
+        lower = key.lower()
+        del(self.__casemap[lower])
+        del(self.__dict[lower])
+
+    def keys(self):
+        return [self.__casemap.get(key, key) for key in self.__dict.keys()]
+
+
+class APEv2(_CIDictProxy, Metadata):
+    """A file with an APEv2 tag.
+
+    ID3v1 tags are silently ignored and overwritten.
+    """
+
+    filename = None
+
     def pprint(self):
         """Return tag key=value pairs in a human-readable format."""
 
-        items = self.items()
-        items.sort()
-        return "\n".join(["%s=%s" % (k, v.pprint()) for k, v in items])
+        items = sorted(self.items())
+        return u"\n".join([u"%s=%s" % (k, v.pprint()) for k, v in items])
 
     def load(self, filename):
         """Load tags from a filename."""
@@ -250,7 +269,6 @@ class APEv2(DictMixin, Metadata):
             fileobj.close()
         if data.tag:
             self.clear()
-            self.__casemap.clear()
             self.__parse_tag(data.tag, data.items)
         else:
             raise APENoHeaderError("No APE tag found")
@@ -283,21 +301,31 @@ class APEv2(DictMixin, Metadata):
                 except UnicodeError as err:
                     reraise(APEBadItemError, err, sys.exc_info()[2])
             value = fileobj.read(size)
-            self[key] = APEValue(value, kind)
+
+            if kind == TEXT:
+                value = APETextValue(value, kind)
+            elif kind == BINARY:
+                value = APEBinaryValue(value, kind)
+            elif kind == EXTERNAL:
+                value = APEExtValue(value, kind)
+
+            self[key] = value
 
     def __getitem__(self, key):
         if not is_valid_apev2_key(key):
             raise KeyError("%r is not a valid APEv2 key" % key)
         if PY2:
             key = key.encode('ascii')
-        return self.__dict[key.lower()]
+
+        return super(APEv2, self).__getitem__(key)
 
     def __delitem__(self, key):
         if not is_valid_apev2_key(key):
             raise KeyError("%r is not a valid APEv2 key" % key)
         if PY2:
             key = key.encode('ascii')
-        del(self.__dict[key.lower()])
+
+        super(APEv2, self).__delitem__(key)
 
     def __setitem__(self, key, value):
         """'Magic' value setter.
@@ -308,8 +336,8 @@ class APEv2(DictMixin, Metadata):
         as a list of string/Unicode values.  If you pass in a string
         that is not valid UTF-8, it assumes it is a binary value.
 
-        Python 3: all strings will be assumed to be a text value, even
-        if they are valid utf-8 data.
+        Python 3: all bytes will be assumed to be a byte value, even
+        if they are valid utf-8.
 
         If you need to force a specific type of value (e.g. binary
         data that also happens to be valid UTF-8, or an external
@@ -330,10 +358,18 @@ class APEv2(DictMixin, Metadata):
             # let's guess at the content if we're not already a value...
             if isinstance(value, text_type):
                 # unicode? we've got to be text.
-                value = APEValue(utf8(value), TEXT)
+                value = APEValue(value, TEXT)
             elif isinstance(value, list):
+                items = []
+                for v in value:
+                    if not isinstance(v, text_type):
+                        if PY3:
+                            raise TypeError("item in list not str")
+                        v = v.decode("utf-8")
+                    items.append(v)
+
                 # list? text.
-                value = APEValue(b"\0".join(map(utf8, value)), TEXT)
+                value = APEValue(u"\0".join(items), TEXT)
             else:
                 if PY3:
                     value = APEValue(value, BINARY)
@@ -346,11 +382,8 @@ class APEv2(DictMixin, Metadata):
                     else:
                         # valid UTF8, probably text
                         value = APEValue(value, TEXT)
-        self.__casemap[key.lower()] = key
-        self.__dict[key.lower()] = value
 
-    def keys(self):
-        return [self.__casemap.get(key, key) for key in self.__dict.keys()]
+        super(APEv2, self).__setitem__(key, value)
 
     def save(self, filename=None):
         """Save changes to a file.
@@ -380,29 +413,30 @@ class APEv2(DictMixin, Metadata):
         # not a MUST, but STRONGLY recommended. Actually the items should
         # be sorted by importance/byte, but this is not feasible."
         tags = [v._internal(k) for k, v in self.items()]
-        tags.sort(lambda a, b: cmp(len(a), len(b)))
+        tags.sort(key=len)
         num_tags = len(tags)
-        tags = "".join(tags)
+        tags = b"".join(tags)
 
-        header = "APETAGEX%s%s" % (
-            # version, tag size, item count, flags
-            struct.pack("<4I", 2000, len(tags) + 32, num_tags,
-                        HAS_HEADER | IS_HEADER),
-            b"\0" * 8)
+        header = bytearray(b"APETAGEX")
+        # version, tag size, item count, flags
+        header += struct.pack("<4I", 2000, len(tags) + 32, num_tags,
+                              HAS_HEADER | IS_HEADER)
+        header += b"\0" * 8
         fileobj.write(header)
 
         fileobj.write(tags)
 
-        footer = "APETAGEX%s%s" % (
-            # version, tag size, item count, flags
-            struct.pack("<4I", 2000, len(tags) + 32, num_tags,
-                        HAS_HEADER),
-            b"\0" * 8)
+        footer = bytearray(b"APETAGEX")
+        footer += struct.pack("<4I", 2000, len(tags) + 32, num_tags,
+                              HAS_HEADER)
+        footer += b"\0" * 8
+
         fileobj.write(footer)
         fileobj.close()
 
     def delete(self, filename=None):
         """Remove tags from a file."""
+
         filename = filename or self.filename
         fileobj = open(filename, "r+b")
         try:
@@ -419,6 +453,7 @@ Open = APEv2
 
 def delete(filename):
     """Remove tags from a file."""
+
     try:
         APEv2(filename).delete()
     except APENoHeaderError:
@@ -431,6 +466,15 @@ def APEValue(value, kind):
     Use this if you need to specify the value's type manually.  Binary
     and text data are automatically detected by APEv2.__setitem__.
     """
+
+    if kind in (TEXT, EXTERNAL):
+        if not isinstance(value, text_type):
+            # stricter with py3
+            if PY3:
+                raise TypeError("str only for text/external values")
+        else:
+            value = value.encode("utf-8")
+
     if kind == TEXT:
         return APETextValue(value, kind)
     elif kind == BINARY:
@@ -441,17 +485,26 @@ def APEValue(value, kind):
         raise ValueError("kind must be TEXT, BINARY, or EXTERNAL")
 
 
+@swap_to_string
+@total_ordering
 class _APEValue(object):
     def __init__(self, value, kind):
+        if not isinstance(value, bytes):
+            raise TypeError("value not bytes")
         self.kind = kind
         self.value = value
 
     def __len__(self):
         return len(self.value)
 
-    if PY2:
-        def __str__(self):
-            return self.value
+    def __bytes__(self):
+        return self.value
+
+    def __eq__(self, other):
+        return bytes(self) == other
+
+    def __lt__(self, other):
+        return bytes(self) < other
 
     # Packed format for an item:
     # 4B: Value length
@@ -460,38 +513,25 @@ class _APEValue(object):
     # 1B: Null
     # Key value
     def _internal(self, key):
-        return "%s%s\0%s" % (
-            struct.pack("<2I", len(self.value), self.kind << 1),
-            key, self.value)
+        if not isinstance(key, bytes):
+            key = key.encode("utf-8")
+        data = bytearray()
+        data += struct.pack("<2I", len(self.value), self.kind << 1)
+        data += key
+        data += b"\0"
+        data += self.value
+        return bytes(data)
 
     def __repr__(self):
         return "%s(%r, %d)" % (type(self).__name__, self.value, self.kind)
 
 
+@swap_to_string
 @total_ordering
-class APETextValue(_APEValue):
-    """An APEv2 text value.
+class _APEUtf8Value(_APEValue):
 
-    Text values are Unicode/UTF-8 strings. They can be accessed like
-    strings (with a null seperating the values), or arrays of strings."""
-
-    if PY2:
-        def __unicode__(self):
-            return unicode(str(self), "utf-8")
-    else:
-        def __str__(self):
-            return self.value.decode("utf-8")
-
-    def __iter__(self):
-        """Iterate over the strings of the value (not the characters)"""
-
-        return iter(text_type(self).split("\0"))
-
-    def __getitem__(self, index):
-        return text_type(self).split("\0")[index]
-
-    def __len__(self):
-        return self.value.count(b"\0") + 1
+    def __str__(self):
+        return self.value.decode("utf-8")
 
     def __eq__(self, other):
         return text_type(self) == other
@@ -499,32 +539,56 @@ class APETextValue(_APEValue):
     def __lt__(self, other):
         return text_type(self) < other
 
+
+class APETextValue(_APEUtf8Value):
+    """An APEv2 text value.
+
+    Text values are Unicode/UTF-8 strings. They can be accessed like
+    strings (with a null separating the values), or arrays of strings.
+    """
+
+    def __iter__(self):
+        """Iterate over the strings of the value (not the characters)"""
+
+        return iter(text_type(self).split(u"\0"))
+
+    def __getitem__(self, index):
+        return text_type(self).split(u"\0")[index]
+
+    def __len__(self):
+        return self.value.count(b"\0") + 1
+
     __hash__ = _APEValue.__hash__
 
     def __setitem__(self, index, value):
+        if not isinstance(value, text_type):
+            if PY3:
+                raise TypeError("value not str")
+            value = value.decode("utf-8")
+
         values = list(self)
-        values[index] = value.encode("utf-8")
-        self.value = b"\0".join(values).encode("utf-8")
+        values[index] = value
+        self.value = (u"\0".join(values)).encode("utf-8")
 
     def pprint(self):
-        return " / ".join(self)
+        return u" / ".join(self)
 
 
 class APEBinaryValue(_APEValue):
     """An APEv2 binary value."""
 
     def pprint(self):
-        return "[%d bytes]" % len(self)
+        return u"[%d bytes]" % len(self)
 
 
-class APEExtValue(_APEValue):
+class APEExtValue(_APEUtf8Value):
     """An APEv2 external value.
 
     External values are usually URI or IRI strings.
     """
 
     def pprint(self):
-        return "[External] %s" % text_type(self)
+        return u"[External] %s" % text_type(self)
 
 
 class APEv2File(FileType):
@@ -537,7 +601,7 @@ class APEv2File(FileType):
 
         @staticmethod
         def pprint():
-            return "Unknown format with APEv2 tag."
+            return u"Unknown format with APEv2 tag."
 
     def load(self, filename):
         self.filename = filename
