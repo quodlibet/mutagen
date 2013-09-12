@@ -47,43 +47,43 @@ class ID3Warning(error, UserWarning):
 class unsynch(object):
     @staticmethod
     def decode(value):
-        output = []
+        output = bytearray()
         safe = True
         append = output.append
-        for val in value:
+        for val in bytearray(value):
             if safe:
                 append(val)
-                safe = val != '\xFF'
+                safe = val != 0xFF
             else:
-                if val >= '\xE0':
+                if val >= 0xE0:
                     raise ValueError('invalid sync-safe string')
-                elif val != '\x00':
+                elif val != 0x00:
                     append(val)
                 safe = True
         if not safe:
             raise ValueError('string ended unsafe')
-        return ''.join(output)
+        return bytes(output)
 
     @staticmethod
     def encode(value):
-        output = []
+        output = bytearray()
         safe = True
         append = output.append
-        for val in value:
+        for val in bytearray(value):
             if safe:
                 append(val)
-                if val == '\xFF':
+                if val == 0xFF:
                     safe = False
-            elif val == '\x00' or val >= '\xE0':
-                append('\x00')
+            elif val == 0x00 or val >= 0xE0:
+                append(0x00)
                 append(val)
-                safe = val != '\xFF'
+                safe = val != 0xFF
             else:
                 append(val)
                 safe = True
         if not safe:
-            append('\x00')
-        return ''.join(output)
+            append(0x00)
+        return bytes(output)
 
 
 class _BitPaddedMixin(object):
@@ -113,11 +113,11 @@ class _BitPaddedMixin(object):
             while value:
                 append(value & mask)
                 value >>= bits
-            bytes_ = bytes_.ljust(minwidth, "\x00")
+            bytes_ = bytes_.ljust(minwidth, b"\x00")
 
         if bigendian:
             bytes_.reverse()
-        return str(bytes_)
+        return bytes(bytes_)
 
     @staticmethod
     def has_valid_padding(value, bits=7):
@@ -132,9 +132,9 @@ class _BitPaddedMixin(object):
                 if value & mask:
                     return False
                 value >>= 8
-        elif isinstance(value, str):
-            for byte in value:
-                if ord(byte) & mask:
+        elif isinstance(value, bytes):
+            for byte in bytearray(value):
+                if byte & mask:
                     return False
         else:
             raise TypeError

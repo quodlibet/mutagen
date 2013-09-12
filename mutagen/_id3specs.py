@@ -8,8 +8,9 @@ import struct
 from struct import unpack, pack
 from warnings import warn
 
-from ._compat import text_type
+from ._compat import text_type, chr_, PY3, swap_to_string
 from mutagen._id3util import ID3JunkFrameError, ID3Warning, BitPaddedInt
+from mutagen._util import total_ordering
 
 
 class Spec(object):
@@ -29,14 +30,14 @@ class Spec(object):
 
 class ByteSpec(Spec):
     def read(self, frame, data):
-        return ord(data[0]), data[1:]
+        return bytearray(data)[0], data[1:]
 
     def write(self, frame, value):
-        return chr(value)
+        return chr_(value)
 
     def validate(self, frame, value):
         if value is not None:
-            chr(value)
+            chr_(value)
         return value
 
 
@@ -71,7 +72,7 @@ class EncodingSpec(ByteSpec):
         if enc < 16:
             return enc, data
         else:
-            return 0, chr(enc)+data
+            return 0, chr_(enc) + data
 
     def validate(self, frame, value):
         if 0 <= value <= 3:
@@ -113,13 +114,21 @@ class StringSpec(Spec):
 
 class BinaryDataSpec(Spec):
     def read(self, frame, data):
-        return data, ''
+        return data, b''
 
     def write(self, frame, value):
-        return str(value)
+        if value is None:
+            return b""
+        if isinstance(value, bytes):
+            return value
+        value = text_type(value).encode("ascii")
+        return value
 
     def validate(self, frame, value):
-        return str(value)
+        if isinstance(value, bytes):
+            return value
+        value = text_type(value).encode("ascii")
+        return value
 
 
 class EncodedTextSpec(Spec):
@@ -127,15 +136,15 @@ class EncodedTextSpec(Spec):
     # completely by the ID3 specification. You can't just add
     # encodings here however you want.
     _encodings = (
-        ('latin1', '\x00'),
-        ('utf16', '\x00\x00'),
-        ('utf_16_be', '\x00\x00'),
-        ('utf8', '\x00')
+        ('latin1', b'\x00'),
+        ('utf16', b'\x00\x00'),
+        ('utf_16_be', b'\x00\x00'),
+        ('utf8', b'\x00')
     )
 
     def read(self, frame, data):
         enc, term = self._encodings[frame.encoding]
-        ret = ''
+        ret = b''
         if len(term) == 1:
             if term in data:
                 data, ret = data.split(term, 1)
@@ -250,6 +259,8 @@ class Latin1TextSpec(EncodedTextSpec):
         return text_type(value)
 
 
+@swap_to_string
+@total_ordering
 class ID3TimeStamp(object):
     """A time stamp in ID3v2 format.
 
@@ -266,6 +277,11 @@ class ID3TimeStamp(object):
     def __init__(self, text):
         if isinstance(text, ID3TimeStamp):
             text = text.text
+        elif not isinstance(text, text_type):
+            if PY3:
+                raise TypeError("not a str")
+            text = text.decode("utf-8")
+
         self.text = text
 
     __formats = ['%04d'] + ['%02d'] * 5
@@ -275,7 +291,9 @@ class ID3TimeStamp(object):
         parts = [self.year, self.month, self.day,
                  self.hour, self.minute, self.second]
         pieces = []
-        for i, part in enumerate(iter(iter(parts).next, None)):
+        for i, part in enumerate(parts):
+            if part is None:
+                break
             pieces.append(self.__formats[i] % part + self.__seps[i])
         return u''.join(pieces)[:-1]
 
@@ -294,11 +312,17 @@ class ID3TimeStamp(object):
     def __str__(self):
         return self.text
 
+    def __bytes__(self):
+        return self.text.encode("utf-8")
+
     def __repr__(self):
         return repr(self.text)
 
-    def __cmp__(self, other):
-        return cmp(self.text, other.text)
+    def __eq__(self, other):
+        return self.text == other.text
+
+    def __lt__(self, other):
+        return self.text < other.text
 
     __hash__ = object.__hash__
 

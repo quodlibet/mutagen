@@ -118,7 +118,7 @@ class Frame(object):
             else:
                 raise ID3JunkFrameError
             setattr(self, reader.name, value)
-        if data.strip('\x00'):
+        if data.strip(b'\x00'):
             warn('Leftover data: %s: %r (from %r)' % (
                  type(self).__name__, data, odata),
                  ID3Warning)
@@ -127,7 +127,7 @@ class Frame(object):
         data = []
         for writer in self._framespec:
             data.append(writer.write(self, getattr(self, writer.name)))
-        return ''.join(data)
+        return b''.join(data)
 
     def pprint(self):
         """Return a human-readable representation of the frame."""
@@ -225,7 +225,7 @@ class FrameOpt(Frame):
                 else:
                     break
                 setattr(self, reader.name, value)
-        if data.strip('\x00'):
+        if data.strip(b'\x00'):
             warn('Leftover data: %s: %r (from %r)' % (
                  type(self).__name__, data, odata),
                  ID3Warning)

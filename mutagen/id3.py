@@ -236,10 +236,10 @@ class ID3(DictProxy, mutagen.Metadata):
         self.size = BitPaddedInt(size) + 10
         self.version = (2, vmaj, vrev)
 
-        if id3 != 'ID3':
-            raise ID3NoHeaderError("'%s' doesn't start with an ID3 tag" % fn)
+        if id3 != b'ID3':
+            raise ID3NoHeaderError("%r doesn't start with an ID3 tag" % fn)
         if vmaj not in [2, 3, 4]:
-            raise ID3UnsupportedVersionError("'%s' ID3v2.%d not supported"
+            raise ID3UnsupportedVersionError("%r ID3v2.%d not supported"
                                              % (fn, vmaj))
 
         if self.PEDANTIC:
@@ -247,9 +247,9 @@ class ID3(DictProxy, mutagen.Metadata):
                 raise ValueError("Header size not synchsafe")
 
             if self._V24 <= self.version and (flags & 0x0f):
-                raise ValueError("'%s' has invalid flags %#02x" % (fn, flags))
+                raise ValueError("%r has invalid flags %#02x" % (fn, flags))
             elif self._V23 <= self.version < self._V24 and (flags & 0x1f):
-                raise ValueError("'%s' has invalid flags %#02x" % (fn, flags))
+                raise ValueError("%r has invalid flags %#02x" % (fn, flags))
 
         if self.f_extended:
             extsize = self.__fullread(4)
@@ -280,9 +280,9 @@ class ID3(DictProxy, mutagen.Metadata):
             if self.__extsize:
                 self.__extdata = self.__fullread(self.__extsize)
             else:
-                self.__extdata = ""
+                self.__extdata = b""
 
-    def __determine_bpi(self, data, frames, EMPTY="\x00" * 10):
+    def __determine_bpi(self, data, frames, EMPTY=b"\x00" * 10):
         if self.version < self._V24:
             return int
         # have to special case whether to use bitpaddedints here
@@ -339,7 +339,7 @@ class ID3(DictProxy, mutagen.Metadata):
                     name, size, flags = unpack('>4sLH', header)
                 except struct.error:
                     return  # not enough header
-                if name.strip('\x00') == '':
+                if name.strip(b'\x00') == b'':
                     return
                 size = bpi(size)
                 framedata = data[10:10+size]
@@ -366,8 +366,8 @@ class ID3(DictProxy, mutagen.Metadata):
                     name, size = unpack('>3s3s', header)
                 except struct.error:
                     return  # not enough header
-                size, = struct.unpack('>L', '\x00'+size)
-                if name.strip('\x00') == '':
+                size, = struct.unpack('>L', b'\x00'+size)
+                if name.strip(b'\x00') == b'':
                     return
                 framedata = data[6:6+size]
                 data = data[6+size:]
@@ -470,18 +470,18 @@ class ID3(DictProxy, mutagen.Metadata):
             except struct.error:
                 id3, insize = '', 0
             insize = BitPaddedInt(insize)
-            if id3 != 'ID3':
+            if id3 != b'ID3':
                 insize = -10
 
             if insize >= framesize:
                 outsize = insize
             else:
                 outsize = (framesize + 1023) & ~0x3FF
-            framedata += '\x00' * (outsize - framesize)
+            framedata += b'\x00' * (outsize - framesize)
 
             framesize = BitPaddedInt.to_str(outsize, width=4)
             flags = 0
-            header = pack('>3sBBB4s', 'ID3', v2_version, 0, flags, framesize)
+            header = pack('>3sBBB4s', b'ID3', v2_version, 0, flags, framesize)
             data = header + framedata
 
             if (insize < outsize):
@@ -503,7 +503,7 @@ class ID3(DictProxy, mutagen.Metadata):
 
             data = f.read(128)
             try:
-                idx = data.index("TAG")
+                idx = data.index(b"TAG")
             except ValueError:
                 offset = 0
                 has_v1 = False
@@ -539,7 +539,7 @@ class ID3(DictProxy, mutagen.Metadata):
         flags = 0
         if self.PEDANTIC and isinstance(frame, TextFrame):
             if len(str(frame)) == 0:
-                return ''
+                return b''
 
         if version == self._V23:
             framev23 = frame._get_v23_frame(sep=v23_sep)
@@ -729,7 +729,7 @@ def delete(filename, delete_v1=True, delete_v2=True):
         except IOError:
             pass
         else:
-            if f.read(3) == "TAG":
+            if f.read(3) == b"TAG":
                 f.seek(-128, 2)
                 f.truncate()
 
@@ -743,7 +743,7 @@ def delete(filename, delete_v1=True, delete_v2=True):
         except struct.error:
             id3, insize = '', -1
         insize = BitPaddedInt(insize)
-        if id3 == 'ID3' and insize >= 0:
+        if id3 == b'ID3' and insize >= 0:
             delete_bytes(f, insize + 10, 0)
 
 
@@ -775,11 +775,11 @@ def ParseID3v1(string):
     except StructError:
         return None
 
-    if tag != "TAG":
+    if tag != b"TAG":
         return None
 
     def fix(string):
-        return string.split("\x00")[0].strip().decode('latin1')
+        return string.split(b"\x00")[0].strip().decode('latin1')
 
     title, artist, album, year, comment = map(
         fix, [title, artist, album, year, comment])
@@ -798,7 +798,7 @@ def ParseID3v1(string):
             encoding=0, lang="eng", desc="ID3v1 Comment", text=comment)
     # Don't read a track number if it looks like the comment was
     # padded with spaces instead of nulls (thanks, WinAmp).
-    if track and (track != 32 or string[-3] == '\x00'):
+    if track and (track != 32 or string[-3] == b'\x00'):
         frames["TRCK"] = TRCK(encoding=0, text=str(track))
     if genre != 255:
         frames["TCON"] = TCON(encoding=0, text=str(genre))

@@ -14,7 +14,7 @@ import struct
 
 from fnmatch import fnmatchcase
 
-from ._compat import chr_, text_type, PY2
+from ._compat import chr_, text_type
 
 
 class DictMixin(object):
@@ -368,18 +368,5 @@ def total_ordering(cls):
     cls.__gt__ = lambda self, other: not (self == other or self < other)
     cls.__ge__ = lambda self, other: not self < other
     cls.__ne__ = lambda self, other: not self.__eq__(other)
-
-    return cls
-
-
-def swap_to_string(cls):
-    if not PY2:
-        return cls
-
-    if hasattr(cls, '__str__'):
-        cls.__unicode__ = cls.__str__
-
-    if hasattr(cls, '__bytes__'):
-        cls.__str__ = cls.__bytes__
 
     return cls

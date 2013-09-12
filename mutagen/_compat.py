@@ -30,6 +30,16 @@ if PY2:
     iteritems = lambda d: d.iteritems()
 
     exec("def reraise(tp, value, tb):\n raise tp, value, tb")
+
+    def swap_to_string(cls):
+        if hasattr(cls, '__str__'):
+            cls.__unicode__ = cls.__str__
+
+        if hasattr(cls, '__bytes__'):
+            cls.__str__ = cls.__bytes__
+
+        return cls
+
 elif PY3:
     from io import StringIO
     StringIO = StringIO
@@ -59,3 +69,6 @@ elif PY3:
 
     def reraise(tp, value, tb):
         raise tp(value).with_traceback(tb)
+
+    def swap_to_string(cls):
+        return cls

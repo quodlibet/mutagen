@@ -42,7 +42,7 @@ class TrueAudioInfo(StreamInfo):
     def __init__(self, fileobj, offset):
         fileobj.seek(offset or 0)
         header = fileobj.read(18)
-        if len(header) != 18 or not header.startswith("TTA"):
+        if len(header) != 18 or not header.startswith(b"TTA"):
             raise TrueAudioHeaderError("TTA header not found")
         self.sample_rate = cdata.int_le(header[10:14])
         samples = cdata.uint_le(header[14:18])
