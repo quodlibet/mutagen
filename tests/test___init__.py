@@ -180,7 +180,7 @@ class TFile(TestCase):
             File(os.path.join("tests", "data", "silence-3.wma")), ASF))
 
     def test_id3_indicates_mp3_not_tta(self):
-        header = "ID3 the rest of this is garbage"
+        header = b"ID3 the rest of this is garbage"
         fileobj = cBytesIO(header)
         filename = "not-identifiable.ext"
         self.failUnless(TrueAudio.score(filename, fileobj, header) <

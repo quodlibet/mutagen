@@ -4,7 +4,7 @@ from tests import TestCase
 from tests import add
 from mutagen import id3
 from mutagen.id3 import ID3, COMR, Frames, Frames_2_2, ID3Warning, ID3JunkFrameError
-from mutagen._compat import cBytesIO
+from mutagen._compat import cBytesIO, PY2, iteritems, integer_types
 import warnings
 warnings.simplefilter('error', ID3Warning)
 
@@ -95,46 +95,46 @@ class ID3Loading(TestCase):
 
     def test_header_2_4_invalid_flags(self):
         id3 = ID3()
-        id3._ID3__fileobj = cBytesIO('ID3\x04\x00\x1f\x00\x00\x00\x00')
+        id3._ID3__fileobj = cBytesIO(b'ID3\x04\x00\x1f\x00\x00\x00\x00')
         self.assertRaises(ValueError, id3._ID3__load_header)
 
     def test_header_2_4_unsynch_size(self):
         id3 = ID3()
-        id3._ID3__fileobj = cBytesIO('ID3\x04\x00\x10\x00\x00\x00\xFF')
+        id3._ID3__fileobj = cBytesIO(b'ID3\x04\x00\x10\x00\x00\x00\xFF')
         self.assertRaises(ValueError, id3._ID3__load_header)
 
     def test_header_2_4_allow_footer(self):
         id3 = ID3()
-        id3._ID3__fileobj = cBytesIO('ID3\x04\x00\x10\x00\x00\x00\x00')
+        id3._ID3__fileobj = cBytesIO(b'ID3\x04\x00\x10\x00\x00\x00\x00')
         id3._ID3__load_header()
 
     def test_header_2_3_invalid_flags(self):
         id3 = ID3()
-        id3._ID3__fileobj = cBytesIO('ID3\x03\x00\x1f\x00\x00\x00\x00')
+        id3._ID3__fileobj = cBytesIO(b'ID3\x03\x00\x1f\x00\x00\x00\x00')
         self.assertRaises(ValueError, id3._ID3__load_header)
-        id3._ID3__fileobj = cBytesIO('ID3\x03\x00\x0f\x00\x00\x00\x00')
+        id3._ID3__fileobj = cBytesIO(b'ID3\x03\x00\x0f\x00\x00\x00\x00')
         self.assertRaises(ValueError, id3._ID3__load_header)
 
     def test_header_2_2(self):
         id3 = ID3()
-        id3._ID3__fileobj = cBytesIO('ID3\x02\x00\x00\x00\x00\x00\x00')
+        id3._ID3__fileobj = cBytesIO(b'ID3\x02\x00\x00\x00\x00\x00\x00')
         id3._ID3__load_header()
         self.assertEquals(id3.version, (2,2,0))
 
     def test_header_2_1(self):
         id3 = ID3()
-        id3._ID3__fileobj = cBytesIO('ID3\x01\x00\x00\x00\x00\x00\x00')
+        id3._ID3__fileobj = cBytesIO(b'ID3\x01\x00\x00\x00\x00\x00\x00')
         self.assertRaises(NotImplementedError, id3._ID3__load_header)
 
     def test_header_too_small(self):
         id3 = ID3()
-        id3._ID3__fileobj = cBytesIO('ID3\x01\x00\x00\x00\x00\x00')
+        id3._ID3__fileobj = cBytesIO(b'ID3\x01\x00\x00\x00\x00\x00')
         self.assertRaises(EOFError, id3._ID3__load_header)
 
     def test_header_2_4_extended(self):
         id3 = ID3()
         id3._ID3__fileobj = cBytesIO(
-            'ID3\x04\x00\x40\x00\x00\x00\x00\x00\x00\x00\x05\x5a')
+            b'ID3\x04\x00\x40\x00\x00\x00\x00\x00\x00\x00\x05\x5a')
         id3._ID3__load_header()
         self.assertEquals(id3._ID3__extsize, 1)
         self.assertEquals(id3._ID3__extdata, '\x5a')
@@ -142,13 +142,13 @@ class ID3Loading(TestCase):
     def test_header_2_4_extended_unsynch_size(self):
         id3 = ID3()
         id3._ID3__fileobj = cBytesIO(
-            'ID3\x04\x00\x40\x00\x00\x00\x00\x00\x00\x00\xFF\x5a')
+            b'ID3\x04\x00\x40\x00\x00\x00\x00\x00\x00\x00\xFF\x5a')
         self.assertRaises(ValueError, id3._ID3__load_header)
 
     def test_header_2_4_extended_but_not(self):
         id3 = ID3()
         id3._ID3__fileobj = cBytesIO(
-            'ID3\x04\x00\x40\x00\x00\x00\x00TIT1\x00\x00\x00\x01a')
+            b'ID3\x04\x00\x40\x00\x00\x00\x00TIT1\x00\x00\x00\x01a')
         id3._ID3__load_header()
         self.assertEquals(id3._ID3__extsize, 0)
         self.assertEquals(id3._ID3__extdata, '')
@@ -162,17 +162,17 @@ class ID3Loading(TestCase):
     def test_header_2_3_extended(self):
         id3 = ID3()
         id3._ID3__fileobj = cBytesIO(
-            'ID3\x03\x00\x40\x00\x00\x00\x00\x00\x00\x00\x06'
-            '\x00\x00\x56\x78\x9a\xbc')
+            b'ID3\x03\x00\x40\x00\x00\x00\x00\x00\x00\x00\x06'
+            b'\x00\x00\x56\x78\x9a\xbc')
         id3._ID3__load_header()
         self.assertEquals(id3._ID3__extsize, 6)
-        self.assertEquals(id3._ID3__extdata, '\x00\x00\x56\x78\x9a\xbc')
+        self.assertEquals(id3._ID3__extdata, b'\x00\x00\x56\x78\x9a\xbc')
 
     def test_unsynch(self):
         id3 = ID3()
         id3.version = (2,4,0)
         id3._ID3__flags = 0x80
-        badsync = '\x00\xff\x00ab\x00'
+        badsync = b'\x00\xff\x00ab\x00'
         self.assertEquals(
             id3._ID3__load_framedata(Frames["TPE2"], 0, badsync), [u"\xffab"])
         id3._ID3__flags = 0x00
@@ -259,7 +259,7 @@ class ID3Tags(TestCase):
         self.assertEquals('2004', id3['TDRC'])
 
     def test_badencoding(self):
-        self.assertRaises(IndexError, Frames["TPE1"].fromData, _24, 0, "\x09ab")
+        self.assertRaises(IndexError, Frames["TPE1"].fromData, _24, 0, b"\x09ab")
         self.assertRaises(ValueError, Frames["TPE1"], encoding=9, text="ab")
 
     def test_badsync(self):
@@ -268,15 +268,15 @@ class ID3Tags(TestCase):
 
     def test_noencrypt(self):
         self.assertRaises(
-            NotImplementedError, Frames["TPE1"].fromData, _24, 0x04, "\x00")
+            NotImplementedError, Frames["TPE1"].fromData, _24, 0x04, b"\x00")
         self.assertRaises(
             NotImplementedError, Frames["TPE1"].fromData, _23, 0x40, "\x00")
 
     def test_badcompress(self):
         self.assertRaises(
-            ValueError, Frames["TPE1"].fromData, _24, 0x08, "\x00\x00\x00\x00#")
+            ValueError, Frames["TPE1"].fromData, _24, 0x08, b"\x00\x00\x00\x00#")
         self.assertRaises(
-            ValueError, Frames["TPE1"].fromData, _23, 0x80, "\x00\x00\x00\x00#")
+            ValueError, Frames["TPE1"].fromData, _23, 0x80, b"\x00\x00\x00\x00#")
 
     def test_junkframe(self):
         self.assertRaises(ValueError, Frames["TPE1"].fromData, _24, 0, "")
@@ -284,17 +284,17 @@ class ID3Tags(TestCase):
     def test_bad_sylt(self):
         self.assertRaises(
             ID3JunkFrameError, Frames["SYLT"].fromData, _24, 0x0,
-            "\x00eng\x01description\x00foobar")
+            b"\x00eng\x01description\x00foobar")
         self.assertRaises(
             ID3JunkFrameError, Frames["SYLT"].fromData, _24, 0x0,
-            "\x00eng\x01description\x00foobar\x00\xFF\xFF\xFF")
+            b"\x00eng\x01description\x00foobar\x00\xFF\xFF\xFF")
 
     def test_extradata(self):
         from mutagen.id3 import RVRB, RBUF
         self.assertRaises(ID3Warning,
-                RVRB()._readData, 'L1R1BBFFFFPP#xyz')
+                RVRB()._readData, b'L1R1BBFFFFPP#xyz')
         self.assertRaises(ID3Warning,
-                RBUF()._readData, '\x00\x01\x00\x01\x00\x00\x00\x00#xyz')
+                RBUF()._readData, b'\x00\x01\x00\x01\x00\x00\x00\x00#xyz')
 
 class ID3v1Tags(TestCase):
 
@@ -446,169 +446,169 @@ add(TestV22Tags)
 
 def TestReadTags():
     tests = [
-    ['TALB', '\x00a/b', 'a/b', '', dict(encoding=0)],
-    ['TBPM', '\x00120', '120', 120, dict(encoding=0)],
-    ['TCMP', '\x001', '1', 1, dict(encoding=0)],
-    ['TCMP', '\x000', '0', 0, dict(encoding=0)],
-    ['TCOM', '\x00a/b', 'a/b', '', dict(encoding=0)],
-    ['TCON', '\x00(21)Disco', '(21)Disco', '', dict(encoding=0)],
-    ['TCOP', '\x001900 c', '1900 c', '', dict(encoding=0)],
-    ['TDAT', '\x00a/b', 'a/b', '', dict(encoding=0)],
-    ['TDEN', '\x001987', '1987', '', dict(encoding=0, year=[1987])],
-    ['TDOR', '\x001987-12', '1987-12', '',
+    ['TALB', b'\x00a/b', 'a/b', '', dict(encoding=0)],
+    ['TBPM', b'\x00120', '120', 120, dict(encoding=0)],
+    ['TCMP', b'\x001', '1', 1, dict(encoding=0)],
+    ['TCMP', b'\x000', '0', 0, dict(encoding=0)],
+    ['TCOM', b'\x00a/b', 'a/b', '', dict(encoding=0)],
+    ['TCON', b'\x00(21)Disco', '(21)Disco', '', dict(encoding=0)],
+    ['TCOP', b'\x001900 c', '1900 c', '', dict(encoding=0)],
+    ['TDAT', b'\x00a/b', 'a/b', '', dict(encoding=0)],
+    ['TDEN', b'\x001987', '1987', '', dict(encoding=0, year=[1987])],
+    ['TDOR', b'\x001987-12', '1987-12', '',
      dict(encoding=0, year=[1987], month=[12])],
-    ['TDRC', '\x001987\x00', '1987', '', dict(encoding=0, year=[1987])],
-    ['TDRL', '\x001987\x001988', '1987,1988', '',
+    ['TDRC', b'\x001987\x00', '1987', '', dict(encoding=0, year=[1987])],
+    ['TDRL', b'\x001987\x001988', '1987,1988', '',
      dict(encoding=0, year=[1987,1988])],
-    ['TDTG', '\x001987', '1987', '', dict(encoding=0, year=[1987])],
-    ['TDLY', '\x001205', '1205', 1205, dict(encoding=0)],
-    ['TENC', '\x00a b/c d', 'a b/c d', '', dict(encoding=0)],
-    ['TEXT', '\x00a b\x00c d', ['a b', 'c d'], '', dict(encoding=0)],
-    ['TFLT', '\x00MPG/3', 'MPG/3', '', dict(encoding=0)],
-    ['TIME', '\x001205', '1205', '', dict(encoding=0)],
-    ['TIPL', '\x02\x00a\x00\x00\x00b', [["a", "b"]], '', dict(encoding=2)],
-    ['TIT1', '\x00a/b', 'a/b', '', dict(encoding=0)],
+    ['TDTG', b'\x001987', '1987', '', dict(encoding=0, year=[1987])],
+    ['TDLY', b'\x001205', '1205', 1205, dict(encoding=0)],
+    ['TENC', b'\x00a b/c d', 'a b/c d', '', dict(encoding=0)],
+    ['TEXT', b'\x00a b\x00c d', ['a b', 'c d'], '', dict(encoding=0)],
+    ['TFLT', b'\x00MPG/3', 'MPG/3', '', dict(encoding=0)],
+    ['TIME', b'\x001205', '1205', '', dict(encoding=0)],
+    ['TIPL', b'\x02\x00a\x00\x00\x00b', [["a", "b"]], '', dict(encoding=2)],
+    ['TIT1', b'\x00a/b', 'a/b', '', dict(encoding=0)],
     # TIT2 checks misaligned terminator '\x00\x00' across crosses utf16 chars
-    ['TIT2', '\x01\xff\xfe\x38\x00\x00\x38', u'8\u3800', '', dict(encoding=1)],
-    ['TIT3', '\x00a/b', 'a/b', '', dict(encoding=0)],
-    ['TKEY', '\x00A#m', 'A#m', '', dict(encoding=0)],
-    ['TLAN', '\x006241', '6241', '', dict(encoding=0)],
-    ['TLEN', '\x006241', '6241', 6241, dict(encoding=0)],
-    ['TMCL', '\x02\x00a\x00\x00\x00b', [["a", "b"]], '', dict(encoding=2)],
-    ['TMED', '\x00med', 'med', '', dict(encoding=0)],
-    ['TMOO', '\x00moo', 'moo', '', dict(encoding=0)],
-    ['TOAL', '\x00alb', 'alb', '', dict(encoding=0)],
-    ['TOFN', '\x0012 : bar', '12 : bar', '', dict(encoding=0)],
-    ['TOLY', '\x00lyr', 'lyr', '', dict(encoding=0)],
-    ['TOPE', '\x00own/lic', 'own/lic', '', dict(encoding=0)],
-    ['TORY', '\x001923', '1923', 1923, dict(encoding=0)],
-    ['TOWN', '\x00own/lic', 'own/lic', '', dict(encoding=0)],
-    ['TPE1', '\x00ab', ['ab'], '', dict(encoding=0)],
-    ['TPE2', '\x00ab\x00cd\x00ef', ['ab','cd','ef'], '', dict(encoding=0)],
-    ['TPE3', '\x00ab\x00cd', ['ab','cd'], '', dict(encoding=0)],
-    ['TPE4', '\x00ab\x00', ['ab'], '', dict(encoding=0)],
-    ['TPOS', '\x0008/32', '08/32', 8, dict(encoding=0)],
-    ['TPRO', '\x00pro', 'pro', '', dict(encoding=0)],
-    ['TPUB', '\x00pub', 'pub', '', dict(encoding=0)],
-    ['TRCK', '\x004/9', '4/9', 4, dict(encoding=0)],
-    ['TRDA', '\x00Sun Jun 12', 'Sun Jun 12', '', dict(encoding=0)],
-    ['TRSN', '\x00ab/cd', 'ab/cd', '', dict(encoding=0)],
-    ['TRSO', '\x00ab', 'ab', '', dict(encoding=0)],
-    ['TSIZ', '\x0012345', '12345', 12345, dict(encoding=0)],
-    ['TSOA', '\x00ab', 'ab', '', dict(encoding=0)],
-    ['TSOP', '\x00ab', 'ab', '', dict(encoding=0)],
-    ['TSOT', '\x00ab', 'ab', '', dict(encoding=0)],
-    ['TSO2', '\x00ab', 'ab', '', dict(encoding=0)],
-    ['TSOC', '\x00ab', 'ab', '', dict(encoding=0)],
-    ['TSRC', '\x0012345', '12345', '', dict(encoding=0)],
-    ['TSSE', '\x0012345', '12345', '', dict(encoding=0)],
-    ['TSST', '\x0012345', '12345', '', dict(encoding=0)],
-    ['TYER', '\x002004', '2004', 2004, dict(encoding=0)],
+    ['TIT2', b'\x01\xff\xfe\x38\x00\x00\x38', u'8\u3800', '', dict(encoding=1)],
+    ['TIT3', b'\x00a/b', 'a/b', '', dict(encoding=0)],
+    ['TKEY', b'\x00A#m', 'A#m', '', dict(encoding=0)],
+    ['TLAN', b'\x006241', '6241', '', dict(encoding=0)],
+    ['TLEN', b'\x006241', '6241', 6241, dict(encoding=0)],
+    ['TMCL', b'\x02\x00a\x00\x00\x00b', [["a", "b"]], '', dict(encoding=2)],
+    ['TMED', b'\x00med', 'med', '', dict(encoding=0)],
+    ['TMOO', b'\x00moo', 'moo', '', dict(encoding=0)],
+    ['TOAL', b'\x00alb', 'alb', '', dict(encoding=0)],
+    ['TOFN', b'\x0012 : bar', '12 : bar', '', dict(encoding=0)],
+    ['TOLY', b'\x00lyr', 'lyr', '', dict(encoding=0)],
+    ['TOPE', b'\x00own/lic', 'own/lic', '', dict(encoding=0)],
+    ['TORY', b'\x001923', '1923', 1923, dict(encoding=0)],
+    ['TOWN', b'\x00own/lic', 'own/lic', '', dict(encoding=0)],
+    ['TPE1', b'\x00ab', ['ab'], '', dict(encoding=0)],
+    ['TPE2', b'\x00ab\x00cd\x00ef', ['ab','cd','ef'], '', dict(encoding=0)],
+    ['TPE3', b'\x00ab\x00cd', ['ab','cd'], '', dict(encoding=0)],
+    ['TPE4', b'\x00ab\x00', ['ab'], '', dict(encoding=0)],
+    ['TPOS', b'\x0008/32', '08/32', 8, dict(encoding=0)],
+    ['TPRO', b'\x00pro', 'pro', '', dict(encoding=0)],
+    ['TPUB', b'\x00pub', 'pub', '', dict(encoding=0)],
+    ['TRCK', b'\x004/9', '4/9', 4, dict(encoding=0)],
+    ['TRDA', b'\x00Sun Jun 12', 'Sun Jun 12', '', dict(encoding=0)],
+    ['TRSN', b'\x00ab/cd', 'ab/cd', '', dict(encoding=0)],
+    ['TRSO', b'\x00ab', 'ab', '', dict(encoding=0)],
+    ['TSIZ', b'\x0012345', '12345', 12345, dict(encoding=0)],
+    ['TSOA', b'\x00ab', 'ab', '', dict(encoding=0)],
+    ['TSOP', b'\x00ab', 'ab', '', dict(encoding=0)],
+    ['TSOT', b'\x00ab', 'ab', '', dict(encoding=0)],
+    ['TSO2', b'\x00ab', 'ab', '', dict(encoding=0)],
+    ['TSOC', b'\x00ab', 'ab', '', dict(encoding=0)],
+    ['TSRC', b'\x0012345', '12345', '', dict(encoding=0)],
+    ['TSSE', b'\x0012345', '12345', '', dict(encoding=0)],
+    ['TSST', b'\x0012345', '12345', '', dict(encoding=0)],
+    ['TYER', b'\x002004', '2004', 2004, dict(encoding=0)],
 
-    ['TXXX', '\x00usr\x00a/b\x00c', ['a/b','c'], '',
+    ['TXXX', b'\x00usr\x00a/b\x00c', ['a/b','c'], '',
      dict(encoding=0, desc='usr')],
 
-    ['WCOM', 'http://foo', 'http://foo', '', {}],
-    ['WCOP', 'http://bar', 'http://bar', '', {}],
-    ['WOAF', 'http://baz', 'http://baz', '', {}],
-    ['WOAR', 'http://bar', 'http://bar', '', {}],
-    ['WOAS', 'http://bar', 'http://bar', '', {}],
-    ['WORS', 'http://bar', 'http://bar', '', {}],
-    ['WPAY', 'http://bar', 'http://bar', '', {}],
-    ['WPUB', 'http://bar', 'http://bar', '', {}],
+    ['WCOM', b'http://foo', 'http://foo', '', {}],
+    ['WCOP', b'http://bar', 'http://bar', '', {}],
+    ['WOAF', b'http://baz', 'http://baz', '', {}],
+    ['WOAR', b'http://bar', 'http://bar', '', {}],
+    ['WOAS', b'http://bar', 'http://bar', '', {}],
+    ['WORS', b'http://bar', 'http://bar', '', {}],
+    ['WPAY', b'http://bar', 'http://bar', '', {}],
+    ['WPUB', b'http://bar', 'http://bar', '', {}],
 
-    ['WXXX', '\x00usr\x00http', 'http', '', dict(encoding=0, desc='usr')],
+    ['WXXX', b'\x00usr\x00http', 'http', '', dict(encoding=0, desc='usr')],
 
-    ['IPLS', '\x00a\x00A\x00b\x00B\x00', [['a','A'],['b','B']], '',
+    ['IPLS', b'\x00a\x00A\x00b\x00B\x00', [['a','A'],['b','B']], '',
         dict(encoding=0)],
 
-    ['MCDI', '\x01\x02\x03\x04', '\x01\x02\x03\x04', '', {}],
+    ['MCDI', b'\x01\x02\x03\x04', '\x01\x02\x03\x04', '', {}],
     
-    ['ETCO', '\x01\x12\x00\x00\x7f\xff', [(18, 32767)], '', dict(format=1)],
+    ['ETCO', b'\x01\x12\x00\x00\x7f\xff', [(18, 32767)], '', dict(format=1)],
 
-    ['COMM', '\x00ENUT\x00Com', 'Com', '',
+    ['COMM', b'\x00ENUT\x00Com', 'Com', '',
         dict(desc='T', lang='ENU', encoding=0)],
     # found in a real MP3
-    ['COMM', '\x00\x00\xcc\x01\x00     ', '     ', '',
+    ['COMM', b'\x00\x00\xcc\x01\x00     ', '     ', '',
         dict(desc=u'', lang='\x00\xcc\x01', encoding=0)],
 
-    ['APIC', '\x00-->\x00\x03cover\x00cover.jpg', 'cover.jpg', '',
+    ['APIC', b'\x00-->\x00\x03cover\x00cover.jpg', 'cover.jpg', '',
         dict(mime='-->', type=3, desc='cover', encoding=0)],
-    ['USER', '\x00ENUCom', 'Com', '', dict(lang='ENU', encoding=0)],
+    ['USER', b'\x00ENUCom', 'Com', '', dict(lang='ENU', encoding=0)],
 
-    ['RVA2', 'testdata\x00\x01\xfb\x8c\x10\x12\x23',
+    ['RVA2', b'testdata\x00\x01\xfb\x8c\x10\x12\x23',
         'Master volume: -2.2266 dB/0.1417', '',
         dict(desc='testdata', channel=1, gain=-2.22656, peak=0.14169)],
 
-    ['RVA2', 'testdata\x00\x01\xfb\x8c\x24\x01\x22\x30\x00\x00',
+    ['RVA2', b'testdata\x00\x01\xfb\x8c\x24\x01\x22\x30\x00\x00',
         'Master volume: -2.2266 dB/0.1417', '',
         dict(desc='testdata', channel=1, gain=-2.22656, peak=0.14169)],
 
-    ['RVA2', 'testdata2\x00\x01\x04\x01\x00',
+    ['RVA2', b'testdata2\x00\x01\x04\x01\x00',
         'Master volume: +2.0020 dB/0.0000', '',
         dict(desc='testdata2', channel=1, gain=2.001953125, peak=0)],
 
-    ['PCNT', '\x00\x00\x00\x11', 17, 17, dict(count=17)],
+    ['PCNT', b'\x00\x00\x00\x11', 17, 17, dict(count=17)],
     ['POPM', 'foo@bar.org\x00\xde\x00\x00\x00\x11', 222, 222,
         dict(email="foo@bar.org", rating=222, count=17)],
-    ['POPM', 'foo@bar.org\x00\xde\x00', 222, 222,
+    ['POPM', b'foo@bar.org\x00\xde\x00', 222, 222,
         dict(email="foo@bar.org", rating=222, count=0)],
     # Issue #33 - POPM may have no playcount at all.
-    ['POPM', 'foo@bar.org\x00\xde', 222, 222,
+    ['POPM', b'foo@bar.org\x00\xde', 222, 222,
         dict(email="foo@bar.org", rating=222)],
 
-    ['UFID', 'own\x00data', 'data', '', dict(data='data', owner='own')],
-    ['UFID', 'own\x00\xdd', '\xdd', '', dict(data='\xdd', owner='own')],
+    ['UFID', b'own\x00data', 'data', '', dict(data='data', owner='own')],
+    ['UFID', b'own\x00\xdd', '\xdd', '', dict(data='\xdd', owner='own')],
 
-    ['GEOB', '\x00mime\x00name\x00desc\x00data', 'data', '',
+    ['GEOB', b'\x00mime\x00name\x00desc\x00data', 'data', '',
         dict(encoding=0, mime='mime', filename='name', desc='desc')],
 
-    ['USLT', '\x00engsome lyrics\x00woo\nfun', 'woo\nfun', '',
+    ['USLT', b'\x00engsome lyrics\x00woo\nfun', 'woo\nfun', '',
      dict(encoding=0, lang='eng', desc='some lyrics', text='woo\nfun')],
 
-    ['SYLT', ('\x00eng\x02\x01some lyrics\x00foo\x00\x00\x00\x00\x01bar'
-              '\x00\x00\x00\x00\x10'), "foobar", '',
+    ['SYLT', (b'\x00eng\x02\x01some lyrics\x00foo\x00\x00\x00\x00\x01bar'
+              b'\x00\x00\x00\x00\x10'), "foobar", '',
      dict(encoding=0, lang='eng', type=1, format=2, desc='some lyrics')],
 
-    ['POSS', '\x01\x0f', 15, 15, dict(format=1, position=15)],
-    ['OWNE', '\x00USD10.01\x0020041010CDBaby', 'CDBaby', 'CDBaby',
+    ['POSS', b'\x01\x0f', 15, 15, dict(format=1, position=15)],
+    ['OWNE', b'\x00USD10.01\x0020041010CDBaby', 'CDBaby', 'CDBaby',
      dict(encoding=0, price="USD10.01", date='20041010', seller='CDBaby')],
 
-    ['PRIV', 'a@b.org\x00random data', 'random data', 'random data',
+    ['PRIV', b'a@b.org\x00random data', 'random data', 'random data',
      dict(owner='a@b.org', data='random data')],
-    ['PRIV', 'a@b.org\x00\xdd', '\xdd', '\xdd',
+    ['PRIV', b'a@b.org\x00\xdd', '\xdd', '\xdd',
      dict(owner='a@b.org', data='\xdd')],
 
-    ['SIGN', '\x92huh?', 'huh?', 'huh?', dict(group=0x92, sig='huh?')],
-    ['ENCR', 'a@b.org\x00\x92Data!', 'Data!', 'Data!',
+    ['SIGN', b'\x92huh?', 'huh?', 'huh?', dict(group=0x92, sig='huh?')],
+    ['ENCR', b'a@b.org\x00\x92Data!', 'Data!', 'Data!',
      dict(owner='a@b.org', method=0x92, data='Data!')],
-    ['SEEK', '\x00\x12\x00\x56', 0x12*256*256+0x56, 0x12*256*256+0x56,
+    ['SEEK', b'\x00\x12\x00\x56', 0x12*256*256+0x56, 0x12*256*256+0x56,
      dict(offset=0x12*256*256+0x56)],
 
     ['SYTC', "\x01\x10obar", '\x10obar', '', dict(format=1, data='\x10obar')],
     
-    ['RBUF', '\x00\x12\x00', 0x12*256, 0x12*256, dict(size=0x12*256)],
-    ['RBUF', '\x00\x12\x00\x01', 0x12*256, 0x12*256,
+    ['RBUF', b'\x00\x12\x00', 0x12*256, 0x12*256, dict(size=0x12*256)],
+    ['RBUF', b'\x00\x12\x00\x01', 0x12*256, 0x12*256,
      dict(size=0x12*256, info=1)],
-    ['RBUF', '\x00\x12\x00\x01\x00\x00\x00\x23', 0x12*256, 0x12*256,
+    ['RBUF', b'\x00\x12\x00\x01\x00\x00\x00\x23', 0x12*256, 0x12*256,
      dict(size=0x12*256, info=1, offset=0x23)],
 
-    ['RVRB', '\x12\x12\x23\x23\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11',
+    ['RVRB', b'\x12\x12\x23\x23\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11',
      (0x12*256+0x12, 0x23*256+0x23), '',
      dict(left=0x12*256+0x12, right=0x23*256+0x23) ],
 
-    ['AENC', 'a@b.org\x00\x00\x12\x00\x23', 'a@b.org', 'a@b.org',
+    ['AENC', b'a@b.org\x00\x00\x12\x00\x23', 'a@b.org', 'a@b.org',
      dict(owner='a@b.org', preview_start=0x12, preview_length=0x23)],
-    ['AENC', 'a@b.org\x00\x00\x12\x00\x23!', 'a@b.org', 'a@b.org',
+    ['AENC', b'a@b.org\x00\x00\x12\x00\x23!', 'a@b.org', 'a@b.org',
      dict(owner='a@b.org', preview_start=0x12, preview_length=0x23, data='!')],
 
-    ['GRID', 'a@b.org\x00\x99', 'a@b.org', 0x99,
+    ['GRID', b'a@b.org\x00\x99', 'a@b.org', 0x99,
      dict(owner='a@b.org', group=0x99)],
-    ['GRID', 'a@b.org\x00\x99data', 'a@b.org', 0x99,
+    ['GRID', b'a@b.org\x00\x99data', 'a@b.org', 0x99,
      dict(owner='a@b.org', group=0x99, data='data')],
 
-    ['COMR', '\x00USD10.00\x0020051010ql@sc.net\x00\x09Joe\x00A song\x00'
-     'x-image/fake\x00some data',
+    ['COMR', b'\x00USD10.00\x0020051010ql@sc.net\x00\x09Joe\x00A song\x00'
+     b'x-image/fake\x00some data',
      COMR(encoding=0, price="USD10.00", valid_until="20051010",
           contact="ql@sc.net", format=9, seller="Joe", desc="A song",
           mime='x-image/fake', logo='some data'), '',
@@ -617,130 +617,130 @@ def TestReadTags():
         contact="ql@sc.net", format=9, seller="Joe", desc="A song",
         mime='x-image/fake', logo='some data')],
 
-    ['COMR', '\x00USD10.00\x0020051010ql@sc.net\x00\x09Joe\x00A song\x00',
+    ['COMR', b'\x00USD10.00\x0020051010ql@sc.net\x00\x09Joe\x00A song\x00',
      COMR(encoding=0, price="USD10.00", valid_until="20051010",
           contact="ql@sc.net", format=9, seller="Joe", desc="A song"), '',
      dict(
         encoding=0, price="USD10.00", valid_until="20051010",
         contact="ql@sc.net", format=9, seller="Joe", desc="A song")],
 
-    ['MLLT', '\x00\x01\x00\x00\x02\x00\x00\x03\x04\x08foobar', 'foobar', '',
+    ['MLLT', b'\x00\x01\x00\x00\x02\x00\x00\x03\x04\x08foobar', 'foobar', '',
      dict(frames=1, bytes=2, milliseconds=3, bits_for_bytes=4,
           bits_for_milliseconds=8, data='foobar')],
 
-    ['EQU2', '\x00Foobar\x00\x01\x01\x04\x00', [(128.5, 2.0)], '',
+    ['EQU2', b'\x00Foobar\x00\x01\x01\x04\x00', [(128.5, 2.0)], '',
      dict(method=0, desc="Foobar")],
 
-    ['ASPI', '\x00\x00\x00\x00\x00\x00\x00\x10\x00\x03\x08\x01\x02\x03',
+    ['ASPI', b'\x00\x00\x00\x00\x00\x00\x00\x10\x00\x03\x08\x01\x02\x03',
      [1, 2, 3], '', dict(S=0, L=16, N=3, b=8)],
 
-    ['ASPI', '\x00\x00\x00\x00\x00\x00\x00\x10\x00\x03\x10'
-     '\x00\x01\x00\x02\x00\x03', [1, 2, 3], '', dict(S=0, L=16, N=3, b=16)],
+    ['ASPI', b'\x00\x00\x00\x00\x00\x00\x00\x10\x00\x03\x10'
+     b'\x00\x01\x00\x02\x00\x03', [1, 2, 3], '', dict(S=0, L=16, N=3, b=16)],
 
-    ['LINK', 'TIT1http://www.example.org/TIT1.txt\x00',
+    ['LINK', b'TIT1http://www.example.org/TIT1.txt\x00',
      ("TIT1", 'http://www.example.org/TIT1.txt'), '',
      dict(frameid='TIT1', url='http://www.example.org/TIT1.txt')],
-    ['LINK', 'COMMhttp://www.example.org/COMM.txt\x00engfoo',
+    ['LINK', b'COMMhttp://www.example.org/COMM.txt\x00engfoo',
      ("COMM", 'http://www.example.org/COMM.txt', 'engfoo'), '',
      dict(frameid='COMM', url='http://www.example.org/COMM.txt',
           data='engfoo')],
 
     # iTunes podcast frames
-    ['TGID', '\x00i', u'i', '', dict(encoding=0)],
-    ['TDES', '\x00ii', u'ii', '', dict(encoding=0)],
-    ['WFED', 'http://zzz', 'http://zzz', '', {}],
+    ['TGID', b'\x00i', u'i', '', dict(encoding=0)],
+    ['TDES', b'\x00ii', u'ii', '', dict(encoding=0)],
+    ['WFED', b'http://zzz', 'http://zzz', '', {}],
 
     # 2.2 tags
-    ['UFI', 'own\x00data', 'data', '', dict(data='data', owner='own')],
-    ['SLT', ('\x00eng\x02\x01some lyrics\x00foo\x00\x00\x00\x00\x01bar'
-              '\x00\x00\x00\x00\x10'), "foobar", '',
+    ['UFI', b'own\x00data', 'data', '', dict(data='data', owner='own')],
+    ['SLT', (b'\x00eng\x02\x01some lyrics\x00foo\x00\x00\x00\x00\x01bar'
+              b'\x00\x00\x00\x00\x10'), "foobar", '',
      dict(encoding=0, lang='eng', type=1, format=2, desc='some lyrics')],
-    ['TT1', '\x00ab\x00', 'ab', '', dict(encoding=0)],
-    ['TT2', '\x00ab', 'ab', '', dict(encoding=0)],
-    ['TT3', '\x00ab', 'ab', '', dict(encoding=0)],
-    ['TP1', '\x00ab\x00', 'ab', '', dict(encoding=0)],
-    ['TP2', '\x00ab', 'ab', '', dict(encoding=0)],
-    ['TP3', '\x00ab', 'ab', '', dict(encoding=0)],
-    ['TP4', '\x00ab', 'ab', '', dict(encoding=0)],
-    ['TCM', '\x00ab/cd', 'ab/cd', '', dict(encoding=0)],
-    ['TXT', '\x00lyr', 'lyr', '', dict(encoding=0)],
-    ['TLA', '\x00ENU', 'ENU', '', dict(encoding=0)],
-    ['TCO', '\x00gen', 'gen', '', dict(encoding=0)],
-    ['TAL', '\x00alb', 'alb', '', dict(encoding=0)],
-    ['TPA', '\x001/9', '1/9', 1, dict(encoding=0)],
-    ['TRK', '\x002/8', '2/8', 2, dict(encoding=0)],
-    ['TRC', '\x00isrc', 'isrc', '', dict(encoding=0)],
-    ['TYE', '\x001900', '1900', 1900, dict(encoding=0)],
-    ['TDA', '\x002512', '2512', '', dict(encoding=0)],
-    ['TIM', '\x001225', '1225', '', dict(encoding=0)],
-    ['TRD', '\x00Jul 17', 'Jul 17', '', dict(encoding=0)],
-    ['TMT', '\x00DIG/A', 'DIG/A', '', dict(encoding=0)],
-    ['TFT', '\x00MPG/3', 'MPG/3', '', dict(encoding=0)],
-    ['TBP', '\x00133', '133', 133, dict(encoding=0)],
-    ['TCP', '\x001', '1', 1, dict(encoding=0)],
-    ['TCP', '\x000', '0', 0, dict(encoding=0)],
-    ['TCR', '\x00Me', 'Me', '', dict(encoding=0)],
-    ['TPB', '\x00Him', 'Him', '', dict(encoding=0)],
-    ['TEN', '\x00Lamer', 'Lamer', '', dict(encoding=0)],
-    ['TSS', '\x00ab', 'ab', '', dict(encoding=0)],
-    ['TOF', '\x00ab:cd', 'ab:cd', '', dict(encoding=0)],
-    ['TLE', '\x0012', '12', 12, dict(encoding=0)],
-    ['TSI', '\x0012', '12', 12, dict(encoding=0)],
-    ['TDY', '\x0012', '12', 12, dict(encoding=0)],
-    ['TKE', '\x00A#m', 'A#m', '', dict(encoding=0)],
-    ['TOT', '\x00org', 'org', '', dict(encoding=0)],
-    ['TOA', '\x00org', 'org', '', dict(encoding=0)],
-    ['TOL', '\x00org', 'org', '', dict(encoding=0)],
-    ['TOR', '\x001877', '1877', 1877, dict(encoding=0)],
-    ['TXX', '\x00desc\x00val', 'val', '', dict(encoding=0, desc='desc')],
+    ['TT1', b'\x00ab\x00', 'ab', '', dict(encoding=0)],
+    ['TT2', b'\x00ab', 'ab', '', dict(encoding=0)],
+    ['TT3', b'\x00ab', 'ab', '', dict(encoding=0)],
+    ['TP1', b'\x00ab\x00', 'ab', '', dict(encoding=0)],
+    ['TP2', b'\x00ab', 'ab', '', dict(encoding=0)],
+    ['TP3', b'\x00ab', 'ab', '', dict(encoding=0)],
+    ['TP4', b'\x00ab', 'ab', '', dict(encoding=0)],
+    ['TCM', b'\x00ab/cd', 'ab/cd', '', dict(encoding=0)],
+    ['TXT', b'\x00lyr', 'lyr', '', dict(encoding=0)],
+    ['TLA', b'\x00ENU', 'ENU', '', dict(encoding=0)],
+    ['TCO', b'\x00gen', 'gen', '', dict(encoding=0)],
+    ['TAL', b'\x00alb', 'alb', '', dict(encoding=0)],
+    ['TPA', b'\x001/9', '1/9', 1, dict(encoding=0)],
+    ['TRK', b'\x002/8', '2/8', 2, dict(encoding=0)],
+    ['TRC', b'\x00isrc', 'isrc', '', dict(encoding=0)],
+    ['TYE', b'\x001900', '1900', 1900, dict(encoding=0)],
+    ['TDA', b'\x002512', '2512', '', dict(encoding=0)],
+    ['TIM', b'\x001225', '1225', '', dict(encoding=0)],
+    ['TRD', b'\x00Jul 17', 'Jul 17', '', dict(encoding=0)],
+    ['TMT', b'\x00DIG/A', 'DIG/A', '', dict(encoding=0)],
+    ['TFT', b'\x00MPG/3', 'MPG/3', '', dict(encoding=0)],
+    ['TBP', b'\x00133', '133', 133, dict(encoding=0)],
+    ['TCP', b'\x001', '1', 1, dict(encoding=0)],
+    ['TCP', b'\x000', '0', 0, dict(encoding=0)],
+    ['TCR', b'\x00Me', 'Me', '', dict(encoding=0)],
+    ['TPB', b'\x00Him', 'Him', '', dict(encoding=0)],
+    ['TEN', b'\x00Lamer', 'Lamer', '', dict(encoding=0)],
+    ['TSS', b'\x00ab', 'ab', '', dict(encoding=0)],
+    ['TOF', b'\x00ab:cd', 'ab:cd', '', dict(encoding=0)],
+    ['TLE', b'\x0012', '12', 12, dict(encoding=0)],
+    ['TSI', b'\x0012', '12', 12, dict(encoding=0)],
+    ['TDY', b'\x0012', '12', 12, dict(encoding=0)],
+    ['TKE', b'\x00A#m', 'A#m', '', dict(encoding=0)],
+    ['TOT', b'\x00org', 'org', '', dict(encoding=0)],
+    ['TOA', b'\x00org', 'org', '', dict(encoding=0)],
+    ['TOL', b'\x00org', 'org', '', dict(encoding=0)],
+    ['TOR', b'\x001877', '1877', 1877, dict(encoding=0)],
+    ['TXX', b'\x00desc\x00val', 'val', '', dict(encoding=0, desc='desc')],
 
-    ['WAF', 'http://zzz', 'http://zzz', '', {}],
-    ['WAR', 'http://zzz', 'http://zzz', '', {}],
-    ['WAS', 'http://zzz', 'http://zzz', '', {}],
-    ['WCM', 'http://zzz', 'http://zzz', '', {}],
-    ['WCP', 'http://zzz', 'http://zzz', '', {}],
-    ['WPB', 'http://zzz', 'http://zzz', '', {}],
-    ['WXX', '\x00desc\x00http', 'http', '', dict(encoding=0, desc='desc')],
+    ['WAF', b'http://zzz', 'http://zzz', '', {}],
+    ['WAR', b'http://zzz', 'http://zzz', '', {}],
+    ['WAS', b'http://zzz', 'http://zzz', '', {}],
+    ['WCM', b'http://zzz', 'http://zzz', '', {}],
+    ['WCP', b'http://zzz', 'http://zzz', '', {}],
+    ['WPB', b'http://zzz', 'http://zzz', '', {}],
+    ['WXX', b'\x00desc\x00http', 'http', '', dict(encoding=0, desc='desc')],
 
-    ['IPL', '\x00a\x00A\x00b\x00B\x00', [['a','A'],['b','B']], '',
+    ['IPL', b'\x00a\x00A\x00b\x00B\x00', [['a','A'],['b','B']], '',
         dict(encoding=0)],
-    ['MCI', '\x01\x02\x03\x04', '\x01\x02\x03\x04', '', {}],
+    ['MCI', b'\x01\x02\x03\x04', '\x01\x02\x03\x04', '', {}],
 
-    ['ETC', '\x01\x12\x00\x00\x7f\xff', [(18, 32767)], '', dict(format=1)],
+    ['ETC', b'\x01\x12\x00\x00\x7f\xff', [(18, 32767)], '', dict(format=1)],
 
-    ['COM', '\x00ENUT\x00Com', 'Com', '',
+    ['COM', b'\x00ENUT\x00Com', 'Com', '',
         dict(desc='T', lang='ENU', encoding=0)],
-    ['PIC', '\x00-->\x03cover\x00cover.jpg', 'cover.jpg', '',
+    ['PIC', b'\x00-->\x03cover\x00cover.jpg', 'cover.jpg', '',
         dict(mime='-->', type=3, desc='cover', encoding=0)],
 
-    ['POP', 'foo@bar.org\x00\xde\x00\x00\x00\x11', 222, 222,
+    ['POP', b'foo@bar.org\x00\xde\x00\x00\x00\x11', 222, 222,
         dict(email="foo@bar.org", rating=222, count=17)],
-    ['CNT', '\x00\x00\x00\x11', 17, 17, dict(count=17)],
-    ['GEO', '\x00mime\x00name\x00desc\x00data', 'data', '',
+    ['CNT', b'\x00\x00\x00\x11', 17, 17, dict(count=17)],
+    ['GEO', b'\x00mime\x00name\x00desc\x00data', 'data', '',
         dict(encoding=0, mime='mime', filename='name', desc='desc')],
-    ['ULT', '\x00engsome lyrics\x00woo\nfun', 'woo\nfun', '',
+    ['ULT', b'\x00engsome lyrics\x00woo\nfun', 'woo\nfun', '',
      dict(encoding=0, lang='eng', desc='some lyrics', text='woo\nfun')],
 
-    ['BUF', '\x00\x12\x00', 0x12*256, 0x12*256, dict(size=0x12*256)],
+    ['BUF', b'\x00\x12\x00', 0x12*256, 0x12*256, dict(size=0x12*256)],
 
-    ['CRA', 'a@b.org\x00\x00\x12\x00\x23', 'a@b.org', 'a@b.org',
+    ['CRA', b'a@b.org\x00\x00\x12\x00\x23', 'a@b.org', 'a@b.org',
      dict(owner='a@b.org', preview_start=0x12, preview_length=0x23)],
-    ['CRA', 'a@b.org\x00\x00\x12\x00\x23!', 'a@b.org', 'a@b.org',
+    ['CRA', b'a@b.org\x00\x00\x12\x00\x23!', 'a@b.org', 'a@b.org',
      dict(owner='a@b.org', preview_start=0x12, preview_length=0x23, data='!')],
 
-    ['REV', '\x12\x12\x23\x23\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11',
+    ['REV', b'\x12\x12\x23\x23\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11',
      (0x12*256+0x12, 0x23*256+0x23), '',
      dict(left=0x12*256+0x12, right=0x23*256+0x23) ],
 
-    ['STC', "\x01\x10obar", '\x10obar', '', dict(format=1, data='\x10obar')],
+    ['STC', b"\x01\x10obar", '\x10obar', '', dict(format=1, data='\x10obar')],
 
-    ['MLL', '\x00\x01\x00\x00\x02\x00\x00\x03\x04\x08foobar', 'foobar', '',
+    ['MLL', b'\x00\x01\x00\x00\x02\x00\x00\x03\x04\x08foobar', 'foobar', '',
      dict(frames=1, bytes=2, milliseconds=3, bits_for_bytes=4,
           bits_for_milliseconds=8, data='foobar')],
-    ['LNK', 'TT1http://www.example.org/TIT1.txt\x00',
-     ("TT1", 'http://www.example.org/TIT1.txt'), '',
+    ['LNK', b'TT1http://www.example.org/TIT1.txt\x00',
+     ("TT1", b'http://www.example.org/TIT1.txt'), '',
      dict(frameid='TT1', url='http://www.example.org/TIT1.txt')],
-    ['CRM', 'foo@example.org\x00test\x00woo',
+    ['CRM', b'foo@example.org\x00test\x00woo',
      'woo', '', dict(owner='foo@example.org', desc='test', data='woo')],
 
     ]
@@ -762,7 +762,7 @@ def TestReadTags():
             self.assertEquals(value, tag)
             if 'encoding' not in info:
                 self.assertRaises(AttributeError, getattr, tag, 'encoding')
-            for attr, value in info.iteritems():
+            for attr, value in iteritems(info):
                 t = tag
                 if not isinstance(value, list):
                     value = [value]
@@ -772,7 +772,7 @@ def TestReadTags():
                         self.failUnlessAlmostEqual(value, getattr(t, attr), 5)
                     else: self.assertEquals(value, getattr(t, attr))
 
-                    if isinstance(intval, (int,long)):
+                    if isinstance(intval, integer_types):
                         self.assertEquals(intval, pos(t))
                     else:
                         self.assertRaises(TypeError, pos, t)
@@ -791,10 +791,15 @@ def TestReadTags():
                 attr = spec.name
                 self.assertEquals(getattr(tag, attr), getattr(tag2, attr))
 
-            # test __str__, __unicode__
-            self.assertTrue(isinstance(tag.__str__(), str))
-            if hasattr(tag, "__unicode__"):
-                self.assertTrue(isinstance(tag.__unicode__(), unicode))
+            if PY2:
+                # test __str__, __unicode__
+                self.assertTrue(isinstance(tag.__str__(), str))
+                if hasattr(tag, "__unicode__"):
+                    self.assertTrue(isinstance(tag.__unicode__(), unicode))
+            else:
+                self.assertTrue(isinstance(tag.__bytes__(), bytes))
+                if hasattr(tag, "__str__"):
+                    self.assertTrue(isinstance(tag.__str__(), str))
 
         repr_tests['test_repr_%s_%d' % (tag, i)] = test_tag_repr
 

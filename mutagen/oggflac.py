@@ -55,11 +55,11 @@ class OggFLACStreamInfo(flac.StreamInfo):
             data = data._fileobj
 
         page = OggPage(data)
-        while not page.packets[0].startswith("\x7FFLAC"):
+        while not page.packets[0].startswith(b"\x7FFLAC"):
             page = OggPage(data)
         major, minor, self.packets, flac = struct.unpack(
             ">BBH4s", page.packets[0][5:13])
-        if flac != "fLaC":
+        if flac != b"fLaC":
             raise OggFLACHeaderError("invalid FLAC marker (%r)" % flac)
         elif (major, minor) != (1, 0):
             raise OggFLACHeaderError(
@@ -77,7 +77,7 @@ class OggFLACStreamInfo(flac.StreamInfo):
         self.length = page.position / float(self.sample_rate)
 
     def pprint(self):
-        return "Ogg " + super(OggFLACStreamInfo, self).pprint()
+        return u"Ogg " + super(OggFLACStreamInfo, self).pprint()
 
 
 class OggFLACVComment(VCFLACDict):
@@ -101,7 +101,7 @@ class OggFLACVComment(VCFLACDict):
         # second packet - and second page - must be the comment data.
         fileobj.seek(0)
         page = OggPage(fileobj)
-        while not page.packets[0].startswith("\x7FFLAC"):
+        while not page.packets[0].startswith(b"\x7FFLAC"):
             page = OggPage(fileobj)
 
         first_page = page
@@ -118,7 +118,7 @@ class OggFLACVComment(VCFLACDict):
 
         # Set the new comment block.
         data = self.write()
-        data = packets[0][0] + struct.pack(">I", len(data))[-3:] + data
+        data = packets[0][:1] + struct.pack(">I", len(data))[-3:] + data
         packets[0] = data
 
         new_pages = OggPage.from_packets(packets, old_pages[0].sequence)

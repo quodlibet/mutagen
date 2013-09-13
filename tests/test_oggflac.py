@@ -28,7 +28,7 @@ class TOggFLAC(TOggFileType):
 
     def test_streaminfo_bad_marker(self):
         page = OggPage(open(self.filename, "rb")).write()
-        page = page.replace("fLaC", "!fLa", 1)
+        page = page.replace(b"fLaC", b"!fLa", 1)
         self.failUnlessRaises(IOError, OggFLACStreamInfo, cBytesIO(page))
 
     def test_streaminfo_too_short(self):
@@ -37,7 +37,7 @@ class TOggFLAC(TOggFileType):
 
     def test_streaminfo_bad_version(self):
         page = OggPage(open(self.filename, "rb")).write()
-        page = page.replace("\x01\x00", "\x02\x00", 1)
+        page = page.replace(b"\x01\x00", b"\x02\x00", 1)
         self.failUnlessRaises(IOError, OggFLACStreamInfo, cBytesIO(page))
 
     def test_flac_reference_simple_save(self):

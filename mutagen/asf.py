@@ -11,7 +11,8 @@ __all__ = ["ASF", "Open"]
 
 import struct
 from mutagen import FileType, Metadata, StreamInfo
-from mutagen._util import insert_bytes, delete_bytes, DictMixin
+from mutagen._util import insert_bytes, delete_bytes, DictMixin, total_ordering
+from ._compat import swap_to_string
 
 
 class error(IOError):
@@ -165,7 +166,8 @@ class ASFBaseAttribute(object):
         return (struct.pack("<HHHHI", self.language or 0, self.stream or 0,
                             len(name), self.TYPE, len(data)) + name + data)
 
-
+@swap_to_string
+@total_ordering
 class ASFUnicodeAttribute(ASFBaseAttribute):
     """Unicode string attribute."""
     TYPE = 0x0000
@@ -179,15 +181,23 @@ class ASFUnicodeAttribute(ASFBaseAttribute):
     def data_size(self):
         return len(self._render())
 
+    def __bytes__(self):
+        return self.value.encode("utf-16-le")
+
     def __str__(self):
         return self.value
 
-    def __cmp__(self, other):
-        return cmp(unicode(self), other)
+    def __eq__(self, other):
+        return unicode(self) == other
+
+    def __lt__(self, other):
+        return unicode(self) < other
 
     __hash__ = ASFBaseAttribute.__hash__
 
 
+@swap_to_string
+@total_ordering
 class ASFByteArrayAttribute(ASFBaseAttribute):
     """Byte array attribute."""
     TYPE = 0x0001
@@ -201,15 +211,20 @@ class ASFByteArrayAttribute(ASFBaseAttribute):
     def data_size(self):
         return len(self.value)
 
-    def __str__(self):
+    def __bytes__(self):
         return "[binary data (%s bytes)]" % len(self.value)
 
-    def __cmp__(self, other):
-        return cmp(str(self), other)
+    def __eq__(self, other):
+        return self.value == other
+
+    def __lt__(self, other):
+        return self.value < other
 
     __hash__ = ASFBaseAttribute.__hash__
 
 
+@swap_to_string
+@total_ordering
 class ASFBoolAttribute(ASFBaseAttribute):
     """Bool attribute."""
     TYPE = 0x0002
@@ -230,17 +245,22 @@ class ASFBoolAttribute(ASFBaseAttribute):
         return 4
 
     def __bool__(self):
+        return bool(self.value)
+
+    def __bytes__(self):
         return self.value
 
-    def __str__(self):
-        return str(self.value)
+    def __eq__(self, other):
+        return bool(self.value) == other
 
-    def __cmp__(self, other):
-        return cmp(bool(self), other)
+    def __lt__(self, other):
+        return bool(self.value) < other
 
     __hash__ = ASFBaseAttribute.__hash__
 
 
+@swap_to_string
+@total_ordering
 class ASFDWordAttribute(ASFBaseAttribute):
     """DWORD attribute."""
     TYPE = 0x0003
@@ -257,15 +277,20 @@ class ASFDWordAttribute(ASFBaseAttribute):
     def __int__(self):
         return self.value
 
-    def __str__(self):
-        return str(self.value)
+    def __bytes__(self):
+        return self.value
 
-    def __cmp__(self, other):
-        return cmp(int(self), other)
+    def __eq__(self, other):
+        return int(self.value) == other
+
+    def __lt__(self, other):
+        return int(self.value) < other
 
     __hash__ = ASFBaseAttribute.__hash__
 
 
+@swap_to_string
+@total_ordering
 class ASFQWordAttribute(ASFBaseAttribute):
     """QWORD attribute."""
     TYPE = 0x0004
@@ -282,15 +307,20 @@ class ASFQWordAttribute(ASFBaseAttribute):
     def __int__(self):
         return self.value
 
-    def __str__(self):
-        return str(self.value)
+    def __bytes__(self):
+        return self.value
 
-    def __cmp__(self, other):
-        return cmp(int(self), other)
+    def __eq__(self, other):
+        return int(self.value) == other
+
+    def __lt__(self, other):
+        return int(self.value) < other
 
     __hash__ = ASFBaseAttribute.__hash__
 
 
+@swap_to_string
+@total_ordering
 class ASFWordAttribute(ASFBaseAttribute):
     """WORD attribute."""
     TYPE = 0x0005
@@ -307,15 +337,20 @@ class ASFWordAttribute(ASFBaseAttribute):
     def __int__(self):
         return self.value
 
-    def __str__(self):
-        return str(self.value)
+    def __bytes__(self):
+        return self.value
 
-    def __cmp__(self, other):
-        return cmp(int(self), other)
+    def __eq__(self, other):
+        return int(self.value) == other
+
+    def __lt__(self, other):
+        return int(self.value) < other
 
     __hash__ = ASFBaseAttribute.__hash__
 
 
+@swap_to_string
+@total_ordering
 class ASFGUIDAttribute(ASFBaseAttribute):
     """GUID attribute."""
     TYPE = 0x0006
@@ -329,11 +364,14 @@ class ASFGUIDAttribute(ASFBaseAttribute):
     def data_size(self):
         return len(self.value)
 
-    def __str__(self):
+    def __bytes__(self):
         return self.value
 
-    def __cmp__(self, other):
-        return cmp(str(self), other)
+    def __eq__(self, other):
+        return self.value == other
+
+    def __lt__(self, other):
+        return self.value < other
 
     __hash__ = ASFBaseAttribute.__hash__
 
@@ -429,11 +467,11 @@ class ContentDescriptionObject(BaseObject):
         def render_text(name):
             value = asf.tags.get(name, [])
             if value:
-                return value[0].encode("utf-16-le") + "\x00\x00"
+                return value[0].encode("utf-16-le") + b"\x00\x00"
             else:
-                return ""
+                return b""
         texts = map(render_text, _standard_attribute_names)
-        data = struct.pack("<HHHHH", *map(len, texts)) + "".join(texts)
+        data = struct.pack("<HHHHH", *map(len, texts)) + b"".join(texts)
         return self.GUID + struct.pack("<Q", 24 + len(data)) + data
 
 
@@ -461,7 +499,7 @@ class ExtendedContentDescriptionObject(BaseObject):
 
     def render(self, asf):
         attrs = asf.to_extended_content_description.items()
-        data = "".join([attr.render(name) for (name, attr) in attrs])
+        data = b"".join([attr.render(name) for (name, attr) in attrs])
         data = struct.pack("<QH", 26 + len(data), len(attrs)) + data
         return self.GUID + data
 
@@ -509,11 +547,11 @@ class HeaderExtensionObject(BaseObject):
             datapos += size
 
     def render(self, asf):
-        data = "".join([obj.render(asf) for obj in self.objects])
+        data = b"".join([obj.render(asf) for obj in self.objects])
         return (self.GUID + struct.pack("<Q", 24 + 16 + 6 + len(data)) +
-                "\x11\xD2\xD3\xAB\xBA\xA9\xcf\x11" +
-                "\x8E\xE6\x00\xC0\x0C\x20\x53\x65" +
-                "\x06\x00" + struct.pack("<I", len(data)) + data)
+                b"\x11\xD2\xD3\xAB\xBA\xA9\xcf\x11" +
+                b"\x8E\xE6\x00\xC0\x0C\x20\x53\x65" +
+                b"\x06\x00" + struct.pack("<I", len(data)) + data)
 
 
 class MetadataObject(BaseObject):
@@ -541,7 +579,7 @@ class MetadataObject(BaseObject):
 
     def render(self, asf):
         attrs = asf.to_metadata.items()
-        data = "".join([attr.render_m(name) for (name, attr) in attrs])
+        data = b"".join([attr.render_m(name) for (name, attr) in attrs])
         return (self.GUID + struct.pack("<QH", 26 + len(data), len(attrs)) +
                 data)
 
@@ -571,7 +609,7 @@ class MetadataLibraryObject(BaseObject):
 
     def render(self, asf):
         attrs = asf.to_metadata_library
-        data = "".join([attr.render_ml(name) for (name, attr) in attrs])
+        data = b"".join([attr.render_ml(name) for (name, attr) in attrs])
         return (self.GUID + struct.pack("<QH", 26 + len(data), len(attrs)) +
                 data)
 
@@ -654,7 +692,7 @@ class ASF(FileType):
         data = "".join([obj.render(self) for obj in self.objects])
         data = (HeaderObject.GUID +
                 struct.pack("<QL", len(data) + 30, len(self.objects)) +
-                "\x01\x02" + data)
+                b"\x01\x02" + data)
 
         fileobj = open(self.filename, "rb+")
         try:

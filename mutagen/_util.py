@@ -14,9 +14,22 @@ import struct
 
 from fnmatch import fnmatchcase
 
-from ._compat import chr_, text_type
+from ._compat import chr_, text_type, PY2, iteritems
 
 
+def total_ordering(cls):
+    assert hasattr(cls, "__eq__")
+    assert hasattr(cls, "__lt__")
+
+    cls.__le__ = lambda self, other: self == other or self < other
+    cls.__gt__ = lambda self, other: not (self == other or self < other)
+    cls.__ge__ = lambda self, other: not self < other
+    cls.__ne__ = lambda self, other: not self.__eq__(other)
+
+    return cls
+
+
+@total_ordering
 class DictMixin(object):
     """Implement the dict API using keys() and __*item__ methods.
 
@@ -35,14 +48,18 @@ class DictMixin(object):
     def __iter__(self):
         return iter(self.keys())
 
-    def has_key(self, key):
+    def __has_key(self, key):
         try:
             self[key]
         except KeyError:
             return False
         else:
             return True
-    __contains__ = has_key
+
+    if PY2:
+        has_key = __has_key
+
+    __contains__ = __has_key
 
     iterkeys = lambda self: iter(self.keys())
 
@@ -57,7 +74,7 @@ class DictMixin(object):
     iteritems = lambda s: iter(s.items())
 
     def clear(self):
-        for key in self.keys():
+        for key in list(self.keys()):
             self.__delitem__(key)
 
     def pop(self, key, *args):
@@ -74,11 +91,11 @@ class DictMixin(object):
         return value
 
     def popitem(self):
-        try:
-            key = self.keys()[0]
-            return key, self.pop(key)
-        except IndexError:
+        for key in self.keys():
+            break
+        else:
             raise KeyError("dictionary is empty")
+        return key, self.pop(key)
 
     def update(self, other=None, **kwargs):
         if other is None:
@@ -108,11 +125,11 @@ class DictMixin(object):
     def __repr__(self):
         return repr(dict(self.items()))
 
-    def __cmp__(self, other):
-        if other is None:
-            return 1
-        else:
-            return cmp(dict(self.items()), other)
+    def __eq__(self, other):
+        return dict(self.items()) == other
+
+    def __lt__(self, other):
+        return dict(self.items()) < other
 
     __hash__ = object.__hash__
 
@@ -354,19 +371,7 @@ def dict_match(d, key, default=None):
     try:
         return d[key]
     except KeyError:
-        for pattern, value in d.iteritems():
+        for pattern, value in iteritems(d):
             if fnmatchcase(key, pattern):
                 return value
     return default
-
-
-def total_ordering(cls):
-    assert hasattr(cls, "__eq__")
-    assert hasattr(cls, "__lt__")
-
-    cls.__le__ = lambda self, other: self == other or self < other
-    cls.__gt__ = lambda self, other: not (self == other or self < other)
-    cls.__ge__ = lambda self, other: not self < other
-    cls.__ne__ = lambda self, other: not self.__eq__(other)
-
-    return cls

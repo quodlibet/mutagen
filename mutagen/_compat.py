@@ -28,6 +28,8 @@ if PY2:
         return text.endswith(end)
 
     iteritems = lambda d: d.iteritems()
+    itervalues = lambda d: d.itervalues()
+    iterkeys = lambda d: d.iterkeys()
 
     exec("def reraise(tp, value, tb):\n raise tp, value, tb")
 
@@ -66,6 +68,8 @@ elif PY3:
         return text.endswith(end)
 
     iteritems = lambda d: iter(d.items())
+    itervalues = lambda d: iter(d.values())
+    iterkeys = lambda d: iter(d.keys())
 
     def reraise(tp, value, tb):
         raise tp(value).with_traceback(tb)
