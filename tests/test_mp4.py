@@ -33,20 +33,20 @@ class TAtom(TestCase):
         self.assertRaises(MP4MetadataError, Atom, fileobj)
 
     def test_render_too_big(self):
-        class TooBig(str):
+        class TooBig(bytes):
             def __len__(self):
                 return 1 << 32
-        data = TooBig("test")
+        data = TooBig(b"test")
         try: len(data)
         except OverflowError:
             # Py_ssize_t is still only 32 bits on this system.
-            self.failUnlessRaises(OverflowError, Atom.render, "data", data)
+            self.failUnlessRaises(OverflowError, Atom.render, b"data", data)
         else:
-            data = Atom.render("data", data)
+            data = Atom.render(b"data", data)
             self.failUnlessEqual(len(data), 4 + 4 + 8 + 4)
 
     def test_non_top_level_length_0_is_invalid(self):
-        data = cBytesIO(struct.pack(">I4s", 0, "whee"))
+        data = cBytesIO(struct.pack(">I4s", 0, b"whee"))
         self.assertRaises(MP4MetadataError, Atom, data, level=1)
 
     def test_length_0(self):
@@ -56,8 +56,8 @@ class TAtom(TestCase):
         self.failUnlessEqual(atom.length, 48)
 
     def test_length_0_container(self):
-        data = cBytesIO(struct.pack(">I4s", 0, "moov") +
-                        Atom.render("data", "whee"))
+        data = cBytesIO(struct.pack(">I4s", 0, b"moov") +
+                        Atom.render(b"data", b"whee"))
         atom = Atom(data)
         self.failUnlessEqual(len(atom.children), 1)
         self.failUnlessEqual(atom.length, 20)
@@ -72,17 +72,17 @@ class TAtoms(TestCase):
         self.atoms = Atoms(open(self.filename, "rb"))
 
     def test_getitem(self):
-        self.failUnless(self.atoms["moov"])
-        self.failUnless(self.atoms["moov.udta"])
-        self.failUnlessRaises(KeyError, self.atoms.__getitem__, "whee")
+        self.failUnless(self.atoms[b"moov"])
+        self.failUnless(self.atoms[b"moov.udta"])
+        self.failUnlessRaises(KeyError, self.atoms.__getitem__, b"whee")
 
     def test_contains(self):
-        self.failUnless("moov" in self.atoms)
-        self.failUnless("moov.udta" in self.atoms)
-        self.failUnless("whee" not in self.atoms)
+        self.failUnless(b"moov" in self.atoms)
+        self.failUnless(b"moov.udta" in self.atoms)
+        self.failUnless(b"whee" not in self.atoms)
 
     def test_name(self):
-        self.failUnlessEqual(self.atoms.atoms[0].name, "ftyp")
+        self.failUnlessEqual(self.atoms.atoms[0].name, b"ftyp")
 
     def test_children(self):
         self.failUnless(self.atoms.atoms[2].children)
@@ -91,7 +91,7 @@ class TAtoms(TestCase):
         self.failUnless(self.atoms.atoms[0].children is None)
 
     def test_extra_trailing_data(self):
-        data = cBytesIO(Atom.render("data", "whee") + "\x00\x00")
+        data = cBytesIO(Atom.render(b"data", b"whee") + b"\x00\x00")
         self.failUnless(Atoms(data))
 
     def test_repr(self):
@@ -287,9 +287,10 @@ class TMP4(TestCase):
         self.failIf(value and value != NOTFOUND)
 
     def test_score(self):
-        fileobj = open(self.filename)
+        fileobj = open(self.filename, "rb")
         header = fileobj.read(128)
         self.failUnless(MP4.score(self.filename, fileobj, header))
+        fileobj.close()
 
     def test_channels(self):
         self.failUnlessEqual(self.audio.info.channels, 2)
@@ -307,24 +308,24 @@ class TMP4(TestCase):
         self.failUnlessAlmostEqual(3.7, self.audio.info.length, 1)
 
     def test_padding(self):
-        self.audio["\xa9nam"] = u"wheeee" * 10
+        self.audio[b"\xa9nam"] = u"wheeee" * 10
         self.audio.save()
         size1 = os.path.getsize(self.audio.filename)
-        self.audio["\xa9nam"] = u"wheeee" * 11
+        self.audio[b"\xa9nam"] = u"wheeee" * 11
         self.audio.save()
         size2 = os.path.getsize(self.audio.filename)
         self.failUnless(size1, size2)
 
     def test_padding_2(self):
-        self.audio["\xa9nam"] = u"wheeee" * 10
+        self.audio[b"\xa9nam"] = u"wheeee" * 10
         self.audio.save()
         # Reorder "free" and "ilst" atoms
         fileobj = open(self.audio.filename, "rb+")
         atoms = Atoms(fileobj)
-        meta = atoms["moov", "udta", "meta"]
+        meta = atoms[b"moov", b"udta", b"meta"]
         meta_length1 = meta.length
-        ilst = meta["ilst",]
-        free = meta["free",]
+        ilst = meta[b"ilst",]
+        free = meta[b"free",]
         self.failUnlessEqual(ilst.offset + ilst.length, free.offset)
         fileobj.seek(ilst.offset)
         ilst_data = fileobj.read(ilst.length)
@@ -335,21 +336,21 @@ class TMP4(TestCase):
         fileobj.close()
         fileobj = open(self.audio.filename, "rb+")
         atoms = Atoms(fileobj)
-        meta = atoms["moov", "udta", "meta"]
-        ilst = meta["ilst",]
-        free = meta["free",]
+        meta = atoms[b"moov", b"udta", b"meta"]
+        ilst = meta[b"ilst",]
+        free = meta[b"free",]
         self.failUnlessEqual(free.offset + free.length, ilst.offset)
         fileobj.close()
         # Save the file
-        self.audio["\xa9nam"] = u"wheeee" * 11
+        self.audio[b"\xa9nam"] = u"wheeee" * 11
         self.audio.save()
         # Check the order of "free" and "ilst" atoms
         fileobj = open(self.audio.filename, "rb+")
         atoms = Atoms(fileobj)
         fileobj.close()
-        meta = atoms["moov", "udta", "meta"]
-        ilst = meta["ilst",]
-        free = meta["free",]
+        meta = atoms[b"moov", b"udta", b"meta"]
+        ilst = meta[b"ilst",]
+        free = meta[b"free",]
         self.failUnlessEqual(meta.length, meta_length1)
         self.failUnlessEqual(ilst.offset + ilst.length, free.offset)
 
@@ -363,112 +364,112 @@ class TMP4(TestCase):
             self.faad()
 
     def test_unicode(self):
-        self.set_key('\xa9nam', ['\xe3\x82\x8a\xe3\x81\x8b'],
+        self.set_key(b'\xa9nam', [b'\xe3\x82\x8a\xe3\x81\x8b'],
                      result=[u'\u308a\u304b'])
 
     def test_save_text(self):
-        self.set_key('\xa9nam', [u"Some test name"])
+        self.set_key(b'\xa9nam', [u"Some test name"])
 
     def test_save_texts(self):
-        self.set_key('\xa9nam', [u"Some test name", u"One more name"])
+        self.set_key(b'\xa9nam', [u"Some test name", u"One more name"])
 
     def test_freeform(self):
-        self.set_key('----:net.sacredchao.Mutagen:test key', ["whee"])
+        self.set_key(b'----:net.sacredchao.Mutagen:test key', [b"whee"])
 
     def test_freeform_2(self):
-        self.set_key('----:net.sacredchao.Mutagen:test key', "whee", ["whee"])
+        self.set_key(b'----:net.sacredchao.Mutagen:test key', b"whee", [b"whee"])
 
     def test_freeforms(self):
-        self.set_key('----:net.sacredchao.Mutagen:test key', ["whee", "uhh"])
+        self.set_key(b'----:net.sacredchao.Mutagen:test key', [b"whee", b"uhh"])
 
     def test_freeform_bin(self):
-        self.set_key('----:net.sacredchao.Mutagen:test key', [
-            MP4FreeForm('woooo', MP4FreeForm.FORMAT_TEXT),
-            MP4FreeForm('hoooo', MP4FreeForm.FORMAT_DATA),
-            MP4FreeForm('boooo'),
+        self.set_key(b'----:net.sacredchao.Mutagen:test key', [
+            MP4FreeForm(b'woooo', MP4FreeForm.FORMAT_TEXT),
+            MP4FreeForm(b'hoooo', MP4FreeForm.FORMAT_DATA),
+            MP4FreeForm(b'boooo'),
         ])
 
     def test_tracknumber(self):
-        self.set_key('trkn', [(1, 10)])
-        self.set_key('trkn', [(1, 10), (5, 20)], faad=False)
-        self.set_key('trkn', [])
+        self.set_key(b'trkn', [(1, 10)])
+        self.set_key(b'trkn', [(1, 10), (5, 20)], faad=False)
+        self.set_key(b'trkn', [])
 
     def test_disk(self):
-        self.set_key('disk', [(18, 0)])
-        self.set_key('disk', [(1, 10), (5, 20)], faad=False)
-        self.set_key('disk', [])
+        self.set_key(b'disk', [(18, 0)])
+        self.set_key(b'disk', [(1, 10), (5, 20)], faad=False)
+        self.set_key(b'disk', [])
 
     def test_tracknumber_too_small(self):
-        self.failUnlessRaises(ValueError, self.set_key, 'trkn', [(-1, 0)])
-        self.failUnlessRaises(ValueError, self.set_key, 'trkn', [(2**18, 1)])
+        self.failUnlessRaises(ValueError, self.set_key, b'trkn', [(-1, 0)])
+        self.failUnlessRaises(ValueError, self.set_key, b'trkn', [(2**18, 1)])
 
     def test_disk_too_small(self):
-        self.failUnlessRaises(ValueError, self.set_key, 'disk', [(-1, 0)])
-        self.failUnlessRaises(ValueError, self.set_key, 'disk', [(2**18, 1)])
+        self.failUnlessRaises(ValueError, self.set_key, b'disk', [(-1, 0)])
+        self.failUnlessRaises(ValueError, self.set_key, b'disk', [(2**18, 1)])
 
     def test_tracknumber_wrong_size(self):
-        self.failUnlessRaises(ValueError, self.set_key, 'trkn', (1,))
-        self.failUnlessRaises(ValueError, self.set_key, 'trkn', (1, 2, 3,))
-        self.failUnlessRaises(ValueError, self.set_key, 'trkn', [(1,)])
-        self.failUnlessRaises(ValueError, self.set_key, 'trkn', [(1, 2, 3,)])
+        self.failUnlessRaises(ValueError, self.set_key, b'trkn', (1,))
+        self.failUnlessRaises(ValueError, self.set_key, b'trkn', (1, 2, 3,))
+        self.failUnlessRaises(ValueError, self.set_key, b'trkn', [(1,)])
+        self.failUnlessRaises(ValueError, self.set_key, b'trkn', [(1, 2, 3,)])
 
     def test_disk_wrong_size(self):
-        self.failUnlessRaises(ValueError, self.set_key, 'disk', [(1,)])
-        self.failUnlessRaises(ValueError, self.set_key, 'disk', [(1, 2, 3,)])
+        self.failUnlessRaises(ValueError, self.set_key, b'disk', [(1,)])
+        self.failUnlessRaises(ValueError, self.set_key, b'disk', [(1, 2, 3,)])
 
     def test_tempo(self):
-        self.set_key('tmpo', [150])
-        self.set_key('tmpo', [])
+        self.set_key(b'tmpo', [150])
+        self.set_key(b'tmpo', [])
 
     def test_tempos(self):
-        self.set_key('tmpo', [160, 200], faad=False)
+        self.set_key(b'tmpo', [160, 200], faad=False)
 
     def test_tempo_invalid(self):
         for badvalue in [[10000000], [-1], 10, "foo"]:
             self.failUnlessRaises(ValueError, self.set_key, 'tmpo', badvalue)
 
     def test_compilation(self):
-        self.set_key('cpil', True)
+        self.set_key(b'cpil', True)
 
     def test_compilation_false(self):
-        self.set_key('cpil', False)
+        self.set_key(b'cpil', False)
 
     def test_gapless(self):
-        self.set_key('pgap', True)
+        self.set_key(b'pgap', True)
 
     def test_gapless_false(self):
-        self.set_key('pgap', False)
+        self.set_key(b'pgap', False)
 
     def test_podcast(self):
-        self.set_key('pcst', True)
+        self.set_key(b'pcst', True)
 
     def test_podcast_false(self):
-        self.set_key('pcst', False)
+        self.set_key(b'pcst', False)
 
     def test_cover(self):
-        self.set_key('covr', ['woooo'])
+        self.set_key(b'covr', [b'woooo'])
 
     def test_cover_png(self):
-        self.set_key('covr', [
-            MP4Cover('woooo', MP4Cover.FORMAT_PNG),
-            MP4Cover('hoooo', MP4Cover.FORMAT_JPEG),
+        self.set_key(b'covr', [
+            MP4Cover(b'woooo', MP4Cover.FORMAT_PNG),
+            MP4Cover(b'hoooo', MP4Cover.FORMAT_JPEG),
         ])
 
     def test_podcast_url(self):
-        self.set_key('purl', ['http://pdl.warnerbros.com/wbie/justiceleagueheroes/audio/JLH_EA.xml'])
+        self.set_key(b'purl', ['http://pdl.warnerbros.com/wbie/justiceleagueheroes/audio/JLH_EA.xml'])
 
     def test_episode_guid(self):
-        self.set_key('catg', ['falling-star-episode-1'])
+        self.set_key(b'catg', ['falling-star-episode-1'])
 
     def test_pprint(self):
         self.failUnless(self.audio.pprint())
 
     def test_pprint_binary(self):
-        self.audio["covr"] = "\x00\xa9\garbage"
+        self.audio[b"covr"] = "\x00\xa9\garbage"
         self.failUnless(self.audio.pprint())
 
     def test_pprint_pair(self):
-        self.audio["cpil"] = (1, 10)
+        self.audio[b"cpil"] = (1, 10)
         self.failUnless("cpil=(1, 10)" in self.audio.pprint())
 
     def test_delete(self):
@@ -484,14 +485,14 @@ class TMP4(TestCase):
         self.faad()
 
     def test_reads_unknown_text(self):
-        self.set_key("foob", [u"A test"])
+        self.set_key(b"foob", [u"A test"])
 
     def __read_offsets(self, filename):
         fileobj = open(filename, 'rb')
         atoms = Atoms(fileobj)
-        moov = atoms['moov']
+        moov = atoms[b'moov']
         samples = []
-        for atom in moov.findall('stco', True):
+        for atom in moov.findall(b'stco', True):
             fileobj.seek(atom.offset + 12)
             data = fileobj.read(atom.length - 12)
             fmt = ">%dI" % cdata.uint_be(data[:4])
@@ -499,7 +500,7 @@ class TMP4(TestCase):
             for offset in offsets:
                 fileobj.seek(offset)
                 samples.append(fileobj.read(8))
-        for atom in moov.findall('co64', True):
+        for atom in moov.findall(b'co64', True):
             fileobj.seek(atom.offset + 12)
             data = fileobj.read(atom.length - 12)
             fmt = ">%dQ" % cdata.uint_be(data[:4])
@@ -508,9 +509,9 @@ class TMP4(TestCase):
                 fileobj.seek(offset)
                 samples.append(fileobj.read(8))
         try:
-            for atom in atoms["moof"].findall('tfhd', True):
+            for atom in atoms[b"moof"].findall(b'tfhd', True):
                 data = fileobj.read(atom.length - 9)
-                flags = cdata.uint_be("\x00" + data[:3])
+                flags = cdata.uint_be(b"\x00" + data[:3])
                 if flags & 1:
                     offset = cdata.ulonglong_be(data[7:15])
                     fileobj.seek(offset)
@@ -522,7 +523,7 @@ class TMP4(TestCase):
 
     def test_update_offsets(self):
         aa = self.__read_offsets(self.original)
-        self.audio["\xa9nam"] = "wheeeeeeee"
+        self.audio[b"\xa9nam"] = "wheeeeeeee"
         self.audio.save()
         bb = self.__read_offsets(self.filename)
         for a, b in zip(aa, bb):
@@ -541,7 +542,7 @@ class TMP4HasTags(TMP4):
         self.faad()
 
     def test_shrink(self):
-        map(self.audio.__delitem__, self.audio.keys())
+        self.audio.clear()
         self.audio.save()
         audio = MP4(self.audio.filename)
         self.failIf(audio.tags)
@@ -550,7 +551,7 @@ class TMP4HasTags(TMP4):
         fileobj = open(self.audio.filename, "rb")
         try:
             atoms = Atoms(fileobj)
-            ilst = atoms["moov.udta.meta.ilst"]
+            ilst = atoms[b"moov.udta.meta.ilst"]
             # fake a too long atom length
             ilst.children[0].length += 10000000
             self.failUnlessRaises(MP4MetadataError, MP4Tags, atoms, fileobj)
@@ -570,14 +571,14 @@ class TMP4Datatypes(TMP4HasTags):
     original = os.path.join("tests", "data", "has-tags.m4a")
 
     def test_has_freeform(self):
-        key = "----:com.apple.iTunes:iTunNORM"
+        key = b"----:com.apple.iTunes:iTunNORM"
         self.failUnless(key in self.audio.tags)
         ff = self.audio.tags[key]
         self.failUnlessEqual(ff[0].dataformat, MP4FreeForm.FORMAT_TEXT)
 
     def test_has_covr(self):
-        self.failUnless('covr' in self.audio.tags)
-        covr = self.audio.tags['covr']
+        self.failUnless(b'covr' in self.audio.tags)
+        covr = self.audio.tags[b'covr']
         self.failUnlessEqual(len(covr), 2)
         self.failUnlessEqual(covr[0].imageformat, MP4Cover.FORMAT_PNG)
         self.failUnlessEqual(covr[1].imageformat, MP4Cover.FORMAT_JPEG)
