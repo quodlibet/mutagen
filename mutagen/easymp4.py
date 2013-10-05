@@ -7,6 +7,8 @@
 from mutagen import Metadata
 from mutagen._util import DictMixin, dict_match, utf8
 from mutagen.mp4 import MP4, MP4Tags, error, delete
+from ._compat import PY2, text_type
+
 
 __all__ = ["EasyMP4Tags", "EasyMP4", "delete", "error"]
 
@@ -96,11 +98,11 @@ class EasyMP4Tags(DictMixin, Metadata):
         """
 
         def getter(tags, key):
-            return map(unicode, tags[atomid])
+            return list(map(text_type, tags[atomid]))
 
         def setter(tags, key, value):
             clamp = lambda x: int(min(max(min_value, x), max_value))
-            tags[atomid] = map(clamp, map(int, value))
+            tags[atomid] = list(map(clamp, map(int, value)))
 
         def deleter(tags, key):
             del(tags[atomid])
@@ -115,7 +117,7 @@ class EasyMP4Tags(DictMixin, Metadata):
                 if total:
                     ret.append(u"%d/%d" % (track, total))
                 else:
-                    ret.append(unicode(track))
+                    ret.append(text_type(track))
             return ret
 
         def setter(tags, key, value):
@@ -138,7 +140,7 @@ class EasyMP4Tags(DictMixin, Metadata):
         cls.RegisterKey(key, getter, setter, deleter)
 
     @classmethod
-    def RegisterFreeformKey(cls, key, name, mean="com.apple.iTunes"):
+    def RegisterFreeformKey(cls, key, name, mean=b"com.apple.iTunes"):
         """Register a text key.
 
         If the key you need to register is a simple one-to-one mapping
@@ -148,13 +150,13 @@ class EasyMP4Tags(DictMixin, Metadata):
             EasyMP4Tags.RegisterFreeformKey(
                 "musicbrainz_artistid", "MusicBrainz Artist Id")
         """
-        atomid = "----:%s:%s" % (mean, name)
+        atomid = b"----:" + mean + b":" + name
 
         def getter(tags, key):
             return [s.decode("utf-8", "replace") for s in tags[atomid]]
 
         def setter(tags, key, value):
-            tags[atomid] = map(utf8, value)
+            tags[atomid] = [utf8(v) for v in value]
 
         def deleter(tags, key):
             del(tags[atomid])
@@ -171,8 +173,14 @@ class EasyMP4Tags(DictMixin, Metadata):
 
     def __setitem__(self, key, value):
         key = key.lower()
-        if isinstance(value, basestring):
-            value = [value]
+
+        if PY2:
+            if isinstance(value, basestring):
+                value = [value]
+        else:
+            if isinstance(value, text_type):
+                value = [value]
+
         func = dict_match(self.Set, key)
         if func is not None:
             return func(self.__mp4, key, value)
@@ -206,44 +214,44 @@ class EasyMP4Tags(DictMixin, Metadata):
         return "\n".join(strings)
 
 for atomid, key in {
-    '\xa9nam': 'title',
-    '\xa9alb': 'album',
-    '\xa9ART': 'artist',
-    'aART': 'albumartist',
-    '\xa9day': 'date',
-    '\xa9cmt': 'comment',
-    'desc': 'description',
-    '\xa9grp': 'grouping',
-    '\xa9gen': 'genre',
-    'cprt': 'copyright',
-    'soal': 'albumsort',
-    'soaa': 'albumartistsort',
-    'soar': 'artistsort',
-    'sonm': 'titlesort',
-    'soco': 'composersort',
+    b'\xa9nam': 'title',
+    b'\xa9alb': 'album',
+    b'\xa9ART': 'artist',
+    b'aART': 'albumartist',
+    b'\xa9day': 'date',
+    b'\xa9cmt': 'comment',
+    b'desc': 'description',
+    b'\xa9grp': 'grouping',
+    b'\xa9gen': 'genre',
+    b'cprt': 'copyright',
+    b'soal': 'albumsort',
+    b'soaa': 'albumartistsort',
+    b'soar': 'artistsort',
+    b'sonm': 'titlesort',
+    b'soco': 'composersort',
 }.items():
     EasyMP4Tags.RegisterTextKey(key, atomid)
 
 for name, key in {
-    'MusicBrainz Artist Id': 'musicbrainz_artistid',
-    'MusicBrainz Track Id': 'musicbrainz_trackid',
-    'MusicBrainz Album Id': 'musicbrainz_albumid',
-    'MusicBrainz Album Artist Id': 'musicbrainz_albumartistid',
-    'MusicIP PUID': 'musicip_puid',
-    'MusicBrainz Album Status': 'musicbrainz_albumstatus',
-    'MusicBrainz Album Type': 'musicbrainz_albumtype',
-    'MusicBrainz Release Country': 'releasecountry',
+    b'MusicBrainz Artist Id': 'musicbrainz_artistid',
+    b'MusicBrainz Track Id': 'musicbrainz_trackid',
+    b'MusicBrainz Album Id': 'musicbrainz_albumid',
+    b'MusicBrainz Album Artist Id': 'musicbrainz_albumartistid',
+    b'MusicIP PUID': 'musicip_puid',
+    b'MusicBrainz Album Status': 'musicbrainz_albumstatus',
+    b'MusicBrainz Album Type': 'musicbrainz_albumtype',
+    b'MusicBrainz Release Country': 'releasecountry',
 }.items():
     EasyMP4Tags.RegisterFreeformKey(key, name)
 
 for name, key in {
-    "tmpo": "bpm",
+    b"tmpo": "bpm",
 }.items():
     EasyMP4Tags.RegisterIntKey(key, name)
 
 for name, key in {
-    "trkn": "tracknumber",
-    "disk": "discnumber",
+    b"trkn": "tracknumber",
+    b"disk": "discnumber",
 }.items():
     EasyMP4Tags.RegisterIntPairKey(key, name)
 

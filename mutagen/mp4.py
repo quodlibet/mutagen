@@ -473,7 +473,7 @@ class MP4Tags(DictProxy, Metadata):
             atom.offset += delta
         fileobj.seek(atom.offset + 9)
         data = fileobj.read(atom.length - 9)
-        flags = cdata.uint_be("\x00" + data[:3])
+        flags = cdata.uint_be(b"\x00" + data[:3])
         if flags & 1:
             o = cdata.ulonglong_be(data[7:15])
             if o > offset:

@@ -102,32 +102,32 @@ class TMP4Info(TestCase):
 
     def test_no_soun(self):
         self.failUnlessRaises(
-            IOError, self.test_mdhd_version_1, "vide")
+            IOError, self.test_mdhd_version_1, b"vide")
 
-    def test_mdhd_version_1(self, soun="soun"):
-        mdhd = Atom.render("mdhd", (b"\x01\x00\x00\x00" + b"\x00" * 16 +
-                                    b"\x00\x00\x00\x02" + # 2 Hz
-                                    b"\x00\x00\x00\x00\x00\x00\x00\x10"))
-        hdlr = Atom.render("hdlr", b"\x00" * 8 + soun)
-        mdia = Atom.render("mdia", mdhd + hdlr)
-        trak = Atom.render("trak", mdia)
-        moov = Atom.render("moov", trak)
+    def test_mdhd_version_1(self, soun=b"soun"):
+        mdhd = Atom.render(b"mdhd", (b"\x01\x00\x00\x00" + b"\x00" * 16 +
+                                     b"\x00\x00\x00\x02" + # 2 Hz
+                                     b"\x00\x00\x00\x00\x00\x00\x00\x10"))
+        hdlr = Atom.render(b"hdlr", b"\x00" * 8 + soun)
+        mdia = Atom.render(b"mdia", mdhd + hdlr)
+        trak = Atom.render(b"trak", mdia)
+        moov = Atom.render(b"moov", trak)
         fileobj = cBytesIO(moov)
         atoms = Atoms(fileobj)
         info = MP4Info(atoms, fileobj)
         self.failUnlessEqual(info.length, 8)
 
     def test_multiple_tracks(self):
-        hdlr = Atom.render("hdlr", b"\x00" * 8 + b"whee")
-        mdia = Atom.render("mdia", hdlr)
-        trak1 = Atom.render("trak", mdia)
-        mdhd = Atom.render("mdhd", (b"\x01\x00\x00\x00" + b"\x00" * 16 +
-                                    b"\x00\x00\x00\x02" + # 2 Hz
-                                    b"\x00\x00\x00\x00\x00\x00\x00\x10"))
-        hdlr = Atom.render("hdlr", b"\x00" * 8 + b"soun")
-        mdia = Atom.render("mdia", mdhd + hdlr)
-        trak2 = Atom.render("trak", mdia)
-        moov = Atom.render("moov", trak1 + trak2)
+        hdlr = Atom.render(b"hdlr", b"\x00" * 8 + b"whee")
+        mdia = Atom.render(b"mdia", hdlr)
+        trak1 = Atom.render(b"trak", mdia)
+        mdhd = Atom.render(b"mdhd", (b"\x01\x00\x00\x00" + b"\x00" * 16 +
+                                     b"\x00\x00\x00\x02" + # 2 Hz
+                                     b"\x00\x00\x00\x00\x00\x00\x00\x10"))
+        hdlr = Atom.render(b"hdlr", b"\x00" * 8 + b"soun")
+        mdia = Atom.render(b"mdia", mdhd + hdlr)
+        trak2 = Atom.render(b"trak", mdia)
+        moov = Atom.render(b"moov", trak1 + trak2)
         fileobj = cBytesIO(moov)
         atoms = Atoms(fileobj)
         info = MP4Info(atoms, fileobj)
@@ -137,98 +137,98 @@ add(TMP4Info)
 class TMP4Tags(TestCase):
 
     def wrap_ilst(self, data):
-        ilst = Atom.render("ilst", data)
-        meta = Atom.render("meta", b"\x00" * 4 + ilst)
-        data = Atom.render("moov", Atom.render("udta", meta))
+        ilst = Atom.render(b"ilst", data)
+        meta = Atom.render(b"meta", b"\x00" * 4 + ilst)
+        data = Atom.render(b"moov", Atom.render(b"udta", meta))
         fileobj = cBytesIO(data)
         return MP4Tags(Atoms(fileobj), fileobj)
 
     def test_genre(self):
-        data = Atom.render("data", b"\x00" * 8 + b"\x00\x01")
-        genre = Atom.render("gnre", data)
+        data = Atom.render(b"data", b"\x00" * 8 + b"\x00\x01")
+        genre = Atom.render(b"gnre", data)
         tags = self.wrap_ilst(genre)
-        self.failIf("gnre" in tags)
-        self.failUnlessEqual(tags["\xa9gen"], ["Blues"])
+        self.failIf(b"gnre" in tags)
+        self.failUnlessEqual(tags[b"\xa9gen"], ["Blues"])
 
     def test_empty_cpil(self):
-        cpil = Atom.render("cpil", Atom.render("data", b"\x00" * 8))
+        cpil = Atom.render(b"cpil", Atom.render(b"data", b"\x00" * 8))
         tags = self.wrap_ilst(cpil)
-        self.failUnless("cpil" in tags)
-        self.failIf(tags["cpil"])
+        self.failUnless(b"cpil" in tags)
+        self.failIf(tags[b"cpil"])
 
     def test_genre_too_big(self):
-        data = Atom.render("data", b"\x00" * 8 + b"\x01\x00")
-        genre = Atom.render("gnre", data)
+        data = Atom.render(b"data", b"\x00" * 8 + b"\x01\x00")
+        genre = Atom.render(b"gnre", data)
         tags = self.wrap_ilst(genre)
-        self.failIf("gnre" in tags)
-        self.failIf("\xa9gen" in tags)
+        self.failIf(b"gnre" in tags)
+        self.failIf(b"\xa9gen" in tags)
 
     def test_strips_unknown_types(self):
-        data = Atom.render("data", b"\x00" * 8 + b"whee")
-        foob = Atom.render("foob", data)
+        data = Atom.render(b"data", b"\x00" * 8 + b"whee")
+        foob = Atom.render(b"foob", data)
         tags = self.wrap_ilst(foob)
         self.failIf(tags)
 
     def test_strips_bad_unknown_types(self):
-        data = Atom.render("datA", b"\x00" * 8 + b"whee")
-        foob = Atom.render("foob", data)
+        data = Atom.render(b"datA", b"\x00" * 8 + b"whee")
+        foob = Atom.render(b"foob", data)
         tags = self.wrap_ilst(foob)
         self.failIf(tags)
 
     def test_bad_covr(self):
-        data = Atom.render("foob", b"\x00\x00\x00\x0E" + b"\x00" * 4 + b"whee")
-        covr = Atom.render("covr", data)
+        data = Atom.render(b"foob", b"\x00\x00\x00\x0E" + b"\x00" * 4 + b"whee")
+        covr = Atom.render(b"covr", data)
         self.failUnlessRaises(MP4MetadataError, self.wrap_ilst, covr)
 
     def test_covr_blank_format(self):
-        data = Atom.render("data", b"\x00\x00\x00\x00" + b"\x00" * 4 + b"whee")
-        covr = Atom.render("covr", data)
+        data = Atom.render(b"data", b"\x00\x00\x00\x00" + b"\x00" * 4 + b"whee")
+        covr = Atom.render(b"covr", data)
         tags = self.wrap_ilst(covr)
-        self.failUnlessEqual(MP4Cover.FORMAT_JPEG, tags["covr"][0].imageformat)
+        self.failUnlessEqual(MP4Cover.FORMAT_JPEG, tags[b"covr"][0].imageformat)
 
     def test_render_bool(self):
-        self.failUnlessEqual(MP4Tags()._MP4Tags__render_bool('pgap', True),
+        self.failUnlessEqual(MP4Tags()._MP4Tags__render_bool(b'pgap', True),
                              b"\x00\x00\x00\x19pgap\x00\x00\x00\x11data"
                              b"\x00\x00\x00\x15\x00\x00\x00\x00\x01")
-        self.failUnlessEqual(MP4Tags()._MP4Tags__render_bool('pgap', False),
+        self.failUnlessEqual(MP4Tags()._MP4Tags__render_bool(b'pgap', False),
                              b"\x00\x00\x00\x19pgap\x00\x00\x00\x11data"
                              b"\x00\x00\x00\x15\x00\x00\x00\x00\x00")
 
     def test_render_text(self):
         self.failUnlessEqual(
-             MP4Tags()._MP4Tags__render_text('purl', ['http://foo/bar.xml'], 0),
+             MP4Tags()._MP4Tags__render_text(b'purl', ['http://foo/bar.xml'], 0),
              b"\x00\x00\x00*purl\x00\x00\x00\"data\x00\x00\x00\x00\x00\x00"
              b"\x00\x00http://foo/bar.xml")
         self.failUnlessEqual(
-             MP4Tags()._MP4Tags__render_text('aART', [u'\u0041lbum Artist']),
+             MP4Tags()._MP4Tags__render_text(b'aART', [u'\u0041lbum Artist']),
              b"\x00\x00\x00$aART\x00\x00\x00\x1cdata\x00\x00\x00\x01\x00\x00"
              b"\x00\x00\x41lbum Artist")
         self.failUnlessEqual(
-             MP4Tags()._MP4Tags__render_text('aART', [u'Album Artist', u'Whee']),
+             MP4Tags()._MP4Tags__render_text(b'aART', [u'Album Artist', u'Whee']),
              b"\x00\x00\x008aART\x00\x00\x00\x1cdata\x00\x00\x00\x01\x00\x00"
              b"\x00\x00Album Artist\x00\x00\x00\x14data\x00\x00\x00\x01\x00"
              b"\x00\x00\x00Whee")
         
     def test_render_data(self):
         self.failUnlessEqual(
-             MP4Tags()._MP4Tags__render_data('aART', 1, ['whee']),
+             MP4Tags()._MP4Tags__render_data(b'aART', 1, [b'whee']),
              b"\x00\x00\x00\x1caART"
              b"\x00\x00\x00\x14data\x00\x00\x00\x01\x00\x00\x00\x00whee")
         self.failUnlessEqual(
-             MP4Tags()._MP4Tags__render_data('aART', 2, ['whee', 'wee']),
+             MP4Tags()._MP4Tags__render_data(b'aART', 2, [b'whee', b'wee']),
              b"\x00\x00\x00/aART"
              b"\x00\x00\x00\x14data\x00\x00\x00\x02\x00\x00\x00\x00whee"
              b"\x00\x00\x00\x13data\x00\x00\x00\x02\x00\x00\x00\x00wee")
 
     def test_bad_text_data(self):
-        data = Atom.render("datA", "\x00\x00\x00\x01\x00\x00\x00\x00whee")
-        data = Atom.render("aART", data)
+        data = Atom.render(b"datA", b"\x00\x00\x00\x01\x00\x00\x00\x00whee")
+        data = Atom.render(b"aART", data)
         self.failUnlessRaises(MP4MetadataError, self.wrap_ilst, data)
 
     def test_render_freeform(self):
         self.failUnlessEqual(
              MP4Tags()._MP4Tags__render_freeform(
-             '----:net.sacredchao.Mutagen:test', ['whee', 'wee']),
+             b'----:net.sacredchao.Mutagen:test', [b'whee', b'wee']),
              b"\x00\x00\x00a----"
              b"\x00\x00\x00\"mean\x00\x00\x00\x00net.sacredchao.Mutagen"
              b"\x00\x00\x00\x10name\x00\x00\x00\x00test"
@@ -236,20 +236,20 @@ class TMP4Tags(TestCase):
              b"\x00\x00\x00\x13data\x00\x00\x00\x01\x00\x00\x00\x00wee")
 
     def test_bad_freeform(self):
-        mean = Atom.render("mean", "net.sacredchao.Mutagen")
-        name = Atom.render("name", "empty test key")
-        bad_freeform = Atom.render("----", "\x00" * 4 + mean + name)
+        mean = Atom.render(b"mean", b"net.sacredchao.Mutagen")
+        name = Atom.render(b"name", b"empty test key")
+        bad_freeform = Atom.render(b"----", b"\x00" * 4 + mean + name)
         self.failUnlessRaises(MP4MetadataError, self.wrap_ilst, bad_freeform)
 
     def test_pprint_non_text_list(self):
         tags = MP4Tags()
-        tags["tmpo"] = [120, 121]
-        tags["trck"] = [(1, 2), (3, 4)]
+        tags[b"tmpo"] = [120, 121]
+        tags[b"trck"] = [(1, 2), (3, 4)]
         tags.pprint()
 
     def test_freeform_data(self):
         # http://code.google.com/p/mutagen/issues/detail?id=103
-        key = "----:com.apple.iTunes:Encoding Params"
+        key = b"----:com.apple.iTunes:Encoding Params"
         value = (b"vers\x00\x00\x00\x01acbf\x00\x00\x00\x01brat\x00\x01\xf4"
                  b"\x00cdcv\x00\x01\x05\x04")
 
@@ -258,7 +258,7 @@ class TMP4Tags(TestCase):
                 b"\x00\x00\x00\x00\x00\x00\x00\x00vers\x00\x00\x00\x01acbf\x00"
                 b"\x00\x00\x01brat\x00\x01\xf4\x00cdcv\x00\x01\x05\x04")
 
-        tags = self.wrap_ilst(Atom.render("----", data))
+        tags = self.wrap_ilst(Atom.render(b"----", data))
         v = tags[key][0]
         self.failUnlessEqual(v, value)
         self.failUnlessEqual(v.dataformat, MP4FreeForm.FORMAT_DATA)
@@ -591,8 +591,8 @@ class TMP4CovrWithName(TMP4):
     original = os.path.join("tests", "data", "covr-with-name.m4a")
 
     def test_has_covr(self):
-        self.failUnless('covr' in self.audio.tags)
-        covr = self.audio.tags['covr']
+        self.failUnless(b'covr' in self.audio.tags)
+        covr = self.audio.tags[b'covr']
         self.failUnlessEqual(len(covr), 2)
         self.failUnlessEqual(covr[0].imageformat, MP4Cover.FORMAT_PNG)
         self.failUnlessEqual(covr[1].imageformat, MP4Cover.FORMAT_JPEG)
@@ -655,18 +655,19 @@ class TMP4UpdateParents64Bit(TestCase):
         shutil.copy(self.original, self.filename)
 
     def test_update_parents(self):
-        file = open(self.filename)
-        atoms = Atoms(file)
-        self.assertEqual(77, atoms.atoms[0].length)
-        self.assertEqual(61, atoms.atoms[0].children[0].length)
-        tags = MP4Tags(atoms, file)
-        tags['pgap'] = True
-        tags.save(self.filename)
-        file = open(self.filename)
-        atoms = Atoms(file)
-        # original size + 'pgap' size + padding
-        self.assertEqual(77 + 25 + 974, atoms.atoms[0].length)
-        self.assertEqual(61 + 25 + 974, atoms.atoms[0].children[0].length)
+        with open(self.filename, "rb") as fileobj:
+            atoms = Atoms(fileobj)
+            self.assertEqual(77, atoms.atoms[0].length)
+            self.assertEqual(61, atoms.atoms[0].children[0].length)
+            tags = MP4Tags(atoms, fileobj)
+            tags[b'pgap'] = True
+            tags.save(self.filename)
+
+        with open(self.filename, "rb") as fileobj:
+            atoms = Atoms(fileobj)
+            # original size + 'pgap' size + padding
+            self.assertEqual(77 + 25 + 974, atoms.atoms[0].length)
+            self.assertEqual(61 + 25 + 974, atoms.atoms[0].children[0].length)
 
     def tearDown(self):
         os.unlink(self.filename)

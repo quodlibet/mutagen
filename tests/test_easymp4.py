@@ -19,7 +19,7 @@ class TEasyMP4(TestCase):
         self.mp4.pprint()
 
     def test_has_key(self):
-        self.failIf(self.mp4.has_key("foo"))
+        self.failIf("foo" in self.mp4)
 
     def test_empty_file(self):
         empty = os.path.join('tests', 'data', 'emptyfile.mp3')
