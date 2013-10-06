@@ -40,9 +40,9 @@ class TASFInfo(TestCase):
         self.failUnlessAlmostEqual(self.wma3.info.length, 3.7, 1)
 
     def test_bitrate(self):
-        self.failUnlessEqual(self.wma1.info.bitrate / 1000, 64)
-        self.failUnlessEqual(self.wma2.info.bitrate / 1000, 38)
-        self.failUnlessEqual(self.wma3.info.bitrate / 1000, 58)
+        self.failUnlessEqual(self.wma1.info.bitrate // 1000, 64)
+        self.failUnlessEqual(self.wma2.info.bitrate // 1000, 38)
+        self.failUnlessEqual(self.wma3.info.bitrate // 1000, 58)
 
     def test_sample_rate(self):
         self.failUnlessEqual(self.wma1.info.sample_rate, 48000)
@@ -95,7 +95,7 @@ class TASF(TestCase):
         repr(ASFValue(u"foo", UNICODE, stream=1, language=2))
 
     def test_auto_guuid(self):
-        value = ASFValue('\x9eZl}\x89\xa2\xb5D\xb8\xa30\xfe', GUID)
+        value = ASFValue(b'\x9eZl}\x89\xa2\xb5D\xb8\xa30\xfe', GUID)
         self.set_key(u"WM/WMCollectionGroupID", value, [value])
 
     def test_auto_unicode(self):
@@ -205,7 +205,7 @@ class TASF(TestCase):
         self.failUnlessEqual(self.audio["QL/Mix"][3].stream, None)
 
     def test_data_size(self):
-        v = ASFValue("", UNICODE, data='4\xd8\x1e\xdd\x00\x00')
+        v = ASFValue("", UNICODE, data=b'4\xd8\x1e\xdd\x00\x00')
         self.failUnlessEqual(v.data_size(), len(v._render()))
 
 class TASFTags1(TASF):
@@ -258,7 +258,7 @@ class TASFLargeValue(TestCase):
 
     def test_save_small_bytearray(self):
         audio = ASF(self.filename)
-        audio["QL/LargeObject"] = [ASFValue("." * 0xFFFF, BYTEARRAY)]
+        audio["QL/LargeObject"] = [ASFValue(b"." * 0xFFFF, BYTEARRAY)]
         audio.save()
         self.failIf("QL/LargeObject" not in audio.to_extended_content_description)
         self.failIf("QL/LargeObject" in audio.to_metadata)
@@ -266,7 +266,7 @@ class TASFLargeValue(TestCase):
 
     def test_save_large_bytearray(self):
         audio = ASF(self.filename)
-        audio["QL/LargeObject"] = [ASFValue("." * (0xFFFF + 1), BYTEARRAY)]
+        audio["QL/LargeObject"] = [ASFValue(b"." * (0xFFFF + 1), BYTEARRAY)]
         audio.save()
         self.failIf("QL/LargeObject" in audio.to_extended_content_description)
         self.failIf("QL/LargeObject" in audio.to_metadata)
@@ -291,7 +291,7 @@ class TASFLargeValue(TestCase):
     def test_save_guid(self):
         # http://code.google.com/p/mutagen/issues/detail?id=81
         audio = ASF(self.filename)
-        audio["QL/GuidObject"] = [ASFValue(" "*16, GUID)]
+        audio["QL/GuidObject"] = [ASFValue(b" "*16, GUID)]
         audio.save()
         self.failIf("QL/GuidObject" in audio.to_extended_content_description)
         self.failIf("QL/GuidObject" in audio.to_metadata)

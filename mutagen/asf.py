@@ -12,7 +12,7 @@ __all__ = ["ASF", "Open"]
 import struct
 from mutagen import FileType, Metadata, StreamInfo
 from mutagen._util import insert_bytes, delete_bytes, DictMixin, total_ordering
-from ._compat import swap_to_string
+from ._compat import swap_to_string, text_type, PY2, string_types
 
 
 class error(IOError):
@@ -63,11 +63,12 @@ class ASFTags(list, DictMixin, Metadata):
 
     def __delitem__(self, key):
         """Delete all values associated with the key."""
-        to_delete = filter(lambda x: x[0] == key, self)
+        to_delete = list(filter(lambda x: x[0] == key, self))
         if not to_delete:
             raise KeyError(key)
         else:
-            map(self.remove, to_delete)
+            for k in to_delete:
+                self.remove(k)
 
     def __contains__(self, key):
         """Return true if the key has any values."""
@@ -93,10 +94,11 @@ class ASFTags(list, DictMixin, Metadata):
             pass
         for value in values:
             if key in _standard_attribute_names:
-                value = unicode(value)
+                value = text_type(value)
             elif not isinstance(value, ASFBaseAttribute):
-                if isinstance(value, basestring):
-                    value = ASFUnicodeAttribute(value)
+                if isinstance(value, string_types):
+                    if PY2 or isinstance(value, text_type):
+                        value = ASFUnicodeAttribute(value)
                 elif isinstance(value, bool):
                     value = ASFBoolAttribute(value)
                 elif isinstance(value, int):
@@ -107,7 +109,7 @@ class ASFTags(list, DictMixin, Metadata):
 
     def keys(self):
         """Return all keys in the comment."""
-        return self and set(zip(*self)[0])
+        return self and set(next(iter(zip(*self))))
 
     def as_dict(self):
         """Return a copy of the comment data in a real dict."""
@@ -143,13 +145,13 @@ class ASFBaseAttribute(object):
         return name
 
     def render(self, name):
-        name = name.encode("utf-16-le") + "\x00\x00"
+        name = name.encode("utf-16-le") + b"\x00\x00"
         data = self._render()
         return (struct.pack("<H", len(name)) + name +
                 struct.pack("<HH", self.TYPE, len(data)) + data)
 
     def render_m(self, name):
-        name = name.encode("utf-16-le") + "\x00\x00"
+        name = name.encode("utf-16-le") + b"\x00\x00"
         if self.TYPE == 2:
             data = self._render(dword=False)
         else:
@@ -158,13 +160,15 @@ class ASFBaseAttribute(object):
                             self.TYPE, len(data)) + name + data)
 
     def render_ml(self, name):
-        name = name.encode("utf-16-le") + "\x00\x00"
+        name = name.encode("utf-16-le") + b"\x00\x00"
         if self.TYPE == 2:
             data = self._render(dword=False)
         else:
             data = self._render()
+
         return (struct.pack("<HHHHI", self.language or 0, self.stream or 0,
                             len(name), self.TYPE, len(data)) + name + data)
+
 
 @swap_to_string
 @total_ordering
@@ -176,7 +180,7 @@ class ASFUnicodeAttribute(ASFBaseAttribute):
         return data.decode("utf-16-le").strip("\x00")
 
     def _render(self):
-        return self.value.encode("utf-16-le") + "\x00\x00"
+        return self.value.encode("utf-16-le") + b"\x00\x00"
 
     def data_size(self):
         return len(self._render())
@@ -188,10 +192,10 @@ class ASFUnicodeAttribute(ASFBaseAttribute):
         return self.value
 
     def __eq__(self, other):
-        return unicode(self) == other
+        return text_type(self) == other
 
     def __lt__(self, other):
-        return unicode(self) < other
+        return text_type(self) < other
 
     __hash__ = ASFBaseAttribute.__hash__
 
@@ -203,9 +207,11 @@ class ASFByteArrayAttribute(ASFBaseAttribute):
     TYPE = 0x0001
 
     def parse(self, data):
+        assert isinstance(data, bytes)
         return data
 
     def _render(self):
+        assert isinstance(self.value, bytes)
         return self.value
 
     def data_size(self):
@@ -356,9 +362,11 @@ class ASFGUIDAttribute(ASFBaseAttribute):
     TYPE = 0x0006
 
     def parse(self, data):
+        assert isinstance(data, bytes)
         return data
 
     def _render(self):
+        assert isinstance(self.value, bytes)
         return self.value
 
     def data_size(self):
@@ -427,6 +435,7 @@ class BaseObject(object):
 class UnknownObject(BaseObject):
     """Unknown ASF object."""
     def __init__(self, guid):
+        assert isinstance(guid, bytes)
         self.GUID = guid
 
 
@@ -470,7 +479,7 @@ class ContentDescriptionObject(BaseObject):
                 return value[0].encode("utf-16-le") + b"\x00\x00"
             else:
                 return b""
-        texts = map(render_text, _standard_attribute_names)
+        texts = list(map(render_text, _standard_attribute_names))
         data = struct.pack("<HHHHH", *map(len, texts)) + b"".join(texts)
         return self.GUID + struct.pack("<Q", 24 + len(data)) + data
 
@@ -689,7 +698,7 @@ class ASF(FileType):
             self.header_extension_obj.objects.append(self.metadata_library_obj)
 
         # Render the header
-        data = "".join([obj.render(self) for obj in self.objects])
+        data = b"".join([obj.render(self) for obj in self.objects])
         data = (HeaderObject.GUID +
                 struct.pack("<QL", len(data) + 30, len(self.objects)) +
                 b"\x01\x02" + data)
