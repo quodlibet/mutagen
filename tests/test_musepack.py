@@ -65,11 +65,11 @@ class TMusepack(TestCase):
 
     def test_almost_my_file(self):
         self.failUnlessRaises(
-            MusepackHeaderError, MusepackInfo, cBytesIO("MP+" + "\x00" * 32))
+            MusepackHeaderError, MusepackInfo, cBytesIO(b"MP+" + b"\x00" * 32))
         self.failUnlessRaises(
-            MusepackHeaderError, MusepackInfo, cBytesIO("MP+" + "\x00" * 100))
+            MusepackHeaderError, MusepackInfo, cBytesIO(b"MP+" + b"\x00" * 100))
         self.failUnlessRaises(
-            MusepackHeaderError, MusepackInfo, cBytesIO("MPCK" + "\x00" * 100))
+            MusepackHeaderError, MusepackInfo, cBytesIO(b"MPCK" + b"\x00" * 100))
 
     def test_pprint(self):
         self.sv8.pprint()
@@ -90,7 +90,9 @@ class TMusepackWithID3(TestCase):
         fd, self.NEW = mkstemp(suffix='mpc')
         os.close(fd)
         shutil.copy(self.SAMPLE, self.NEW)
-        self.failUnlessEqual(open(self.SAMPLE).read(), open(self.NEW).read())
+        with open(self.SAMPLE, "rb") as h1:
+            with open(self.NEW, "rb") as h2:
+                self.failUnlessEqual(h1.read(), h2.read())
 
     def tearDown(self):
         os.unlink(self.NEW)

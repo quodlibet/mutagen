@@ -4,7 +4,7 @@
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
 
-from zlib import error as zlibError
+import zlib
 from warnings import warn
 from struct import unpack
 
@@ -17,6 +17,7 @@ from mutagen._id3specs import (
     VolumeAdjustmentsSpec, VolumePeakSpec, VolumeAdjustmentSpec,
     ChannelSpec, MultiSpec, SynchronizedTextSpec, KeyEventSpec, TimeStampSpec,
     EncodedNumericPartTextSpec, EncodedNumericTextSpec)
+from ._compat import text_type, string_types, swap_to_string
 
 
 def is_valid_frame_id(frame_id):
@@ -158,14 +159,14 @@ class Frame(object):
                 raise ID3EncryptionUnsupportedError
             if tflags & Frame.FLAG24_COMPRESS:
                 try:
-                    data = data.decode('zlib')
-                except zlibError as err:
+                    data = zlib.decompress(data)
+                except zlib.error as err:
                     # the initial mutagen that went out with QL 0.12 did not
                     # write the 4 bytes of uncompressed size. Compensate.
                     data = datalen_bytes + data
                     try:
-                        data = data.decode('zlib')
-                    except zlibError as err:
+                        data = zlib.decompress(data)
+                    except zlib.error as err:
                         if id3.PEDANTIC:
                             raise ID3BadCompressedData('%s: %r' % (err, data))
 
@@ -177,8 +178,8 @@ class Frame(object):
                 raise ID3EncryptionUnsupportedError
             if tflags & Frame.FLAG23_COMPRESS:
                 try:
-                    data = data.decode('zlib')
-                except zlibError as err:
+                    data = zlib.decompress(data)
+                except zlib.error as err:
                     if id3.PEDANTIC:
                         raise ID3BadCompressedData('%s: %r' % (err, data))
 
@@ -251,6 +252,7 @@ class FrameOpt(Frame):
         return '%s(%s)' % (type(self).__name__, ', '.join(kw))
 
 
+@swap_to_string
 class TextFrame(Frame):
     """Text strings.
 
@@ -271,17 +273,17 @@ class TextFrame(Frame):
         MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000'),
     ]
 
-    def __str__(self):
-        return self.__unicode__().encode('utf-8')
+    def __bytes__(self):
+        return text_type(self).encode('utf-8')
 
-    def __unicode__(self):
+    def __str__(self):
         return u'\u0000'.join(self.text)
 
     def __eq__(self, other):
-        if isinstance(other, str):
-            return str(self) == other
-        elif isinstance(other, unicode):
-            return unicode(self) == other
+        if isinstance(other, bytes):
+            return bytes(self) == other
+        elif isinstance(other, text_type):
+            return text_type(self) == other
         return self.text == other
 
     __hash__ = Frame.__hash__
@@ -344,6 +346,7 @@ class NumericPartTextFrame(TextFrame):
         return int(self.text[0].split("/")[0])
 
 
+@swap_to_string
 class TimeStampTextFrame(TextFrame):
     """A list of time stamps.
 
@@ -356,16 +359,16 @@ class TimeStampTextFrame(TextFrame):
         MultiSpec('text', TimeStampSpec('stamp'), sep=u','),
     ]
 
-    def __str__(self):
-        return self.__unicode__().encode('utf-8')
+    def __bytes__(self):
+        return text_type(self).encode('utf-8')
 
-    def __unicode__(self):
+    def __str__(self):
         return ','.join([stamp.text for stamp in self.text])
 
     def _pprint(self):
         return " / ".join([stamp.text for stamp in self.text])
 
-
+@swap_to_string
 class UrlFrame(Frame):
     """A frame containing a URL string.
 
@@ -380,10 +383,10 @@ class UrlFrame(Frame):
 
     _framespec = [Latin1TextSpec('url')]
 
-    def __str__(self):
+    def __bytes__(self):
         return self.url.encode('utf-8')
 
-    def __unicode__(self):
+    def __str__(self):
         return self.url
 
     def __eq__(self, other):
@@ -446,7 +449,7 @@ class TCON(TextFrame):
                 if genreid:
                     for gid in genreid[1:-1].split(")("):
                         if gid.isdigit() and int(gid) < len(self.GENRES):
-                            gid = unicode(self.GENRES[int(gid)])
+                            gid = text_type(self.GENRES[int(gid)])
                             newgenres.append(gid)
                         elif gid == "CR":
                             newgenres.append(u"Cover")
@@ -467,12 +470,12 @@ class TCON(TextFrame):
         return genres
 
     def __set_genres(self, genres):
-        if isinstance(genres, basestring):
+        if isinstance(genres, string_types):
             genres = [genres]
-        self.text = map(self.__decode, genres)
+        self.text = [self.__decode(g) for g in genres]
 
     def __decode(self, value):
-        if isinstance(value, str):
+        if isinstance(value, bytes):
             enc = EncodedTextSpec._encodings[self.encoding][0]
             return value.decode(enc)
         else:

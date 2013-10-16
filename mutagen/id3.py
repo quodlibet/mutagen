@@ -37,7 +37,7 @@ from struct import unpack, pack, error as StructError
 
 import mutagen
 from mutagen._util import insert_bytes, delete_bytes, DictProxy
-from ._compat import reraise
+from ._compat import reraise, chr_
 
 from mutagen._id3util import *
 from mutagen._id3frames import *
@@ -136,7 +136,8 @@ class ID3(DictProxy, mutagen.Metadata):
                     frames = ParseID3v1(self.__fileobj.read(128))
                     if frames is not None:
                         self.version = self._V11
-                        map(self.add, frames.values())
+                        for v in frames.values():
+                            self.add(v)
                     else:
                         reraise(type(err), None, stack)
             else:
@@ -429,8 +430,7 @@ class ID3(DictProxy, mutagen.Metadata):
         order = dict(zip(order, range(len(order))))
         last = len(order)
         frames = self.items()
-        frames.sort(lambda a, b: cmp(order.get(a[0][:4], last),
-                                     order.get(b[0][:4], last)))
+        frames.sort(key=lambda a: order.get(a[0][:4], last))
 
         framedata = [self.__save_frame(frame, version=version, v23_sep=v23_sep)
                      for (key, frame) in frames]
@@ -450,7 +450,7 @@ class ID3(DictProxy, mutagen.Metadata):
                     raise
             return
 
-        framedata = ''.join(framedata)
+        framedata = b''.join(framedata)
         framesize = len(framedata)
 
         if filename is None:
@@ -468,7 +468,7 @@ class ID3(DictProxy, mutagen.Metadata):
             try:
                 id3, vmaj, vrev, flags, insize = unpack('>3sBBB4s', idata)
             except struct.error:
-                id3, insize = '', 0
+                id3, insize = b'', 0
             insize = BitPaddedInt(insize)
             if id3 != b'ID3':
                 insize = -10
@@ -564,7 +564,8 @@ class ID3(DictProxy, mutagen.Metadata):
             raise ValueError
 
         datasize = BitPaddedInt.to_str(len(framedata), width=4, bits=bits)
-        header = pack('>4s4sH', name or type(frame).__name__, datasize, flags)
+        frame_name = type(frame).__name__.encode("ascii")
+        header = pack('>4s4sH', name or frame_name, datasize, flags)
         return header + framedata
 
     def __update_common(self):
@@ -815,22 +816,22 @@ def MakeID3v1(id3):
         if v2id in id3:
             text = id3[v2id].text[0].encode('latin1', 'replace')[:30]
         else:
-            text = ""
-        v1[name] = text + ("\x00" * (30 - len(text)))
+            text = b""
+        v1[name] = text + (b"\x00" * (30 - len(text)))
 
     if "COMM" in id3:
         cmnt = id3["COMM"].text[0].encode('latin1', 'replace')[:28]
     else:
-        cmnt = ""
-    v1["comment"] = cmnt + ("\x00" * (29 - len(cmnt)))
+        cmnt = b""
+    v1["comment"] = cmnt + (b"\x00" * (29 - len(cmnt)))
 
     if "TRCK" in id3:
         try:
-            v1["track"] = chr(+id3["TRCK"])
+            v1["track"] = chr_(+id3["TRCK"])
         except ValueError:
-            v1["track"] = "\x00"
+            v1["track"] = b"\x00"
     else:
-        v1["track"] = "\x00"
+        v1["track"] = b"\x00"
 
     if "TCON" in id3:
         try:
@@ -839,20 +840,27 @@ def MakeID3v1(id3):
             pass
         else:
             if genre in TCON.GENRES:
-                v1["genre"] = chr(TCON.GENRES.index(genre))
+                v1["genre"] = chr_(TCON.GENRES.index(genre))
     if "genre" not in v1:
-        v1["genre"] = "\xff"
+        v1["genre"] = b"\xff"
 
     if "TDRC" in id3:
-        year = str(id3["TDRC"])
+        year = bytes(id3["TDRC"])
     elif "TYER" in id3:
-        year = str(id3["TYER"])
+        year = bytes(id3["TYER"])
     else:
-        year = ""
-    v1["year"] = (year + "\x00\x00\x00\x00")[:4]
+        year = b""
+    v1["year"] = (year + b"\x00\x00\x00\x00")[:4]
 
-    return ("TAG%(title)s%(artist)s%(album)s%(year)s%(comment)s"
-            "%(track)s%(genre)s") % v1
+    data = b"TAG"
+    data += v1["title"]
+    data += v1["artist"]
+    data += v1["album"]
+    data += v1["year"]
+    data += v1["comment"]
+    data += v1["track"]
+    data += v1["genre"]
+    return data
 
 
 class ID3FileType(mutagen.FileType):

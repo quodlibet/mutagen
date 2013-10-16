@@ -24,6 +24,7 @@ from mutagen import StreamInfo
 from mutagen.apev2 import APEv2File, error, delete
 from mutagen.id3 import BitPaddedInt
 from mutagen._util import cdata
+from ._compat import xrange
 
 
 class MusepackHeaderError(error):
@@ -93,7 +94,7 @@ class MusepackInfo(StreamInfo):
             raise MusepackHeaderError("not a Musepack file")
 
         # Skip ID3v2 tags
-        if header[:3] == "ID3":
+        if header[:3] == b"ID3":
             header = fileobj.read(6)
             if len(header) != 6:
                 raise MusepackHeaderError("not a Musepack file")
@@ -103,7 +104,7 @@ class MusepackInfo(StreamInfo):
             if len(header) != 4:
                 raise MusepackHeaderError("not a Musepack file")
 
-        if header.startswith("MPCK"):
+        if header.startswith(b"MPCK"):
             self.__parse_sv8(fileobj)
         else:
             self.__parse_sv467(fileobj)
@@ -116,26 +117,26 @@ class MusepackInfo(StreamInfo):
         #SV8 http://trac.musepack.net/trac/wiki/SV8Specification
 
         key_size = 2
-        mandatory_packets = ["SH", "RG"]
+        mandatory_packets = [b"SH", b"RG"]
 
         def check_frame_key(key):
-            if len(frame_type) != key_size or not 'AA' <= frame_type <= 'ZZ':
+            if len(frame_type) != key_size or not b'AA' <= frame_type <= b'ZZ':
                 raise MusepackHeaderError("Invalid frame key.")
 
         frame_type = fileobj.read(key_size)
         check_frame_key(frame_type)
 
-        while frame_type not in ("AP", "SE") and mandatory_packets:
+        while frame_type not in (b"AP", b"SE") and mandatory_packets:
             try:
                 frame_size, slen = _parse_sv8_int(fileobj)
             except (EOFError, ValueError):
                 raise MusepackHeaderError("Invalid packet size.")
             data_size = frame_size - key_size - slen
 
-            if frame_type == "SH":
+            if frame_type == b"SH":
                 mandatory_packets.remove(frame_type)
                 self.__parse_stream_header(fileobj, data_size)
-            elif frame_type == "RG":
+            elif frame_type == b"RG":
                 mandatory_packets.remove(frame_type)
                 self.__parse_replaygain_packet(fileobj, data_size)
             else:
@@ -145,8 +146,8 @@ class MusepackInfo(StreamInfo):
             check_frame_key(frame_type)
 
         if mandatory_packets:
-            raise MusepackHeaderError("Missing mandatory packets: %s."
-                                      % ", ".join(mandatory_packets))
+            raise MusepackHeaderError("Missing mandatory packets: %s." %
+                                      ", ".join(map(repr, mandatory_packets)))
 
         self.length = float(self.samples) / self.sample_rate
         self.bitrate = 0
@@ -169,8 +170,8 @@ class MusepackInfo(StreamInfo):
         data = fileobj.read(left_size)
         if len(data) != left_size:
             raise MusepackHeaderError("SH packet ended unexpectedly.")
-        self.sample_rate = RATES[ord(data[-2]) >> 5]
-        self.channels = (ord(data[-1]) >> 4) + 1
+        self.sample_rate = RATES[ord(data[-2:-1]) >> 5]
+        self.channels = (ord(data[-1:]) >> 4) + 1
         self.samples = samples - samples_skip
 
     def __parse_replaygain_packet(self, fileobj, data_size):
@@ -199,8 +200,8 @@ class MusepackInfo(StreamInfo):
             raise MusepackHeaderError("not a Musepack file")
 
         # SV7
-        if header.startswith("MP+"):
-            self.version = ord(header[3]) & 0xF
+        if header.startswith(b"MP+"):
+            self.version = ord(header[3:4]) & 0xF
             if self.version < 7:
                 raise MusepackHeaderError("not a Musepack file")
             frames = cdata.uint_le(header[4:8])

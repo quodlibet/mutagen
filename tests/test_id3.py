@@ -328,20 +328,20 @@ class ID3v1Tags(TestCase):
 
     def test_nulls(self):
         from mutagen.id3 import ParseID3v1
-        s = 'TAG%(title)30s%(artist)30s%(album)30s%(year)4s%(cmt)29s\x03\x01'
-        s = s % dict(artist='abcd\00fg', title='hijklmn\x00p',
+        s = u'TAG%(title)30s%(artist)30s%(album)30s%(year)4s%(cmt)29s\x03\x01'
+        s = s % dict(artist=u'abcd\00fg', title=u'hijklmn\x00p',
                     album='qrst\x00v', cmt='wxyz', year='1224')
-        tags = ParseID3v1(s)
+        tags = ParseID3v1(s.encode("ascii"))
         self.assertEquals('abcd'.decode('latin1'), tags['TPE1'])
         self.assertEquals('hijklmn'.decode('latin1'), tags['TIT2'])
         self.assertEquals('qrst'.decode('latin1'), tags['TALB'])
 
     def test_nonascii(self):
         from mutagen.id3 import ParseID3v1
-        s = 'TAG%(title)30s%(artist)30s%(album)30s%(year)4s%(cmt)29s\x03\x01'
-        s = s % dict(artist='abcd\xe9fg', title='hijklmn\xf3p',
-                    album='qrst\xfcv', cmt='wxyz', year='1234')
-        tags = ParseID3v1(s)
+        s = u'TAG%(title)30s%(artist)30s%(album)30s%(year)4s%(cmt)29s\x03\x01'
+        s = s % dict(artist=u'abcd\xe9fg', title=u'hijklmn\xf3p',
+                    album=u'qrst\xfcv', cmt='wxyz', year='1234')
+        tags = ParseID3v1(s.encode("latin-1"))
         self.assertEquals('abcd\xe9fg'.decode('latin1'), tags['TPE1'])
         self.assertEquals('hijklmn\xf3p'.decode('latin1'), tags['TIT2'])
         self.assertEquals('qrst\xfcv'.decode('latin1'), tags['TALB'])
@@ -358,7 +358,7 @@ class ID3v1Tags(TestCase):
 
     def test_make_from_empty(self):
         from mutagen.id3 import MakeID3v1, TCON, COMM
-        empty = 'TAG' + '\x00' * 124 + '\xff'
+        empty = b'TAG' + b'\x00' * 124 + b'\xff'
         self.assertEquals(MakeID3v1({}), empty)
         self.assertEquals(MakeID3v1({'TCON': TCON()}), empty)
         self.assertEquals(

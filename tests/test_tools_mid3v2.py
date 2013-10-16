@@ -4,6 +4,7 @@ import shutil
 
 import mutagen
 from mutagen.id3 import ID3
+from mutagen._compat import PY2
 
 from tests import add
 from tests.test_tools import _TTools
@@ -175,7 +176,9 @@ class TMid3v2(_TTools):
         import locale
         text = u'\xe4\xf6\xfc'
         enc = locale.getpreferredencoding()
-        res, out = self.call("-e", "-a", text.encode(enc), self.filename)
+        if PY2:
+            text = text.encode(enc)
+        res, out = self.call("-e", "-a", text, self.filename)
         self.failUnlessEqual((res, out), (0, ""))
 
     def test_invalid_encoding(self):

@@ -1,6 +1,7 @@
 from tests import TestCase, add
 
 from mutagen.id3 import Frames, Frames_2_2, ID3
+from mutagen._compat import text_type
 
 _22 = ID3(); _22.version = (2,2,0)
 _23 = ID3(); _23.version = (2,3,0)
@@ -39,45 +40,45 @@ class FrameSanityChecks(TestCase):
         self.assert_(isinstance(TXXX(desc='d',text='text'), TXXX))
 
     def test_22_uses_direct_ints(self):
-        data = 'TT1\x00\x00\x83\x00' + ('123456789abcdef' * 16)
+        data = b'TT1\x00\x00\x83\x00' + (b'123456789abcdef' * 16)
         tag = list(_22._ID3__read_frames(data, Frames_2_2))[0]
         self.assertEquals(data[7:7+0x82].decode('latin1'), tag.text[0])
 
     def test_frame_too_small(self):
-        self.assertEquals([], list(_24._ID3__read_frames('012345678', Frames)))
-        self.assertEquals([], list(_23._ID3__read_frames('012345678', Frames)))
-        self.assertEquals([], list(_22._ID3__read_frames('01234', Frames_2_2)))
+        self.assertEquals([], list(_24._ID3__read_frames(b'012345678', Frames)))
+        self.assertEquals([], list(_23._ID3__read_frames(b'012345678', Frames)))
+        self.assertEquals([], list(_22._ID3__read_frames(b'01234', Frames_2_2)))
         self.assertEquals(
-            [], list(_22._ID3__read_frames('TT1'+'\x00'*3, Frames_2_2)))
+            [], list(_22._ID3__read_frames(b'TT1'+b'\x00'*3, Frames_2_2)))
 
     def test_unknown_22_frame(self):
-        data = 'XYZ\x00\x00\x01\x00'
+        data = b'XYZ\x00\x00\x01\x00'
         self.assertEquals([data], list(_22._ID3__read_frames(data, {})))
 
 
     def test_zlib_latin1(self):
         from mutagen.id3 import TPE1
-        tag = TPE1.fromData(_24, 0x9, '\x00\x00\x00\x0f'
-                'x\x9cc(\xc9\xc8,V\x00\xa2D\xfd\x92\xd4\xe2\x12\x00&\x7f\x05%')
+        tag = TPE1.fromData(_24, 0x9, b'\x00\x00\x00\x0f'
+            b'x\x9cc(\xc9\xc8,V\x00\xa2D\xfd\x92\xd4\xe2\x12\x00&\x7f\x05%')
         self.assertEquals(tag.encoding, 0)
         self.assertEquals(tag, ['this is a/test'])
 
     def test_datalen_but_not_compressed(self):
         from mutagen.id3 import TPE1
-        tag = TPE1.fromData(_24, 0x01, '\x00\x00\x00\x06\x00A test')
+        tag = TPE1.fromData(_24, 0x01, b'\x00\x00\x00\x06\x00A test')
         self.assertEquals(tag.encoding, 0)
         self.assertEquals(tag, ['A test'])
 
     def test_utf8(self):
         from mutagen.id3 import TPE1
-        tag = TPE1.fromData(_23, 0x00, '\x03this is a test')
+        tag = TPE1.fromData(_23, 0x00, b'\x03this is a test')
         self.assertEquals(tag.encoding, 3)
         self.assertEquals(tag, 'this is a test')
 
     def test_zlib_utf16(self):
         from mutagen.id3 import TPE1
-        data = ('\x00\x00\x00\x1fx\x9cc\xfc\xff\xaf\x84!\x83!\x93\xa1\x98A'
-                '\x01J&2\xe83\x940\xa4\x02\xd9%\x0c\x00\x87\xc6\x07#')
+        data = (b'\x00\x00\x00\x1fx\x9cc\xfc\xff\xaf\x84!\x83!\x93\xa1\x98A'
+                b'\x01J&2\xe83\x940\xa4\x02\xd9%\x0c\x00\x87\xc6\x07#')
         tag = TPE1.fromData(_23, 0x80, data)
         self.assertEquals(tag.encoding, 1)
         self.assertEquals(tag, ['this is a/test'])
@@ -89,7 +90,7 @@ class FrameSanityChecks(TestCase):
     def test_load_write(self):
         from mutagen.id3 import TPE1, Frames
         artists= [s.decode('utf8') for s in
-                  ['\xc2\xb5', '\xe6\x97\xa5\xe6\x9c\xac']]
+                  [b'\xc2\xb5', b'\xe6\x97\xa5\xe6\x9c\xac']]
         artist = TPE1(encoding=3, text=artists)
         id3 = ID3()
         tag = list(id3._ID3__read_frames(
@@ -343,7 +344,7 @@ class TimeStampTextFrame(TestCase):
 
     def test_compare_to_unicode(self):
         frame = self.Frame(encoding=0, text=[u'1987', u'1988'])
-        self.failUnlessEqual(frame, unicode(frame))
+        self.failUnlessEqual(frame, text_type(frame))
 
 add(TimeStampTextFrame)
 
@@ -366,7 +367,7 @@ class TRVA2(TestCase):
     def test_basic(self):
         from mutagen.id3 import RVA2
         r = RVA2(gain=1, channel=1, peak=1)
-        self.assertReallyEqual(r, r)
-        self.assertReallyNotEqual(r, 42)
+        self.assertEqual(r, r)
+        self.assertNotEqual(r, 42)
 
 add(TRVA2)

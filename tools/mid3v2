@@ -13,6 +13,7 @@ from optparse import OptionParser, SUPPRESS_HELP
 
 import mutagen
 import mutagen.id3
+from mutagen._compat import PY2, text_type
 
 
 VERSION = (1, 3)
@@ -86,8 +87,7 @@ def unescape_string(string):
 
 def list_frames(option, opt, value, parser):
     items = mutagen.id3.Frames.items()
-    items.sort()
-    for name, frame in items:
+    for name, frame in sorted(items):
         print("    --%s    %s" % (name, frame.__doc__.split("\n")[0]))
     raise SystemExit
 
@@ -126,7 +126,8 @@ def delete_frames(deletes, filenames):
         except StandardError as err:
             print(str(err))
         else:
-            map(id3.delall, frames)
+            for frame in frames:
+                id3.delall(frame)
             id3.save()
 
 
@@ -147,11 +148,12 @@ def write_files(edits, filenames, escape):
                 print("%s: %s" % (frame, str(err)))
                 raise SystemExit(1)
 
-        try:
-            value = value.decode(enc)
-        except UnicodeDecodeError as err:
-            print("%s: %s" % (frame, str(err)))
-            raise SystemExit(1)
+        if PY2:
+            try:
+                value = value.decode(enc)
+            except UnicodeDecodeError as err:
+                print("%s: %s" % (frame, str(err)))
+                raise SystemExit(1)
 
         encoded_edits.append((frame, value))
     edits = encoded_edits
