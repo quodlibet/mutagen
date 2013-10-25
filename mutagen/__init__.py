@@ -6,7 +6,7 @@
 # published by the Free Software Foundation.
 
 
-"""Mutagen aims to be an all purpose tagging library.
+"""Mutagen aims to be an all purpose multimedia tagging library.
 
 ::
 
