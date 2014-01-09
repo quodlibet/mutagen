@@ -1,5 +1,8 @@
-Mutagen Documentation
-=====================
+.. image:: images/logo.png
+   :align: center
+   :width: 400px
+
+----
 
 .. toctree::
     :titlesonly:
@@ -11,6 +14,10 @@ Mutagen Documentation
     bugs
     api/index
     man/index
+
+=====================
+Mutagen Documentation
+=====================
 
 .. note::
 
