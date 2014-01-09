@@ -9,6 +9,8 @@ include man/*.1
 include docs/Makefile
 include docs/*.py
 include docs/*.rst
+include docs/images/*.svg
+include docs/images/*.png
 include docs/api/*.rst
 include docs/man/*.rst
 include docs/man/Makefile
