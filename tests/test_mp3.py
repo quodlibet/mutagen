@@ -125,6 +125,10 @@ class TMP3(TestCase):
 
     def test_mime(self):
         self.failUnless("audio/mp3" in self.mp3.mime)
+        # XXX
+        self.mp3.info.layer = 2
+        self.failIf("audio/mp3" in self.mp3.mime)
+        self.failUnless("audio/mp2" in self.mp3.mime)
 
     def tearDown(self):
         os.unlink(self.filename)

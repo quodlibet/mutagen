@@ -252,8 +252,13 @@ class MP3(ID3FileType):
     """
 
     _Info = MPEGInfo
-    _mimes = ["audio/mp3", "audio/x-mp3", "audio/mpeg", "audio/mpg",
-              "audio/x-mpeg"]
+
+    _mimes = ["audio/mpeg", "audio/mpg", "audio/x-mpeg"]
+
+    @property
+    def mime(self):
+        l = self.info.layer
+        return ["audio/mp%d" % l, "audio/x-mp%d" % l] + super(MP3, self).mime
 
     @staticmethod
     def score(filename, fileobj, header):
