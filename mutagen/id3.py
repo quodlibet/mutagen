@@ -430,7 +430,7 @@ class ID3(DictProxy, mutagen.Metadata):
         order = dict(zip(order, range(len(order))))
         last = len(order)
         frames = self.items()
-        frames.sort(key=lambda a: order.get(a[0][:4], last))
+        frames.sort(key=lambda a: (order.get(a[0][:4], last), a[0]))
 
         framedata = [self.__save_frame(frame, version=version, v23_sep=v23_sep)
                      for (key, frame) in frames]
