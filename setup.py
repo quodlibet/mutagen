@@ -129,48 +129,36 @@ class coverage_cmd(Command):
         self.quick = bool(self.quick)
 
     def run(self):
-        import trace
-        tracer = trace.Trace(
-            count=True, trace=False,
-            ignoredirs=[sys.prefix, sys.exec_prefix])
-
-        def run_tests():
-            import mutagen
-            import mutagen._util
-            reload(mutagen._util)
-            reload(mutagen)
-            cmd = self.reinitialize_command("test")
-            cmd.quick = self.quick
-            cmd.ensure_finalized()
-            cmd.run()
-
-        tracer.runfunc(run_tests)
-        results = tracer.results()
-        coverage = os.path.join(os.path.dirname(__file__), "coverage")
-        results.write_results(show_missing=True, coverdir=coverage)
-        map(os.unlink, glob.glob(os.path.join(coverage, "[!m]*.cover")))
         try:
-            os.unlink(os.path.join(coverage, "..setup.cover"))
-        except OSError:
-            pass
-
-        total_lines = 0
-        bad_lines = 0
-        for filename in glob.glob(os.path.join(coverage, "*.cover")):
-            lines = file(filename, "rU").readlines()
-            total_lines += len(lines)
-            bad_lines += len(
-                [line for line in lines if
-                 (line.startswith(">>>>>>") and
-                  "finally:" not in line and '"""' not in line)])
-        pct = 100.0 * (total_lines - bad_lines) / float(total_lines)
-        print("Coverage data written to", coverage, "(%d/%d, %0.2f%%)" % (
-            total_lines - bad_lines, total_lines, pct))
-        if pct < 98.66:
+            from coverage import coverage
+        except ImportError:
             raise SystemExit(
-                "Coverage percentage went down; write more tests.")
-        if pct > 98.7:
-            raise SystemExit("Coverage percentage went up; change setup.py.")
+                "Missing 'coverage' module. See "
+                "https://pypi.python.org/pypi/coverage or try "
+                "`apt-get install python-coverage python3-coverage`")
+
+        for key in list(sys.modules.keys()):
+            if key.startswith('mutagen'):
+                del(sys.modules[key])
+
+        cov = coverage()
+        cov.start()
+
+        cmd = self.reinitialize_command("test")
+        cmd.quick = self.quick
+        cmd.ensure_finalized()
+        cmd.run()
+
+        dest = os.path.join(os.getcwd(), "coverage")
+
+        cov.stop()
+        cov.html_report(
+            directory=dest,
+            ignore_errors=True,
+            include=["mutagen/*", "tools/*"])
+
+        print("Coverage summary: file://%s/index.html" % dest)
+
 
 if os.name == "posix":
     data_files = [('share/man/man1', glob.glob("man/*.1"))]
