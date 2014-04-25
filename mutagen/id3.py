@@ -397,27 +397,7 @@ class ID3(DictProxy, mutagen.Metadata):
 
     #f_crc = property(lambda s: bool(s.__extflags & 0x8000))
 
-    def save(self, filename=None, v1=1, v2_version=4, v23_sep='/'):
-        """Save changes to a file.
-
-        If no filename is given, the one most recently loaded is used.
-
-        Keyword arguments:
-        v1 -- if 0, ID3v1 tags will be removed
-              if 1, ID3v1 tags will be updated but not added
-              if 2, ID3v1 tags will be created and/or updated
-        v2 -- version of ID3v2 tags (3 or 4).
-
-        By default Mutagen saves ID3v2.4 tags. If you want to save ID3v2.3
-        tags, you must call method update_to_v23 before saving the file.
-
-        v23_sep -- the separator used to join multiple text values
-                   if v2_version == 3. Defaults to '/' but if it's None
-                   will be the ID3v2v2.4 null separator.
-
-        The lack of a way to update only an ID3v1 tag is intentional.
-        """
-
+    def __prepare_framedata(self, v2_version, v23_sep):
         if v2_version == 3:
             version = self._V23
         elif v2_version == 4:
@@ -441,6 +421,51 @@ class ID3(DictProxy, mutagen.Metadata):
             framedata.extend([data for data in self.unknown_frames
                               if len(data) > 10])
 
+        return b''.join(framedata)
+
+    def __prepare_id3_header(self, original_header, framesize, v2_version):
+        try:
+            id3, vmaj, vrev, flags, insize = unpack('>3sBBB4s', original_header)
+        except struct.error:
+            id3, insize = b'', 0
+        insize = BitPaddedInt(insize)
+        if id3 != b'ID3':
+            insize = -10
+
+        if insize >= framesize:
+            outsize = insize
+        else:
+            outsize = (framesize + 1023) & ~0x3FF
+
+        framesize = BitPaddedInt.to_str(outsize, width=4)
+        header = pack('>3sBBB4s', b'ID3', v2_version, 0, 0, framesize)
+
+        return (header, outsize, insize)
+
+    def save(self, filename=None, v1=1, v2_version=4, v23_sep='/'):
+        """Save changes to a file.
+
+        If no filename is given, the one most recently loaded is used.
+
+        Keyword arguments:
+        v1 -- if 0, ID3v1 tags will be removed
+              if 1, ID3v1 tags will be updated but not added
+              if 2, ID3v1 tags will be created and/or updated
+        v2 -- version of ID3v2 tags (3 or 4).
+
+        By default Mutagen saves ID3v2.4 tags. If you want to save ID3v2.3
+        tags, you must call method update_to_v23 before saving the file.
+
+        v23_sep -- the separator used to join multiple text values
+                   if v2_version == 3. Defaults to '/' but if it's None
+                   will be the ID3v2v2.4 null separator.
+
+        The lack of a way to update only an ID3v1 tag is intentional.
+        """
+
+        framedata = self.__prepare_framedata(v2_version, v23_sep)
+        framesize = len(framedata)
+
         if not framedata:
             try:
                 self.delete(filename)
@@ -449,9 +474,6 @@ class ID3(DictProxy, mutagen.Metadata):
                 if err.errno != ENOENT:
                     raise
             return
-
-        framedata = b''.join(framedata)
-        framesize = len(framedata)
 
         if filename is None:
             filename = self.filename
@@ -465,24 +487,11 @@ class ID3(DictProxy, mutagen.Metadata):
             f = open(filename, 'rb+')
         try:
             idata = f.read(10)
-            try:
-                id3, vmaj, vrev, flags, insize = unpack('>3sBBB4s', idata)
-            except struct.error:
-                id3, insize = b'', 0
-            insize = BitPaddedInt(insize)
-            if id3 != b'ID3':
-                insize = -10
 
-            if insize >= framesize:
-                outsize = insize
-            else:
-                outsize = (framesize + 1023) & ~0x3FF
-            framedata += b'\x00' * (outsize - framesize)
+            header = self.__prepare_id3_header(idata, framesize, v2_version)
+            header, outsize, insize = header
 
-            framesize = BitPaddedInt.to_str(outsize, width=4)
-            flags = 0
-            header = pack('>3sBBB4s', b'ID3', v2_version, 0, flags, framesize)
-            data = header + framedata
+            data = header + framedata + (b'\x00' * (outsize - framesize))
 
             if (insize < outsize):
                 insert_bytes(f, outsize-insize, insize+10)
