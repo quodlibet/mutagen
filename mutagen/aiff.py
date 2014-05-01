@@ -12,9 +12,9 @@ import struct
 from struct import pack
 
 from ._compat import endswith
-from mutagen import StreamInfo
+from mutagen import StreamInfo, FileType
 
-from mutagen.id3 import ID3, ID3FileType
+from mutagen.id3 import ID3
 from mutagen._id3util import error as ID3Error
 from mutagen._util import insert_bytes, delete_bytes
 
@@ -166,7 +166,7 @@ class AIFFInfo(StreamInfo):
     channels = 0
     sample_rate = 0
 
-    def __init__(self, fileobj, offset=None):
+    def __init__(self, fileobj):
         common_chunk = IFFFile(fileobj)['COMM']
         common_chunk.read()
 
@@ -247,15 +247,12 @@ def delete(filename, delete_v1=True, delete_v2=True):
     file.close()
 
 
-class AIFF(ID3FileType):
+class AIFF(FileType):
     """An AIFF audio file.
 
     :ivar info: :class:`AIFFInfo`
-    :ivar tags: :class:`AIFFID3`
+    :ivar tags: :class:`ID3`
     """
-
-    ID3 = ID3
-    _Info = AIFFInfo
 
     _mimes = ["audio/aiff", "audio/x-aiff"]
 
@@ -265,6 +262,28 @@ class AIFF(ID3FileType):
 
         return (header.startswith(b"FORM") * 2 + endswith(filename, b".aif") +
                 endswith(filename, b".aiff") + endswith(filename, b".aifc"))
+
+    def add_tags(self):
+        """Add an empty ID3 tag to the file."""
+        if self.tags is None:
+            self.tags = ID3()
+        else:
+            raise error("an ID3 tag already exists")
+
+    def load(self, filename, **kwargs):
+        """Load stream and tag information from a file."""
+        self.filename = filename
+
+        try:
+            self.tags = ID3(filename, **kwargs)
+        except ID3Error:
+            self.tags = None
+
+        try:
+            fileobj = open(filename, "rb")
+            self.info = AIFFInfo(fileobj)
+        finally:
+            fileobj.close()
 
 
 Open = AIFF
