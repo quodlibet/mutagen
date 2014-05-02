@@ -247,15 +247,16 @@ class _IFFID3(ID3):
         finally:
             fileobj.close()
 
-    def delete(self, filename=None, delete_v1=True, delete_v2=True):
+    def delete(self, filename=None):
         """Completely removes the ID3 chunk from the AIFF file"""
+
         if filename is None:
             filename = self.filename
         delete(filename)
         self.clear()
 
 
-def delete(filename, delete_v1=True, delete_v2=True):
+def delete(filename):
     """Completely removes the ID3 chunk from the AIFF file"""
 
     with open(filename, "rb+") as file_:
