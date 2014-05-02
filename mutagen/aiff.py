@@ -127,32 +127,32 @@ class IFFFile(object):
             self.__next_offset += self.__next_offset % 2
             fileobj.seek(self.__next_offset)
 
-    def __contains__(self, id):
+    def __contains__(self, id_):
         """Check if the IFF file contains a specific chunk"""
-        return id in self.__chunks
+        return id_ in self.__chunks
 
-    def __getitem__(self, id):
+    def __getitem__(self, id_):
         """Get a chunk from the IFF file"""
 
         try:
-            return self.__chunks[id]
+            return self.__chunks[id_]
         except KeyError:
             raise KeyError(
-                "%r has no %r chunk" % (self.__fileobj.name, id))
+                "%r has no %r chunk" % (self.__fileobj.name, id_))
 
-    def __delitem__(self, id):
+    def __delitem__(self, id_):
         """Remove a chunk from the IFF file"""
-        self.__chunks.pop(id).delete()
+        self.__chunks.pop(id_).delete()
 
-    def insert_chunk(self, id):
+    def insert_chunk(self, id_):
         """Insert a new chunk at the end of the IFF file"""
         self.__fileobj.seek(self.__next_offset)
-        self.__fileobj.write(pack('>4si', id.ljust(4), 0))
+        self.__fileobj.write(pack('>4si', id_.ljust(4), 0))
         self.__fileobj.seek(self.__next_offset)
         chunk = IFFChunk(self.__fileobj, self['FORM'])
         self['FORM'].resize(self['FORM'].data_size + chunk.size)
 
-        self.__chunks[id] = chunk
+        self.__chunks[id_] = chunk
         self.__next_offset = chunk.offset + chunk.size
 
 
