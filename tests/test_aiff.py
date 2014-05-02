@@ -87,6 +87,10 @@ class TAIFF(TestCase):
         delete(self.filename_1)
         self.failUnless(AIFF(self.filename_1).tags is None)
 
+    def test_module_double_delete(self):
+        delete(self.filename_1)
+        delete(self.filename_1)
+
     def test_pprint_no_tags(self):
         self.aiff_tmp_id3.tags = None
         self.failUnless(self.aiff_tmp_id3.pprint())

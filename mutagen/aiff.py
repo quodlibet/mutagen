@@ -257,9 +257,12 @@ class _IFFID3(ID3):
 
 def delete(filename, delete_v1=True, delete_v2=True):
     """Completely removes the ID3 chunk from the AIFF file"""
-    file = open(filename, 'rb+')
-    del IFFFile(file)['ID3']
-    file.close()
+
+    with open(filename, "rb+") as file_:
+        try:
+            del IFFFile(file_)['ID3']
+        except KeyError:
+            pass
 
 
 class AIFF(FileType):
