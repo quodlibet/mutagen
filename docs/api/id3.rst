@@ -75,3 +75,15 @@ TrueAudio
     :show-inheritance:
     :members:
     :exclude-members: ID3
+
+AIFF
+----
+
+.. automodule:: mutagen.aiff
+
+.. autoclass:: mutagen.aiff.AIFF(filename)
+    :show-inheritance:
+    :members:
+
+.. autoclass:: mutagen.aiff.AIFFInfo()
+    :members:
