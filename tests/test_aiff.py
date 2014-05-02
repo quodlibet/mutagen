@@ -110,6 +110,21 @@ class TAIFF(TestCase):
     def test_loaded_tags(self):
         self.failUnless(self.aiff_tmp_id3["TIT2"] == "AIFF title")
 
+    def test_roundtrip(self):
+        self.failUnlessEqual(self.aiff_tmp_id3["TIT2"], ["AIFF title"])
+        self.aiff_tmp_id3.save()
+        new = AIFF(self.aiff_tmp_id3.filename)
+        self.failUnlessEqual(new["TIT2"], ["AIFF title"])
+
+    def test_save_tags(self):
+        from mutagen._id3frames import TIT1
+        tags = self.aiff_tmp_id3.tags
+        tags.add(TIT1(encoding=3, text="foobar"))
+        tags.save()
+
+        new = AIFF(self.aiff_tmp_id3.filename)
+        self.failUnlessEqual(new["TIT1"], ["foobar"])
+
     def test_save_with_ID3_chunk(self):
         from mutagen._id3frames import TIT1
         self.aiff_tmp_id3["TIT1"] = TIT1(encoding=3, text="foobar")

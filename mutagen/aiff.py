@@ -214,6 +214,9 @@ class _IFFID3(ID3):
         framedata = self._prepare_framedata(v2_version, v23_sep)
         framesize = len(framedata)
 
+        if filename is None:
+            filename = self.filename
+
         # Unlike the parent ID3.save method, we won't save to a blank file
         # since we would have to construct a empty AIFF file
         fileobj = open(filename, 'rb+')
