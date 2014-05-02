@@ -7,7 +7,6 @@
 
 """AIFF audio stream information and tags."""
 
-import os
 import struct
 from struct import pack
 
@@ -20,15 +19,20 @@ from mutagen._util import insert_bytes, delete_bytes
 
 __all__ = ["AIFF", "Open", "delete"]
 
+
 class error(RuntimeError):
     pass
+
 
 class InvalidChunk(error, IOError):
     pass
 
+
 # based on stdlib's aifc
 _HUGE_VAL = 1.79769313486231e+308
-def read_float(s): # 10 bytes
+
+
+def read_float(s):  # 10 bytes
     expon, himant, lomant = struct.unpack('>hLL', s)
     sign = 1
     if expon < 0:
@@ -43,7 +47,8 @@ def read_float(s): # 10 bytes
         f = (himant * 0x100000000 + lomant) * pow(2.0, expon - 63)
     return sign * f
 
-class IFFChunk:
+
+class IFFChunk(object):
     """Representation of a single IFF chunk"""
 
     # Chunk headers are 8 bytes long (4 for ID and 4 for the size)
@@ -51,7 +56,7 @@ class IFFChunk:
 
     def __init__(self, fileobj, parent_chunk=None):
         self.__fileobj = fileobj
-        self.parent_chunk =  parent_chunk
+        self.parent_chunk = parent_chunk
         self.offset = fileobj.tell()
 
         header = fileobj.read(self.HEADER_SIZE)
@@ -88,7 +93,7 @@ class IFFChunk:
         self.size = data_size + self.HEADER_SIZE
 
 
-class IFFFile:
+class IFFFile(object):
     """Representation of a IFF file"""
 
     def __init__(self, fileobj):
@@ -116,8 +121,9 @@ class IFFFile:
                 break
             self.__chunks[chunk.id.strip()] = chunk
 
-            # Calculate the location of the next chunk, considering the pad byte
-            self.__next_offset  = chunk.offset + chunk.size
+            # Calculate the location of the next chunk,
+            # considering the pad byte
+            self.__next_offset = chunk.offset + chunk.size
             self.__next_offset += self.__next_offset % 2
             fileobj.seek(self.__next_offset)
 
@@ -128,7 +134,8 @@ class IFFFile:
     def __getitem__(self, id):
         """Get a chunk from the IFF file"""
         if id not in self:
-            raise InvalidChunk("%r has no %r chunk" % (self.__fileobj.name, id))
+            raise InvalidChunk(
+                "%r has no %r chunk" % (self.__fileobj.name, id))
         return self.__chunks[id]
 
     def __delitem__(self, id):
