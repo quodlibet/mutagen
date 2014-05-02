@@ -20,6 +20,7 @@ from mutagen.musepack import Musepack
 from mutagen.monkeysaudio import MonkeysAudio
 from mutagen.optimfrog import OptimFROG
 from mutagen.asf import ASF
+from mutagen.aiff import AIFF
 try: from os.path import devnull
 except ImportError: devnull = "/dev/null"
 
@@ -178,6 +179,21 @@ class TFile(TestCase):
             File(os.path.join("tests", "data", "silence-2.wma")), ASF))
         self.failUnless(isinstance(
             File(os.path.join("tests", "data", "silence-3.wma")), ASF))
+
+    def test_aiff(self):
+        data_path = os.path.join("tests", "data")
+        self.failUnless(isinstance(
+            File(os.path.join(data_path, "with-id3.aif")), AIFF))
+        self.failUnless(isinstance(
+            File(os.path.join(data_path, "11k-1ch-2s-silence.aif")), AIFF))
+        self.failUnless(isinstance(
+            File(os.path.join(data_path, "48k-2ch-s16-silence.aif")), AIFF))
+        self.failUnless(isinstance(
+            File(os.path.join(data_path, "8k-1ch-1s-silence.aif")), AIFF))
+        self.failUnless(isinstance(
+            File(os.path.join(data_path, "8k-1ch-3.5s-silence.aif")), AIFF))
+        self.failUnless(isinstance(
+            File(os.path.join(data_path, "8k-4ch-1s-silence.aif")), AIFF))
 
     def test_id3_indicates_mp3_not_tta(self):
         header = b"ID3 the rest of this is garbage"

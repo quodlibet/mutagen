@@ -82,7 +82,7 @@ class ID3(DictProxy, mutagen.Metadata):
                     int(size), int(self.__filesize), self.filename))
         except AttributeError:
             pass
-        data = self.__fileobj.read(size)
+        data = self._fileobj.read(size)
         if len(data) != size:
             raise EOFError
         self.__readbytes += size
@@ -115,11 +115,11 @@ class ID3(DictProxy, mutagen.Metadata):
 
         self.filename = filename
         self.__known_frames = known_frames
-        self.__fileobj = open(filename, 'rb')
+        self._fileobj = open(filename, 'rb')
         self.__filesize = getsize(filename)
         try:
             try:
-                self.__load_header()
+                self._load_header()
             except EOFError:
                 self.size = 0
                 raise ID3NoHeaderError("%s: too small (%d bytes)" % (
@@ -129,11 +129,11 @@ class ID3(DictProxy, mutagen.Metadata):
                 import sys
                 stack = sys.exc_info()[2]
                 try:
-                    self.__fileobj.seek(-128, 2)
+                    self._fileobj.seek(-128, 2)
                 except EnvironmentError:
                     reraise(err, None, stack)
                 else:
-                    frames = ParseID3v1(self.__fileobj.read(128))
+                    frames = ParseID3v1(self._fileobj.read(128))
                     if frames is not None:
                         self.version = self._V11
                         for v in frames.values():
@@ -155,8 +155,8 @@ class ID3(DictProxy, mutagen.Metadata):
                         self.unknown_frames.append(frame)
                 self.__unknown_version = self.version
         finally:
-            self.__fileobj.close()
-            del self.__fileobj
+            self._fileobj.close()
+            del self._fileobj
             del self.__filesize
             if translate:
                 if v2_version == 3:
@@ -229,7 +229,7 @@ class ID3(DictProxy, mutagen.Metadata):
         """Add a frame to the tag."""
         return self.loaded_frame(frame)
 
-    def __load_header(self):
+    def _load_header(self):
         fn = self.filename
         data = self.__fullread(10)
         id3, vmaj, vrev, flags, size = unpack('>3sBBB4s', data)
@@ -265,7 +265,7 @@ class ID3(DictProxy, mutagen.Metadata):
                 # http://code.google.com/p/quodlibet/issues/detail?id=126
                 self.__flags ^= 0x40
                 self.__extsize = 0
-                self.__fileobj.seek(-4, 1)
+                self._fileobj.seek(-4, 1)
                 self.__readbytes -= 4
             elif self.version >= self._V24:
                 # "Where the 'Extended header size' is the size of the whole
@@ -397,7 +397,7 @@ class ID3(DictProxy, mutagen.Metadata):
 
     #f_crc = property(lambda s: bool(s.__extflags & 0x8000))
 
-    def __prepare_framedata(self, v2_version, v23_sep):
+    def _prepare_framedata(self, v2_version, v23_sep):
         if v2_version == 3:
             version = self._V23
         elif v2_version == 4:
@@ -423,7 +423,7 @@ class ID3(DictProxy, mutagen.Metadata):
 
         return b''.join(framedata)
 
-    def __prepare_id3_header(self, original_header, framesize, v2_version):
+    def _prepare_id3_header(self, original_header, framesize, v2_version):
         try:
             id3, vmaj, vrev, flags, insize = unpack('>3sBBB4s', original_header)
         except struct.error:
@@ -463,7 +463,7 @@ class ID3(DictProxy, mutagen.Metadata):
         The lack of a way to update only an ID3v1 tag is intentional.
         """
 
-        framedata = self.__prepare_framedata(v2_version, v23_sep)
+        framedata = self._prepare_framedata(v2_version, v23_sep)
         framesize = len(framedata)
 
         if not framedata:
@@ -488,7 +488,7 @@ class ID3(DictProxy, mutagen.Metadata):
         try:
             idata = f.read(10)
 
-            header = self.__prepare_id3_header(idata, framesize, v2_version)
+            header = self._prepare_id3_header(idata, framesize, v2_version)
             header, outsize, insize = header
 
             data = header + framedata + (b'\x00' * (outsize - framesize))
