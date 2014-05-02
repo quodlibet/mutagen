@@ -83,88 +83,88 @@ class ID3Loading(TestCase):
 
     def test_header_empty(self):
         id3 = ID3()
-        id3._ID3__fileobj = open(self.empty, 'rb')
-        self.assertRaises(EOFError, id3._ID3__load_header)
+        id3._fileobj = open(self.empty, 'rb')
+        self.assertRaises(EOFError, id3._load_header)
 
     def test_header_silence(self):
         id3 = ID3()
-        id3._ID3__fileobj = open(self.silence, 'rb')
-        id3._ID3__load_header()
+        id3._fileobj = open(self.silence, 'rb')
+        id3._load_header()
         self.assertEquals(id3.version, (2,3,0))
         self.assertEquals(id3.size, 1314)
 
     def test_header_2_4_invalid_flags(self):
         id3 = ID3()
-        id3._ID3__fileobj = cBytesIO(b'ID3\x04\x00\x1f\x00\x00\x00\x00')
-        self.assertRaises(ValueError, id3._ID3__load_header)
+        id3._fileobj = cBytesIO(b'ID3\x04\x00\x1f\x00\x00\x00\x00')
+        self.assertRaises(ValueError, id3._load_header)
 
     def test_header_2_4_unsynch_size(self):
         id3 = ID3()
-        id3._ID3__fileobj = cBytesIO(b'ID3\x04\x00\x10\x00\x00\x00\xFF')
-        self.assertRaises(ValueError, id3._ID3__load_header)
+        id3._fileobj = cBytesIO(b'ID3\x04\x00\x10\x00\x00\x00\xFF')
+        self.assertRaises(ValueError, id3._load_header)
 
     def test_header_2_4_allow_footer(self):
         id3 = ID3()
-        id3._ID3__fileobj = cBytesIO(b'ID3\x04\x00\x10\x00\x00\x00\x00')
-        id3._ID3__load_header()
+        id3._fileobj = cBytesIO(b'ID3\x04\x00\x10\x00\x00\x00\x00')
+        id3._load_header()
 
     def test_header_2_3_invalid_flags(self):
         id3 = ID3()
-        id3._ID3__fileobj = cBytesIO(b'ID3\x03\x00\x1f\x00\x00\x00\x00')
-        self.assertRaises(ValueError, id3._ID3__load_header)
-        id3._ID3__fileobj = cBytesIO(b'ID3\x03\x00\x0f\x00\x00\x00\x00')
-        self.assertRaises(ValueError, id3._ID3__load_header)
+        id3._fileobj = cBytesIO(b'ID3\x03\x00\x1f\x00\x00\x00\x00')
+        self.assertRaises(ValueError, id3._load_header)
+        id3._fileobj = cBytesIO(b'ID3\x03\x00\x0f\x00\x00\x00\x00')
+        self.assertRaises(ValueError, id3._load_header)
 
     def test_header_2_2(self):
         id3 = ID3()
-        id3._ID3__fileobj = cBytesIO(b'ID3\x02\x00\x00\x00\x00\x00\x00')
-        id3._ID3__load_header()
+        id3._fileobj = cBytesIO(b'ID3\x02\x00\x00\x00\x00\x00\x00')
+        id3._load_header()
         self.assertEquals(id3.version, (2,2,0))
 
     def test_header_2_1(self):
         id3 = ID3()
-        id3._ID3__fileobj = cBytesIO(b'ID3\x01\x00\x00\x00\x00\x00\x00')
-        self.assertRaises(NotImplementedError, id3._ID3__load_header)
+        id3._fileobj = cBytesIO(b'ID3\x01\x00\x00\x00\x00\x00\x00')
+        self.assertRaises(NotImplementedError, id3._load_header)
 
     def test_header_too_small(self):
         id3 = ID3()
-        id3._ID3__fileobj = cBytesIO(b'ID3\x01\x00\x00\x00\x00\x00')
-        self.assertRaises(EOFError, id3._ID3__load_header)
+        id3._fileobj = cBytesIO(b'ID3\x01\x00\x00\x00\x00\x00')
+        self.assertRaises(EOFError, id3._load_header)
 
     def test_header_2_4_extended(self):
         id3 = ID3()
-        id3._ID3__fileobj = cBytesIO(
+        id3._fileobj = cBytesIO(
             b'ID3\x04\x00\x40\x00\x00\x00\x00\x00\x00\x00\x05\x5a')
-        id3._ID3__load_header()
+        id3._load_header()
         self.assertEquals(id3._ID3__extsize, 1)
         self.assertEquals(id3._ID3__extdata, '\x5a')
 
     def test_header_2_4_extended_unsynch_size(self):
         id3 = ID3()
-        id3._ID3__fileobj = cBytesIO(
+        id3._fileobj = cBytesIO(
             b'ID3\x04\x00\x40\x00\x00\x00\x00\x00\x00\x00\xFF\x5a')
-        self.assertRaises(ValueError, id3._ID3__load_header)
+        self.assertRaises(ValueError, id3._load_header)
 
     def test_header_2_4_extended_but_not(self):
         id3 = ID3()
-        id3._ID3__fileobj = cBytesIO(
+        id3._fileobj = cBytesIO(
             b'ID3\x04\x00\x40\x00\x00\x00\x00TIT1\x00\x00\x00\x01a')
-        id3._ID3__load_header()
+        id3._load_header()
         self.assertEquals(id3._ID3__extsize, 0)
         self.assertEquals(id3._ID3__extdata, '')
 
     def test_header_2_4_extended_but_not_but_not_tag(self):
         id3 = ID3()
-        id3._ID3__fileobj = cBytesIO(
+        id3._fileobj = cBytesIO(
             'ID3\x04\x00\x40\x00\x00\x00\x00TIT9')
-        self.failUnlessRaises(EOFError, id3._ID3__load_header)
+        self.failUnlessRaises(EOFError, id3._load_header)
 
     def test_header_2_3_extended(self):
         id3 = ID3()
-        id3._ID3__fileobj = cBytesIO(
+        id3._fileobj = cBytesIO(
             b'ID3\x03\x00\x40\x00\x00\x00\x00\x00\x00\x00\x06'
             b'\x00\x00\x56\x78\x9a\xbc')
-        id3._ID3__load_header()
+        id3._load_header()
         self.assertEquals(id3._ID3__extsize, 6)
         self.assertEquals(id3._ID3__extdata, b'\x00\x00\x56\x78\x9a\xbc')
 

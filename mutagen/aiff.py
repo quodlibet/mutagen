@@ -184,19 +184,20 @@ class AIFFInfo(StreamInfo):
             self.channels, self.bitrate, self.sample_rate, self.length)
 
 
-class ID3(ID3):
+class _IFFID3(ID3):
     """A AIFF file with ID3v2 tags"""
 
-    def __load_header(self):
+    def _load_header(self):
         try:
-            self.__fileobj.seek(IFFFile(self.__fileobj)['ID3'].data_offset)
+            self._fileobj.seek(IFFFile(self._fileobj)['ID3'].data_offset)
         except InvalidChunk:
             raise ID3Error()
-        super(ID3, self).__load_header()
+        super(_IFFID3, self)._load_header()
 
     def save(self, filename=None, v2_version=4, v23_sep='/'):
         """Save ID3v2 data to the AIFF file"""
-        framedata = self.__prepare_framedata(v2_version, v23_sep)
+
+        framedata = self._prepare_framedata(v2_version, v23_sep)
         framesize = len(framedata)
 
         # Unlike the parent ID3.save method, we won't save to a blank file
@@ -212,7 +213,7 @@ class ID3(ID3):
             fileobj.seek(chunk.data_offset)
 
             header = fileobj.read(10)
-            header = self.__prepare_id3_header(header, framesize, v2_version)
+            header = self._prepare_id3_header(header, framesize, v2_version)
             header, new_size, _ = header
 
             data = header + framedata + (b'\x00' * (new_size - framesize))
@@ -266,7 +267,7 @@ class AIFF(FileType):
     def add_tags(self):
         """Add an empty ID3 tag to the file."""
         if self.tags is None:
-            self.tags = ID3()
+            self.tags = _IFFID3()
         else:
             raise error("an ID3 tag already exists")
 
@@ -275,7 +276,7 @@ class AIFF(FileType):
         self.filename = filename
 
         try:
-            self.tags = ID3(filename, **kwargs)
+            self.tags = _IFFID3(filename, **kwargs)
         except ID3Error:
             self.tags = None
 
