@@ -133,10 +133,12 @@ class IFFFile(object):
 
     def __getitem__(self, id):
         """Get a chunk from the IFF file"""
-        if id not in self:
-            raise InvalidChunk(
+
+        try:
+            return self.__chunks[id]
+        except KeyError:
+            raise KeyError(
                 "%r has no %r chunk" % (self.__fileobj.name, id))
-        return self.__chunks[id]
 
     def __delitem__(self, id):
         """Remove a chunk from the IFF file"""
@@ -174,7 +176,12 @@ class AIFFInfo(StreamInfo):
     sample_rate = 0
 
     def __init__(self, fileobj):
-        common_chunk = IFFFile(fileobj)['COMM']
+        iff = IFFFile(fileobj)
+        try:
+            common_chunk = iff['COMM']
+        except KeyError as e:
+            raise error(str(e))
+
         common_chunk.read()
 
         info = struct.unpack('>hLh10s', common_chunk.data[:18])
@@ -197,7 +204,7 @@ class _IFFID3(ID3):
     def _load_header(self):
         try:
             self._fileobj.seek(IFFFile(self._fileobj)['ID3'].data_offset)
-        except InvalidChunk:
+        except (InvalidChunk, KeyError):
             raise ID3Error()
         super(_IFFID3, self)._load_header()
 
