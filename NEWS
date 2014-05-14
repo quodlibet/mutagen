@@ -1,3 +1,9 @@
+1.23 - 2014.05.14
+ * tools: Don't crash in misconfigured envs, fall back to utf-8.
+ * mp3: Return correct mimetype for MP2 files. (#163)
+ * id3: deterministic sorting of frames. (#166)
+ * AIFF support (#146, Evan Purkhiser)
+
 1.22 - 2013.09.08
  * Minimum required Python version is now 2.6
  * Online API reference at https://mutagen.readthedocs.org/
