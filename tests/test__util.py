@@ -1,4 +1,5 @@
 from mutagen._util import DictMixin, cdata, utf8, insert_bytes, delete_bytes
+from mutagen._util import decode_terminated
 from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2
 from tests import TestCase, add
 import random
@@ -349,3 +350,28 @@ class FileHandling(TestCase):
             self.failUnless(fobj.read() == data)
 
 add(FileHandling)
+
+
+class Tdecode_terminated(TestCase):
+
+    def test_all(self):
+        values = [u"", u"", u"\xe4", u"abc", u"", u""]
+
+        for codec in ["utf-8", "utf-16", "latin-1", "utf-16be"]:
+            # NULL without the BOM
+            term = u"\x00".encode(codec)[-2:]
+            data = b"".join(v.encode(codec) + term for v in values)
+
+            for v in values:
+                dec, data = decode_terminated(data, codec)
+                self.assertEqual(dec, v)
+            self.assertEqual(data, b"")
+
+    def test_invalid(self):
+        self.assertRaises(
+            UnicodeDecodeError, decode_terminated, b"\xff", "utf-8")
+        self.assertRaises(ValueError, decode_terminated, b"abc", "utf-8")
+        self.assertRaises(LookupError, decode_terminated, b"abc", "foobar")
+
+
+add(Tdecode_terminated)

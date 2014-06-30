@@ -75,6 +75,31 @@ class SpecSanityChecks(TestCase):
         self.assertEquals(b'\x04\x00', s.write(None, 2.0))
         self.assertEquals(b'\xfc\x00', s.write(None, -2.0))
 
+    def test_synchronizedtextspec(self):
+        from mutagen.id3 import SynchronizedTextSpec, Frame
+        s = SynchronizedTextSpec('name')
+        f = Frame()
+
+        values = [(u"A", 100), (u"\xe4xy", 0), (u"", 42), (u"", 0)]
+
+        # utf-16
+        f.encoding = 1
+        self.assertEqual(s.read(f, s.write(f, values)), (values, b""))
+        self.assertEquals(
+            s.write(f, [(u"A", 100)]), b"\xff\xfeA\x00\x00\x00\x00\x00\x00d")
+
+        # utf-16be
+        f.encoding = 2
+        self.assertEqual(s.read(f, s.write(f, values)), (values, b""))
+        self.assertEquals(
+            s.write(f, [(u"A", 100)]), b"\x00A\x00\x00\x00\x00\x00d")
+
+        # utf-8
+        f.encoding = 3
+        self.assertEqual(s.read(f, s.write(f, values)), (values, b""))
+        self.assertEquals(s.write(f, [(u"A", 100)]), b"A\x00\x00\x00\x00d")
+
+
 add(SpecSanityChecks)
 
 

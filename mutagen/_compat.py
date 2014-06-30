@@ -31,6 +31,8 @@ if PY2:
     itervalues = lambda d: d.itervalues()
     iterkeys = lambda d: d.iterkeys()
 
+    iterbytes = lambda b: iter(b)
+
     exec("def reraise(tp, value, tb):\n raise tp, value, tb")
 
     def swap_to_string(cls):
@@ -70,6 +72,8 @@ elif PY3:
     iteritems = lambda d: iter(d.items())
     itervalues = lambda d: iter(d.values())
     iterkeys = lambda d: iter(d.keys())
+
+    iterbytes = lambda b: (bytes([v]) for v in b)
 
     def reraise(tp, value, tb):
         raise tp(value).with_traceback(tb)

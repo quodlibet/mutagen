@@ -11,10 +11,11 @@ intended for internal use in Mutagen only.
 """
 
 import struct
+import codecs
 
 from fnmatch import fnmatchcase
 
-from ._compat import chr_, text_type, PY2, iteritems
+from ._compat import chr_, text_type, PY2, iteritems, iterbytes
 
 
 def total_ordering(cls):
@@ -375,3 +376,25 @@ def dict_match(d, key, default=None):
             if fnmatchcase(key, pattern):
                 return value
     return default
+
+
+def decode_terminated(data, encoding):
+    """Returns the decoded data until the first NULL terminator
+    and all data after it.
+
+    In case the data can't be decoded raises UnicodeError.
+    In case the encoding is not found raises LookupError.
+    In case the data isn't null terminated (even if it is encoded correctly)
+    raises ValueError.
+    """
+
+    decoder = codecs.getincrementaldecoder(encoding)()
+    r = []
+    for i, b in enumerate(iterbytes(data)):
+        c = decoder.decode(b)
+        if c == u"\x00":
+            break
+        r.append(c)
+    else:
+        raise ValueError("not null terminated")
+    return u"".join(r), data[i + 1:]

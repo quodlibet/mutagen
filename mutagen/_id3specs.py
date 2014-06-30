@@ -10,7 +10,7 @@ from warnings import warn
 
 from ._compat import text_type, chr_, PY3, swap_to_string, string_types
 from mutagen._id3util import ID3JunkFrameError, ID3Warning, BitPaddedInt
-from mutagen._util import total_ordering
+from mutagen._util import total_ordering, decode_terminated
 
 
 class Spec(object):
@@ -410,23 +410,23 @@ class SynchronizedTextSpec(EncodedTextSpec):
         texts = []
         encoding, term = self._encodings[frame.encoding]
         while data:
-            l = len(term)
             try:
-                value_idx = data.index(term)
+                value, data = decode_terminated(data, encoding)
             except ValueError:
                 raise ID3JunkFrameError
-            value = data[:value_idx].decode(encoding)
-            if len(data) < value_idx + l + 4:
+
+            if len(data) < 4:
                 raise ID3JunkFrameError
-            time, = struct.unpack(">I", data[value_idx+l:value_idx+l+4])
+            time, = struct.unpack(">I", data[:4])
+
             texts.append((value, time))
-            data = data[value_idx+l+4:]
+            data = data[4:]
         return texts, ""
 
     def write(self, frame, value):
         data = []
         encoding, term = self._encodings[frame.encoding]
-        for text, time in frame.text:
+        for text, time in value:
             text = text.encode(encoding) + term
             data.append(text + struct.pack(">I", time))
         return b"".join(data)
