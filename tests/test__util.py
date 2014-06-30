@@ -373,5 +373,15 @@ class Tdecode_terminated(TestCase):
         self.assertRaises(ValueError, decode_terminated, b"abc", "utf-8")
         self.assertRaises(LookupError, decode_terminated, b"abc", "foobar")
 
+    def test_lax(self):
+        # missing termination
+        self.assertEqual(
+            decode_terminated(b"abc", "utf-8", strict=False), (u"abc", b""))
+
+        # missing termination and truncated data
+        truncated = u"\xe4\xe4".encode("utf-8")[:-1]
+        self.assertRaises(
+            UnicodeDecodeError, decode_terminated,
+            truncated, "utf-8", strict=False)
 
 add(Tdecode_terminated)

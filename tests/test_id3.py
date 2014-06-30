@@ -1022,6 +1022,13 @@ class BrokenButParsed(TestCase):
         tpe1 = TPE1.fromData(_24, 0, '\x01\x00\x00\x00\x00')
         self.assertEquals([u'', u''], tpe1)
 
+    def test_utf16_wrongnullterm(self):
+        # issue 169
+        from mutagen.id3 import TPE1
+        tpe1 = TPE1.fromData(
+            _24, 0, '\x01\xff\xfeH\x00e\x00l\x00l\x00o\x00\x00')
+        self.assertEquals(tpe1, [u'Hello'])
+
     def test_fake_zlib_pedantic(self):
         from mutagen.id3 import TPE1, Frame, ID3BadCompressedData
         id3 = ID3()

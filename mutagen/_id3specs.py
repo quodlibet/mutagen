@@ -144,25 +144,19 @@ class EncodedTextSpec(Spec):
 
     def read(self, frame, data):
         enc, term = self._encodings[frame.encoding]
-        ret = b''
-        if len(term) == 1:
-            if term in data:
-                data, ret = data.split(term, 1)
-        else:
-            offset = -1
-            try:
-                while True:
-                    offset = data.index(term, offset+1)
-                    if offset & 1:
-                        continue
-                    data, ret = data[0:offset], data[offset+2:]
-                    break
-            except ValueError:
-                pass
+        try:
+            # allow missing termination
+            return decode_terminated(data, enc, strict=False)
+        except ValueError:
+            # utf-16 termination with missing BOM, or single NULL
+            if not data[:len(term)].strip(b"\x00"):
+                return u"", data[len(term):]
 
-        if len(data) < len(term):
-            return u'', ret
-        return data.decode(enc), ret
+            # utf-16 data with single NULL, see issue 169
+            try:
+                return decode_terminated(data + b"\x00", enc)
+            except ValueError:
+                raise ID3JunkFrameError
 
     def write(self, frame, value):
         enc, term = self._encodings[frame.encoding]

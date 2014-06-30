@@ -378,14 +378,15 @@ def dict_match(d, key, default=None):
     return default
 
 
-def decode_terminated(data, encoding):
+def decode_terminated(data, encoding, strict=True):
     """Returns the decoded data until the first NULL terminator
     and all data after it.
 
     In case the data can't be decoded raises UnicodeError.
     In case the encoding is not found raises LookupError.
     In case the data isn't null terminated (even if it is encoded correctly)
-    raises ValueError.
+    raises ValueError except if strict is False, then the decoded string
+    will be returned anyway.
     """
 
     decoder = codecs.getincrementaldecoder(encoding)()
@@ -393,8 +394,11 @@ def decode_terminated(data, encoding):
     for i, b in enumerate(iterbytes(data)):
         c = decoder.decode(b)
         if c == u"\x00":
-            break
+            return u"".join(r), data[i + 1:]
         r.append(c)
     else:
-        raise ValueError("not null terminated")
-    return u"".join(r), data[i + 1:]
+        if strict:
+            raise ValueError("not null terminated")
+        # make sure the decoder is finished
+        r.append(decoder.decode(b"", True))
+        return u"".join(r), b""
