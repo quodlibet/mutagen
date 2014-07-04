@@ -178,7 +178,7 @@ if __name__ == "__main__":
 
     setup(cmdclass=cmd_classes,
           name="mutagen", version=version_string,
-          url="http://code.google.com/p/mutagen/",
+          url="https://bitbucket.org/lazka/mutagen",
           description="read and write audio tags for many formats",
           author="Michael Urman",
           author_email="quod-libet-development@groups.google.com",

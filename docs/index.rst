@@ -46,12 +46,10 @@ There is a :doc:`brief tutorial with several API examples.
 Where do I get it?
 ------------------
 
-Mutagen is hosted on `Google Code <http://code.google.com/p/mutagen/>`_ and 
-`Bitbucket <http://bitbucket.org/lazka/mutagen>`_. The `download page 
-<http://code.google.com/p/mutagen/downloads>`_ will have the latest version 
-or check out the Mercurial repository::
+Mutagen is hosted on `Bitbucket <http://bitbucket.org/lazka/mutagen>`_. The 
+`download page <https://bitbucket.org/lazka/mutagen/downloads>`_ will have the 
+latest version or check out the Mercurial repository::
 
-    $ hg clone https://code.google.com/p/mutagen
     $ hg clone https://bitbucket.org/lazka/mutagen
 
 Why Mutagen?
@@ -98,6 +96,7 @@ Contact
 
 For historical and practical reasons, Mutagen shares a `mailing list 
 <http://groups.google.com/group/quod-libet-development/>`_ and IRC channel 
-(#quodlibet on irc.oftc.net) with Quod Libet. If you need help using 
-Mutagen or would like to discuss the library, please use the mailing list. 
-Bugs and patches should go to the `issue tracker <http://code.google.com/p/mutagen/issues>`_.
+(#quodlibet on irc.oftc.net) with Quod Libet. If you need help using Mutagen 
+or would like to discuss the library, please use the mailing list. Bugs and 
+patches should go to the `issue tracker 
+<https://bitbucket.org/lazka/mutagen/issues>`_.
