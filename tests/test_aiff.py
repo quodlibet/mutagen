@@ -72,7 +72,8 @@ class TAIFF(TestCase):
         self.failUnlessEqual(self.aiff_5.info.sample_size, 16)
 
     def test_notaiff(self):
-        self.failUnlessRaises(AIFFError, AIFF, "README")
+        self.failUnlessRaises(
+            AIFFError, AIFF, os.path.join('tests', 'data', 'empty.ofr'))
 
     def test_pprint(self):
         self.failUnless(self.aiff_1.pprint())
