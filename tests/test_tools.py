@@ -9,7 +9,12 @@ from tests import TestCase
 
 def get_var(tool_name, entry="main"):
     tool_path = os.path.join("tools", tool_name)
-    mod = imp.load_source(tool_name, tool_path)
+    dont_write_bytecode = sys.dont_write_bytecode
+    sys.dont_write_bytecode = True
+    try:
+        mod = imp.load_source(tool_name, tool_path)
+    finally:
+        sys.dont_write_bytecode = dont_write_bytecode
     return getattr(mod, entry)
 
 
