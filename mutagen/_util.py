@@ -389,7 +389,25 @@ def decode_terminated(data, encoding, strict=True):
     will be returned anyway.
     """
 
-    decoder = codecs.getincrementaldecoder(encoding)()
+    codec_info = codecs.lookup(encoding)
+
+    # normalize encoding name so we can compare by name
+    encoding = codec_info.name
+
+    # fast path
+    if encoding in ("utf-8", "iso8859-1"):
+        index = data.find(b"\x00")
+        if index == -1:
+            # make sure we raise UnicodeError first, like in the slow path
+            res = data.decode(encoding), b""
+            if strict:
+                raise ValueError("not null terminated")
+            else:
+                return res
+        return data[:index].decode(encoding), data[index + 1:]
+
+    # slow path
+    decoder = codec_info.incrementaldecoder()
     r = []
     for i, b in enumerate(iterbytes(data)):
         c = decoder.decode(b)
@@ -397,8 +415,8 @@ def decode_terminated(data, encoding, strict=True):
             return u"".join(r), data[i + 1:]
         r.append(c)
     else:
-        if strict:
-            raise ValueError("not null terminated")
         # make sure the decoder is finished
         r.append(decoder.decode(b"", True))
+        if strict:
+            raise ValueError("not null terminated")
         return u"".join(r), b""

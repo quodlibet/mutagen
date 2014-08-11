@@ -357,7 +357,7 @@ class Tdecode_terminated(TestCase):
     def test_all(self):
         values = [u"", u"", u"\xe4", u"abc", u"", u""]
 
-        for codec in ["utf-8", "utf-16", "latin-1", "utf-16be"]:
+        for codec in ["utf8", "utf-8", "utf-16", "latin-1", "utf-16be"]:
             # NULL without the BOM
             term = u"\x00".encode(codec)[-2:]
             data = b"".join(v.encode(codec) + term for v in values)
@@ -368,9 +368,15 @@ class Tdecode_terminated(TestCase):
             self.assertEqual(data, b"")
 
     def test_invalid(self):
+        # invalid
         self.assertRaises(
             UnicodeDecodeError, decode_terminated, b"\xff", "utf-8")
+        # truncated
+        self.assertRaises(
+            UnicodeDecodeError, decode_terminated, b"\xff\xfe\x00", "utf-16")
+        # not null terminated
         self.assertRaises(ValueError, decode_terminated, b"abc", "utf-8")
+        # invalid encoding
         self.assertRaises(LookupError, decode_terminated, b"abc", "foobar")
 
     def test_lax(self):
