@@ -1,3 +1,10 @@
+1.24 - ???
+ * Moved to Bitbucket: https://bitbucket.org/lazka/mutagen
+ * ID3:
+   * Parse utf-16 text frames with wrong termination (#169)
+   * Fix parsing of utf-16 SYLT frames (#173)
+ * setup.py: Don't install leftover files produced by the test suite (#179)
+
 1.23 - 2014.05.14
  * tools: Don't crash in misconfigured envs, fall back to utf-8.
  * mp3: Return correct mimetype for MP2 files. (#163)
