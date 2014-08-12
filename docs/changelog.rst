@@ -1,4 +1,4 @@
 Changelog
 =========
 
-.. literalinclude:: ../NEWS
+.. include:: ../NEWS
