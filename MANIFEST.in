@@ -1,7 +1,6 @@
 include COPYING
 include NEWS
 include README.rst
-include TODO
 include MANIFEST.in
 include tests/data/*
 include tests/*.py
