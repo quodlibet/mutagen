@@ -12,6 +12,7 @@
   * Fix length calculation if sample count is missing in the header :bug:`180`
 
 * setup.py: Don't install leftover files produced by the test suite :bug:`179`
+* tests: Fix error with POSIX locale :bug:`181`
 
 1.23 - 2014.05.14
 -----------------

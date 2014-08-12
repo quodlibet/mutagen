@@ -176,10 +176,13 @@ class TMid3v2(_TTools):
         import locale
         text = u'\xe4\xf6\xfc'
         enc = locale.getpreferredencoding()
-        if PY2:
-            text = text.encode(enc)
+        # don't fail in case getpreferredencoding doesn't give us a unicode
+        # encoding.
+        text = text.encode(enc, errors="replace")
         res, out = self.call("-e", "-a", text, self.filename)
         self.failUnlessEqual((res, out), (0, ""))
+        f = ID3(self.filename)
+        self.assertEqual(f.getall("TPE1")[0], text.decode(enc))
 
     def test_invalid_encoding(self):
         res, out = self.call("--TALB", '\\xff', '-e', self.filename)
