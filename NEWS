@@ -3,6 +3,8 @@
  * ID3:
    * Parse utf-16 text frames with wrong termination (#169)
    * Fix parsing of utf-16 SYLT frames (#173)
+ * WavPack:
+   * Fix length calculation if sample count is missing in the header (#180)
  * setup.py: Don't install leftover files produced by the test suite (#179)
 
 1.23 - 2014.05.14
