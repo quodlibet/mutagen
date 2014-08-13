@@ -225,6 +225,11 @@ ID3v2.3/4 Frames
     :members:
 
 
+.. autoclass:: mutagen.id3.TDES(encoding=None, text=[])
+    :show-inheritance:
+    :members:
+
+
 .. autoclass:: mutagen.id3.TDLY(encoding=None, text=[])
     :show-inheritance:
     :members:
@@ -261,6 +266,11 @@ ID3v2.3/4 Frames
 
 
 .. autoclass:: mutagen.id3.TFLT(encoding=None, text=[])
+    :show-inheritance:
+    :members:
+
+
+.. autoclass:: mutagen.id3.TGID(encoding=None, text=[])
     :show-inheritance:
     :members:
 
@@ -481,6 +491,11 @@ ID3v2.3/4 Frames
 
 
 .. autoclass:: mutagen.id3.WCOP(url=u'None')
+    :show-inheritance:
+    :members:
+
+
+.. autoclass:: mutagen.id3.WFED(url=u'None')
     :show-inheritance:
     :members:
 
