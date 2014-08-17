@@ -198,15 +198,8 @@ class cdata(object):
     to_longlong_be = staticmethod(lambda data: struct.pack('>q', data))
     to_ulonglong_be = staticmethod(lambda data: struct.pack('>Q', data))
 
-    bitswap = b''.join([chr_(sum([((val >> i) & 1) << (7-i)
-                        for i in range(8)]))
-                        for val in range(256)])
-
-    try:
-        del(i)
-        del(val)
-    except NameError:
-        pass
+    bitswap = b''.join(chr_(sum(((val >> i) & 1) << (7-i) for i in range(8)))
+                       for val in range(256))
 
     test_bit = staticmethod(lambda value, n: bool((value >> n) & 1))
 
@@ -271,11 +264,11 @@ def insert_bytes(fobj, size, offset, BUFFER_SIZE=2**16):
     try:
         try:
             import mmap
-            map = mmap.mmap(fobj.fileno(), filesize + size)
+            file_map = mmap.mmap(fobj.fileno(), filesize + size)
             try:
-                map.move(offset + size, offset, movesize)
+                file_map.move(offset + size, offset, movesize)
             finally:
-                map.close()
+                file_map.close()
         except (ValueError, EnvironmentError, ImportError):
             # handle broken mmap scenarios
             locked = lock(fobj)
@@ -334,11 +327,11 @@ def delete_bytes(fobj, size, offset, BUFFER_SIZE=2**16):
             fobj.flush()
             try:
                 import mmap
-                map = mmap.mmap(fobj.fileno(), filesize)
+                file_map = mmap.mmap(fobj.fileno(), filesize)
                 try:
-                    map.move(offset, offset + size, movesize)
+                    file_map.move(offset, offset + size, movesize)
                 finally:
-                    map.close()
+                    file_map.close()
             except (ValueError, EnvironmentError, ImportError):
                 # handle broken mmap scenarios
                 locked = lock(fobj)
@@ -365,7 +358,7 @@ def utf8(data):
     elif isinstance(data, text_type):
         return data.encode("utf-8")
     else:
-        raise TypeError("only unicode/str types can be converted to UTF-8")
+        raise TypeError("only unicode/bytes types can be converted to UTF-8")
 
 
 def dict_match(d, key, default=None):
