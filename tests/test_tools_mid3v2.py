@@ -178,7 +178,7 @@ class TMid3v2(_TTools):
         enc = locale.getpreferredencoding()
         # don't fail in case getpreferredencoding doesn't give us a unicode
         # encoding.
-        text = text.encode(enc, errors="replace")
+        text = text.encode(enc, "replace")
         res, out = self.call("-e", "-a", text, self.filename)
         self.failUnlessEqual((res, out), (0, ""))
         f = ID3(self.filename)
