@@ -3,6 +3,7 @@ include NEWS
 include README.rst
 include MANIFEST.in
 include tests/data/*
+include tests/quality/*
 include tests/*.py
 include man/*.1
 include docs/Makefile
