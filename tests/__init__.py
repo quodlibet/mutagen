@@ -54,12 +54,15 @@ class TestCase(BaseTestCase):
         self.assertNotEqual(0, cmp(b, a))
 
 
-for name in glob.glob(os.path.join(os.path.dirname(__file__), "test_*.py")):
-    # skip m4a in py3k
-    if sys.version_info[0] != 2 and "test_m4a" in name:
-        continue
-    module = "tests." + os.path.basename(name)
-    __import__(module[:-3], {}, {}, [])
+def import_tests():
+    for name in glob.glob(
+            os.path.join(os.path.dirname(__file__), "test_*.py")):
+        # skip m4a in py3k
+        if sys.version_info[0] != 2 and "test_m4a" in name:
+            continue
+        module = "tests." + os.path.basename(name)
+        __import__(module[:-3], {}, {}, [])
+
 
 class Result(unittest.TestResult):
 
@@ -104,8 +107,22 @@ class Runner(object):
         return bool(result.failures + result.errors)
 
 
+def check():
+    from tests.quality import test_pep8
+    from tests.quality import test_pyflakes
+
+    runner = Runner()
+    failures = 0
+    for test in suites:
+        failures += runner.run(test)
+
+    return len(suites), failures
+
+
 def unit(run=[], quick=False):
     import mmap
+
+    import_tests()
 
     runner = Runner()
     failures = 0

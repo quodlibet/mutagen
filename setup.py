@@ -150,6 +150,25 @@ class test_cmd(Command):
             raise SystemExit("Test failures are listed above.")
 
 
+class quality_cmd(Command):
+    description = "run pyflakes/pep8 tests"
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        import tests
+
+        count, failures = tests.check()
+        if failures:
+            print("%d out of %d failed" % (failures, count))
+            raise SystemExit("Test failures are listed above.")
+
+
 class coverage_cmd(Command):
     description = "generate test coverage data"
     user_options = [
@@ -205,6 +224,7 @@ if __name__ == "__main__":
     cmd_classes = {
         "clean": clean,
         "test": test_cmd,
+        "quality": quality_cmd,
         "coverage": coverage_cmd,
         "distcheck": distcheck,
         "build_sphinx": build_sphinx,
