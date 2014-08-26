@@ -3,6 +3,12 @@ from mutagen._util import decode_terminated
 from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2
 from tests import TestCase, add
 import random
+import mmap
+
+try:
+    import fcntl
+except ImportError:
+    fcntl = None
 
 class FDict(DictMixin):
 
@@ -350,6 +356,58 @@ class FileHandling(TestCase):
             self.failUnless(fobj.read() == data)
 
 add(FileHandling)
+
+
+class FileHandlingMockedLock(FileHandling):
+
+    def setUp(self):
+        def MockLockF(*args, **kwargs):
+            raise IOError
+        self._orig_lockf = fcntl.lockf
+        fcntl.lockf = MockLockF
+
+    def tearDown(self):
+        fcntl.lockf = self._orig_lockf
+
+if fcntl:
+    add(FileHandlingMockedLock)
+
+
+class FileHandlingMockedMMapMove(FileHandling):
+
+    def setUp(self):
+        class MockMMap(object):
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def move(self, dest, src, count):
+                raise ValueError
+
+            def close(self):
+                pass
+
+        self._orig_mmap = mmap.mmap
+        mmap.mmap = MockMMap
+
+    def tearDown(self):
+        mmap.mmap = self._orig_mmap
+
+add(FileHandlingMockedMMapMove)
+
+
+class FileHandlingMockedMMap(FileHandling):
+
+    def setUp(self):
+        def MockMMap2(*args, **kwargs):
+            raise EnvironmentError
+
+        self._orig_mmap = mmap.mmap
+        mmap.mmap = MockMMap2
+
+    def tearDown(self):
+        mmap.mmap = self._orig_mmap
+
+add(FileHandlingMockedMMap)
 
 
 class Tdecode_terminated(TestCase):
