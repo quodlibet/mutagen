@@ -240,7 +240,7 @@ class FrameOpt(Frame):
                 data.append(writer.write(self, getattr(self, writer.name)))
             except AttributeError:
                 break
-        return ''.join(data)
+        return b''.join(data)
 
     def __repr__(self):
         kw = []

@@ -43,7 +43,7 @@ class ByteSpec(Spec):
 
 class IntegerSpec(Spec):
     def read(self, frame, data):
-        return int(BitPaddedInt(data, bits=8)), ''
+        return int(BitPaddedInt(data, bits=8)), b''
 
     def write(self, frame, value):
         return BitPaddedInt.to_str(value, bits=8, width=-1)
@@ -415,7 +415,7 @@ class SynchronizedTextSpec(EncodedTextSpec):
 
             texts.append((value, time))
             data = data[4:]
-        return texts, ""
+        return texts, b""
 
     def write(self, frame, value):
         data = []

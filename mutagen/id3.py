@@ -751,7 +751,7 @@ def delete(filename, delete_v1=True, delete_v2=True):
         try:
             id3, vmaj, vrev, flags, insize = unpack('>3sBBB4s', idata)
         except struct.error:
-            id3, insize = '', -1
+            id3, insize = b'', -1
         insize = BitPaddedInt(insize)
         if id3 == b'ID3' and insize >= 0:
             delete_bytes(f, insize + 10, 0)
@@ -762,14 +762,14 @@ Open = ID3
 
 
 # ID3v1.1 support.
-def ParseID3v1(string):
+def ParseID3v1(data):
     """Parse an ID3v1 tag, returning a list of ID3v2.4 frames."""
 
     try:
-        string = string[string.index(b"TAG"):]
+        data = data[data.index(b"TAG"):]
     except ValueError:
         return None
-    if 128 < len(string) or len(string) < 124:
+    if 128 < len(data) or len(data) < 124:
         return None
 
     # Issue #69 - Previous versions of Mutagen, when encountering
@@ -777,19 +777,19 @@ def ParseID3v1(string):
     # wrote only the characters available - e.g. "1" or "" - into the
     # year field. To parse those, reduce the size of the year field.
     # Amazingly, "0s" works as a struct format string.
-    unpack_fmt = "3s30s30s30s%ds29sBB" % (len(string) - 124)
+    unpack_fmt = "3s30s30s30s%ds29sBB" % (len(data) - 124)
 
     try:
         tag, title, artist, album, year, comment, track, genre = unpack(
-            unpack_fmt, string)
+            unpack_fmt, data)
     except StructError:
         return None
 
     if tag != b"TAG":
         return None
 
-    def fix(string):
-        return string.split(b"\x00")[0].strip().decode('latin1')
+    def fix(data):
+        return data.split(b"\x00")[0].strip().decode('latin1')
 
     title, artist, album, year, comment = map(
         fix, [title, artist, album, year, comment])
@@ -808,7 +808,7 @@ def ParseID3v1(string):
             encoding=0, lang="eng", desc="ID3v1 Comment", text=comment)
     # Don't read a track number if it looks like the comment was
     # padded with spaces instead of nulls (thanks, WinAmp).
-    if track and (track != 32 or string[-3] == b'\x00'):
+    if track and (track != 32 or data[-3] == b'\x00'[0]):
         frames["TRCK"] = TRCK(encoding=0, text=str(track))
     if genre != 255:
         frames["TCON"] = TCON(encoding=0, text=str(genre))
@@ -888,8 +888,8 @@ class ID3FileType(mutagen.FileType):
             return "Unknown format with ID3 tag"
 
     @staticmethod
-    def score(filename, fileobj, header):
-        return header.startswith(b"ID3")
+    def score(filename, fileobj, header_data):
+        return header_data.startswith(b"ID3")
 
     def add_tags(self, ID3=None):
         """Add an empty ID3 tag to the file.
