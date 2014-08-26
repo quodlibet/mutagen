@@ -60,7 +60,8 @@ class MPEGInfo(StreamInfo):
 
     # Map (version, layer) tuples to bitrates.
     __BITRATE = {
-        (1, 1): range(0, 480, 32),
+        (1, 1): [0, 32, 64, 96, 128, 160, 192, 224,
+                 256, 288, 320, 352, 384, 416, 448],
         (1, 2): [0, 32, 48, 56, 64, 80, 96, 112, 128,
                  160, 192, 224, 256, 320, 384],
         (1, 3): [0, 32, 40, 48, 56, 64, 80, 96, 112,
@@ -178,13 +179,13 @@ class MPEGInfo(StreamInfo):
         self.sample_rate = self.__RATES[self.version][sample_rate]
 
         if self.layer == 1:
-            frame_length = (12 * self.bitrate / self.sample_rate + padding) * 4
+            frame_length = (12 * self.bitrate // self.sample_rate + padding) * 4
             frame_size = 384
         elif self.version >= 2 and self.layer == 3:
-            frame_length = 72 * self.bitrate / self.sample_rate + padding
+            frame_length = 72 * self.bitrate // self.sample_rate + padding
             frame_size = 576
         else:
-            frame_length = 144 * self.bitrate / self.sample_rate + padding
+            frame_length = 144 * self.bitrate // self.sample_rate + padding
             frame_size = 1152
 
         if check_second:
@@ -232,8 +233,8 @@ class MPEGInfo(StreamInfo):
                 samples = float(frame_size * frame_count)
                 self.length = (samples / self.sample_rate) or self.length
             if flags & 0x2:
-                bytes = struct.unpack('>I', data[xing + 12:xing + 16])[0]
-                self.bitrate = int((bytes * 8) // self.length)
+                bitrate_data = struct.unpack('>I', data[xing + 12:xing + 16])[0]
+                self.bitrate = int((bitrate_data * 8) // self.length)
 
     def pprint(self):
         s = "MPEG %s layer %d, %d bps, %s Hz, %.2f seconds" % (
@@ -261,10 +262,10 @@ class MP3(ID3FileType):
         return ["audio/mp%d" % l, "audio/x-mp%d" % l] + super(MP3, self).mime
 
     @staticmethod
-    def score(filename, fileobj, header):
+    def score(filename, fileobj, header_data):
         filename = filename.lower()
 
-        return (header.startswith(b"ID3") * 2 + endswith(filename, b".mp3") +
+        return (header_data.startswith(b"ID3") * 2 + endswith(filename, b".mp3") +
                 endswith(filename, b".mp2") + endswith(filename, b".mpg") +
                 endswith(filename, b".mpeg"))
 
