@@ -119,7 +119,7 @@ def check():
     return len(suites), failures
 
 
-def unit(run=[], quick=False):
+def unit(run=[], quick=False, exitfirst=False):
     import mmap
 
     import_tests()
@@ -134,6 +134,8 @@ def unit(run=[], quick=False):
     uses_mmap = []
     print("Running tests with real mmap.")
     for test in tests:
+        if failures and exitfirst:
+            break
         def new_mmap(*args, **kwargs):
             if test not in uses_mmap:
                 uses_mmap.append(test)
@@ -144,7 +146,7 @@ def unit(run=[], quick=False):
     count += len(tests)
 
     # make sure the above works
-    if not run:
+    if not run and not exitfirst:
         assert len(uses_mmap) > 1
 
     if quick:
@@ -180,6 +182,8 @@ def unit(run=[], quick=False):
     print("Running tests with mocked failing mmap.move.")
     mmap.mmap = MockMMap
     for test in uses_mmap:
+        if failures and exitfirst:
+            break
         failures += runner.run(test)
     count += len(uses_mmap)
 
@@ -190,6 +194,8 @@ def unit(run=[], quick=False):
     mmap.mmap = MockMMap2
     print("Running tests with mocked failing mmap.mmap.")
     for test in uses_mmap:
+        if failures and exitfirst:
+            break
         failures += runner.run(test)
     count += len(uses_mmap)
 

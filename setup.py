@@ -131,20 +131,24 @@ class test_cmd(Command):
     user_options = [
         ("to-run=", None, "list of tests to run (default all)"),
         ("quick", None, "don't run slow mmap-failing tests"),
+        ("exitfirst", "x", "stop after first failing test"),
     ]
 
     def initialize_options(self):
         self.to_run = []
         self.quick = False
+        self.exitfirst = False
 
     def finalize_options(self):
         if self.to_run:
             self.to_run = self.to_run.split(",")
+        self.quick = bool(self.quick)
+        self.exitfirst = bool(self.exitfirst)
 
     def run(self):
         import tests
 
-        count, failures = tests.unit(self.to_run, self.quick)
+        count, failures = tests.unit(self.to_run, self.quick, self.exitfirst)
         if failures:
             print("%d out of %d failed" % (failures, count))
             raise SystemExit("Test failures are listed above.")
