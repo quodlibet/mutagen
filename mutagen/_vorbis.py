@@ -127,7 +127,7 @@ class VComment(mutagen.Metadata, list):
                         tag = tag.decode("ascii")
                     if is_valid_key(tag):
                         self.append((tag, value))
-            if framing and not ord(fileobj.read(1)) & 0x01:
+            if framing and not bytearray(fileobj.read(1))[0] & 0x01:
                 raise VorbisUnsetFrameError("framing bit was unset")
         except (cdata.error, TypeError):
             raise error("file is not a valid Vorbis comment")
