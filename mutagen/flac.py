@@ -45,10 +45,10 @@ class FLACVorbisError(ValueError, error):
     pass
 
 
-def to_int_be(string):
+def to_int_be(data):
     """Convert an arbitrarily-long string to a long using big-endian
     byte order."""
-    return reduce(lambda a, b: (a << 8) + b, bytearray(string), 0)
+    return reduce(lambda a, b: (a << 8) + b, bytearray(data), 0)
 
 
 class StrictFileObject(object):
@@ -619,8 +619,8 @@ class FLAC(mutagen.FileType):
     """Known metadata block types, indexed by ID."""
 
     @staticmethod
-    def score(filename, fileobj, header):
-        return (header.startswith(b"fLaC") +
+    def score(filename, fileobj, header_data):
+        return (header_data.startswith(b"fLaC") +
                 endswith(filename.lower(), ".flac") * 3)
 
     def __read_metadata_block(self, fileobj):
