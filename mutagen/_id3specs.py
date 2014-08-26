@@ -370,17 +370,18 @@ class VolumePeakSpec(Spec):
     def read(self, frame, data):
         # http://bugs.xmms.org/attachment.cgi?id=113&action=view
         peak = 0
-        bits = ord(data[0])
-        bytes = min(4, (bits + 7) >> 3)
+        data_array = bytearray(data)
+        bits = data_array[0]
+        vol_bytes = min(4, (bits + 7) >> 3)
         # not enough frame data
-        if bytes + 1 > len(data):
+        if vol_bytes + 1 > len(data):
             raise ID3JunkFrameError
-        shift = ((8 - (bits & 7)) & 7) + (4 - bytes) * 8
-        for i in range(1, bytes+1):
+        shift = ((8 - (bits & 7)) & 7) + (4 - vol_bytes) * 8
+        for i in range(1, vol_bytes+1):
             peak *= 256
-            peak += ord(data[i])
+            peak += data_array[i]
         peak *= 2 ** shift
-        return (float(peak) / (2**31-1)), data[1+bytes:]
+        return (float(peak) / (2**31-1)), data[1+vol_bytes:]
 
     def write(self, frame, value):
         number = int(round(value * 32768))
