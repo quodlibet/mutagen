@@ -255,7 +255,7 @@ class TOggPage(TestCase):
         packets = [b"1"] * 3000
         pages = OggPage.from_packets(packets)
         map(OggPage.write, pages)
-        self.failUnless(len(pages) > 3000/255)
+        self.failUnless(len(pages) > 3000//255)
 
     def test_read_max_size(self):
         page = OggPage()
@@ -494,7 +494,7 @@ class TOggFileType(TestCase):
     def test_ogg_reference_delete(self):
         self.audio.delete()
         self.ogg_reference(self.filename)
- 
+
     def test_ogg_reference_medium_sized(self):
         self.audio["foobar"] = "foobar" * 1000
         self.audio.save()
@@ -509,7 +509,7 @@ class TOggFileType(TestCase):
 
     def test_mime_secondary(self):
         self.failUnless('application/ogg' in self.audio.mime)
- 
+
     def tearDown(self):
         os.unlink(self.filename)
 
