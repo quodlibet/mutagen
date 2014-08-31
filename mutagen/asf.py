@@ -254,7 +254,7 @@ class ASFBoolAttribute(ASFBaseAttribute):
         return bool(self.value)
 
     def __bytes__(self):
-        return self.value
+        return bytes(self.value)
 
     def __eq__(self, other):
         return bool(self.value) == other
