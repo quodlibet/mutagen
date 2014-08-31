@@ -208,7 +208,7 @@ class TMP4Tags(TestCase):
              b"\x00\x00\x008aART\x00\x00\x00\x1cdata\x00\x00\x00\x01\x00\x00"
              b"\x00\x00Album Artist\x00\x00\x00\x14data\x00\x00\x00\x01\x00"
              b"\x00\x00\x00Whee")
-        
+
     def test_render_data(self):
         self.failUnlessEqual(
              MP4Tags()._MP4Tags__render_data(b'aART', 1, [b'whee']),
@@ -426,7 +426,7 @@ class TMP4(TestCase):
 
     def test_tempo_invalid(self):
         for badvalue in [[10000000], [-1], 10, "foo"]:
-            self.failUnlessRaises(ValueError, self.set_key, 'tmpo', badvalue)
+            self.failUnlessRaises(ValueError, self.set_key, b'tmpo', badvalue)
 
     def test_compilation(self):
         self.set_key(b'cpil', True)
