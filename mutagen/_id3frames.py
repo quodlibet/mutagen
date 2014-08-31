@@ -363,10 +363,10 @@ class TimeStampTextFrame(TextFrame):
         return text_type(self).encode('utf-8')
 
     def __str__(self):
-        return ','.join([stamp.text for stamp in self.text])
+        return u','.join([stamp.text for stamp in self.text])
 
     def _pprint(self):
-        return " / ".join([stamp.text for stamp in self.text])
+        return u" / ".join([stamp.text for stamp in self.text])
 
 @swap_to_string
 class UrlFrame(Frame):
@@ -872,6 +872,7 @@ class SYTC(Frame):
     __hash__ = Frame.__hash__
 
 
+@swap_to_string
 class USLT(Frame):
     """Unsynchronised lyrics/text transcription.
 
@@ -890,10 +891,10 @@ class USLT(Frame):
     def HashKey(self):
         return '%s:%s:%r' % (self.FrameID, self.desc, self.lang)
 
-    def __str__(self):
+    def __bytes__(self):
         return self.text.encode('utf-8')
 
-    def __unicode__(self):
+    def __str__(self):
         return self.text
 
     def __eq__(self, other):
@@ -902,6 +903,7 @@ class USLT(Frame):
     __hash__ = Frame.__hash__
 
 
+@swap_to_string
 class SYLT(Frame):
     """Synchronised lyrics/text."""
 
@@ -924,7 +926,10 @@ class SYLT(Frame):
     __hash__ = Frame.__hash__
 
     def __str__(self):
-        return "".join([text for (text, time) in self.text]).encode('utf-8')
+        return u"".join(text for (text, time) in self.text)
+        
+    def __bytes__(self):
+        return text_type(self).encode("utf-8")
 
 
 class COMM(TextFrame):
@@ -1105,7 +1110,7 @@ class PCNT(Frame):
         return self.count
 
     def _pprint(self):
-        return unicode(self.count)
+        return text_type(self.count)
 
 
 class POPM(FrameOpt):
@@ -1205,6 +1210,7 @@ class RBUF(FrameOpt):
         return self.size
 
 
+@swap_to_string
 class AENC(FrameOpt):
     """Audio encryption.
 
@@ -1230,10 +1236,10 @@ class AENC(FrameOpt):
     def HashKey(self):
         return '%s:%s' % (self.FrameID, self.owner)
 
-    def __str__(self):
+    def __bytes__(self):
         return self.owner.encode('utf-8')
 
-    def __unicode__(self):
+    def __str__(self):
         return self.owner
 
     def __eq__(self, other):
@@ -1326,13 +1332,14 @@ class UFID(Frame):
     __hash__ = Frame.__hash__
 
     def _pprint(self):
-        isascii = ord(max(self.data)) < 128
+        isascii = max(bytearray(self.data)) < 128
         if isascii:
             return "%s=%s" % (self.owner, self.data)
         else:
             return "%s (%d bytes)" % (self.owner, len(self.data))
 
 
+@swap_to_string
 class USER(Frame):
     """Terms of use.
 
@@ -1353,10 +1360,10 @@ class USER(Frame):
     def HashKey(self):
         return '%s:%r' % (self.FrameID, self.lang)
 
-    def __str__(self):
+    def __bytes__(self):
         return self.text.encode('utf-8')
 
-    def __unicode__(self):
+    def __str__(self):
         return self.text
 
     def __eq__(self, other):
@@ -1368,6 +1375,7 @@ class USER(Frame):
         return "%r=%s" % (self.lang, self.text)
 
 
+@swap_to_string
 class OWNE(Frame):
     """Ownership frame."""
 
@@ -1378,10 +1386,10 @@ class OWNE(Frame):
         EncodedTextSpec('seller'),
     ]
 
-    def __str__(self):
+    def __bytes__(self):
         return self.seller.encode('utf-8')
 
-    def __unicode__(self):
+    def __str__(self):
         return self.seller
 
     def __eq__(self, other):
@@ -1418,6 +1426,7 @@ class COMR(FrameOpt):
     __hash__ = FrameOpt.__hash__
 
 
+@swap_to_string
 class ENCR(Frame):
     """Encryption method registration.
 
@@ -1435,7 +1444,7 @@ class ENCR(Frame):
     def HashKey(self):
         return "%s:%s" % (self.FrameID, self.owner)
 
-    def __str__(self):
+    def __bytes__(self):
         return self.data
 
     def __eq__(self, other):
@@ -1444,6 +1453,7 @@ class ENCR(Frame):
     __hash__ = Frame.__hash__
 
 
+@swap_to_string
 class GRID(FrameOpt):
     """Group identification registration."""
 
@@ -1461,10 +1471,10 @@ class GRID(FrameOpt):
     def __pos__(self):
         return self.group
 
-    def __str__(self):
+    def __bytes__(self):
         return self.owner.encode('utf-8')
 
-    def __unicode__(self):
+    def __str__(self):
         return self.owner
 
     def __eq__(self, other):
@@ -1473,6 +1483,7 @@ class GRID(FrameOpt):
     __hash__ = FrameOpt.__hash__
 
 
+@swap_to_string
 class PRIV(Frame):
     """Private frame."""
 
@@ -1486,14 +1497,14 @@ class PRIV(Frame):
         return '%s:%s:%s' % (
             self.FrameID, self.owner, self.data.decode('latin1'))
 
-    def __str__(self):
+    def __bytes__(self):
         return self.data
 
     def __eq__(self, other):
         return self.data == other
 
     def _pprint(self):
-        isascii = ord(max(self.data)) < 128
+        isascii = max(bytearray(self.data)) < 128
         if isascii:
             return "%s=%s" % (self.owner, self.data)
         else:
@@ -1501,7 +1512,7 @@ class PRIV(Frame):
 
     __hash__ = Frame.__hash__
 
-
+@swap_to_string
 class SIGN(Frame):
     """Signature frame."""
 
@@ -1514,7 +1525,7 @@ class SIGN(Frame):
     def HashKey(self):
         return '%s:%c:%s' % (self.FrameID, self.group, self.sig)
 
-    def __str__(self):
+    def __bytes__(self):
         return self.sig
 
     def __eq__(self, other):

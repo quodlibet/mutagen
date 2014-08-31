@@ -36,10 +36,10 @@ if PY2:
     exec("def reraise(tp, value, tb):\n raise tp, value, tb")
 
     def swap_to_string(cls):
-        if hasattr(cls, '__str__'):
+        if "__str__" in cls.__dict__:
             cls.__unicode__ = cls.__str__
 
-        if hasattr(cls, '__bytes__'):
+        if "__bytes__" in cls.__dict__:
             cls.__str__ = cls.__bytes__
 
         return cls
