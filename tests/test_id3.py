@@ -323,14 +323,14 @@ class ID3v1Tags(TestCase):
         self.failUnless(32, ParseID3v1(tag)["TRCK"])
         del(self.id3["TRCK"])
         tag = MakeID3v1(self.id3)
-        tag = tag[:125] + '  ' + tag[-1]
+        tag = tag[:125] + b'  ' + tag[-1:]
         self.failIf("TRCK" in ParseID3v1(tag))
 
     def test_nulls(self):
         from mutagen.id3 import ParseID3v1
         s = u'TAG%(title)30s%(artist)30s%(album)30s%(year)4s%(cmt)29s\x03\x01'
         s = s % dict(artist=u'abcd\00fg', title=u'hijklmn\x00p',
-                    album='qrst\x00v', cmt='wxyz', year='1224')
+                     album=u'qrst\x00v', cmt=u'wxyz', year=u'1224')
         tags = ParseID3v1(s.encode("ascii"))
         self.assertEquals(b'abcd'.decode('latin1'), tags['TPE1'])
         self.assertEquals(b'hijklmn'.decode('latin1'), tags['TIT2'])
@@ -340,7 +340,7 @@ class ID3v1Tags(TestCase):
         from mutagen.id3 import ParseID3v1
         s = u'TAG%(title)30s%(artist)30s%(album)30s%(year)4s%(cmt)29s\x03\x01'
         s = s % dict(artist=u'abcd\xe9fg', title=u'hijklmn\xf3p',
-                    album=u'qrst\xfcv', cmt='wxyz', year='1234')
+                    album=u'qrst\xfcv', cmt=u'wxyz', year=u'1234')
         tags = ParseID3v1(s.encode("latin-1"))
         self.assertEquals(b'abcd\xe9fg'.decode('latin1'), tags['TPE1'])
         self.assertEquals(b'hijklmn\xf3p'.decode('latin1'), tags['TIT2'])
