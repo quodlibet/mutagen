@@ -1,5 +1,5 @@
-# A Musepack reader/tagger
-#
+# -*- coding: utf-8 -*-
+
 # Copyright 2006 Lukas Lalinsky <lalinsky@gmail.com>
 # Copyright 2012 Christoph Reiter <christoph.reiter@gmx.at>
 #
@@ -19,12 +19,11 @@ __all__ = ["Musepack", "Open", "delete"]
 
 import struct
 
-from ._compat import endswith
+from ._compat import endswith, xrange
 from mutagen import StreamInfo
 from mutagen.apev2 import APEv2File, error, delete
 from mutagen.id3 import BitPaddedInt
 from mutagen._util import cdata
-from ._compat import xrange
 
 
 class MusepackHeaderError(error):
@@ -49,8 +48,9 @@ def _parse_sv8_int(fileobj, limit=9):
         c = fileobj.read(1)
         if len(c) != 1:
             raise EOFError
-        num = (num << 7) | (ord(c) & 0x7F)
-        if not ord(c) & 0x80:
+        c = bytearray(c)
+        num = (num << 7) | (c[0] & 0x7F)
+        if not c[0] & 0x80:
             return num, i + 1
     if limit > 0:
         raise ValueError
@@ -120,7 +120,7 @@ class MusepackInfo(StreamInfo):
         mandatory_packets = [b"SH", b"RG"]
 
         def check_frame_key(key):
-            if len(frame_type) != key_size or not b'AA' <= frame_type <= b'ZZ':
+            if (len(frame_type) != key_size) or (not b'AA' <= frame_type <= b'ZZ'):
                 raise MusepackHeaderError("Invalid frame key.")
 
         frame_type = fileobj.read(key_size)
@@ -155,7 +155,7 @@ class MusepackInfo(StreamInfo):
     def __parse_stream_header(self, fileobj, data_size):
         fileobj.seek(4, 1)
         try:
-            self.version = ord(fileobj.read(1))
+            self.version = bytearray(fileobj.read(1))[0]
         except TypeError:
             raise MusepackHeaderError("SH packet ended unexpectedly.")
         try:
@@ -170,8 +170,8 @@ class MusepackInfo(StreamInfo):
         data = fileobj.read(left_size)
         if len(data) != left_size:
             raise MusepackHeaderError("SH packet ended unexpectedly.")
-        self.sample_rate = RATES[ord(data[-2:-1]) >> 5]
-        self.channels = (ord(data[-1:]) >> 4) + 1
+        self.sample_rate = RATES[bytearray(data)[-2] >> 5]
+        self.channels = (bytearray(data)[-1] >> 4) + 1
         self.samples = samples - samples_skip
 
     def __parse_replaygain_packet(self, fileobj, data_size):
@@ -201,7 +201,7 @@ class MusepackInfo(StreamInfo):
 
         # SV7
         if header.startswith(b"MP+"):
-            self.version = ord(header[3:4]) & 0xF
+            self.version = bytearray(header)[3] & 0xF
             if self.version < 7:
                 raise MusepackHeaderError("not a Musepack file")
             frames = cdata.uint_le(header[4:8])
@@ -253,8 +253,10 @@ class Musepack(APEv2File):
 
     @staticmethod
     def score(filename, fileobj, header):
+        filename = filename.lower()
+
         return (header.startswith(b"MP+") + header.startswith(b"MPCK") +
-                endswith(filename.lower(), b".mpc"))
+                endswith(filename, b".mpc"))
 
 
 Open = Musepack
