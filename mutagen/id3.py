@@ -623,13 +623,16 @@ class ID3(DictProxy, mutagen.Metadata):
 
         # TDAT, TYER, and TIME have been turned into TDRC.
         try:
-            if str(self.get("TYER", "")).strip("\x00"):
-                date = str(self.pop("TYER"))
-                if str(self.get("TDAT", "")).strip("\x00"):
-                    dat = str(self.pop("TDAT"))
+            date = text_type(self.get("TYER", ""))
+            if date.strip(u"\x00"):
+                self.pop("TYER")
+                dat = text_type(self.get("TDAT", ""))
+                if dat.strip("\x00"):
+                    self.pop("TDAT")
                     date = "%s-%s-%s" % (date, dat[2:], dat[:2])
-                    if str(self.get("TIME", "")).strip("\x00"):
-                        time = str(self.pop("TIME"))
+                    time = text_type(self.get("TIME", ""))
+                    if time.strip("\x00"):
+                        self.pop("TIME")
                         date += "T%s:%s:00" % (time[:2], time[2:])
                 if "TDRC" not in self:
                     self.add(TDRC(encoding=0, text=date))
