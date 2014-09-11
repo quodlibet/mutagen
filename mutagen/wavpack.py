@@ -1,5 +1,5 @@
-# A WavPack reader/tagger
-#
+# -*- coding: utf-8 -*-
+
 # Copyright 2006 Joe Wreschnig
 #           2014 Christoph Reiter
 #
