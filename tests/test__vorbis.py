@@ -186,6 +186,18 @@ class TVCommentDict(TestCase):
         self.c["woo"] = "bar"
         self.failUnlessEqual(self.c["woo"], ["bar"])
 
+    def test_slice(self):
+        l = [("foo", "bar"), ("foo", "bar2")]
+        self.c[:] = l
+        self.assertEqual(self.c[:], l)
+        self.failUnlessEqual(self.c["foo"], ["bar", "bar2"])
+        del self.c[:]
+        self.assertEqual(self.c[:], [])
+
+    def test_iter(self):
+        self.assertEqual(next(iter(self.c)), ("artist", "mu"))
+        self.assertEqual(list(self.c)[0], ("artist", "mu"))
+
     def test_del(self):
         del(self.c["title"])
         self.failUnlessRaises(KeyError, self.c.__getitem__, "title")

@@ -244,6 +244,10 @@ class VCommentDict(VComment, DictMixin):
         work.
         """
 
+        # PY3 only
+        if isinstance(key, slice):
+            return VComment.__getitem__(self, key)
+
         if not is_valid_key(key):
             raise ValueError
 
@@ -257,6 +261,10 @@ class VCommentDict(VComment, DictMixin):
 
     def __delitem__(self, key):
         """Delete all values associated with the key."""
+
+        # PY3 only
+        if isinstance(key, slice):
+            return VComment.__delitem__(self, key)
 
         if not is_valid_key(key):
             raise ValueError
@@ -289,6 +297,10 @@ class VCommentDict(VComment, DictMixin):
         list of Unicode or UTF-8 strings, or a single Unicode or UTF-8
         string.
         """
+
+        # PY3 only
+        if isinstance(key, slice):
+            return VComment.__setitem__(self, key, values)
 
         if not is_valid_key(key):
             raise ValueError
