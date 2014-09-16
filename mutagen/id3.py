@@ -131,7 +131,7 @@ class ID3(DictProxy, mutagen.Metadata):
                 try:
                     self._fileobj.seek(-128, 2)
                 except EnvironmentError:
-                    reraise(err, None, stack)
+                    reraise(type(err), None, stack)
                 else:
                     frames = ParseID3v1(self._fileobj.read(128))
                     if frames is not None:
@@ -139,7 +139,7 @@ class ID3(DictProxy, mutagen.Metadata):
                         for v in frames.values():
                             self.add(v)
                     else:
-                        reraise(err, None, stack)
+                        reraise(type(err), None, stack)
             else:
                 frames = self.__known_frames
                 if frames is None:
