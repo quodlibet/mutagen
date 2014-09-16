@@ -590,8 +590,16 @@ class ID3(DictProxy, mutagen.Metadata):
             raise ValueError
 
         datasize = BitPaddedInt.to_str(len(framedata), width=4, bits=bits)
-        n = (name or type(frame).__name__).encode("ascii")
-        header = pack('>4s4sH', n, datasize, flags)
+
+        if name is not None:
+            assert isinstance(name, bytes)
+            frame_name = name
+        else:
+            frame_name = type(frame).__name__
+            if PY3:
+                frame_name = frame_name.encode("ascii")
+
+        header = pack('>4s4sH', frame_name, datasize, flags)
         return header + framedata
 
     def __update_common(self):
@@ -634,8 +642,7 @@ class ID3(DictProxy, mutagen.Metadata):
                     frame = BinaryFrame.fromData(self, flags, frame[10:])
                 except (struct.error, error):
                     continue
-                if PY3:
-                    name = name.decode('latin1')
+
                 converted.append(self.__save_frame(frame, name=name))
             self.unknown_frames[:] = converted
             self.__unknown_version = (2, 4, 0)
