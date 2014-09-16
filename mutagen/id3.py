@@ -37,7 +37,7 @@ from struct import unpack, pack, error as StructError
 
 import mutagen
 from mutagen._util import insert_bytes, delete_bytes, DictProxy
-from ._compat import reraise, chr_
+from ._compat import reraise, chr_, PY3
 
 from mutagen._id3util import *
 from mutagen._id3frames import *
@@ -139,7 +139,7 @@ class ID3(DictProxy, mutagen.Metadata):
                         for v in frames.values():
                             self.add(v)
                     else:
-                        reraise(type(err), None, stack)
+                        reraise(err, None, stack)
             else:
                 frames = self.__known_frames
                 if frames is None:
@@ -254,7 +254,7 @@ class ID3(DictProxy, mutagen.Metadata):
 
         if self.f_extended:
             extsize = self.__fullread(4)
-            if extsize in Frames:
+            if (extsize.decode('ascii') if PY3 else extsize) in Frames:
                 # Some tagger sets the extended header flag but
                 # doesn't write an extended header; in this case, the
                 # ID3 data follows immediately. Since no extended
@@ -342,6 +342,10 @@ class ID3(DictProxy, mutagen.Metadata):
                     return  # not enough header
                 if name.strip(b'\x00') == b'':
                     return
+
+                if PY3:
+                    name = name.decode('latin1')
+
                 size = bpi(size)
                 framedata = data[10:10+size]
                 data = data[10+size:]
@@ -370,6 +374,10 @@ class ID3(DictProxy, mutagen.Metadata):
                 size, = struct.unpack('>L', b'\x00'+size)
                 if name.strip(b'\x00') == b'':
                     return
+
+                if PY3:
+                    name = name.decode('latin1')
+
                 framedata = data[6:6+size]
                 data = data[6+size:]
                 if size == 0:
@@ -573,8 +581,8 @@ class ID3(DictProxy, mutagen.Metadata):
             raise ValueError
 
         datasize = BitPaddedInt.to_str(len(framedata), width=4, bits=bits)
-        frame_name = type(frame).__name__.encode("ascii")
-        header = pack('>4s4sH', name or frame_name, datasize, flags)
+        n = (name or type(frame).__name__).encode("ascii")
+        header = pack('>4s4sH', n, datasize, flags)
         return header + framedata
 
     def __update_common(self):
@@ -587,7 +595,8 @@ class ID3(DictProxy, mutagen.Metadata):
         if self.version < self._V23:
             # ID3v2.2 PIC frames are slightly different.
             pics = self.getall("APIC")
-            mimes = {"PNG": "image/png", "JPG": "image/jpeg"}
+            #str(b"PNG") may seem redundant, but it's necessary with APIC in Py3k
+            mimes = {str(b"PNG"): "image/png", str(b"JPG"): "image/jpeg"}
             self.delall("APIC")
             for pic in pics:
                 newpic = APIC(
@@ -617,6 +626,8 @@ class ID3(DictProxy, mutagen.Metadata):
                     frame = BinaryFrame.fromData(self, flags, frame[10:])
                 except (struct.error, error):
                     continue
+                if PY3:
+                    name = name.decode('latin1')
                 converted.append(self.__save_frame(frame, name=name))
             self.unknown_frames[:] = converted
             self.__unknown_version = (2, 4, 0)
@@ -857,9 +868,9 @@ def MakeID3v1(id3):
         v1["genre"] = b"\xff"
 
     if "TDRC" in id3:
-        year = bytes(id3["TDRC"])
+        year = text_type(id3["TDRC"]).encode('ascii')
     elif "TYER" in id3:
-        year = bytes(id3["TYER"])
+        year = text_type(id3["TYER"]).encode('ascii')
     else:
         year = b""
     v1["year"] = (year + b"\x00\x00\x00\x00")[:4]
