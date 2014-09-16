@@ -344,14 +344,18 @@ class ID3(DictProxy, mutagen.Metadata):
                 if name.strip(b'\x00') == b'':
                     return
 
-                if PY3:
-                    name = name.decode('latin1')
-
                 size = bpi(size)
                 framedata = data[10:10+size]
                 data = data[10+size:]
                 if size == 0:
                     continue  # drop empty frames
+
+                if PY3:
+                    try:
+                        name = name.decode('ascii')
+                    except UnicodeDecodeError:
+                        yield header + framedata
+
                 try:
                     tag = frames[name]
                 except KeyError:
@@ -376,13 +380,17 @@ class ID3(DictProxy, mutagen.Metadata):
                 if name.strip(b'\x00') == b'':
                     return
 
-                if PY3:
-                    name = name.decode('latin1')
-
                 framedata = data[6:6+size]
                 data = data[6+size:]
                 if size == 0:
                     continue  # drop empty frames
+
+                if PY3:
+                    try:
+                        name = name.decode('ascii')
+                    except UnicodeDecodeError:
+                        yield header + framedata
+
                 try:
                     tag = frames[name]
                 except KeyError:
