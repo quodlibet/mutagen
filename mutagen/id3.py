@@ -254,7 +254,8 @@ class ID3(DictProxy, mutagen.Metadata):
 
         if self.f_extended:
             extsize = self.__fullread(4)
-            if (extsize.decode('ascii') if PY3 else extsize) in Frames:
+            frame_id = extsize.decode("ascii", "replace") if PY3 else extsize
+            if frame_id in Frames:
                 # Some tagger sets the extended header flag but
                 # doesn't write an extended header; in this case, the
                 # ID3 data follows immediately. Since no extended
