@@ -1,5 +1,7 @@
-# AIFF audio stream header information and ID3 tag support for Mutagen.
-# Copyright 2014 Evan Purkhiser <evanpurkhiser@gmail.com>
+# -*- coding: utf-8 -*-
+
+# Copyright 2014 Evan Purkhiser
+#           2014 Ben Ockmore
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of version 2 of the GNU General Public License as
@@ -7,10 +9,14 @@
 
 """AIFF audio stream information and tags."""
 
+# NOTE from Ben Ockmore - according to the Py3k migration guidelines, AIFF
+# chunk keys should be unicode in Py3k, and unicode or bytes in Py2k (ASCII). To
+# make this easier, chunk keys should be stored internally as unicode.
+
 import struct
 from struct import pack
 
-from ._compat import endswith
+from ._compat import endswith, text_type, PY3
 from mutagen import StreamInfo, FileType
 
 from mutagen.id3 import ID3
@@ -30,6 +36,20 @@ class InvalidChunk(error, IOError):
 
 # based on stdlib's aifc
 _HUGE_VAL = 1.79769313486231e+308
+
+def is_valid_chunk_id(id):
+    if not isinstance(id, text_type):
+        if PY3:
+            raise TypeError("AIFF chunk must be unicode")
+
+        try:
+            id = id.decode('ascii')
+        except UnicodeDecodeError:
+            return False
+
+    #PY26 - Change to set literal syntax (since set is faster than list here)
+    return ((len(id) <= 4) and (min(id) >= u' ') and
+            (max(id) <= u'~'))
 
 
 def read_float(s):  # 10 bytes
@@ -64,7 +84,11 @@ class IFFChunk(object):
             raise InvalidChunk()
 
         self.id, self.data_size = struct.unpack('>4si', header)
-        if self.id == b'\x00' * 4:
+
+        if not isinstance(self.id, text_type):
+            self.id = self.id.decode('ascii')
+
+        if not is_valid_chunk_id(self.id):
             raise InvalidChunk()
 
         self.size = self.HEADER_SIZE + self.data_size
@@ -103,7 +127,7 @@ class IFFFile(object):
         # AIFF Files always start with the FORM chunk which contains a 4 byte
         # ID before the start of other chunks
         fileobj.seek(0)
-        self.__chunks['FORM'] = IFFChunk(fileobj)
+        self.__chunks[u'FORM'] = IFFChunk(fileobj)
 
         # Skip past the 4 byte FORM id
         fileobj.seek(IFFChunk.HEADER_SIZE + 4)
@@ -116,7 +140,7 @@ class IFFFile(object):
         # Load all of the chunks
         while True:
             try:
-                chunk = IFFChunk(fileobj, self['FORM'])
+                chunk = IFFChunk(fileobj, self[u'FORM'])
             except InvalidChunk:
                 break
             self.__chunks[chunk.id.strip()] = chunk
@@ -129,10 +153,23 @@ class IFFFile(object):
 
     def __contains__(self, id_):
         """Check if the IFF file contains a specific chunk"""
+
+        if not isinstance(id_, text_type):
+            id_ = id_.decode('ascii')
+
+        if not is_valid_chunk_id(id_):
+            raise KeyError("AIFF key must be four ASCII characters.")
+
         return id_ in self.__chunks
 
     def __getitem__(self, id_):
         """Get a chunk from the IFF file"""
+
+        if not isinstance(id_, text_type):
+            id_ = id_.decode('ascii')
+
+        if not is_valid_chunk_id(id_):
+            raise KeyError("AIFF key must be four ASCII characters.")
 
         try:
             return self.__chunks[id_]
@@ -142,15 +179,29 @@ class IFFFile(object):
 
     def __delitem__(self, id_):
         """Remove a chunk from the IFF file"""
+
+        if not isinstance(id_, text_type):
+            id_ = id_.decode('ascii')
+
+        if not is_valid_chunk_id(id_):
+            raise KeyError("AIFF key must be four ASCII characters.")
+
         self.__chunks.pop(id_).delete()
 
     def insert_chunk(self, id_):
         """Insert a new chunk at the end of the IFF file"""
+
+        if not isinstance(id_, text_type):
+            id_ = id_.decode('ascii')
+
+        if not is_valid_chunk_id(id_):
+            raise KeyError("AIFF key must be four ASCII characters.")
+
         self.__fileobj.seek(self.__next_offset)
-        self.__fileobj.write(pack('>4si', id_.ljust(4), 0))
+        self.__fileobj.write(pack('>4si', id_.ljust(4).encode('ascii'), 0))
         self.__fileobj.seek(self.__next_offset)
-        chunk = IFFChunk(self.__fileobj, self['FORM'])
-        self['FORM'].resize(self['FORM'].data_size + chunk.size)
+        chunk = IFFChunk(self.__fileobj, self[u'FORM'])
+        self[u'FORM'].resize(self[u'FORM'].data_size + chunk.size)
 
         self.__chunks[id_] = chunk
         self.__next_offset = chunk.offset + chunk.size
@@ -178,7 +229,7 @@ class AIFFInfo(StreamInfo):
     def __init__(self, fileobj):
         iff = IFFFile(fileobj)
         try:
-            common_chunk = iff['COMM']
+            common_chunk = iff[u'COMM']
         except KeyError as e:
             raise error(str(e))
 
@@ -203,7 +254,7 @@ class _IFFID3(ID3):
 
     def _load_header(self):
         try:
-            self._fileobj.seek(IFFFile(self._fileobj)['ID3'].data_offset)
+            self._fileobj.seek(IFFFile(self._fileobj)[u'ID3'].data_offset)
         except (InvalidChunk, KeyError):
             raise ID3Error()
         super(_IFFID3, self)._load_header()
@@ -223,10 +274,10 @@ class _IFFID3(ID3):
         iff_file = IFFFile(fileobj)
 
         try:
-            if 'ID3' not in iff_file:
-                iff_file.insert_chunk('ID3')
+            if u'ID3' not in iff_file:
+                iff_file.insert_chunk(u'ID3')
 
-            chunk = iff_file['ID3']
+            chunk = iff_file[u'ID3']
             fileobj.seek(chunk.data_offset)
 
             header = fileobj.read(10)
@@ -264,7 +315,7 @@ def delete(filename):
 
     with open(filename, "rb+") as file_:
         try:
-            del IFFFile(file_)['ID3']
+            del IFFFile(file_)[u'ID3']
         except KeyError:
             pass
 
