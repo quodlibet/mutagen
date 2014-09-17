@@ -7,6 +7,7 @@ from tests import TestCase, add
 from mutagen.id3 import ID3, TIT2, ID3NoHeaderError
 from mutagen.flac import to_int_be, Padding, VCFLACDict, MetadataBlock, error
 from mutagen.flac import StreamInfo, SeekTable, CueSheet, FLAC, delete, Picture
+from mutagen._compat import PY3
 from tests.test__vorbis import TVCommentDict, VComment
 
 
@@ -158,7 +159,7 @@ class TCueSheet(TestCase):
         self.cs = self.flac.cuesheet
 
     def test_cuesheet(self):
-        self.failUnlessEqual(self.cs.media_catalog_number, "1234567890123")
+        self.failUnlessEqual(self.cs.media_catalog_number, b"1234567890123")
         self.failUnlessEqual(self.cs.lead_in_samples, 88200)
         self.failUnlessEqual(self.cs.compact_disc, True)
         self.failUnlessEqual(len(self.cs.tracks), 4)
@@ -166,7 +167,7 @@ class TCueSheet(TestCase):
     def test_first_track(self):
         self.failUnlessEqual(self.cs.tracks[0].track_number, 1)
         self.failUnlessEqual(self.cs.tracks[0].start_offset, 0)
-        self.failUnlessEqual(self.cs.tracks[0].isrc, '123456789012')
+        self.failUnlessEqual(self.cs.tracks[0].isrc, b'123456789012')
         self.failUnlessEqual(self.cs.tracks[0].type, 0)
         self.failUnlessEqual(self.cs.tracks[0].pre_emphasis, False)
         self.failUnlessEqual(self.cs.tracks[0].indexes, [(1, 0)])
@@ -174,7 +175,7 @@ class TCueSheet(TestCase):
     def test_second_track(self):
         self.failUnlessEqual(self.cs.tracks[1].track_number, 2)
         self.failUnlessEqual(self.cs.tracks[1].start_offset, 44100)
-        self.failUnlessEqual(self.cs.tracks[1].isrc, '')
+        self.failUnlessEqual(self.cs.tracks[1].isrc, b'')
         self.failUnlessEqual(self.cs.tracks[1].type, 1)
         self.failUnlessEqual(self.cs.tracks[1].pre_emphasis, True)
         self.failUnlessEqual(self.cs.tracks[1].indexes, [(1, 0),
@@ -183,7 +184,7 @@ class TCueSheet(TestCase):
     def test_lead_out(self):
         self.failUnlessEqual(self.cs.tracks[-1].track_number, 170)
         self.failUnlessEqual(self.cs.tracks[-1].start_offset, 162496)
-        self.failUnlessEqual(self.cs.tracks[-1].isrc, '')
+        self.failUnlessEqual(self.cs.tracks[-1].isrc, b'')
         self.failUnlessEqual(self.cs.tracks[-1].type, 0)
         self.failUnlessEqual(self.cs.tracks[-1].pre_emphasis, False)
         self.failUnlessEqual(self.cs.tracks[-1].indexes, [])
@@ -309,24 +310,33 @@ class TFLAC(TestCase):
 
     def test_write_changetitle(self):
         f = FLAC(self.NEW)
-        f[b"title"] = b"A New Title"
-        f.save()
-        f = FLAC(self.NEW)
-        self.failUnlessEqual(f[b"title"][0], b"A New Title")
+        if PY3:
+            self.assertRaises(ValueError, f.__setitem__, b'title', b"A New Title")
+        else:
+            f[b"title"] = b"A New Title"
+            f.save()
+            f = FLAC(self.NEW)
+            self.failUnlessEqual(f[b"title"][0], b"A New Title")
 
     def test_write_changetitle_unicode_value(self):
         f = FLAC(self.NEW)
-        f[b"title"] = u"A Unicode Title \u2022"
-        f.save()
-        f = FLAC(self.NEW)
-        self.failUnlessEqual(f[b"title"][0], u"A Unicode Title \u2022")
+        if PY3:
+            self.assertRaises(ValueError, f.__setitem__, b'title', u"A Unicode Title \u2022")
+        else:
+            f[b"title"] = u"A Unicode Title \u2022"
+            f.save()
+            f = FLAC(self.NEW)
+            self.failUnlessEqual(f[b"title"][0], u"A Unicode Title \u2022")
 
     def test_write_changetitle_unicode_key(self):
         f = FLAC(self.NEW)
         f[u"title"] = b"A New Title"
-        f.save()
-        f = FLAC(self.NEW)
-        self.failUnlessEqual(f[u"title"][0], b"A New Title")
+        if PY3:
+            self.assertRaises(ValueError, f.save)
+        else:
+            f.save()
+            f = FLAC(self.NEW)
+            self.failUnlessEqual(f[u"title"][0], b"A New Title")
 
     def test_write_changetitle_unicode_key_and_value(self):
         f = FLAC(self.NEW)
