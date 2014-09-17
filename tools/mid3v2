@@ -80,9 +80,12 @@ def split_escape(string, sep, maxsplit=None, escape_char=u"\\"):
 
 
 def unescape_string(string):
-    assert isinstance(string, str)
+    codec = "string_escape" if PY2 else "unicode_escape"
 
-    return string.decode("string_escape")
+    if isinstance(string, bytes):
+        return string.decode(codec)
+    else:
+        return string.encode("utf-8").decode(codec)
 
 
 def list_frames(option, opt, value, parser):
