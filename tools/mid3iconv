@@ -23,7 +23,18 @@ def getpreferredencoding(*args):
 
 
 def isascii(string):
-    return not string or ord(max(string)) < 128
+    """Checks whether a unicode string is non-empty and contains only ASCII
+    characters.
+    """
+    if not string:
+        return False
+
+    try:
+        string.encode('ascii')
+    except UnicodeEncodeError:
+        return False
+
+    return True
 
 
 class ID3OptionParser(OptionParser):
@@ -68,7 +79,8 @@ def update(options, filenames):
                 print("No ID3 header found; skipping...")
             continue
         except Exception as err:
-            print >>sys.stderr, str(err)
+            sys.stderr.write(str(err))
+            sys.stderr.flush()
             continue
 
         for tag in filter(lambda t: t.startswith(("T", "COMM")), id3):
@@ -81,7 +93,7 @@ def update(options, filenames):
             except AttributeError:
                 continue
             try:
-                text = map(conv, frame.text)
+                text = [conv(x) for x in frame.text]
             except (UnicodeError, LookupError):
                 continue
             else:
@@ -106,7 +118,7 @@ def has_id3v1(filename):
     try:
         f = open(filename, 'rb+')
         f.seek(-128, 2)
-        return f.read(3) == "TAG"
+        return f.read(3) == b"TAG"
     except IOError:
         return False
 
