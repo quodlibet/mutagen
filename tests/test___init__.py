@@ -3,7 +3,7 @@ from tempfile import mkstemp
 import shutil
 
 from tests import TestCase, add
-from mutagen._compat import cBytesIO, text_type
+from mutagen._compat import cBytesIO, text_type, PY3
 from mutagen import File, Metadata, FileType
 from mutagen.oggvorbis import OggVorbis
 from mutagen.oggflac import OggFLAC
@@ -21,8 +21,7 @@ from mutagen.monkeysaudio import MonkeysAudio
 from mutagen.optimfrog import OptimFROG
 from mutagen.asf import ASF
 from mutagen.aiff import AIFF
-try: from os.path import devnull
-except ImportError: devnull = "/dev/null"
+from os import devnull
 
 class TMetadata(TestCase):
 
@@ -205,19 +204,18 @@ class TFile(TestCase):
 add(TFile)
 
 class TFileUpperExt(TestCase):
-    FILES = [(os.path.join(b"tests", b"data", b"empty.ofr"), OptimFROG),
-             (os.path.join(b"tests", b"data", b"sv5_header.mpc"), Musepack),
-             (os.path.join(b"tests", b"data", b"silence-3.wma"), ASF),
-             (os.path.join(b"tests", b"data", b"truncated-64bit.mp4"), MP4),
-             (os.path.join(b"tests", b"data", b"silence-44-s.flac"), FLAC),
+    FILES = [(os.path.join("tests", "data", "empty.ofr"), OptimFROG),
+             (os.path.join("tests", "data", "sv5_header.mpc"), Musepack),
+             (os.path.join("tests", "data", "silence-3.wma"), ASF),
+             (os.path.join("tests", "data", "truncated-64bit.mp4"), MP4),
+             (os.path.join("tests", "data", "silence-44-s.flac"), FLAC),
              ]
              
     def setUp(self):
         checks = []
         for (original, instance) in self.FILES:
-            ext = original.rsplit(b".", 1)[-1]
-            suffix = b'.' + ext.upper()
-            fd, filename = mkstemp(suffix=str(suffix))
+            ext = os.path.splitext(original)[1]
+            fd, filename = mkstemp(suffix=ext.upper())
             os.close(fd)
             shutil.copy(original, filename)
             checks.append((filename, instance))
@@ -245,8 +243,11 @@ class TModuleImportAll(TestCase):
     def test_all(self):
         import mutagen
         files = os.listdir(mutagen.__path__[0])
-        modules = [os.path.splitext(f)[0] for f in files]
+        modules = set(os.path.splitext(f)[0] for f in files)
         modules = [f for f in modules if not f.startswith("_")]
+
+        if PY3 and 'm4a' in modules:
+            modules.remove('m4a')
 
         for module in modules:
             mod = getattr(__import__("mutagen." + module), module)
