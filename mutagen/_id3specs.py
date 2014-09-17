@@ -524,7 +524,7 @@ class VolumeAdjustmentsSpec(Spec):
             freq /= 2.0
             adj /= 512.0
             adjustments[freq] = adj
-        adjustments = adjustments.items()
+        adjustments = list(adjustments.items())
         adjustments.sort()
         return adjustments, data
 
