@@ -43,11 +43,11 @@ class TOggOpus(TOggFileType):
         page = OggPage(open(self.filename, "rb"))
         data = bytearray(page.packets[0])
 
-        data[8] = ord(b"\x03")
+        data[8] = 0x03
         page.packets[0] = bytes(data)
         OggOpusInfo(BytesIO(page.write()))
 
-        data[8] = ord(b"\x10")
+        data[8] = 0x10
         page.packets[0] = bytes(data)
         self.failUnlessRaises(IOError, OggOpusInfo, BytesIO(page.write()))
 
