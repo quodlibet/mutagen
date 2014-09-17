@@ -37,8 +37,11 @@ class TEasyID3(TestCase):
         self.id3["artist"] = "baz"
         self.id3.pprint()
 
-    def test_has_key(self):
-        if not PY3:
+    def test_in(self):
+        self.failIf("foo" in self.id3)
+
+    if not PY3:
+        def test_has_key(self):
             self.failIf(self.id3.has_key("foo"))
 
     def test_empty_file(self):
