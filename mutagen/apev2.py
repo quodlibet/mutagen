@@ -39,11 +39,17 @@ from mutagen._util import DictMixin, cdata, delete_bytes, total_ordering
 
 
 def is_valid_apev2_key(key):
-    if PY3 and not isinstance(key, text_type):
-        raise TypeError("Keys have to be str")
+    if not isinstance(key, text_type):
+        if PY3:
+            raise TypeError("APEv2 key must be str")
+            
+        try:
+            key = key.decode('ascii')
+        except UnicodeDecodeError:
+            return False
 
-    return (2 <= len(key) <= 255 and min(key) >= ' ' and max(key) <= '~' and
-            key not in ["OggS", "TAG", "ID3", "MP+"])
+    return ((2 <= len(key) <= 255) and (min(key) >= u' ') and
+            (max(key) <= u'~') and (key not in [u"OggS", u"TAG", u"ID3", u"MP+"]))
 
 # There are three different kinds of APE tag values.
 # "0: Item contains text information coded in UTF-8
