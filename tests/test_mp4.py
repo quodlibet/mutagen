@@ -8,8 +8,8 @@ from tests import TestCase, add
 from mutagen.mp4 import MP4, Atom, Atoms, MP4Tags, MP4Info, \
      delete, MP4Cover, MP4MetadataError, MP4FreeForm, error
 from mutagen._util import cdata
-try: from os.path import devnull
-except ImportError: devnull = "/dev/null"
+from os import devnull
+
 
 class TAtom(TestCase):
 
@@ -465,7 +465,7 @@ class TMP4(TestCase):
         self.failUnless(self.audio.pprint())
 
     def test_pprint_binary(self):
-        self.audio[b"covr"] = "\x00\xa9\garbage"
+        self.audio[b"covr"] = [b"\x00\xa9\garbage"]
         self.failUnless(self.audio.pprint())
 
     def test_pprint_pair(self):
