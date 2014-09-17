@@ -354,7 +354,7 @@ class ID3(DictProxy, mutagen.Metadata):
                     try:
                         name = name.decode('ascii')
                     except UnicodeDecodeError:
-                        yield header + framedata
+                        continue
 
                 try:
                     tag = frames[name]
@@ -389,7 +389,7 @@ class ID3(DictProxy, mutagen.Metadata):
                     try:
                         name = name.decode('ascii')
                     except UnicodeDecodeError:
-                        yield header + framedata
+                        continue
 
                 try:
                     tag = frames[name]
