@@ -190,7 +190,7 @@ class ID3(DictProxy, mutagen.Metadata):
             del(self[key])
         else:
             key = key + ":"
-            for k in filter(lambda s: s.startswith(key), self.keys()):
+            for k in filter(lambda s: s.startswith(key), list(self.keys())):
                 del(self[k])
 
     def setall(self, key, values):

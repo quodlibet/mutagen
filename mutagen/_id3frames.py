@@ -16,7 +16,7 @@ from mutagen._id3specs import (
     EncodingSpec, ASPIIndexSpec, SizedIntegerSpec, IntegerSpec,
     VolumeAdjustmentsSpec, VolumePeakSpec, VolumeAdjustmentSpec,
     ChannelSpec, MultiSpec, SynchronizedTextSpec, KeyEventSpec, TimeStampSpec,
-    EncodedNumericPartTextSpec, EncodedNumericTextSpec)
+    EncodedNumericPartTextSpec, EncodedNumericTextSpec, FixedBinaryDataSpec)
 from ._compat import text_type, string_types, swap_to_string
 
 
@@ -53,13 +53,8 @@ class Frame(object):
         if len(args) == 1 and len(kwargs) == 0 and \
                 isinstance(args[0], type(self)):
             other = args[0]
-            for checker in self._framespec:
-                try:
-                    val = checker.validate(self, getattr(other, checker.name))
-                except ValueError as e:
-                    e.message = "%s: %s" % (checker.name, e.message)
-                    raise
-                setattr(self, checker.name, val)
+            # ask the sub class to fill in our data
+            other._to_other(self)
         else:
             for checker, val in zip(self._framespec, args):
                 setattr(self, checker.name, checker.validate(self, val))
@@ -68,9 +63,16 @@ class Frame(object):
                     validated = checker.validate(
                         self, kwargs.get(checker.name, None))
                 except ValueError as e:
-                    e.message = "%s: %s" % (checker.name, e.message)
-                    raise
+                    raise ValueError("%s: %s" % (checker.name, e))
                 setattr(self, checker.name, validated)
+
+    def _to_other(self, other):
+        # this impl covers subclasses with the same framespec
+        if other._framespec is not self._framespec:
+            raise ValueError
+
+        for checker in other._framespec:
+            setattr(other, checker.name, getattr(self, checker.name))
 
     def _get_v23_frame(self, **kwargs):
         """Returns a frame copy which is suitable for writing into a v2.3 tag.
@@ -105,7 +107,9 @@ class Frame(object):
         """
         kw = []
         for attr in self._framespec:
-            kw.append('%s=%r' % (attr.name, getattr(self, attr.name)))
+            # so repr works during __init__
+            if hasattr(self, attr.name):
+                kw.append('%s=%r' % (attr.name, getattr(self, attr.name)))
         return '%s(%s)' % (type(self).__name__, ', '.join(kw))
 
     def _readData(self, data):
@@ -210,6 +214,20 @@ class FrameOpt(Frame):
                 setattr(self, spec.name, validated)
             else:
                 break
+
+    def _to_other(self, other):
+        if other._optionalspec is not self._optionalspec:
+            raise ValueError
+
+        super(FrameOpt, self)._to_other(other)
+
+        # this impl covers subclasses with the same optionalspec
+        if other._optionalspec is not self._optionalspec:
+            raise ValueError
+
+        for checker in other._optionalspec:
+            if hasattr(self, checker.name):
+                setattr(other, checker.name, getattr(self, checker.name))
 
     def _readData(self, data):
         odata = data
@@ -1085,6 +1103,12 @@ class APIC(Frame):
     def HashKey(self):
         return '%s:%s' % (self.FrameID, self.desc)
 
+    def _validate_from_22(self, other, checker):
+        if checker.name == "mime":
+            self.mime = other.mime.decode("ascii", "ignore")
+        else:
+            super(APIC, self)._validate_from_22(other, checker)
+
     def _pprint(self):
         return "%s (%s, %d bytes)" % (
             self.desc, self.mime, len(self.data))
@@ -1810,9 +1834,25 @@ class PIC(APIC):
     The 'mime' attribute of an ID3v2.2 attached picture must be either
     'PNG' or 'JPG'.
     """
-    _framespec = [EncodingSpec('encoding'), StringSpec('mime', 3),
-                  ByteSpec('type'), EncodedTextSpec('desc'),
-                  BinaryDataSpec('data')]
+
+    _framespec = [
+        EncodingSpec('encoding'),
+        FixedBinaryDataSpec('mime', 3),
+        ByteSpec('type'),
+        EncodedTextSpec('desc'),
+        BinaryDataSpec('data')
+    ]
+
+    def _to_other(self, other):
+        if not isinstance(other, APIC):
+            raise TypeError
+
+        other.encoding = self.encoding
+        other.encoding = self.encoding
+        other.mime = self.mime.decode("ascii", "ignore")
+        other.type = self.type
+        other.desc = self.desc
+        other.data = self.data
 
 
 class GEO(GEOB):
@@ -1847,8 +1887,22 @@ class CRA(AENC):
 
 class LNK(LINK):
     """Linked information"""
-    _framespec = [StringSpec('frameid', 3), Latin1TextSpec('url')]
+
+    _framespec = [
+        StringSpec('frameid', 3),
+        Latin1TextSpec('url')
+    ]
+
     _optionalspec = [BinaryDataSpec('data')]
+
+    def _to_other(self, other):
+        if not isinstance(other, LINK):
+            raise TypeError
+
+        other.frameid = self.frameid
+        other.url = self.url
+        if hasattr(self, "data"):
+            other.data = self.data
 
 
 Frames_2_2 = dict([(k, v) for (k, v) in globals().items()

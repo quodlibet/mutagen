@@ -34,6 +34,15 @@ class SpecSanityChecks(TestCase):
         self.assertEquals(b'\x00\x00\x00', s.write(None, '\x00'))
         self.assertEquals(b'a\x00\x00', s.write(None, 'a'))
 
+    def test_fixedbytespec(self):
+        from mutagen.id3 import FixedBinaryDataSpec
+        s = FixedBinaryDataSpec('name', 3)
+        self.assertEquals((b'\xffbc', b'defg'),  s.read(None, b'\xffbcdefg'))
+        self.assertEquals(b'\x00bc', s.write(None, b'\x00bcdefg'))
+        self.assertEquals(b'\x00\x00\x00', s.write(None, None))
+        self.assertEquals(b'\x00\x00\x00', s.write(None, b'\x00'))
+        self.assertEquals(b'a\x00\x00', s.write(None, b'a'))
+
     def test_binarydataspec(self):
         from mutagen.id3 import BinaryDataSpec
         s = BinaryDataSpec('name')
@@ -123,6 +132,7 @@ class SpecValidateChecks(TestCase):
     def test_stringspec(self):
         from mutagen.id3 import StringSpec
         s = StringSpec('byte', 3)
+        self.assertEqual(s.validate(None, None), None)
         self.assertEqual(s.validate(None, "ABC"), "ABC")
         self.assertEqual(s.validate(None, u"ABC"), u"ABC")
         self.assertRaises(ValueError, s.validate, None, "abc2")
@@ -132,6 +142,28 @@ class SpecValidateChecks(TestCase):
             self.assertRaises(TypeError, s.validate, None, b"ABC")
             self.assertRaises(ValueError, s.validate, None, u"\xf6\xe4\xfc")
 
+    def test_fixedbytespec(self):
+        from mutagen.id3 import FixedBinaryDataSpec
+        s = FixedBinaryDataSpec('byte', 3)
+        self.assertEqual(s.validate(None, None), None)
+        self.assertEqual(s.validate(None, b"abc"), b"abc")
+        self.assertRaises(ValueError, s.validate, None, b"ab")
+        if PY3:
+            self.assertRaises(TypeError, s.validate, None, "abc")
+        else:
+            self.assertEqual(s.validate(None, u"abc"), b"abc")
+            self.assertRaises(ValueError, s.validate, None, u"\xf6\xe4\xfc")
+
+    def test_binarydataspec(self):
+        from mutagen.id3 import BinaryDataSpec
+        s = BinaryDataSpec('name')
+        self.assertEqual(s.validate(None, None), None)
+        self.assertEqual(s.validate(None, b"abc"), b"abc")
+        if PY3:
+            self.assertRaises(TypeError, s.validate, None, "abc")
+        else:
+            self.assertEqual(s.validate(None, u"abc"), b"abc")
+            self.assertRaises(ValueError, s.validate, None, u"\xf6\xe4\xfc")
 
 add(SpecValidateChecks)
 

@@ -10,6 +10,34 @@ _24 = ID3(); _24.version = (2,4,0)
 
 class FrameSanityChecks(TestCase):
 
+    def test_CRA_upgrade(self):
+        from mutagen.id3 import CRA, AENC
+        frame = CRA(owner="a", preview_start=1, preview_length=2, data=b"foo")
+        new = AENC(frame)
+        self.assertEqual(new.owner, "a")
+        self.assertEqual(new.preview_start, 1)
+        self.assertEqual(new.preview_length, 2)
+        self.assertEqual(new.data, b"foo")
+
+        frame = CRA(owner="a", preview_start=1, preview_length=2)
+        new = AENC(frame)
+        self.assertFalse(hasattr(new, "data"))
+
+    def test_PIC_upgrade(self):
+        from mutagen.id3 import PIC, APIC
+        frame = PIC(encoding=0, mime=b"PNG", desc="bla", type=3, data=b"\x00")
+        new = APIC(frame)
+        self.assertEqual(new.encoding, 0)
+        self.assertEqual(new.mime, "PNG")
+        self.assertEqual(new.desc, "bla")
+        self.assertEqual(new.data, b"\x00")
+
+        frame = PIC(encoding=0, mime=b"\x00\x01\xFF",
+                    desc="bla", type=3, data=b"\x00")
+        self.assertEqual(frame.mime, b"\x00\x01\xFF")
+        new = APIC(frame)
+        self.assertEqual(new.mime, "\x00\x01")
+
     def test_TF(self):
         from mutagen.id3 import TextFrame
         self.assert_(isinstance(TextFrame(text='text'), TextFrame))

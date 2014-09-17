@@ -611,7 +611,7 @@ def TestReadTags():
      b'x-image/fake\x00some data',
      COMR(encoding=0, price="USD10.00", valid_until="20051010",
           contact="ql@sc.net", format=9, seller="Joe", desc="A song",
-          mime='x-image/fake', logo='some data'), '',
+          mime='x-image/fake', logo=b'some data'), '',
      dict(
         encoding=0, price="USD10.00", valid_until="20051010",
         contact="ql@sc.net", format=9, seller="Joe", desc="A song",
@@ -842,7 +842,7 @@ class UpdateTo24(TestCase):
         from mutagen.id3 import PIC
         id3 = ID3()
         id3.version = (2, 2)
-        id3.add(PIC(encoding=0, mime="PNG", desc="cover", type=3, data=""))
+        id3.add(PIC(encoding=0, mime=b"PNG", desc="cover", type=3, data=b""))
         id3.update_to_v24()
         self.failUnlessEqual(id3["APIC:cover"].mime, "image/png")
 
