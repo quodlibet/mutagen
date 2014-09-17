@@ -477,7 +477,6 @@ EasyID3.RegisterKey(
 EasyID3.RegisterKey("musicbrainz_trackid", musicbrainz_trackid_get,
                     musicbrainz_trackid_set, musicbrainz_trackid_delete)
 EasyID3.RegisterKey("website", website_get, website_set, website_delete)
-EasyID3.RegisterKey("website", website_get, website_set, website_delete)
 EasyID3.RegisterKey(
     "replaygain_*_gain", gain_get, gain_set, gain_delete, peakgain_list)
 EasyID3.RegisterKey("replaygain_*_peak", peak_get, peak_set, peak_delete)
