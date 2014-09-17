@@ -15,7 +15,10 @@ import codecs
 
 from fnmatch import fnmatchcase
 
-from ._compat import chr_, text_type, PY2, iteritems, iterbytes
+from ._compat import chr_, text_type, PY2, PY3, iteritems, iterbytes
+
+if PY3:
+    from collections import OrderedDict
 
 
 def total_ordering(cls):
@@ -140,7 +143,11 @@ class DictMixin(object):
 
 class DictProxy(DictMixin):
     def __init__(self, *args, **kwargs):
-        self.__dict = {}
+        # Needs to be an ordered dict in Python 3
+        if PY3:
+            self.__dict = OrderedDict()
+        else:
+            self.__dict = {}
         super(DictProxy, self).__init__(*args, **kwargs)
 
     def __getitem__(self, key):
