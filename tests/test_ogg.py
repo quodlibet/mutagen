@@ -7,8 +7,7 @@ from tests import TestCase, add
 from mutagen.ogg import OggPage, error as OggError
 from mutagen._util import cdata
 from tempfile import mkstemp
-try: from os.path import devnull
-except ImportError: devnull = "/dev/null"
+from os import devnull
 
 class TOggPage(TestCase):
 

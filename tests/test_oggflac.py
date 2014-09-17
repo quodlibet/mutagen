@@ -8,8 +8,7 @@ from mutagen.oggflac import OggFLAC, OggFLACStreamInfo, delete
 from mutagen.ogg import OggPage, error as OggError
 from tests import add
 from tests.test_ogg import TOggFileType
-try: from os.path import devnull
-except ImportError: devnull = "/dev/null"
+from os import devnull
 
 class TOggFLAC(TOggFileType):
     Kind = OggFLAC
