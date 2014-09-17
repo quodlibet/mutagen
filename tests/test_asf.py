@@ -17,12 +17,6 @@ class TASFFile(TestCase):
 
 add(TASFFile)
 
-try: sorted
-except NameError:
-    def sorted(l):
-        n = list(l)
-        n.sort()
-        return n
 
 class TASFInfo(TestCase):
 
