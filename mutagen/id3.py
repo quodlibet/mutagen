@@ -612,7 +612,7 @@ class ID3(DictProxy, mutagen.Metadata):
         if self.version < self._V23:
             # ID3v2.2 PIC frames are slightly different.
             pics = self.getall("APIC")
-            mimes = {b"PNG": "image/png", b"JPG": "image/jpeg"}
+            mimes = {"PNG": "image/png", "JPG": "image/jpeg"}
             self.delall("APIC")
             for pic in pics:
                 newpic = APIC(

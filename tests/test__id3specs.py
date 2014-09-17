@@ -28,11 +28,11 @@ class SpecSanityChecks(TestCase):
     def test_stringspec(self):
         from mutagen.id3 import StringSpec
         s = StringSpec('name', 3)
-        self.assertEquals((b'abc', b'defg'),  s.read(None, b'abcdefg'))
-        self.assertEquals(b'abc', s.write(None, b'abcdefg'))
+        self.assertEquals(('abc', b'defg'),  s.read(None, b'abcdefg'))
+        self.assertEquals(b'abc', s.write(None, 'abcdefg'))
         self.assertEquals(b'\x00\x00\x00', s.write(None, None))
-        self.assertEquals(b'\x00\x00\x00', s.write(None, b'\x00'))
-        self.assertEquals(b'a\x00\x00', s.write(None, b'a'))
+        self.assertEquals(b'\x00\x00\x00', s.write(None, '\x00'))
+        self.assertEquals(b'a\x00\x00', s.write(None, 'a'))
 
     def test_binarydataspec(self):
         from mutagen.id3 import BinaryDataSpec
@@ -119,6 +119,19 @@ class SpecValidateChecks(TestCase):
         from mutagen.id3 import ByteSpec
         s = ByteSpec('byte')
         self.assertRaises(ValueError, s.validate, None, 1000)
+
+    def test_stringspec(self):
+        from mutagen.id3 import StringSpec
+        s = StringSpec('byte', 3)
+        self.assertEqual(s.validate(None, "ABC"), "ABC")
+        self.assertEqual(s.validate(None, u"ABC"), u"ABC")
+        self.assertRaises(ValueError, s.validate, None, "abc2")
+        self.assertRaises(ValueError, s.validate, None, "ab")
+
+        if PY3:
+            self.assertRaises(TypeError, s.validate, None, b"ABC")
+            self.assertRaises(ValueError, s.validate, None, u"\xf6\xe4\xfc")
+
 
 add(SpecValidateChecks)
 

@@ -14,6 +14,7 @@ from mutagen._util import total_ordering, decode_terminated
 
 
 class Spec(object):
+
     def __init__(self, name):
         self.name = name
 
@@ -26,6 +27,17 @@ class Spec(object):
         """
 
         return value
+
+    def read(self, frame, value):
+        raise NotImplementedError
+
+    def write(self, frame, value):
+        raise NotImplementedError
+
+    def validate(self, frame, value):
+        """Returns the validated data or raises ValueError/TypeError"""
+
+        raise NotImplementedError
 
 
 class ByteSpec(Spec):
@@ -87,28 +99,45 @@ class EncodingSpec(ByteSpec):
 
 
 class StringSpec(Spec):
+    """A fixed size ASCII only payload."""
+
     def __init__(self, name, length):
         super(StringSpec, self).__init__(name)
         self.len = length
 
     def read(s, frame, data):
-        return data[:s.len], data[s.len:]
+        read = data[:s.len]
+        if PY3:
+            try:
+                read = read.decode("ascii")
+            except UnicodeDecodeError:
+                raise ID3JunkFrameError("not ascii")
+
+        return read, data[s.len:]
 
     def write(s, frame, value):
         if value is None:
             return b'\x00' * s.len
         else:
+            if PY3:
+                value = value.encode("ascii")
             return (bytes(value) + b'\x00' * s.len)[:s.len]
 
     def validate(s, frame, value):
         if value is None:
             return None
 
-        if not isinstance(value, bytes):
-            value = value.encode("ascii")
+        if PY3:
+            if not isinstance(value, str):
+                raise TypeError("%s has to be str" % s.name)
+            value.encode("ascii")
+        else:
+            if not isinstance(value, bytes):
+                value = value.encode("ascii")
 
         if len(value) == s.len:
             return value
+
         raise ValueError('Invalid StringSpec[%d] data: %r' % (s.len, value))
 
 
