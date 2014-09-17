@@ -28,9 +28,7 @@ import mutagen
 from ._compat import cBytesIO, endswith, chr_
 from mutagen._util import insert_bytes
 from mutagen.id3 import BitPaddedInt
-import sys
-if sys.version_info >= (2, 6):
-    from functools import reduce
+from functools import reduce
 
 
 class error(IOError):
