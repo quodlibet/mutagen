@@ -142,17 +142,10 @@ class VComment(mutagen.Metadata, list):
         In Python 3 all keys and values have to be a string.
         """
 
-        # be stricter in Python 3
-        if PY3:
-            if not isinstance(self.vendor, text_type):
-                raise ValueError
-            for key, value in self:
-                if not isinstance(key, text_type):
-                    raise ValueError
-                if not isinstance(value, text_type):
-                    raise ValueError
-
         if not isinstance(self.vendor, text_type):
+            if PY3:
+                raise ValueError
+
             try:
                 self.vendor.decode('utf-8')
             except UnicodeDecodeError:
@@ -166,12 +159,15 @@ class VComment(mutagen.Metadata, list):
                 raise ValueError("%r is not a valid key" % key)
 
             if not isinstance(value, text_type):
+                if PY3:
+                    raise ValueError
+
                 try:
                     value.decode("utf-8")
                 except:
                     raise ValueError("%r is not a valid value" % value)
-        else:
-            return True
+
+        return True
 
     def clear(self):
         """Clear all keys from the comment."""
