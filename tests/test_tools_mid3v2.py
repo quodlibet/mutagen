@@ -188,16 +188,17 @@ class TMid3v2(_TTools):
         self.assertEqual(f.getall("TPE1")[0], text.decode(enc))
 
     def test_invalid_encoding_escaped(self):
-        res, out = self.call("--TALB", '\\xff', '-e', self.filename)
+        res, out = self.call("--TALB", '\\xff\\x81', '-e', self.filename)
         self.failIfEqual(res, 0)
         self.failUnless("TALB" in out)
 
     def test_invalid_encoding(self):
-        if PY2:
-            value = b"\xff\xff\xff"
-        else:
+        value = b"\xff\xff\x81"
+        self.assertRaises(ValueError, value.decode, "utf-8")
+        self.assertRaises(ValueError, value.decode, "cp1252")
+        if not PY2:
             enc = locale.getpreferredencoding()
-            value = b"\xff\xff\xff".decode(enc, "surrogateescape")
+            value = value.decode(enc, "surrogateescape")
         res, out = self.call("--TALB", value, self.filename)
         self.failIfEqual(res, 0)
         self.failUnless("TALB" in out)

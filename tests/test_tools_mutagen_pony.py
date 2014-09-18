@@ -12,6 +12,6 @@ class TMutagenPony(_TTools):
         base = os.path.join('tests', 'data')
         res, out = self.call(base)
         self.failIf(res)
-        self.failUnless("Report for tests/data" in out)
+        self.failUnless("Report for %s" % base in out)
 
 add(TMutagenPony)
