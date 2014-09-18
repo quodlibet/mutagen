@@ -87,13 +87,15 @@ class TEasyID3(TestCase):
             self.id3[key] = ["a test", "value"]
             self.id3.save(self.filename)
             id3 = EasyID3(self.filename)
-            self.failUnlessEqual(id3.get(key), ["a test", "value"])
+            # some keys end up in multiple frames and ID3.getall returns
+            # them in undefined order
+            self.failUnlessEqual(sorted(id3.get(key)), ["a test", "value"])
             self.failUnlessEqual(id3.keys(), [key])
 
             self.id3[key] = ["a test", "value"]
             self.id3.save(self.filename)
             id3 = EasyID3(self.filename)
-            self.failUnlessEqual(id3.get(key), ["a test", "value"])
+            self.failUnlessEqual(sorted(id3.get(key)), ["a test", "value"])
             self.failUnlessEqual(id3.keys(), [key])
 
             del(self.id3[key])
