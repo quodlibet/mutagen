@@ -93,6 +93,13 @@ class TVComment(TestCase):
         self.failUnlessRaises(ValueError, self.c.validate)
         self.failUnlessRaises(ValueError, self.c.write)
 
+    def test_validate_utf8_value(self):
+        self.c.append(("uvalid", b"\xc3\xbc\xc3\xb6\xc3\xa4"))
+        if PY3:
+            self.failUnlessRaises(ValueError, self.c.validate)
+        else:
+            self.c.validate()
+
     def test_invalid_format_strict(self):
         data = (b'\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x03\x00\x00'
                 b'\x00abc\x01')

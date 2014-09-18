@@ -167,7 +167,7 @@ class VComment(mutagen.Metadata, list):
 
             if not isinstance(value, text_type):
                 try:
-                    value.encode("utf-8")
+                    value.decode("utf-8")
                 except:
                     raise ValueError("%r is not a valid value" % value)
         else:
