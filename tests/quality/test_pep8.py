@@ -7,7 +7,6 @@
 import os
 import glob
 import subprocess
-import unittest
 
 from tests import TestCase, add
 

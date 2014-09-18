@@ -113,6 +113,7 @@ def check():
     from tests.quality import test_pep8
     from tests.quality import test_pyflakes
 
+    test_pep8, test_pyflakes
     runner = Runner()
     failures = 0
     for test in suites:

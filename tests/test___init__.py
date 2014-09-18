@@ -3,7 +3,7 @@ from tempfile import mkstemp
 import shutil
 
 from tests import TestCase, add
-from mutagen._compat import cBytesIO, text_type, PY3
+from mutagen._compat import cBytesIO, PY3
 from mutagen import File, Metadata, FileType
 from mutagen.oggvorbis import OggVorbis
 from mutagen.oggflac import OggFLAC

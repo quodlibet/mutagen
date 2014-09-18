@@ -60,6 +60,7 @@ class OggOpusInfo(StreamInfo):
 
         # only the higher 4 bits change on incombatible changes
         major, minor = version >> 4, version & 0xF
+        minor
         if major != 0:
             raise OggOpusHeaderError("version %r unsupported" % major)
 

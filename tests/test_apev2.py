@@ -322,7 +322,7 @@ class TAPEBinaryValue(TestCase):
     def test_pprint(self):
         self.value.pprint()
 
-    def test_type(self):
+    def test_type2(self):
         self.assertRaises(TypeError,
                           mutagen.apev2.APEValue, u"abc", mutagen.apev2.BINARY)
 

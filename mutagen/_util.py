@@ -15,7 +15,7 @@ import codecs
 
 from fnmatch import fnmatchcase
 
-from ._compat import chr_, text_type, PY2, PY3, iteritems, iterbytes
+from ._compat import chr_, text_type, PY2, iteritems, iterbytes
 
 
 def total_ordering(cls):
