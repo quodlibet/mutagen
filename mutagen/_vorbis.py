@@ -32,7 +32,7 @@ def is_valid_key(key):
     """
 
     if PY3 and isinstance(key, bytes):
-        raise ValueError
+        raise TypeError("needs to be str not bytes")
 
     for c in key:
         if c < " " or c > "}" or c == "=":
@@ -162,7 +162,7 @@ class VComment(mutagen.Metadata, list):
             try:
                 if not is_valid_key(key):
                     raise ValueError
-            except:
+            except TypeError:
                 raise ValueError("%r is not a valid key" % key)
 
             if not isinstance(value, text_type):

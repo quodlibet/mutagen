@@ -311,7 +311,7 @@ class TFLAC(TestCase):
     def test_write_changetitle(self):
         f = FLAC(self.NEW)
         if PY3:
-            self.assertRaises(ValueError, f.__setitem__, b'title', b"A New Title")
+            self.assertRaises(TypeError, f.__setitem__, b'title', b"A New Title")
         else:
             f[b"title"] = b"A New Title"
             f.save()
@@ -321,7 +321,7 @@ class TFLAC(TestCase):
     def test_write_changetitle_unicode_value(self):
         f = FLAC(self.NEW)
         if PY3:
-            self.assertRaises(ValueError, f.__setitem__, b'title', u"A Unicode Title \u2022")
+            self.assertRaises(TypeError, f.__setitem__, b'title', u"A Unicode Title \u2022")
         else:
             f[b"title"] = u"A Unicode Title \u2022"
             f.save()

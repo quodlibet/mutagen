@@ -34,7 +34,7 @@ class Tistag(TestCase):
 
     if PY3:
         def test_py3(self):
-            self.failUnlessRaises(ValueError, istag, b"abc")
+            self.failUnlessRaises(TypeError, istag, b"abc")
 
 add(Tistag)
 
@@ -271,11 +271,11 @@ class TVCommentDict(TestCase):
 
     if PY3:
         def test_py3_bad_key(self):
-            self.failUnlessRaises(ValueError, self.c.get, b"a")
+            self.failUnlessRaises(TypeError, self.c.get, b"a")
             self.failUnlessRaises(
-                ValueError, self.c.__setitem__, b"a", "foo")
+                TypeError, self.c.__setitem__, b"a", "foo")
             self.failUnlessRaises(
-                ValueError, self.c.__delitem__, b"a")
+                TypeError, self.c.__delitem__, b"a")
 
     def test_duplicate_keys(self):
         self.c = VCommentDict()
