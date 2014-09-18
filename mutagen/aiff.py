@@ -10,8 +10,8 @@
 """AIFF audio stream information and tags."""
 
 # NOTE from Ben Ockmore - according to the Py3k migration guidelines, AIFF
-# chunk keys should be unicode in Py3k, and unicode or bytes in Py2k (ASCII). To
-# make this easier, chunk keys should be stored internally as unicode.
+# chunk keys should be unicode in Py3k, and unicode or bytes in Py2k (ASCII).
+# To make this easier, chunk keys should be stored internally as unicode.
 
 import struct
 from struct import pack
@@ -37,6 +37,7 @@ class InvalidChunk(error, IOError):
 # based on stdlib's aifc
 _HUGE_VAL = 1.79769313486231e+308
 
+
 def is_valid_chunk_id(id):
     if not isinstance(id, text_type):
         if PY3:
@@ -47,7 +48,7 @@ def is_valid_chunk_id(id):
         except UnicodeDecodeError:
             return False
 
-    #PY26 - Change to set literal syntax (since set is faster than list here)
+    # PY26 - Change to set literal syntax (since set is faster than list here)
     return ((len(id) <= 4) and (min(id) >= u' ') and
             (max(id) <= u'~'))
 

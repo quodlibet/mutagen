@@ -26,7 +26,7 @@ class Tto_int_be(TestCase):
         self.failUnlessEqual(to_int_be(b"\x01\x00"), 256)
 
     def test_long(self):
-        self.failUnlessEqual(to_int_be(b"\x01\x00\x00\x00\x00"), 2**32)
+        self.failUnlessEqual(to_int_be(b"\x01\x00\x00\x00\x00"), 2 ** 32)
 add(Tto_int_be)
 
 
@@ -291,13 +291,16 @@ class TFLAC(TestCase):
         self.failUnlessAlmostEqual(FLAC(self.NEW).info.length, 3.7, 1)
 
     def test_keys(self):
-        self.failUnlessEqual(list(self.flac.keys()), list(self.flac.tags.keys()))
+        self.failUnlessEqual(
+            list(self.flac.keys()), list(self.flac.tags.keys()))
 
     def test_values(self):
-        self.failUnlessEqual(list(self.flac.values()), list(self.flac.tags.values()))
+        self.failUnlessEqual(
+            list(self.flac.values()), list(self.flac.tags.values()))
 
     def test_items(self):
-        self.failUnlessEqual(list(self.flac.items()), list(self.flac.tags.items()))
+        self.failUnlessEqual(
+            list(self.flac.items()), list(self.flac.tags.items()))
 
     def test_vc(self):
         self.failUnlessEqual(self.flac['title'][0], 'Silence')
@@ -311,7 +314,8 @@ class TFLAC(TestCase):
     def test_write_changetitle(self):
         f = FLAC(self.NEW)
         if PY3:
-            self.assertRaises(TypeError, f.__setitem__, b'title', b"A New Title")
+            self.assertRaises(
+                TypeError, f.__setitem__, b'title', b"A New Title")
         else:
             f[b"title"] = b"A New Title"
             f.save()
@@ -321,7 +325,8 @@ class TFLAC(TestCase):
     def test_write_changetitle_unicode_value(self):
         f = FLAC(self.NEW)
         if PY3:
-            self.assertRaises(TypeError, f.__setitem__, b'title', u"A Unicode Title \u2022")
+            self.assertRaises(
+                TypeError, f.__setitem__, b'title', u"A Unicode Title \u2022")
         else:
             f[b"title"] = u"A Unicode Title \u2022"
             f.save()

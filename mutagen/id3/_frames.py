@@ -386,6 +386,7 @@ class TimeStampTextFrame(TextFrame):
     def _pprint(self):
         return u" / ".join([stamp.text for stamp in self.text])
 
+
 @swap_to_string
 class UrlFrame(Frame):
     """A frame containing a URL string.
@@ -945,7 +946,7 @@ class SYLT(Frame):
 
     def __str__(self):
         return u"".join(text for (text, time) in self.text)
-        
+
     def __bytes__(self):
         return text_type(self).encode("utf-8")
 
@@ -1536,6 +1537,7 @@ class PRIV(Frame):
 
     __hash__ = Frame.__hash__
 
+
 @swap_to_string
 class SIGN(Frame):
     """Signature frame."""
@@ -1820,8 +1822,8 @@ class COM(COMM):
     "Comment"
 
 
-#class RVA(RVAD)
-#class EQU(EQUA)
+# class RVA(RVAD)
+# class EQU(EQUA)
 
 
 class REV(RVRB):

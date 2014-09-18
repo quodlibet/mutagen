@@ -110,7 +110,7 @@ class MetadataBlock(object):
         codes[-1][0] |= 128
         for code, datum in codes:
             byte = chr_(code)
-            if len(datum) > 2**24:
+            if len(datum) > 2 ** 24:
                 raise error("block is too long to write")
             length = struct.pack(">I", len(datum))[-3:]
             data.append(byte + length + datum)

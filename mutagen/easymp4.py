@@ -24,7 +24,7 @@ class EasyMP4Tags(DictMixin, Metadata):
     strings, and values are a list of Unicode strings (and these lists
     are always of length 0 or 1).
 
-    If you need access to the full MP4 metadata feature set, you should use 
+    If you need access to the full MP4 metadata feature set, you should use
     MP4, not EasyMP4.
     """
 
@@ -93,7 +93,7 @@ class EasyMP4Tags(DictMixin, Metadata):
         cls.RegisterKey(key, getter, setter, deleter)
 
     @classmethod
-    def RegisterIntKey(cls, key, atomid, min_value=0, max_value=2**16-1):
+    def RegisterIntKey(cls, key, atomid, min_value=0, max_value=2 ** 16 - 1):
         """Register a scalar integer key.
         """
 
@@ -110,7 +110,8 @@ class EasyMP4Tags(DictMixin, Metadata):
         cls.RegisterKey(key, getter, setter, deleter)
 
     @classmethod
-    def RegisterIntPairKey(cls, key, atomid, min_value=0, max_value=2**16-1):
+    def RegisterIntPairKey(cls, key, atomid, min_value=0,
+                           max_value=2 ** 16 - 1):
         def getter(tags, key):
             ret = []
             for (track, total) in tags[atomid]:

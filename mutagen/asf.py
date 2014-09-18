@@ -495,13 +495,14 @@ class ExtendedContentDescriptionObject(BaseObject):
         num_attributes, = struct.unpack("<H", data[0:2])
         pos = 2
         for i in range(num_attributes):
-            name_length, = struct.unpack("<H", data[pos:pos+2])
+            name_length, = struct.unpack("<H", data[pos:pos + 2])
             pos += 2
-            name = data[pos:pos+name_length].decode("utf-16-le").strip("\x00")
+            name = data[pos:pos + name_length]
+            name = name.decode("utf-16-le").strip("\x00")
             pos += name_length
-            value_type, value_length = struct.unpack("<HH", data[pos:pos+4])
+            value_type, value_length = struct.unpack("<HH", data[pos:pos + 4])
             pos += 4
-            value = data[pos:pos+value_length]
+            value = data[pos:pos + value_length]
             pos += value_length
             attr = _attribute_types[value_type](data=value)
             asf.tags.append((name, attr))
@@ -546,12 +547,14 @@ class HeaderExtensionObject(BaseObject):
         datapos = 0
         self.objects = []
         while datapos < datasize:
-            guid, size = struct.unpack("<16sQ", data[22+datapos:22+datapos+24])
+            guid, size = struct.unpack(
+                "<16sQ", data[22 + datapos:22 + datapos + 24])
             if guid in _object_types:
                 obj = _object_types[guid]()
             else:
                 obj = UnknownObject(guid)
-            obj.parse(asf, data[22+datapos+24:22+datapos+size], fileobj, size)
+            obj.parse(asf, data[22 + datapos + 24:22 + datapos + size],
+                      fileobj, size)
             self.objects.append(obj)
             datapos += size
 
@@ -574,11 +577,12 @@ class MetadataObject(BaseObject):
         pos = 2
         for i in range(num_attributes):
             (reserved, stream, name_length, value_type,
-             value_length) = struct.unpack("<HHHHI", data[pos:pos+12])
+             value_length) = struct.unpack("<HHHHI", data[pos:pos + 12])
             pos += 12
-            name = data[pos:pos+name_length].decode("utf-16-le").strip("\x00")
+            name = data[pos:pos + name_length]
+            name = name.decode("utf-16-le").strip("\x00")
             pos += name_length
-            value = data[pos:pos+value_length]
+            value = data[pos:pos + value_length]
             pos += value_length
             args = {'data': value, 'stream': stream}
             if value_type == 2:
@@ -604,11 +608,12 @@ class MetadataLibraryObject(BaseObject):
         pos = 2
         for i in range(num_attributes):
             (language, stream, name_length, value_type,
-             value_length) = struct.unpack("<HHHHI", data[pos:pos+12])
+             value_length) = struct.unpack("<HHHHI", data[pos:pos + 12])
             pos += 12
-            name = data[pos:pos+name_length].decode("utf-16-le").strip("\x00")
+            name = data[pos:pos + name_length]
+            name = name.decode("utf-16-le").strip("\x00")
             pos += name_length
-            value = data[pos:pos+value_length]
+            value = data[pos:pos + value_length]
             pos += value_length
             args = {'data': value, 'language': language, 'stream': stream}
             if value_type == 2:

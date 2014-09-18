@@ -108,7 +108,7 @@ class ID3(DictProxy, mutagen.Metadata):
             mutagen.id3.ID3(filename, known_frames=my_frames)
         """
 
-        if not v2_version in (3, 4):
+        if v2_version not in (3, 4):
             raise ValueError("Only 3 and 4 possible for v2_version")
 
         from os.path import getsize
@@ -345,8 +345,8 @@ class ID3(DictProxy, mutagen.Metadata):
                     return
 
                 size = bpi(size)
-                framedata = data[10:10+size]
-                data = data[10+size:]
+                framedata = data[10:10 + size]
+                data = data[10 + size:]
                 if size == 0:
                     continue  # drop empty frames
 
@@ -376,12 +376,12 @@ class ID3(DictProxy, mutagen.Metadata):
                     name, size = unpack('>3s3s', header)
                 except struct.error:
                     return  # not enough header
-                size, = struct.unpack('>L', b'\x00'+size)
+                size, = struct.unpack('>L', b'\x00' + size)
                 if name.strip(b'\x00') == b'':
                     return
 
-                framedata = data[6:6+size]
-                data = data[6+size:]
+                framedata = data[6:6 + size]
+                data = data[6 + size:]
                 if size == 0:
                     continue  # drop empty frames
 
@@ -412,7 +412,7 @@ class ID3(DictProxy, mutagen.Metadata):
     f_experimental = property(lambda s: bool(s.__flags & 0x20))
     f_footer = property(lambda s: bool(s.__flags & 0x10))
 
-    #f_crc = property(lambda s: bool(s.__extflags & 0x8000))
+    # f_crc = property(lambda s: bool(s.__extflags & 0x8000))
 
     def _prepare_framedata(self, v2_version, v23_sep):
         if v2_version == 3:
@@ -442,7 +442,8 @@ class ID3(DictProxy, mutagen.Metadata):
 
     def _prepare_id3_header(self, original_header, framesize, v2_version):
         try:
-            id3, vmaj, vrev, flags, insize = unpack('>3sBBB4s', original_header)
+            id3, vmaj, vrev, flags, insize = \
+                unpack('>3sBBB4s', original_header)
         except struct.error:
             id3, insize = b'', 0
         insize = BitPaddedInt(insize)
@@ -511,7 +512,7 @@ class ID3(DictProxy, mutagen.Metadata):
             data = header + framedata + (b'\x00' * (outsize - framesize))
 
             if (insize < outsize):
-                insert_bytes(f, outsize-insize, insize+10)
+                insert_bytes(f, outsize - insize, insize + 10)
             f.seek(0)
             f.write(data)
 
@@ -578,8 +579,8 @@ class ID3(DictProxy, mutagen.Metadata):
             # Disabled as this causes iTunes and other programs
             # to fail to find these frames, which usually includes
             # e.g. APIC.
-            #framedata = BitPaddedInt.to_str(usize) + framedata.encode('zlib')
-            #flags |= Frame.FLAG24_COMPRESS | Frame.FLAG24_DATALEN
+            # framedata = BitPaddedInt.to_str(usize) + framedata.encode('zlib')
+            # flags |= Frame.FLAG24_COMPRESS | Frame.FLAG24_DATALEN
             pass
 
         if version == self._V24:

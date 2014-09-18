@@ -63,6 +63,10 @@ class TPEP8(TestCase):
         import mutagen
         self._run_package(mutagen)
 
+    def test_id3_package(self):
+        import mutagen.id3
+        self._run_package(mutagen.id3)
+
     def test_tests(self):
         import tests
         self._run_package(tests)

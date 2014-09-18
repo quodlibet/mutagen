@@ -23,10 +23,12 @@ from mutagen.asf import ASF
 from mutagen.aiff import AIFF
 from os import devnull
 
+
 class TMetadata(TestCase):
 
     class FakeMeta(Metadata):
-        def __init__(self): pass
+        def __init__(self):
+            pass
 
     def test_virtual_constructor(self):
         self.failUnlessRaises(NotImplementedError, Metadata, "filename")
@@ -46,6 +48,7 @@ class TMetadata(TestCase):
             NotImplementedError, self.FakeMeta().delete, "filename")
 add(TMetadata)
 
+
 class TFileType(TestCase):
 
     def setUp(self):
@@ -63,10 +66,12 @@ class TFileType(TestCase):
         self.failIf("quux" in self.vorbis)
 add(TFileType)
 
+
 class TFile(TestCase):
 
     def test_bad(self):
-        try: self.failUnless(File(devnull) is None)
+        try:
+            self.failUnless(File(devnull) is None)
         except (OSError, IOError):
             print("WARNING: Unable to open %s." % devnull)
         self.failUnless(File(__file__) is None)
@@ -74,8 +79,10 @@ class TFile(TestCase):
     def test_empty(self):
         filename = os.path.join("tests", "data", "empty")
         open(filename, "wb").close()
-        try: self.failUnless(File(filename) is None)
-        finally: os.unlink(filename)
+        try:
+            self.failUnless(File(filename) is None)
+        finally:
+            os.unlink(filename)
 
     def test_not_file(self):
         self.failUnlessRaises(EnvironmentError, File, "/dev/doesnotexist")
@@ -203,14 +210,16 @@ class TFile(TestCase):
 
 add(TFile)
 
+
 class TFileUpperExt(TestCase):
-    FILES = [(os.path.join("tests", "data", "empty.ofr"), OptimFROG),
-             (os.path.join("tests", "data", "sv5_header.mpc"), Musepack),
-             (os.path.join("tests", "data", "silence-3.wma"), ASF),
-             (os.path.join("tests", "data", "truncated-64bit.mp4"), MP4),
-             (os.path.join("tests", "data", "silence-44-s.flac"), FLAC),
-             ]
-             
+    FILES = [
+        (os.path.join("tests", "data", "empty.ofr"), OptimFROG),
+        (os.path.join("tests", "data", "sv5_header.mpc"), Musepack),
+        (os.path.join("tests", "data", "silence-3.wma"), ASF),
+        (os.path.join("tests", "data", "truncated-64bit.mp4"), MP4),
+        (os.path.join("tests", "data", "silence-44-s.flac"), FLAC),
+    ]
+
     def setUp(self):
         checks = []
         for (original, instance) in self.FILES:

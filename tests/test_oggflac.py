@@ -10,6 +10,7 @@ from tests import add
 from tests.test_ogg import TOggFileType
 from os import devnull
 
+
 class TOggFLAC(TOggFileType):
     Kind = OggFLAC
 
@@ -40,14 +41,16 @@ class TOggFLAC(TOggFileType):
         self.failUnlessRaises(IOError, OggFLACStreamInfo, cBytesIO(page))
 
     def test_flac_reference_simple_save(self):
-        if not have_flac: return
+        if not have_flac:
+            return
         self.audio.save()
         self.scan_file()
         value = os.system("flac --ogg -t %s 2> %s" % (self.filename, devnull))
         self.failIf(value and value != NOTFOUND)
 
     def test_flac_reference_really_big(self):
-        if not have_flac: return
+        if not have_flac:
+            return
         self.test_really_big()
         self.audio.save()
         self.scan_file()
@@ -60,14 +63,16 @@ class TOggFLAC(TOggFileType):
         self.failIf(OggFLAC(self.filename).tags)
 
     def test_flac_reference_delete(self):
-        if not have_flac: return
+        if not have_flac:
+            return
         self.audio.delete()
         self.scan_file()
         value = os.system("flac --ogg -t %s 2> %s" % (self.filename, devnull))
         self.failIf(value and value != NOTFOUND)
- 
+
     def test_flac_reference_medium_sized(self):
-        if not have_flac: return
+        if not have_flac:
+            return
         self.audio["foobar"] = "foobar" * 1000
         self.audio.save()
         self.scan_file()
@@ -75,7 +80,8 @@ class TOggFLAC(TOggFileType):
         self.failIf(value and value != NOTFOUND)
 
     def test_flac_reference_delete_readd(self):
-        if not have_flac: return
+        if not have_flac:
+            return
         self.audio.delete()
         self.audio.tags.clear()
         self.audio["foobar"] = "foobar" * 1000
@@ -83,7 +89,7 @@ class TOggFLAC(TOggFileType):
         self.scan_file()
         value = os.system("flac --ogg -t %s 2> %s" % (self.filename, devnull))
         self.failIf(value and value != NOTFOUND)
- 
+
     def test_not_my_ogg(self):
         fn = os.path.join('tests', 'data', 'empty.ogg')
         self.failUnlessRaises(IOError, type(self.audio), fn)

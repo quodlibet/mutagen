@@ -400,7 +400,7 @@ class OggPage(object):
 
         # For non-muxed streams, look at the last page.
         try:
-            fileobj.seek(-256*256, 2)
+            fileobj.seek(-256 * 256, 2)
         except IOError:
             # The file is less than 64k in length.
             fileobj.seek(0)

@@ -8,6 +8,7 @@ from mutagen.aiff import AIFF, AIFFInfo, delete, IFFFile, IFFChunk
 from mutagen.aiff import error as AIFFError
 from tempfile import mkstemp
 
+
 class TAIFF(TestCase):
     silence_1 = os.path.join('tests', 'data', '11k-1ch-2s-silence.aif')
     silence_2 = os.path.join('tests', 'data', '48k-2ch-s16-silence.aif')
@@ -16,7 +17,7 @@ class TAIFF(TestCase):
     silence_5 = os.path.join('tests', 'data', '8k-4ch-1s-silence.aif')
 
     has_tags = os.path.join('tests', 'data', 'with-id3.aif')
-    no_tags  = os.path.join('tests', 'data', '8k-1ch-1s-silence.aif')
+    no_tags = os.path.join('tests', 'data', '8k-1ch-1s-silence.aif')
 
     def setUp(self):
         fd, self.filename_1 = mkstemp(suffix='.aif')
@@ -27,7 +28,7 @@ class TAIFF(TestCase):
         os.close(fd)
         shutil.copy(self.no_tags, self.filename_2)
 
-        self.aiff_tmp_id3    = AIFF(self.filename_1)
+        self.aiff_tmp_id3 = AIFF(self.filename_1)
         self.aiff_tmp_no_id3 = AIFF(self.filename_2)
 
         self.aiff_1 = AIFF(self.silence_1)
@@ -145,6 +146,7 @@ class TAIFF(TestCase):
 
 add(TAIFF)
 
+
 class TAIFFInfo(TestCase):
 
     def test_empty(self):
@@ -153,31 +155,32 @@ class TAIFFInfo(TestCase):
 
 add(TAIFFInfo)
 
+
 class TIFFFile(TestCase):
     has_tags = os.path.join('tests', 'data', 'with-id3.aif')
-    no_tags  = os.path.join('tests', 'data', '8k-1ch-1s-silence.aif')
+    no_tags = os.path.join('tests', 'data', '8k-1ch-1s-silence.aif')
 
     def setUp(self):
         self.file_1 = open(self.has_tags, 'rb')
-        self.iff_1  = IFFFile(self.file_1)
+        self.iff_1 = IFFFile(self.file_1)
         self.file_2 = open(self.no_tags, 'rb')
-        self.iff_2  = IFFFile(self.file_2)
+        self.iff_2 = IFFFile(self.file_2)
 
         fd_1, tmp_1_name = mkstemp(suffix='.aif')
         shutil.copy(self.has_tags, tmp_1_name)
         self.file_1_tmp = open(tmp_1_name, 'rb+')
-        self.iff_1_tmp  = IFFFile(self.file_1_tmp)
+        self.iff_1_tmp = IFFFile(self.file_1_tmp)
 
         fd_2, tmp_2_name = mkstemp(suffix='.aif')
         shutil.copy(self.no_tags, tmp_2_name)
         self.file_2_tmp = open(tmp_2_name, 'rb+')
-        self.iff_2_tmp  = IFFFile(self.file_2_tmp)
+        self.iff_2_tmp = IFFFile(self.file_2_tmp)
 
     def test_has_chunks(self):
         self.failUnless('FORM' in self.iff_1)
         self.failUnless('COMM' in self.iff_1)
         self.failUnless('SSND' in self.iff_1)
-        self.failUnless('ID3'  in self.iff_1)
+        self.failUnless('ID3' in self.iff_1)
 
         self.failUnless('FORM' in self.iff_2)
         self.failUnless('COMM' in self.iff_2)
@@ -187,7 +190,7 @@ class TIFFFile(TestCase):
         self.failUnless(isinstance(self.iff_1['FORM'], IFFChunk))
         self.failUnless(isinstance(self.iff_1['COMM'], IFFChunk))
         self.failUnless(isinstance(self.iff_1['SSND'], IFFChunk))
-        self.failUnless(isinstance(self.iff_1['ID3'],  IFFChunk))
+        self.failUnless(isinstance(self.iff_1['ID3'], IFFChunk))
 
     def test_chunk_size(self):
         self.failUnlessEqual(self.iff_1['FORM'].size, 17096)

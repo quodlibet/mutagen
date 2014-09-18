@@ -415,14 +415,14 @@ class MP4Tags(DictProxy, Metadata):
         meta = path[-1]
         index = meta.children.index(ilst)
         try:
-            prev = meta.children[index-1]
+            prev = meta.children[index - 1]
             if prev.name == b"free":
                 offset = prev.offset
                 length += prev.length
         except IndexError:
             pass
         try:
-            next = meta.children[index+1]
+            next = meta.children[index + 1]
             if next.name == b"free":
                 length += next.length
         except IndexError:
@@ -499,11 +499,11 @@ class MP4Tags(DictProxy, Metadata):
     def __parse_data(self, atom, data):
         pos = 0
         while pos < atom.length - 8:
-            length, name, flags = struct.unpack(">I4sI", data[pos:pos+12])
+            length, name, flags = struct.unpack(">I4sI", data[pos:pos + 12])
             if name != b"data":
                 raise MP4MetadataError(
                     "unexpected atom %r inside %r" % (name, atom.name))
-            yield flags, data[pos+16:pos+length]
+            yield flags, data[pos + 16:pos + length]
             pos += length
 
     def __render_data(self, key, flags, value):
@@ -515,22 +515,22 @@ class MP4Tags(DictProxy, Metadata):
         length = cdata.uint_be(data[:4])
         mean = data[12:length]
         pos = length
-        length = cdata.uint_be(data[pos:pos+4])
-        name = data[pos+12:pos+length]
+        length = cdata.uint_be(data[pos:pos + 4])
+        name = data[pos + 12:pos + length]
         pos += length
         value = []
         while pos < atom.length - 8:
-            length, atom_name = struct.unpack(">I4s", data[pos:pos+8])
+            length, atom_name = struct.unpack(">I4s", data[pos:pos + 8])
             if atom_name != b"data":
                 raise MP4MetadataError(
                     "unexpected atom %r inside %r" % (atom_name, atom.name))
 
-            version = ord(data[pos+8:pos+8+1])
+            version = ord(data[pos + 8:pos + 8 + 1])
             if version != 0:
                 raise MP4MetadataError("Unsupported version: %r" % version)
 
-            flags = struct.unpack(">I", b"\x00" + data[pos+9:pos+12])[0]
-            value.append(MP4FreeForm(data[pos+16:pos+length],
+            flags = struct.unpack(">I", b"\x00" + data[pos + 9:pos + 12])[0]
+            value.append(MP4FreeForm(data[pos + 16:pos + length],
                                      dataformat=flags))
             pos += length
         if value:
@@ -593,7 +593,7 @@ class MP4Tags(DictProxy, Metadata):
             if len(value) == 0:
                 return self.__render_data(key, 0x15, b"")
 
-            if min(value) < 0 or max(value) >= 2**16:
+            if min(value) < 0 or max(value) >= 2 ** 16:
                 raise MP4MetadataValueError(
                     "invalid 16 bit integers: %r" % value)
         except TypeError:
@@ -617,7 +617,7 @@ class MP4Tags(DictProxy, Metadata):
         pos = 0
         while pos < atom.length - 8:
             length, name, imageformat = struct.unpack(">I4sI",
-                                                      data[pos:pos+12])
+                                                      data[pos:pos + 12])
             if name != b"data":
                 if name == b"name":
                     pos += length
@@ -626,7 +626,7 @@ class MP4Tags(DictProxy, Metadata):
                     "unexpected atom %r inside 'covr'" % name)
             if imageformat not in (MP4Cover.FORMAT_JPEG, MP4Cover.FORMAT_PNG):
                 imageformat = MP4Cover.FORMAT_JPEG
-            cover = MP4Cover(data[pos+16:pos+length], imageformat)
+            cover = MP4Cover(data[pos + 16:pos + length], imageformat)
             self[atom.name].append(cover)
             pos += length
 
@@ -678,7 +678,7 @@ class MP4Tags(DictProxy, Metadata):
     # any of them fails
     for name in [b"\xa9nam", b"\xa9alb", b"\xa9ART", b"aART", b"\xa9wrt",
                  b"\xa9day", b"\xa9cmt", b"desc", b"purd", b"\xa9grp",
-                 b"\xa9gen", b"\xa9lyr",  b"catg", b"keyw", b"\xa9too",
+                 b"\xa9gen", b"\xa9lyr", b"catg", b"keyw", b"\xa9too",
                  b"cprt", b"soal", b"soaa", b"soar", b"sonm", b"soco",
                  b"sosn", b"tvsh"]:
         __atoms[name] = (__parse_text, __render_text)
@@ -751,20 +751,20 @@ class MP4Info(StreamInfo):
                     pos = 65
                     # skip extended descriptor type tag, length, ES ID
                     # and stream priority
-                    if data[pos:pos+3] == b"\x80\x80\x80":
+                    if data[pos:pos + 3] == b"\x80\x80\x80":
                         pos += 3
                     pos += 4
                     # decoder config descriptor type
-                    if ord(data[pos:pos+1]) == 0x04:
+                    if ord(data[pos:pos + 1]) == 0x04:
                         pos += 1
                         # skip extended descriptor type tag, length,
                         # object type ID, stream type, buffer size
                         # and maximum bitrate
-                        if data[pos:pos+3] == b"\x80\x80\x80":
+                        if data[pos:pos + 3] == b"\x80\x80\x80":
                             pos += 3
                         pos += 10
                         # average bitrate
-                        self.bitrate = cdata.uint_be(data[pos:pos+4])
+                        self.bitrate = cdata.uint_be(data[pos:pos + 4])
         except (ValueError, KeyError):
             # stsd atoms are optional
             pass

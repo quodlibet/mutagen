@@ -114,13 +114,14 @@ class MusepackInfo(StreamInfo):
             self.bitrate = int(round(fileobj.tell() * 8 / self.length))
 
     def __parse_sv8(self, fileobj):
-        #SV8 http://trac.musepack.net/trac/wiki/SV8Specification
+        # SV8 http://trac.musepack.net/trac/wiki/SV8Specification
 
         key_size = 2
         mandatory_packets = [b"SH", b"RG"]
 
         def check_frame_key(key):
-            if (len(frame_type) != key_size) or (not b'AA' <= frame_type <= b'ZZ'):
+            if (len(frame_type) != key_size) or \
+                    (not b'AA' <= frame_type <= b'ZZ'):
                 raise MusepackHeaderError("Invalid frame key.")
 
         frame_type = fileobj.read(key_size)

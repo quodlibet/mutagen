@@ -10,15 +10,22 @@ try:
 except ImportError:
     fcntl = None
 
+
 class FDict(DictMixin):
 
     def __init__(self):
         self.__d = {}
         self.keys = self.__d.keys
 
-    def __getitem__(self, *args): return self.__d.__getitem__(*args)
-    def __setitem__(self, *args): return self.__d.__setitem__(*args)
-    def __delitem__(self, *args): return self.__d.__delitem__(*args)
+    def __getitem__(self, *args):
+        return self.__d.__getitem__(*args)
+
+    def __setitem__(self, *args):
+        return self.__d.__setitem__(*args)
+
+    def __delitem__(self, *args):
+        return self.__d.__delitem__(*args)
+
 
 class Tutf8(TestCase):
 
@@ -47,6 +54,7 @@ class Tutf8(TestCase):
         self.failUnlessRaises(TypeError, utf8, 1234)
 
 add(Tutf8)
+
 
 class TDictMixin(TestCase):
 
@@ -142,6 +150,7 @@ class TDictMixin(TestCase):
 
 add(TDictMixin)
 
+
 class Tcdata(TestCase):
 
     ZERO = b"\x00\x00\x00\x00"
@@ -159,7 +168,7 @@ class Tcdata(TestCase):
         self.failUnlessEqual(cdata.uint_le(self.ZERO), 0)
         self.failUnlessEqual(cdata.uint_le(self.LEONE), 1)
         self.failUnlessEqual(cdata.uint_le(self.BEONE), 16777216)
-        self.failUnlessEqual(cdata.uint_le(self.NEGONE), 2**32-1)
+        self.failUnlessEqual(cdata.uint_le(self.NEGONE), 2 ** 32 - 1)
 
     def test_longlong_le(self):
         self.failUnlessEqual(cdata.longlong_le(self.ZERO * 2), 0)
@@ -169,7 +178,7 @@ class Tcdata(TestCase):
     def test_ulonglong_le(self):
         self.failUnlessEqual(cdata.ulonglong_le(self.ZERO * 2), 0)
         self.failUnlessEqual(cdata.ulonglong_le(self.LEONE + self.ZERO), 1)
-        self.failUnlessEqual(cdata.ulonglong_le(self.NEGONE * 2), 2**64-1)
+        self.failUnlessEqual(cdata.ulonglong_le(self.NEGONE * 2), 2 ** 64 - 1)
 
     def test_invalid_lengths(self):
         self.failUnlessRaises(cdata.error, cdata.int_le, b"")
@@ -193,6 +202,7 @@ class Tcdata(TestCase):
         self.failIf(cdata.test_bit(v, 13))
 
 add(Tcdata)
+
 
 class FileHandling(TestCase):
     def file(self, contents):
@@ -294,26 +304,26 @@ class FileHandling(TestCase):
     def test_insert_6106_79_51760(self):
         # This appears to be due to ANSI C limitations in read/write on rb+
         # files. The problematic behavior only showed up in our mmap fallback
-        # code for transfers of this or similar sizes. 
-        data = u''.join(map(text_type, range(12574))) # 51760 bytes
+        # code for transfers of this or similar sizes.
+        data = u''.join(map(text_type, range(12574)))  # 51760 bytes
         data = data.encode("ascii")
         o = self.file(data)
         insert_bytes(o, 6106, 79)
-        self.failUnless(data[:6106+79] + data[79:] == self.read(o))
+        self.failUnless(data[:6106 + 79] + data[79:] == self.read(o))
 
     def test_delete_6106_79_51760(self):
         # This appears to be due to ANSI C limitations in read/write on rb+
         # files. The problematic behavior only showed up in our mmap fallback
-        # code for transfers of this or similar sizes. 
-        data = u''.join(map(text_type, range(12574))) # 51760 bytes
+        # code for transfers of this or similar sizes.
+        data = u''.join(map(text_type, range(12574)))  # 51760 bytes
         data = data.encode("ascii")
-        o = self.file(data[:6106+79] + data[79:])
+        o = self.file(data[:6106 + 79] + data[79:])
         delete_bytes(o, 6106, 79)
         self.failUnless(data == self.read(o))
 
     # Generate a bunch of random insertions, apply them, delete them,
     # and make sure everything is still correct.
-    # 
+    #
     # The num_runs and num_changes values are tuned to take about 10s
     # on my laptop, or about 30 seconds since we we have 3 variations
     # on insert/delete_bytes brokenness. If I ever get a faster
@@ -333,14 +343,16 @@ class FileHandling(TestCase):
             # Generate the list of changes to apply
             changes = []
             for i in range(num_changes):
-                change_size = random.randrange(min_change_size, max_change_size)
+                change_size = random.randrange(
+                    min_change_size, max_change_size)
                 change_offset = random.randrange(0, filesize)
                 filesize += change_size
                 changes.append((change_offset, change_size))
 
             # Apply the changes, and make sure they all took.
             for offset, size in changes:
-                buffer_size = random.randrange(min_buffer_size, max_buffer_size)
+                buffer_size = random.randrange(
+                    min_buffer_size, max_buffer_size)
                 insert_bytes(fobj, size, offset, BUFFER_SIZE=buffer_size)
             fobj.seek(0)
             self.failIfEqual(fobj.read(len(data)), data)
@@ -350,7 +362,8 @@ class FileHandling(TestCase):
             # Then, undo them.
             changes.reverse()
             for offset, size in changes:
-                buffer_size = random.randrange(min_buffer_size, max_buffer_size)
+                buffer_size = random.randrange(
+                    min_buffer_size, max_buffer_size)
                 delete_bytes(fobj, size, offset, BUFFER_SIZE=buffer_size)
             fobj.seek(0)
             self.failUnless(fobj.read() == data)

@@ -59,7 +59,7 @@ class _WavPackHeader(object):
         track_no = ord(header[10:11])
         index_no = ord(header[11:12])
         samples = cdata.uint_le(header[12:16])
-        if samples == 2**32 - 1:
+        if samples == 2 ** 32 - 1:
             samples = -1
         block_index = cdata.uint_le(header[16:20])
         block_samples = cdata.uint_le(header[20:24])

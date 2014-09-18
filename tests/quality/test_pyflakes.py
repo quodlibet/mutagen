@@ -63,6 +63,8 @@ class TPyFlakes(TestCase):
             sys.stdout = stream
             for dirpath, dirnames, filenames in os.walk(path):
                 for filename in filenames:
+                    if _compat.PY3 and filename in ("m4a.py", "test_m4a.py"):
+                        continue
                     if filename.endswith('.py'):
                         pyflakes.checkPath(os.path.join(dirpath, filename))
         finally:

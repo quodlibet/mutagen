@@ -8,9 +8,10 @@ from tests import add
 from tests.test_ogg import TOggFileType
 from tempfile import mkstemp
 
+
 class TOggVorbis(TOggFileType):
     Kind = OggVorbis
-    
+
     def setUp(self):
         original = os.path.join("tests", "data", "empty.ogg")
         fd, self.filename = mkstemp(suffix='.ogg')
@@ -81,21 +82,24 @@ class TOggVorbis(TOggFileType):
     def test_vorbiscomment(self):
         self.audio.save()
         self.scan_file()
-        if ogg is None: return
+        if ogg is None:
+            return
         self.failUnless(ogg.vorbis.VorbisFile(self.filename))
 
     def test_vorbiscomment_big(self):
         self.test_really_big()
         self.audio.save()
         self.scan_file()
-        if ogg is None: return
+        if ogg is None:
+            return
         vfc = ogg.vorbis.VorbisFile(self.filename).comment()
         self.failUnlessEqual(self.audio["foo"], vfc["foo"])
 
     def test_vorbiscomment_delete(self):
         self.audio.delete()
         self.scan_file()
-        if ogg is None: return
+        if ogg is None:
+            return
         vfc = ogg.vorbis.VorbisFile(self.filename).comment()
         self.failUnlessEqual(vfc.keys(), ["VENDOR"])
 
@@ -105,7 +109,8 @@ class TOggVorbis(TOggFileType):
         self.audio["foobar"] = "foobar" * 1000
         self.audio.save()
         self.scan_file()
-        if ogg is None: return
+        if ogg is None:
+            return
         vfc = ogg.vorbis.VorbisFile(self.filename).comment()
         self.failUnlessEqual(self.audio["foobar"], vfc["foobar"])
         self.failUnless("FOOBAR" in vfc.keys())
@@ -137,7 +142,8 @@ class TOggVorbis(TOggFileType):
         self.failUnlessEqual(self.audio.tags, tags)
 
     def test_save_split_setup_packet_reference(self):
-        if ogg is None: return
+        if ogg is None:
+            return
         self.test_save_split_setup_packet()
         vfc = ogg.vorbis.VorbisFile(self.filename).comment()
         for key in self.audio:
@@ -145,7 +151,8 @@ class TOggVorbis(TOggFileType):
         self.ogg_reference(self.filename)
 
     def test_save_grown_split_setup_packet_reference(self):
-        if ogg is None: return
+        if ogg is None:
+            return
         fn = os.path.join("tests", "data", "multipage-setup.ogg")
         shutil.copy(fn, self.filename)
         audio = OggVorbis(self.filename)
@@ -163,7 +170,8 @@ class TOggVorbis(TOggFileType):
     def test_mime(self):
         self.failUnless("audio/vorbis" in self.audio.mime)
 
-try: import ogg.vorbis
+try:
+    import ogg.vorbis
 except ImportError:
     print("WARNING: Skipping Ogg Vorbis reference tests.")
     ogg = None

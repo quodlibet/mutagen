@@ -5,6 +5,7 @@ from tests import TestCase, add
 from mutagen.asf import ASF, ASFHeaderError, ASFValue, UNICODE, DWORD, QWORD
 from mutagen.asf import BOOL, WORD, BYTEARRAY, GUID
 
+
 class TASFFile(TestCase):
 
     def test_not_my_file(self):
@@ -49,6 +50,7 @@ class TASFInfo(TestCase):
         self.failUnlessEqual(self.wma3.info.channels, 2)
 
 add(TASFInfo)
+
 
 class TASF(TestCase):
 
@@ -202,20 +204,25 @@ class TASF(TestCase):
         v = ASFValue("", UNICODE, data=b'4\xd8\x1e\xdd\x00\x00')
         self.failUnlessEqual(v.data_size(), len(v._render()))
 
+
 class TASFTags1(TASF):
     original = os.path.join("tests", "data", "silence-1.wma")
 add(TASFTags1)
+
 
 class TASFTags2(TASF):
     original = os.path.join("tests", "data", "silence-2.wma")
 add(TASFTags2)
 
+
 class TASFTags3(TASF):
     original = os.path.join("tests", "data", "silence-3.wma")
 add(TASFTags3)
 
+
 class TASFIssue29(TestCase):
     original = os.path.join("tests", "data", "issue_29.wma")
+
     def setUp(self):
         fd, self.filename = mkstemp(suffix='wma')
         os.close(fd)
@@ -238,6 +245,7 @@ class TASFIssue29(TestCase):
         self.failIf("Description" in audio)
 add(TASFIssue29)
 
+
 class TASFLargeValue(TestCase):
 
     original = os.path.join("tests", "data", "silence-1.wma")
@@ -254,7 +262,8 @@ class TASFLargeValue(TestCase):
         audio = ASF(self.filename)
         audio["QL/LargeObject"] = [ASFValue(b"." * 0xFFFF, BYTEARRAY)]
         audio.save()
-        self.failIf("QL/LargeObject" not in audio.to_extended_content_description)
+        self.failIf(
+            "QL/LargeObject" not in audio.to_extended_content_description)
         self.failIf("QL/LargeObject" in audio.to_metadata)
         self.failIf("QL/LargeObject" in dict(audio.to_metadata_library))
 
@@ -270,7 +279,8 @@ class TASFLargeValue(TestCase):
         audio = ASF(self.filename)
         audio["QL/LargeObject"] = [ASFValue("." * (0x7FFF - 1), UNICODE)]
         audio.save()
-        self.failIf("QL/LargeObject" not in audio.to_extended_content_description)
+        self.failIf(
+            "QL/LargeObject" not in audio.to_extended_content_description)
         self.failIf("QL/LargeObject" in audio.to_metadata)
         self.failIf("QL/LargeObject" in dict(audio.to_metadata_library))
 
@@ -285,7 +295,7 @@ class TASFLargeValue(TestCase):
     def test_save_guid(self):
         # http://code.google.com/p/mutagen/issues/detail?id=81
         audio = ASF(self.filename)
-        audio["QL/GuidObject"] = [ASFValue(b" "*16, GUID)]
+        audio["QL/GuidObject"] = [ASFValue(b" " * 16, GUID)]
         audio.save()
         self.failIf("QL/GuidObject" in audio.to_extended_content_description)
         self.failIf("QL/GuidObject" in audio.to_metadata)
@@ -293,8 +303,9 @@ class TASFLargeValue(TestCase):
 
 add(TASFLargeValue)
 
-# http://code.google.com/p/mutagen/issues/detail?id=81#c4
+
 class TASFUpdateSize(TestCase):
+    # http://code.google.com/p/mutagen/issues/detail?id=81#c4
 
     original = os.path.join("tests", "data", "silence-1.wma")
 
@@ -303,7 +314,7 @@ class TASFUpdateSize(TestCase):
         os.close(fd)
         shutil.copy(self.original, self.filename)
         audio = ASF(self.filename)
-        audio["large_value1"] = "#"*50000
+        audio["large_value1"] = "#" * 50000
         audio.save()
 
     def tearDown(self):

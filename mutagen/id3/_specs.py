@@ -417,7 +417,7 @@ class ChannelSpec(ByteSpec):
 class VolumeAdjustmentSpec(Spec):
     def read(self, frame, data):
         value, = unpack('>h', data[0:2])
-        return value/512.0, data[2:]
+        return value / 512.0, data[2:]
 
     def write(self, frame, value):
         number = int(round(value * 512))
@@ -446,11 +446,11 @@ class VolumePeakSpec(Spec):
         if vol_bytes + 1 > len(data):
             raise ID3JunkFrameError
         shift = ((8 - (bits & 7)) & 7) + (4 - vol_bytes) * 8
-        for i in range(1, vol_bytes+1):
+        for i in range(1, vol_bytes + 1):
             peak *= 256
             peak += data_array[i]
         peak *= 2 ** shift
-        return (float(peak) / (2**31-1)), data[1+vol_bytes:]
+        return (float(peak) / (2 ** 31 - 1)), data[1 + vol_bytes:]
 
     def write(self, frame, value):
         number = int(round(value * 32768))

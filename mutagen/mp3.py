@@ -68,7 +68,7 @@ class MPEGInfo(StreamInfo):
                  128, 160, 192, 224, 256, 320],
         (2, 1): [0, 32, 48, 56, 64, 80, 96, 112, 128,
                  144, 160, 176, 192, 224, 256],
-        (2, 2): [0,  8, 16, 24, 32, 40, 48,  56, 64,
+        (2, 2): [0, 8, 16, 24, 32, 40, 48, 56, 64,
                  80, 96, 112, 128, 144, 160],
     }
 
@@ -153,12 +153,12 @@ class MPEGInfo(StreamInfo):
                 bitrate = (frame_data >> 12) & 0xF
                 sample_rate = (frame_data >> 10) & 0x3
                 padding = (frame_data >> 9) & 0x1
-                #private = (frame_data >> 8) & 0x1
+                # private = (frame_data >> 8) & 0x1
                 self.mode = (frame_data >> 6) & 0x3
-                #mode_extension = (frame_data >> 4) & 0x3
-                #copyright = (frame_data >> 3) & 0x1
-                #original = (frame_data >> 2) & 0x1
-                #emphasis = (frame_data >> 0) & 0x3
+                # mode_extension = (frame_data >> 4) & 0x3
+                # copyright = (frame_data >> 3) & 0x1
+                # original = (frame_data >> 2) & 0x1
+                # emphasis = (frame_data >> 0) & 0x3
                 if (version == 1 or layer == 0 or sample_rate == 0x3 or
                         bitrate == 0 or bitrate == 0xF):
                     frame_1 = data.find(b"\xff", frame_1 + 2)
@@ -179,7 +179,8 @@ class MPEGInfo(StreamInfo):
         self.sample_rate = self.__RATES[self.version][sample_rate]
 
         if self.layer == 1:
-            frame_length = (12 * self.bitrate // self.sample_rate + padding) * 4
+            frame_length = (
+                12 * self.bitrate // self.sample_rate + padding) * 4
             frame_size = 384
         elif self.version >= 2 and self.layer == 3:
             frame_length = 72 * self.bitrate // self.sample_rate + padding
@@ -233,7 +234,8 @@ class MPEGInfo(StreamInfo):
                 samples = float(frame_size * frame_count)
                 self.length = (samples / self.sample_rate) or self.length
             if flags & 0x2:
-                bitrate_data = struct.unpack('>I', data[xing + 12:xing + 16])[0]
+                bitrate_data = struct.unpack(
+                    '>I', data[xing + 12:xing + 16])[0]
                 self.bitrate = int((bitrate_data * 8) // self.length)
 
     def pprint(self):
@@ -265,7 +267,8 @@ class MP3(ID3FileType):
     def score(filename, fileobj, header_data):
         filename = filename.lower()
 
-        return (header_data.startswith(b"ID3") * 2 + endswith(filename, b".mp3") +
+        return (header_data.startswith(b"ID3") * 2 +
+                endswith(filename, b".mp3") +
                 endswith(filename, b".mp2") + endswith(filename, b".mpg") +
                 endswith(filename, b".mpeg"))
 

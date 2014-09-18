@@ -5,6 +5,7 @@ from mutagen.id3 import TIT1
 from tests import TestCase, add
 from tempfile import mkstemp
 
+
 class TTrueAudio(TestCase):
 
     def setUp(self):
