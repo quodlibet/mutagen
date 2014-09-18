@@ -10,7 +10,7 @@ from unittest import TestCase as BaseTestCase
 suites = []
 add = suites.append
 
-from mutagen._compat import cmp
+from mutagen._compat import PY3
 
 
 class TestCase(BaseTestCase):
@@ -40,8 +40,9 @@ class TestCase(BaseTestCase):
         self.assertTrue(b == a)
         self.assertFalse(a != b)
         self.assertFalse(b != a)
-        self.assertEqual(0, cmp(a, b))
-        self.assertEqual(0, cmp(b, a))
+        if not PY3:
+            self.assertEqual(0, cmp(a, b))
+            self.assertEqual(0, cmp(b, a))
 
     def assertReallyNotEqual(self, a, b):
         self.assertNotEqual(a, b)
@@ -50,8 +51,9 @@ class TestCase(BaseTestCase):
         self.assertFalse(b == a)
         self.assertTrue(a != b)
         self.assertTrue(b != a)
-        self.assertNotEqual(0, cmp(a, b))
-        self.assertNotEqual(0, cmp(b, a))
+        if not PY3:
+            self.assertNotEqual(0, cmp(a, b))
+            self.assertNotEqual(0, cmp(b, a))
 
 
 def import_tests():
