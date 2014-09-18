@@ -77,7 +77,7 @@ class TVComment(TestCase):
         self.failUnlessRaises(ValueError, self.c.write)
 
     def test_validate_nonunicode_value(self):
-        self.c.append(("uvalid", b"wt\xff"))
+        self.c.append((u"valid", b"wt\xff"))
         self.failUnlessRaises(ValueError, self.c.validate)
         self.failUnlessRaises(ValueError, self.c.write)
 
@@ -94,7 +94,7 @@ class TVComment(TestCase):
         self.failUnlessRaises(ValueError, self.c.write)
 
     def test_validate_utf8_value(self):
-        self.c.append(("uvalid", b"\xc3\xbc\xc3\xb6\xc3\xa4"))
+        self.c.append((u"valid", b"\xc3\xbc\xc3\xb6\xc3\xa4"))
         if PY3:
             self.failUnlessRaises(ValueError, self.c.validate)
         else:
