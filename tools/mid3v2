@@ -8,12 +8,13 @@
 
 import sys
 import locale
+import codecs
 
 from optparse import OptionParser, SUPPRESS_HELP
 
 import mutagen
 import mutagen.id3
-from mutagen._compat import PY2, text_type
+from mutagen._compat import PY2, PY3, text_type
 
 
 VERSION = (1, 3)
@@ -79,13 +80,13 @@ def split_escape(string, sep, maxsplit=None, escape_char=u"\\"):
     return result
 
 
-def unescape_string(string):
-    codec = "string_escape" if PY2 else "unicode_escape"
+def unescape_bytes(string):
+    assert isinstance(string, bytes)
 
-    if isinstance(string, bytes):
-        return string.decode(codec)
+    if PY2:
+        return string.decode("string_escape")
     else:
-        return string.encode("utf-8").decode(codec)
+        return codecs.escape_decode(string)[0]
 
 
 def list_frames(option, opt, value, parser):
@@ -135,6 +136,7 @@ def delete_frames(deletes, filenames):
 
 
 def write_files(edits, filenames, escape):
+    # edits are (bytes, bytes) on PY2 and (str, str+surrogateescape) on PY3
     enc = getpreferredencoding()
 
     # unescape escape sequences and decode values
@@ -142,21 +144,25 @@ def write_files(edits, filenames, escape):
     for frame, value in edits:
         if not value:
             continue
+
+        # strip "--"
         frame = frame[2:]
+
+        if PY3:
+            value = value.encode(enc, "surrogateescape")
 
         if escape:
             try:
-                value = unescape_string(value)
+                value = unescape_bytes(value)
             except ValueError as err:
                 print("%s: %s" % (frame, str(err)))
                 raise SystemExit(1)
 
-        if PY2:
-            try:
-                value = value.decode(enc)
-            except UnicodeDecodeError as err:
-                print("%s: %s" % (frame, str(err)))
-                raise SystemExit(1)
+        try:
+            value = value.decode(enc)
+        except UnicodeDecodeError as err:
+            print("%s: %s" % (frame, str(err)))
+            raise SystemExit(1)
 
         encoded_edits.append((frame, value))
     edits = encoded_edits

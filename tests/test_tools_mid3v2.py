@@ -1,6 +1,7 @@
 import os
 from tempfile import mkstemp
 import shutil
+import locale
 
 import mutagen
 from mutagen.id3 import ID3
@@ -104,8 +105,8 @@ class TMid3v2(_TTools):
             self.assertEqual(split_escape(*inargs), out)
 
     def test_unescape(self):
-        unescape_string = self.get_var("unescape_string")
-        self.assertEqual(unescape_string("\\n"), "\n")
+        unescape_bytes = self.get_var("unescape_bytes")
+        self.assertEqual(unescape_bytes(b"\\n"), b"\n")
 
     def test_artist_escape(self):
         res, out = self.call("-e", "-a", "foo\\nbar", self.filename)
@@ -173,7 +174,9 @@ class TMid3v2(_TTools):
         self.failUnlessEqual(frame.lang, "ger")
 
     def test_encoding_with_escape(self):
-        import locale
+        if not PY2:
+            return
+
         text = u'\xe4\xf6\xfc'
         enc = locale.getpreferredencoding()
         # don't fail in case getpreferredencoding doesn't give us a unicode
@@ -184,8 +187,18 @@ class TMid3v2(_TTools):
         f = ID3(self.filename)
         self.assertEqual(f.getall("TPE1")[0], text.decode(enc))
 
-    def test_invalid_encoding(self):
+    def test_invalid_encoding_escaped(self):
         res, out = self.call("--TALB", '\\xff', '-e', self.filename)
+        self.failIfEqual(res, 0)
+        self.failUnless("TALB" in out)
+
+    def test_invalid_encoding(self):
+        if PY2:
+            value = b"\xff\xff\xff"
+        else:
+            enc = locale.getpreferredencoding()
+            value = b"\xff\xff\xff".decode(enc, "surrogateescape")
+        res, out = self.call("--TALB", value, self.filename)
         self.failIfEqual(res, 0)
         self.failUnless("TALB" in out)
 
