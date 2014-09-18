@@ -9,6 +9,7 @@ from mutagen._util import cdata
 from tempfile import mkstemp
 from os import devnull
 
+
 class TOggPage(TestCase):
 
     def setUp(self):
@@ -73,7 +74,8 @@ class TOggPage(TestCase):
 
     def test_wiggle_room(self):
         packets = [b"1" * 511, b"2" * 511, b"3" * 511]
-        pages = OggPage.from_packets(packets, default_size=510, wiggle_room=100)
+        pages = OggPage.from_packets(
+            packets, default_size=510, wiggle_room=100)
         self.failUnlessEqual(len(pages), 3)
         self.failUnlessEqual(OggPage.to_packets(pages), packets)
 
@@ -130,8 +132,10 @@ class TOggPage(TestCase):
             OggPage.renumber(fileobj, 1002429366, 0)
             fileobj.close()
         finally:
-            try: os.unlink(filename)
-            except OSError: pass
+            try:
+                os.unlink(filename)
+            except OSError:
+                pass
 
     def test_renumber_muxed(self):
         pages = [OggPage() for i in range(10)]
@@ -203,7 +207,8 @@ class TOggPage(TestCase):
         self.failUnlessEqual(OggPage.to_packets(pages), packets)
 
     def test_random_data_roundtrip(self):
-        try: random_file = open("/dev/urandom", "rb")
+        try:
+            random_file = open("/dev/urandom", "rb")
         except (IOError, OSError):
             print("WARNING: Random data round trip test disabled.")
             return
@@ -254,7 +259,7 @@ class TOggPage(TestCase):
         packets = [b"1"] * 3000
         pages = OggPage.from_packets(packets)
         map(OggPage.write, pages)
-        self.failUnless(len(pages) > 3000//255)
+        self.failUnless(len(pages) > 3000 // 255)
 
     def test_read_max_size(self):
         page = OggPage()
@@ -289,7 +294,8 @@ class TOggPage(TestCase):
 
     def test_find_last(self):
         pages = [OggPage() for i in range(10)]
-        for i, page in enumerate(pages): page.sequence = i
+        for i, page in enumerate(pages):
+            page.sequence = i
         data = BytesIO(b"".join([page.write() for page in pages]))
         self.failUnlessEqual(
             OggPage.find_last(data, pages[0].serial), pages[-1])
@@ -297,14 +303,16 @@ class TOggPage(TestCase):
     def test_find_last_really_last(self):
         pages = [OggPage() for i in range(10)]
         pages[-1].last = True
-        for i, page in enumerate(pages): page.sequence = i
+        for i, page in enumerate(pages):
+            page.sequence = i
         data = BytesIO(b"".join([page.write() for page in pages]))
         self.failUnlessEqual(
             OggPage.find_last(data, pages[0].serial), pages[-1])
 
     def test_find_last_muxed(self):
         pages = [OggPage() for i in range(10)]
-        for i, page in enumerate(pages): page.sequence = i
+        for i, page in enumerate(pages):
+            page.sequence = i
         pages[-2].last = True
         pages[-1].serial = pages[0].serial + 1
         data = BytesIO(b"".join([page.write() for page in pages]))
@@ -313,7 +321,8 @@ class TOggPage(TestCase):
 
     def test_find_last_no_serial(self):
         pages = [OggPage() for i in range(10)]
-        for i, page in enumerate(pages): page.sequence = i
+        for i, page in enumerate(pages):
+            page.sequence = i
         data = BytesIO(b"".join([page.write() for page in pages]))
         self.failUnless(OggPage.find_last(data, pages[0].serial + 1) is None)
 
@@ -324,9 +333,9 @@ class TOggPage(TestCase):
     # Disabled because GStreamer will write Oggs with bad data,
     # which we need to make a best guess for.
     #
-    #def test_find_last_invalid_sync(self):
-    #    data = BytesIO("if you think this is an OggS, you're crazy")
-    #    self.failUnlessRaises(OggError, OggPage.find_last, data, 0)
+    # def test_find_last_invalid_sync(self):
+    #     data = BytesIO("if you think this is an OggS, you're crazy")
+    #     self.failUnlessRaises(OggError, OggPage.find_last, data, 0)
 
     def test_find_last_invalid_sync(self):
         data = BytesIO(b"if you think this is an OggS, you're crazy")
@@ -341,8 +350,10 @@ class TOggPage(TestCase):
 
         import zlib
         old_crc = zlib.crc32
+
         def zlib_uint(*args):
             return (old_crc(*args) & 0xffffffff)
+
         def zlib_int(*args):
             return cdata.int_be(cdata.to_uint_be(old_crc(*args) & 0xffffffff))
 
@@ -352,7 +363,7 @@ class TOggPage(TestCase):
             zlib.crc32 = zlib_uint
             uint_data = page.write()
             zlib.crc32 = zlib_int
-            int_data  = page.write()
+            int_data = page.write()
         finally:
             zlib.crc32 = old_crc
 
@@ -361,6 +372,7 @@ class TOggPage(TestCase):
     def tearDown(self):
         self.fileobj.close()
 add(TOggPage)
+
 
 class TOggFileType(TestCase):
     def scan_file(self):
@@ -433,20 +445,20 @@ class TOggFileType(TestCase):
         self.scan_file()
 
     def test_really_big(self):
-        self.audio["foo"] = "foo" * (2**16)
-        self.audio["bar"] = "bar" * (2**16)
-        self.audio["baz"] = "quux" * (2**16)
+        self.audio["foo"] = "foo" * (2 ** 16)
+        self.audio["bar"] = "bar" * (2 ** 16)
+        self.audio["baz"] = "quux" * (2 ** 16)
         self.audio.save()
         audio = self.Kind(self.filename)
-        self.failUnlessEqual(audio["foo"], ["foo" * 2**16])
-        self.failUnlessEqual(audio["bar"], ["bar" * 2**16])
-        self.failUnlessEqual(audio["baz"], ["quux" * 2**16])
+        self.failUnlessEqual(audio["foo"], ["foo" * 2 ** 16])
+        self.failUnlessEqual(audio["bar"], ["bar" * 2 ** 16])
+        self.failUnlessEqual(audio["baz"], ["quux" * 2 ** 16])
         self.scan_file()
 
     def test_delete_really_big(self):
-        self.audio["foo"] = "foo" * (2**16)
-        self.audio["bar"] = "bar" * (2**16)
-        self.audio["baz"] = "quux" * (2**16)
+        self.audio["foo"] = "foo" * (2 ** 16)
+        self.audio["bar"] = "bar" * (2 ** 16)
+        self.audio["baz"] = "quux" * (2 ** 16)
         self.audio.save()
 
         self.audio.delete()

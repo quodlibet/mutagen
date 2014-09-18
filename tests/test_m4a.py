@@ -1,5 +1,6 @@
 import os
 import shutil
+from os.path import devnull
 
 from cStringIO import StringIO
 from tempfile import mkstemp
@@ -10,8 +11,6 @@ warnings.simplefilter("ignore", DeprecationWarning)
 from mutagen.m4a import M4A, Atom, Atoms, M4ATags, M4AInfo, \
      delete, M4ACover, M4AMetadataError
 
-try: from os.path import devnull
-except ImportError: devnull = "/dev/null"
 
 class TAtom(TestCase):
 
@@ -29,7 +28,8 @@ class TAtom(TestCase):
             def __len__(self):
                 return 1L << 32
         data = TooBig("test")
-        try: len(data)
+        try:
+            len(data)
         except OverflowError:
             # Py_ssize_t is still only 32 bits on this system.
             self.failUnlessRaises(OverflowError, Atom.render, "data", data)
@@ -42,6 +42,7 @@ class TAtom(TestCase):
         Atom(fileobj)
         self.failUnlessEqual(fileobj.tell(), 8)
 add(TAtom)
+
 
 class TAtoms(TestCase):
     filename = os.path.join("tests", "data", "has-tags.m4a")
@@ -67,6 +68,7 @@ class TAtoms(TestCase):
         repr(self.atoms)
 add(TAtoms)
 
+
 class TM4AInfo(TestCase):
 
     def test_no_soun(self):
@@ -75,7 +77,7 @@ class TM4AInfo(TestCase):
 
     def test_mdhd_version_1(self, soun="soun"):
         mdhd = Atom.render("mdhd", ("\x01\x00\x00\x00" + "\x00" * 16 +
-                                    "\x00\x00\x00\x02" + # 2 Hz
+                                    "\x00\x00\x00\x02" +  # 2 Hz
                                     "\x00\x00\x00\x00\x00\x00\x00\x10"))
         hdlr = Atom.render("hdlr", soun)
         mdia = Atom.render("mdia", mdhd + hdlr)
@@ -87,6 +89,7 @@ class TM4AInfo(TestCase):
         self.failUnlessEqual(info.length, 8)
 add(TM4AInfo)
 
+
 class TM4ATags(TestCase):
 
     def wrap_ilst(self, data):
@@ -95,7 +98,7 @@ class TM4ATags(TestCase):
         data = Atom.render("moov", Atom.render("udta", meta))
         fileobj = StringIO(data)
         return M4ATags(Atoms(fileobj), fileobj)
-        
+
     def test_bad_freeform(self):
         mean = Atom.render("mean", "net.sacredchao.Mutagen")
         name = Atom.render("name", "empty test key")
@@ -135,6 +138,7 @@ class TM4ATags(TestCase):
 
 add(TM4ATags)
 
+
 class TM4A(TestCase):
     def setUp(self):
         fd, self.filename = mkstemp(suffix='m4a')
@@ -143,7 +147,8 @@ class TM4A(TestCase):
         self.audio = M4A(self.filename)
 
     def faad(self):
-        if not have_faad: return
+        if not have_faad:
+            return
         value = os.system(
             "faad %s -o %s > %s 2> %s" % (
                 self.filename, devnull, devnull, devnull))
@@ -177,11 +182,11 @@ class TM4A(TestCase):
 
     def test_tracknumber_too_small(self):
         self.failUnlessRaises(ValueError, self.set_key, 'trkn', (-1, 0))
-        self.failUnlessRaises(ValueError, self.set_key, 'trkn', (2**18, 1))
+        self.failUnlessRaises(ValueError, self.set_key, 'trkn', (2 ** 18, 1))
 
     def test_disk_too_small(self):
         self.failUnlessRaises(ValueError, self.set_key, 'disk', (-1, 0))
-        self.failUnlessRaises(ValueError, self.set_key, 'disk', (2**18, 1))
+        self.failUnlessRaises(ValueError, self.set_key, 'disk', (2 ** 18, 1))
 
     def test_tracknumber_wrong_size(self):
         self.failUnlessRaises(ValueError, self.set_key, 'trkn', (1,))
@@ -240,6 +245,7 @@ class TM4A(TestCase):
     def tearDown(self):
         os.unlink(self.filename)
 
+
 class TM4AHasTags(TM4A):
     original = os.path.join("tests", "data", "has-tags.m4a")
 
@@ -266,6 +272,7 @@ class TM4AHasTags(TM4A):
             IOError, M4A, os.path.join("tests", "data", "empty.ogg"))
 
 add(TM4AHasTags)
+
 
 class TM4ANoTags(TM4A):
     original = os.path.join("tests", "data", "no-tags.m4a")

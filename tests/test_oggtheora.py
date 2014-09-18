@@ -9,6 +9,7 @@ from mutagen.ogg import OggPage
 from tests import add
 from tests.test_ogg import TOggFileType
 
+
 class TOggTheora(TOggFileType):
     Kind = OggTheora
 

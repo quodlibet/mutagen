@@ -98,6 +98,7 @@ class Result(unittest.TestResult):
             sys.stdout.write(self.separator2 + "\n")
             sys.stdout.write("%s\n" % err)
 
+
 class Runner(object):
     def run(self, test):
         suite = unittest.makeSuite(test)

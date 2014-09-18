@@ -20,6 +20,7 @@ BROKEN = os.path.join(DIR, "data", "brokentag.apev2")
 LYRICS2 = os.path.join(DIR, "data", "apev2-lyricsv2.mp3")
 INVAL_ITEM_COUNT = os.path.join(DIR, "data", "145-invalid-item-count.apev2")
 
+
 class Tis_valid_apev2_key(TestCase):
 
     def test_yes(self):
@@ -68,7 +69,7 @@ class TAPEWriter(TestCase):
         self.tag = mutagen.apev2.APEv2(SAMPLE + ".new")
 
     def test_changed(self):
-        size = os.path.getsize(SAMPLE + ".new") 
+        size = os.path.getsize(SAMPLE + ".new")
         self.tag.save()
         self.failUnlessEqual(
             os.path.getsize(SAMPLE + ".new"), size - self.offset)
@@ -80,7 +81,7 @@ class TAPEWriter(TestCase):
         tag = mutagen.apev2.APEv2(BROKEN)
         tag.save(BROKEN + ".new")
         self.failUnlessEqual(
-            os.path.getsize(OLD), os.path.getsize(BROKEN+".new"))
+            os.path.getsize(OLD), os.path.getsize(BROKEN + ".new"))
 
     def test_readback(self):
         for k, v in self.tag.items():
@@ -152,6 +153,7 @@ class TAPEWriter(TestCase):
 
 add(TAPEWriter)
 
+
 class TAPEv2ThenID3v1Writer(TAPEWriter):
     offset = 128
 
@@ -171,6 +173,7 @@ class TAPEv2ThenID3v1Writer(TAPEWriter):
         pass
 
 add(TAPEv2ThenID3v1Writer)
+
 
 class TAPEv2(TestCase):
 
@@ -278,6 +281,7 @@ class TAPEv2(TestCase):
 
 add(TAPEv2)
 
+
 class TAPEv2ThenID3v1(TAPEv2):
 
     def setUp(self):
@@ -288,6 +292,7 @@ class TAPEv2ThenID3v1(TAPEv2):
         self.audio = APEv2(self.filename)
 
 add(TAPEv2ThenID3v1)
+
 
 class TAPEv2WithLyrics2(TestCase):
 
@@ -301,6 +306,7 @@ class TAPEv2WithLyrics2(TestCase):
 
 add(TAPEv2WithLyrics2)
 
+
 class TAPEBinaryValue(TestCase):
 
     from mutagen.apev2 import APEBinaryValue as BV
@@ -308,7 +314,7 @@ class TAPEBinaryValue(TestCase):
 
     def setUp(self):
         self.sample = b"\x12\x45\xde"
-        self.value = mutagen.apev2.APEValue(self.sample,mutagen.apev2.BINARY)
+        self.value = mutagen.apev2.APEValue(self.sample, mutagen.apev2.BINARY)
 
     def test_type(self):
         self.failUnless(isinstance(self.value, self.BV))
@@ -327,6 +333,7 @@ class TAPEBinaryValue(TestCase):
                           mutagen.apev2.APEValue, u"abc", mutagen.apev2.BINARY)
 
 add(TAPEBinaryValue)
+
 
 class TAPETextValue(TestCase):
 
@@ -365,6 +372,7 @@ class TAPETextValue(TestCase):
 
 add(TAPETextValue)
 
+
 class TAPEExtValue(TestCase):
 
     from mutagen.apev2 import APEExtValue as EV
@@ -394,6 +402,7 @@ class TAPEExtValue(TestCase):
         self.value.pprint()
 
 add(TAPEExtValue)
+
 
 class TAPEv2File(TestCase):
 

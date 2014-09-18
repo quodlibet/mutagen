@@ -28,7 +28,7 @@ class SpecSanityChecks(TestCase):
     def test_stringspec(self):
         from mutagen.id3 import StringSpec
         s = StringSpec('name', 3)
-        self.assertEquals(('abc', b'defg'),  s.read(None, b'abcdefg'))
+        self.assertEquals(('abc', b'defg'), s.read(None, b'abcdefg'))
         self.assertEquals(b'abc', s.write(None, 'abcdefg'))
         self.assertEquals(b'\x00\x00\x00', s.write(None, None))
         self.assertEquals(b'\x00\x00\x00', s.write(None, '\x00'))
@@ -37,7 +37,7 @@ class SpecSanityChecks(TestCase):
     def test_fixedbytespec(self):
         from mutagen.id3 import FixedBinaryDataSpec
         s = FixedBinaryDataSpec('name', 3)
-        self.assertEquals((b'\xffbc', b'defg'),  s.read(None, b'\xffbcdefg'))
+        self.assertEquals((b'\xffbc', b'defg'), s.read(None, b'\xffbcdefg'))
         self.assertEquals(b'\x00bc', s.write(None, b'\x00bcdefg'))
         self.assertEquals(b'\x00\x00\x00', s.write(None, None))
         self.assertEquals(b'\x00\x00\x00', s.write(None, b'\x00'))
@@ -47,14 +47,15 @@ class SpecSanityChecks(TestCase):
         from mutagen.id3 import BinaryDataSpec
         s = BinaryDataSpec('name')
         self.assertEquals((b'abcdefg', b''), s.read(None, b'abcdefg'))
-        self.assertEquals(b'',  s.write(None, None))
-        self.assertEquals(b'43',  s.write(None, 43))
-        self.assertEquals(b'abc',  s.write(None, b'abc'))
+        self.assertEquals(b'', s.write(None, None))
+        self.assertEquals(b'43', s.write(None, 43))
+        self.assertEquals(b'abc', s.write(None, b'abc'))
 
     def test_encodedtextspec(self):
         from mutagen.id3 import EncodedTextSpec, Frame
         s = EncodedTextSpec('name')
-        f = Frame(); f.encoding = 0
+        f = Frame()
+        f.encoding = 0
         self.assertEquals((u'abcd', b'fg'), s.read(f, b'abcd\x00fg'))
         self.assertEquals(b'abcdefg\x00', s.write(f, u'abcdefg'))
         self.assertRaises(AttributeError, s.write, f, None)
@@ -62,7 +63,8 @@ class SpecSanityChecks(TestCase):
     def test_timestampspec(self):
         from mutagen.id3 import TimeStampSpec, Frame, ID3TimeStamp
         s = TimeStampSpec('name')
-        f = Frame(); f.encoding = 0
+        f = Frame()
+        f.encoding = 0
         self.assertEquals((ID3TimeStamp('ab'), b'fg'), s.read(f, b'ab\x00fg'))
         self.assertEquals((ID3TimeStamp('1234'), b''), s.read(f, b'1234\x00'))
         self.assertEquals(b'1234\x00', s.write(f, ID3TimeStamp('1234')))
@@ -70,7 +72,7 @@ class SpecSanityChecks(TestCase):
         if PY3:
             self.assertRaises(TypeError, ID3TimeStamp, b"blah")
         self.assertEquals(
-            text_type(ID3TimeStamp(u"2000-01-01")),  u"2000-01-01")
+            text_type(ID3TimeStamp(u"2000-01-01")), u"2000-01-01")
         self.assertEquals(
             bytes(ID3TimeStamp(u"2000-01-01")), b"2000-01-01")
 
@@ -186,7 +188,8 @@ class BitPaddedIntTest(TestCase):
         self.assertEquals(BitPaddedInt(b'\x00\x00\x00\x01'), 1)
 
     def test_1l(self):
-        self.assertEquals(BitPaddedInt(b'\x01\x00\x00\x00', bigendian=False), 1)
+        self.assertEquals(
+            BitPaddedInt(b'\x01\x00\x00\x00', bigendian=False), 1)
 
     def test_129(self):
         self.assertEquals(BitPaddedInt(b'\x00\x00\x01\x01'), 0x81)
@@ -242,7 +245,7 @@ class BitPaddedIntTest(TestCase):
     def test_varwidth(self):
         self.assertEquals(len(BitPaddedInt.to_str(100)), 4)
         self.assertEquals(len(BitPaddedInt.to_str(100, width=-1)), 4)
-        self.assertEquals(len(BitPaddedInt.to_str(2**32, width=-1)), 5)
+        self.assertEquals(len(BitPaddedInt.to_str(2 ** 32, width=-1)), 5)
 
     def test_minwidth(self):
         self.assertEquals(
@@ -280,7 +283,8 @@ class TestUnsynch(TestCase):
 
     def test_unsync_encode(self):
         from mutagen.id3 import unsynch as un
-        for d in (b'\xff\xff\xff\xff', b'\xff\xf0\x0f\x00', b'\xff\x00\x0f\xf0'):
+        for d in (b'\xff\xff\xff\xff', b'\xff\xf0\x0f\x00',
+                  b'\xff\x00\x0f\xf0'):
             self.assertEquals(d, un.decode(un.encode(d)))
             self.assertNotEqual(d, un.encode(d))
         self.assertEquals(b'\xff\x44', un.encode(b'\xff\x44'))

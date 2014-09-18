@@ -60,14 +60,14 @@ class TMid3Iconv(_TTools):
             res, out = self.call("-d", "-e", codec, self.filename)
             f = ID3(self.filename)
             self.failUnlessEqual(f["TALB"].encoding, 1)
-            self.failUnlessEqual(f["TALB"].text[0] , AMBIGUOUS.decode(codec))
+            self.failUnlessEqual(f["TALB"].text[0], AMBIGUOUS.decode(codec))
 
     def test_comm(self):
         from mutagen.id3 import COMM
 
         for codec in CODECS:
             f = ID3(self.filename)
-            frame = COMM(desc="", lang="eng",  encoding=0,
+            frame = COMM(desc="", lang="eng", encoding=0,
                          text=[AMBIGUOUS.decode("latin-1")])
             f.add(frame)
             f.save()
@@ -75,7 +75,7 @@ class TMid3Iconv(_TTools):
             f = ID3(self.filename)
             new_frame = f[frame.HashKey]
             self.failUnlessEqual(new_frame.encoding, 1)
-            self.failUnlessEqual(new_frame.text[0] , AMBIGUOUS.decode(codec))
+            self.failUnlessEqual(new_frame.text[0], AMBIGUOUS.decode(codec))
 
     def test_remove_v1(self):
         from mutagen.id3 import ParseID3v1

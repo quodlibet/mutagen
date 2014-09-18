@@ -4,6 +4,7 @@ from tests import add, TestCase
 from mutagen.easymp4 import EasyMP4, error as MP4Error
 from tempfile import mkstemp
 
+
 class TEasyMP4(TestCase):
 
     def setUp(self):
@@ -85,7 +86,7 @@ class TEasyMP4(TestCase):
         self.failUnlessEqual(self.mp4["date"], ["2004"])
         del(self.mp4["date"])
         self.failIf("date" in self.mp4)
-        
+
     def test_write_date_double(self):
         self.mp4["date"] = ["2004", "2005"]
         self.mp4.save(self.filename)

@@ -3,6 +3,7 @@ import os
 from mutagen.wavpack import WavPack
 from tests import TestCase, add
 
+
 class TWavPack(TestCase):
 
     def setUp(self):

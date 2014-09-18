@@ -39,7 +39,7 @@ class _TTools(TestCase):
             except SystemExit as e:
                 ret = e.code
             ret = ret or 0
-            return (ret,  out.getvalue())
+            return (ret, out.getvalue())
         finally:
             sys.stdout = old_stdout
 

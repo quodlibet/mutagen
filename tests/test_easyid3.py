@@ -7,6 +7,7 @@ from mutagen.easyid3 import EasyID3, error as ID3Error
 from mutagen._compat import PY3
 from tempfile import mkstemp
 
+
 class TEasyID3(TestCase):
 
     def setUp(self):
@@ -116,7 +117,7 @@ class TEasyID3(TestCase):
         self.failUnlessEqual(self.id3["date"], ["2004"])
         del(self.id3["date"])
         self.failIf("date" in self.id3.keys())
-        
+
     def test_write_date_double(self):
         self.id3["date"] = ["2004", "2005"]
         self.id3.save(self.filename)
@@ -199,31 +200,33 @@ class TEasyID3(TestCase):
     def test_gain_bad_key(self):
         self.failIf("replaygain_foo_gain" in self.id3)
         self.failIf(self.id3._EasyID3__id3.getall("RVA2"))
-        
+
     def test_gain_bad_value(self):
         self.failUnlessRaises(
             ValueError, self.id3.__setitem__, "replaygain_foo_gain", [])
         self.failUnlessRaises(
             ValueError, self.id3.__setitem__, "replaygain_foo_gain", ["foo"])
         self.failUnlessRaises(
-            ValueError, self.id3.__setitem__, "replaygain_foo_gain", ["1", "2"])
+            ValueError,
+            self.id3.__setitem__, "replaygain_foo_gain", ["1", "2"])
         self.failIf(self.id3._EasyID3__id3.getall("RVA2"))
-        
+
     def test_peak_bad_key(self):
         self.failIf("replaygain_foo_peak" in self.id3)
         self.failIf(self.id3._EasyID3__id3.getall("RVA2"))
-        
+
     def test_peak_bad_value(self):
         self.failUnlessRaises(
             ValueError, self.id3.__setitem__, "replaygain_foo_peak", [])
         self.failUnlessRaises(
             ValueError, self.id3.__setitem__, "replaygain_foo_peak", ["foo"])
         self.failUnlessRaises(
-            ValueError, self.id3.__setitem__, "replaygain_foo_peak", ["1", "1"])
+            ValueError,
+            self.id3.__setitem__, "replaygain_foo_peak", ["1", "1"])
         self.failUnlessRaises(
             ValueError, self.id3.__setitem__, "replaygain_foo_peak", ["3"])
         self.failIf(self.id3._EasyID3__id3.getall("RVA2"))
-        
+
     def test_gain_peak_get(self):
         self.id3["replaygain_foo_gain"] = "+3.5 dB"
         self.id3["replaygain_bar_peak"] = "0.5"

@@ -37,7 +37,8 @@ class TAtom(TestCase):
             def __len__(self):
                 return 1 << 32
         data = TooBig(b"test")
-        try: len(data)
+        try:
+            len(data)
         except OverflowError:
             # Py_ssize_t is still only 32 bits on this system.
             self.failUnlessRaises(OverflowError, Atom.render, b"data", data)
@@ -64,6 +65,7 @@ class TAtom(TestCase):
         self.failUnlessEqual(atom.children[-1].length, 12)
 
 add(TAtom)
+
 
 class TAtoms(TestCase):
     filename = os.path.join("tests", "data", "has-tags.m4a")
@@ -98,6 +100,7 @@ class TAtoms(TestCase):
         repr(self.atoms)
 add(TAtoms)
 
+
 class TMP4Info(TestCase):
 
     def test_no_soun(self):
@@ -106,7 +109,7 @@ class TMP4Info(TestCase):
 
     def test_mdhd_version_1(self, soun=b"soun"):
         mdhd = Atom.render(b"mdhd", (b"\x01\x00\x00\x00" + b"\x00" * 16 +
-                                     b"\x00\x00\x00\x02" + # 2 Hz
+                                     b"\x00\x00\x00\x02" +  # 2 Hz
                                      b"\x00\x00\x00\x00\x00\x00\x00\x10"))
         hdlr = Atom.render(b"hdlr", b"\x00" * 8 + soun)
         mdia = Atom.render(b"mdia", mdhd + hdlr)
@@ -122,7 +125,7 @@ class TMP4Info(TestCase):
         mdia = Atom.render(b"mdia", hdlr)
         trak1 = Atom.render(b"trak", mdia)
         mdhd = Atom.render(b"mdhd", (b"\x01\x00\x00\x00" + b"\x00" * 16 +
-                                     b"\x00\x00\x00\x02" + # 2 Hz
+                                     b"\x00\x00\x00\x02" +  # 2 Hz
                                      b"\x00\x00\x00\x00\x00\x00\x00\x10"))
         hdlr = Atom.render(b"hdlr", b"\x00" * 8 + b"soun")
         mdia = Atom.render(b"mdia", mdhd + hdlr)
@@ -133,6 +136,7 @@ class TMP4Info(TestCase):
         info = MP4Info(atoms, fileobj)
         self.failUnlessEqual(info.length, 8)
 add(TMP4Info)
+
 
 class TMP4Tags(TestCase):
 
@@ -176,15 +180,18 @@ class TMP4Tags(TestCase):
         self.failIf(tags)
 
     def test_bad_covr(self):
-        data = Atom.render(b"foob", b"\x00\x00\x00\x0E" + b"\x00" * 4 + b"whee")
+        data = Atom.render(
+            b"foob", b"\x00\x00\x00\x0E" + b"\x00" * 4 + b"whee")
         covr = Atom.render(b"covr", data)
         self.failUnlessRaises(MP4MetadataError, self.wrap_ilst, covr)
 
     def test_covr_blank_format(self):
-        data = Atom.render(b"data", b"\x00\x00\x00\x00" + b"\x00" * 4 + b"whee")
+        data = Atom.render(
+            b"data", b"\x00\x00\x00\x00" + b"\x00" * 4 + b"whee")
         covr = Atom.render(b"covr", data)
         tags = self.wrap_ilst(covr)
-        self.failUnlessEqual(MP4Cover.FORMAT_JPEG, tags[b"covr"][0].imageformat)
+        self.failUnlessEqual(
+            MP4Cover.FORMAT_JPEG, tags[b"covr"][0].imageformat)
 
     def test_render_bool(self):
         self.failUnlessEqual(MP4Tags()._MP4Tags__render_bool(b'pgap', True),
@@ -196,7 +203,8 @@ class TMP4Tags(TestCase):
 
     def test_render_text(self):
         self.failUnlessEqual(
-             MP4Tags()._MP4Tags__render_text(b'purl', ['http://foo/bar.xml'], 0),
+             MP4Tags()._MP4Tags__render_text(
+                b'purl', ['http://foo/bar.xml'], 0),
              b"\x00\x00\x00*purl\x00\x00\x00\"data\x00\x00\x00\x00\x00\x00"
              b"\x00\x00http://foo/bar.xml")
         self.failUnlessEqual(
@@ -204,7 +212,8 @@ class TMP4Tags(TestCase):
              b"\x00\x00\x00$aART\x00\x00\x00\x1cdata\x00\x00\x00\x01\x00\x00"
              b"\x00\x00\x41lbum Artist")
         self.failUnlessEqual(
-             MP4Tags()._MP4Tags__render_text(b'aART', [u'Album Artist', u'Whee']),
+             MP4Tags()._MP4Tags__render_text(
+                b'aART', [u'Album Artist', u'Whee']),
              b"\x00\x00\x008aART\x00\x00\x00\x1cdata\x00\x00\x00\x01\x00\x00"
              b"\x00\x00Album Artist\x00\x00\x00\x14data\x00\x00\x00\x01\x00"
              b"\x00\x00\x00Whee")
@@ -273,6 +282,7 @@ class TMP4Tags(TestCase):
 
 add(TMP4Tags)
 
+
 class TMP4(TestCase):
     def setUp(self):
         fd, self.filename = mkstemp(suffix='.m4a')
@@ -281,7 +291,8 @@ class TMP4(TestCase):
         self.audio = MP4(self.filename)
 
     def faad(self):
-        if not have_faad: return
+        if not have_faad:
+            return
         value = os.system("faad %s -o %s > %s 2> %s" % (
                 self.filename, devnull, devnull, devnull))
         self.failIf(value and value != NOTFOUND)
@@ -324,8 +335,8 @@ class TMP4(TestCase):
         atoms = Atoms(fileobj)
         meta = atoms[b"moov", b"udta", b"meta"]
         meta_length1 = meta.length
-        ilst = meta[b"ilst",]
-        free = meta[b"free",]
+        ilst = meta[b"ilst", ]
+        free = meta[b"free", ]
         self.failUnlessEqual(ilst.offset + ilst.length, free.offset)
         fileobj.seek(ilst.offset)
         ilst_data = fileobj.read(ilst.length)
@@ -337,8 +348,8 @@ class TMP4(TestCase):
         fileobj = open(self.audio.filename, "rb+")
         atoms = Atoms(fileobj)
         meta = atoms[b"moov", b"udta", b"meta"]
-        ilst = meta[b"ilst",]
-        free = meta[b"free",]
+        ilst = meta[b"ilst", ]
+        free = meta[b"free", ]
         self.failUnlessEqual(free.offset + free.length, ilst.offset)
         fileobj.close()
         # Save the file
@@ -349,8 +360,8 @@ class TMP4(TestCase):
         atoms = Atoms(fileobj)
         fileobj.close()
         meta = atoms[b"moov", b"udta", b"meta"]
-        ilst = meta[b"ilst",]
-        free = meta[b"free",]
+        ilst = meta[b"ilst", ]
+        free = meta[b"free", ]
         self.failUnlessEqual(meta.length, meta_length1)
         self.failUnlessEqual(ilst.offset + ilst.length, free.offset)
 
@@ -377,10 +388,12 @@ class TMP4(TestCase):
         self.set_key(b'----:net.sacredchao.Mutagen:test key', [b"whee"])
 
     def test_freeform_2(self):
-        self.set_key(b'----:net.sacredchao.Mutagen:test key', b"whee", [b"whee"])
+        self.set_key(
+            b'----:net.sacredchao.Mutagen:test key', b"whee", [b"whee"])
 
     def test_freeforms(self):
-        self.set_key(b'----:net.sacredchao.Mutagen:test key', [b"whee", b"uhh"])
+        self.set_key(
+            b'----:net.sacredchao.Mutagen:test key', [b"whee", b"uhh"])
 
     def test_freeform_bin(self):
         self.set_key(b'----:net.sacredchao.Mutagen:test key', [
@@ -401,11 +414,13 @@ class TMP4(TestCase):
 
     def test_tracknumber_too_small(self):
         self.failUnlessRaises(ValueError, self.set_key, b'trkn', [(-1, 0)])
-        self.failUnlessRaises(ValueError, self.set_key, b'trkn', [(2**18, 1)])
+        self.failUnlessRaises(
+            ValueError, self.set_key, b'trkn', [(2 ** 18, 1)])
 
     def test_disk_too_small(self):
         self.failUnlessRaises(ValueError, self.set_key, b'disk', [(-1, 0)])
-        self.failUnlessRaises(ValueError, self.set_key, b'disk', [(2**18, 1)])
+        self.failUnlessRaises(
+            ValueError, self.set_key, b'disk', [(2 ** 18, 1)])
 
     def test_tracknumber_wrong_size(self):
         self.failUnlessRaises(ValueError, self.set_key, b'trkn', (1,))
@@ -456,7 +471,8 @@ class TMP4(TestCase):
         ])
 
     def test_podcast_url(self):
-        self.set_key(b'purl', ['http://pdl.warnerbros.com/wbie/justiceleagueheroes/audio/JLH_EA.xml'])
+        self.set_key(b'purl', ['http://pdl.warnerbros.com/wbie/'
+                               'justiceleagueheroes/audio/JLH_EA.xml'])
 
     def test_episode_guid(self):
         self.set_key(b'catg', ['falling-star-episode-1'])
@@ -599,6 +615,7 @@ class TMP4CovrWithName(TMP4):
 
 add(TMP4CovrWithName)
 
+
 class TMP4HasTags64Bit(TMP4HasTags):
     original = os.path.join("tests", "data", "truncated-64bit.mp4")
 
@@ -617,6 +634,7 @@ class TMP4HasTags64Bit(TMP4HasTags):
 
 add(TMP4HasTags64Bit)
 
+
 class TMP4NoTagsM4A(TMP4):
     original = os.path.join("tests", "data", "no-tags.m4a")
 
@@ -628,6 +646,7 @@ class TMP4NoTagsM4A(TMP4):
         self.failUnlessRaises(error, self.audio.add_tags)
 
 add(TMP4NoTagsM4A)
+
 
 class TMP4NoTags3G2(TMP4):
     original = os.path.join("tests", "data", "no-tags.3g2")
@@ -645,6 +664,7 @@ class TMP4NoTags3G2(TMP4):
         self.failUnlessAlmostEqual(15, self.audio.info.length, 1)
 
 add(TMP4NoTags3G2)
+
 
 class TMP4UpdateParents64Bit(TestCase):
     original = os.path.join("tests", "data", "64bit.mp4")

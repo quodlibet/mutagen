@@ -3,6 +3,7 @@ import os
 from mutagen.optimfrog import OptimFROG, OptimFROGHeaderError
 from tests import TestCase, add
 
+
 class TOptimFROG(TestCase):
 
     def setUp(self):

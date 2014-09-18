@@ -20,7 +20,7 @@ except OSError:
 
 
 class TPEP8(TestCase):
-    IGNORE = ["E12"]
+    IGNORE = ["E12", "W601"]
 
     def _run(self, path, ignore=None):
         if ignore is None:

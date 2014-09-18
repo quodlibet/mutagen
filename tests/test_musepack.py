@@ -7,6 +7,7 @@ from mutagen.musepack import Musepack, MusepackInfo, MusepackHeaderError
 from mutagen._compat import cBytesIO
 from tests import TestCase, add
 
+
 class TMusepack(TestCase):
 
     def setUp(self):
@@ -47,12 +48,16 @@ class TMusepack(TestCase):
     def test_gain(self):
         self.failUnlessAlmostEqual(self.sv8.info.title_gain, -4.668, 3)
         self.failUnlessAlmostEqual(self.sv8.info.title_peak, 0.5288, 3)
-        self.failUnlessEqual(self.sv8.info.title_gain, self.sv8.info.album_gain)
-        self.failUnlessEqual(self.sv8.info.title_peak, self.sv8.info.album_peak)
+        self.failUnlessEqual(
+            self.sv8.info.title_gain, self.sv8.info.album_gain)
+        self.failUnlessEqual(
+            self.sv8.info.title_peak, self.sv8.info.album_peak)
         self.failUnlessAlmostEqual(self.sv7.info.title_gain, 9.27, 6)
         self.failUnlessAlmostEqual(self.sv7.info.title_peak, 0.1149, 4)
-        self.failUnlessEqual(self.sv7.info.title_gain, self.sv7.info.album_gain)
-        self.failUnlessEqual(self.sv7.info.title_peak, self.sv7.info.album_peak)
+        self.failUnlessEqual(
+            self.sv7.info.title_gain, self.sv7.info.album_gain)
+        self.failUnlessEqual(
+            self.sv7.info.title_peak, self.sv7.info.album_peak)
         self.failUnlessRaises(AttributeError, getattr, self.sv5, 'title_gain')
 
     def test_not_my_file(self):
@@ -67,9 +72,13 @@ class TMusepack(TestCase):
         self.failUnlessRaises(
             MusepackHeaderError, MusepackInfo, cBytesIO(b"MP+" + b"\x00" * 32))
         self.failUnlessRaises(
-            MusepackHeaderError, MusepackInfo, cBytesIO(b"MP+" + b"\x00" * 100))
+            MusepackHeaderError,
+            MusepackInfo,
+            cBytesIO(b"MP+" + b"\x00" * 100))
         self.failUnlessRaises(
-            MusepackHeaderError, MusepackInfo, cBytesIO(b"MPCK" + b"\x00" * 100))
+            MusepackHeaderError,
+            MusepackInfo,
+            cBytesIO(b"MPCK" + b"\x00" * 100))
 
     def test_pprint(self):
         self.sv8.pprint()

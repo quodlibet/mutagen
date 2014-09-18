@@ -3,9 +3,12 @@ from tests import TestCase, add
 from mutagen.id3 import Frames, Frames_2_2, ID3
 from mutagen._compat import text_type
 
-_22 = ID3(); _22.version = (2,2,0)
-_23 = ID3(); _23.version = (2,3,0)
-_24 = ID3(); _24.version = (2,4,0)
+_22 = ID3()
+_22.version = (2, 2, 0)
+_23 = ID3()
+_23.version = (2, 3, 0)
+_24 = ID3()
+_24.version = (2, 4, 0)
 
 
 class FrameSanityChecks(TestCase):
@@ -61,28 +64,30 @@ class FrameSanityChecks(TestCase):
 
     def test_MTF(self):
         from mutagen.id3 import TextFrame
-        self.assert_(isinstance(TextFrame(text=['a','b']), TextFrame))
+        self.assert_(isinstance(TextFrame(text=['a', 'b']), TextFrame))
 
     def test_TXXX(self):
         from mutagen.id3 import TXXX
-        self.assert_(isinstance(TXXX(desc='d',text='text'), TXXX))
+        self.assert_(isinstance(TXXX(desc='d', text='text'), TXXX))
 
     def test_22_uses_direct_ints(self):
         data = b'TT1\x00\x00\x83\x00' + (b'123456789abcdef' * 16)
         tag = list(_22._ID3__read_frames(data, Frames_2_2))[0]
-        self.assertEquals(data[7:7+0x82].decode('latin1'), tag.text[0])
+        self.assertEquals(data[7:7 + 0x82].decode('latin1'), tag.text[0])
 
     def test_frame_too_small(self):
-        self.assertEquals([], list(_24._ID3__read_frames(b'012345678', Frames)))
-        self.assertEquals([], list(_23._ID3__read_frames(b'012345678', Frames)))
-        self.assertEquals([], list(_22._ID3__read_frames(b'01234', Frames_2_2)))
         self.assertEquals(
-            [], list(_22._ID3__read_frames(b'TT1'+b'\x00'*3, Frames_2_2)))
+            [], list(_24._ID3__read_frames(b'012345678', Frames)))
+        self.assertEquals(
+            [], list(_23._ID3__read_frames(b'012345678', Frames)))
+        self.assertEquals(
+            [], list(_22._ID3__read_frames(b'01234', Frames_2_2)))
+        self.assertEquals(
+            [], list(_22._ID3__read_frames(b'TT1' + b'\x00' * 3, Frames_2_2)))
 
     def test_unknown_22_frame(self):
         data = b'XYZ\x00\x00\x01\x00'
         self.assertEquals([data], list(_22._ID3__read_frames(data, {})))
-
 
     def test_zlib_latin1(self):
         from mutagen.id3 import TPE1
@@ -117,8 +122,8 @@ class FrameSanityChecks(TestCase):
 
     def test_load_write(self):
         from mutagen.id3 import TPE1, Frames
-        artists= [s.decode('utf8') for s in
-                  [b'\xc2\xb5', b'\xe6\x97\xa5\xe6\x9c\xac']]
+        artists = [s.decode('utf8') for s in
+                   [b'\xc2\xb5', b'\xe6\x97\xa5\xe6\x9c\xac']]
         artist = TPE1(encoding=3, text=artists)
         id3 = ID3()
         tag = list(id3._ID3__read_frames(
@@ -199,9 +204,11 @@ class Genres(TestCase):
     from mutagen._constants import GENRES
     GENRES = GENRES
 
-    def _g(self, s): return self.TCON(text=s).genres
+    def _g(self, s):
+        return self.TCON(text=s).genres
 
-    def test_empty(self): self.assertEquals(self._g(""), [])
+    def test_empty(self):
+        self.assertEquals(self._g(""), [])
 
     def test_num(self):
         for i in range(len(self.GENRES)):
@@ -243,8 +250,8 @@ class Genres(TestCase):
     def test_crazy(self):
         self.assertEquals(
             self._g("(20)(CR)\x0030\x00\x00Another\x00(51)Hooray"),
-             ['Alternative', 'Cover', 'Fusion', 'Another',
-              'Techno-Industrial', 'Hooray'])
+            ['Alternative', 'Cover', 'Fusion', 'Another',
+             'Techno-Industrial', 'Hooray'])
 
     def test_repeat(self):
         self.assertEquals(self._g("(20)Alternative"), ["Alternative"])

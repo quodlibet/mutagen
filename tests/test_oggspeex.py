@@ -8,9 +8,10 @@ from tests import add
 from tests.test_ogg import TOggFileType
 from tempfile import mkstemp
 
+
 class TOggSpeex(TOggFileType):
     Kind = OggSpeex
-    
+
     def setUp(self):
         original = os.path.join("tests", "data", "empty.spx")
         fd, self.filename = mkstemp(suffix='.ogg')
