@@ -248,7 +248,7 @@ if __name__ == "__main__":
             'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
             'Topic :: Multimedia :: Sound/Audio',
           ],
-          packages=["mutagen"],
+          packages=["mutagen", "mutagen.id3"],
           data_files=data_files,
           scripts=[os.path.join("tools", name) for name in [
             "mid3iconv",

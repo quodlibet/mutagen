@@ -20,7 +20,7 @@ from ._compat import endswith, text_type, PY3
 from mutagen import StreamInfo, FileType
 
 from mutagen.id3 import ID3
-from mutagen._id3util import error as ID3Error
+from mutagen.id3._util import error as ID3Error
 from mutagen._util import insert_bytes, delete_bytes
 
 __all__ = ["AIFF", "Open", "delete"]

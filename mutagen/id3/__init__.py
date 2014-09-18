@@ -37,11 +37,11 @@ from struct import unpack, pack, error as StructError
 
 import mutagen
 from mutagen._util import insert_bytes, delete_bytes, DictProxy
-from ._compat import reraise, chr_, PY3
+from .._compat import reraise, chr_, PY3
 
-from mutagen._id3util import *
-from mutagen._id3frames import *
-from mutagen._id3specs import *
+from ._util import *
+from ._frames import *
+from ._specs import *
 
 
 class ID3(DictProxy, mutagen.Metadata):

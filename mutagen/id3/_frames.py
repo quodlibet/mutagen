@@ -8,16 +8,16 @@ import zlib
 from warnings import warn
 from struct import unpack
 
-from mutagen._id3util import (
+from ._util import (
     ID3Warning, ID3JunkFrameError, ID3BadCompressedData,
     ID3EncryptionUnsupportedError, ID3BadUnsynchData, unsynch)
-from mutagen._id3specs import (
+from ._specs import (
     BinaryDataSpec, StringSpec, Latin1TextSpec, EncodedTextSpec, ByteSpec,
     EncodingSpec, ASPIIndexSpec, SizedIntegerSpec, IntegerSpec,
     VolumeAdjustmentsSpec, VolumePeakSpec, VolumeAdjustmentSpec,
     ChannelSpec, MultiSpec, SynchronizedTextSpec, KeyEventSpec, TimeStampSpec,
     EncodedNumericPartTextSpec, EncodedNumericTextSpec, FixedBinaryDataSpec)
-from ._compat import text_type, string_types, swap_to_string
+from .._compat import text_type, string_types, swap_to_string
 
 
 def is_valid_frame_id(frame_id):

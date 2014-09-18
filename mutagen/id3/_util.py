@@ -5,7 +5,7 @@
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
 
-from ._compat import long_, integer_types
+from .._compat import long_, integer_types
 
 
 class error(Exception):

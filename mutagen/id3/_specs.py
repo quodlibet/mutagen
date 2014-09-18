@@ -8,9 +8,9 @@ import struct
 from struct import unpack, pack
 from warnings import warn
 
-from ._compat import text_type, chr_, PY3, swap_to_string, string_types
-from mutagen._id3util import ID3JunkFrameError, ID3Warning, BitPaddedInt
-from mutagen._util import total_ordering, decode_terminated
+from .._compat import text_type, chr_, PY3, swap_to_string, string_types
+from .._util import total_ordering, decode_terminated
+from ._util import ID3JunkFrameError, ID3Warning, BitPaddedInt
 
 
 class Spec(object):
