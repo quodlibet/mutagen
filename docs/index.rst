@@ -37,8 +37,8 @@ length of MP3s. ID3 and APEv2 tags can be edited regardless of audio
 format. It can also manipulate Ogg streams on an individual packet/page 
 level.
 
-Mutagen works on Python 2.6+ / PyPy and has no dependencies outside the
-CPython standard library.
+Mutagen works on Python 2.6, 2.7, 3.3, 3.4 (CPython and PyPy) and has no 
+dependencies outside the Python standard library.
 
 There is a :doc:`brief tutorial with several API examples. 
 <tutorial>`
