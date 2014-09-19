@@ -82,28 +82,6 @@ class TMid3v2(_TTools):
         res, out = self.call("--convert", self.filename)
         self.failUnlessEqual((res, out), (0, ""))
 
-    def test_split_escape(self):
-        split_escape = self.get_var("split_escape")
-
-        inout = [
-            (("", ":"), [""]),
-            ((":", ":"), ["", ""]),
-            ((":", ":", 0), [":"]),
-            ((":b:c:", ":", 0), [":b:c:"]),
-            ((":b:c:", ":", 1), ["", "b:c:"]),
-            ((":b:c:", ":", 2), ["", "b", "c:"]),
-            ((":b:c:", ":", 3), ["", "b", "c", ""]),
-            (("a\\:b:c", ":"), ["a:b", "c"]),
-            (("a\\\\:b:c", ":"), ["a\\", "b", "c"]),
-            (("a\\\\\\:b:c\\:", ":"), ["a\\:b", "c:"]),
-            (("\\", ":"), [""]),
-            (("\\\\", ":"), ["\\"]),
-            (("\\\\a\\b", ":"), ["\\a\\b"]),
-        ]
-
-        for inargs, out in inout:
-            self.assertEqual(split_escape(*inargs), out)
-
     def test_unescape(self):
         unescape_bytes = self.get_var("unescape_bytes")
         self.assertEqual(unescape_bytes(b"\\n"), b"\n")

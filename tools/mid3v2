@@ -14,6 +14,7 @@ from optparse import OptionParser, SUPPRESS_HELP
 
 import mutagen
 import mutagen.id3
+from mutagen._util import split_escape
 from mutagen._compat import PY2, PY3, text_type
 
 
@@ -48,36 +49,6 @@ would set the "Subtitle/Description" frame to "Monkey!".
 
 Any editing operation will cause the ID3 tag to be upgraded to ID3v2.4.
 """
-
-
-def split_escape(string, sep, maxsplit=None, escape_char=u"\\"):
-    """Like unicode.split but allows for the separator to be escaped"""
-
-    assert len(sep) == 1
-    assert len(escape_char) == 1
-
-    if maxsplit is None:
-        maxsplit = len(string)
-
-    result = []
-    current = u""
-    escaped = False
-    for char in string:
-        if escaped:
-            if char != escape_char and char != sep:
-                current += escape_char
-            current += char
-            escaped = False
-        else:
-            if char == escape_char:
-                escaped = True
-            elif char == sep and len(result) < maxsplit:
-                result.append(current)
-                current = u""
-            else:
-                current += char
-    result.append(current)
-    return result
 
 
 def unescape_bytes(string):
