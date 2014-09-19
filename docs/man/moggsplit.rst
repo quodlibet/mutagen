@@ -7,7 +7,6 @@ split Ogg logical streams
 -------------------------
 
 :Manual section: 1
-:Date: Nov 14th, 2009
 
 
 SYNOPSIS
@@ -37,7 +36,7 @@ OPTIONS
     file's base name, *stream* for the stream's serial number, and ext for
     the extension give by **--extension**.
 
-    The default is **%(base)s-%(stream)d.%(ext)s**.
+    The default is ``%(base)s-%(stream)d.%(ext)s``.
 
 --m3u
     Generate an m3u playlist along with the newly generated files. Useful

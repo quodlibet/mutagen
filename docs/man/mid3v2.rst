@@ -7,7 +7,6 @@ audio tag editor similar to 'id3v2'
 -----------------------------------
 
 :Manual section: 1
-:Date: October 30th, 2010
 
 
 SYNOPSIS
@@ -19,13 +18,12 @@ SYNOPSIS
 DESCRIPTION
 ===========
 
-mid3v2 is a Mutagen-based replacement for id3lib's **id3v2**. It supports
-ID3v2.4 and more frames; it also does not have the numerous bugs that
-plague **id3v2**.
+**mid3v2** is a Mutagen-based replacement for id3lib's id3v2. It supports 
+ID3v2.4 and more frames; it also does not have the numerous bugs that plague 
+id3v2.
 
-This program exists mostly for compatibility with programs that want
-to tag files using **id3v2**. For a more usable interface, we recommend Ex
-Falso.
+This program exists mostly for compatibility with programs that want to tag 
+files using id3v2. For a more usable interface, we recommend Ex Falso.
 
 
 OPTIONS
@@ -52,8 +50,8 @@ OPTIONS
     but it is not recommended.
 
 -l, --list
-    List all tags in the files. The output format is *not* the same as
-    **id3v2**'s; instead, it is easily parsable and readable. Some tags may not
+    List all tags in the files. The output format is *not* the same as 
+    id3v2's; instead, it is easily parsable and readable. Some tags may not 
     have human-readable representations.
 
 --list-raw
@@ -70,47 +68,48 @@ OPTIONS
 -D, --delete-all
     Delete all ID3 tags.
 
---delete-frames=FID1,FID2,...
-    Delete specific ID3v2 frames (or groups of frames) from the files.
+--delete-frames=FRAMES
+    Delete specific ID3v2 frames (or groups of frames) from the files. 
+    `FRAMES` is a "," separated list of frame names e.g. ``"TPE1,TALB"``
 
 -C, --convert
     Convert ID3v1 tags to ID3v2 tags. This  will also happen automatically
     during any editing.
 
--a, --artist\=artist
+-a, --artist=ARTIST
     Set the artist information (TPE1).
 
--A, --album\=album
+-A, --album=ALBUM
     Set the album information (TALB).
 
--t, --song\=title
+-t, --song=TITLE
     Set the title information (TIT2).
 
--c, --comment=DESCRIPTION:COMMENT:LANGUAGE
+-c, --comment=<DESCRIPTION:COMMENT:LANGUAGE>
     Set a comment (COMM). The language and description may be omitted, in
     which case the language defaults to English, and the description to an
     empty string.
 
--g, --genre\=genre
+-g, --genre=GENRE
     Set the genre information (TCON).
 
--y, --year=, --date=YYYY-[MM-DD]
+-y, --year=<YYYY>, --date=<YYYY-[MM-DD]>
     Set the year/date information (TDRC).
 
--Tnum/num, --track=num/num
+-T, --track=<NUM/NUM>
     Set the track number (TRCK).
 
 Any text or URL frame (those beginning with T or W) can be modified or
-added by prefixing the name of the frame with "--". For example, **--TIT3
-"Monkey!"** will set the TIT3 (subtitle) frame to **Monkey!**.
+added by prefixing the name of the frame with "--". For example, ``--TIT3
+"Monkey!"`` will set the TIT3 (subtitle) frame to ``Monkey!``.
 
 The TXXX frame requires a colon-separated description key; many TXXX frames
 may be set in the file as long as they have different keys. To set this
-key, just separate the text with a colon, e.g. **--TXXX
-"ALBUMARTISTSORT:Examples, The"**.
+key, just separate the text with a colon, e.g. ``--TXXX
+"ALBUMARTISTSORT:Examples, The"``.
 
-The special POPM frame can be set in a similar way: **--POPM
-"bob@example.com:128:2"** to set Bob's rating to 128/255 with 2 plays.
+The special POPM frame can be set in a similar way: ``--POPM
+"bob@example.com:128:2"`` to set Bob's rating to 128/255 with 2 plays.
 
 
 BUGS

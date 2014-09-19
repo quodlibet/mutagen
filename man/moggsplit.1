@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH MOGGSPLIT 1 "Nov 14th, 2009" "" ""
+.TH MOGGSPLIT 1 "" "" ""
 .SH NAME
 moggsplit \- split Ogg logical streams
 .
@@ -43,15 +43,15 @@ streams, or a chained Ogg Vorbis file into two separate files.
 .TP
 .B \-\-extension
 Use the supplied extension when generating new files; the default is
-\fBogg\fP.
+\fBogg\fP\&.
 .TP
 .B \-\-pattern
 Use the supplied pattern when generating new files. This is a Python
 keyword format string with three variables, \fIbase\fP for the original
 file\(aqs base name, \fIstream\fP for the stream\(aqs serial number, and ext for
-the extension give by \fB\-\-extension\fP.
+the extension give by \fB\-\-extension\fP\&.
 .sp
-The default is \fB%(base)s\-%(stream)d.%(ext)s\fP.
+The default is \fB%(base)s\-%(stream)d.%(ext)s\fP\&.
 .TP
 .B \-\-m3u
 Generate an m3u playlist along with the newly generated files. Useful

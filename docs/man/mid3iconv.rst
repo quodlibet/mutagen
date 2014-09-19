@@ -7,7 +7,6 @@ convert ID3 tag encodings
 -------------------------
 
 :Manual section: 1
-:Date: April 10th, 2006
 
 
 SYNOPSIS

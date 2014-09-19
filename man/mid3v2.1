@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH MID3V2 1 "October 30th, 2010" "" ""
+.TH MID3V2 1 "" "" ""
 .SH NAME
 mid3v2 \- audio tag editor similar to 'id3v2'
 .
@@ -35,39 +35,38 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 \fBmid3v2\fP [\fIoptions\fP] \fIfilename\fP ...
 .SH DESCRIPTION
 .sp
-mid3v2 is a Mutagen\-based replacement for id3lib\(aqs \fBid3v2\fP. It supports
-ID3v2.4 and more frames; it also does not have the numerous bugs that
-plague \fBid3v2\fP.
+\fBmid3v2\fP is a Mutagen\-based replacement for id3lib\(aqs id3v2. It supports
+ID3v2.4 and more frames; it also does not have the numerous bugs that plague
+id3v2.
 .sp
-This program exists mostly for compatibility with programs that want
-to tag files using \fBid3v2\fP. For a more usable interface, we recommend Ex
-Falso.
+This program exists mostly for compatibility with programs that want to tag
+files using id3v2. For a more usable interface, we recommend Ex Falso.
 .SH OPTIONS
 .INDENT 0.0
 .TP
-.B \-q,  \-\-quiet
+.B \-q\fP,\fB  \-\-quiet
 Be quiet: do not mention file operations that perform the user\(aqs
 request. Warnings will still be printed.
 .TP
-.B \-v,  \-\-verbose
+.B \-v\fP,\fB  \-\-verbose
 Be verbose: state all operations performed. This is the opposite of
 \-\-quiet. This is the default.
 .TP
-.B \-e,  \-\-escape
+.B \-e\fP,\fB  \-\-escape
 Enable interpretation of backslash escapes for tag values.
 Makes it possible to escape the colon\-separator in TXXX, COMM
 values like \(aq\e:\(aq and insert escape sequences like \(aq\en\(aq, \(aq\et\(aq etc.
 .TP
-.B \-f,  \-\-list\-frames
+.B \-f\fP,\fB  \-\-list\-frames
 Display all supported ID3v2.3/2.4 frames and their meanings.
 .TP
-.B \-L,  \-\-list\-genres
+.B \-L\fP,\fB  \-\-list\-genres
 List all ID3v1 numeric genres. These can be used to set TCON frames,
 but it is not recommended.
 .TP
-.B \-l,  \-\-list
+.B \-l\fP,\fB  \-\-list
 List all tags in the files. The output format is \fInot\fP the same as
-\fBid3v2\fP\(aqs; instead, it is easily parsable and readable. Some tags may not
+id3v2\(aqs; instead, it is easily parsable and readable. Some tags may not
 have human\-readable representations.
 .TP
 .B \-\-list\-raw
@@ -75,60 +74,55 @@ List all tags in the files, in raw format. Although this format is
 nominally human\-readable, it may be very long if the tag contains
 embedded binary data.
 .TP
-.B \-d,  \-\-delete\-v2
+.B \-d\fP,\fB  \-\-delete\-v2
 Delete ID3v2 tags.
 .TP
-.B \-s,  \-\-delete\-v1
+.B \-s\fP,\fB  \-\-delete\-v1
 Delete ID3v1 tags.
 .TP
-.B \-D,  \-\-delete\-all
+.B \-D\fP,\fB  \-\-delete\-all
 Delete all ID3 tags.
-.UNINDENT
-.INDENT 0.0
 .TP
-.B \-\-delete\-frames=FID1,FID2,...
+.BI \-\-delete\-frames\fB= FRAMES
 Delete specific ID3v2 frames (or groups of frames) from the files.
-.UNINDENT
-.INDENT 0.0
+\fIFRAMES\fP is a "," separated list of frame names e.g. \fB"TPE1,TALB"\fP
 .TP
-.B \-C,  \-\-convert
+.B \-C\fP,\fB  \-\-convert
 Convert ID3v1 tags to ID3v2 tags. This  will also happen automatically
 during any editing.
-.UNINDENT
-.INDENT 0.0
 .TP
-.B \-a, \-\-artist=artist
+.BI \-a\fP,\fB  \-\-artist\fB= ARTIST
 Set the artist information (TPE1).
 .TP
-.B \-A, \-\-album=album
+.BI \-A\fP,\fB  \-\-album\fB= ALBUM
 Set the album information (TALB).
 .TP
-.B \-t, \-\-song=title
+.BI \-t\fP,\fB  \-\-song\fB= TITLE
 Set the title information (TIT2).
 .TP
-.B \-c, \-\-comment=DESCRIPTION:COMMENT:LANGUAGE
+.BI \-c\fP,\fB  \-\-comment\fB= <DESCRIPTION:COMMENT:LANGUAGE>
 Set a comment (COMM). The language and description may be omitted, in
 which case the language defaults to English, and the description to an
 empty string.
 .TP
-.B \-g, \-\-genre=genre
+.BI \-g\fP,\fB  \-\-genre\fB= GENRE
 Set the genre information (TCON).
 .TP
-.B \-y, \-\-year=, \-\-date=YYYY\-[MM\-DD]
+.BI \-y\fP,\fB  \-\-year\fB= <YYYY>\fP,\fB \ \-\-date\fB= <YYYY\-[MM\-DD]>
 Set the year/date information (TDRC).
 .TP
-.B \-Tnum/num, \-\-track=num/num
+.BI \-T\fP,\fB  \-\-track\fB= <NUM/NUM>
 Set the track number (TRCK).
 .UNINDENT
 .sp
 Any text or URL frame (those beginning with T or W) can be modified or
 added by prefixing the name of the frame with "\-\-". For example, \fB\-\-TIT3
-"Monkey!"\fP will set the TIT3 (subtitle) frame to \fBMonkey!\fP.
+"Monkey!"\fP will set the TIT3 (subtitle) frame to \fBMonkey!\fP\&.
 .sp
 The TXXX frame requires a colon\-separated description key; many TXXX frames
 may be set in the file as long as they have different keys. To set this
 key, just separate the text with a colon, e.g. \fB\-\-TXXX
-"ALBUMARTISTSORT:Examples, The"\fP.
+"ALBUMARTISTSORT:Examples, The"\fP\&.
 .sp
 The special POPM frame can be set in a similar way: \fB\-\-POPM
 "bob@example.com:128:2"\fP to set Bob\(aqs rating to 128/255 with 2 plays.

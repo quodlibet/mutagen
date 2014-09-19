@@ -7,7 +7,6 @@ scan a collection of MP3 files
 ---------------------------------
 
 :Manual section: 1
-:Date: February 20th, 2006
 
 
 SYNOPSIS

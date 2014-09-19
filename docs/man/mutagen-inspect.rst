@@ -7,7 +7,6 @@ view Mutagen-supported audio tags
 ---------------------------------
 
 :Manual section: 1
-:Date: May 27th, 2006
 
 
 SYNOPSIS
