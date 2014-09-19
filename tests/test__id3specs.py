@@ -3,7 +3,7 @@ import sys
 from tests import TestCase, add
 
 from mutagen._compat import PY2, PY3, text_type
-from mutagen.id3 import BitPaddedInt
+from mutagen.id3 import BitPaddedInt, unsynch
 
 
 class SpecSanityChecks(TestCase):
@@ -281,21 +281,38 @@ add(BitPaddedIntTest)
 
 class TestUnsynch(TestCase):
 
-    def test_unsync_encode(self):
-        from mutagen.id3 import unsynch as un
-        for d in (b'\xff\xff\xff\xff', b'\xff\xf0\x0f\x00',
-                  b'\xff\x00\x0f\xf0'):
-            self.assertEquals(d, un.decode(un.encode(d)))
-            self.assertNotEqual(d, un.encode(d))
-        self.assertEquals(b'\xff\x44', un.encode(b'\xff\x44'))
-        self.assertEquals(b'\xff\x00\x00', un.encode(b'\xff\x00'))
+    def test_unsync_encode_decode(self):
+        pairs = [
+            (b'', b''),
+            (b'\x00', b'\x00'),
+            (b'\x44', b'\x44'),
+            (b'\x44\xff', b'\x44\xff\x00'),
+            (b'\xe0', b'\xe0'),
+            (b'\xe0\xe0', b'\xe0\xe0'),
+            (b'\xe0\xff', b'\xe0\xff\x00'),
+            (b'\xff', b'\xff\x00'),
+            (b'\xff\x00', b'\xff\x00\x00'),
+            (b'\xff\x00\x00', b'\xff\x00\x00\x00'),
+            (b'\xff\x01', b'\xff\x01'),
+            (b'\xff\x44', b'\xff\x44'),
+            (b'\xff\xe0', b'\xff\x00\xe0'),
+            (b'\xff\xe0\xff', b'\xff\x00\xe0\xff\x00'),
+            (b'\xff\xf0\x0f\x00', b'\xff\x00\xf0\x0f\x00'),
+            (b'\xff\xff', b'\xff\x00\xff\x00'),
+            (b'\xff\xff\x01', b'\xff\x00\xff\x01'),
+            (b'\xff\xff\xff\xff', b'\xff\x00\xff\x00\xff\x00\xff\x00'),
+        ]
 
-    def test_unsync_decode(self):
-        from mutagen.id3 import unsynch as un
-        self.assertRaises(ValueError, un.decode, b'\xff\xff\xff\xff')
-        self.assertRaises(ValueError, un.decode, b'\xff\xf0\x0f\x00')
-        self.assertRaises(ValueError, un.decode, b'\xff\xe0')
-        self.assertRaises(ValueError, un.decode, b'\xff')
-        self.assertEquals(b'\xff\x44', un.decode(b'\xff\x44'))
+        for d, e in pairs:
+            self.assertEqual(unsynch.encode(d), e)
+            self.assertEqual(unsynch.decode(e), d)
+            self.assertEqual(unsynch.decode(unsynch.encode(e)), e)
+            self.assertEqual(unsynch.decode(e + e), d + d)
+
+    def test_unsync_decode_invalid(self):
+        self.assertRaises(ValueError, unsynch.decode, b'\xff\xff\xff\xff')
+        self.assertRaises(ValueError, unsynch.decode, b'\xff\xf0\x0f\x00')
+        self.assertRaises(ValueError, unsynch.decode, b'\xff\xe0')
+        self.assertRaises(ValueError, unsynch.decode, b'\xff')
 
 add(TestUnsynch)
