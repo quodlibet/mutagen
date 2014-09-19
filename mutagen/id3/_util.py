@@ -1,6 +1,5 @@
 # Copyright (C) 2005  Michael Urman
 #               2013  Christoph Reiter
-#               2014  Ben Ockmore
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of version 2 of the GNU General Public License as
@@ -48,28 +47,43 @@ class ID3Warning(error, UserWarning):
 class unsynch(object):
     @staticmethod
     def decode(value):
-        fragments = [bytearray(x) for x in value.split(b'\xff')]
-        if not fragments[-1]:
+        output = bytearray()
+        safe = True
+        append = output.append
+        for val in bytearray(value):
+            if safe:
+                append(val)
+                safe = val != 0xFF
+            else:
+                if val >= 0xE0:
+                    raise ValueError('invalid sync-safe string')
+                elif val != 0x00:
+                    append(val)
+                safe = True
+        if not safe:
             raise ValueError('string ended unsafe')
-                
-        for f in (fragments[1:] if not fragments[0] else fragments):
-            if (not f) or (f[0] >= 0xE0):
-                raise ValueError('invalid sync-safe string')
-            
-            if f[0] == 0:
-                del f[0]
-        
-        return b'\xff'.join(map(bytes, fragments))
-    
+        return bytes(output)
+
     @staticmethod
     def encode(value):
-        fragments = [bytearray(x) for x in value.split(b'\xff')]
-                
-        for f in (fragments[1:] if not fragments[0] else fragments):
-            if (not f) or (f[0] >= 0xE0) or (f[0] == 0):
-                f[0:0] = b'\x00'
-            
-        return b'\xff'.join(map(bytes, fragments))
+        output = bytearray()
+        safe = True
+        append = output.append
+        for val in bytearray(value):
+            if safe:
+                append(val)
+                if val == 0xFF:
+                    safe = False
+            elif val == 0x00 or val >= 0xE0:
+                append(0x00)
+                append(val)
+                safe = val != 0xFF
+            else:
+                append(val)
+                safe = True
+        if not safe:
+            append(0x00)
+        return bytes(output)
 
 
 class _BitPaddedMixin(object):
