@@ -27,7 +27,8 @@ import sys
 from mutagen import FileType, Metadata, StreamInfo
 from mutagen._constants import GENRES
 from mutagen._util import cdata, insert_bytes, DictProxy, utf8
-from mutagen._compat import reraise, PY2, string_types, text_type, chr_
+from mutagen._compat import reraise, PY2, string_types, text_type, chr_, \
+    iteritems
 
 
 class error(IOError):
@@ -685,7 +686,7 @@ class MP4Tags(DictProxy, Metadata):
 
     def pprint(self):
         values = []
-        for key, value in self.iteritems():
+        for key, value in iteritems(self):
             key = key.decode('latin1', "replace")
             if key == "covr":
                 values.append("%s=%s" % (key, ", ".join(

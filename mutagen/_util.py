@@ -62,17 +62,20 @@ class DictMixin(object):
 
     __contains__ = __has_key
 
-    iterkeys = lambda self: iter(self.keys())
+    if PY2:
+        iterkeys = lambda self: iter(self.keys())
 
     def values(self):
         return [self[k] for k in self.keys()]
 
-    itervalues = lambda self: iter(self.values())
+    if PY2:
+        itervalues = lambda self: iter(self.values())
 
     def items(self):
         return list(zip(self.keys(), self.values()))
 
-    iteritems = lambda s: iter(s.items())
+    if PY2:
+        iteritems = lambda s: iter(s.items())
 
     def clear(self):
         for key in list(self.keys()):
