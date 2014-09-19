@@ -48,34 +48,26 @@ class ID3Warning(error, UserWarning):
 class unsynch(object):
     @staticmethod
     def decode(value):
-        if b'\xff' not in value:
-            return value
-
-        fragments = [bytearray(x) for x in value.split(b'\xff')]
-        if not fragments[-1]:
+        fragments = bytearray(value).split(b'\xff')
+        if len(fragments) > 1 and not fragments[-1]:
             raise ValueError('string ended unsafe')
 
         for f in fragments[1:]:
             if (not f) or (f[0] >= 0xE0):
                 raise ValueError('invalid sync-safe string')
 
-            if f[0] == 0:
+            if f[0] == 0x00:
                 del f[0]
 
-        return b'\xff'.join(map(bytes, fragments))
+        return bytes(bytearray(b'\xff').join(fragments))
 
     @staticmethod
     def encode(value):
-        if b'\xff' not in value:
-            return value
-
-        fragments = [bytearray(x) for x in value.split(b'\xff')]
-
+        fragments = bytearray(value).split(b'\xff')
         for f in fragments[1:]:
-            if (not f) or (f[0] >= 0xE0) or (f[0] == 0):
-                f[0:0] = b'\x00'
-
-        return b'\xff'.join(map(bytes, fragments))
+            if (not f) or (f[0] >= 0xE0) or (f[0] == 0x00):
+                f.insert(0, 0x00)
+        return bytes(bytearray(b'\xff').join(fragments))
 
 
 class _BitPaddedMixin(object):
