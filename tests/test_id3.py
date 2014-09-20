@@ -961,6 +961,14 @@ class UpdateTo24(TestCase):
         id3.update_to_v24()
         self.failUnlessEqual(id3["APIC:cover"].mime, "image/png")
 
+    def test_lnk(self):
+        from mutagen.id3 import LNK
+        id3 = ID3()
+        id3.version = (2, 2)
+        id3.add(LNK(frameid="PIC", url="http://foo.bar"))
+        id3.update_to_v24()
+        self.assertFalse(id3.getall("LINK"))
+
     def test_tyer(self):
         from mutagen.id3 import TYER
         id3 = ID3()
@@ -1655,6 +1663,33 @@ class WriteTo23(TestCase):
         self.assertEqual(id3["TIPL"].encoding, 1)
 
 
+class Read22FrameNamesin23(TestCase):
+
+    def test_PIC_in_23(self):
+        from tempfile import mkstemp
+        fd, filename = mkstemp(suffix='.mp3')
+        os.close(fd)
+
+        try:
+            with open(filename, "wb") as h:
+                # contains a bad upgraded frame, 2.3 structure with 2.2 name.
+                # PIC was upgraded to APIC, but mime was not
+                h.write(b"ID3\x03\x00\x00\x00\x00\x08\x00PIC\x00\x00\x00"
+                        b"\x00\x0b\x00\x00\x00JPG\x00\x03foo\x00\x42"
+                        b"\x00" * 100)
+            id3 = ID3(filename)
+            self.assertEqual(id3.version, (2, 3, 0))
+            self.assertTrue(id3.getall("APIC"))
+            frame = id3.getall("APIC")[0]
+            self.assertEqual(frame.mime, "image/jpeg")
+            self.assertEqual(frame.data, b"\x42")
+            self.assertEqual(frame.type, 3)
+            self.assertEqual(frame.desc, "foo")
+        finally:
+            os.remove(filename)
+
+
+add(Read22FrameNamesin23)
 add(ID3Loading)
 add(ID3GetSetDel)
 add(ID3Tags)

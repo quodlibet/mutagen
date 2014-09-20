@@ -357,6 +357,11 @@ class ID3(DictProxy, mutagen.Metadata):
                         continue
 
                 try:
+                    # someone writes 2.3 frames with 2.2 names
+                    if name[-1] == "\x00":
+                        tag = Frames_2_2[name[:-1]]
+                        name = tag.__base__.__name__
+
                     tag = frames[name]
                 except KeyError:
                     if is_valid_frame_id(name):
@@ -610,19 +615,18 @@ class ID3(DictProxy, mutagen.Metadata):
             # Get rid of "(xx)Foobr" format.
             self["TCON"].genres = self["TCON"].genres
 
-        if self.version < self._V23:
-            # ID3v2.2 PIC frames are slightly different.
-            pics = self.getall("APIC")
-            mimes = {"PNG": "image/png", "JPG": "image/jpeg"}
-            self.delall("APIC")
-            for pic in pics:
+        # ID3v2.2 LNK frames are just way too different to upgrade.
+        for frame in self.getall("LINK"):
+            if len(frame.frameid) != 4:
+                del self[frame.HashKey]
+
+        mimes = {"PNG": "image/png", "JPG": "image/jpeg"}
+        for pic in self.getall("APIC"):
+            if pic.mime in mimes:
                 newpic = APIC(
-                    encoding=pic.encoding, mime=mimes.get(pic.mime, pic.mime),
+                    encoding=pic.encoding, mime=mimes[pic.mime],
                     type=pic.type, desc=pic.desc, data=pic.data)
                 self.add(newpic)
-
-            # ID3v2.2 LNK frames are just way too different to upgrade.
-            self.delall("LINK")
 
     def update_to_v24(self):
         """Convert older tags into an ID3v2.4 tag.
