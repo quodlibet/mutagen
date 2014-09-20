@@ -2,7 +2,7 @@ import os
 import shutil
 import pickle
 from tests import add, TestCase
-from mutagen.id3 import ID3FileType
+from mutagen.id3 import ID3FileType, ID3
 from mutagen.easyid3 import EasyID3, error as ID3Error
 from mutagen._compat import PY3
 from tempfile import mkstemp
@@ -25,6 +25,11 @@ class TEasyID3(TestCase):
         self.failUnless(mp3.tags)
         mp3.pprint()
         self.failUnless(isinstance(mp3.tags, EasyID3))
+
+    def test_ignore_23(self):
+        self.id3["date"] = "2004"
+        self.id3.save(self.filename, v2_version=3)
+        self.assertEqual(ID3(self.filename).version, (2, 4, 0))
 
     def test_delete(self):
         self.id3["artist"] = "foobar"

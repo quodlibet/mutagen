@@ -172,8 +172,10 @@ class EasyID3(DictMixin, Metadata):
     load = property(lambda s: s.__id3.load,
                     lambda s, v: setattr(s.__id3, 'load', v))
 
-    save = property(lambda s: s.__id3.save,
-                    lambda s, v: setattr(s.__id3, 'save', v))
+    def save(self, *args, **kwargs):
+        # ignore v2_version until we support 2.3 here
+        kwargs.pop("v2_version", None)
+        self.__id3.save(*args, **kwargs)
 
     delete = property(lambda s: s.__id3.delete,
                       lambda s, v: setattr(s.__id3, 'delete', v))
