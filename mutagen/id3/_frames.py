@@ -24,6 +24,12 @@ def is_valid_frame_id(frame_id):
     return frame_id.isalnum() and frame_id.isupper()
 
 
+def _bytes2key(b):
+    assert isinstance(b, bytes)
+
+    return b.decode("latin1")
+
+
 class Frame(object):
     """Fundamental unit of ID3 data.
 
@@ -905,7 +911,7 @@ class USLT(Frame):
 
     @property
     def HashKey(self):
-        return '%s:%s:%r' % (self.FrameID, self.desc, self.lang)
+        return '%s:%s:%s' % (self.FrameID, self.desc, self.lang)
 
     def __bytes__(self):
         return self.text.encode('utf-8')
@@ -934,7 +940,7 @@ class SYLT(Frame):
 
     @property
     def HashKey(self):
-        return '%s:%s:%r' % (self.FrameID, self.desc, self.lang)
+        return '%s:%s:%s' % (self.FrameID, self.desc, self.lang)
 
     def __eq__(self, other):
         return str(self) == other
@@ -964,10 +970,10 @@ class COMM(TextFrame):
 
     @property
     def HashKey(self):
-        return '%s:%s:%r' % (self.FrameID, self.desc, self.lang)
+        return '%s:%s:%s' % (self.FrameID, self.desc, self.lang)
 
     def _pprint(self):
-        return "%s=%r=%s" % (self.desc, self.lang, " / ".join(self.text))
+        return "%s=%s=%s" % (self.desc, self.lang, " / ".join(self.text))
 
 
 class RVA2(Frame):
@@ -1290,8 +1296,8 @@ class LINK(FrameOpt):
     @property
     def HashKey(self):
         try:
-            return "%s:%s:%s:%r" % (
-                self.FrameID, self.frameid, self.url, self.data)
+            return "%s:%s:%s:%s" % (
+                self.FrameID, self.frameid, self.url, _bytes2key(self.data))
         except AttributeError:
             return "%s:%s:%s" % (self.FrameID, self.frameid, self.url)
 
@@ -1354,11 +1360,7 @@ class UFID(Frame):
     __hash__ = Frame.__hash__
 
     def _pprint(self):
-        isascii = max(bytearray(self.data)) < 128
-        if isascii:
-            return "%s=%s" % (self.owner, self.data)
-        else:
-            return "%s (%d bytes)" % (self.owner, len(self.data))
+        return "%s=%r" % (self.owner, self.data)
 
 
 @swap_to_string
@@ -1380,7 +1382,7 @@ class USER(Frame):
 
     @property
     def HashKey(self):
-        return '%s:%r' % (self.FrameID, self.lang)
+        return '%s:%s' % (self.FrameID, self.lang)
 
     def __bytes__(self):
         return self.text.encode('utf-8')
@@ -1440,7 +1442,7 @@ class COMR(FrameOpt):
 
     @property
     def HashKey(self):
-        return '%s:%s' % (self.FrameID, self._writeData())
+        return '%s:%s' % (self.FrameID, _bytes2key(self._writeData()))
 
     def __eq__(self, other):
         return self._writeData() == other._writeData()
@@ -1517,7 +1519,7 @@ class PRIV(Frame):
     @property
     def HashKey(self):
         return '%s:%s:%s' % (
-            self.FrameID, self.owner, self.data.decode('latin1'))
+            self.FrameID, self.owner, _bytes2key(self.data))
 
     def __bytes__(self):
         return self.data
@@ -1526,11 +1528,7 @@ class PRIV(Frame):
         return self.data == other
 
     def _pprint(self):
-        isascii = max(bytearray(self.data)) < 128
-        if isascii:
-            return "%s=%s" % (self.owner, self.data)
-        else:
-            return "%s (%d bytes)" % (self.owner, len(self.data))
+        return "%s=%r" % (self.owner, self.data)
 
     __hash__ = Frame.__hash__
 
@@ -1546,7 +1544,7 @@ class SIGN(Frame):
 
     @property
     def HashKey(self):
-        return '%s:%c:%s' % (self.FrameID, self.group, self.sig)
+        return '%s:%s:%s' % (self.FrameID, self.group, _bytes2key(self.sig))
 
     def __bytes__(self):
         return self.sig

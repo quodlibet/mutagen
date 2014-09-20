@@ -41,6 +41,160 @@ class FrameSanityChecks(TestCase):
         new = APIC(frame)
         self.assertEqual(new.mime, "foo")
 
+    def test_SIGN(self):
+        from mutagen.id3 import SIGN
+        frame = SIGN(group=1, sig=b"foo")
+        self.assertEqual(frame.HashKey, "SIGN:1:foo")
+        frame._pprint()
+
+    def test_PRIV(self):
+        from mutagen.id3 import PRIV
+        frame = PRIV(owner="foo", data=b"foo")
+        self.assertEqual(frame.HashKey, "PRIV:foo:foo")
+        frame._pprint()
+
+        frame = PRIV(owner="foo", data=b"\x00\xff")
+        self.assertEqual(frame.HashKey, u"PRIV:foo:\x00\xff")
+        frame._pprint()
+
+    def test_GRID(self):
+        from mutagen.id3 import GRID
+
+        frame = GRID(owner="foo", group=42)
+        self.assertEqual(frame.HashKey, "GRID:42")
+        frame._pprint()
+
+    def test_ENCR(self):
+        from mutagen.id3 import ENCR
+
+        frame = ENCR(owner="foo", method=42, data=b"\xff")
+        self.assertEqual(frame.HashKey, "ENCR:foo")
+        frame._pprint()
+
+    def test_COMR(self):
+        from mutagen.id3 import COMR
+
+        frame = COMR(
+            encoding=0, price="p", valid_until="v" * 8, contact="c",
+            format=42, seller="s", desc="d", mime="m", logo=b"\xff")
+        self.assertEqual(
+            frame.HashKey, u"COMR:\x00p\x00vvvvvvvvc\x00*s\x00d\x00m\x00\xff")
+        frame._pprint()
+
+    def test_USER(self):
+        from mutagen.id3 import USER
+
+        frame = USER(encoding=0, lang="foo", text="bla")
+        self.assertEqual(frame.HashKey, "USER:foo")
+        frame._pprint()
+
+    def test_UFID(self):
+        from mutagen.id3 import UFID
+
+        frame = UFID(owner="foo", data=b"\x42")
+        self.assertEqual(frame.HashKey, "UFID:foo")
+        frame._pprint()
+
+    def test_LINK(self):
+        from mutagen.id3 import LINK
+
+        frame = LINK(frameid="TPE1", url="http://foo.bar", data=b"\x42")
+        self.assertEqual(frame.HashKey, "LINK:TPE1:http://foo.bar:B")
+        frame._pprint()
+
+        frame = LINK(frameid="TPE1", url="http://foo.bar")
+        self.assertEqual(frame.HashKey, "LINK:TPE1:http://foo.bar")
+
+    def test_AENC(self):
+        from mutagen.id3 import AENC
+
+        frame = AENC(
+            owner="foo", preview_start=1, preview_length=2, data=b"\x42")
+        self.assertEqual(frame.HashKey, "AENC:foo")
+        frame._pprint()
+
+    def test_GEOB(self):
+        from mutagen.id3 import GEOB
+
+        frame = GEOB(
+            encoding=0, mtime="m", filename="f", desc="d", data=b"\x42")
+        self.assertEqual(frame.HashKey, "GEOB:d")
+        frame._pprint()
+
+    def test_POPM(self):
+        from mutagen.id3 import POPM
+
+        frame = POPM(email="e", rating=42)
+        self.assertEqual(frame.HashKey, "POPM:e")
+        frame._pprint()
+
+    def test_APIC(self):
+        from mutagen.id3 import APIC
+
+        frame = APIC(encoding=0, mime="m", type=3, desc="d", data=b"\x42")
+        self.assertEqual(frame.HashKey, "APIC:d")
+        frame._pprint()
+
+    def test_EQU2(self):
+        from mutagen.id3 import EQU2
+
+        frame = EQU2(method=42, desc="d", adjustments=[(0, 0)])
+        self.assertEqual(frame.HashKey, "EQU2:d")
+        frame._pprint()
+
+    def test_RVA2(self):
+        from mutagen.id3 import RVA2
+
+        frame = RVA2(method=42, desc="d", channel=1, gain=1, peak=1)
+        self.assertEqual(frame.HashKey, "RVA2:d")
+        frame._pprint()
+
+    def test_COMM(self):
+        from mutagen.id3 import COMM
+
+        frame = COMM(encoding=0, lang="foo", desc="d")
+        self.assertEqual(frame.HashKey, "COMM:d:foo")
+        frame._pprint()
+
+    def test_SYLT(self):
+        from mutagen.id3 import SYLT
+
+        frame = SYLT(encoding=0, lang="foo", format=1, type=2,
+                     desc="d", text=[("t", 0)])
+        self.assertEqual(frame.HashKey, "SYLT:d:foo")
+        frame._pprint()
+
+    def test_USLT(self):
+        from mutagen.id3 import USLT
+
+        frame = USLT(encoding=0, lang="foo", desc="d", text="t")
+        self.assertEqual(frame.HashKey, "USLT:d:foo")
+        frame._pprint()
+
+    def test_WXXX(self):
+        from mutagen.id3 import WXXX
+
+        self.assert_(isinstance(WXXX(url='durl'), WXXX))
+
+        frame = WXXX(encoding=0, desc="d", url="u")
+        self.assertEqual(frame.HashKey, "WXXX:d")
+        frame._pprint()
+
+    def test_TXXX(self):
+        from mutagen.id3 import TXXX
+        self.assert_(isinstance(TXXX(desc='d', text='text'), TXXX))
+
+        frame = TXXX(encoding=0, desc="d", text=[])
+        self.assertEqual(frame.HashKey, "TXXX:d")
+        frame._pprint()
+
+    def test_WCOM(self):
+        from mutagen.id3 import WCOM
+
+        frame = WCOM(url="u")
+        self.assertEqual(frame.HashKey, "WCOM:u")
+        frame._pprint()
+
     def test_TF(self):
         from mutagen.id3 import TextFrame
         self.assert_(isinstance(TextFrame(text='text'), TextFrame))
@@ -48,10 +202,6 @@ class FrameSanityChecks(TestCase):
     def test_UF(self):
         from mutagen.id3 import UrlFrame
         self.assert_(isinstance(UrlFrame('url'), UrlFrame))
-
-    def test_WXXX(self):
-        from mutagen.id3 import WXXX
-        self.assert_(isinstance(WXXX(url='durl'), WXXX))
 
     def test_NTF(self):
         from mutagen.id3 import NumericTextFrame
@@ -65,10 +215,6 @@ class FrameSanityChecks(TestCase):
     def test_MTF(self):
         from mutagen.id3 import TextFrame
         self.assert_(isinstance(TextFrame(text=['a', 'b']), TextFrame))
-
-    def test_TXXX(self):
-        from mutagen.id3 import TXXX
-        self.assert_(isinstance(TXXX(desc='d', text='text'), TXXX))
 
     def test_22_uses_direct_ints(self):
         data = b'TT1\x00\x00\x83\x00' + (b'123456789abcdef' * 16)
