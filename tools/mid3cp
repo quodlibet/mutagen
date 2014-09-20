@@ -1,0 +1,101 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# Copyright 2014 Marcus Sundman
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of version 2 of the GNU General Public License as
+# published by the Free Software Foundation.
+
+"""A program replicating the functionality of id3lib's id3cp, using mutagen for
+tag loading and saving.
+"""
+
+import sys
+import os.path
+from optparse import OptionParser
+import mutagen
+import mutagen.id3
+
+VERSION = (0, 1)
+
+
+class ID3OptionParser(OptionParser):
+    def __init__(self):
+        mutagen_version = mutagen.version_string
+        my_version = ".".join(map(str, VERSION))
+        version = "mid3cp %s\nUses Mutagen %s" % (my_version, mutagen_version)
+        self.disable_interspersed_args()
+        OptionParser.__init__(
+            self, version=version,
+            usage="%prog [option(s)] <src> <dst>",
+            description=("Copies ID3 tags from <src> to <dst>. Mutagen-based "
+                         "replacement for id3lib's id3cp."))
+
+
+def copy(src, dst, include_v1=True, excluded_tags=None, verbose=False):
+    if excluded_tags is None:
+        excluded_tags = []
+
+    try:
+        id3 = mutagen.id3.ID3(src)
+    except mutagen.id3.ID3NoHeaderError:
+        print("No ID3 header found in %s" % src)
+    except StandardError as err:
+        sys.stderr.write(str(err))
+        sys.stderr.flush()
+    else:
+        if verbose:
+            print("File %s contains:" % src)
+            print(id3.pprint())
+        try:
+            for tag in excluded_tags:
+                id3.delall(tag)
+            id3.save(dst, v1=(2 if include_v1 else 0))
+        except StandardError as err:
+            sys.stderr.write("Error saving %s:\n%s" % (dst, str(err)))
+            sys.stderr.flush()
+        else:
+            if verbose:
+                print("Successfully saved %s" % dst)
+
+
+def main(argv):
+    parser = ID3OptionParser()
+    parser.add_option("-q", "--quiet", action="store_false", dest="verbose",
+                      help="do not print out file tags", default=True)
+    parser.add_option("-1", "--include-id3v1", action="store_true", dest="v1",
+                      default=False, help="include id3v1 tags")
+    parser.add_option("-x", "--exclude-tag", metavar="TAG", action="append",
+                      dest="x", help="exclude the specified tag", default=[])
+    (options, args) = parser.parse_args(argv[1:])
+
+    if len(args) != 2:
+        parser.print_help()
+        return
+
+    (src, dst) = args
+
+    if not os.path.isfile(src):
+        print("File not found: '%s'" % src)
+        parser.print_help()
+        return
+
+    if not os.path.isfile(dst):
+        print("File not found: '%s'" % dst)
+        parser.print_help()
+        return
+
+    if os.path.samefile(src, dst):
+        print("Source and destination files are the same!")
+        parser.print_help()
+        return
+
+    # Strip tags - "-x FOO" adds whitespace at the beginning of the tag name
+    excluded_tags = [x.strip() for x in options.x]
+
+    copy(src, dst, options.v1, excluded_tags, options.verbose)
+
+
+if __name__ == "__main__":
+    main(sys.argv)
