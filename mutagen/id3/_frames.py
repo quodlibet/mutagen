@@ -16,7 +16,7 @@ from ._specs import (
     EncodingSpec, ASPIIndexSpec, SizedIntegerSpec, IntegerSpec,
     VolumeAdjustmentsSpec, VolumePeakSpec, VolumeAdjustmentSpec,
     ChannelSpec, MultiSpec, SynchronizedTextSpec, KeyEventSpec, TimeStampSpec,
-    EncodedNumericPartTextSpec, EncodedNumericTextSpec, FixedBinaryDataSpec)
+    EncodedNumericPartTextSpec, EncodedNumericTextSpec)
 from .._compat import text_type, string_types, swap_to_string
 
 
@@ -216,9 +216,6 @@ class FrameOpt(Frame):
                 break
 
     def _to_other(self, other):
-        if other._optionalspec is not self._optionalspec:
-            raise ValueError
-
         super(FrameOpt, self)._to_other(other)
 
         # this impl covers subclasses with the same optionalspec
@@ -1839,7 +1836,7 @@ class PIC(APIC):
 
     _framespec = [
         EncodingSpec('encoding'),
-        FixedBinaryDataSpec('mime', 3),
+        StringSpec('mime', 3),
         ByteSpec('type'),
         EncodedTextSpec('desc'),
         BinaryDataSpec('data')
@@ -1850,8 +1847,7 @@ class PIC(APIC):
             raise TypeError
 
         other.encoding = self.encoding
-        other.encoding = self.encoding
-        other.mime = self.mime.decode("ascii", "ignore")
+        other.mime = self.mime
         other.type = self.type
         other.desc = self.desc
         other.data = self.data

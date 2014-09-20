@@ -809,7 +809,7 @@ def TestReadTags():
         ],
         [
             'PIC', b'\x00-->\x03cover\x00cover.jpg', b'cover.jpg', '',
-            dict(mime=b'-->', type=3, desc='cover', encoding=0)
+            dict(mime='-->', type=3, desc='cover', encoding=0)
         ],
         [
             'POP', b'foo@bar.org\x00\xde\x00\x00\x00\x11', 222, 222,
@@ -957,7 +957,7 @@ class UpdateTo24(TestCase):
         from mutagen.id3 import PIC
         id3 = ID3()
         id3.version = (2, 2)
-        id3.add(PIC(encoding=0, mime=b"PNG", desc="cover", type=3, data=b""))
+        id3.add(PIC(encoding=0, mime="PNG", desc="cover", type=3, data=b""))
         id3.update_to_v24()
         self.failUnlessEqual(id3["APIC:cover"].mime, "image/png")
 

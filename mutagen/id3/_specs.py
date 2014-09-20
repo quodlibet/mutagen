@@ -141,40 +141,6 @@ class StringSpec(Spec):
         raise ValueError('Invalid StringSpec[%d] data: %r' % (s.len, value))
 
 
-class FixedBinaryDataSpec(Spec):
-    """Fixed size binary data"""
-
-    def __init__(self, name, length):
-        super(FixedBinaryDataSpec, self).__init__(name)
-        self._length = length
-
-    def read(self, frame, data):
-        return data[:self._length], data[self._length:]
-
-    def write(self, frame, value):
-        if value is None:
-            return b'\x00' * self._length
-        return (value + b'\x00' * self._length)[:self._length]
-
-    def validate(self, frame, value):
-        if value is None:
-            return None
-
-        if PY3:
-            if not isinstance(value, bytes):
-                raise TypeError("%s has to be bytes" % self.name)
-        else:
-            # support ascii unicode on py2 because StringSpec
-            # was used for this before the py3 port
-            if not isinstance(value, bytes):
-                value = value.encode("ascii")
-
-        if len(value) == self._length:
-            return value
-
-        raise ValueError("wrong length")
-
-
 class BinaryDataSpec(Spec):
     def read(self, frame, data):
         return data, b''

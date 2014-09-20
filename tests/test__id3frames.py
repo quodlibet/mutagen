@@ -28,18 +28,18 @@ class FrameSanityChecks(TestCase):
 
     def test_PIC_upgrade(self):
         from mutagen.id3 import PIC, APIC
-        frame = PIC(encoding=0, mime=b"PNG", desc="bla", type=3, data=b"\x00")
+        frame = PIC(encoding=0, mime="PNG", desc="bla", type=3, data=b"\x00")
         new = APIC(frame)
         self.assertEqual(new.encoding, 0)
         self.assertEqual(new.mime, "PNG")
         self.assertEqual(new.desc, "bla")
         self.assertEqual(new.data, b"\x00")
 
-        frame = PIC(encoding=0, mime=b"\x00\x01\xFF",
+        frame = PIC(encoding=0, mime="foo",
                     desc="bla", type=3, data=b"\x00")
-        self.assertEqual(frame.mime, b"\x00\x01\xFF")
+        self.assertEqual(frame.mime, "foo")
         new = APIC(frame)
-        self.assertEqual(new.mime, "\x00\x01")
+        self.assertEqual(new.mime, "foo")
 
     def test_TF(self):
         from mutagen.id3 import TextFrame
