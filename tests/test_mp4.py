@@ -5,8 +5,8 @@ import struct
 from mutagen._compat import cBytesIO
 from tempfile import mkstemp
 from tests import TestCase, add
-from mutagen.mp4 import MP4, Atom, Atoms, MP4Tags, MP4Info, \
-     delete, MP4Cover, MP4MetadataError, MP4FreeForm, error
+from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
+                         MP4MetadataError, MP4FreeForm, error)
 from mutagen._util import cdata
 from os import devnull
 
@@ -194,40 +194,50 @@ class TMP4Tags(TestCase):
             MP4Cover.FORMAT_JPEG, tags[b"covr"][0].imageformat)
 
     def test_render_bool(self):
-        self.failUnlessEqual(MP4Tags()._MP4Tags__render_bool(b'pgap', True),
-                             b"\x00\x00\x00\x19pgap\x00\x00\x00\x11data"
-                             b"\x00\x00\x00\x15\x00\x00\x00\x00\x01")
-        self.failUnlessEqual(MP4Tags()._MP4Tags__render_bool(b'pgap', False),
-                             b"\x00\x00\x00\x19pgap\x00\x00\x00\x11data"
-                             b"\x00\x00\x00\x15\x00\x00\x00\x00\x00")
+        self.failUnlessEqual(
+            MP4Tags()._MP4Tags__render_bool(b'pgap', True),
+            b"\x00\x00\x00\x19pgap\x00\x00\x00\x11data"
+            b"\x00\x00\x00\x15\x00\x00\x00\x00\x01"
+        )
+        self.failUnlessEqual(
+            MP4Tags()._MP4Tags__render_bool(b'pgap', False),
+            b"\x00\x00\x00\x19pgap\x00\x00\x00\x11data"
+            b"\x00\x00\x00\x15\x00\x00\x00\x00\x00"
+        )
 
     def test_render_text(self):
         self.failUnlessEqual(
-             MP4Tags()._MP4Tags__render_text(
+            MP4Tags()._MP4Tags__render_text(
                 b'purl', ['http://foo/bar.xml'], 0),
-             b"\x00\x00\x00*purl\x00\x00\x00\"data\x00\x00\x00\x00\x00\x00"
-             b"\x00\x00http://foo/bar.xml")
+            b"\x00\x00\x00*purl\x00\x00\x00\"data\x00\x00\x00\x00\x00\x00"
+            b"\x00\x00http://foo/bar.xml"
+        )
         self.failUnlessEqual(
-             MP4Tags()._MP4Tags__render_text(b'aART', [u'\u0041lbum Artist']),
-             b"\x00\x00\x00$aART\x00\x00\x00\x1cdata\x00\x00\x00\x01\x00\x00"
-             b"\x00\x00\x41lbum Artist")
+            MP4Tags()._MP4Tags__render_text(
+                b'aART', [u'\u0041lbum Artist']),
+            b"\x00\x00\x00$aART\x00\x00\x00\x1cdata\x00\x00\x00\x01\x00\x00"
+            b"\x00\x00\x41lbum Artist"
+        )
         self.failUnlessEqual(
-             MP4Tags()._MP4Tags__render_text(
+            MP4Tags()._MP4Tags__render_text(
                 b'aART', [u'Album Artist', u'Whee']),
-             b"\x00\x00\x008aART\x00\x00\x00\x1cdata\x00\x00\x00\x01\x00\x00"
-             b"\x00\x00Album Artist\x00\x00\x00\x14data\x00\x00\x00\x01\x00"
-             b"\x00\x00\x00Whee")
+            b"\x00\x00\x008aART\x00\x00\x00\x1cdata\x00\x00\x00\x01\x00\x00"
+            b"\x00\x00Album Artist\x00\x00\x00\x14data\x00\x00\x00\x01\x00"
+            b"\x00\x00\x00Whee"
+        )
 
     def test_render_data(self):
         self.failUnlessEqual(
-             MP4Tags()._MP4Tags__render_data(b'aART', 1, [b'whee']),
-             b"\x00\x00\x00\x1caART"
-             b"\x00\x00\x00\x14data\x00\x00\x00\x01\x00\x00\x00\x00whee")
+            MP4Tags()._MP4Tags__render_data(b'aART', 1, [b'whee']),
+            b"\x00\x00\x00\x1caART"
+            b"\x00\x00\x00\x14data\x00\x00\x00\x01\x00\x00\x00\x00whee"
+        )
         self.failUnlessEqual(
-             MP4Tags()._MP4Tags__render_data(b'aART', 2, [b'whee', b'wee']),
-             b"\x00\x00\x00/aART"
-             b"\x00\x00\x00\x14data\x00\x00\x00\x02\x00\x00\x00\x00whee"
-             b"\x00\x00\x00\x13data\x00\x00\x00\x02\x00\x00\x00\x00wee")
+            MP4Tags()._MP4Tags__render_data(b'aART', 2, [b'whee', b'wee']),
+            b"\x00\x00\x00/aART"
+            b"\x00\x00\x00\x14data\x00\x00\x00\x02\x00\x00\x00\x00whee"
+            b"\x00\x00\x00\x13data\x00\x00\x00\x02\x00\x00\x00\x00wee"
+        )
 
     def test_bad_text_data(self):
         data = Atom.render(b"datA", b"\x00\x00\x00\x01\x00\x00\x00\x00whee")
@@ -236,13 +246,15 @@ class TMP4Tags(TestCase):
 
     def test_render_freeform(self):
         self.failUnlessEqual(
-             MP4Tags()._MP4Tags__render_freeform(
-             b'----:net.sacredchao.Mutagen:test', [b'whee', b'wee']),
-             b"\x00\x00\x00a----"
-             b"\x00\x00\x00\"mean\x00\x00\x00\x00net.sacredchao.Mutagen"
-             b"\x00\x00\x00\x10name\x00\x00\x00\x00test"
-             b"\x00\x00\x00\x14data\x00\x00\x00\x01\x00\x00\x00\x00whee"
-             b"\x00\x00\x00\x13data\x00\x00\x00\x01\x00\x00\x00\x00wee")
+            MP4Tags()._MP4Tags__render_freeform(
+                b'----:net.sacredchao.Mutagen:test', [b'whee', b'wee']
+            ),
+            b"\x00\x00\x00a----"
+            b"\x00\x00\x00\"mean\x00\x00\x00\x00net.sacredchao.Mutagen"
+            b"\x00\x00\x00\x10name\x00\x00\x00\x00test"
+            b"\x00\x00\x00\x14data\x00\x00\x00\x01\x00\x00\x00\x00whee"
+            b"\x00\x00\x00\x13data\x00\x00\x00\x01\x00\x00\x00\x00wee"
+        )
 
     def test_bad_freeform(self):
         mean = Atom.render(b"mean", b"net.sacredchao.Mutagen")
@@ -293,8 +305,8 @@ class TMP4(TestCase):
     def faad(self):
         if not have_faad:
             return
-        value = os.system("faad %s -o %s > %s 2> %s" % (
-                self.filename, devnull, devnull, devnull))
+        value = os.system("faad %s -o %s > %s 2> %s" % (self.filename, devnull,
+                                                        devnull, devnull))
         self.failIf(value and value != NOTFOUND)
 
     def test_score(self):

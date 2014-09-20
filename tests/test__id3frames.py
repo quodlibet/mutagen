@@ -91,8 +91,10 @@ class FrameSanityChecks(TestCase):
 
     def test_zlib_latin1(self):
         from mutagen.id3 import TPE1
-        tag = TPE1.fromData(_24, 0x9, b'\x00\x00\x00\x0f'
-            b'x\x9cc(\xc9\xc8,V\x00\xa2D\xfd\x92\xd4\xe2\x12\x00&\x7f\x05%')
+        tag = TPE1.fromData(
+            _24, 0x9, b'\x00\x00\x00\x0f'
+            b'x\x9cc(\xc9\xc8,V\x00\xa2D\xfd\x92\xd4\xe2\x12\x00&\x7f\x05%'
+        )
         self.assertEquals(tag.encoding, 0)
         self.assertEquals(tag, ['this is a/test'])
 

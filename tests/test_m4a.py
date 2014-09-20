@@ -8,8 +8,8 @@ from tests import TestCase, add
 
 import warnings
 warnings.simplefilter("ignore", DeprecationWarning)
-from mutagen.m4a import M4A, Atom, Atoms, M4ATags, M4AInfo, \
-     delete, M4ACover, M4AMetadataError
+from mutagen.m4a import (M4A, Atom, Atoms, M4ATags, M4AInfo, delete, M4ACover,
+                         M4AMetadataError)
 
 
 class TAtom(TestCase):
