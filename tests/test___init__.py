@@ -208,6 +208,20 @@ class TFile(TestCase):
         self.failUnless(TrueAudio.score(filename, fileobj, header) <
                         MP3.score(filename, fileobj, header))
 
+    def test_prefer_theora_over_vorbis(self):
+        header = (
+            b"OggS\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\xe1x\x06\x0f"
+            b"\x00\x00\x00\x00)S'\xf4\x01*\x80theora\x03\x02\x01\x006\x00\x1e"
+            b"\x00\x03V\x00\x01\xe0\x00\x00\x00\x00\x00\x18\x00\x00\x00\x01"
+            b"\x00\x00\x00\x00\x00\x00\x00&%\xa0\x00\xc0OggS\x00\x02\x00\x00"
+            b"\x00\x00\x00\x00\x00\x00d#\xa8\x1f\x00\x00\x00\x00]Y\xc0\xc0"
+            b"\x01\x1e\x01vorbis\x00\x00\x00\x00\x02\x80\xbb\x00\x00\x00\x00"
+            b"\x00\x00\x00\xee\x02\x00\x00\x00\x00\x00\xb8\x01")
+        fileobj = cBytesIO(header)
+        filename = "not-identifiable.ext"
+        self.failUnless(OggVorbis.score(filename, fileobj, header) <
+                        OggTheora.score(filename, fileobj, header))
+
 add(TFile)
 
 
