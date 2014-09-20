@@ -33,6 +33,7 @@ class SpecSanityChecks(TestCase):
         self.assertEquals(b'\x00\x00\x00', s.write(None, None))
         self.assertEquals(b'\x00\x00\x00', s.write(None, '\x00'))
         self.assertEquals(b'a\x00\x00', s.write(None, 'a'))
+        self.assertRaises(ValueError, s.read, None, b'\xff')
 
     def test_binarydataspec(self):
         from mutagen.id3 import BinaryDataSpec

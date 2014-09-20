@@ -106,14 +106,16 @@ class StringSpec(Spec):
         self.len = length
 
     def read(s, frame, data):
-        read = data[:s.len]
-        if PY3:
-            try:
-                read = read.decode("ascii")
-            except UnicodeDecodeError:
-                raise ID3JunkFrameError("not ascii")
+        chunk = data[:s.len]
+        try:
+            ascii = chunk.decode("ascii")
+        except UnicodeDecodeError:
+            raise ID3JunkFrameError("not ascii")
+        else:
+            if PY3:
+                chunk = ascii
 
-        return read, data[s.len:]
+        return chunk, data[s.len:]
 
     def write(s, frame, value):
         if value is None:
