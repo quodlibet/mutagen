@@ -12,12 +12,13 @@ import struct
 
 from ._compat import endswith
 from mutagen import StreamInfo
+from mutagen._util import MutagenError
 from mutagen.id3 import ID3FileType, BitPaddedInt, delete
 
 __all__ = ["MP3", "Open", "delete", "MP3"]
 
 
-class error(RuntimeError):
+class error(RuntimeError, MutagenError):
     pass
 
 

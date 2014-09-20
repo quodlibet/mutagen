@@ -7,9 +7,10 @@
 # published by the Free Software Foundation.
 
 from .._compat import long_, integer_types
+from .._util import MutagenError
 
 
-class error(Exception):
+class error(MutagenError):
     pass
 
 

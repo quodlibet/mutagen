@@ -21,12 +21,12 @@ from mutagen import StreamInfo, FileType
 
 from mutagen.id3 import ID3
 from mutagen.id3._util import error as ID3Error
-from mutagen._util import insert_bytes, delete_bytes
+from mutagen._util import insert_bytes, delete_bytes, MutagenError
 
 __all__ = ["AIFF", "Open", "delete"]
 
 
-class error(RuntimeError):
+class error(MutagenError, RuntimeError):
     pass
 
 

@@ -18,6 +18,13 @@ from fnmatch import fnmatchcase
 from ._compat import chr_, text_type, PY2, iteritems, iterbytes
 
 
+class MutagenError(Exception):
+    """Base class for all custom exceptions in mutagen
+
+    .. versionadded:: 1.25
+    """
+
+
 def total_ordering(cls):
     assert hasattr(cls, "__eq__")
     assert hasattr(cls, "__lt__")

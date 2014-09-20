@@ -26,12 +26,12 @@ from ._vorbis import VCommentDict
 import mutagen
 
 from ._compat import cBytesIO, endswith, chr_
-from mutagen._util import insert_bytes
+from mutagen._util import insert_bytes, MutagenError
 from mutagen.id3 import BitPaddedInt
 from functools import reduce
 
 
-class error(IOError):
+class error(IOError, MutagenError):
     pass
 
 

@@ -33,10 +33,11 @@ from cStringIO import StringIO
 from ._compat import reraise
 from mutagen import FileType, Metadata, StreamInfo
 from mutagen._constants import GENRES
-from mutagen._util import cdata, insert_bytes, delete_bytes, DictProxy
+from mutagen._util import cdata, insert_bytes, delete_bytes, DictProxy, \
+    MutagenError
 
 
-class error(IOError):
+class error(IOError, MutagenError):
     pass
 
 

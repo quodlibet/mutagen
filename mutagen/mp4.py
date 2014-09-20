@@ -26,12 +26,12 @@ import sys
 
 from mutagen import FileType, Metadata, StreamInfo
 from mutagen._constants import GENRES
-from mutagen._util import cdata, insert_bytes, DictProxy, utf8
+from mutagen._util import cdata, insert_bytes, DictProxy, utf8, MutagenError
 from mutagen._compat import reraise, PY2, string_types, text_type, chr_, \
     iteritems
 
 
-class error(IOError):
+class error(IOError, MutagenError):
     pass
 
 

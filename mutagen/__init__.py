@@ -29,6 +29,8 @@ version_string = ".".join(map(str, version))
 import warnings
 
 import mutagen._util
+from mutagen._util import MutagenError
+MutagenError
 
 
 class Metadata(object):

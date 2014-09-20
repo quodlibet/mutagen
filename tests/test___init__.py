@@ -4,7 +4,7 @@ import shutil
 
 from tests import TestCase, add
 from mutagen._compat import cBytesIO, PY3
-from mutagen import File, Metadata, FileType
+from mutagen import File, Metadata, FileType, MutagenError
 from mutagen.oggvorbis import OggVorbis
 from mutagen.oggflac import OggFLAC
 from mutagen.oggspeex import OggSpeex
@@ -249,7 +249,7 @@ add(TFileUpperExt)
 
 class TModuleImportAll(TestCase):
 
-    def test_all(self):
+    def setUp(self):
         import mutagen
         files = os.listdir(mutagen.__path__[0])
         modules = set(os.path.splitext(f)[0] for f in files)
@@ -258,9 +258,21 @@ class TModuleImportAll(TestCase):
         if PY3 and 'm4a' in modules:
             modules.remove('m4a')
 
+        self.modules = []
         for module in modules:
             mod = getattr(__import__("mutagen." + module), module)
+            self.modules.append(mod)
+
+    def tearDown(self):
+        del self.modules[:]
+
+    def test_all(self):
+        for mod in self.modules:
             for attr in getattr(mod, "__all__", []):
                 getattr(mod, attr)
+
+    def test_errors(self):
+        for mod in self.modules:
+            self.assertTrue(issubclass(mod.error, MutagenError), msg=mod.error)
 
 add(TModuleImportAll)

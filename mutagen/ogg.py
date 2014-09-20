@@ -19,11 +19,11 @@ import sys
 import zlib
 
 from mutagen import FileType
-from mutagen._util import cdata, insert_bytes, delete_bytes
+from mutagen._util import cdata, insert_bytes, delete_bytes, MutagenError
 from ._compat import cBytesIO, reraise, chr_
 
 
-class error(IOError):
+class error(IOError, MutagenError):
     """Ogg stream parsing errors."""
 
     pass

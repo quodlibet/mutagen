@@ -20,10 +20,10 @@ __all__ = ["TrueAudio", "Open", "delete", "EasyTrueAudio"]
 from ._compat import endswith
 from mutagen import StreamInfo
 from mutagen.id3 import ID3FileType, delete
-from mutagen._util import cdata
+from mutagen._util import cdata, MutagenError
 
 
-class error(RuntimeError):
+class error(RuntimeError, MutagenError):
     pass
 
 

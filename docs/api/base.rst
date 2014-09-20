@@ -24,6 +24,9 @@ Base Classes
     .. automethod:: save()
 
 
+.. autoclass:: mutagen.MutagenError
+
+
 Internal Classes
 ~~~~~~~~~~~~~~~~
 

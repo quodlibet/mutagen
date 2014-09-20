@@ -11,11 +11,12 @@ __all__ = ["ASF", "Open"]
 
 import struct
 from mutagen import FileType, Metadata, StreamInfo
-from mutagen._util import insert_bytes, delete_bytes, DictMixin, total_ordering
+from mutagen._util import insert_bytes, delete_bytes, DictMixin, \
+    total_ordering, MutagenError
 from ._compat import swap_to_string, text_type, PY2, string_types
 
 
-class error(IOError):
+class error(IOError, MutagenError):
     pass
 
 

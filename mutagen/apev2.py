@@ -35,7 +35,8 @@ import struct
 
 from ._compat import cBytesIO, PY3, text_type, PY2, reraise, swap_to_string
 from mutagen import Metadata, FileType, StreamInfo
-from mutagen._util import DictMixin, cdata, delete_bytes, total_ordering
+from mutagen._util import DictMixin, cdata, delete_bytes, total_ordering, \
+    MutagenError
 
 
 def is_valid_apev2_key(key):
@@ -64,7 +65,7 @@ HAS_NO_FOOTER = 1 << 30
 IS_HEADER = 1 << 29
 
 
-class error(IOError):
+class error(IOError, MutagenError):
     pass
 
 
