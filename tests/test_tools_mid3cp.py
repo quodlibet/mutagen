@@ -122,7 +122,7 @@ class TMid3cp(_TTools):
         fd, blank_file = mkstemp(suffix='.mp3')
         os.close(fd)
 
-        out = self.call(self.filename, blank_file)[1]
+        out = self.call(self.filename, "--verbose", blank_file)[1]
         self.failUnless('mp3 contains:' in out)
         self.failUnless('Successfully saved' in out)
 
@@ -130,7 +130,7 @@ class TMid3cp(_TTools):
         fd, blank_file = mkstemp(suffix='.mp3')
         os.close(fd)
 
-        out = self.call('-q', self.filename, blank_file)[1]
+        out = self.call(self.filename, blank_file)[1]
         self.failIf(out)
 
 

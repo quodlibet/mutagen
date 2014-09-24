@@ -62,8 +62,8 @@ def copy(src, dst, include_v1=True, excluded_tags=None, verbose=False):
 
 def main(argv):
     parser = ID3OptionParser()
-    parser.add_option("-q", "--quiet", action="store_false", dest="verbose",
-                      help="do not print out file tags", default=True)
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
+                      help="print out saved tags", default=False)
     parser.add_option("-1", "--include-id3v1", action="store_true", dest="v1",
                       default=False, help="include id3v1 tags")
     parser.add_option("-x", "--exclude-tag", metavar="TAG", action="append",
