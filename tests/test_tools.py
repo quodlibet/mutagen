@@ -27,21 +27,28 @@ class _TTools(TestCase):
     def get_var(self, name):
         return get_var(self.TOOL_NAME, name)
 
-    def call(self, *args):
+    def call2(self, *args):
         for arg in args:
             assert isinstance(arg, str)
         old_stdout = sys.stdout
+        old_stderr = sys.stderr
         try:
             out = StringIO()
+            err = StringIO()
             sys.stdout = out
+            sys.stderr = err
             try:
                 ret = self._main([self.TOOL_NAME] + list(args))
             except SystemExit as e:
                 ret = e.code
             ret = ret or 0
-            return (ret, out.getvalue())
+            return (ret, out.getvalue(), err.getvalue())
         finally:
             sys.stdout = old_stdout
+            sys.stderr = old_stderr
+
+    def call(self, *args):
+        return self.call2(*args)[:2]
 
     def tearDown(self):
         del self._main

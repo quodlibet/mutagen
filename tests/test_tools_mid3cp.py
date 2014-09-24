@@ -41,10 +41,10 @@ class TMid3cp(_TTools):
         self.failUnless("Usage:" in out)
 
     def test_src_equal_dst(self):
-        res, out = self.call(self.filename, self.filename)
+        res, out, err = self.call2(self.filename, self.filename)
         self.failIf(res)
-        self.failUnless("the same" in out)
-        self.failUnless("Usage:" in out)
+        self.failUnless("the same" in err)
+        self.failUnless("Usage:" in err)
 
     def test_copy(self):
         fd, blank_file = mkstemp(suffix='.mp3')
@@ -115,16 +115,16 @@ class TMid3cp(_TTools):
         fd, blank_file2 = mkstemp(suffix='.mp3')
         os.close(fd)
 
-        out = self.call(blank_file1, blank_file2)[1]
-        self.failUnless("No ID3 header found" in out)
+        err = self.call2(blank_file1, blank_file2)[2]
+        self.failUnless("No ID3 header found" in err)
 
     def test_verbose(self):
         fd, blank_file = mkstemp(suffix='.mp3')
         os.close(fd)
 
-        out = self.call(self.filename, "--verbose", blank_file)[1]
-        self.failUnless('mp3 contains:' in out)
-        self.failUnless('Successfully saved' in out)
+        err = self.call2(self.filename, "--verbose", blank_file)[2]
+        self.failUnless('mp3 contains:' in err)
+        self.failUnless('Successfully saved' in err)
 
     def test_quiet(self):
         fd, blank_file = mkstemp(suffix='.mp3')

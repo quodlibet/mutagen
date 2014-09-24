@@ -11,6 +11,8 @@
 tag loading and saving.
 """
 
+from __future__ import print_function
+
 import sys
 import os.path
 from optparse import OptionParser
@@ -18,6 +20,10 @@ import mutagen
 import mutagen.id3
 
 VERSION = (0, 1)
+
+
+def printerr(msg):
+    print(msg, file=sys.stderr)
 
 
 class ID3OptionParser(OptionParser):
@@ -40,24 +46,22 @@ def copy(src, dst, include_v1=True, excluded_tags=None, verbose=False):
     try:
         id3 = mutagen.id3.ID3(src)
     except mutagen.id3.ID3NoHeaderError:
-        print("No ID3 header found in %s" % src)
+        printerr("No ID3 header found in %s" % src)
     except StandardError as err:
-        sys.stderr.write(str(err))
-        sys.stderr.flush()
+        print_(str(err))
     else:
         if verbose:
-            print("File %s contains:" % src)
-            print(id3.pprint())
+            printerr("File %s contains:" % src)
+            printerr(id3.pprint())
         try:
             for tag in excluded_tags:
                 id3.delall(tag)
             id3.save(dst, v1=(2 if include_v1 else 0))
         except StandardError as err:
-            sys.stderr.write("Error saving %s:\n%s" % (dst, str(err)))
-            sys.stderr.flush()
+            printerr("Error saving %s:\n%s" % (dst, str(err)))
         else:
             if verbose:
-                print("Successfully saved %s" % dst)
+                printerr("Successfully saved %s" % dst)
 
 
 def main(argv):
@@ -71,24 +75,24 @@ def main(argv):
     (options, args) = parser.parse_args(argv[1:])
 
     if len(args) != 2:
-        parser.print_help()
+        parser.print_help(file=sys.stderr)
         return
 
     (src, dst) = args
 
     if not os.path.isfile(src):
-        print("File not found: '%s'" % src)
-        parser.print_help()
+        printerr("File not found: '%s'" % src)
+        parser.print_help(file=sys.stderr)
         return
 
     if not os.path.isfile(dst):
-        print("File not found: '%s'" % dst)
-        parser.print_help()
+        printerr("File not found: '%s'" % dst)
+        parser.print_help(file=sys.stderr)
         return
 
     if os.path.samefile(src, dst):
-        print("Source and destination files are the same!")
-        parser.print_help()
+        printerr("Source and destination files are the same!")
+        parser.print_help(file=sys.stderr)
         return
 
     # Strip tags - "-x FOO" adds whitespace at the beginning of the tag name
