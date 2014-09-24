@@ -9,11 +9,12 @@
 
 __all__ = ["ASF", "Open"]
 
+import sys
 import struct
 from mutagen import FileType, Metadata, StreamInfo
 from mutagen._util import insert_bytes, delete_bytes, DictMixin, \
     total_ordering, MutagenError
-from ._compat import swap_to_string, text_type, PY2, string_types
+from ._compat import swap_to_string, text_type, PY2, string_types, reraise
 
 
 class error(IOError, MutagenError):
@@ -178,7 +179,10 @@ class ASFUnicodeAttribute(ASFBaseAttribute):
     TYPE = 0x0000
 
     def parse(self, data):
-        return data.decode("utf-16-le").strip("\x00")
+        try:
+            return data.decode("utf-16-le").strip("\x00")
+        except UnicodeDecodeError as e:
+            reraise(ASFError, e, sys.exc_info()[2])
 
     def _render(self):
         return self.value.encode("utf-16-le") + b"\x00\x00"

@@ -4,6 +4,7 @@ from tempfile import mkstemp
 from tests import TestCase, add
 from mutagen.asf import ASF, ASFHeaderError, ASFValue, UNICODE, DWORD, QWORD
 from mutagen.asf import BOOL, WORD, BYTEARRAY, GUID
+from mutagen.asf import ASFUnicodeAttribute, ASFError
 
 
 class TASFFile(TestCase):
@@ -203,6 +204,14 @@ class TASF(TestCase):
     def test_data_size(self):
         v = ASFValue("", UNICODE, data=b'4\xd8\x1e\xdd\x00\x00')
         self.failUnlessEqual(v.data_size(), len(v._render()))
+
+
+class TASFAttributes(TestCase):
+    def test_ASFUnicodeAttribute(self):
+        self.assertRaises(ASFError, ASFUnicodeAttribute, data=b"\x00")
+
+
+add(TASFAttributes)
 
 
 class TASFTags1(TASF):
