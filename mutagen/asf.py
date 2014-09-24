@@ -132,7 +132,14 @@ class ASFBaseAttribute(object):
         if data:
             self.value = self.parse(data, **kwargs)
         else:
-            self.value = value
+            self.value = self._validate(value)
+
+    def _validate(self, value):
+        """Raises TypeError or ValueError in case the user supplied value
+        isn't valid.
+        """
+
+        return value
 
     def data_size(self):
         raise NotImplementedError
@@ -184,6 +191,14 @@ class ASFUnicodeAttribute(ASFBaseAttribute):
         except UnicodeDecodeError as e:
             reraise(ASFError, e, sys.exc_info()[2])
 
+    def _validate(self, value):
+        if not isinstance(value, text_type):
+            if PY2:
+                return value.decode("utf-8")
+            else:
+                raise TypeError("%r not str" % value)
+        return value
+
     def _render(self):
         return self.value.encode("utf-16-le") + b"\x00\x00"
 
@@ -219,6 +234,11 @@ class ASFByteArrayAttribute(ASFBaseAttribute):
         assert isinstance(self.value, bytes)
         return self.value
 
+    def _validate(self, value):
+        if not isinstance(value, bytes):
+            raise TypeError("must be bytes/str")
+        return value
+
     def data_size(self):
         return len(self.value)
 
@@ -248,9 +268,12 @@ class ASFBoolAttribute(ASFBaseAttribute):
 
     def _render(self, dword=True):
         if dword:
-            return struct.pack("<I", int(self.value))
+            return struct.pack("<I", bool(self.value))
         else:
-            return struct.pack("<H", int(self.value))
+            return struct.pack("<H", bool(self.value))
+
+    def _validate(self, value):
+        return bool(value)
 
     def data_size(self):
         return 4
@@ -282,6 +305,12 @@ class ASFDWordAttribute(ASFBaseAttribute):
     def _render(self):
         return struct.pack("<L", self.value)
 
+    def _validate(self, value):
+        value = int(value)
+        if not 0 <= value <= 2 ** 32 - 1:
+            raise ValueError("Out of range")
+        return value
+
     def data_size(self):
         return 4
 
@@ -312,6 +341,12 @@ class ASFQWordAttribute(ASFBaseAttribute):
     def _render(self):
         return struct.pack("<Q", self.value)
 
+    def _validate(self, value):
+        value = int(value)
+        if not 0 <= value <= 2 ** 64 - 1:
+            raise ValueError("Out of range")
+        return value
+
     def data_size(self):
         return 8
 
@@ -341,6 +376,12 @@ class ASFWordAttribute(ASFBaseAttribute):
 
     def _render(self):
         return struct.pack("<H", self.value)
+
+    def _validate(self, value):
+        value = int(value)
+        if not 0 <= value <= 2 ** 16 - 1:
+            raise ValueError("Out of range")
+        return value
 
     def data_size(self):
         return 2
@@ -373,6 +414,11 @@ class ASFGUIDAttribute(ASFBaseAttribute):
     def _render(self):
         assert isinstance(self.value, bytes)
         return self.value
+
+    def _validate(self, value):
+        if not isinstance(value, bytes):
+            raise TypeError("must be bytes/str")
+        return value
 
     def data_size(self):
         return len(self.value)

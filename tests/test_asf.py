@@ -2,9 +2,13 @@ import os
 import shutil
 from tempfile import mkstemp
 from tests import TestCase, add
+
+from mutagen._compat import PY3, text_type
 from mutagen.asf import ASF, ASFHeaderError, ASFValue, UNICODE, DWORD, QWORD
 from mutagen.asf import BOOL, WORD, BYTEARRAY, GUID
-from mutagen.asf import ASFUnicodeAttribute, ASFError
+from mutagen.asf import ASFUnicodeAttribute, ASFError, ASFByteArrayAttribute, \
+    ASFBoolAttribute, ASFDWordAttribute, ASFQWordAttribute, ASFWordAttribute, \
+    ASFGUIDAttribute
 
 
 class TASFFile(TestCase):
@@ -207,8 +211,60 @@ class TASF(TestCase):
 
 
 class TASFAttributes(TestCase):
+
     def test_ASFUnicodeAttribute(self):
+        if PY3:
+            self.assertRaises(TypeError, ASFUnicodeAttribute, b"\xff")
+        else:
+            self.assertRaises(ValueError, ASFUnicodeAttribute, b"\xff")
+            val = u'\xf6\xe4\xfc'
+            self.assertEqual(ASFUnicodeAttribute(val.encode("utf-8")), val)
+
         self.assertRaises(ASFError, ASFUnicodeAttribute, data=b"\x00")
+        self.assertEqual(ASFUnicodeAttribute(u"foo").value, u"foo")
+        self.assertEqual(
+            bytes(ASFUnicodeAttribute(u"foo")), b"f\x00o\x00o\x00")
+        self.assertEqual(
+            text_type(ASFUnicodeAttribute(u"foo")), u"foo")
+
+    def test_ASFByteArrayAttribute(self):
+        self.assertEqual(ASFByteArrayAttribute(data=b"\xff").value, b"\xff")
+        self.assertRaises(TypeError, ASFByteArrayAttribute, u"foo")
+
+    def test_ASFGUIDAttribute(self):
+        self.assertEqual(ASFGUIDAttribute(data=b"\xff").value, b"\xff")
+        self.assertRaises(TypeError, ASFGUIDAttribute, u"foo")
+
+    def test_ASFBoolAttribute(self):
+        self.assertEqual(
+            ASFBoolAttribute(data=b"\x01\x00\x00\x00").value, True)
+        self.assertEqual(
+            ASFBoolAttribute(data=b"\x00\x00\x00\x00").value, False)
+        self.assertEqual(ASFBoolAttribute(False).value, False)
+
+    def test_ASFWordAttribute(self):
+        self.assertEqual(
+            ASFWordAttribute(data=b"\x00" * 2).value, 0)
+        self.assertEqual(
+            ASFWordAttribute(data=b"\xff" * 2).value, 2 ** 16 - 1)
+        self.assertRaises(ValueError, ASFWordAttribute, -1)
+        self.assertRaises(ValueError, ASFWordAttribute, 2 ** 16)
+
+    def test_ASFDWordAttribute(self):
+        self.assertEqual(
+            ASFDWordAttribute(data=b"\x00" * 4).value, 0)
+        self.assertEqual(
+            ASFDWordAttribute(data=b"\xff" * 4).value, 2 ** 32 - 1)
+        self.assertRaises(ValueError, ASFDWordAttribute, -1)
+        self.assertRaises(ValueError, ASFDWordAttribute, 2 ** 32)
+
+    def test_ASFQWordAttribute(self):
+        self.assertEqual(
+            ASFQWordAttribute(data=b"\x00" * 8).value, 0)
+        self.assertEqual(
+            ASFQWordAttribute(data=b"\xff" * 8).value, 2 ** 64 - 1)
+        self.assertRaises(ValueError, ASFQWordAttribute, -1)
+        self.assertRaises(ValueError, ASFQWordAttribute, 2 ** 64)
 
 
 add(TASFAttributes)
