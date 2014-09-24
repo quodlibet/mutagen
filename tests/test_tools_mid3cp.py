@@ -70,7 +70,7 @@ class TMid3cp(_TTools):
         fd, blank_file = mkstemp(suffix='.mp3')
         os.close(fd)
 
-        self.call('-1', self.filename, blank_file)
+        self.call('--write-v1', self.filename, blank_file)
 
         fileobj = open(blank_file, 'rb')
         fileobj.seek(-128, 2)
