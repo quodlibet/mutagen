@@ -152,4 +152,16 @@ class TMid3cp(_TTools):
         status, out, err = self.call2(self.filename, blank_file)
         self.assertFalse(status)
 
+    def test_v23_v24(self):
+        fd, blank_file = mkstemp(suffix='.mp3')
+        os.close(fd)
+
+        self.assertEqual(ID3(self.filename).version, (2, 3, 0))
+        self.call(self.filename, blank_file)
+        self.assertEqual(ID3(blank_file).version, (2, 3, 0))
+
+        ID3(self.filename).save()
+        self.call(self.filename, blank_file)
+        self.assertEqual(ID3(blank_file).version, (2, 4, 0))
+
 add(TMid3cp)

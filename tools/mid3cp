@@ -46,7 +46,7 @@ def copy(src, dst, write_v1=True, excluded_tags=None, verbose=False):
         excluded_tags = []
 
     try:
-        id3 = mutagen.id3.ID3(src)
+        id3 = mutagen.id3.ID3(src, translate=False)
     except mutagen.id3.ID3NoHeaderError:
         printerr("No ID3 header found in %s" % src)
         return 1
@@ -57,10 +57,20 @@ def copy(src, dst, write_v1=True, excluded_tags=None, verbose=False):
         if verbose:
             printerr("File %s contains:" % src)
             printerr(id3.pprint())
+
+        for tag in excluded_tags:
+            id3.delall(tag)
+
+        # if the source is 2.3 save it as 2.3
+        if id3.version < (2, 4, 0):
+            id3.update_to_v23()
+            v2_version = 3
+        else:
+            id3.update_to_v24()
+            v2_version = 4
+
         try:
-            for tag in excluded_tags:
-                id3.delall(tag)
-            id3.save(dst, v1=(2 if write_v1 else 0))
+            id3.save(dst, v1=(2 if write_v1 else 0), v2_version=v2_version)
         except StandardError as err:
             printerr("Error saving %s:\n%s" % (dst, str(err)))
             return 1
