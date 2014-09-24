@@ -40,6 +40,8 @@ class ID3OptionParser(OptionParser):
 
 
 def copy(src, dst, include_v1=True, excluded_tags=None, verbose=False):
+    """Returns 0 on success"""
+
     if excluded_tags is None:
         excluded_tags = []
 
@@ -47,8 +49,10 @@ def copy(src, dst, include_v1=True, excluded_tags=None, verbose=False):
         id3 = mutagen.id3.ID3(src)
     except mutagen.id3.ID3NoHeaderError:
         printerr("No ID3 header found in %s" % src)
+        return 1
     except StandardError as err:
         print_(str(err))
+        return 1
     else:
         if verbose:
             printerr("File %s contains:" % src)
@@ -59,9 +63,11 @@ def copy(src, dst, include_v1=True, excluded_tags=None, verbose=False):
             id3.save(dst, v1=(2 if include_v1 else 0))
         except StandardError as err:
             printerr("Error saving %s:\n%s" % (dst, str(err)))
+            return 1
         else:
             if verbose:
                 printerr("Successfully saved %s" % dst)
+            return 0
 
 
 def main(argv):
@@ -76,30 +82,30 @@ def main(argv):
 
     if len(args) != 2:
         parser.print_help(file=sys.stderr)
-        return
+        return 1
 
     (src, dst) = args
 
     if not os.path.isfile(src):
         printerr("File not found: '%s'" % src)
         parser.print_help(file=sys.stderr)
-        return
+        return 1
 
     if not os.path.isfile(dst):
         printerr("File not found: '%s'" % dst)
         parser.print_help(file=sys.stderr)
-        return
+        return 1
 
     if os.path.samefile(src, dst):
         printerr("Source and destination files are the same!")
         parser.print_help(file=sys.stderr)
-        return
+        return 1
 
     # Strip tags - "-x FOO" adds whitespace at the beginning of the tag name
     excluded_tags = [x.strip() for x in options.x]
 
-    copy(src, dst, options.v1, excluded_tags, options.verbose)
+    return copy(src, dst, options.v1, excluded_tags, options.verbose)
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    sys.exit(main(sys.argv))

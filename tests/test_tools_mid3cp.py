@@ -36,13 +36,13 @@ class TMid3cp(_TTools):
         os.unlink(self.filename)
 
     def test_noop(self):
-        res, out = self.call()
-        self.failIf(res)
-        self.failUnless("Usage:" in out)
+        res, out, err = self.call2()
+        self.assertNotEqual(res, 0)
+        self.failUnless("Usage:" in err)
 
     def test_src_equal_dst(self):
         res, out, err = self.call2(self.filename, self.filename)
-        self.failIf(res)
+        self.assertNotEqual(res, 0)
         self.failUnless("the same" in err)
         self.failUnless("Usage:" in err)
 
@@ -133,5 +133,23 @@ class TMid3cp(_TTools):
         out = self.call(self.filename, blank_file)[1]
         self.failIf(out)
 
+    def test_exit_status(self):
+        fd, blank_file = mkstemp(suffix='.mp3')
+        os.close(fd)
+
+        status, out, err = self.call2(self.filename)
+        self.assertTrue(status)
+
+        status, out, err = self.call2(self.filename, self.filename)
+        self.assertTrue(status)
+
+        status, out, err = self.call2(blank_file, self.filename)
+        self.assertTrue(status)
+
+        status, out, err = self.call2("", self.filename)
+        self.assertTrue(status)
+
+        status, out, err = self.call2(self.filename, blank_file)
+        self.assertFalse(status)
 
 add(TMid3cp)
