@@ -675,7 +675,7 @@ class APEv2File(FileType):
         self.info = self._Info(open(filename, "rb"))
         try:
             self.tags = APEv2(filename)
-        except error:
+        except APENoHeaderError:
             self.tags = None
 
     def add_tags(self):

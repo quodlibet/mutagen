@@ -421,6 +421,10 @@ class TAPEv2File(TestCase):
     def setUp(self):
         self.audio = APEv2File("tests/data/click.mpc")
 
+    def test_empty(self):
+        f = APEv2File(os.path.join(DIR, "data", "xing.mp3"))
+        self.assertFalse(f.items())
+
     def test_add_tags(self):
         self.failUnless(self.audio.tags is None)
         self.audio.add_tags()
