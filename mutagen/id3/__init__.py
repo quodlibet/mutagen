@@ -32,12 +32,13 @@ interested in the :class:`ID3` class to start with.
 __all__ = ['ID3', 'ID3FileType', 'Frames', 'Open', 'delete']
 
 import struct
+import errno
 
 from struct import unpack, pack, error as StructError
 
 import mutagen
 from mutagen._util import insert_bytes, delete_bytes, DictProxy
-from .._compat import reraise, chr_, PY3
+from .._compat import chr_, PY3
 
 from ._util import *
 from ._frames import *
@@ -124,22 +125,15 @@ class ID3(DictProxy, mutagen.Metadata):
                 self.size = 0
                 raise ID3NoHeaderError("%s: too small (%d bytes)" % (
                     filename, self.__filesize))
-            except (ID3NoHeaderError, ID3UnsupportedVersionError) as err:
+            except (ID3NoHeaderError, ID3UnsupportedVersionError):
                 self.size = 0
-                import sys
-                stack = sys.exc_info()[2]
-                try:
-                    self._fileobj.seek(-128, 2)
-                except EnvironmentError:
-                    reraise(type(err), None, stack)
-                else:
-                    frames = ParseID3v1(self._fileobj.read(128))
-                    if frames is not None:
-                        self.version = self._V11
-                        for v in frames.values():
-                            self.add(v)
-                    else:
-                        reraise(type(err), None, stack)
+                frames, offset = _find_id3v1(self._fileobj)
+                if frames is None:
+                    raise
+
+                self.version = self._V11
+                for v in frames.values():
+                    self.add(v)
             else:
                 frames = self.__known_frames
                 if frames is None:
@@ -521,36 +515,20 @@ class ID3(DictProxy, mutagen.Metadata):
             f.seek(0)
             f.write(data)
 
-            try:
-                f.seek(-128, 2)
-            except IOError as err:
-                # If the file is too small, that's OK - it just means
-                # we're certain it doesn't have a v1 tag.
-                from errno import EINVAL
-                if err.errno != EINVAL:
-                    # If we failed to see for some other reason, bail out.
-                    raise
-                # Since we're sure this isn't a v1 tag, don't read it.
-                f.seek(0, 2)
-
-            data = f.read(128)
-            try:
-                idx = data.index(b"TAG")
-            except ValueError:
-                offset = 0
-                has_v1 = False
-            else:
-                offset = idx - len(data)
-                has_v1 = True
-
-            f.seek(offset, 2)
-            if v1 == 1 and has_v1 or v1 == 2:
-                f.write(MakeID3v1(self))
-            else:
-                f.truncate()
+            self.__save_v1(f, v1)
 
         finally:
             f.close()
+
+    def __save_v1(self, f, v1):
+        tag, offset = _find_id3v1(f)
+        has_v1 = tag is not None
+
+        f.seek(offset, 2)
+        if v1 == 1 and has_v1 or v1 == 2:
+            f.write(MakeID3v1(self))
+        else:
+            f.truncate()
 
     def delete(self, filename=None, delete_v1=True, delete_v2=True):
         """Remove tags from a file.
@@ -768,14 +746,10 @@ def delete(filename, delete_v1=True, delete_v2=True):
     f = open(filename, 'rb+')
 
     if delete_v1:
-        try:
-            f.seek(-128, 2)
-        except IOError:
-            pass
-        else:
-            if f.read(3) == b"TAG":
-                f.seek(-128, 2)
-                f.truncate()
+        tag, offset = _find_id3v1(f)
+        if tag is not None:
+            f.seek(offset, 2)
+            f.truncate()
 
     # technically an insize=0 tag is invalid, but we delete it anyway
     # (primarily because we used to write it)
@@ -793,6 +767,51 @@ def delete(filename, delete_v1=True, delete_v2=True):
 
 # support open(filename) as interface
 Open = ID3
+
+
+def _find_id3v1(fileobj):
+    """Returns a tuple of (id3tag, offset_to_end) or (None, 0)
+
+    offset mainly because we used to write too short tags in some cases and
+    we need the offset to delete them.
+    """
+
+    # id3v1 is always at the end (after apev2)
+
+    extra_read = b"APETAGEX".index(b"TAG")
+
+    try:
+        fileobj.seek(-128 - extra_read, 2)
+    except IOError as e:
+        if e.errno == errno.EINVAL:
+            # If the file is too small, might be ok since we wrote too small
+            # tags at some point. let's see how the parsing goes..
+            fileobj.seek(0, 0)
+        else:
+            raise
+
+    data = fileobj.read(128 + extra_read)
+    try:
+        idx = data.index(b"TAG")
+    except ValueError:
+        return (None, 0)
+    else:
+        # FIXME: make use of the apev2 parser here
+        # if TAG is part of APETAGEX assume this is an APEv2 tag
+        try:
+            ape_idx = data.index(b"APETAGEX")
+        except ValueError:
+            pass
+        else:
+            if idx == ape_idx + extra_read:
+                return (None, 0)
+
+        tag = ParseID3v1(data[idx:])
+        if tag is None:
+            return (None, 0)
+
+        offset = idx - len(data)
+        return (tag, offset)
 
 
 # ID3v1.1 support.

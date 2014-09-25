@@ -4,6 +4,7 @@ import shutil
 from tests import TestCase
 from tests import add
 from mutagen import id3
+from mutagen.apev2 import APEv2
 from mutagen.id3 import ID3, COMR, Frames, Frames_2_2, ID3Warning, \
     ID3JunkFrameError
 from mutagen._compat import cBytesIO, PY2, iteritems, integer_types
@@ -1478,6 +1479,7 @@ class Issue69_BadV1Year(TestCase):
 
     def test_missing_year(self):
         from mutagen.id3 import ParseID3v1
+
         tag = ParseID3v1(
             b'ABCTAGhello world\x00\x00\x00\x00\x00\x00\x00\x00'
             b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
@@ -1491,8 +1493,9 @@ class Issue69_BadV1Year(TestCase):
         self.failUnlessEqual(tag["TIT2"], "hello world")
 
     def test_short_year(self):
-        from mutagen.id3 import ParseID3v1
-        tag = ParseID3v1(
+        from mutagen.id3 import ParseID3v1, _find_id3v1
+
+        data = (
             b'XTAGhello world\x00\x00\x00\x00\x00\x00\x00\x00'
             b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
             b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
@@ -1502,8 +1505,13 @@ class Issue69_BadV1Year(TestCase):
             b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
             b'\x00\x00\x00\x00\x00\x00\xff'
         )
+        tag = ParseID3v1(data)
         self.failUnlessEqual(tag["TIT2"], "hello world")
         self.failUnlessEqual(tag["TDRC"], "0001")
+
+        frames, offset = _find_id3v1(cBytesIO(data))
+        self.assertEqual(offset, -125)
+        self.assertEqual(frames, tag)
 
     def test_none(self):
         from mutagen.id3 import ParseID3v1, MakeID3v1
@@ -1699,16 +1707,37 @@ class ID3V1_vs_APEv2(TestCase):
         shutil.copy(self.SILENCE, self.filename)
 
     def test_save_id3_over_ape(self):
-        # FIXME
         id3.delete(self.filename, delete_v2=False)
 
-        from mutagen.apev2 import APEv2
         ape_tag = APEv2()
         ape_tag["oh"] = ["no"]
         ape_tag.save(self.filename)
 
         ID3(self.filename).save()
-        # APEv2(self.filename)
+        self.assertEqual(APEv2(self.filename)["oh"], "no")
+
+    def test_delete_id3_with_ape(self):
+        ID3(self.filename).save(v1=2)
+
+        ape_tag = APEv2()
+        ape_tag["oh"] = ["no"]
+        ape_tag.save(self.filename)
+
+        id3.delete(self.filename, delete_v2=False)
+        self.assertEqual(APEv2(self.filename)["oh"], "no")
+
+    def test_ape_id3_lookalike(self):
+        # mp3 with apev2 tag that parses as id3v1 (at least with ParseID3v1)
+
+        id3.delete(self.filename, delete_v2=False)
+
+        ape_tag = APEv2()
+        ape_tag["oh"] = [
+            "noooooooooo0000000000000000000000000000000000ooooooooooo"]
+        ape_tag.save(self.filename)
+
+        ID3(self.filename).save()
+        self.assertTrue(APEv2(self.filename))
 
     def tearDown(self):
         os.remove(self.filename)
