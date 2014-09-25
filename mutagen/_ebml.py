@@ -1,3 +1,20 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright 2014 Ben Ockmore
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+
+"""EBML document parser.
+
+This module provides parsing for only the barebones tags specified by the EBML
+specification at:
+
+    http://ebml.sourceforge.net/specs/
+
+For an example of how to use it for specific formats, see the matroska.py file.
+"""
 
 import io
 from mutagen._compat import long_

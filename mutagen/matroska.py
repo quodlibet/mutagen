@@ -1,3 +1,20 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright 2014 Ben Ockmore
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+
+"""Parser for tags within a Matroska container.
+
+Allows editing of the metadata stored in the SimpleTag EBML elements of the
+Matroska EBML document.
+
+Based on:
+    http://www.matroska.org/technical/specs/index.html
+
+"""
 
 import mutagen
 import io
@@ -62,129 +79,4 @@ class MatroskaDocument(Document):
         0x1A45DFA3: ("ebml", EBMLHeader, True),
         0x18538067: ("segment", Segment, True),
     }
-
-#http://www.matroska.org/technical/specs/index.html
-
-
-__all__ = ['MKATag', 'MKAFileType', 'Open']
-
-class MKATag(DictProxy, mutagen.Metadata):
-
-    def __init__(self, *args, **kwargs):
-        super(MKATag, self).__init__(*args, **kwargs)
-
-Open = MKATag
-
-
-class Element(object):
-    def __init__(self, fileobj):
-        self.id = ElementID(fileobj)
-        self.data_size = DataSize(fileobj)
-        self.raw_data = fileobj.read(self.data_size)
-
-    def write(self):
-        return self.id.write() + self.data_size.write() + self.raw_data
-
-class UnsignedInteger(Element):
-    def __init__(self, fileobj):
-        super(UnsignedInteger, self).__init__(fileobj)
-
-        # Pad the raw data to 8 octets
-        data = (b'\x00'*8 + self.raw_data)[-8:]
-        self.val = cdata.ulonglong_be(data)
-
-class String(Element):
-    def __init__(self, fileobj):
-        super(String, self).__init__(fileobj)
-
-        self.val = self.raw_data
-
-class EBML(Element):
-    def __init__(self, fileobj):
-        super(EBML, self).__init__(fileobj)
-        data_stream = io.BytesIO(self.raw_data)
-        self.version = UnsignedInteger(data_stream)
-        self.read_version = UnsignedInteger(data_stream)
-        self.max_id_length = UnsignedInteger(data_stream)
-        self.max_size_length = UnsignedInteger(data_stream)
-        self.doc_type = String(data_stream)
-        self.doc_type_version = UnsignedInteger(data_stream)
-        self.doc_type_read_version = UnsignedInteger(data_stream)
-
-
-class MKAFileType(mutagen.FileType):
-    @staticmethod
-    def score(filename, fileobj, header_data):
-        return header_data.startswith(b'\x1a\x45\xdf\xa3')
-
-
-
-    """def parse_tag(data):
-        tag_name_id = data[0:2]
-        if tag_name_id != b'\x45\xa3':
-            return
-        tag_name_length ="""
-
-
-    def read_header(self, fileobj):
-        data = fileobj.read(4)
-
-        length = self._read_length(fileobj)[0]
-        fileobj.read(length)
-
-
-        section_id = fileobj.read(4)
-        length = self._read_length(fileobj)[0]
-        while section_id != b"\x18\x53\x80\x67":
-            fileobj.read(length)
-            section_id = fileobj.read(4)
-            if not section_id:
-                raise ValueError
-
-            length = self._read_length(fileobj)[0]
-
-        print("Segment found, with length: {}!".format(length))
-
-        while 1:
-            section_id = fileobj.read(4)
-            if not section_id:
-                raise ValueError
-
-            print([hex(ord(x)) for x in section_id])
-            length = self._read_length(fileobj)[0]
-            if section_id == '\x12\x54\xc3\x67':
-                print("Tags found! Length: {}".format(length))
-                break
-
-            fileobj.read(length)
-
-        tags_length = length
-        read = 0
-        while read < tags_length:
-            tag = fileobj.read(2)
-            if tag != '\x73\x73':
-                return
-
-            tag_length, length_bytes_read = self._read_length(fileobj)
-
-            l2_read = 0
-            while l2_read < tag_length:
-                level_3 = fileobj.read(2)
-                if level_3 == b'\x63\xc0':
-                    length, l2_len_bytes_read = self._read_length(fileobj)
-                    fileobj.read(length)
-                elif level_3 == b'\x67\xc8':
-                    length, l2_len_bytes_read = self._read_length(fileobj)
-                    fileobj.read(length)
-                    print("SimpleTag ({})".format(length))
-                l2_read += length + 2 + l2_len_bytes_read
-
-            print("Tag ({})".format(tag_length + length_bytes_read + 2))
-            read += tag_length + length_bytes_read + 2
-
-    def load(self, filename, **kwargs):
-        print filename
-        fileobj = open(filename, "rb")
-        self.read_header(fileobj)
-
 
