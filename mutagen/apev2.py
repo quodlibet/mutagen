@@ -309,12 +309,7 @@ class APEv2(_CIDictProxy, Metadata):
                     reraise(APEBadItemError, err, sys.exc_info()[2])
             value = fileobj.read(size)
 
-            if kind == TEXT:
-                value = APETextValue(value, kind)
-            elif kind == BINARY:
-                value = APEBinaryValue(value, kind)
-            elif kind == EXTERNAL:
-                value = APEExtValue(value, kind)
+            value = _get_value_type(kind)._new(value)
 
             self[key] = value
 
@@ -416,10 +411,25 @@ class APEv2(_CIDictProxy, Metadata):
             fileobj.truncate()
         fileobj.seek(0, 2)
 
+        tags = []
+        for key, value in self.items():
+            # Packed format for an item:
+            # 4B: Value length
+            # 4B: Value type
+            # Key name
+            # 1B: Null
+            # Key value
+            value_data = value._write()
+            if not isinstance(key, bytes):
+                key = key.encode("utf-8")
+            tag_data = bytearray()
+            tag_data += struct.pack("<2I", len(value_data), value.kind << 1)
+            tag_data += key + b"\0" + value_data
+            tags.append(bytes(tag_data))
+
         # "APE tags items should be sorted ascending by size... This is
         # not a MUST, but STRONGLY recommended. Actually the items should
         # be sorted by importance/byte, but this is not feasible."
-        tags = [v._internal(k) for k, v in self.items()]
         tags.sort(key=len)
         num_tags = len(tags)
         tags = b"".join(tags)
@@ -467,6 +477,18 @@ def delete(filename):
         pass
 
 
+def _get_value_type(kind):
+    """Returns a _APEValue subclass or raises ValueError"""
+
+    if kind == TEXT:
+        return APETextValue
+    elif kind == BINARY:
+        return APEBinaryValue
+    elif kind == EXTERNAL:
+        return APEExtValue
+    raise ValueError("unknown kind %r" % kind)
+
+
 def APEValue(value, kind):
     """APEv2 tag value factory.
 
@@ -474,60 +496,45 @@ def APEValue(value, kind):
     and text data are automatically detected by APEv2.__setitem__.
     """
 
-    if kind in (TEXT, EXTERNAL):
-        if not isinstance(value, text_type):
-            # stricter with py3
-            if PY3:
-                raise TypeError("str only for text/external values")
-        else:
-            value = value.encode("utf-8")
-
-    if kind == TEXT:
-        return APETextValue(value, kind)
-    elif kind == BINARY:
-        return APEBinaryValue(value, kind)
-    elif kind == EXTERNAL:
-        return APEExtValue(value, kind)
-    else:
+    try:
+        type_ = _get_value_type(kind)
+    except ValueError:
         raise ValueError("kind must be TEXT, BINARY, or EXTERNAL")
+    else:
+        return type_(value)
 
 
-@swap_to_string
-@total_ordering
 class _APEValue(object):
-    def __init__(self, value, kind):
-        if not isinstance(value, bytes):
-            raise TypeError("value not bytes")
-        self.kind = kind
-        self.value = value
 
-    def __len__(self):
-        return len(self.value)
+    kind = None
+    value = None
 
-    def __bytes__(self):
-        return self.value
+    def __init__(self, value, kind=None):
+        # kind kwarg is for backwards compat
+        if kind is not None and kind != self.kind:
+            raise ValueError
+        self.value = self._validate(value)
 
-    def __eq__(self, other):
-        return bytes(self) == other
+    @classmethod
+    def _new(cls, data):
+        instance = cls.__new__(cls)
+        instance._parse(data)
+        return instance
 
-    def __lt__(self, other):
-        return bytes(self) < other
+    def _parse(self, data):
+        """Sets value or raises APEBadItemError"""
 
-    # Packed format for an item:
-    # 4B: Value length
-    # 4B: Value type
-    # Key name
-    # 1B: Null
-    # Key value
-    def _internal(self, key):
-        if not isinstance(key, bytes):
-            key = key.encode("utf-8")
-        data = bytearray()
-        data += struct.pack("<2I", len(self.value), self.kind << 1)
-        data += key
-        data += b"\0"
-        data += self.value
-        return bytes(data)
+        raise NotImplementedError
+
+    def _write(self):
+        """Returns bytes"""
+
+        raise NotImplementedError
+
+    def _validate(self, value):
+        """Returns validated value or raises TypeError/ValueErrr"""
+
+        raise NotImplementedError
 
     def __repr__(self):
         return "%s(%r, %d)" % (type(self).__name__, self.value, self.kind)
@@ -537,14 +544,37 @@ class _APEValue(object):
 @total_ordering
 class _APEUtf8Value(_APEValue):
 
-    def __str__(self):
-        return self.value.decode("utf-8")
+    def _parse(self, data):
+        try:
+            self.value = data.decode("utf-8")
+        except UnicodeDecodeError as e:
+            reraise(APEBadItemError, e, sys.exc_info()[2])
+
+    def _validate(self, value):
+        if not isinstance(value, text_type):
+            if PY3:
+                raise TypeError("value not str")
+            else:
+                value = value.decode("utf-8")
+        return value
+
+    def _write(self):
+        return self.value.encode("utf-8")
+
+    def __len__(self):
+        return len(self.value)
+
+    def __bytes__(self):
+        return self._write()
 
     def __eq__(self, other):
-        return text_type(self) == other
+        return self.value == other
 
     def __lt__(self, other):
-        return text_type(self) < other
+        return self.value < other
+
+    def __str__(self):
+        return self.value
 
 
 class APETextValue(_APEUtf8Value):
@@ -554,35 +584,63 @@ class APETextValue(_APEUtf8Value):
     strings (with a null separating the values), or arrays of strings.
     """
 
+    kind = TEXT
+
     def __iter__(self):
         """Iterate over the strings of the value (not the characters)"""
 
-        return iter(text_type(self).split(u"\0"))
+        return iter(self.value.split(u"\0"))
 
     def __getitem__(self, index):
-        return text_type(self).split(u"\0")[index]
+        return self.value.split(u"\0")[index]
 
     def __len__(self):
-        return self.value.count(b"\0") + 1
-
-    __hash__ = _APEValue.__hash__
+        return self.value.count(u"\0") + 1
 
     def __setitem__(self, index, value):
         if not isinstance(value, text_type):
             if PY3:
                 raise TypeError("value not str")
-            value = value.decode("utf-8")
+            else:
+                value = value.decode("utf-8")
 
         values = list(self)
         values[index] = value
-        self.value = (u"\0".join(values)).encode("utf-8")
+        self.value = u"\0".join(values)
 
     def pprint(self):
         return u" / ".join(self)
 
 
+@swap_to_string
+@total_ordering
 class APEBinaryValue(_APEValue):
     """An APEv2 binary value."""
+
+    kind = BINARY
+
+    def _parse(self, data):
+        self.value = data
+
+    def _write(self):
+        return self.value
+
+    def _validate(self, value):
+        if not isinstance(value, bytes):
+            raise TypeError("value not bytes")
+        return bytes(value)
+
+    def __len__(self):
+        return len(self.value)
+
+    def __bytes__(self):
+        return self._write()
+
+    def __eq__(self, other):
+        return self.value == other
+
+    def __lt__(self, other):
+        return self.value < other
 
     def pprint(self):
         return u"[%d bytes]" % len(self)
@@ -594,8 +652,10 @@ class APEExtValue(_APEUtf8Value):
     External values are usually URI or IRI strings.
     """
 
+    kind = EXTERNAL
+
     def pprint(self):
-        return u"[External] %s" % text_type(self)
+        return u"[External] %s" % self.value
 
 
 class APEv2File(FileType):

@@ -10,7 +10,7 @@ from tests import TestCase, add
 
 import mutagen.apev2
 from mutagen._compat import PY3, text_type
-from mutagen.apev2 import APEv2File, APEv2, is_valid_apev2_key
+from mutagen.apev2 import APEv2File, APEv2, is_valid_apev2_key, APEBadItemError
 
 
 DIR = os.path.dirname(__file__)
@@ -326,7 +326,7 @@ class TAPEBinaryValue(TestCase):
         repr(self.value)
 
     def test_pprint(self):
-        self.value.pprint()
+        self.assertEqual(self.value.pprint(), "[3 bytes]")
 
     def test_type2(self):
         self.assertRaises(TypeError,
@@ -345,8 +345,17 @@ class TAPETextValue(TestCase):
         self.value = mutagen.apev2.APEValue(
             "\0".join(self.sample), mutagen.apev2.TEXT)
 
+    def test_parse(self):
+        self.assertRaises(APEBadItemError, self.TV._new, b"\xff")
+
     def test_type(self):
         self.failUnless(isinstance(self.value, self.TV))
+
+    def test_construct(self):
+        self.assertEqual(text_type(self.TV(u"foo")), u"foo")
+        if not PY3:
+            self.assertEqual(text_type(self.TV(b"foo")), u"foo")
+            self.assertRaises(ValueError, self.TV, b"\xff")
 
     def test_list(self):
         self.failUnlessEqual(self.sample, list(self.value))
@@ -361,14 +370,17 @@ class TAPETextValue(TestCase):
         for i in range(len(self.value)):
             self.failUnlessEqual(self.sample[i], self.value[i])
 
-    if PY3:
-        def test_py3(self):
+    def test_types(self):
+        if PY3:
             self.assertRaises(TypeError, self.value.__setitem__, 2, b"abc")
             self.assertRaises(
                 TypeError, mutagen.apev2.APEValue, b"abc", mutagen.apev2.TEXT)
 
     def test_repr(self):
         repr(self.value)
+
+    def test_pprint(self):
+        self.assertEqual(self.value.pprint(), "foo / bar / baz")
 
 add(TAPETextValue)
 
@@ -399,7 +411,7 @@ class TAPEExtValue(TestCase):
                 mutagen.apev2.EXTERNAL)
 
     def test_pprint(self):
-        self.value.pprint()
+        self.assertEqual(self.value.pprint(), "[External] http://foo")
 
 add(TAPEExtValue)
 
