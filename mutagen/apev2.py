@@ -33,7 +33,8 @@ __all__ = ["APEv2", "APEv2File", "Open", "delete"]
 import sys
 import struct
 
-from ._compat import cBytesIO, PY3, text_type, PY2, reraise, swap_to_string
+from ._compat import cBytesIO, PY3, text_type, PY2, reraise, swap_to_string, \
+    xrange
 from mutagen import Metadata, FileType, StreamInfo
 from mutagen._util import DictMixin, cdata, delete_bytes, total_ordering, \
     MutagenError
@@ -283,7 +284,7 @@ class APEv2(_CIDictProxy, Metadata):
     def __parse_tag(self, tag, count):
         fileobj = cBytesIO(tag)
 
-        for i in range(count):
+        for i in xrange(count):
             size_data = fileobj.read(4)
             # someone writes wrong item counts
             if not size_data:
