@@ -231,6 +231,11 @@ class TASFAttributes(TestCase):
         self.assertEqual(ASFByteArrayAttribute(data=b"\xff").value, b"\xff")
         self.assertRaises(TypeError, ASFByteArrayAttribute, u"foo")
 
+    def test_compat(self):
+        ba = ASFByteArrayAttribute()
+        ba.value = b"\xff"
+        self.assertEqual(ba._render(), b"\xff")
+
     def test_ASFGUIDAttribute(self):
         self.assertEqual(ASFGUIDAttribute(data=b"\xff").value, b"\xff")
         self.assertRaises(TypeError, ASFGUIDAttribute, u"foo")

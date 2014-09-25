@@ -132,7 +132,12 @@ class ASFBaseAttribute(object):
         if data:
             self.value = self.parse(data, **kwargs)
         else:
-            self.value = self._validate(value)
+            if value is None:
+                # we used to support not passing any args and instead assign
+                # them later, keep that working..
+                self.value = None
+            else:
+                self.value = self._validate(value)
 
     def _validate(self, value):
         """Raises TypeError or ValueError in case the user supplied value
@@ -236,7 +241,7 @@ class ASFByteArrayAttribute(ASFBaseAttribute):
 
     def _validate(self, value):
         if not isinstance(value, bytes):
-            raise TypeError("must be bytes/str")
+            raise TypeError("must be bytes/str: %r" % value)
         return value
 
     def data_size(self):
@@ -417,7 +422,7 @@ class ASFGUIDAttribute(ASFBaseAttribute):
 
     def _validate(self, value):
         if not isinstance(value, bytes):
-            raise TypeError("must be bytes/str")
+            raise TypeError("must be bytes/str: %r" % value)
         return value
 
     def data_size(self):
