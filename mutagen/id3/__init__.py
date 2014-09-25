@@ -797,7 +797,10 @@ Open = ID3
 
 # ID3v1.1 support.
 def ParseID3v1(data):
-    """Parse an ID3v1 tag, returning a list of ID3v2.4 frames."""
+    """Parse an ID3v1 tag, returning a list of ID3v2.4 frames.
+
+    Returns a {frame_name: frame} dict or None.
+    """
 
     try:
         data = data[data.index(b"TAG"):]

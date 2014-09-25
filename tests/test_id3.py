@@ -1689,6 +1689,32 @@ class Read22FrameNamesin23(TestCase):
             os.remove(filename)
 
 
+class ID3V1_vs_APEv2(TestCase):
+    SILENCE = os.path.join("tests", "data", "silence-44-s.mp3")
+
+    def setUp(self):
+        from tempfile import mkstemp
+        fd, self.filename = mkstemp(suffix='.mp3')
+        os.close(fd)
+        shutil.copy(self.SILENCE, self.filename)
+
+    def test_save_id3_over_ape(self):
+        # FIXME
+        id3.delete(self.filename, delete_v2=False)
+
+        from mutagen.apev2 import APEv2
+        ape_tag = APEv2()
+        ape_tag["oh"] = ["no"]
+        ape_tag.save(self.filename)
+
+        ID3(self.filename).save()
+        # APEv2(self.filename)
+
+    def tearDown(self):
+        os.remove(self.filename)
+
+
+add(ID3V1_vs_APEv2)
 add(Read22FrameNamesin23)
 add(ID3Loading)
 add(ID3GetSetDel)
