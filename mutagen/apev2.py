@@ -692,5 +692,4 @@ class APEv2File(FileType):
         except IOError:
             fileobj.seek(0)
         footer = fileobj.read()
-        filename = filename.lower()
         return ((b"APETAGEX" in footer) - header.startswith(b"ID3"))
