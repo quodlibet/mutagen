@@ -370,6 +370,19 @@ class TAPETextValue(TestCase):
         for i in range(len(self.value)):
             self.failUnlessEqual(self.sample[i], self.value[i])
 
+    def test_delitem(self):
+        del self.sample[1]
+        self.assertEqual(list(self.sample), ["foo", "baz"])
+        del self.sample[1:]
+        self.assertEqual(list(self.sample), ["foo"])
+
+    def test_insert(self):
+        self.sample.insert(0, "a")
+        self.assertEqual(len(self.sample), 4)
+        self.assertEqual(self.sample[0], "a")
+        if PY3:
+            self.assertRaises(TypeError, self.value.insert, 2, b"abc")
+
     def test_types(self):
         if PY3:
             self.assertRaises(TypeError, self.value.__setitem__, 2, b"abc")
@@ -378,6 +391,9 @@ class TAPETextValue(TestCase):
 
     def test_repr(self):
         repr(self.value)
+
+    def test_str(self):
+        self.assertEqual(text_type(self.value), u"foo\x00bar\x00baz")
 
     def test_pprint(self):
         self.assertEqual(self.value.pprint(), "foo / bar / baz")

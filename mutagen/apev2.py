@@ -32,6 +32,7 @@ __all__ = ["APEv2", "APEv2File", "Open", "delete"]
 
 import sys
 import struct
+from collections import MutableSequence
 
 from ._compat import cBytesIO, PY3, text_type, PY2, reraise, swap_to_string, \
     xrange
@@ -578,7 +579,7 @@ class _APEUtf8Value(_APEValue):
         return self.value
 
 
-class APETextValue(_APEUtf8Value):
+class APETextValue(_APEUtf8Value, MutableSequence):
     """An APEv2 text value.
 
     Text values are Unicode/UTF-8 strings. They can be accessed like
@@ -607,6 +608,22 @@ class APETextValue(_APEUtf8Value):
 
         values = list(self)
         values[index] = value
+        self.value = u"\0".join(values)
+
+    def insert(self, index, value):
+        if not isinstance(value, text_type):
+            if PY3:
+                raise TypeError("value not str")
+            else:
+                value = value.decode("utf-8")
+
+        values = list(self)
+        values.insert(index, value)
+        self.value = u"\0".join(values)
+
+    def __delitem__(self, index):
+        values = list(self)
+        del values[index]
         self.value = u"\0".join(values)
 
     def pprint(self):
