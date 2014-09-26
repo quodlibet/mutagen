@@ -146,6 +146,11 @@ class MP4Cover(bytes):
     def __init__(self, data, imageformat=FORMAT_JPEG):
         self.imageformat = imageformat
 
+    def __repr__(self):
+        return "%s(%r, %s)" % (
+            type(self).__name__, bytes(self),
+            AtomDataType._to_repr(self.imageformat))
+
 
 class MP4FreeForm(bytes):
     """A freeform value.
