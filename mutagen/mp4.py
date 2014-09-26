@@ -619,19 +619,25 @@ class MP4Tags(DictProxy, Metadata):
             self.setdefault(key, []).extend(value)
 
     def __render_freeform(self, key, value):
-        dummy, mean, name = key.split(b":", 2)
-        mean = struct.pack(">I4sI", len(mean) + 12, b"mean", 0) + mean
-        name = struct.pack(">I4sI", len(name) + 12, b"name", 0) + name
         if isinstance(value, bytes):
             value = [value]
+
+        # foobar writes multi value tags as multiple "---"
+        # atoms with the same key, so do the same
         data = b""
         for v in value:
-            flags = MP4FreeForm.FORMAT_TEXT
+            dummy, mean, name = key.split(b":", 2)
+            mean = struct.pack(">I4sI", len(mean) + 12, b"mean", 0) + mean
+            name = struct.pack(">I4sI", len(name) + 12, b"name", 0) + name
+
+            flags = AtomDataType.UTF8
             if isinstance(v, MP4FreeForm):
                 flags = v.dataformat
-            data += struct.pack(">I4s2I", len(v) + 16, b"data", flags, 0)
-            data += v
-        return Atom.render(b"----", mean + name + data)
+
+            vdata = struct.pack(">I4s2I", len(v) + 16, b"data", flags, 0)
+            vdata += v
+            data += Atom.render(b"----", mean + name + vdata)
+        return data
 
     def __parse_pair(self, atom, data):
         self[atom.name] = [struct.unpack(">2H", d[2:6]) for

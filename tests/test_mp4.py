@@ -268,10 +268,23 @@ class TMP4Tags(TestCase):
         self.failUnlessRaises(MP4MetadataError, self.wrap_ilst, data)
 
     def test_render_freeform(self):
+        data = (
+            b"\x00\x00\x00N----"
+            b"\x00\x00\x00\"mean\x00\x00\x00\x00net.sacredchao.Mutagen"
+            b"\x00\x00\x00\x10name\x00\x00\x00\x00test"
+            b"\x00\x00\x00\x14data\x00\x00\x00\x01\x00\x00\x00\x00whee"
+            b"\x00\x00\x00M----"
+            b"\x00\x00\x00\"mean\x00\x00\x00\x00net.sacredchao.Mutagen"
+            b"\x00\x00\x00\x10name\x00\x00\x00\x00test"
+            b"\x00\x00\x00\x13data\x00\x00\x00\x01\x00\x00\x00\x00wee"
+        )
+
+        key = b'----:net.sacredchao.Mutagen:test'
         self.failUnlessEqual(
-            MP4Tags()._MP4Tags__render_freeform(
-                b'----:net.sacredchao.Mutagen:test', [b'whee', b'wee']
-            ),
+            MP4Tags()._MP4Tags__render_freeform(key, [b'whee', b'wee']), data)
+
+    def test_parse_freeform(self):
+        double_data = (
             b"\x00\x00\x00a----"
             b"\x00\x00\x00\"mean\x00\x00\x00\x00net.sacredchao.Mutagen"
             b"\x00\x00\x00\x10name\x00\x00\x00\x00test"
@@ -279,8 +292,19 @@ class TMP4Tags(TestCase):
             b"\x00\x00\x00\x13data\x00\x00\x00\x01\x00\x00\x00\x00wee"
         )
 
+        key = b'----:net.sacredchao.Mutagen:test'
+        double_atom = \
+            MP4Tags()._MP4Tags__render_freeform(key, [b'whee', b'wee'])
+
+        tags = self.wrap_ilst(double_data)
+        self.assertTrue(key in tags)
+        self.assertEqual(tags[key], [b'whee', b'wee'])
+
+        tags2 = self.wrap_ilst(double_atom)
+        self.assertEqual(tags, tags2)
+
     def test_multi_freeform(self):
-        # merge multiple freeform tags witht he same key
+        # merge multiple freeform tags with the same key
         mean = Atom.render(b"mean", b"\x00" * 4 + b"net.sacredchao.Mutagen")
         name = Atom.render(b"name", b"\x00" * 4 + b"foo")
 
