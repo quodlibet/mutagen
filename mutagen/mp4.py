@@ -614,11 +614,17 @@ class MP4Tags(DictProxy, Metadata):
     def __parse_data(self, atom, data):
         pos = 0
         while pos < atom.length - 8:
-            length, name, flags = struct.unpack(">I4sI", data[pos:pos + 12])
+            head = data[pos:pos + 12]
+            if len(head) != 12:
+                raise MP4MetadataError("truncated atom % r" % atom.name)
+            length, name, flags = struct.unpack(">I4sI", head)
             if name != b"data":
                 raise MP4MetadataError(
                     "unexpected atom %r inside %r" % (name, atom.name))
-            yield flags, data[pos + 16:pos + length]
+            chunk = data[pos + 16:pos + length]
+            if len(chunk) != length - 16:
+                raise MP4MetadataError("truncated atom % r" % atom.name)
+            yield flags, chunk
             pos += length
 
     def __render_data(self, key, flags, value):

@@ -273,6 +273,11 @@ class TMP4Tags(TestCase):
         tags = self.wrap_ilst(data)
         self.assertFalse(tags)
 
+    def test_bad_cprt(self):
+        data = Atom.render(b"cprt", b"\x00\x00\x00#data\x00")
+        tags = self.wrap_ilst(data)
+        self.assertFalse(tags)
+
     def test_write_back_bad_atoms(self):
         # write a broken atom and try to load it
         data = Atom.render(b"datA", b"\x00\x00\x00\x01\x00\x00\x00\x00wheeee")
