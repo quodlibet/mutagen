@@ -145,10 +145,6 @@ class MP4Cover(bytes):
 
     def __init__(self, data, imageformat=FORMAT_JPEG):
         self.imageformat = imageformat
-        try:
-            self.format
-        except AttributeError:
-            self.format = imageformat
 
 
 class MP4FreeForm(bytes):
