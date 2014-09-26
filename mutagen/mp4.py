@@ -391,12 +391,12 @@ class MP4Tags(DictProxy, Metadata):
 
             if atom.name in self.__atoms:
                 info = self.__atoms[atom.name]
-                info[0](self, atom, data, *info[2:])
+                info[0](self, atom, data)
             else:
                 # unknown atom, try as text and skip if it fails
                 # FIXME: keep them somehow
                 try:
-                    self.__parse_text(atom, data)
+                    self.__parse_text(atom, data, implicit=False)
                 except MP4MetadataError:
                     continue
 
@@ -711,12 +711,30 @@ class MP4Tags(DictProxy, Metadata):
                 b"data", struct.pack(">2I", imageformat, 0) + cover))
         return Atom.render(key, b"".join(atom_data))
 
-    def __parse_text(self, atom, data, expected_flags=1):
-        value = [text.decode('utf-8', 'replace') for flags, text
-                 in self.__parse_data(atom, data)
-                 if flags == expected_flags]
-        if value:
-            self[atom.name] = value
+    def __parse_text(self, atom, data, implicit=True):
+        # implicit = False, for parsing unknown atoms only take utf8 ones.
+        # For known ones we can assume the implicit are utf8 too.
+        values = []
+        for flags, atom_data in self.__parse_data(atom, data):
+            if implicit:
+                if flags not in (AtomDataType.IMPLICIT, AtomDataType.UTF8):
+                    raise MP4MetadataError(
+                        "Unknown atom type %r for %r" % (flags, atom.name))
+            else:
+                if flags != AtomDataType.UTF8:
+                    raise MP4MetadataError(
+                        "%r is not text, ignore" % atom.name)
+
+            try:
+                text = atom_data.decode("utf-8")
+            except UnicodeDecodeError as e:
+                raise MP4MetadataError("%s: %s" % (atom.name, e))
+
+            values.append(text)
+
+        # extend in case we get multiple ones? never seen in the wild..
+        if values:
+            self[atom.name] = values
 
     def __render_text(self, key, value, flags=1):
         if isinstance(value, string_types):
@@ -740,8 +758,8 @@ class MP4Tags(DictProxy, Metadata):
         b"pgap": (__parse_bool, __render_bool),
         b"pcst": (__parse_bool, __render_bool),
         b"covr": (__parse_cover, __render_cover),
-        b"purl": (__parse_text, __render_text, 0),
-        b"egid": (__parse_text, __render_text, 0),
+        b"purl": (__parse_text, __render_text),
+        b"egid": (__parse_text, __render_text),
     }
 
     # the text atoms we know about which should make loading fail if parsing

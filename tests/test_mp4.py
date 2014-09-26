@@ -147,6 +147,29 @@ class TMP4Tags(TestCase):
         fileobj = cBytesIO(data)
         return MP4Tags(Atoms(fileobj), fileobj)
 
+    def test_purl(self):
+        # purl can have 0 or 1 flags (implicit or utf8)
+        data = Atom.render(b"data", b"\x00\x00\x00\x01" + b"\x00" * 4 + b"foo")
+        purl = Atom.render(b"purl", data)
+        tags = self.wrap_ilst(purl)
+        self.failUnlessEqual(tags[b"purl"], ["foo"])
+
+        data = Atom.render(b"data", b"\x00\x00\x00\x00" + b"\x00" * 4 + b"foo")
+        purl = Atom.render(b"purl", data)
+        tags = self.wrap_ilst(purl)
+        self.failUnlessEqual(tags[b"purl"], ["foo"])
+
+        # invalid flag
+        data = Atom.render(b"data", b"\x00\x00\x00\x03" + b"\x00" * 4 + b"foo")
+        purl = Atom.render(b"purl", data)
+        self.assertRaises(MP4MetadataError, self.wrap_ilst, purl)
+
+        # invalid utf8
+        data = Atom.render(
+            b"data", b"\x00\x00\x00\x01" + b"\x00" * 4 + b"\xff")
+        purl = Atom.render(b"purl", data)
+        self.assertRaises(MP4MetadataError, self.wrap_ilst, purl)
+
     def test_genre(self):
         data = Atom.render(b"data", b"\x00" * 8 + b"\x00\x01")
         genre = Atom.render(b"gnre", data)
