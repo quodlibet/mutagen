@@ -141,7 +141,7 @@ class EasyMP4Tags(DictMixin, Metadata):
         cls.RegisterKey(key, getter, setter, deleter)
 
     @classmethod
-    def RegisterFreeformKey(cls, key, name, mean=b"com.apple.iTunes"):
+    def RegisterFreeformKey(cls, key, name, mean="com.apple.iTunes"):
         """Register a text key.
 
         If the key you need to register is a simple one-to-one mapping
@@ -151,7 +151,7 @@ class EasyMP4Tags(DictMixin, Metadata):
             EasyMP4Tags.RegisterFreeformKey(
                 "musicbrainz_artistid", "MusicBrainz Artist Id")
         """
-        atomid = b"----:" + mean + b":" + name
+        atomid = "----:" + mean + ":" + name
 
         def getter(tags, key):
             return [s.decode("utf-8", "replace") for s in tags[atomid]]
@@ -215,44 +215,44 @@ class EasyMP4Tags(DictMixin, Metadata):
         return "\n".join(strings)
 
 for atomid, key in {
-    b'\xa9nam': 'title',
-    b'\xa9alb': 'album',
-    b'\xa9ART': 'artist',
-    b'aART': 'albumartist',
-    b'\xa9day': 'date',
-    b'\xa9cmt': 'comment',
-    b'desc': 'description',
-    b'\xa9grp': 'grouping',
-    b'\xa9gen': 'genre',
-    b'cprt': 'copyright',
-    b'soal': 'albumsort',
-    b'soaa': 'albumartistsort',
-    b'soar': 'artistsort',
-    b'sonm': 'titlesort',
-    b'soco': 'composersort',
+    '\xa9nam': 'title',
+    '\xa9alb': 'album',
+    '\xa9ART': 'artist',
+    'aART': 'albumartist',
+    '\xa9day': 'date',
+    '\xa9cmt': 'comment',
+    'desc': 'description',
+    '\xa9grp': 'grouping',
+    '\xa9gen': 'genre',
+    'cprt': 'copyright',
+    'soal': 'albumsort',
+    'soaa': 'albumartistsort',
+    'soar': 'artistsort',
+    'sonm': 'titlesort',
+    'soco': 'composersort',
 }.items():
     EasyMP4Tags.RegisterTextKey(key, atomid)
 
 for name, key in {
-    b'MusicBrainz Artist Id': 'musicbrainz_artistid',
-    b'MusicBrainz Track Id': 'musicbrainz_trackid',
-    b'MusicBrainz Album Id': 'musicbrainz_albumid',
-    b'MusicBrainz Album Artist Id': 'musicbrainz_albumartistid',
-    b'MusicIP PUID': 'musicip_puid',
-    b'MusicBrainz Album Status': 'musicbrainz_albumstatus',
-    b'MusicBrainz Album Type': 'musicbrainz_albumtype',
-    b'MusicBrainz Release Country': 'releasecountry',
+    'MusicBrainz Artist Id': 'musicbrainz_artistid',
+    'MusicBrainz Track Id': 'musicbrainz_trackid',
+    'MusicBrainz Album Id': 'musicbrainz_albumid',
+    'MusicBrainz Album Artist Id': 'musicbrainz_albumartistid',
+    'MusicIP PUID': 'musicip_puid',
+    'MusicBrainz Album Status': 'musicbrainz_albumstatus',
+    'MusicBrainz Album Type': 'musicbrainz_albumtype',
+    'MusicBrainz Release Country': 'releasecountry',
 }.items():
     EasyMP4Tags.RegisterFreeformKey(key, name)
 
 for name, key in {
-    b"tmpo": "bpm",
+    "tmpo": "bpm",
 }.items():
     EasyMP4Tags.RegisterIntKey(key, name)
 
 for name, key in {
-    b"trkn": "tracknumber",
-    b"disk": "discnumber",
+    "trkn": "tracknumber",
+    "disk": "discnumber",
 }.items():
     EasyMP4Tags.RegisterIntPairKey(key, name)
 

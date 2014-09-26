@@ -325,6 +325,18 @@ class Atoms(object):
         return "\n".join([repr(child) for child in self.atoms])
 
 
+def _name2key(name):
+    if PY2:
+        return name
+    return name.decode("latin-1")
+
+
+def _key2name(key):
+    if PY2:
+        return key
+    return key.encode("latin-1")
+
+
 class MP4Tags(DictProxy, Metadata):
     r"""Dictionary containing Apple iTunes metadata list key/values.
 
@@ -414,7 +426,13 @@ class MP4Tags(DictProxy, Metadata):
                     self.__parse_text(atom, data, implicit=False)
             except MP4MetadataError:
                 # parsing failed, save them so we can write them back
-                self._failed_atoms.setdefault(atom.name, []).append(data)
+                key = _name2key(atom.name)
+                self._failed_atoms.setdefault(key, []).append(data)
+
+    def __setitem__(self, key, value):
+        if not isinstance(key, str):
+            raise TypeError("key has to be str")
+        super(MP4Tags, self).__setitem__(key, value)
 
     @classmethod
     def _can_load(cls, atoms):
@@ -443,13 +461,14 @@ class MP4Tags(DictProxy, Metadata):
         items = self.items()
         items.sort(key=self.__key_sort)
         for key, value in items:
+            atom_name = _key2name(key)[:4]
+            if atom_name in self.__atoms:
+                render_func = self.__atoms[atom_name][1]
+            else:
+                render_func = type(self).__render_text
 
-            if not PY2 and not isinstance(key, bytes):
-                raise MP4MetadataValueError("keys have to be bytes")
-
-            info = self.__atoms.get(key[:4], (None, type(self).__render_text))
             try:
-                values.append(info[1](self, key, value, *info[2:]))
+                values.append(render_func(self, key, value))
             except (TypeError, ValueError) as s:
                 reraise(MP4MetadataValueError, s, sys.exc_info()[2])
 
@@ -461,7 +480,7 @@ class MP4Tags(DictProxy, Metadata):
                 assert atom_name != b"----"
                 continue
             for data in failed:
-                values.append(Atom.render(atom_name, data))
+                values.append(Atom.render(_key2name(atom_name), data))
 
         data = Atom.render(b"ilst", b"".join(values))
 
@@ -602,7 +621,7 @@ class MP4Tags(DictProxy, Metadata):
             pos += length
 
     def __render_data(self, key, flags, value):
-        return Atom.render(key, b"".join([
+        return Atom.render(_key2name(key), b"".join([
             Atom.render(b"data", struct.pack(">2I", flags, 0) + data)
             for data in value]))
 
@@ -630,7 +649,7 @@ class MP4Tags(DictProxy, Metadata):
             pos += length
 
         if value:
-            key = atom.name + b":" + mean + b":" + name
+            key = _name2key(atom.name + b":" + mean + b":" + name)
             self.setdefault(key, []).extend(value)
 
     def __render_freeform(self, key, value):
@@ -641,7 +660,7 @@ class MP4Tags(DictProxy, Metadata):
         # atoms with the same key, so do the same
         data = b""
         for v in value:
-            dummy, mean, name = key.split(b":", 2)
+            dummy, mean, name = _key2name(key).split(b":", 2)
             mean = struct.pack(">I4sI", len(mean) + 12, b"mean", 0) + mean
             name = struct.pack(">I4sI", len(name) + 12, b"name", 0) + name
 
@@ -655,7 +674,8 @@ class MP4Tags(DictProxy, Metadata):
         return data
 
     def __parse_pair(self, atom, data):
-        self[atom.name] = [struct.unpack(">2H", d[2:6]) for
+        key = _name2key(atom.name)
+        self[key] = [struct.unpack(">2H", d[2:6]) for
                            flags, d in self.__parse_data(atom, data)]
 
     def __render_pair(self, key, value):
@@ -681,14 +701,16 @@ class MP4Tags(DictProxy, Metadata):
     def __parse_genre(self, atom, data):
         # Translate to a freeform genre.
         genre = cdata.short_be(data[16:18])
-        if b"\xa9gen" not in self:
+        key = _name2key(b"\xa9gen")
+        if key not in self:
             try:
-                self[b"\xa9gen"] = [GENRES[genre - 1]]
+                self[key] = [GENRES[genre - 1]]
             except IndexError:
                 pass
 
     def __parse_tempo(self, atom, data):
-        self[atom.name] = [cdata.ushort_be(value[1]) for
+        key = _name2key(atom.name)
+        self[key] = [cdata.ushort_be(value[1]) for
                            value in self.__parse_data(atom, data)]
 
     def __render_tempo(self, key, value):
@@ -707,10 +729,11 @@ class MP4Tags(DictProxy, Metadata):
         return self.__render_data(key, 0x15, values)
 
     def __parse_bool(self, atom, data):
+        key = _name2key(atom.name)
         try:
-            self[atom.name] = bool(ord(data[16:17]))
+            self[key] = bool(ord(data[16:17]))
         except TypeError:
-            self[atom.name] = False
+            self[key] = False
 
     def __render_bool(self, key, value):
         return self.__render_data(key, 0x15, [chr_(bool(value))])
@@ -736,7 +759,8 @@ class MP4Tags(DictProxy, Metadata):
             pos += length
 
         if values:
-            self[atom.name] = values
+            key = _name2key(atom.name)
+            self[key] = values
 
     def __render_cover(self, key, value):
         atom_data = []
@@ -747,7 +771,7 @@ class MP4Tags(DictProxy, Metadata):
                 imageformat = MP4Cover.FORMAT_JPEG
             atom_data.append(Atom.render(
                 b"data", struct.pack(">2I", imageformat, 0) + cover))
-        return Atom.render(key, b"".join(atom_data))
+        return Atom.render(_key2name(key), b"".join(atom_data))
 
     def __parse_text(self, atom, data, implicit=True):
         # implicit = False, for parsing unknown atoms only take utf8 ones.
@@ -772,7 +796,8 @@ class MP4Tags(DictProxy, Metadata):
 
         # extend in case we get multiple ones? never seen in the wild..
         if values:
-            self[atom.name] = values
+            key = _name2key(atom.name)
+            self[key] = values
 
     def __render_text(self, key, value, flags=1):
         if isinstance(value, string_types):
@@ -813,7 +838,8 @@ class MP4Tags(DictProxy, Metadata):
     def pprint(self):
         values = []
         for key, value in iteritems(self):
-            key = key.decode('latin1', "replace")
+            if not isinstance(key, text_type):
+                key = key.decode("latin-1")
             if key == "covr":
                 values.append("%s=%s" % (key, ", ".join(
                     ["[%d bytes of data]" % len(data) for data in value])))
