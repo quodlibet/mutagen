@@ -53,7 +53,73 @@ _CONTAINERS = [b"moov", b"udta", b"trak", b"mdia", b"meta", b"ilst",
                b"stbl", b"minf", b"moof", b"traf"]
 _SKIP_SIZE = {b"meta": 4}
 
-__all__ = ['MP4', 'Open', 'delete', 'MP4Cover', 'MP4FreeForm']
+__all__ = ['MP4', 'Open', 'delete', 'MP4Cover', 'MP4FreeForm', 'AtomDataType']
+
+
+class AtomDataType(object):
+
+    IMPLICIT = 0
+    """for use with tags for which no type needs to be indicated because
+       only one type is allowed"""
+
+    UTF8 = 1
+    """without any count or null terminator"""
+
+    UTF16 = 2
+    """also known as UTF-16BE"""
+
+    SJIS = 3
+    """deprecated unless it is needed for special Japanese characters"""
+
+    HTML = 6
+    """the HTML file header specifies which HTML version"""
+
+    XML = 7
+    """the XML header must identify the DTD or schemas"""
+
+    UUID = 8
+    """also known as GUID; stored as 16 bytes in binary (valid as an ID)"""
+
+    ISRC = 9
+    """stored as UTF-8 text (valid as an ID)"""
+
+    MI3P = 10
+    """stored as UTF-8 text (valid as an ID)"""
+
+    GIF = 12
+    """(deprecated) a GIF image"""
+
+    JPEG = 13
+    """a JPEG image"""
+
+    PNG = 14
+    """PNG image"""
+
+    URL = 15
+    """absolute, in UTF-8 characters"""
+
+    DURATION = 16
+    """in milliseconds, 32-bit integer"""
+
+    DATETIME = 17
+    """in UTC, counting seconds since midnight, January 1, 1904;
+       32 or 64-bits"""
+
+    GENRES = 18
+    """a list of enumerated values"""
+
+    INTEGER = 21
+    """a signed big-endian integer with length one of { 1,2,3,4,8 } bytes"""
+
+    RIAA_PA = 24
+    """RIAA parental advisory; { -1=no, 1=yes, 0=unspecified },
+       8-bit ingteger"""
+
+    UPC = 25
+    """Universal Product Code, in text UTF-8 format (valid as an ID)"""
+
+    BMP = 27
+    """Windows bitmap image"""
 
 
 class MP4Cover(bytes):
@@ -63,8 +129,9 @@ class MP4Cover(bytes):
 
     * imageformat -- format of the image (either FORMAT_JPEG or FORMAT_PNG)
     """
-    FORMAT_JPEG = 0x0D
-    FORMAT_PNG = 0x0E
+
+    FORMAT_JPEG = AtomDataType.JPEG
+    FORMAT_PNG = AtomDataType.PNG
 
     def __new__(cls, data, *args, **kwargs):
         return bytes.__new__(cls, data)
@@ -82,16 +149,16 @@ class MP4FreeForm(bytes):
 
     Attributes:
 
-    * dataformat -- format of the data (either FORMAT_TEXT or FORMAT_DATA)
+    * dataformat -- format of the data (see AtomDataType)
     """
 
-    FORMAT_DATA = 0x0
-    FORMAT_TEXT = 0x1
+    FORMAT_DATA = AtomDataType.IMPLICIT  # deprecated
+    FORMAT_TEXT = AtomDataType.UTF8  # deprecated
 
     def __new__(cls, data, *args, **kwargs):
         return bytes.__new__(cls, data)
 
-    def __init__(self, data, dataformat=FORMAT_TEXT):
+    def __init__(self, data, dataformat=AtomDataType.UTF8):
         self.dataformat = dataformat
 
 
@@ -626,6 +693,8 @@ class MP4Tags(DictProxy, Metadata):
                 raise MP4MetadataError(
                     "unexpected atom %r inside 'covr'" % name)
             if imageformat not in (MP4Cover.FORMAT_JPEG, MP4Cover.FORMAT_PNG):
+                # Sometimes AtomDataType.IMPLICIT or simply wrong.
+                # In all cases it was jpeg, so default to it
                 imageformat = MP4Cover.FORMAT_JPEG
             cover = MP4Cover(data[pos + 16:pos + length], imageformat)
             self[atom.name].append(cover)
