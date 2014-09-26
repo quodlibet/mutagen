@@ -121,6 +121,13 @@ class AtomDataType(object):
     BMP = 27
     """Windows bitmap image"""
 
+    @classmethod
+    def _to_repr(cls, value):
+        for var in dir(cls):
+            if getattr(cls, var) == value:
+                return "%s.%s" % (cls.__name__, var)
+        return "-1"
+
 
 class MP4Cover(bytes):
     """A cover artwork.
@@ -160,6 +167,11 @@ class MP4FreeForm(bytes):
 
     def __init__(self, data, dataformat=AtomDataType.UTF8):
         self.dataformat = dataformat
+
+    def __repr__(self):
+        return "%s(%r, %s)" % (
+            type(self).__name__, bytes(self),
+            AtomDataType._to_repr(self.dataformat))
 
 
 class Atom(object):
@@ -601,8 +613,10 @@ class MP4Tags(DictProxy, Metadata):
             value.append(MP4FreeForm(data[pos + 16:pos + length],
                                      dataformat=flags))
             pos += length
+
         if value:
-            self[atom.name + b":" + mean + b":" + name] = value
+            key = atom.name + b":" + mean + b":" + name
+            self.setdefault(key, []).extend(value)
 
     def __render_freeform(self, key, value):
         dummy, mean, name = key.split(b":", 2)

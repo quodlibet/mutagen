@@ -279,6 +279,21 @@ class TMP4Tags(TestCase):
             b"\x00\x00\x00\x13data\x00\x00\x00\x01\x00\x00\x00\x00wee"
         )
 
+    def test_multi_freeform(self):
+        # merge multiple freeform tags witht he same key
+        mean = Atom.render(b"mean", b"\x00" * 4 + b"net.sacredchao.Mutagen")
+        name = Atom.render(b"name", b"\x00" * 4 + b"foo")
+
+        data = Atom.render(b"data", b"\x00\x00\x00\x01" + b"\x00" * 4 + b"bar")
+        result = Atom.render(b"----", mean + name + data)
+        data = Atom.render(
+            b"data", b"\x00\x00\x00\x01" + b"\x00" * 4 + b"quux")
+        result += Atom.render(b"----", mean + name + data)
+        tags = self.wrap_ilst(result)
+        values = tags[b"----:net.sacredchao.Mutagen:foo"]
+        self.assertEqual(values[0], b"bar")
+        self.assertEqual(values[1], b"quux")
+
     def test_bad_freeform(self):
         mean = Atom.render(b"mean", b"net.sacredchao.Mutagen")
         name = Atom.render(b"name", b"empty test key")
