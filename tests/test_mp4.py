@@ -162,13 +162,17 @@ class TMP4Tags(TestCase):
         # invalid flag
         data = Atom.render(b"data", b"\x00\x00\x00\x03" + b"\x00" * 4 + b"foo")
         purl = Atom.render(b"purl", data)
-        self.assertRaises(MP4MetadataError, self.wrap_ilst, purl)
+        tags = self.wrap_ilst(purl)
+        self.assertFalse(b"purl" in tags)
+
+        self.assertTrue(b"purl" in tags._failed_atoms)
 
         # invalid utf8
         data = Atom.render(
             b"data", b"\x00\x00\x00\x01" + b"\x00" * 4 + b"\xff")
         purl = Atom.render(b"purl", data)
-        self.assertRaises(MP4MetadataError, self.wrap_ilst, purl)
+        tags = self.wrap_ilst(purl)
+        self.assertFalse(b"purl" in tags)
 
     def test_genre(self):
         data = Atom.render(b"data", b"\x00" * 8 + b"\x00\x01")
@@ -206,7 +210,8 @@ class TMP4Tags(TestCase):
         data = Atom.render(
             b"foob", b"\x00\x00\x00\x0E" + b"\x00" * 4 + b"whee")
         covr = Atom.render(b"covr", data)
-        self.failUnlessRaises(MP4MetadataError, self.wrap_ilst, covr)
+        tags = self.wrap_ilst(covr)
+        self.assertFalse(tags)
 
     def test_covr_blank_format(self):
         data = Atom.render(
@@ -265,7 +270,42 @@ class TMP4Tags(TestCase):
     def test_bad_text_data(self):
         data = Atom.render(b"datA", b"\x00\x00\x00\x01\x00\x00\x00\x00whee")
         data = Atom.render(b"aART", data)
-        self.failUnlessRaises(MP4MetadataError, self.wrap_ilst, data)
+        tags = self.wrap_ilst(data)
+        self.assertFalse(tags)
+
+    def test_write_back_bad_atoms(self):
+        # write a broken atom and try to load it
+        data = Atom.render(b"datA", b"\x00\x00\x00\x01\x00\x00\x00\x00wheeee")
+        data = Atom.render(b"aART", data)
+        tags = self.wrap_ilst(data)
+        self.assertFalse(tags)
+
+        # save it into an existing mp4
+        original = os.path.join("tests", "data", "has-tags.m4a")
+        fd, filename = mkstemp(suffix='.mp4')
+        os.close(fd)
+        shutil.copy(original, filename)
+        delete(filename)
+
+        # it should still end up in the file
+        tags.save(filename)
+        with open(filename, "rb") as h:
+            self.assertTrue(b"wheeee" in h.read())
+
+        # if we define our own aART throw away the broken one
+        tags[b"aART"] = ["new"]
+        tags.save(filename)
+        with open(filename, "rb") as h:
+            self.assertFalse(b"wheeee" in h.read())
+
+        # add the broken one back and delete all tags including the broken one
+        del tags[b"aART"]
+        tags.save(filename)
+        with open(filename, "rb") as h:
+            self.assertTrue(b"wheeee" in h.read())
+        delete(filename)
+        with open(filename, "rb") as h:
+            self.assertFalse(b"wheeee" in h.read())
 
     def test_render_freeform(self):
         data = (
@@ -322,7 +362,8 @@ class TMP4Tags(TestCase):
         mean = Atom.render(b"mean", b"net.sacredchao.Mutagen")
         name = Atom.render(b"name", b"empty test key")
         bad_freeform = Atom.render(b"----", b"\x00" * 4 + mean + name)
-        self.failUnlessRaises(MP4MetadataError, self.wrap_ilst, bad_freeform)
+        tags = self.wrap_ilst(bad_freeform)
+        self.assertFalse(tags)
 
     def test_pprint_non_text_list(self):
         tags = MP4Tags()

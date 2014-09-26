@@ -390,6 +390,10 @@ class MP4Tags(DictProxy, Metadata):
     Unknown non-text tags are removed.
     """
 
+    def __init__(self, *args, **kwargs):
+        self._failed_atoms = {}
+        super(MP4Tags, self).__init__(*args, **kwargs)
+
     def load(self, atoms, fileobj):
         try:
             ilst = atoms[b"moov.udta.meta.ilst"]
@@ -401,16 +405,16 @@ class MP4Tags(DictProxy, Metadata):
             if len(data) != atom.length - 8:
                 raise MP4MetadataError("Not enough data")
 
-            if atom.name in self.__atoms:
-                info = self.__atoms[atom.name]
-                info[0](self, atom, data)
-            else:
-                # unknown atom, try as text and skip if it fails
-                # FIXME: keep them somehow
-                try:
+            try:
+                if atom.name in self.__atoms:
+                    info = self.__atoms[atom.name]
+                    info[0](self, atom, data)
+                else:
+                    # unknown atom, try as text
                     self.__parse_text(atom, data, implicit=False)
-                except MP4MetadataError:
-                    continue
+            except MP4MetadataError:
+                # parsing failed, save them so we can write them back
+                self._failed_atoms.setdefault(atom.name, []).append(data)
 
     @classmethod
     def _can_load(cls, atoms):
@@ -448,6 +452,17 @@ class MP4Tags(DictProxy, Metadata):
                 values.append(info[1](self, key, value, *info[2:]))
             except (TypeError, ValueError) as s:
                 reraise(MP4MetadataValueError, s, sys.exc_info()[2])
+
+        for atom_name, failed in iteritems(self._failed_atoms):
+            # don't write atoms back if we have added a new one with
+            # the same name, this excludes freeform which can have
+            # multiple atoms with the same key
+            if atom_name in self:
+                assert atom_name != b"----"
+                continue
+            for data in failed:
+                values.append(Atom.render(atom_name, data))
+
         data = Atom.render(b"ilst", b"".join(values))
 
         # Find the old atoms.
@@ -701,7 +716,7 @@ class MP4Tags(DictProxy, Metadata):
         return self.__render_data(key, 0x15, [chr_(bool(value))])
 
     def __parse_cover(self, atom, data):
-        self[atom.name] = []
+        values = []
         pos = 0
         while pos < atom.length - 8:
             length, name, imageformat = struct.unpack(">I4sI",
@@ -717,8 +732,11 @@ class MP4Tags(DictProxy, Metadata):
                 # In all cases it was jpeg, so default to it
                 imageformat = MP4Cover.FORMAT_JPEG
             cover = MP4Cover(data[pos + 16:pos + length], imageformat)
-            self[atom.name].append(cover)
+            values.append(cover)
             pos += length
+
+        if values:
+            self[atom.name] = values
 
     def __render_cover(self, key, value):
         atom_data = []
@@ -765,6 +783,7 @@ class MP4Tags(DictProxy, Metadata):
     def delete(self, filename):
         """Remove the metadata from the given filename."""
 
+        self._failed_atoms.clear()
         self.clear()
         self.save(filename)
 
