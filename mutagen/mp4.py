@@ -697,7 +697,7 @@ class MP4Tags(DictProxy, Metadata):
             else:
                 raise MP4MetadataValueError(
                     "invalid numeric pair %r" % ((track, total),))
-        return self.__render_data(key, 0, 0, data)
+        return self.__render_data(key, 0, AtomDataType.IMPLICIT, data)
 
     def __render_pair_no_trailing(self, key, value):
         data = []
@@ -707,7 +707,7 @@ class MP4Tags(DictProxy, Metadata):
             else:
                 raise MP4MetadataValueError(
                     "invalid numeric pair %r" % ((track, total),))
-        return self.__render_data(key, 0, 0, data)
+        return self.__render_data(key, 0, AtomDataType.IMPLICIT, data)
 
     def __parse_genre(self, atom, data):
         # Translate to a freeform genre.
@@ -727,7 +727,7 @@ class MP4Tags(DictProxy, Metadata):
     def __render_tempo(self, key, value):
         try:
             if len(value) == 0:
-                return self.__render_data(key, 0, 0x15, b"")
+                return self.__render_data(key, 0, AtomDataType.INTEGER, b"")
 
             if min(value) < 0 or max(value) >= 2 ** 16:
                 raise MP4MetadataValueError(
@@ -737,7 +737,7 @@ class MP4Tags(DictProxy, Metadata):
                 "tmpo must be a list of 16 bit integers")
 
         values = list(map(cdata.to_ushort_be, value))
-        return self.__render_data(key, 0, 0x15, values)
+        return self.__render_data(key, 0, AtomDataType.INTEGER, values)
 
     def __parse_bool(self, atom, data):
         key = _name2key(atom.name)
@@ -747,7 +747,8 @@ class MP4Tags(DictProxy, Metadata):
             self[key] = False
 
     def __render_bool(self, key, value):
-        return self.__render_data(key, 0, 0x15, [chr_(bool(value))])
+        return self.__render_data(
+            key, 0, AtomDataType.INTEGER, [chr_(bool(value))])
 
     def __parse_cover(self, atom, data):
         values = []
@@ -810,7 +811,7 @@ class MP4Tags(DictProxy, Metadata):
             key = _name2key(atom.name)
             self[key] = values
 
-    def __render_text(self, key, value, flags=1):
+    def __render_text(self, key, value, flags=AtomDataType.UTF8):
         if isinstance(value, string_types):
             value = [value]
         return self.__render_data(key, 0, flags, [utf8(v) for v in value])
