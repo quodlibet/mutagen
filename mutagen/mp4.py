@@ -617,19 +617,23 @@ class MP4Tags(DictProxy, Metadata):
             head = data[pos:pos + 12]
             if len(head) != 12:
                 raise MP4MetadataError("truncated atom % r" % atom.name)
-            length, name, flags = struct.unpack(">I4sI", head)
+            length, name = struct.unpack(">I4s", head[:8])
+            version = ord(head[8:9])
+            flags = struct.unpack(">I", b"\x00" + head[9:12])[0]
             if name != b"data":
                 raise MP4MetadataError(
                     "unexpected atom %r inside %r" % (name, atom.name))
+
             chunk = data[pos + 16:pos + length]
             if len(chunk) != length - 16:
                 raise MP4MetadataError("truncated atom % r" % atom.name)
-            yield flags, chunk
+            yield version, flags, chunk
             pos += length
 
-    def __render_data(self, key, flags, value):
+    def __render_data(self, key, version, flags, value):
         return Atom.render(_key2name(key), b"".join([
-            Atom.render(b"data", struct.pack(">2I", flags, 0) + data)
+            Atom.render(
+                b"data", struct.pack(">2I", version << 24 | flags, 0) + data)
             for data in value]))
 
     def __parse_freeform(self, atom, data):
@@ -683,7 +687,7 @@ class MP4Tags(DictProxy, Metadata):
     def __parse_pair(self, atom, data):
         key = _name2key(atom.name)
         self[key] = [struct.unpack(">2H", d[2:6]) for
-                           flags, d in self.__parse_data(atom, data)]
+                     version, flags, d in self.__parse_data(atom, data)]
 
     def __render_pair(self, key, value):
         data = []
@@ -693,7 +697,7 @@ class MP4Tags(DictProxy, Metadata):
             else:
                 raise MP4MetadataValueError(
                     "invalid numeric pair %r" % ((track, total),))
-        return self.__render_data(key, 0, data)
+        return self.__render_data(key, 0, 0, data)
 
     def __render_pair_no_trailing(self, key, value):
         data = []
@@ -703,7 +707,7 @@ class MP4Tags(DictProxy, Metadata):
             else:
                 raise MP4MetadataValueError(
                     "invalid numeric pair %r" % ((track, total),))
-        return self.__render_data(key, 0, data)
+        return self.__render_data(key, 0, 0, data)
 
     def __parse_genre(self, atom, data):
         # Translate to a freeform genre.
@@ -717,13 +721,13 @@ class MP4Tags(DictProxy, Metadata):
 
     def __parse_tempo(self, atom, data):
         key = _name2key(atom.name)
-        self[key] = [cdata.ushort_be(value[1]) for
+        self[key] = [cdata.ushort_be(value[-1]) for
                            value in self.__parse_data(atom, data)]
 
     def __render_tempo(self, key, value):
         try:
             if len(value) == 0:
-                return self.__render_data(key, 0x15, b"")
+                return self.__render_data(key, 0, 0x15, b"")
 
             if min(value) < 0 or max(value) >= 2 ** 16:
                 raise MP4MetadataValueError(
@@ -733,7 +737,7 @@ class MP4Tags(DictProxy, Metadata):
                 "tmpo must be a list of 16 bit integers")
 
         values = list(map(cdata.to_ushort_be, value))
-        return self.__render_data(key, 0x15, values)
+        return self.__render_data(key, 0, 0x15, values)
 
     def __parse_bool(self, atom, data):
         key = _name2key(atom.name)
@@ -743,7 +747,7 @@ class MP4Tags(DictProxy, Metadata):
             self[key] = False
 
     def __render_bool(self, key, value):
-        return self.__render_data(key, 0x15, [chr_(bool(value))])
+        return self.__render_data(key, 0, 0x15, [chr_(bool(value))])
 
     def __parse_cover(self, atom, data):
         values = []
@@ -784,7 +788,7 @@ class MP4Tags(DictProxy, Metadata):
         # implicit = False, for parsing unknown atoms only take utf8 ones.
         # For known ones we can assume the implicit are utf8 too.
         values = []
-        for flags, atom_data in self.__parse_data(atom, data):
+        for version, flags, atom_data in self.__parse_data(atom, data):
             if implicit:
                 if flags not in (AtomDataType.IMPLICIT, AtomDataType.UTF8):
                     raise MP4MetadataError(
@@ -809,8 +813,7 @@ class MP4Tags(DictProxy, Metadata):
     def __render_text(self, key, value, flags=1):
         if isinstance(value, string_types):
             value = [value]
-        return self.__render_data(
-            key, flags, [utf8(v) for v in value])
+        return self.__render_data(key, 0, flags, [utf8(v) for v in value])
 
     def delete(self, filename):
         """Remove the metadata from the given filename."""

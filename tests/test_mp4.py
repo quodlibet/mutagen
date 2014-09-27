@@ -256,12 +256,12 @@ class TMP4Tags(TestCase):
 
     def test_render_data(self):
         self.failUnlessEqual(
-            MP4Tags()._MP4Tags__render_data('aART', 1, [b'whee']),
+            MP4Tags()._MP4Tags__render_data('aART', 0, 1, [b'whee']),
             b"\x00\x00\x00\x1caART"
             b"\x00\x00\x00\x14data\x00\x00\x00\x01\x00\x00\x00\x00whee"
         )
         self.failUnlessEqual(
-            MP4Tags()._MP4Tags__render_data('aART', 2, [b'whee', b'wee']),
+            MP4Tags()._MP4Tags__render_data('aART', 0, 2, [b'whee', b'wee']),
             b"\x00\x00\x00/aART"
             b"\x00\x00\x00\x14data\x00\x00\x00\x02\x00\x00\x00\x00whee"
             b"\x00\x00\x00\x13data\x00\x00\x00\x02\x00\x00\x00\x00wee"
