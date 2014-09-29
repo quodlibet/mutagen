@@ -147,6 +147,17 @@ class TMP4Tags(TestCase):
         fileobj = cBytesIO(data)
         return MP4Tags(Atoms(fileobj), fileobj)
 
+    def test_parse_multiple_atoms(self):
+        # while we don't write multiple values as multiple atoms
+        # still read them
+        # https://bitbucket.org/lazka/mutagen/issue/165
+        data = Atom.render(b"data", b"\x00\x00\x00\x01" + b"\x00" * 4 + b"foo")
+        grp1 = Atom.render(b"\xa9grp", data)
+        data = Atom.render(b"data", b"\x00\x00\x00\x01" + b"\x00" * 4 + b"bar")
+        grp2 = Atom.render(b"\xa9grp", data)
+        tags = self.wrap_ilst(grp1 + grp2)
+        self.assertEqual(tags["\xa9grp"], [u"foo", u"bar"])
+
     def test_purl(self):
         # purl can have 0 or 1 flags (implicit or utf8)
         data = Atom.render(b"data", b"\x00\x00\x00\x01" + b"\x00" * 4 + b"foo")

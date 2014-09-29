@@ -631,6 +631,14 @@ class MP4Tags(DictProxy, Metadata):
             yield version, flags, chunk
             pos += length
 
+    def __add(self, key, value, single=False):
+        assert isinstance(key, str)
+
+        if single:
+            self[key] = value
+        else:
+            self.setdefault(key, []).extend(value)
+
     def __render_data(self, key, version, flags, value):
         return Atom.render(_key2name(key), b"".join([
             Atom.render(
@@ -657,9 +665,8 @@ class MP4Tags(DictProxy, Metadata):
                                      dataformat=flags, version=version))
             pos += length
 
-        if value:
-            key = _name2key(atom.name + b":" + mean + b":" + name)
-            self.setdefault(key, []).extend(value)
+        key = _name2key(atom.name + b":" + mean + b":" + name)
+        self.__add(key, value)
 
     def __render_freeform(self, key, value):
         if isinstance(value, bytes):
@@ -684,8 +691,9 @@ class MP4Tags(DictProxy, Metadata):
 
     def __parse_pair(self, atom, data):
         key = _name2key(atom.name)
-        self[key] = [struct.unpack(">2H", d[2:6]) for
-                     version, flags, d in self.__parse_data(atom, data)]
+        values = [struct.unpack(">2H", d[2:6]) for
+                  version, flags, d in self.__parse_data(atom, data)]
+        self.__add(key, values)
 
     def __render_pair(self, key, value):
         data = []
@@ -713,14 +721,15 @@ class MP4Tags(DictProxy, Metadata):
         key = _name2key(b"\xa9gen")
         if key not in self:
             try:
-                self[key] = [GENRES[genre - 1]]
+                self.__add(key, [GENRES[genre - 1]])
             except IndexError:
                 pass
 
     def __parse_tempo(self, atom, data):
         key = _name2key(atom.name)
-        self[key] = [cdata.ushort_be(value[-1]) for
-                           value in self.__parse_data(atom, data)]
+        values = [cdata.ushort_be(value[-1]) for
+                  value in self.__parse_data(atom, data)]
+        self.__add(key, values)
 
     def __render_tempo(self, key, value):
         try:
@@ -740,9 +749,11 @@ class MP4Tags(DictProxy, Metadata):
     def __parse_bool(self, atom, data):
         key = _name2key(atom.name)
         try:
-            self[key] = bool(ord(data[16:17]))
+            value = bool(ord(data[16:17]))
         except TypeError:
-            self[key] = False
+            value = False
+
+        self.__add(key, value, single=True)
 
     def __render_bool(self, key, value):
         return self.__render_data(
@@ -768,9 +779,8 @@ class MP4Tags(DictProxy, Metadata):
             values.append(cover)
             pos += length
 
-        if values:
-            key = _name2key(atom.name)
-            self[key] = values
+        key = _name2key(atom.name)
+        self.__add(key, values)
 
     def __render_cover(self, key, value):
         atom_data = []
@@ -804,10 +814,8 @@ class MP4Tags(DictProxy, Metadata):
 
             values.append(text)
 
-        # extend in case we get multiple ones? never seen in the wild..
-        if values:
-            key = _name2key(atom.name)
-            self[key] = values
+        key = _name2key(atom.name)
+        self.__add(key, values)
 
     def __render_text(self, key, value, flags=AtomDataType.UTF8):
         if isinstance(value, string_types):
