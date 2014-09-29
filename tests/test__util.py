@@ -1,5 +1,5 @@
 from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes
-from mutagen._util import decode_terminated, split_escape
+from mutagen._util import decode_terminated, split_escape, dict_match
 from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2
 from tests import TestCase, add
 import random
@@ -392,6 +392,24 @@ class FileHandlingMockedMMap(FileHandling):
         mmap.mmap = self._orig_mmap
 
 add(FileHandlingMockedMMap)
+
+
+class Tdict_match(TestCase):
+
+    def test_match(self):
+        self.assertEqual(dict_match({"*": 1}, "a"), 1)
+        self.assertEqual(dict_match({"*": 1}, "*"), 1)
+        self.assertEqual(dict_match({"*a": 1}, "ba"), 1)
+        self.assertEqual(dict_match({"?": 1}, "b"), 1)
+        self.assertEqual(dict_match({"[ab]": 1}, "b"), 1)
+
+    def test_nomatch(self):
+        self.assertEqual(dict_match({"*a": 1}, "ab"), None)
+        self.assertEqual(dict_match({"??": 1}, "a"), None)
+        self.assertEqual(dict_match({"[ab]": 1}, "c"), None)
+        self.assertEqual(dict_match({"[ab]": 1}, "[ab]"), None)
+
+add(Tdict_match)
 
 
 class Tdecode_terminated(TestCase):

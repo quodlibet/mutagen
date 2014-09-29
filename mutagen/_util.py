@@ -361,9 +361,13 @@ def delete_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
 
 
 def dict_match(d, key, default=None):
-    try:
+    """Like __getitem__ but works as if the keys() are all filename patterns.
+    Returns the value of any dict key that matches the passed key.
+    """
+
+    if key in d and "[" not in key:
         return d[key]
-    except KeyError:
+    else:
         for pattern, value in iteritems(d):
             if fnmatchcase(key, pattern):
                 return value
