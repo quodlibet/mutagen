@@ -5,9 +5,9 @@
 # published by the Free Software Foundation.
 
 from mutagen import Metadata
-from mutagen._util import DictMixin, dict_match, utf8
+from mutagen._util import DictMixin, dict_match
 from mutagen.mp4 import MP4, MP4Tags, error, delete
-from ._compat import PY2, text_type
+from ._compat import PY2, text_type, PY3
 
 
 __all__ = ["EasyMP4Tags", "EasyMP4", "delete", "error"]
@@ -157,7 +157,14 @@ class EasyMP4Tags(DictMixin, Metadata):
             return [s.decode("utf-8", "replace") for s in tags[atomid]]
 
         def setter(tags, key, value):
-            tags[atomid] = [utf8(v) for v in value]
+            encoded = []
+            for v in value:
+                if not isinstance(v, text_type):
+                    if PY3:
+                        raise TypeError("%r not str" % v)
+                    v = v.decode("utf-8")
+                encoded.append(v.encode("utf-8"))
+            tags[atomid] = encoded
 
         def deleter(tags, key):
             del(tags[atomid])

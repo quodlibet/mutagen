@@ -2,11 +2,12 @@ import os
 import shutil
 import struct
 
-from mutagen._compat import cBytesIO
+from mutagen._compat import cBytesIO, PY3
 from tempfile import mkstemp
 from tests import TestCase, add
 from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
-                         MP4MetadataError, MP4FreeForm, error, AtomDataType)
+                         MP4MetadataError, MP4FreeForm, error, AtomDataType,
+                         MP4MetadataValueError)
 from mutagen._util import cdata
 from os import devnull
 
@@ -195,8 +196,7 @@ class TMP4Tags(TestCase):
     def test_empty_cpil(self):
         cpil = Atom.render(b"cpil", Atom.render(b"data", b"\x00" * 8))
         tags = self.wrap_ilst(cpil)
-        self.failUnless("cpil" in tags)
-        self.failIf(tags["cpil"])
+        self.assertFalse("cpil" in tags)
 
     def test_genre_too_big(self):
         data = Atom.render(b"data", b"\x00" * 8 + b"\x01\x00")
@@ -506,8 +506,16 @@ class TMP4(TestCase):
             self.faad()
 
     def test_unicode(self):
-        self.set_key('\xa9nam', [b'\xe3\x82\x8a\xe3\x81\x8b'],
-                     result=[u'\u308a\u304b'])
+        try:
+            self.set_key('\xa9nam', [b'\xe3\x82\x8a\xe3\x81\x8b'],
+                         result=[u'\u308a\u304b'])
+        except MP4MetadataValueError:
+            if not PY3:
+                raise
+
+    def test_invalid_text(self):
+        self.assertRaises(
+            MP4MetadataValueError, self.set_key, '\xa9nam', [b'\xff'])
 
     def test_save_text(self):
         self.set_key('\xa9nam', [u"Some test name"])

@@ -26,9 +26,9 @@ import sys
 
 from mutagen import FileType, Metadata, StreamInfo
 from mutagen._constants import GENRES
-from mutagen._util import cdata, insert_bytes, DictProxy, utf8, MutagenError
+from mutagen._util import cdata, insert_bytes, DictProxy, MutagenError
 from mutagen._compat import reraise, PY2, string_types, text_type, chr_, \
-    iteritems
+    iteritems, PY3
 
 
 class error(IOError, MutagenError):
@@ -716,19 +716,30 @@ class MP4Tags(DictProxy, Metadata):
         return self.__render_data(key, 0, AtomDataType.IMPLICIT, data)
 
     def __parse_genre(self, atom, data):
-        # Translate to a freeform genre.
-        genre = cdata.short_be(data[16:18])
-        key = _name2key(b"\xa9gen")
-        if key not in self:
+        values = []
+        for version, flags, data in self.__parse_data(atom, data):
+            # version = 0, flags = 0
+            if len(data) != 2:
+                raise MP4MetadataValueError("invalid genre")
+            genre = cdata.short_be(data)
+            # Translate to a freeform genre.
             try:
-                self.__add(key, [GENRES[genre - 1]])
+                genre = GENRES[genre - 1]
             except IndexError:
-                pass
+                # this will make us write it back at least
+                raise MP4MetadataValueError("unknown genre")
+            values.append(genre)
+        key = _name2key(b"\xa9gen")
+        self.__add(key, values)
 
     def __parse_tempo(self, atom, data):
+        values = []
+        for version, flags, data in self.__parse_data(atom, data):
+            # version = 0, flags = 0 or 21
+            if len(data) != 2:
+                raise MP4MetadataValueError("invalid tempo")
+            values.append(cdata.ushort_be(data))
         key = _name2key(atom.name)
-        values = [cdata.ushort_be(value[-1]) for
-                  value in self.__parse_data(atom, data)]
         self.__add(key, values)
 
     def __render_tempo(self, key, value):
@@ -747,13 +758,13 @@ class MP4Tags(DictProxy, Metadata):
         return self.__render_data(key, 0, AtomDataType.INTEGER, values)
 
     def __parse_bool(self, atom, data):
-        key = _name2key(atom.name)
-        try:
-            value = bool(ord(data[16:17]))
-        except TypeError:
-            value = False
+        for version, flags, data in self.__parse_data(atom, data):
+            if len(data) != 1:
+                raise MP4MetadataValueError("invalid bool")
 
-        self.__add(key, value, single=True)
+            value = bool(ord(data))
+            key = _name2key(atom.name)
+            self.__add(key, value, single=True)
 
     def __render_bool(self, key, value):
         return self.__render_data(
@@ -820,7 +831,16 @@ class MP4Tags(DictProxy, Metadata):
     def __render_text(self, key, value, flags=AtomDataType.UTF8):
         if isinstance(value, string_types):
             value = [value]
-        return self.__render_data(key, 0, flags, [utf8(v) for v in value])
+
+        encoded = []
+        for v in value:
+            if not isinstance(v, text_type):
+                if PY3:
+                    raise TypeError("%r not str" % v)
+                v = v.decode("utf-8")
+            encoded.append(v.encode("utf-8"))
+
+        return self.__render_data(key, 0, flags, encoded)
 
     def delete(self, filename):
         """Remove the metadata from the given filename."""
@@ -843,8 +863,7 @@ class MP4Tags(DictProxy, Metadata):
         b"egid": (__parse_text, __render_text),
     }
 
-    # the text atoms we know about which should make loading fail if parsing
-    # any of them fails
+    # these allow implicit flags and parse as text
     for name in [b"\xa9nam", b"\xa9alb", b"\xa9ART", b"aART", b"\xa9wrt",
                  b"\xa9day", b"\xa9cmt", b"desc", b"purd", b"\xa9grp",
                  b"\xa9gen", b"\xa9lyr", b"catg", b"keyw", b"\xa9too",

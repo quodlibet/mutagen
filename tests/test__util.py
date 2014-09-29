@@ -1,4 +1,4 @@
-from mutagen._util import DictMixin, cdata, utf8, insert_bytes, delete_bytes
+from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes
 from mutagen._util import decode_terminated, split_escape
 from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2
 from tests import TestCase, add
@@ -25,35 +25,6 @@ class FDict(DictMixin):
 
     def __delitem__(self, *args):
         return self.__d.__delitem__(*args)
-
-
-class Tutf8(TestCase):
-
-    def test_str(self):
-        value = utf8(b"1234")
-        self.failUnlessEqual(value, b"1234")
-        self.failUnless(isinstance(value, bytes))
-
-    def test_bad_str(self):
-        value = utf8(b"\xab\xde")
-        # Two '?' symbols.
-        self.failUnlessEqual(value, b"\xef\xbf\xbd\xef\xbf\xbd")
-        self.failUnless(isinstance(value, bytes))
-
-    def test_low_unicode(self):
-        value = utf8(u"1234")
-        self.failUnlessEqual(value, b"1234")
-        self.failUnless(isinstance(value, bytes))
-
-    def test_high_unicode(self):
-        value = utf8(u"\u1234")
-        self.failUnlessEqual(value, b'\xe1\x88\xb4')
-        self.failUnless(isinstance(value, bytes))
-
-    def test_invalid(self):
-        self.failUnlessRaises(TypeError, utf8, 1234)
-
-add(Tutf8)
 
 
 class TDictMixin(TestCase):
