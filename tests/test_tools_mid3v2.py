@@ -174,8 +174,17 @@ class TMid3v2(_TTools):
         value = b"\xff\xff\x81"
         self.assertRaises(ValueError, value.decode, "utf-8")
         self.assertRaises(ValueError, value.decode, "cp1252")
+        enc = locale.getpreferredencoding()
+
+        # we need the decoding to fail for this test to work...
+        try:
+            value.decode(enc)
+        except ValueError:
+            pass
+        else:
+            return
+
         if not PY2:
-            enc = locale.getpreferredencoding()
             value = value.decode(enc, "surrogateescape")
         res, out = self.call("--TALB", value, self.filename)
         self.failIfEqual(res, 0)
