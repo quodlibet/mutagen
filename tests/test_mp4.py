@@ -6,7 +6,7 @@ from mutagen._compat import cBytesIO
 from tempfile import mkstemp
 from tests import TestCase, add
 from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
-                         MP4MetadataError, MP4FreeForm, error)
+                         MP4MetadataError, MP4FreeForm, error, AtomDataType)
 from mutagen._util import cdata
 from os import devnull
 
@@ -390,15 +390,15 @@ class TMP4Tags(TestCase):
         tags = self.wrap_ilst(Atom.render(b"----", data))
         v = tags[key][0]
         self.failUnlessEqual(v, value)
-        self.failUnlessEqual(v.dataformat, MP4FreeForm.FORMAT_DATA)
+        self.failUnlessEqual(v.dataformat, AtomDataType.IMPLICIT)
 
         data = MP4Tags()._MP4Tags__render_freeform(key, v)
         v = self.wrap_ilst(data)[key][0]
-        self.failUnlessEqual(v.dataformat, MP4FreeForm.FORMAT_DATA)
+        self.failUnlessEqual(v.dataformat, AtomDataType.IMPLICIT)
 
         data = MP4Tags()._MP4Tags__render_freeform(key, value)
         v = self.wrap_ilst(data)[key][0]
-        self.failUnlessEqual(v.dataformat, MP4FreeForm.FORMAT_TEXT)
+        self.failUnlessEqual(v.dataformat, AtomDataType.UTF8)
 
 add(TMP4Tags)
 
@@ -517,8 +517,8 @@ class TMP4(TestCase):
 
     def test_freeform_bin(self):
         self.set_key('----:net.sacredchao.Mutagen:test key', [
-            MP4FreeForm(b'woooo', MP4FreeForm.FORMAT_TEXT),
-            MP4FreeForm(b'hoooo', MP4FreeForm.FORMAT_DATA),
+            MP4FreeForm(b'woooo', AtomDataType.UTF8),
+            MP4FreeForm(b'hoooo', AtomDataType.IMPLICIT),
             MP4FreeForm(b'boooo'),
         ])
 
@@ -710,7 +710,7 @@ class TMP4Datatypes(TMP4HasTags):
         key = "----:com.apple.iTunes:iTunNORM"
         self.failUnless(key in self.audio.tags)
         ff = self.audio.tags[key]
-        self.failUnlessEqual(ff[0].dataformat, MP4FreeForm.FORMAT_TEXT)
+        self.failUnlessEqual(ff[0].dataformat, AtomDataType.UTF8)
         self.failUnlessEqual(ff[0].version, 0)
 
     def test_has_covr(self):
