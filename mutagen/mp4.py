@@ -166,8 +166,9 @@ class MP4FreeForm(bytes):
     def __new__(cls, data, *args, **kwargs):
         return bytes.__new__(cls, data)
 
-    def __init__(self, data, dataformat=AtomDataType.UTF8):
+    def __init__(self, data, dataformat=AtomDataType.UTF8, version=0):
         self.dataformat = dataformat
+        self.version = version
 
     def __repr__(self):
         return "%s(%r, %s)" % (
@@ -651,12 +652,9 @@ class MP4Tags(DictProxy, Metadata):
                     "unexpected atom %r inside %r" % (atom_name, atom.name))
 
             version = ord(data[pos + 8:pos + 8 + 1])
-            if version != 0:
-                raise MP4MetadataError("Unsupported version: %r" % version)
-
             flags = struct.unpack(">I", b"\x00" + data[pos + 9:pos + 12])[0]
             value.append(MP4FreeForm(data[pos + 16:pos + length],
-                                     dataformat=flags))
+                                     dataformat=flags, version=version))
             pos += length
 
         if value:

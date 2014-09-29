@@ -711,6 +711,7 @@ class TMP4Datatypes(TMP4HasTags):
         self.failUnless(key in self.audio.tags)
         ff = self.audio.tags[key]
         self.failUnlessEqual(ff[0].dataformat, MP4FreeForm.FORMAT_TEXT)
+        self.failUnlessEqual(ff[0].version, 0)
 
     def test_has_covr(self):
         self.failUnless('covr' in self.audio.tags)
