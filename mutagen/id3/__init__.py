@@ -147,7 +147,7 @@ class ID3(DictProxy, mutagen.Metadata):
                         self.add(frame)
                     else:
                         self.unknown_frames.append(frame)
-                self.__unknown_version = self.version
+                self.__unknown_version = self.version[:2]
         finally:
             self._fileobj.close()
             del self._fileobj
@@ -433,7 +433,7 @@ class ID3(DictProxy, mutagen.Metadata):
 
         # only write unknown frames if they were loaded from the version
         # we are saving with or upgraded to it
-        if self.__unknown_version == version:
+        if self.__unknown_version == version[:2]:
             framedata.extend([data for data in self.unknown_frames
                               if len(data) > 10])
 
@@ -616,7 +616,7 @@ class ID3(DictProxy, mutagen.Metadata):
 
         self.__update_common()
 
-        if self.__unknown_version == (2, 3, 0):
+        if self.__unknown_version == (2, 3):
             # convert unknown 2.3 frames (flags/size) to 2.4
             converted = []
             for frame in self.unknown_frames:
@@ -628,7 +628,7 @@ class ID3(DictProxy, mutagen.Metadata):
 
                 converted.append(self.__save_frame(frame, name=name))
             self.unknown_frames[:] = converted
-            self.__unknown_version = (2, 4, 0)
+            self.__unknown_version = (2, 4)
 
         # TDAT, TYER, and TIME have been turned into TDRC.
         try:
