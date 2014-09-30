@@ -57,6 +57,10 @@ __all__ = ['MP4', 'Open', 'delete', 'MP4Cover', 'MP4FreeForm', 'AtomDataType']
 
 
 class AtomDataType(object):
+    """Enum for `dataformat` attribute of MP4FreeForm.
+
+    .. versionadded:: 1.25
+    """
 
     IMPLICIT = 0
     """for use with tags for which no type needs to be indicated because
@@ -401,7 +405,8 @@ class MP4Tags(DictProxy, Metadata):
     MP4 tag data cannot exist outside of the structure of an MP4 file,
     so this class should not be manually instantiated.
 
-    Unknown non-text tags are removed.
+    Unknown non-text tags and tags that failed to parse will be written
+    back as is.
     """
 
     def __init__(self, *args, **kwargs):
