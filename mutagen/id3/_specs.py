@@ -9,7 +9,7 @@ from struct import unpack, pack
 from warnings import warn
 
 from .._compat import text_type, chr_, PY3, swap_to_string, string_types
-from .._util import total_ordering, decode_terminated
+from .._util import total_ordering, decode_terminated, enum
 from ._util import ID3JunkFrameError, ID3Warning, BitPaddedInt
 
 
@@ -76,6 +76,14 @@ class SizedIntegerSpec(Spec):
 
     def validate(self, frame, value):
         return value
+
+
+@enum
+class Encoding(object):
+    LATIN1 = 0
+    UTF16 = 1
+    UTF16BE = 2
+    UTF8 = 3
 
 
 class EncodingSpec(ByteSpec):

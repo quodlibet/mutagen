@@ -37,12 +37,25 @@ import errno
 from struct import unpack, pack, error as StructError
 
 import mutagen
-from mutagen._util import insert_bytes, delete_bytes, DictProxy
+from mutagen._util import insert_bytes, delete_bytes, DictProxy, enum
 from .._compat import chr_, PY3
 
 from ._util import *
 from ._frames import *
 from ._specs import *
+
+
+@enum
+class ID3v1SaveOptions(object):
+
+    REMOVE = 0
+    """ID3v1 tags will be removed"""
+
+    UPDATE = 1
+    """ID3v1 tags will be updated but not added"""
+
+    CREATE = 2
+    """ID3v1 tags will be created and/or updated"""
 
 
 class ID3(DictProxy, mutagen.Metadata):
@@ -525,7 +538,8 @@ class ID3(DictProxy, mutagen.Metadata):
         has_v1 = tag is not None
 
         f.seek(offset, 2)
-        if v1 == 1 and has_v1 or v1 == 2:
+        if v1 == ID3v1SaveOptions.UPDATE and has_v1 or \
+                v1 == ID3v1SaveOptions.CREATE:
             f.write(MakeID3v1(self))
         else:
             f.truncate()

@@ -1743,6 +1743,14 @@ class ID3V1_vs_APEv2(TestCase):
         os.remove(self.filename)
 
 
+class TID3Misc(TestCase):
+
+    def test_main(self):
+        self.assertEqual(id3.Encoding.UTF8, 3)
+        self.assertEqual(id3.ID3v1SaveOptions.UPDATE, 1)
+
+
+add(TID3Misc)
 add(ID3V1_vs_APEv2)
 add(Read22FrameNamesin23)
 add(ID3Loading)
