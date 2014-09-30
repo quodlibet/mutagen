@@ -513,6 +513,27 @@ class TMP4(TestCase):
             if not PY3:
                 raise
 
+    def test_preserve_freeform(self):
+        self.set_key('----:net.sacredchao.Mutagen:test key', [MP4FreeForm(b'woooo', 142, 42)])
+
+    def test_freeform_cmp(self):
+        self.assertReallyEqual(
+            MP4FreeForm(b'woooo', 142, 42), MP4FreeForm(b'woooo', 142, 42))
+        self.assertReallyNotEqual(
+            MP4FreeForm(b'woooo', 142, 43), MP4FreeForm(b'woooo', 142, 42))
+        self.assertReallyNotEqual(
+            MP4FreeForm(b'woooo', 143, 42), MP4FreeForm(b'woooo', 142, 42))
+        self.assertReallyNotEqual(
+            MP4FreeForm(b'wooox', 142, 42), MP4FreeForm(b'woooo', 142, 42))
+
+    def test_cover_cmp(self):
+        self.assertReallyEqual(
+            MP4Cover(b'woooo', 142), MP4Cover(b'woooo', 142))
+        self.assertReallyNotEqual(
+            MP4Cover(b'woooo', 143), MP4Cover(b'woooo', 142))
+        self.assertReallyNotEqual(
+            MP4Cover(b'woooo', 142), MP4Cover(b'wooox', 142))
+
     def test_invalid_text(self):
         self.assertRaises(
             MP4MetadataValueError, self.set_key, '\xa9nam', [b'\xff'])

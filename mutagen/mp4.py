@@ -130,7 +130,7 @@ class AtomDataType(object):
         for var in dir(cls):
             if getattr(cls, var) == value:
                 return "%s.%s" % (cls.__name__, var)
-        return "-1"
+        return repr(value)
 
 
 class MP4Cover(bytes):
@@ -149,6 +149,21 @@ class MP4Cover(bytes):
 
     def __init__(self, data, imageformat=FORMAT_JPEG):
         self.imageformat = imageformat
+
+    def __eq__(self, other):
+        if not isinstance(other, MP4Cover):
+            return NotImplemented
+
+        if not bytes.__eq__(self, other):
+            return False
+
+        if self.imageformat != other.imageformat:
+            return False
+
+        return True
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def __repr__(self):
         return "%s(%r, %s)" % (
@@ -173,6 +188,24 @@ class MP4FreeForm(bytes):
     def __init__(self, data, dataformat=AtomDataType.UTF8, version=0):
         self.dataformat = dataformat
         self.version = version
+
+    def __eq__(self, other):
+        if not isinstance(other, MP4FreeForm):
+            return NotImplemented
+
+        if not bytes.__eq__(self, other):
+            return False
+
+        if self.dataformat != other.dataformat:
+            return False
+
+        if self.version != other.version:
+            return False
+
+        return True
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def __repr__(self):
         return "%s(%r, %s)" % (
@@ -686,10 +719,13 @@ class MP4Tags(DictProxy, Metadata):
             name = struct.pack(">I4sI", len(name) + 12, b"name", 0) + name
 
             flags = AtomDataType.UTF8
+            version = 0
             if isinstance(v, MP4FreeForm):
                 flags = v.dataformat
+                version = v.version
 
-            vdata = struct.pack(">I4s2I", len(v) + 16, b"data", flags, 0)
+            vdata = struct.pack(
+                ">I4s2I", len(v) + 16, b"data", version << 24 | flags, 0)
             vdata += v
             data += Atom.render(b"----", mean + name + vdata)
         return data
