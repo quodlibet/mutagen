@@ -26,7 +26,8 @@ import sys
 
 from mutagen import FileType, Metadata, StreamInfo
 from mutagen._constants import GENRES
-from mutagen._util import cdata, insert_bytes, DictProxy, MutagenError
+from mutagen._util import cdata, insert_bytes, DictProxy, MutagenError, \
+    hashable
 from mutagen._compat import reraise, PY2, string_types, text_type, chr_, \
     iteritems, PY3
 
@@ -133,6 +134,7 @@ class AtomDataType(object):
         return repr(value)
 
 
+@hashable
 class MP4Cover(bytes):
     """A cover artwork.
 
@@ -149,6 +151,8 @@ class MP4Cover(bytes):
 
     def __init__(self, data, imageformat=FORMAT_JPEG):
         self.imageformat = imageformat
+
+    __hash__ = bytes.__hash__
 
     def __eq__(self, other):
         if not isinstance(other, MP4Cover):
@@ -171,6 +175,7 @@ class MP4Cover(bytes):
             AtomDataType._to_repr(self.imageformat))
 
 
+@hashable
 class MP4FreeForm(bytes):
     """A freeform value.
 
@@ -188,6 +193,8 @@ class MP4FreeForm(bytes):
     def __init__(self, data, dataformat=AtomDataType.UTF8, version=0):
         self.dataformat = dataformat
         self.version = version
+
+    __hash__ = bytes.__hash__
 
     def __eq__(self, other):
         if not isinstance(other, MP4FreeForm):
