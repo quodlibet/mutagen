@@ -255,6 +255,7 @@ if __name__ == "__main__":
           packages=["mutagen", "mutagen.id3"],
           data_files=data_files,
           scripts=[os.path.join("tools", name) for name in [
+            "mid3cp",
             "mid3iconv",
             "mid3v2",
             "moggsplit",
