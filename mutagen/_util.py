@@ -15,7 +15,7 @@ import codecs
 
 from fnmatch import fnmatchcase
 
-from ._compat import chr_, text_type, PY2, iteritems, iterbytes
+from ._compat import chr_, text_type, PY2, iteritems, iterbytes, integer_types
 
 
 class MutagenError(Exception):
@@ -52,6 +52,56 @@ def hashable(cls):
     cls.__ne__ = lambda self, other: not self.__eq__(other)
 
     return cls
+
+
+def _create_enum_class(ffi, type_name, prefix):
+    """Returns a new shiny class for the given enum type"""
+
+    class _template(int):
+        _map = {}
+
+        @property
+        def value(self):
+            return int(self)
+
+        def __repr__(self):
+            return "%s.%s" % (type(self).__name__,
+                              self._map.get(self, "__UNKNOWN__"))
+
+    cls = type(type_name, _template.__bases__, dict(_template.__dict__))
+    prefix_len = len(prefix)
+    for value, name in ffi.typeof(type_name).elements.items():
+        assert name[:prefix_len] == prefix
+        name = name[prefix_len:]
+        setattr(cls, name, cls(value))
+        cls._map[value] = name
+
+    return cls
+
+
+def enum(cls):
+    assert cls.__bases__ == (object,)
+
+    d = dict(cls.__dict__)
+    new_type = type(cls.__name__, (int,), d)
+    new_type.__module__ = cls.__module__
+
+    map_ = {}
+    for key, value in iteritems(d):
+        if key.upper() == key and isinstance(value, integer_types):
+            value_instance = new_type(value)
+            setattr(new_type, key, value_instance)
+            map_[value] = key
+
+    def repr_(self):
+        if self in map_:
+            return "%s.%s" % (type(self).__name__, map_[self])
+        else:
+            return "%s(%s)" % (type(self).__name__, self)
+
+    setattr(new_type, "__repr__", repr_)
+
+    return new_type
 
 
 @total_ordering

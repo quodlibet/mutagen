@@ -1,5 +1,5 @@
 from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes
-from mutagen._util import decode_terminated, split_escape, dict_match
+from mutagen._util import decode_terminated, split_escape, dict_match, enum
 from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2
 from tests import TestCase, add
 import random
@@ -410,6 +410,25 @@ class Tdict_match(TestCase):
         self.assertEqual(dict_match({"[ab]": 1}, "[ab]"), None)
 
 add(Tdict_match)
+
+
+class Tenum(TestCase):
+
+    def test_enum(self):
+        @enum
+        class Foo(object):
+            FOO = 1
+            BAR = 3
+
+        self.assertEqual(Foo.FOO, 1)
+        self.assertTrue(isinstance(Foo.FOO, Foo))
+        self.assertEqual(repr(Foo.FOO), "Foo.FOO")
+        self.assertEqual(repr(Foo(3)), "Foo.BAR")
+        self.assertEqual(repr(Foo(42)), "Foo(42)")
+        self.assertEqual(str(Foo(42)), "42")
+        self.assertEqual(str(Foo(1)), "1")
+
+add(Tenum)
 
 
 class Tdecode_terminated(TestCase):

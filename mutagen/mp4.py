@@ -27,7 +27,7 @@ import sys
 from mutagen import FileType, Metadata, StreamInfo
 from mutagen._constants import GENRES
 from mutagen._util import cdata, insert_bytes, DictProxy, MutagenError, \
-    hashable
+    hashable, enum
 from mutagen._compat import reraise, PY2, string_types, text_type, chr_, \
     iteritems, PY3
 
@@ -57,6 +57,7 @@ _SKIP_SIZE = {b"meta": 4}
 __all__ = ['MP4', 'Open', 'delete', 'MP4Cover', 'MP4FreeForm', 'AtomDataType']
 
 
+@enum
 class AtomDataType(object):
     """Enum for `dataformat` attribute of MP4FreeForm.
 
@@ -126,13 +127,6 @@ class AtomDataType(object):
     BMP = 27
     """Windows bitmap image"""
 
-    @classmethod
-    def _to_repr(cls, value):
-        for var in dir(cls):
-            if getattr(cls, var) == value:
-                return "%s.%s" % (cls.__name__, var)
-        return repr(value)
-
 
 @hashable
 class MP4Cover(bytes):
@@ -170,9 +164,9 @@ class MP4Cover(bytes):
         return not self.__eq__(other)
 
     def __repr__(self):
-        return "%s(%r, %s)" % (
+        return "%s(%r, %r)" % (
             type(self).__name__, bytes(self),
-            AtomDataType._to_repr(self.imageformat))
+            AtomDataType(self.imageformat))
 
 
 @hashable
@@ -215,9 +209,9 @@ class MP4FreeForm(bytes):
         return not self.__eq__(other)
 
     def __repr__(self):
-        return "%s(%r, %s)" % (
+        return "%s(%r, %r)" % (
             type(self).__name__, bytes(self),
-            AtomDataType._to_repr(self.dataformat))
+            AtomDataType(self.dataformat))
 
 
 class Atom(object):
