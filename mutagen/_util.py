@@ -45,7 +45,7 @@ def hashable(cls):
 
     # py2
     assert "__hash__" in cls.__dict__
-    #py3
+    # py3
     assert cls.__dict__["__hash__"] is not None
     assert "__eq__" in cls.__dict__
 

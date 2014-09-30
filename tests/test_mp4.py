@@ -514,7 +514,8 @@ class TMP4(TestCase):
                 raise
 
     def test_preserve_freeform(self):
-        self.set_key('----:net.sacredchao.Mutagen:test key', [MP4FreeForm(b'woooo', 142, 42)])
+        self.set_key('----:net.sacredchao.Mutagen:test key',
+                     [MP4FreeForm(b'woooo', 142, 42)])
 
     def test_freeform_cmp(self):
         self.assertReallyEqual(
