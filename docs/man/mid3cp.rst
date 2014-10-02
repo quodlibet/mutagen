@@ -12,7 +12,7 @@ copy ID3 tags
 SYNOPSIS
 ========
 
-**mid3cp* [*options*] *source* *dest*...
+**mid3cp** [*options*] *source* *dest*
 
 
 DESCRIPTION
