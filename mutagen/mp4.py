@@ -516,7 +516,8 @@ class MP4Tags(DictProxy, Metadata):
         for atom_name, failed in iteritems(self._failed_atoms):
             # don't write atoms back if we have added a new one with
             # the same name, this excludes freeform which can have
-            # multiple atoms with the same key
+            # multiple atoms with the same key (most parsers seem to be able
+            # to handle that)
             if atom_name in self:
                 assert atom_name != b"----"
                 continue
@@ -711,25 +712,23 @@ class MP4Tags(DictProxy, Metadata):
         if isinstance(value, bytes):
             value = [value]
 
-        # foobar writes multi value tags as multiple "---"
-        # atoms with the same key, so do the same
+        dummy, mean, name = _key2name(key).split(b":", 2)
+        mean = struct.pack(">I4sI", len(mean) + 12, b"mean", 0) + mean
+        name = struct.pack(">I4sI", len(name) + 12, b"name", 0) + name
+
         data = b""
         for v in value:
-            dummy, mean, name = _key2name(key).split(b":", 2)
-            mean = struct.pack(">I4sI", len(mean) + 12, b"mean", 0) + mean
-            name = struct.pack(">I4sI", len(name) + 12, b"name", 0) + name
-
             flags = AtomDataType.UTF8
             version = 0
             if isinstance(v, MP4FreeForm):
                 flags = v.dataformat
                 version = v.version
 
-            vdata = struct.pack(
+            data += struct.pack(
                 ">I4s2I", len(v) + 16, b"data", version << 24 | flags, 0)
-            vdata += v
-            data += Atom.render(b"----", mean + name + vdata)
-        return data
+            data += v
+
+        return Atom.render(b"----", mean + name + data)
 
     def __parse_pair(self, atom, data):
         key = _name2key(atom.name)
