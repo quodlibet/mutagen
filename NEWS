@@ -1,3 +1,37 @@
+1.25 - 2014.10.??
+-----------------
+
+* Python 3 support (Ben Ockmore et al) :bug:`27`
+  Supported: Python 2.6, 2.7, 3.3, 3.4 (CPython and PyPy)
+* All custom exceptions now have a common mutagen.MutagenError base class
+* mutagen.File: prefer theora over vorbis/flac streams in ogg :bug:`184`
+* New mid3cp script for copying id3 tags :bug:`178`
+  (Marcus Sundman, Ben Ockmore)
+
+* ID3:
+
+  * Parse 2.3/4 frames with 2.2 names :bug:`177`
+  * Try to detect apev2 tags when looking for id3v1 tags :bug:`122`
+  * New id3.Encoding, id3.ID3v1SaveOptions enums :bug:`190`
+
+* ASF:
+
+  * Raise a proper exception on invalid utf-16 :bug:`127`
+
+* APEv2:
+
+  * Fix UnicodeDecodeError during parsing :bug:`174`
+
+* MP4:
+
+  * Fix struct.error exception during parsing :bug:`119`
+  * New AtomDataType enum for MP4FreeForm.dataformat values
+  * Read some previously ignored purl/egit atoms
+  * Read multi value reverse DNS tags written by foobar2000
+  * Read multi value atoms written by MusicBee :bug:`165`
+  * Write back unknown atoms and ones that failed to parse.
+
+
 1.24 - 2014.08.13
 -----------------
 
