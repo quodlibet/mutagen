@@ -291,47 +291,11 @@ class ID3(DictProxy, mutagen.Metadata):
             else:
                 self.__extdata = b""
 
-    def __determine_bpi(self, data, frames, EMPTY=b"\x00" * 10):
+    def __determine_bpi(self, data, frames):
         if self.version < self._V24:
             return int
-        # have to special case whether to use bitpaddedints here
-        # spec says to use them, but iTunes has it wrong
 
-        # count number of tags found as BitPaddedInt and how far past
-        o = 0
-        asbpi = 0
-        while o < len(data) - 10:
-            part = data[o:o + 10]
-            if part == EMPTY:
-                bpioff = -((len(data) - o) % 10)
-                break
-            name, size, flags = unpack('>4sLH', part)
-            size = BitPaddedInt(size)
-            o += 10 + size
-            if name in frames:
-                asbpi += 1
-        else:
-            bpioff = o - len(data)
-
-        # count number of tags found as int and how far past
-        o = 0
-        asint = 0
-        while o < len(data) - 10:
-            part = data[o:o + 10]
-            if part == EMPTY:
-                intoff = -((len(data) - o) % 10)
-                break
-            name, size, flags = unpack('>4sLH', part)
-            o += 10 + size
-            if name in frames:
-                asint += 1
-        else:
-            intoff = o - len(data)
-
-        # if more tags as int, or equal and bpi is past and int is not
-        if asint > asbpi or (asint == asbpi and (bpioff >= 1 and intoff <= 1)):
-            return int
-        return BitPaddedInt
+        return _determine_bpi(data, frames)
 
     def __read_frames(self, data, frames):
         if self.version < self._V24 and self.f_unsynch:
@@ -781,6 +745,59 @@ def delete(filename, delete_v1=True, delete_v2=True):
 
 # support open(filename) as interface
 Open = ID3
+
+
+def _determine_bpi(data, frames, EMPTY=b"\x00" * 10):
+    """Takes id3v2.4 frame data and determines if ints or bitpaddedints
+    should be used for parsing. Needed because iTunes used to write
+    normal ints for frame sizes.
+    """
+
+    # count number of tags found as BitPaddedInt and how far past
+    o = 0
+    asbpi = 0
+    while o < len(data) - 10:
+        part = data[o:o + 10]
+        if part == EMPTY:
+            bpioff = -((len(data) - o) % 10)
+            break
+        name, size, flags = unpack('>4sLH', part)
+        size = BitPaddedInt(size)
+        o += 10 + size
+        if PY3:
+            try:
+                name = name.decode("ascii")
+            except UnicodeDecodeError:
+                continue
+        if name in frames:
+            asbpi += 1
+    else:
+        bpioff = o - len(data)
+
+    # count number of tags found as int and how far past
+    o = 0
+    asint = 0
+    while o < len(data) - 10:
+        part = data[o:o + 10]
+        if part == EMPTY:
+            intoff = -((len(data) - o) % 10)
+            break
+        name, size, flags = unpack('>4sLH', part)
+        o += 10 + size
+        if PY3:
+            try:
+                name = name.decode("ascii")
+            except UnicodeDecodeError:
+                continue
+        if name in frames:
+            asint += 1
+    else:
+        intoff = o - len(data)
+
+    # if more tags as int, or equal and bpi is past and int is not
+    if asint > asbpi or (asint == asbpi and (bpioff >= 1 and intoff <= 1)):
+        return int
+    return BitPaddedInt
 
 
 def _find_id3v1(fileobj):

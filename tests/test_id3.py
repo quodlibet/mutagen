@@ -7,6 +7,7 @@ from mutagen import id3
 from mutagen.apev2 import APEv2
 from mutagen.id3 import ID3, COMR, Frames, Frames_2_2, ID3Warning, \
     ID3JunkFrameError
+from mutagen.id3._util import BitPaddedInt
 from mutagen._compat import cBytesIO, PY2, iteritems, integer_types
 import warnings
 warnings.simplefilter('error', ID3Warning)
@@ -1748,6 +1749,34 @@ class TID3Misc(TestCase):
     def test_main(self):
         self.assertEqual(id3.Encoding.UTF8, 3)
         self.assertEqual(id3.ID3v1SaveOptions.UPDATE, 1)
+
+    def test_determine_bpi(self):
+        determine_bpi = id3._determine_bpi
+        # default to BitPaddedInt
+        self.assertTrue(determine_bpi("", {}) is BitPaddedInt)
+
+        def get_frame_data(name, size, bpi=True):
+            data = name
+            if bpi:
+                data += BitPaddedInt.to_str(size)
+            else:
+                data += BitPaddedInt.to_str(size, bits=8)
+            data += b"\x00\x00" + b"\x01" * size
+            return data
+
+        data = get_frame_data(b"TPE2", 1000, True)
+        self.assertTrue(determine_bpi(data, Frames) is BitPaddedInt)
+        self.assertTrue(
+            determine_bpi(data + b"\x00" * 1000, Frames) is BitPaddedInt)
+
+        data = get_frame_data(b"TPE2", 1000, False)
+        self.assertTrue(determine_bpi(data, Frames) is int)
+        self.assertTrue(determine_bpi(data + b"\x00" * 1000, Frames) is int)
+
+        # in this case it helps that we know the frame name
+        d = get_frame_data(b"TPE2", 1000) + get_frame_data(b"TPE2", 10) + \
+                b"\x01" * 875
+        self.assertTrue(determine_bpi(d, Frames) is BitPaddedInt)
 
 
 add(TID3Misc)
