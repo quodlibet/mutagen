@@ -17,12 +17,9 @@ For an example of how to use it for specific formats, see the matroska.py file.
 """
 
 import io
-from mutagen._compat import long_
+from mutagen._compat import long_, text_type
 from mutagen._util import cdata
 
-class VoidElement(object):
-    def read(self, dataobj):
-        pass
 
 _global_ignored_elements = {
     0xEC: "void"
@@ -39,8 +36,6 @@ class VariableIntMixin(object):
         data = bytearray(fileobj.read(1))
 
         if not data:
-            print(fileobj.getvalue())
-            print(data[0])
             raise ValueError("Could not read first byte of {}".format(fileobj))
 
         length_descriptor = VariableIntMixin._determine_length(data[0])
@@ -111,111 +106,156 @@ class DataSize(long_, VariableIntMixin):
         return bytes(data)
 
 
-class UnsignedInteger(object):
-    def __init__(self, document, element_id, data_size, data):
+class ElementSpec(object):
+    """Specifies characteristics of an EBML element, including which
+    element type to use, the name of the element to be created, whether
+    the element is mandatory within the parent and whether multiple
+    elements are allowed.
+    """
+    
+    def __init__(self, id, name, element_type, range=None,
+                 default=None, mandatory=True, multiple=False):
+        self.id = id
+        self.name = name
+        self.type = element_type
+        self.range = range
+        self.default = default
+        self.mandatory = mandatory
+        self.multiple = multiple
+        
+    def create_element(self, e_id, d_size, data):
+        """Creates a new element using this specification."""
+        
+        return self.type(e_id, d_size, data)
+        
+
+indentation = 0
+
+class Element(object):
+    def __init__(self, element_id, data_size, data):
         self.id = element_id
         self.data_size = data_size
+        self.data = data
 
+
+class VoidElement(Element):
+    def read(self, dataobj):
+        pass
+
+class UnsignedInteger(long_, Element):
+    def __new__(cls, element_id, data_size, data):
         # Pad the raw data to 8 octets
-        data = (b'\x00'*8 + data)[-8:]
-        self.val = cdata.ulonglong_be(data)
+        value = (b'\x00'*8 + data)[-8:]
+        return long_.__new__(UnsignedInteger, cdata.ulonglong_be(value))
 
     def write(self):
         self.data = cdata.to_ulonglong_be(self.val).strip(b'\x00')
         self.data_size = len(data)
         return self.id.write() + self.data_size.write() + self.data
 
-class String(object):
-    def __init__(self, document, element_id, data_size, data):
-        self.id = element_id
-        self.data_size = data_size
-
-        self.val = data.strip(b'\x00').decode('ascii')
+class String(text_type, Element):
+    def __new__(cls, element_id, data_size, data):
+        return text_type.__new__(String, data.strip(b'\x00').decode('ascii'))
 
     def write(self):
         self.data = self.val.encode('ascii')
         self.data_size = len(data)
         return self.id.write() + self.data_size.write() + self.data
 
-class UTF8String(object):
-    def __init__(self, document, element_id, data_size, data):
-        self.id = element_id
-        self.data_size = data_size
-
-        self.val = data.strip(b'\x00').decode('utf-8')
+class UTF8String(text_type, Element):
+    def __new__(cls, element_id, data_size, data):
+        return text_type.__new__(UTF8String, data.strip(b'\x00').decode('utf-8'))
 
     def write(self):
         self.data = self.val.encode('utf-8')
         self.data_size = len(data)
         return self.id.write() + self.data_size.write() + self.data
 
-class Binary(object):
-    def __init__(self, document, element_id, data_size, data):
-        self.id = element_id
-        self.data_size = data_size
-
-        self.val = data
+class Binary(bytes, Element):
+    def __new__(cls, element_id, data_size, data):
+        return bytes.__new__(Binary, data)
 
     def write(self):
         self.data = self.val
         self.data_size = len(data)
         return self.id.write() + self.data_size.write() + self.data
 
-class MasterElement(object):
-    # Child elements, in format {ID: (name (string), (type), multi (bool))}
-    _mandatory_elements = {}
+class MasterElement(Element):
+    # Child elements, in format {ID: ElementSpec(id, name, type)}
+    _child_specs = {}
+    
+    def __init__(self, element_id, data_size, data):
+        super(MasterElement, self).__init__(element_id, data_size, data)
 
-    _optional_elements = {}
+        self.children = []
+        self.dataobj = io.BytesIO(data)
+        self.read()
 
-    _ignored_elements = {}
-
-    def __init__(self, document, element_id, data_size, data):
-        self.document = document
-        self.element_id = element_id
-        self.data_size = data_size
-
-        dataobj = io.BytesIO(data)
-        self.read(dataobj)
-
-    def read(self, dataobj, root=False):
+    def read(self):
         while 1:
             try:
-                e_id, d_size, data = self.document.read_element(dataobj)
+                e_id, d_size, data = self.read_element()
             except EOFError:
                 break
 
-            if e_id in self._mandatory_elements:
-                e_name, e_type, multi = self._mandatory_elements[e_id]
-            elif e_id in self._optional_elements:
-                e_name, e_type, multi = self._optional_elements[e_id]
-            elif (e_id in self._ignored_elements) or (e_id in _global_ignored_elements):
+            spec = self._child_specs.get(e_id, None)
+            if spec is None:
+                # Append tuple indicating element was unrecognised, then
+                # move on to the next element.
+                self.children.append((e_id, d_size, data))
                 continue
-            else:
-                # Raise exception, since element ID is not valid in this master
-                if root:
-                    raise EOFError("End of EBML document.")
-                else:
-                    raise EBMLParseError("Element ID {:02X} in {} not recognized.".format(e_id, type(self)))
-
-            new_element = e_type(self.document, e_id, d_size, data)
-
-            # Test whether element has already been set
-            try:
-                existing_element = getattr(self, e_name)
-            except AttributeError:
-                setattr(self, e_name, [new_element])
-            else:
-                # Check that this element can be multi-set
-                if multi:
-                    existing_element.append(new_element)
-                else:
-                    # if not, raise exception
+                
+            if not spec.multiple:
+                # Check that there are no elements with the same ID
+                if any(child.id == spec.id for child in self.children):
                     raise Exception("Attempt to set multiple values for non multi element")
 
-        for e in self._mandatory_elements.values():
-            # Check that all mandatory elements are set, otherwise raise Exception
-            if not hasattr(self, e[0]):
-                raise Exception("{} is mandatory but not set!".format(e[0]))
+            self.children.append(spec.create_element(e_id, d_size, data))
+
+        # Check that all mandatory elements are set, otherwise raise Exception
+        mandatory_specs = [
+            k for k,v in self._child_specs.items() if v.mandatory
+        ]
+                
+        for child in self.children:
+            if isinstance(child, Element):
+                if child.id in mandatory_specs:
+                    mandatory_specs.remove(child.id)
+        
+        if mandatory_specs:
+            missing = ", ".join("0x{:02x}".format(m) for m in mandatory_specs)
+            raise Exception("The following mandatory elements are missing: {}".format(missing))
+            
+        # Set attributes
+        for child in self.children:
+            if isinstance(child, Element):
+                spec = self._child_specs[child.id]
+                
+                try:
+                    existing_element = getattr(self, spec.name)
+                except AttributeError:
+                    if spec.multiple:
+                        child = [child]
+                        
+                    setattr(self, spec.name, child)
+                else:
+                    # Since we know the children are all valid already,
+                    # this must be a multi-element
+                    existing_element.append(child)
+                        
+            
+
+    def read_element(self):
+        if self.dataobj.read(1):
+            self.dataobj.seek(-1, 1)
+        else:
+            # Now that we know that stream hasn't ended, go back a byte
+            raise EOFError
+
+        e_id = ElementID(self.dataobj)
+        data_size = DataSize(self.dataobj)
+        data = self.dataobj.read(data_size)
+        return e_id, data_size, data
 
     def write(self):
         """Calls write for all children, and concatenates the output into own
@@ -228,43 +268,30 @@ class MasterElement(object):
 
 
 class EBMLHeader(MasterElement):
-    _mandatory_elements = {
-        0x4286: ("version", UnsignedInteger, False),
-        0x42F7: ("read_version", UnsignedInteger, False),
-        0x42F2: ("max_id_length", UnsignedInteger, False),
-        0x42F3: ("max_size_length", UnsignedInteger, False),
-        0x4282: ("doc_type", String, False),
-        0x4287: ("doc_type_version", UnsignedInteger, False),
-        0x4285: ("doc_type_read_version", UnsignedInteger, False),
+    _child_specs = {
+        0x4286: ElementSpec(0x4286, 'version', UnsignedInteger),
+        0x42F7: ElementSpec(0x42F7, 'read_version', UnsignedInteger),
+        0x42F2: ElementSpec(0x42F2, 'max_id_length', UnsignedInteger),
+        0x42F3: ElementSpec(0x42F3, 'max_size_length', UnsignedInteger),
+        0x4282: ElementSpec(0x4282, 'doc_type', String),
+        0x4287: ElementSpec(0x4287, 'doc_type_version', UnsignedInteger),
+        0x4285: ElementSpec(0x4285, 'doc_type_read_version',
+                            UnsignedInteger),
     }
 
 class Document(MasterElement):
 
-    _mandatory_elements = {
-        0x1A45DFA3: ("ebml", EBMLHeader, True),
+    _child_specs = {
+        0x1A45DFA3: ElementSpec(0x1A45DFA3, 'ebml', EBMLHeader,
+                                multiple=True),
     }
+    
 
     def __init__(self, fileobj):
-        self.fileobj = fileobj
-        self.document = self
+        self.children = []
 
-        try:
-            self.read(self.fileobj)
-        except EOFError:
-            # This means that no more valid tags were found - stop parsing.
-            pass
+        self.dataobj = fileobj
+        self.read()
 
-    def read_element(self, dataobj=None):
-        if dataobj is None:
-            dataobj = self.fileobj
-
-        if dataobj.read(1):
-            dataobj.seek(-1, 1)
-        else:
-            # Now that we know that stream hasn't ended, go back a byte
-            raise EOFError
-
-        e_id = ElementID(dataobj)
-        data_size = DataSize(dataobj)
-        data = dataobj.read(data_size)
-        return e_id, data_size, data
+    def write(self):
+        pass
