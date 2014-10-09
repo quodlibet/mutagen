@@ -67,26 +67,36 @@ class VariableIntMixin(object):
         return 7-bval
 
 class ElementID(int, VariableIntMixin):
-    def __new__(cls, fileobj):
-        data = cls._get_required_bytes(fileobj, unset_ld=False)
+    def __new__(cls, value):
+        # Get integer value
+        return int.__new__(ElementID, value)
 
+    @classmethod
+    def from_buffer(cls, dataobj):
+        data = cls._get_required_bytes(dataobj, unset_ld=False)
+        
         if len(data) > 4:
             raise EBMLParseError("More than four bytes read for element ID.")
 
         # Pad to 4 bytes
         data[0:0] = b'\x00'*4
         data = data[-4:]
-
-        # Get integer value
-        return int.__new__(ElementID, cdata.uint_be(data))
-
+        
+        return cls(cdata.uint_be(data))
+        
     def write(self):
         data = cdata.to_uint_be(self)
         return data.lstrip(b'\x00')
 
 class DataSize(long_, VariableIntMixin):
-    def __new__(cls, fileobj):
-        data = cls._get_required_bytes(fileobj, unset_ld=True)
+    def __new__(cls, value):
+        
+        # Get 64-bit integer value
+        return long_.__new__(DataSize, value)
+
+    @classmethod
+    def from_buffer(cls, dataobj):
+        data = cls._get_required_bytes(dataobj, unset_ld=True)
 
         if len(data) > 8:
             raise EBMLParseError("More than eight bytes read for data size.")
@@ -94,9 +104,9 @@ class DataSize(long_, VariableIntMixin):
         # Pad to 8 bytes
         data[0:0] = b'\x00'*8
         data = data[-8:]
+        
+        return cls(cdata.ulonglong_be(data))
 
-        # Get 64-bit integer value
-        return long_.__new__(DataSize, cdata.ulonglong_be(data))
 
     def write(self):
         data = cdata.to_ulonglong_be(self)
@@ -128,20 +138,15 @@ class ElementSpec(object):
 
         return self.type.from_buffer(e_id, d_size, dataobj)
 
-
-indentation = 0
-
 class Element(object):
     def __init__(self, element_id, value):
         print("Creating element {} ({})".format(type(self), element_id))
+        if not isinstance(element_id, ElementID):
+            element_id = ElementID(element_id)
         self.id = element_id
 
     @classmethod
     def from_buffer(cls, element_id, data_size, dataobj):
-        raise NotImplementedError
-
-    @classmethod
-    def from_value(cls, element_id, value):
         raise NotImplementedError
 
 class VoidElement(Element):
@@ -150,19 +155,19 @@ class VoidElement(Element):
 
 class UnsignedInteger(long_, Element):
     def __new__(cls, element_id, value):
-        # Pad the raw data to 8 octets
         return long_.__new__(UnsignedInteger, value)
 
     @classmethod
     def from_buffer(cls, element_id, data_size, dataobj):
         data = dataobj.read(data_size)
+        # Pad the raw data to 8 octets
         data = (b'\x00'*8 + data)[-8:]
         return cls(element_id, cdata.ulonglong_be(data))
 
-#    def write(self):
-#        self.data = cdata.to_ulonglong_be(self.val).strip(b'\x00')
-#        self.data_size = len(data)
-#        return self.id.write() + self.data_size.write() + self.data
+    def write(self):
+        data = cdata.to_ulonglong_be(self).strip(b'\x00')
+        data_size = DataSize(len(data))
+        return self.id.write() + data_size.write() + data
 
 class String(text_type, Element):
     def __new__(cls, element_id, value):
@@ -173,10 +178,10 @@ class String(text_type, Element):
         data = dataobj.read(data_size)
         return cls(element_id, data.strip(b'\x00').decode('ascii'))
 
-    #def write(self):
-    #    self.data = self.val.encode('ascii')
-    #    self.data_size = len(data)
-    #    return self.id.write() + self.data_size.write() + self.data
+    def write(self):
+        data = self.encode('ascii')
+        data_size = DataSize(len(data))
+        return self.id.write() + data_size.write() + data
 
 class UTF8String(text_type, Element):
     def __new__(cls, element_id, value):
@@ -201,9 +206,9 @@ class Binary(bytes, Element):
         return cls(element_id, dataobj.read(data_size))
 
     def write(self):
-        self.data = self.val
-        self.data_size = len(data)
-        return self.id.write() + self.data_size.write() + self.data
+        data = bytes(self)
+        data_size = DataSize(len(data))
+        return self.id.write() + data_size.write() + data
 
 class MasterElement(Element):
     # Child elements, in format {ID: ElementSpec(id, name, type)}
@@ -297,8 +302,8 @@ class MasterElement(Element):
             # Now that we know that stream hasn't ended, go back a byte
             raise EOFError
 
-        e_id = ElementID(dataobj)
-        data_size = DataSize(dataobj)
+        e_id = ElementID.from_buffer(dataobj)
+        data_size = DataSize.from_buffer(dataobj)
         return e_id, data_size
 
     def write(self):
