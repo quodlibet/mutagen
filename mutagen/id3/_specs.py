@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # Copyright (C) 2005  Michael Urman
 #
 # This program is free software; you can redistribute it and/or modify
@@ -484,7 +486,7 @@ class KeyEventSpec(Spec):
         return events, data
 
     def write(self, frame, value):
-        return b"".join([struct.pack(">bI", *event) for event in value])
+        return b"".join(struct.pack(">bI", *event) for event in value)
 
     def validate(self, frame, value):
         return value
@@ -500,14 +502,13 @@ class VolumeAdjustmentsSpec(Spec):
             freq /= 2.0
             adj /= 512.0
             adjustments[freq] = adj
-        adjustments = list(adjustments.items())
-        adjustments.sort()
+        adjustments = sorted(adjustments.items())
         return adjustments, data
 
     def write(self, frame, value):
         value.sort()
-        return b"".join([struct.pack(">Hh", int(freq * 2), int(adj * 512))
-                         for (freq, adj) in value])
+        return b"".join(struct.pack(">Hh", int(freq * 2), int(adj * 512))
+                        for (freq, adj) in value)
 
     def validate(self, frame, value):
         return value
