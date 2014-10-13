@@ -1,4 +1,5 @@
-# id3 support for mutagen
+# -*- coding: utf-8 -*-
+
 # Copyright (C) 2005  Michael Urman
 #               2006  Lukas Lalinsky
 #               2013  Christoph Reiter
@@ -88,6 +89,8 @@ class ID3(DictProxy, mutagen.Metadata):
         super(ID3, self).__init__(*args, **kwargs)
 
     def __fullread(self, size):
+        """ Read a certain number of bytes from the source file. """
+
         try:
             if size < 0:
                 raise ValueError('Requested bytes (%s) less than zero' % size)
@@ -197,8 +200,9 @@ class ID3(DictProxy, mutagen.Metadata):
             del(self[key])
         else:
             key = key + ":"
-            for k in filter(lambda s: s.startswith(key), list(self.keys())):
-                del(self[k])
+            for k in self.keys():
+                if k.startswith(key):
+                    del(self[k])
 
     def setall(self, key, values):
         """Delete frames of the given type and add frames in 'values'."""
@@ -218,8 +222,7 @@ class ID3(DictProxy, mutagen.Metadata):
 
             ``POPM=user@example.org=3 128/255``
         """
-        frames = list(map(Frame.pprint, self.values()))
-        frames.sort()
+        frames = sorted(Frame.pprint(s) for s in self.values())
         return "\n".join(frames)
 
     def loaded_frame(self, tag):
@@ -254,9 +257,9 @@ class ID3(DictProxy, mutagen.Metadata):
             if not BitPaddedInt.has_valid_padding(size):
                 raise ValueError("Header size not synchsafe")
 
-            if self._V24 <= self.version and (flags & 0x0f):
+            if (self._V24 <= self.version) and (flags & 0x0f):
                 raise ValueError("%r has invalid flags %#02x" % (fn, flags))
-            elif self._V23 <= self.version < self._V24 and (flags & 0x1f):
+            elif (self._V23 <= self.version < self._V24) and (flags & 0x1f):
                 raise ValueError("%r has invalid flags %#02x" % (fn, flags))
 
         if self.f_extended:
@@ -400,10 +403,9 @@ class ID3(DictProxy, mutagen.Metadata):
 
         # Sort frames by 'importance'
         order = ["TIT2", "TPE1", "TRCK", "TALB", "TPOS", "TDRC", "TCON"]
-        order = dict(zip(order, range(len(order))))
+        order = dict((b, a) for a, b in enumerate(order))
         last = len(order)
-        frames = self.items()
-        frames.sort(key=lambda a: (order.get(a[0][:4], last), a[0]))
+        frames = sorted(self.items(), key=lambda a: (order.get(a[0][:4], last), a[0]))
 
         framedata = [self.__save_frame(frame, version=version, v23_sep=v23_sep)
                      for (key, frame) in frames]
@@ -411,8 +413,8 @@ class ID3(DictProxy, mutagen.Metadata):
         # only write unknown frames if they were loaded from the version
         # we are saving with or upgraded to it
         if self.__unknown_version == version[:2]:
-            framedata.extend([data for data in self.unknown_frames
-                              if len(data) > 10])
+            framedata.extend(data for data in self.unknown_frames
+                             if len(data) > 10)
 
         return b''.join(framedata)
 
@@ -895,7 +897,7 @@ def ParseID3v1(data):
             encoding=0, lang="eng", desc="ID3v1 Comment", text=comment)
     # Don't read a track number if it looks like the comment was
     # padded with spaces instead of nulls (thanks, WinAmp).
-    if track and (track != 32 or data[-3] == b'\x00'[0]):
+    if track and ((track != 32) or (data[-3] == b'\x00'[0])):
         frames["TRCK"] = TRCK(encoding=0, text=str(track))
     if genre != 255:
         frames["TCON"] = TCON(encoding=0, text=str(genre))
@@ -948,15 +950,17 @@ def MakeID3v1(id3):
         year = b""
     v1["year"] = (year + b"\x00\x00\x00\x00")[:4]
 
-    data = b"TAG"
-    data += v1["title"]
-    data += v1["artist"]
-    data += v1["album"]
-    data += v1["year"]
-    data += v1["comment"]
-    data += v1["track"]
-    data += v1["genre"]
-    return data
+
+    return (
+        b"TAG" +
+        v1["title"] +
+        v1["artist"] +
+        v1["album"] +
+        v1["year"] +
+        v1["comment"] +
+        v1["track"] +
+        v1["genre"]
+    )
 
 
 class ID3FileType(mutagen.FileType):
