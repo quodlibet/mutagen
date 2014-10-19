@@ -200,7 +200,7 @@ class ID3(DictProxy, mutagen.Metadata):
             del(self[key])
         else:
             key = key + ":"
-            for k in self.keys():
+            for k in list(self.keys()):
                 if k.startswith(key):
                     del(self[k])
 
