@@ -60,7 +60,7 @@ class TEasyID3(TestCase):
 
     def test_write_single(self):
         for key in EasyID3.valid_keys:
-            if key == "date":
+            if (key == "date") or (key == "originaldate"):
                 continue
             elif key.startswith("replaygain_"):
                 continue
@@ -83,7 +83,7 @@ class TEasyID3(TestCase):
 
     def test_write_double(self):
         for key in EasyID3.valid_keys:
-            if key == "date":
+            if (key == "date") or (key == "originaldate"):
                 continue
             elif key.startswith("replaygain_"):
                 continue
@@ -133,6 +133,34 @@ class TEasyID3(TestCase):
         self.id3.save(self.filename)
         id3 = EasyID3(self.filename)
         self.failUnlessEqual(id3["date"], ["2004", "2005"])
+
+    def test_write_original_date(self):
+        self.id3["originaldate"] = "2004"
+        self.id3.save(self.filename)
+        id3 = EasyID3(self.filename)
+        self.failUnlessEqual(id3["originaldate"], ["2004"])
+
+        self.id3["originaldate"] = "2004"
+        self.id3.save(self.filename)
+        id3 = EasyID3(self.filename)
+        self.failUnlessEqual(id3["originaldate"], ["2004"])
+
+    def test_original_date_delete(self):
+        self.id3["originaldate"] = "2004"
+        self.failUnlessEqual(self.id3["originaldate"], ["2004"])
+        del(self.id3["originaldate"])
+        self.failIf("originaldate" in self.id3.keys())
+
+    def test_write_original_date_double(self):
+        self.id3["originaldate"] = ["2004", "2005"]
+        self.id3.save(self.filename)
+        id3 = EasyID3(self.filename)
+        self.failUnlessEqual(id3["originaldate"], ["2004", "2005"])
+
+        self.id3["originaldate"] = ["2004", "2005"]
+        self.id3.save(self.filename)
+        id3 = EasyID3(self.filename)
+        self.failUnlessEqual(id3["originaldate"], ["2004", "2005"])
 
     def test_write_invalid(self):
         self.failUnlessRaises(ValueError, self.id3.__getitem__, "notvalid")
