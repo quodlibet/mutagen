@@ -1,5 +1,6 @@
-# Simpler (but far more limited) API for ID3 editing
-# Copyright 2006 Joe Wreschnig
+# -*- coding: utf-8 -*-
+
+# Copyright (C) 2006  Joe Wreschnig
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of version 2 of the GNU General Public License as
@@ -155,6 +156,8 @@ class EasyID3(DictMixin, Metadata):
                 for v in value:
                     if v and max(v) > u'\x7f':
                         enc = 3
+                        break
+
                 id3.add(mutagen.id3.TXXX(encoding=enc, text=value, desc=desc))
             else:
                 frame.text = value
