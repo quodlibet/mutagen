@@ -1,6 +1,7 @@
-# Vorbis comment support for Mutagen
-# Copyright 2005-2006 Joe Wreschnig
-#           2013 Christoph Reiter
+# -*- coding: utf-8 -*-
+
+# Copyright (C) 2005-2006  Joe Wreschnig
+#                    2013  Christoph Reiter
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of version 2 of the GNU General Public License as
@@ -127,6 +128,7 @@ class VComment(mutagen.Metadata, list):
                         tag = tag.decode("ascii")
                     if is_valid_key(tag):
                         self.append((tag, value))
+
             if framing and not bytearray(fileobj.read(1))[0] & 0x01:
                 raise VorbisUnsetFrameError("framing bit was unset")
         except (cdata.error, TypeError):
