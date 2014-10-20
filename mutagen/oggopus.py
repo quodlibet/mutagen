@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2012, 2013 Christoph Reiter
+# Copyright (C) 2012, 2013  Christoph Reiter
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -59,8 +59,7 @@ class OggOpusInfo(StreamInfo):
         self.__pre_skip = pre_skip
 
         # only the higher 4 bits change on incombatible changes
-        major, minor = version >> 4, version & 0xF
-        minor
+        major = version >> 4
         if major != 0:
             raise OggOpusHeaderError("version %r unsupported" % major)
 
@@ -78,8 +77,8 @@ class OggOpusVComment(VCommentDict):
     def __get_comment_pages(self, fileobj, info):
         # find the first tags page with the right serial
         page = OggPage(fileobj)
-        while info.serial != page.serial or \
-                not page.packets[0].startswith(b"OpusTags"):
+        while ((info.serial != page.serial) or
+                not page.packets[0].startswith(b"OpusTags")):
             page = OggPage(fileobj)
 
         # get all comment pages
