@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2014 Evan Purkhiser
-#           2014 Ben Ockmore
+# Copyright (C) 2014  Evan Purkhiser
+#               2014  Ben Ockmore
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of version 2 of the GNU General Public License as
@@ -48,13 +48,12 @@ def is_valid_chunk_id(id):
         except UnicodeDecodeError:
             return False
 
-    # PY26 - Change to set literal syntax (since set is faster than list here)
     return ((len(id) <= 4) and (min(id) >= u' ') and
             (max(id) <= u'~'))
 
 
-def read_float(s):  # 10 bytes
-    expon, himant, lomant = struct.unpack('>hLL', s)
+def read_float(data):  # 10 bytes
+    expon, himant, lomant = struct.unpack('>hLL', data)
     sign = 1
     if expon < 0:
         sign = -1
