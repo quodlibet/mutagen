@@ -1,5 +1,8 @@
-# Copyright 2006-2007 Lukas Lalinsky
-# Copyright 2005-2006 Joe Wreschnig
+# -*- coding: utf-8 -*-
+
+# Copyright (C) 2005-2006  Joe Wreschnig
+# Copyright (C) 2006-2007  Lukas Lalinsky
+
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -12,8 +15,8 @@ __all__ = ["ASF", "Open"]
 import sys
 import struct
 from mutagen import FileType, Metadata, StreamInfo
-from mutagen._util import insert_bytes, delete_bytes, DictMixin, \
-    total_ordering, MutagenError
+from mutagen._util import (insert_bytes, delete_bytes, DictMixin,
+                           total_ordering, MutagenError)
 from ._compat import swap_to_string, text_type, PY2, string_types, reraise
 
 
@@ -48,7 +51,7 @@ class ASFTags(list, DictMixin, Metadata):
     """Dictionary containing ASF attributes."""
 
     def pprint(self):
-        return "\n".join(["%s=%s" % (k, v) for k, v in self])
+        return "\n".join("%s=%s" % (k, v) for k, v in self)
 
     def __getitem__(self, key):
         """A list of values for the key.
@@ -65,7 +68,7 @@ class ASFTags(list, DictMixin, Metadata):
 
     def __delitem__(self, key):
         """Delete all values associated with the key."""
-        to_delete = list(filter(lambda x: x[0] == key, self))
+        to_delete = [x for x in self if x[0] == key]
         if not to_delete:
             raise KeyError(key)
         else:
@@ -535,7 +538,7 @@ class ContentDescriptionObject(BaseObject):
                 return value[0].encode("utf-16-le") + b"\x00\x00"
             else:
                 return b""
-        texts = list(map(render_text, _standard_attribute_names))
+        texts = [render_text(x) for x in _standard_attribute_names]
         data = struct.pack("<HHHHH", *map(len, texts)) + b"".join(texts)
         return self.GUID + struct.pack("<Q", 24 + len(data)) + data
 
@@ -565,7 +568,7 @@ class ExtendedContentDescriptionObject(BaseObject):
 
     def render(self, asf):
         attrs = asf.to_extended_content_description.items()
-        data = b"".join([attr.render(name) for (name, attr) in attrs])
+        data = b"".join(attr.render(name) for (name, attr) in attrs)
         data = struct.pack("<QH", 26 + len(data), len(attrs)) + data
         return self.GUID + data
 
@@ -577,7 +580,7 @@ class FilePropertiesObject(BaseObject):
     def parse(self, asf, data, fileobj, size):
         super(FilePropertiesObject, self).parse(asf, data, fileobj, size)
         length, _, preroll = struct.unpack("<QQQ", data[40:64])
-        asf.info.length = length / 10000000.0 - preroll / 1000.0
+        asf.info.length = (length / 10000000.0) - (preroll / 1000.0)
 
 
 class StreamPropertiesObject(BaseObject):
@@ -615,7 +618,7 @@ class HeaderExtensionObject(BaseObject):
             datapos += size
 
     def render(self, asf):
-        data = b"".join([obj.render(asf) for obj in self.objects])
+        data = b"".join(obj.render(asf) for obj in self.objects)
         return (self.GUID + struct.pack("<Q", 24 + 16 + 6 + len(data)) +
                 b"\x11\xD2\xD3\xAB\xBA\xA9\xcf\x11" +
                 b"\x8E\xE6\x00\xC0\x0C\x20\x53\x65" +
