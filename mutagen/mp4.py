@@ -1,4 +1,6 @@
-# Copyright 2006 Joe Wreschnig
+# -*- coding: utf-8 -*-
+
+# Copyright (C) 2006  Joe Wreschnig
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -26,10 +28,10 @@ import sys
 
 from mutagen import FileType, Metadata, StreamInfo
 from mutagen._constants import GENRES
-from mutagen._util import cdata, insert_bytes, DictProxy, MutagenError, \
-    hashable, enum
-from mutagen._compat import reraise, PY2, string_types, text_type, chr_, \
-    iteritems, PY3
+from mutagen._util import (cdata, insert_bytes, DictProxy, MutagenError,
+                           hashable, enum)
+from mutagen._compat import (reraise, PY2, string_types, text_type, chr_,
+                             iteritems, PY3)
 
 
 class error(IOError, MutagenError):
@@ -293,15 +295,15 @@ class Atom(object):
             raise KeyError("%r not found" % remaining[0])
 
     def __repr__(self):
-        klass = self.__class__.__name__
+        cls = self.__class__.__name__
         if self.children is None:
             return "<%s name=%r length=%r offset=%r>" % (
-                klass, self.name, self.length, self.offset)
+                cls, self.name, self.length, self.offset)
         else:
             children = "\n".join([" " + line for child in self.children
                                   for line in repr(child).splitlines()])
             return "<%s name=%r length=%r offset=%r\n%s>" % (
-                klass, self.name, self.length, self.offset, children)
+                cls, self.name, self.length, self.offset, children)
 
 
 class Atoms(object):
@@ -455,7 +457,7 @@ class MP4Tags(DictProxy, Metadata):
         for atom in ilst.children:
             fileobj.seek(atom.offset + 8)
             data = fileobj.read(atom.length - 8)
-            if len(data) != atom.length - 8:
+            if len(data) != (atom.length - 8):
                 raise MP4MetadataError("Not enough data")
 
             try:
@@ -499,8 +501,7 @@ class MP4Tags(DictProxy, Metadata):
         """Save the metadata to the given filename."""
 
         values = []
-        items = self.items()
-        items.sort(key=self.__key_sort)
+        items = sorted(self.items(), key=self.__key_sort)
         for key, value in items:
             atom_name = _key2name(key)[:4]
             if atom_name in self.__atoms:
@@ -788,14 +789,14 @@ class MP4Tags(DictProxy, Metadata):
             if len(value) == 0:
                 return self.__render_data(key, 0, AtomDataType.INTEGER, b"")
 
-            if min(value) < 0 or max(value) >= 2 ** 16:
+            if (min(value) < 0) or (max(value) >= 2 ** 16):
                 raise MP4MetadataValueError(
                     "invalid 16 bit integers: %r" % value)
         except TypeError:
             raise MP4MetadataValueError(
                 "tmpo must be a list of 16 bit integers")
 
-        values = list(map(cdata.to_ushort_be, value))
+        values = [cdata.to_ushort_be(v) for v in value]
         return self.__render_data(key, 0, AtomDataType.INTEGER, values)
 
     def __parse_bool(self, atom, data):
@@ -1054,8 +1055,8 @@ class MP4(FileType):
             raise error("an MP4 tag already exists")
 
     @staticmethod
-    def score(filename, fileobj, header):
-        return (b"ftyp" in header) + (b"mp4" in header)
+    def score(filename, fileobj, header_data):
+        return (b"ftyp" in header_data) + (b"mp4" in header_data)
 
 
 Open = MP4
