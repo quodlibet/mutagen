@@ -1,6 +1,6 @@
-# An APEv2 tag reader
-#
-# Copyright 2005 Joe Wreschnig
+# -*- coding: utf-8 -*-
+
+# Copyright (C) 2005  Joe Wreschnig
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -34,11 +34,11 @@ import sys
 import struct
 from collections import MutableSequence
 
-from ._compat import cBytesIO, PY3, text_type, PY2, reraise, swap_to_string, \
-    xrange
+from ._compat import (cBytesIO, PY3, text_type, PY2, reraise, swap_to_string,
+                      xrange)
 from mutagen import Metadata, FileType, StreamInfo
-from mutagen._util import DictMixin, cdata, delete_bytes, total_ordering, \
-    MutagenError
+from mutagen._util import (DictMixin, cdata, delete_bytes, total_ordering,
+                           MutagenError)
 
 
 def is_valid_apev2_key(key):
@@ -51,6 +51,7 @@ def is_valid_apev2_key(key):
         except UnicodeDecodeError:
             return False
 
+    #PY26 - Change to set literal syntax (since set is faster than list here)
     return ((2 <= len(key) <= 255) and (min(key) >= u' ') and
             (max(key) <= u'~') and
             (key not in [u"OggS", u"TAG", u"ID3", u"MP+"]))
@@ -110,6 +111,7 @@ class _APEv2Data(object):
             self.metadata = self.header
         else:
             self.metadata = max(self.header, self.footer)
+
         if self.metadata is None:
             return
 
@@ -265,7 +267,7 @@ class APEv2(_CIDictProxy, Metadata):
         """Return tag key=value pairs in a human-readable format."""
 
         items = sorted(self.items())
-        return u"\n".join([u"%s=%s" % (k, v.pprint()) for k, v in items])
+        return u"\n".join(u"%s=%s" % (k, v.pprint()) for k, v in items)
 
     def load(self, filename):
         """Load tags from a filename."""
