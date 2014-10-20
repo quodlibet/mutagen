@@ -1,6 +1,6 @@
-# Ogg FLAC support.
-#
-# Copyright 2006 Joe Wreschnig
+# -*- coding: utf-8 -*-
+
+# Copyright (C) 2006  Joe Wreschnig
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -21,8 +21,7 @@ import struct
 
 from ._compat import cBytesIO
 
-from mutagen import flac
-from mutagen.flac import VCFLACDict, StrictFileObject
+from mutagen.flac import StreamInfo, VCFLACDict, StrictFileObject
 from mutagen.ogg import OggPage, OggFileType, error as OggError
 
 
@@ -34,7 +33,7 @@ class OggFLACHeaderError(error):
     pass
 
 
-class OggFLACStreamInfo(flac.StreamInfo):
+class OggFLACStreamInfo(StreamInfo):
     """Ogg FLAC general header and stream info.
 
     This encompasses the Ogg wrapper for the FLAC STREAMINFO metadata
