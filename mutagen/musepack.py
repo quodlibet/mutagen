@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2006 Lukas Lalinsky <lalinsky@gmail.com>
-# Copyright 2012 Christoph Reiter <christoph.reiter@gmx.at>
+# Copyright (C) 2006  Lukas Lalinsky
+# Copyright (C) 2012  Christoph Reiter
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -120,8 +120,8 @@ class MusepackInfo(StreamInfo):
         mandatory_packets = [b"SH", b"RG"]
 
         def check_frame_key(key):
-            if (len(frame_type) != key_size) or \
-                    (not b'AA' <= frame_type <= b'ZZ'):
+            if ((len(frame_type) != key_size) or
+                    (not b'AA' <= frame_type <= b'ZZ')):
                 raise MusepackHeaderError("Invalid frame key.")
 
         frame_type = fileobj.read(key_size)
