@@ -405,7 +405,8 @@ class ID3(DictProxy, mutagen.Metadata):
         order = ["TIT2", "TPE1", "TRCK", "TALB", "TPOS", "TDRC", "TCON"]
         order = dict((b, a) for a, b in enumerate(order))
         last = len(order)
-        frames = sorted(self.items(), key=lambda a: (order.get(a[0][:4], last), a[0]))
+        frames = sorted(self.items(),
+                        key=lambda a: (order.get(a[0][:4], last), a[0]))
 
         framedata = [self.__save_frame(frame, version=version, v23_sep=v23_sep)
                      for (key, frame) in frames]
@@ -952,7 +953,6 @@ def MakeID3v1(id3):
     else:
         year = b""
     v1["year"] = (year + b"\x00\x00\x00\x00")[:4]
-
 
     return (
         b"TAG" +
