@@ -1,4 +1,6 @@
-# Copyright 2009 Joe Wreschnig
+# -*- coding: utf-8 -*-
+
+# Copyright (C) 2009  Joe Wreschnig
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of version 2 of the GNU General Public License as
@@ -93,7 +95,7 @@ class EasyMP4Tags(DictMixin, Metadata):
         cls.RegisterKey(key, getter, setter, deleter)
 
     @classmethod
-    def RegisterIntKey(cls, key, atomid, min_value=0, max_value=2 ** 16 - 1):
+    def RegisterIntKey(cls, key, atomid, min_value=0, max_value=(2 ** 16) - 1):
         """Register a scalar integer key.
         """
 
@@ -102,7 +104,7 @@ class EasyMP4Tags(DictMixin, Metadata):
 
         def setter(tags, key, value):
             clamp = lambda x: int(min(max(min_value, x), max_value))
-            tags[atomid] = list(map(clamp, map(int, value)))
+            tags[atomid] = [clamp(v) for v in map(int, value)]
 
         def deleter(tags, key):
             del(tags[atomid])
@@ -111,7 +113,7 @@ class EasyMP4Tags(DictMixin, Metadata):
 
     @classmethod
     def RegisterIntPairKey(cls, key, atomid, min_value=0,
-                           max_value=2 ** 16 - 1):
+                           max_value=(2 ** 16) - 1):
         def getter(tags, key):
             ret = []
             for (track, total) in tags[atomid]:
