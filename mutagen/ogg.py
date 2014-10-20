@@ -1,4 +1,6 @@
-# Copyright 2006 Joe Wreschnig
+# -*- coding: utf-8 -*-
+
+# Copyright (C) 2006  Joe Wreschnig
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -77,9 +79,9 @@ class OggPage(object):
             raise EOFError
 
         try:
-            (oggs, self.version, self.__type_flags, self.position,
-             self.serial, self.sequence, crc, segments) = struct.unpack(
-                 "<4sBBqIIiB", header)
+            (oggs, self.version, self.__type_flags,
+             self.position, self.serial, self.sequence,
+             crc, segments) = struct.unpack("<4sBBqIIiB", header)
         except struct.error:
             raise error("unable to read full header; got %r" % header)
 
@@ -195,8 +197,8 @@ class OggPage(object):
         lambda self, v: self.__set_flag(2, v),
         doc="This is the last page of a logical bitstream.")
 
-    @classmethod
-    def renumber(klass, fileobj, serial, start):
+    @staticmethod
+    def renumber(fileobj, serial, start):
         """Renumber pages belonging to a specified logical stream.
 
         fileobj must be opened with mode r+b or w+b.
@@ -234,8 +236,8 @@ class OggPage(object):
             fileobj.seek(page.offset + page.size, 0)
             number += 1
 
-    @classmethod
-    def to_packets(klass, pages, strict=False):
+    @staticmethod
+    def to_packets(pages, strict=False):
         """Construct a list of packet data from a list of Ogg pages.
 
         If strict is true, the first page must start a new packet,
@@ -266,13 +268,13 @@ class OggPage(object):
                 packets[-1].append(page.packets[0])
             else:
                 packets.append([page.packets[0]])
-            packets.extend([[p] for p in page.packets[1:]])
+            packets.extend([p] for p in page.packets[1:])
 
         return [b"".join(p) for p in packets]
 
-    @classmethod
-    def from_packets(klass, packets, sequence=0,
-                     default_size=4096, wiggle_room=2048):
+    @staticmethod
+    def from_packets(packets, sequence=0, default_size=4096,
+                     wiggle_room=2048):
         """Construct a list of Ogg pages from a list of packet data.
 
         The algorithm will generate pages of approximately
@@ -332,7 +334,7 @@ class OggPage(object):
         return pages
 
     @classmethod
-    def replace(klass, fileobj, old_pages, new_pages):
+    def replace(cls, fileobj, old_pages, new_pages):
         """Replace old_pages with new_pages within fileobj.
 
         old_pages must have come from reading fileobj originally.
@@ -360,7 +362,7 @@ class OggPage(object):
         if not new_pages[-1].complete and len(new_pages[-1].packets) == 1:
             new_pages[-1].position = -1
 
-        new_data = b"".join(map(klass.write, new_pages))
+        new_data = b"".join(cls.write(p) for p in new_pages)
 
         # Make room in the file for the new data.
         delta = len(new_data)
@@ -385,10 +387,10 @@ class OggPage(object):
             fileobj.seek(new_data_end, 0)
             serial = new_pages[-1].serial
             sequence = new_pages[-1].sequence + 1
-            klass.renumber(fileobj, serial, sequence)
+            cls.renumber(fileobj, serial, sequence)
 
-    @classmethod
-    def find_last(klass, fileobj, serial):
+    @staticmethod
+    def find_last(fileobj, serial):
         """Find the last page of the stream 'serial'.
 
         If the file is not multiplexed this function is fast. If it is,
@@ -409,10 +411,10 @@ class OggPage(object):
             index = data.rindex(b"OggS")
         except ValueError:
             raise error("unable to find final Ogg header")
-        stringobj = cBytesIO(data[index:])
+        bytesobj = cBytesIO(data[index:])
         best_page = None
         try:
-            page = OggPage(stringobj)
+            page = OggPage(bytesobj)
         except error:
             pass
         else:
