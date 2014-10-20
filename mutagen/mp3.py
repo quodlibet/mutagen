@@ -1,5 +1,6 @@
-# MP3 stream header information support for Mutagen.
-# Copyright 2006 Joe Wreschnig
+# -*- coding: utf-8 -*-
+
+# Copyright (C) 2006  Joe Wreschnig
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of version 2 of the GNU General Public License as
@@ -143,9 +144,9 @@ class MPEGInfo(StreamInfo):
         data = fileobj.read(32768)
 
         frame_1 = data.find(b"\xff")
-        while 0 <= frame_1 <= len(data) - 4:
+        while 0 <= frame_1 <= (len(data) - 4):
             frame_data = struct.unpack(">I", data[frame_1:frame_1 + 4])[0]
-            if (frame_data >> 16) & 0xE0 != 0xE0:
+            if ((frame_data >> 16) & 0xE0) != 0xE0:
                 frame_1 = data.find(b"\xff", frame_1 + 2)
             else:
                 version = (frame_data >> 19) & 0x3
@@ -181,13 +182,13 @@ class MPEGInfo(StreamInfo):
 
         if self.layer == 1:
             frame_length = (
-                12 * self.bitrate // self.sample_rate + padding) * 4
+                (12 * self.bitrate // self.sample_rate) + padding) * 4
             frame_size = 384
         elif self.version >= 2 and self.layer == 3:
-            frame_length = 72 * self.bitrate // self.sample_rate + padding
+            frame_length = (72 * self.bitrate // self.sample_rate) + padding
             frame_size = 576
         else:
-            frame_length = 144 * self.bitrate // self.sample_rate + padding
+            frame_length = (144 * self.bitrate // self.sample_rate) + padding
             frame_size = 1152
 
         if check_second:
@@ -199,7 +200,7 @@ class MPEGInfo(StreamInfo):
                     ">H", data[possible:possible + 2])[0]
             except struct.error:
                 raise HeaderNotFoundError("can't sync to second MPEG frame")
-            if frame_data & 0xFFE0 != 0xFFE0:
+            if (frame_data & 0xFFE0) != 0xFFE0:
                 raise HeaderNotFoundError("can't sync to second MPEG frame")
 
         self.length = 8 * real_size / float(self.bitrate)
