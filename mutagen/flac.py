@@ -1,5 +1,6 @@
-# FLAC comment support for Mutagen
-# Copyright 2005 Joe Wreschnig
+# -*- coding: utf-8 -*-
+
+# Copyright (C) 2005  Joe Wreschnig
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of version 2 of the GNU General Public License as
@@ -129,7 +130,7 @@ class MetadataBlock(object):
             blocks.remove(p)
         # total padding size is the sum of padding sizes plus 4 bytes
         # per removed header.
-        size = sum([padding.length for padding in paddings])
+        size = sum(padding.length for padding in paddings)
         padding = Padding()
         padding.length = size + 4 * (len(paddings) - 1)
         blocks.append(padding)
@@ -380,10 +381,10 @@ class CueSheetTrack(object):
     __hash__ = object.__hash__
 
     def __repr__(self):
-        return ("<%s number=%r, offset=%d, isrc=%r, type=%r, "
-                "pre_emphasis=%r, indexes=%r)>") % (
-                    type(self).__name__, self.track_number, self.start_offset,
-                    self.isrc, self.type, self.pre_emphasis, self.indexes)
+        return (("<%s number=%r, offset=%d, isrc=%r, type=%r, "
+                "pre_emphasis=%r, indexes=%r)>") %
+                (type(self).__name__, self.track_number, self.start_offset,
+                 self.isrc, self.type, self.pre_emphasis, self.indexes))
 
 
 class CueSheet(MetadataBlock):
@@ -482,10 +483,10 @@ class CueSheet(MetadataBlock):
         return f.getvalue()
 
     def __repr__(self):
-        return ("<%s media_catalog_number=%r, lead_in=%r, compact_disc=%r, "
-                "tracks=%r>") % (
-                    type(self).__name__, self.media_catalog_number,
-                    self.lead_in_samples, self.compact_disc, self.tracks)
+        return (("<%s media_catalog_number=%r, lead_in=%r, compact_disc=%r, "
+                 "tracks=%r>") %
+                (type(self).__name__, self.media_catalog_number,
+                 self.lead_in_samples, self.compact_disc, self.tracks))
 
 
 class Picture(MetadataBlock):
