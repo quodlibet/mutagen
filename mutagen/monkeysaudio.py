@@ -1,6 +1,6 @@
-# A Monkey's Audio (APE) reader/tagger
-#
-# Copyright 2006 Lukas Lalinsky <lalinsky@gmail.com>
+# -*- coding: utf-8 -*-
+
+# Copyright (C) 2006  Lukas Lalinsky
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -64,7 +64,7 @@ class MonkeysAudioInfo(StreamInfo):
                 blocks_per_frame = 9216
         self.version /= 1000.0
         self.length = 0.0
-        if self.sample_rate != 0 and total_frames > 0:
+        if (self.sample_rate != 0) and (total_frames > 0):
             total_blocks = ((total_frames - 1) * blocks_per_frame +
                             final_frame_blocks)
             self.length = float(total_blocks) / self.sample_rate
