@@ -441,20 +441,23 @@ class ID3(DictProxy, mutagen.Metadata):
     def save(self, filename=None, v1=1, v2_version=4, v23_sep='/'):
         """Save changes to a file.
 
-        If no filename is given, the one most recently loaded is used.
-
-        Keyword arguments:
-        v1 -- if 0, ID3v1 tags will be removed
-              if 1, ID3v1 tags will be updated but not added
-              if 2, ID3v1 tags will be created and/or updated
-        v2 -- version of ID3v2 tags (3 or 4).
+        Args:
+            filename:
+                Filename to save the tag to. If no filename is given,
+                the one most recently loaded is used.
+            v1 (ID3v1SaveOptions):
+                if 0, ID3v1 tags will be removed.
+                if 1, ID3v1 tags will be updated but not added.
+                if 2, ID3v1 tags will be created and/or updated
+            v2 (int):
+                version of ID3v2 tags (3 or 4).
+            v23_sep (str):
+                the separator used to join multiple text values
+                if v2_version == 3. Defaults to '/' but if it's None
+                will be the ID3v2v2.4 null separator.
 
         By default Mutagen saves ID3v2.4 tags. If you want to save ID3v2.3
         tags, you must call method update_to_v23 before saving the file.
-
-        v23_sep -- the separator used to join multiple text values
-                   if v2_version == 3. Defaults to '/' but if it's None
-                   will be the ID3v2v2.4 null separator.
 
         The lack of a way to update only an ID3v1 tag is intentional.
         """
