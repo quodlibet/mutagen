@@ -69,6 +69,8 @@ class ID3(DictProxy, mutagen.Metadata):
     * size -- the total size of the ID3 tag, including the header
     """
 
+    __module__ = "mutagen.id3"
+
     PEDANTIC = True
     version = (2, 4, 0)
 

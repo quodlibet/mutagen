@@ -11,6 +11,8 @@ class Metadata(object):
     Metadata is the base class for many of the tag objects in Mutagen.
     """
 
+    __module__ = "mutagen"
+
     def __init__(self, *args, **kwargs):
         if args or kwargs:
             self.load(*args, **kwargs)

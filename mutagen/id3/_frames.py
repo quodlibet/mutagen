@@ -19,7 +19,7 @@ from ._specs import (
     VolumeAdjustmentsSpec, VolumePeakSpec, VolumeAdjustmentSpec,
     ChannelSpec, MultiSpec, SynchronizedTextSpec, KeyEventSpec, TimeStampSpec,
     EncodedNumericPartTextSpec, EncodedNumericTextSpec)
-from .._compat import text_type, string_types, swap_to_string
+from .._compat import text_type, string_types, swap_to_string, iteritems
 
 
 def is_valid_frame_id(frame_id):
@@ -1594,18 +1594,6 @@ class ASPI(Frame):
     __hash__ = Frame.__hash__
 
 
-Frames = dict([(k, v) for (k, v) in globals().items()
-               if len(k) == 4 and isinstance(v, type) and
-               issubclass(v, Frame)])
-"""All supported ID3v2 frames, keyed by frame name."""
-
-try:
-    del(k)
-    del(v)
-except NameError:
-    pass
-
-
 # ID3v2.2 frames
 class UFI(UFID):
     "Unique File Identifier"
@@ -1903,9 +1891,23 @@ class LNK(LINK):
             other.data = self.data
 
 
-Frames_2_2 = dict([(k, v) for (k, v) in globals().items()
-                   if len(k) == 3 and isinstance(v, type) and
-                   issubclass(v, Frame)])
+Frames = {}
+"""All supported ID3v2.3/4 frames, keyed by frame name."""
+
+
+Frames_2_2 = {}
+"""All supported ID3v2.2 frames, keyed by frame name."""
+
+
+k, v = None, None
+for k, v in iteritems(globals()):
+    if isinstance(v, type) and issubclass(v, Frame):
+        v.__module__ = "mutagen.id3"
+
+        if len(k) == 3:
+            Frames_2_2[k] = v
+        elif len(k) == 4:
+            Frames[k] = v
 
 try:
     del k

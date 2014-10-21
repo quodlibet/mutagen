@@ -25,6 +25,8 @@ class FileType(DictMixin):
     the appropriate methods on its tag data.
     """
 
+    __module__ = "mutagen"
+
     info = None
     tags = None
     filename = None
