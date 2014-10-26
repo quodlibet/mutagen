@@ -65,6 +65,21 @@ class TAtom(TestCase):
         self.failUnlessEqual(atom.length, 20)
         self.failUnlessEqual(atom.children[-1].length, 12)
 
+    def test_read(self):
+        payload = 8 * b"\xff"
+        fileobj = cBytesIO(b"\x00\x00\x00\x10atom" + payload)
+        atom = Atom(fileobj)
+        ok, data = atom.read(fileobj)
+        self.assertTrue(ok)
+        self.assertEqual(data, payload)
+
+        payload = 7 * b"\xff"
+        fileobj = cBytesIO(b"\x00\x00\x00\x10atom" + payload)
+        atom = Atom(fileobj)
+        ok, data = atom.read(fileobj)
+        self.assertFalse(ok)
+        self.assertEqual(data, payload)
+
 add(TAtom)
 
 

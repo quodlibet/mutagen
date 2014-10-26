@@ -233,8 +233,10 @@ class Atom(object):
     def __init__(self, fileobj, level=0):
         self.offset = fileobj.tell()
         self.length, self.name = struct.unpack(">I4s", fileobj.read(8))
+        self._dataoffset = self.offset + 8
         if self.length == 1:
             self.length, = struct.unpack(">Q", fileobj.read(8))
+            self._dataoffset += 8
             if self.length < 16:
                 raise MP4MetadataError(
                     "64 bit atom length can only be 16 and higher")
@@ -258,6 +260,14 @@ class Atom(object):
                 self.children.append(Atom(fileobj, level + 1))
         else:
             fileobj.seek(self.offset + self.length, 0)
+
+    def read(self, fileobj):
+        """Return if all data could be read and the atom payload"""
+
+        fileobj.seek(self._dataoffset, 0)
+        length = self.length - (self._dataoffset - self.offset)
+        data = fileobj.read(length)
+        return len(data) == length, data
 
     @staticmethod
     def render(name, data):
@@ -455,9 +465,8 @@ class MP4Tags(DictProxy, Metadata):
         except KeyError as key:
             raise MP4MetadataError(key)
         for atom in ilst.children:
-            fileobj.seek(atom.offset + 8)
-            data = fileobj.read(atom.length - 8)
-            if len(data) != (atom.length - 8):
+            ok, data = atom.read(fileobj)
+            if not ok:
                 raise MP4MetadataError("Not enough data")
 
             try:
@@ -929,6 +938,17 @@ class MP4Tags(DictProxy, Metadata):
         return "\n".join(values)
 
 
+def _parse_full_atom(data):
+    """Some atoms are versioned."""
+
+    if len(data) < 4:
+        raise ValueError("not enough data")
+
+    version = ord(data[0:1])
+    flags = cdata.uint_be(b"\x00" + data[1:4])
+    return version, flags, data[4:]
+
+
 class MP4Info(StreamInfo):
     """MPEG-4 stream information.
 
@@ -949,25 +969,39 @@ class MP4Info(StreamInfo):
     def __init__(self, atoms, fileobj):
         for trak in list(atoms[b"moov"].findall(b"trak")):
             hdlr = trak[b"mdia", b"hdlr"]
-            fileobj.seek(hdlr.offset)
-            data = fileobj.read(hdlr.length)
-            if data[16:20] == b"soun":
+            ok, data = hdlr.read(fileobj)
+            if not ok:
+                raise MP4StreamInfoError("Not enough data")
+            if data[8:12] == b"soun":
                 break
         else:
             raise MP4StreamInfoError("track has no audio data")
 
         mdhd = trak[b"mdia", b"mdhd"]
-        fileobj.seek(mdhd.offset)
-        data = fileobj.read(mdhd.length)
-        if ord(data[8:9]) == 0:
-            offset = 20
+        ok, data = mdhd.read(fileobj)
+        if not ok:
+            raise MP4StreamInfoError("Not enough data")
+
+        try:
+            version, flags, data = _parse_full_atom(data)
+        except ValueError as e:
+            raise MP4StreamInfoError(e)
+
+        if version == 0:
+            offset = 8
             fmt = ">2I"
-        else:
-            offset = 28
+        elif version == 1:
+            offset = 16
             fmt = ">IQ"
+        else:
+            raise MP4StreamInfoError("Unknown mdhd version %d" % version)
+
         end = offset + struct.calcsize(fmt)
         unit, length = struct.unpack(fmt, data[offset:end])
-        self.length = float(length) / unit
+        try:
+            self.length = float(length) / unit
+        except ZeroDivisionError:
+            self.length = 0
 
         try:
             atom = trak[b"mdia", b"minf", b"stbl", b"stsd"]
