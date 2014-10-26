@@ -51,7 +51,7 @@ def is_valid_apev2_key(key):
         except UnicodeDecodeError:
             return False
 
-    #PY26 - Change to set literal syntax (since set is faster than list here)
+    # PY26 - Change to set literal syntax (since set is faster than list here)
     return ((2 <= len(key) <= 255) and (min(key) >= u' ') and
             (max(key) <= u'~') and
             (key not in [u"OggS", u"TAG", u"ID3", u"MP+"]))
