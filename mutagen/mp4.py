@@ -1007,7 +1007,7 @@ class MP4Info(StreamInfo):
             atom = trak[b"mdia", b"minf", b"stbl", b"stsd"]
             fileobj.seek(atom.offset)
             data = fileobj.read(atom.length)
-            if data[20:24] == b"mp4a":
+            if data[20:24] in (b"mp4a", b"alac"):
                 length = cdata.uint_be(data[16:20])
                 (self.channels, self.bits_per_sample, _,
                  self.sample_rate) = struct.unpack(">3HI", data[40:50])

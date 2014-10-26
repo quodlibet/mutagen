@@ -868,6 +868,28 @@ class TMP4UpdateParents64Bit(TestCase):
 
 add(TMP4UpdateParents64Bit)
 
+
+class TMP4ALAC(TestCase):
+    original = os.path.join("tests", "data", "alac.m4a")
+
+    def setUp(self):
+        self.audio = MP4(self.original)
+
+    def test_channels(self):
+        self.failUnlessEqual(self.audio.info.channels, 2)
+
+    def test_sample_rate(self):
+        self.failUnlessEqual(self.audio.info.sample_rate, 44100)
+
+    def test_bits_per_sample(self):
+        self.failUnlessEqual(self.audio.info.bits_per_sample, 16)
+
+    def test_length(self):
+        self.failUnlessAlmostEqual(3.7, self.audio.info.length, 1)
+
+add(TMP4ALAC)
+
+
 NOTFOUND = os.system("tools/notarealprogram 2> %s" % devnull)
 
 have_faad = True
