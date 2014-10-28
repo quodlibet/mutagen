@@ -251,7 +251,10 @@ class ASFByteArrayAttribute(ASFBaseAttribute):
         return len(self.value)
 
     def __bytes__(self):
-        return "[binary data (%s bytes)]" % len(self.value)
+        return self.value
+
+    def __str__(self):
+        return "[binary data (%d bytes)]" % len(self.value)
 
     def __eq__(self, other):
         return self.value == other
@@ -292,6 +295,9 @@ class ASFBoolAttribute(ASFBaseAttribute):
     def __bytes__(self):
         return text_type(self.value).encode('utf-8')
 
+    def __str__(self):
+        return text_type(self.value)
+
     def __eq__(self, other):
         return bool(self.value) == other
 
@@ -326,7 +332,10 @@ class ASFDWordAttribute(ASFBaseAttribute):
         return self.value
 
     def __bytes__(self):
-        return self.value
+        return text_type(self.value).encode('utf-8')
+
+    def __str__(self):
+        return text_type(self.value)
 
     def __eq__(self, other):
         return int(self.value) == other
@@ -362,7 +371,10 @@ class ASFQWordAttribute(ASFBaseAttribute):
         return self.value
 
     def __bytes__(self):
-        return self.value
+        return text_type(self.value).encode('utf-8')
+
+    def __str__(self):
+        return text_type(self.value)
 
     def __eq__(self, other):
         return int(self.value) == other
@@ -398,7 +410,10 @@ class ASFWordAttribute(ASFBaseAttribute):
         return self.value
 
     def __bytes__(self):
-        return self.value
+        return text_type(self.value).encode('utf-8')
+
+    def __str__(self):
+        return text_type(self.value)
 
     def __eq__(self, other):
         return int(self.value) == other
@@ -433,6 +448,9 @@ class ASFGUIDAttribute(ASFBaseAttribute):
 
     def __bytes__(self):
         return self.value
+
+    def __str__(self):
+        return repr(self.value)
 
     def __eq__(self, other):
         return self.value == other

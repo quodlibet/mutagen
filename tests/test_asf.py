@@ -222,16 +222,33 @@ class TASFAttributes(TestCase):
 
         self.assertRaises(ASFError, ASFUnicodeAttribute, data=b"\x00")
         self.assertEqual(ASFUnicodeAttribute(u"foo").value, u"foo")
-        self.assertEqual(
-            bytes(ASFUnicodeAttribute(u"foo")), b"f\x00o\x00o\x00")
-        self.assertEqual(
-            text_type(ASFUnicodeAttribute(u"foo")), u"foo")
+
+    def test_ASFUnicodeAttribute_dunder(self):
+        attr = ASFUnicodeAttribute(u"foo")
+
+        self.assertEqual(bytes(attr), b"f\x00o\x00o\x00")
+        self.assertEqual(text_type(attr), u"foo")
+        if PY3:
+            self.assertEqual(repr(attr), "ASFUnicodeAttribute('foo')")
+        else:
+            self.assertEqual(repr(attr), "ASFUnicodeAttribute(u'foo')")
+        self.assertRaises(TypeError, int, attr)
 
     def test_ASFByteArrayAttribute(self):
-        self.assertEqual(ASFByteArrayAttribute(data=b"\xff").value, b"\xff")
         self.assertRaises(TypeError, ASFByteArrayAttribute, u"foo")
+        self.assertEqual(ASFByteArrayAttribute(data=b"\xff").value, b"\xff")
 
-    def test_compat(self):
+    def test_ASFByteArrayAttribute_dunder(self):
+        attr = ASFByteArrayAttribute(data=b"\xff")
+        self.assertEqual(bytes(attr), b"\xff")
+        self.assertEqual(text_type(attr), u"[binary data (1 bytes)]")
+        if PY3:
+            self.assertEqual(repr(attr), r"ASFByteArrayAttribute(b'\xff')")
+        else:
+            self.assertEqual(repr(attr), r"ASFByteArrayAttribute('\xff')")
+        self.assertRaises(TypeError, int, attr)
+
+    def test_ASFByteArrayAttribute_compat(self):
         ba = ASFByteArrayAttribute()
         ba.value = b"\xff"
         self.assertEqual(ba._render(), b"\xff")
@@ -240,12 +257,30 @@ class TASFAttributes(TestCase):
         self.assertEqual(ASFGUIDAttribute(data=b"\xff").value, b"\xff")
         self.assertRaises(TypeError, ASFGUIDAttribute, u"foo")
 
+    def test_ASFGUIDAttribute_dunder(self):
+        attr = ASFGUIDAttribute(data=b"\xff")
+        self.assertEqual(bytes(attr), b"\xff")
+        if PY3:
+            self.assertEqual(text_type(attr), u"b'\\xff'")
+            self.assertEqual(repr(attr), "ASFGUIDAttribute(b'\\xff')")
+        else:
+            self.assertEqual(text_type(attr), u"'\\xff'")
+            self.assertEqual(repr(attr), "ASFGUIDAttribute('\\xff')")
+        self.assertRaises(TypeError, int, attr)
+
     def test_ASFBoolAttribute(self):
         self.assertEqual(
             ASFBoolAttribute(data=b"\x01\x00\x00\x00").value, True)
         self.assertEqual(
             ASFBoolAttribute(data=b"\x00\x00\x00\x00").value, False)
         self.assertEqual(ASFBoolAttribute(False).value, False)
+
+    def test_ASFBoolAttribute_dunder(self):
+        attr = ASFBoolAttribute(False)
+        self.assertEqual(bytes(attr), b"False")
+        self.assertEqual(text_type(attr), u"False")
+        self.assertEqual(repr(attr), "ASFBoolAttribute(False)")
+        self.assertRaises(TypeError, int, attr)
 
     def test_ASFWordAttribute(self):
         self.assertEqual(
@@ -255,6 +290,13 @@ class TASFAttributes(TestCase):
         self.assertRaises(ValueError, ASFWordAttribute, -1)
         self.assertRaises(ValueError, ASFWordAttribute, 2 ** 16)
 
+    def test_ASFWordAttribute_dunder(self):
+        attr = ASFWordAttribute(data=b"\x00" * 2)
+        self.assertEqual(bytes(attr), b"0")
+        self.assertEqual(text_type(attr), u"0")
+        self.assertEqual(repr(attr), "ASFWordAttribute(0)")
+        self.assertEqual(int(attr), 0)
+
     def test_ASFDWordAttribute(self):
         self.assertEqual(
             ASFDWordAttribute(data=b"\x00" * 4).value, 0)
@@ -262,6 +304,13 @@ class TASFAttributes(TestCase):
             ASFDWordAttribute(data=b"\xff" * 4).value, 2 ** 32 - 1)
         self.assertRaises(ValueError, ASFDWordAttribute, -1)
         self.assertRaises(ValueError, ASFDWordAttribute, 2 ** 32)
+
+    def test_ASFDWordAttribute_dunder(self):
+        attr = ASFDWordAttribute(data=b"\x00" * 4)
+        self.assertEqual(bytes(attr), b"0")
+        self.assertEqual(text_type(attr), u"0")
+        self.assertEqual(repr(attr), "ASFDWordAttribute(0)")
+        self.assertEqual(int(attr), 0)
 
     def test_ASFQWordAttribute(self):
         self.assertEqual(
@@ -271,6 +320,12 @@ class TASFAttributes(TestCase):
         self.assertRaises(ValueError, ASFQWordAttribute, -1)
         self.assertRaises(ValueError, ASFQWordAttribute, 2 ** 64)
 
+    def test_ASFQWordAttribute_dunder(self):
+        attr = ASFQWordAttribute(data=b"\x00" * 8)
+        self.assertEqual(bytes(attr), b"0")
+        self.assertEqual(text_type(attr), u"0")
+        self.assertEqual(repr(attr), "ASFQWordAttribute(0)")
+        self.assertEqual(int(attr), 0)
 
 add(TASFAttributes)
 
@@ -301,6 +356,9 @@ class TASFIssue29(TestCase):
 
     def tearDown(self):
         os.unlink(self.filename)
+
+    def test_pprint(self):
+        self.audio.pprint()
 
     def test_issue_29_description(self):
         self.audio["Description"] = "Hello"
