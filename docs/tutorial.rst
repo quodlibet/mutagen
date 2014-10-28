@@ -1,11 +1,11 @@
 Mutagen Tutorial
 ----------------
 
-There are two different ways to load files in Mutagen, but both provide 
-similar interfaces. The first is the :class:`Metadata <mutagen.Metadata>` 
-API, which deals only in metadata tags. The second is the :class:`FileType 
-<mutagen.FileType>` API, which is a superset of the :class:`mutagen 
-<mutagen.Metadata>` API, and contains information about the audio data 
+There are two different ways to load files in Mutagen, but both provide
+similar interfaces. The first is the :class:`Metadata <mutagen.Metadata>`
+API, which deals only in metadata tags. The second is the :class:`FileType
+<mutagen.FileType>` API, which is a superset of the :class:`mutagen
+<mutagen.Metadata>` API, and contains information about the audio data
 itself.
 
 Both Metadata and FileType objects present a dict-like interface to
@@ -118,3 +118,96 @@ Most tag formats support multiple values for each key, so when you
 access then (e.g. ``audio["title"]``) you will get a list of strings
 rather than a single one (``[u"An example"]`` rather than ``u"An example"``).
 Similarly, you can assign a list of strings rather than a single one.
+
+
+VorbisComment
+^^^^^^^^^^^^^
+
+VorbisComment is the tagging format used in Ogg and FLAC container formats. In
+mutagen this corresponds to the tags in all subclasses of
+:class:`mutagen.ogg.OggFileType` and the :class:`mutagen.flac.FLAC` class.
+
+Embedded Images
+~~~~~~~~~~~~~~~
+
+The most common way to include images in VorbisComment is to store a base64
+encoded FLAC Picture block with the key ``metadata_block_picture`` [0]. See
+the following code example on how to read and write images this way::
+
+    # READING
+    import base64
+    from mutagen.oggvorbis import OggVorbis
+    from mutagen.flac import Picture, error as FLACError
+
+    file_ = OggVorbis("somefile.ogg")
+
+    for b64_data in file_.get("metadata_block_picture", []):
+        try:
+            data = base64.b64decode(b64_data)
+        except (TypeError, ValueError):
+            continue
+
+        try:
+            picture = Picture(data)
+        except FLACError:
+            continue
+
+        print(picture)
+
+::
+
+    # WRITING
+    import base64
+    from mutagen.oggvorbis import OggVorbis
+    from mutagen.flac import Picture
+
+    file_ = OggVorbis("somefile.ogg")
+
+    with open("image.jpeg", "rb") as h:
+        data = h.read()
+
+    picture = Picture()
+    picture.data = data
+    picture.type = 17
+    picture.desc = u"A bright coloured fish"
+    picture.mime = u"image/jpeg"
+    picture.width = 100
+    picture.height = 100
+    picture.depth = 24
+
+    picture_data = picture.write()
+    encoded_data = base64.b64encode(picture_data)
+
+    file_["metadata_block_picture"] = [encoded_data]
+    file_.save()
+
+
+Some programs also write base64 encoded image data directly into the
+``coverart`` field and sometimes a corresponding mime type into the
+``coverartmime`` field::
+
+    # READING
+    import base64
+    import itertools
+    from mutagen.oggvorbis import OggVorbis
+
+    file_ = OggVorbis("somefile.ogg")
+
+    values = file_.get("coverart", [])
+    mimes = file_.get("coverartmime", [])
+    for value, mime in itertools.izip_longest(values, mimes, fillvalue=b""):
+        try:
+            image_data = base64.b64decode(value)
+        except (TypeError, ValueError):
+            continue
+
+        print(mime)
+        print(image_data)
+
+
+FLAC supports images directly, see :class:`mutagen.flac.Picture`,
+:attr:`mutagen.flac.FLAC.pictures`, :meth:`mutagen.flac.FLAC.add_picture` and
+:meth:`mutagen.flac.FLAC.clear_pictures`.
+
+
+[0] https://wiki.xiph.org/VorbisComment#Cover_art
