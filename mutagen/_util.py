@@ -210,52 +210,54 @@ class DictProxy(DictMixin):
         return self.__dict.keys()
 
 
+def _fill_cdata(cls):
+    """Add struct pack/unpack functions"""
+
+    funcs = {}
+    for key, name in [("b", "char"), ("h", "short"),
+                      ("i", "int"), ("q", "longlong")]:
+        for echar, esuffix in [("<", "le"), (">", "be")]:
+            esuffix = "_" + esuffix
+            for unsigned in [True, False]:
+                s = struct.Struct(echar + (key.upper() if unsigned else key))
+                get_wrapper = lambda f: lambda *a, **k: f(*a, **k)[0]
+                unpack = get_wrapper(s.unpack)
+                unpack_from = get_wrapper(s.unpack_from)
+                pack = s.pack
+
+                prefix = "u" if unsigned else ""
+                if s.size == 1:
+                    esuffix = ""
+                bits = str(s.size * 8)
+                funcs["%s%s%s" % (prefix, name, esuffix)] = unpack
+                funcs["%sint%s%s" % (prefix, bits, esuffix)] = unpack
+                funcs["%s%s%s_from" % (prefix, name, esuffix)] = unpack_from
+                funcs["%sint%s%s_from" % (prefix, bits, esuffix)] = unpack_from
+                funcs["to_%s%s%s" % (prefix, name, esuffix)] = pack
+                funcs["to_%sint%s%s" % (prefix, bits, esuffix)] = pack
+
+    for key, func in iteritems(funcs):
+        setattr(cls, key, staticmethod(func))
+
+
 class cdata(object):
-    """C character buffer to Python numeric type conversions."""
+    """C character buffer to Python numeric type conversions.
+
+    For each size/sign/endianness:
+    uint32_le(data)/to_uint32_le(num)/uint32_le_from(data, offset=0)
+    """
 
     from struct import error
     error = error
 
-    short_le = staticmethod(lambda data: struct.unpack('<h', data)[0])
-    ushort_le = staticmethod(lambda data: struct.unpack('<H', data)[0])
-
-    short_be = staticmethod(lambda data: struct.unpack('>h', data)[0])
-    ushort_be = staticmethod(lambda data: struct.unpack('>H', data)[0])
-
-    int_le = staticmethod(lambda data: struct.unpack('<i', data)[0])
-    uint_le = staticmethod(lambda data: struct.unpack('<I', data)[0])
-
-    int_be = staticmethod(lambda data: struct.unpack('>i', data)[0])
-    uint_be = staticmethod(lambda data: struct.unpack('>I', data)[0])
-
-    longlong_le = staticmethod(lambda data: struct.unpack('<q', data)[0])
-    ulonglong_le = staticmethod(lambda data: struct.unpack('<Q', data)[0])
-
-    longlong_be = staticmethod(lambda data: struct.unpack('>q', data)[0])
-    ulonglong_be = staticmethod(lambda data: struct.unpack('>Q', data)[0])
-
-    to_short_le = staticmethod(lambda data: struct.pack('<h', data))
-    to_ushort_le = staticmethod(lambda data: struct.pack('<H', data))
-
-    to_short_be = staticmethod(lambda data: struct.pack('>h', data))
-    to_ushort_be = staticmethod(lambda data: struct.pack('>H', data))
-
-    to_int_le = staticmethod(lambda data: struct.pack('<i', data))
-    to_uint_le = staticmethod(lambda data: struct.pack('<I', data))
-
-    to_int_be = staticmethod(lambda data: struct.pack('>i', data))
-    to_uint_be = staticmethod(lambda data: struct.pack('>I', data))
-
-    to_longlong_le = staticmethod(lambda data: struct.pack('<q', data))
-    to_ulonglong_le = staticmethod(lambda data: struct.pack('<Q', data))
-
-    to_longlong_be = staticmethod(lambda data: struct.pack('>q', data))
-    to_ulonglong_be = staticmethod(lambda data: struct.pack('>Q', data))
-
-    bitswap = b''.join(chr_(sum(((val >> i) & 1) << (7 - i) for i in range(8)))
-                       for val in range(256))
+    bitswap = b''.join(
+        chr_(sum(((val >> i) & 1) << (7 - i) for i in range(8)))
+        for val in range(256))
 
     test_bit = staticmethod(lambda value, n: bool((value >> n) & 1))
+
+
+_fill_cdata(cdata)
 
 
 def lock(fileobj):

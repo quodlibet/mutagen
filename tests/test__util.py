@@ -124,38 +124,125 @@ add(TDictMixin)
 
 class Tcdata(TestCase):
 
-    ZERO = b"\x00\x00\x00\x00"
-    LEONE = b"\x01\x00\x00\x00"
-    BEONE = b"\x00\x00\x00\x01"
-    NEGONE = b"\xff\xff\xff\xff"
+    ZERO = staticmethod(lambda s: b"\x00" * s)
+    LEONE = staticmethod(lambda s: b"\x01" + b"\x00" * (s - 1))
+    BEONE = staticmethod(lambda s: b"\x00" * (s - 1) + b"\x01")
+    NEGONE = staticmethod(lambda s: b"\xff" * s)
 
-    def test_int_le(self):
-        self.failUnlessEqual(cdata.int_le(self.ZERO), 0)
-        self.failUnlessEqual(cdata.int_le(self.LEONE), 1)
-        self.failUnlessEqual(cdata.int_le(self.BEONE), 16777216)
-        self.failUnlessEqual(cdata.int_le(self.NEGONE), -1)
+    def test_char(self):
+        self.failUnlessEqual(cdata.char(self.ZERO(1)), 0)
+        self.failUnlessEqual(cdata.char(self.LEONE(1)), 1)
+        self.failUnlessEqual(cdata.char(self.BEONE(1)), 1)
+        self.failUnlessEqual(cdata.char(self.NEGONE(1)), -1)
+        self.assertTrue(cdata.char is cdata.int8)
+        self.assertTrue(cdata.to_char is cdata.to_int8)
+        self.assertTrue(cdata.char_from is cdata.int8_from)
 
-    def test_uint_le(self):
-        self.failUnlessEqual(cdata.uint_le(self.ZERO), 0)
-        self.failUnlessEqual(cdata.uint_le(self.LEONE), 1)
-        self.failUnlessEqual(cdata.uint_le(self.BEONE), 16777216)
-        self.failUnlessEqual(cdata.uint_le(self.NEGONE), 2 ** 32 - 1)
+    def test_char_from_to(self):
+        self.assertEqual(cdata.to_char(-2), b"\xfe")
+        self.assertEqual(cdata.char_from(b"\xfe"), -2)
+        self.assertEqual(cdata.char_from(b"\x00\xfe", 1), -2)
+        self.assertEqual(cdata.char_from(b"\x00\xfe", -1), -2)
+        self.assertRaises(cdata.error, cdata.char_from, b"\x00\xfe", 3)
 
-    def test_longlong_le(self):
-        self.failUnlessEqual(cdata.longlong_le(self.ZERO * 2), 0)
-        self.failUnlessEqual(cdata.longlong_le(self.LEONE + self.ZERO), 1)
-        self.failUnlessEqual(cdata.longlong_le(self.NEGONE * 2), -1)
+    def test_uchar(self):
+        self.failUnlessEqual(cdata.uchar(self.ZERO(1)), 0)
+        self.failUnlessEqual(cdata.uchar(self.LEONE(1)), 1)
+        self.failUnlessEqual(cdata.uchar(self.BEONE(1)), 1)
+        self.failUnlessEqual(cdata.uchar(self.NEGONE(1)), 255)
+        self.assertTrue(cdata.uchar is cdata.uint8)
+        self.assertTrue(cdata.to_uchar is cdata.to_uint8)
+        self.assertTrue(cdata.uchar_from is cdata.uint8_from)
 
-    def test_ulonglong_le(self):
-        self.failUnlessEqual(cdata.ulonglong_le(self.ZERO * 2), 0)
-        self.failUnlessEqual(cdata.ulonglong_le(self.LEONE + self.ZERO), 1)
-        self.failUnlessEqual(cdata.ulonglong_le(self.NEGONE * 2), 2 ** 64 - 1)
+    def test_short(self):
+        self.failUnlessEqual(cdata.short_le(self.ZERO(2)), 0)
+        self.failUnlessEqual(cdata.short_le(self.LEONE(2)), 1)
+        self.failUnlessEqual(cdata.short_le(self.BEONE(2)), 256)
+        self.failUnlessEqual(cdata.short_le(self.NEGONE(2)), -1)
+        self.assertTrue(cdata.short_le is cdata.int16_le)
+
+        self.failUnlessEqual(cdata.short_be(self.ZERO(2)), 0)
+        self.failUnlessEqual(cdata.short_be(self.LEONE(2)), 256)
+        self.failUnlessEqual(cdata.short_be(self.BEONE(2)), 1)
+        self.failUnlessEqual(cdata.short_be(self.NEGONE(2)), -1)
+        self.assertTrue(cdata.short_be is cdata.int16_be)
+
+    def test_ushort(self):
+        self.failUnlessEqual(cdata.ushort_le(self.ZERO(2)), 0)
+        self.failUnlessEqual(cdata.ushort_le(self.LEONE(2)), 1)
+        self.failUnlessEqual(cdata.ushort_le(self.BEONE(2)), 2 ** 16 >> 8)
+        self.failUnlessEqual(cdata.ushort_le(self.NEGONE(2)), 65535)
+        self.assertTrue(cdata.ushort_le is cdata.uint16_le)
+
+        self.failUnlessEqual(cdata.ushort_be(self.ZERO(2)), 0)
+        self.failUnlessEqual(cdata.ushort_be(self.LEONE(2)), 2 ** 16 >> 8)
+        self.failUnlessEqual(cdata.ushort_be(self.BEONE(2)), 1)
+        self.failUnlessEqual(cdata.ushort_be(self.NEGONE(2)), 65535)
+        self.assertTrue(cdata.ushort_be is cdata.uint16_be)
+
+    def test_int(self):
+        self.failUnlessEqual(cdata.int_le(self.ZERO(4)), 0)
+        self.failUnlessEqual(cdata.int_le(self.LEONE(4)), 1)
+        self.failUnlessEqual(cdata.int_le(self.BEONE(4)), 2 ** 32 >> 8)
+        self.failUnlessEqual(cdata.int_le(self.NEGONE(4)), -1)
+        self.assertTrue(cdata.int_le is cdata.int32_le)
+
+        self.failUnlessEqual(cdata.int_be(self.ZERO(4)), 0)
+        self.failUnlessEqual(cdata.int_be(self.LEONE(4)), 2 ** 32 >> 8)
+        self.failUnlessEqual(cdata.int_be(self.BEONE(4)), 1)
+        self.failUnlessEqual(cdata.int_be(self.NEGONE(4)), -1)
+        self.assertTrue(cdata.int_be is cdata.int32_be)
+
+    def test_uint(self):
+        self.failUnlessEqual(cdata.uint_le(self.ZERO(4)), 0)
+        self.failUnlessEqual(cdata.uint_le(self.LEONE(4)), 1)
+        self.failUnlessEqual(cdata.uint_le(self.BEONE(4)), 2 ** 32 >> 8)
+        self.failUnlessEqual(cdata.uint_le(self.NEGONE(4)), 2 ** 32 - 1)
+        self.assertTrue(cdata.uint_le is cdata.uint32_le)
+
+        self.failUnlessEqual(cdata.uint_be(self.ZERO(4)), 0)
+        self.failUnlessEqual(cdata.uint_be(self.LEONE(4)), 2 ** 32 >> 8)
+        self.failUnlessEqual(cdata.uint_be(self.BEONE(4)), 1)
+        self.failUnlessEqual(cdata.uint_be(self.NEGONE(4)), 2 ** 32 - 1)
+        self.assertTrue(cdata.uint_be is cdata.uint32_be)
+
+    def test_longlong(self):
+        self.failUnlessEqual(cdata.longlong_le(self.ZERO(8)), 0)
+        self.failUnlessEqual(cdata.longlong_le(self.LEONE(8)), 1)
+        self.failUnlessEqual(cdata.longlong_le(self.BEONE(8)), 2 ** 64 >> 8)
+        self.failUnlessEqual(cdata.longlong_le(self.NEGONE(8)), -1)
+        self.assertTrue(cdata.longlong_le is cdata.int64_le)
+
+        self.failUnlessEqual(cdata.longlong_be(self.ZERO(8)), 0)
+        self.failUnlessEqual(cdata.longlong_be(self.LEONE(8)), 2 ** 64 >> 8)
+        self.failUnlessEqual(cdata.longlong_be(self.BEONE(8)), 1)
+        self.failUnlessEqual(cdata.longlong_be(self.NEGONE(8)), -1)
+        self.assertTrue(cdata.longlong_be is cdata.int64_be)
+
+    def test_ulonglong(self):
+        self.failUnlessEqual(cdata.ulonglong_le(self.ZERO(8)), 0)
+        self.failUnlessEqual(cdata.ulonglong_le(self.LEONE(8)), 1)
+        self.failUnlessEqual(cdata.longlong_le(self.BEONE(8)), 2 ** 64 >> 8)
+        self.failUnlessEqual(cdata.ulonglong_le(self.NEGONE(8)), 2 ** 64 - 1)
+        self.assertTrue(cdata.ulonglong_le is cdata.uint64_le)
+
+        self.failUnlessEqual(cdata.ulonglong_be(self.ZERO(8)), 0)
+        self.failUnlessEqual(cdata.ulonglong_be(self.LEONE(8)), 2 ** 64 >> 8)
+        self.failUnlessEqual(cdata.longlong_be(self.BEONE(8)), 1)
+        self.failUnlessEqual(cdata.ulonglong_be(self.NEGONE(8)), 2 ** 64 - 1)
+        self.assertTrue(cdata.ulonglong_be is cdata.uint64_be)
 
     def test_invalid_lengths(self):
+        self.failUnlessRaises(cdata.error, cdata.char, b"")
+        self.failUnlessRaises(cdata.error, cdata.uchar, b"")
         self.failUnlessRaises(cdata.error, cdata.int_le, b"")
         self.failUnlessRaises(cdata.error, cdata.longlong_le, b"")
         self.failUnlessRaises(cdata.error, cdata.uint_le, b"")
         self.failUnlessRaises(cdata.error, cdata.ulonglong_le, b"")
+        self.failUnlessRaises(cdata.error, cdata.int_be, b"")
+        self.failUnlessRaises(cdata.error, cdata.longlong_be, b"")
+        self.failUnlessRaises(cdata.error, cdata.uint_be, b"")
+        self.failUnlessRaises(cdata.error, cdata.ulonglong_be, b"")
 
     def test_test(self):
         self.failUnless(cdata.test_bit((1), 0))
