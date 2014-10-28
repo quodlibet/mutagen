@@ -89,6 +89,16 @@ class TMusepack(TestCase):
     def test_mime(self):
         self.failUnless("audio/x-musepack" in self.sv7.mime)
 
+    def test_zero_padded_sh_packet(self):
+        # https://bitbucket.org/lazka/mutagen/issue/198
+        data = (b"MPCKSH\x10\x95 Q\xa2\x08\x81\xb8\xc9T\x00\x1e\x1b"
+                b"\x00RG\x0c\x01A\xcdY\x06?\x80Z\x06EI")
+
+        fileobj = cBytesIO(data)
+        info = MusepackInfo(fileobj)
+        self.assertEqual(info.channels, 2)
+        self.assertEqual(info.samples, 3024084)
+
 add(TMusepack)
 
 

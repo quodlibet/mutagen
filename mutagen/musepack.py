@@ -133,6 +133,7 @@ class MusepackInfo(StreamInfo):
             except (EOFError, ValueError):
                 raise MusepackHeaderError("Invalid packet size.")
             data_size = frame_size - key_size - slen
+            # packets can be at maximum data_size big and are padded with zeros
 
             if frame_type == b"SH":
                 mandatory_packets.remove(frame_type)
@@ -154,30 +155,36 @@ class MusepackInfo(StreamInfo):
         self.bitrate = 0
 
     def __parse_stream_header(self, fileobj, data_size):
+        # skip CRC
         fileobj.seek(4, 1)
+        remaining_size = data_size - 4
+
         try:
             self.version = bytearray(fileobj.read(1))[0]
         except TypeError:
             raise MusepackHeaderError("SH packet ended unexpectedly.")
+
+        remaining_size -= 1
+
         try:
             samples, l1 = _parse_sv8_int(fileobj)
             samples_skip, l2 = _parse_sv8_int(fileobj)
         except (EOFError, ValueError):
             raise MusepackHeaderError(
                 "SH packet: Invalid sample counts.")
-        left_size = data_size - 5 - l1 - l2
-        if left_size != 2:
-            raise MusepackHeaderError("Invalid SH packet size.")
-        data = fileobj.read(left_size)
-        if len(data) != left_size:
-            raise MusepackHeaderError("SH packet ended unexpectedly.")
-        self.sample_rate = RATES[bytearray(data)[-2] >> 5]
-        self.channels = (bytearray(data)[-1] >> 4) + 1
+
         self.samples = samples - samples_skip
+        remaining_size -= l1 + l2
+
+        data = fileobj.read(remaining_size)
+        if len(data) != remaining_size:
+            raise MusepackHeaderError("SH packet ended unexpectedly.")
+        self.sample_rate = RATES[bytearray(data)[0] >> 5]
+        self.channels = (bytearray(data)[1] >> 4) + 1
 
     def __parse_replaygain_packet(self, fileobj, data_size):
         data = fileobj.read(data_size)
-        if data_size != 9:
+        if data_size < 9:
             raise MusepackHeaderError("Invalid RG packet size.")
         if len(data) != data_size:
             raise MusepackHeaderError("RG packet ended unexpectedly.")
