@@ -324,7 +324,7 @@ class TASFAttributes(TestCase):
         attr = ASFQWordAttribute(data=b"\x00" * 8)
         self.assertEqual(bytes(attr), b"0")
         self.assertEqual(text_type(attr), u"0")
-        self.assertEqual(repr(attr), "ASFQWordAttribute(0)")
+        self.assertEqual(repr(attr).replace("0L", "0"), "ASFQWordAttribute(0)")
         self.assertEqual(int(attr), 0)
 
 add(TASFAttributes)
