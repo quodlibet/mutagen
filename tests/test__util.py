@@ -140,9 +140,8 @@ class Tcdata(TestCase):
 
     def test_char_from_to(self):
         self.assertEqual(cdata.to_char(-2), b"\xfe")
-        self.assertEqual(cdata.char_from(b"\xfe"), -2)
-        self.assertEqual(cdata.char_from(b"\x00\xfe", 1), -2)
-        self.assertEqual(cdata.char_from(b"\x00\xfe", -1), -2)
+        self.assertEqual(cdata.char_from(b"\xfe"), (-2, 1))
+        self.assertEqual(cdata.char_from(b"\x00\xfe", 1), (-2, 2))
         self.assertRaises(cdata.error, cdata.char_from, b"\x00\xfe", 3)
 
     def test_uchar(self):

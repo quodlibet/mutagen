@@ -223,6 +223,13 @@ def _fill_cdata(cls):
                 get_wrapper = lambda f: lambda *a, **k: f(*a, **k)[0]
                 unpack = get_wrapper(s.unpack)
                 unpack_from = get_wrapper(s.unpack_from)
+
+                def get_unpack_from(s):
+                    def unpack_from(data, offset=0):
+                        return s.unpack_from(data, offset)[0], offset + s.size
+                    return unpack_from
+
+                unpack_from = get_unpack_from(s)
                 pack = s.pack
 
                 prefix = "u" if unsigned else ""

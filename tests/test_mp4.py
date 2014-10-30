@@ -7,7 +7,7 @@ from tempfile import mkstemp
 from tests import TestCase, add
 from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
                          MP4MetadataError, MP4FreeForm, error, AtomDataType,
-                         MP4MetadataValueError)
+                         MP4MetadataValueError, AudioSampleEntry)
 from mutagen._util import cdata
 from os import devnull
 
@@ -887,7 +887,46 @@ class TMP4ALAC(TestCase):
     def test_length(self):
         self.failUnlessAlmostEqual(3.7, self.audio.info.length, 1)
 
+    def test_bitrate(self):
+        self.assertEqual(self.audio.info.bitrate, 2764)
+
 add(TMP4ALAC)
+
+
+class TMP4AudioSampleEntry(TestCase):
+
+    def test_alac(self):
+        # an exampe where the channel count in the alac cookie is right
+        # but the SampleEntry is wrong
+        atom_data = (
+            b'\x00\x00\x00Halac\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x02\x00\x10\x00\x00\x00\x00\x1f@\x00'
+            b'\x00\x00\x00\x00$alac\x00\x00\x00\x00\x00\x00\x10\x00\x00\x10'
+            b'(\n\x0e\x01\x00\xff\x00\x00P\x01\x00\x00\x00\x00\x00\x00\x1f@')
+
+        fileobj = cBytesIO(atom_data)
+        atom = Atom(fileobj)
+        entry = AudioSampleEntry(atom, fileobj)
+        self.assertEqual(entry.channels, 1)
+        self.assertEqual(entry.sample_rate, 8000)
+
+    def test_alac_2(self):
+        # an example where the samplerate is only correct in the cookie,
+        # also contains a bitrate
+        atom_data = (
+            b'\x00\x00\x00Halac\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x02\x00\x18\x00\x00\x00\x00X\x88\x00'
+            b'\x00\x00\x00\x00$alac\x00\x00\x00\x00\x00\x00\x10\x00\x00\x18'
+            b'(\n\x0e\x02\x00\xff\x00\x00F/\x00%2\xd5\x00\x01X\x88')
+
+        fileobj = cBytesIO(atom_data)
+        atom = Atom(fileobj)
+        entry = AudioSampleEntry(atom, fileobj)
+        self.assertEqual(entry.channels, 2)
+        self.assertEqual(entry.sample_rate, 88200)
+        self.assertEqual(entry.bitrate, 2437845)
+
+add(TMP4AudioSampleEntry)
 
 
 NOTFOUND = os.system("tools/notarealprogram 2> %s" % devnull)
