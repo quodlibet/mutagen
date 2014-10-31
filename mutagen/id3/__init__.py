@@ -73,6 +73,7 @@ class ID3(DictProxy, mutagen.Metadata):
 
     PEDANTIC = True
     version = (2, 4, 0)
+    """ID3 tag version as a tuple (of the loaded file)"""
 
     filename = None
     size = 0
