@@ -146,7 +146,7 @@ class VComment(mutagen.Metadata, list):
 
         if not isinstance(self.vendor, text_type):
             if PY3:
-                raise ValueError
+                raise ValueError("vendor needs to be str")
 
             try:
                 self.vendor.decode('utf-8')
@@ -162,7 +162,7 @@ class VComment(mutagen.Metadata, list):
 
             if not isinstance(value, text_type):
                 if PY3:
-                    raise ValueError
+                    raise ValueError("%r needs to be str" % key)
 
                 try:
                     value.decode("utf-8")

@@ -279,8 +279,9 @@ the following code example on how to read and write images this way::
 
     picture_data = picture.write()
     encoded_data = base64.b64encode(picture_data)
+    vcomment_value = encoded_data.decode("ascii")
 
-    file_["metadata_block_picture"] = [encoded_data]
+    file_["metadata_block_picture"] = [vcomment_value]
     file_.save()
 
 
@@ -297,9 +298,9 @@ Some programs also write base64 encoded image data directly into the
 
     values = file_.get("coverart", [])
     mimes = file_.get("coverartmime", [])
-    for value, mime in itertools.izip_longest(values, mimes, fillvalue=b""):
+    for value, mime in itertools.izip_longest(values, mimes, fillvalue=u""):
         try:
-            image_data = base64.b64decode(value)
+            image_data = base64.b64decode(value.encode("ascii"))
         except (TypeError, ValueError):
             continue
 
