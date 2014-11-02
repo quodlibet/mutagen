@@ -17,7 +17,8 @@ import struct
 from mutagen import FileType, Metadata, StreamInfo
 from mutagen._util import (insert_bytes, delete_bytes, DictMixin,
                            total_ordering, MutagenError)
-from ._compat import swap_to_string, text_type, PY2, string_types, reraise
+from ._compat import swap_to_string, text_type, PY2, string_types, reraise, \
+    xrange
 
 
 class error(IOError, MutagenError):
@@ -471,10 +472,12 @@ GUID = ASFGUIDAttribute.TYPE
 
 
 def ASFValue(value, kind, **kwargs):
-    for t, c in _attribute_types.items():
-        if kind == t:
-            return c(value=value, **kwargs)
-    raise ValueError("Unknown value type")
+    try:
+        attr_type = _attribute_types[kind]
+    except KeyError:
+        raise ValueError("Unknown value type %r" % kind)
+    else:
+        return attr_type(value=value, **kwargs)
 
 
 _attribute_types = {
@@ -571,7 +574,7 @@ class ExtendedContentDescriptionObject(BaseObject):
         asf.extended_content_description_obj = self
         num_attributes, = struct.unpack("<H", data[0:2])
         pos = 2
-        for i in range(num_attributes):
+        for i in xrange(num_attributes):
             name_length, = struct.unpack("<H", data[pos:pos + 2])
             pos += 2
             name = data[pos:pos + name_length]
@@ -652,7 +655,7 @@ class MetadataObject(BaseObject):
         asf.metadata_obj = self
         num_attributes, = struct.unpack("<H", data[0:2])
         pos = 2
-        for i in range(num_attributes):
+        for i in xrange(num_attributes):
             (reserved, stream, name_length, value_type,
              value_length) = struct.unpack("<HHHHI", data[pos:pos + 12])
             pos += 12
@@ -683,7 +686,7 @@ class MetadataLibraryObject(BaseObject):
         asf.metadata_library_obj = self
         num_attributes, = struct.unpack("<H", data[0:2])
         pos = 2
-        for i in range(num_attributes):
+        for i in xrange(num_attributes):
             (language, stream, name_length, value_type,
              value_length) = struct.unpack("<HHHHI", data[pos:pos + 12])
             pos += 12
@@ -724,8 +727,7 @@ class ASF(FileType):
 
     def load(self, filename):
         self.filename = filename
-        fileobj = open(filename, "rb")
-        try:
+        with open(filename, "rb") as fileobj:
             self.size = 0
             self.size1 = 0
             self.size2 = 0
@@ -735,8 +737,6 @@ class ASF(FileType):
             self.info = ASFInfo()
             self.tags = ASFTags()
             self.__read_file(fileobj)
-        finally:
-            fileobj.close()
 
     def save(self):
         # Move attributes to the right objects
@@ -785,8 +785,7 @@ class ASF(FileType):
                 struct.pack("<QL", len(data) + 30, len(self.objects)) +
                 b"\x01\x02" + data)
 
-        fileobj = open(self.filename, "rb+")
-        try:
+        with open(self.filename, "rb+") as fileobj:
             size = len(data)
             if size > self.size:
                 insert_bytes(fileobj, size - self.size, self.size)
@@ -794,8 +793,6 @@ class ASF(FileType):
                 delete_bytes(fileobj, self.size - size, 0)
             fileobj.seek(0)
             fileobj.write(data)
-        finally:
-            fileobj.close()
 
         self.size = size
         self.num_objects = len(self.objects)
@@ -813,7 +810,7 @@ class ASF(FileType):
 
         self.size, self.num_objects = struct.unpack("<QL", header[16:28])
         self.objects = []
-        for i in range(self.num_objects):
+        for i in xrange(self.num_objects):
             self.__read_object(fileobj)
 
     def __read_object(self, fileobj):
