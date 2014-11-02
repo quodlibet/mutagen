@@ -17,10 +17,10 @@ For an example of how to use it for specific formats, see the matroska.py file.
 """
 
 from ._compat import integer_types, long_, text_type
-from ._util import cdata, delete_bytes, insert_bytes
+from ._util import cdata, delete_bytes, insert_bytes, MutagenError
 
 
-class EBMLParseError(Exception):
+class error(IOError, MutagenError):
     pass
 
 
@@ -371,6 +371,36 @@ class MasterElement(Element):
 
         return result
 
+    def add_child(self, name, element, index=None):
+
+        if index is None:
+            self._children.append(element)
+        else:
+            self._children[index:index] = element
+
+        elements = getattr(self, name, None)
+        if isinstance(elements, list):
+            elements.append(element)
+        elif elements is None:
+            setattr(self, name, element)
+        else:
+            raise error('The spec for this element does not allow multiple '
+                        'elements to be set on the master.')
+
+    def delete_child(self, name):
+        # Find the spec which matches the name
+        elements = getattr(self, name, None)
+        if isinstance(elements, list):
+            _id = elements[0].id
+        elif elements is not None:
+            _id = elements.id
+        else:
+            raise AttributeError('Child element {} does not '
+                                 'exist.'.format(name))
+
+        self._children = [child for child in self._children if child.id != _id]
+        delattr(self, name)
+
     def _check_mandatory_children(self):
         # Check that all mandatory elements are set, otherwise raise Exception
         mandatory_ids = [
@@ -463,13 +493,14 @@ class Document(MasterElement):
     }
 
     def __init__(self, buf):
-        super(Document, self).__init__(_id)
-
         buf.seek(0, 2)
         size = buf.tell()
         buf.seek(0)
 
-        self._read(size, buf)
+        fake_header = ElementHeader(None, size)
+        super(Document, self).__init__(fake_header, 0)
+
+        self._read_children(buf)
 
     def write(self, buf):
         # This function assumes the fileobj can be written to.
@@ -477,3 +508,9 @@ class Document(MasterElement):
         buf.seek(0)
         # Carry out a standard MasterElement write.
         self._write_data(buf)
+
+    # Ensure that this will raise an exception is called - invalid to construct
+    # a document in this way.
+    @classmethod
+    def read(cls, header, buf):
+        raise NotImplementedError

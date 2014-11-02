@@ -1,9 +1,10 @@
 
 import io
 
-from tests import TestCase, add
-from mutagen._ebml import (ElementHeader, UnsignedElement, ASCIIElement,
-                           UTF8Element, BinaryElement, MasterElement, EBMLHeader)
+from mutagen._ebml import (ASCIIElement, BinaryElement, Document, EBMLHeader,
+                           ElementHeader, MasterElement, UnsignedElement,
+                           UTF8Element)
+from tests import add, TestCase
 
 
 class TElementHeader(TestCase):
@@ -195,6 +196,26 @@ class TEBMLElement(TestCase):
             b'\xdf\xa3\x81\x64'
         )
 
+    def test_master_add_delete(self):
+        header = ElementHeader(0x1A45DFA3, 0)
+        ele = MasterElement(header)
+
+        ele.add_child('test', BinaryElement(ElementHeader(0x1A45DFA3, 4),
+                                            b'\x00\x11\x22\x33'))
+
+        self.assertTrue(hasattr(ele, 'test'))
+
+        ele.delete_child('test')
+        self.assertFalse(hasattr(ele, 'test'))
+
+        ele.add_child('test', [BinaryElement(ElementHeader(0x1A45DFA3, 4),
+                                             b'\x00\x11\x22\x33')])
+
+        ele.add_child('test', BinaryElement(ElementHeader(0x1A45DFA3, 4),
+                                            b'\x00\x11\x22\x33'))
+
+        self.assertEquals(len(ele.test), 2)
+
     def test_ebml_header(self):
         data = (b'\x1A\x45\xDF\xA3\x01\x00\x00\x00\x00\x00\x00\x23\x42\x86\x81'
                 b'\x01\x42\xF7\x81\x01\x42\xF2\x81\x04\x42\xF3\x81\x08\x42\x82'
@@ -218,6 +239,19 @@ class TEBMLElement(TestCase):
         self.assertEquals(buf.getvalue(), data)
 
     def test_document(self):
-        pass
+        data = (b'\x1A\x45\xDF\xA3\x01\x00\x00\x00\x00\x00\x00\x23\x42\x86\x81'
+                b'\x01\x42\xF7\x81\x01\x42\xF2\x81\x04\x42\xF3\x81\x08\x42\x82'
+                b'\x88\x6D\x61\x74\x72\x6F\x73\x6B\x61\x42\x87\x81\x02\x42\x85'
+                b'\x81\x02')
+        buf = io.BytesIO(data)
+        doc = Document(buf)
+
+        self.assertTrue(hasattr(doc, 'ebml'))
+
+        buf = io.BytesIO()
+        doc.write(buf)
+
+        self.assertEquals(buf.getvalue(), data)
+
 
 add(TEBMLElement)
