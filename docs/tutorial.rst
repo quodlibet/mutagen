@@ -228,7 +228,7 @@ The most common way to include images in VorbisComment is to store a base64
 encoded FLAC Picture block with the key ``metadata_block_picture`` [0]. See
 the following code example on how to read and write images this way::
 
-    # READING
+    # READING / SAVING
     import base64
     from mutagen.oggvorbis import OggVorbis
     from mutagen.flac import Picture, error as FLACError
@@ -246,7 +246,15 @@ the following code example on how to read and write images this way::
         except FLACError:
             continue
 
-        print(picture)
+        extensions = {
+            "image/jpeg": "jpg",
+            "image/png": "png",
+            "image/gif": "gif",
+        }
+        ext = extensions.get(picture.mime, "jpg")
+
+        with open("image.%s" % ext, "wb") as h:
+            h.write(picture.data)
 
 ::
 
