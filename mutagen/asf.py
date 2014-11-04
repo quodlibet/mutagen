@@ -18,7 +18,7 @@ from mutagen import FileType, Metadata, StreamInfo
 from mutagen._util import (insert_bytes, delete_bytes, DictMixin,
                            total_ordering, MutagenError)
 from ._compat import swap_to_string, text_type, PY2, string_types, reraise, \
-    xrange
+    xrange, long_, PY3
 
 
 class error(IOError, MutagenError):
@@ -94,22 +94,30 @@ class ASFTags(list, DictMixin, Metadata):
         """
         if not isinstance(values, list):
             values = [values]
-        try:
-            del(self[key])
-        except KeyError:
-            pass
+
+        to_append = []
         for value in values:
             if not isinstance(value, ASFBaseAttribute):
                 if isinstance(value, string_types):
-                    if PY2 or isinstance(value, text_type):
-                        value = ASFUnicodeAttribute(value)
+                    value = ASFUnicodeAttribute(value)
+                elif PY3 and isinstance(value, bytes):
+                    value = ASFByteArrayAttribute(value)
                 elif isinstance(value, bool):
                     value = ASFBoolAttribute(value)
                 elif isinstance(value, int):
                     value = ASFDWordAttribute(value)
-                elif isinstance(value, long):
+                elif isinstance(value, long_):
                     value = ASFQWordAttribute(value)
-            self.append((key, value))
+                else:
+                    raise TypeError("Invalid type %r" % type(value))
+            to_append.append((key, value))
+
+        try:
+            del(self[key])
+        except KeyError:
+            pass
+
+        self.extend(to_append)
 
     def keys(self):
         """Return all keys in the comment."""

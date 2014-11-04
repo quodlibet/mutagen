@@ -3,7 +3,7 @@ import shutil
 from tempfile import mkstemp
 from tests import TestCase, add
 
-from mutagen._compat import PY3, text_type
+from mutagen._compat import PY3, text_type, PY2
 from mutagen.asf import ASF, ASFHeaderError, ASFValue, UNICODE, DWORD, QWORD
 from mutagen.asf import BOOL, WORD, BYTEARRAY, GUID
 from mutagen.asf import ASFUnicodeAttribute, ASFError, ASFByteArrayAttribute, \
@@ -98,6 +98,22 @@ class TASF(TestCase):
     def test_auto_guuid(self):
         value = ASFValue(b'\x9eZl}\x89\xa2\xb5D\xb8\xa30\xfe', GUID)
         self.set_key(u"WM/WMCollectionGroupID", value, [value])
+
+    def test_py3_bytes(self):
+        if PY3:
+            value = ASFValue(b'\xff\x00', BYTEARRAY)
+            self.set_key(u"QL/Something", [b'\xff\x00'], [value])
+
+    def test_set_invalid(self):
+        setitem = self.audio.__setitem__
+        if PY2:
+            self.assertRaises(ValueError, setitem, u"QL/Something", [b"\xff"])
+        self.assertRaises(TypeError, setitem, u"QL/Something", [object()])
+
+        # don't delete on error
+        setitem(u"QL/Foobar", [u"ok"])
+        self.assertRaises(TypeError, setitem, u"QL/Foobar", [object()])
+        self.assertEqual(self.audio[u"QL/Foobar"], [u"ok"])
 
     def test_auto_unicode(self):
         self.set_key(u"WM/AlbumTitle", u"foo",
