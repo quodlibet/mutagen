@@ -99,9 +99,7 @@ class ASFTags(list, DictMixin, Metadata):
         except KeyError:
             pass
         for value in values:
-            if key in _standard_attribute_names:
-                value = text_type(value)
-            elif not isinstance(value, ASFBaseAttribute):
+            if not isinstance(value, ASFBaseAttribute):
                 if isinstance(value, string_types):
                     if PY2 or isinstance(value, text_type):
                         value = ASFUnicodeAttribute(value)
@@ -491,15 +489,6 @@ _attribute_types = {
 }
 
 
-_standard_attribute_names = [
-    "Title",
-    "Author",
-    "Copyright",
-    "Description",
-    "Rating"
-]
-
-
 class BaseObject(object):
     """Base ASF object."""
     GUID = None
@@ -528,6 +517,14 @@ class ContentDescriptionObject(BaseObject):
     """Content description."""
     GUID = b"\x33\x26\xB2\x75\x8E\x66\xCF\x11\xA6\xD9\x00\xAA\x00\x62\xCE\x6C"
 
+    NAMES = [
+        u"Title",
+        u"Author",
+        u"Copyright",
+        u"Description",
+        u"Rating",
+    ]
+
     def parse(self, asf, data, fileobj, size):
         super(ContentDescriptionObject, self).parse(asf, data, fileobj, size)
         asf.content_description_obj = self
@@ -537,29 +534,25 @@ class ContentDescriptionObject(BaseObject):
         for length in lengths:
             end = pos + length
             if length > 0:
-                texts.append(data[pos:end].decode("utf-16-le").strip("\x00"))
+                texts.append(data[pos:end].decode("utf-16-le").strip(u"\x00"))
             else:
                 texts.append(None)
             pos = end
-        title, author, copyright, desc, rating = texts
-        for key, value in dict(
-            Title=title,
-            Author=author,
-            Copyright=copyright,
-            Description=desc,
-            Rating=rating
-        ).items():
+
+        for key, value in zip(self.NAMES, texts):
             if value is not None:
-                asf.tags[key] = value
+                value = ASFUnicodeAttribute(value=value)
+                asf.tags.append((key, value))
 
     def render(self, asf):
         def render_text(name):
-            value = asf.tags.get(name, [])
-            if value:
-                return value[0].encode("utf-16-le") + b"\x00\x00"
+            value = asf.to_content_description.get(name)
+            if value is not None:
+                return text_type(value).encode("utf-16-le") + b"\x00\x00"
             else:
                 return b""
-        texts = [render_text(x) for x in _standard_attribute_names]
+
+        texts = [render_text(x) for x in self.NAMES]
         data = struct.pack("<HHHHH", *map(len, texts)) + b"".join(texts)
         return self.GUID + struct.pack("<Q", 24 + len(data)) + data
 
@@ -740,22 +733,31 @@ class ASF(FileType):
 
     def save(self):
         # Move attributes to the right objects
+        self.to_content_description = {}
         self.to_extended_content_description = {}
         self.to_metadata = {}
         self.to_metadata_library = []
         for name, value in self.tags:
-            if name in _standard_attribute_names:
-                continue
             library_only = (value.data_size() > 0xFFFF or value.TYPE == GUID)
-            if (value.language is None and value.stream is None and
-                    name not in self.to_extended_content_description and
-                    not library_only):
-                self.to_extended_content_description[name] = value
-            elif (value.language is None and value.stream is not None and
-                  name not in self.to_metadata and not library_only):
-                self.to_metadata[name] = value
-            else:
+            can_cont_desc = value.TYPE == UNICODE
+
+            if library_only or value.language is not None:
                 self.to_metadata_library.append((name, value))
+            elif value.stream is not None:
+                if name not in self.to_metadata:
+                    self.to_metadata[name] = value
+                else:
+                    self.to_metadata_library.append((name, value))
+            elif name in ContentDescriptionObject.NAMES:
+                if name not in self.to_content_description and can_cont_desc:
+                    self.to_content_description[name] = value
+                else:
+                    self.to_metadata_library.append((name, value))
+            else:
+                if name not in self.to_extended_content_description:
+                    self.to_extended_content_description[name] = value
+                else:
+                    self.to_metadata_library.append((name, value))
 
         # Add missing objects
         if not self.content_description_obj:

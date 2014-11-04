@@ -374,6 +374,72 @@ class TASFIssue29(TestCase):
 add(TASFIssue29)
 
 
+class TASFAttrDest(TestCase):
+
+    original = os.path.join("tests", "data", "silence-1.wma")
+
+    def setUp(self):
+        fd, self.filename = mkstemp(suffix='wma')
+        os.close(fd)
+        shutil.copy(self.original, self.filename)
+        audio = ASF(self.filename)
+        audio.clear()
+        audio.save()
+
+    def tearDown(self):
+        os.unlink(self.filename)
+
+    def test_author(self):
+        audio = ASF(self.filename)
+        values = [u"Foo", u"Bar", u"Baz"]
+        audio["Author"] = values
+        audio.save()
+        self.assertEqual(
+            list(audio.to_content_description.items()), [(u"Author", u"Foo")])
+        self.assertEqual(
+            audio.to_metadata_library,
+            [(u"Author", u"Bar"), (u"Author", u"Baz")])
+
+        new = ASF(self.filename)
+        self.assertEqual(new["Author"], values)
+
+    def test_author_long(self):
+        audio = ASF(self.filename)
+        # 2 ** 16 - 2 bytes encoded text + 2 bytes termination
+        just_small_enough = u"a" * (((2 ** 16) // 2) - 2)
+        audio["Author"] = [just_small_enough]
+        audio.save()
+        self.assertTrue(audio.to_content_description)
+        self.assertFalse(audio.to_metadata_library)
+
+        audio["Author"] = [just_small_enough + u"a"]
+        audio.save()
+        self.assertFalse(audio.to_content_description)
+        self.assertTrue(audio.to_metadata_library)
+
+    def test_non_text_type(self):
+        audio = ASF(self.filename)
+        audio["Author"] = [42]
+        audio.save()
+        self.assertFalse(audio.to_content_description)
+        new = ASF(self.filename)
+        self.assertEqual(new["Author"], [42])
+
+    def test_empty(self):
+        audio = ASF(self.filename)
+        audio["Author"] = [u"", u""]
+        audio["Title"] = [u""]
+        audio["Copyright"] = []
+        audio.save()
+
+        new = ASF(self.filename)
+        self.assertEqual(new["Author"], [u"", u""])
+        self.assertEqual(new["Title"], [u""])
+        self.assertFalse("Copyright" in new)
+
+add(TASFAttrDest)
+
+
 class TASFLargeValue(TestCase):
 
     original = os.path.join("tests", "data", "silence-1.wma")
