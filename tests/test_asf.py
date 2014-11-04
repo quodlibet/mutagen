@@ -86,6 +86,20 @@ class TASF(TestCase):
         else:
             self.failUnlessEqual(self.audio[key], result or value)
 
+    def test_slice(self):
+        tags = self.audio.tags
+        tags.clear()
+        tags["Author"] = [u"Foo", u"Bar"]
+        self.assertEqual(tags[:], [("Author", "Foo"), ("Author", "Bar")])
+        del tags[:]
+        self.assertEqual(tags[:], [])
+        tags[:] = [("Author", "Baz")]
+        self.assertEqual(tags.items(), [("Author", ["Baz"])])
+
+    def test_iter(self):
+        self.assertEqual(next(iter(self.audio.tags)), ("Title", "test"))
+        self.assertEqual(list(self.audio.tags)[0], ("Title", "test"))
+
     def test_contains(self):
         self.failUnlessEqual("notatag" in self.audio.tags, False)
 

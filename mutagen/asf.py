@@ -61,6 +61,11 @@ class ASFTags(list, DictMixin, Metadata):
         work.
 
         """
+
+        # PY3 only
+        if isinstance(key, slice):
+            return list.__getitem__(self, key)
+
         values = [value for (k, value) in self if k == key]
         if not values:
             raise KeyError(key)
@@ -69,6 +74,11 @@ class ASFTags(list, DictMixin, Metadata):
 
     def __delitem__(self, key):
         """Delete all values associated with the key."""
+
+        # PY3 only
+        if isinstance(key, slice):
+            return list.__delitem__(self, key)
+
         to_delete = [x for x in self if x[0] == key]
         if not to_delete:
             raise KeyError(key)
@@ -92,6 +102,11 @@ class ASFTags(list, DictMixin, Metadata):
         string.
 
         """
+
+        # PY3 only
+        if isinstance(key, slice):
+            return list.__setitem__(self, key, values)
+
         if not isinstance(values, list):
             values = [values]
 
