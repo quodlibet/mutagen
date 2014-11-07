@@ -1,3 +1,27 @@
+1.26 - 2014.??.??
+-----------------
+
+* MP4:
+
+  * Parse channels/sample_rate/bits_per_sample/bitrate for ALAC files
+    :bug:`199` :pr:`5` (Adrian Sampson, Christoph Reiter)
+
+* ASF:
+
+  * Support writing multiple values for
+    Author/Title/Copyright/Description/Rating :bug:`151`
+  * Various Python3 fixes
+
+* EasyID3: Add more tag mappings :bug:`136` (Ben Ockmore)
+
+* MPC/SV8: Fix parsing of SH packets with padding :bug:`198`
+
+* docs:
+
+  * New logo :pr:`4` (Samuel Messner)
+  * Add examples for handling cover art in vorbiscomment :bug:`200`
+
+
 1.25.1 - 2014.10.13
 -------------------
 
