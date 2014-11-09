@@ -21,6 +21,7 @@
 
   * New logo :pr:`4` (Samuel Messner)
   * Add examples for handling cover art in vorbiscomment :bug:`200`
+  * Add examples for id3v2.3
 
 
 1.25.1 - 2014.10.13
