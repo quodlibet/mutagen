@@ -565,7 +565,7 @@ class ContentDescriptionObject(BaseObject):
         for key, value in zip(self.NAMES, texts):
             if value is not None:
                 value = ASFUnicodeAttribute(value=value)
-                asf.tags.append((key, value))
+                asf._tags.setdefault(self.GUID, []).append((key, value))
 
     def render(self, asf):
         def render_text(name):
@@ -601,7 +601,7 @@ class ExtendedContentDescriptionObject(BaseObject):
             value = data[pos:pos + value_length]
             pos += value_length
             attr = _attribute_types[value_type](data=value)
-            asf.tags.append((name, attr))
+            asf._tags.setdefault(self.GUID, []).append((name, attr))
 
     def render(self, asf):
         attrs = asf.to_extended_content_description.items()
@@ -684,7 +684,7 @@ class MetadataObject(BaseObject):
             if value_type == 2:
                 args['dword'] = False
             attr = _attribute_types[value_type](**args)
-            asf.tags.append((name, attr))
+            asf._tags.setdefault(self.GUID, []).append((name, attr))
 
     def render(self, asf):
         attrs = asf.to_metadata.items()
@@ -715,7 +715,7 @@ class MetadataLibraryObject(BaseObject):
             if value_type == 2:
                 args['dword'] = False
             attr = _attribute_types[value_type](**args)
-            asf.tags.append((name, attr))
+            asf._tags.setdefault(self.GUID, []).append((name, attr))
 
     def render(self, asf):
         attrs = asf.to_metadata_library
@@ -835,8 +835,15 @@ class ASF(FileType):
 
         self.size, self.num_objects = struct.unpack("<QL", header[16:28])
         self.objects = []
+        self._tags = {}
         for i in xrange(self.num_objects):
             self.__read_object(fileobj)
+
+        for guid in [ContentDescriptionObject.GUID,
+                ExtendedContentDescriptionObject.GUID, MetadataObject.GUID,
+                MetadataLibraryObject.GUID]:
+            self.tags.extend(self._tags.pop(guid, []))
+        assert not self._tags
 
     def __read_object(self, fileobj):
         guid, size = struct.unpack("<16sQ", fileobj.read(24))

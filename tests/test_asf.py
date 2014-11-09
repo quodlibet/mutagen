@@ -192,8 +192,8 @@ class TASF(TestCase):
         self.audio.save()
         self.audio = ASF(self.audio.filename)
         self.failUnlessEqual(self.audio["QL/NoStream"][0].stream, None)
-        self.failUnlessEqual(self.audio["QL/OneHasStream"][0].stream, 2)
-        self.failUnlessEqual(self.audio["QL/OneHasStream"][1].stream, None)
+        self.failUnlessEqual(self.audio["QL/OneHasStream"][1].stream, 2)
+        self.failUnlessEqual(self.audio["QL/OneHasStream"][0].stream, None)
         self.failUnlessEqual(self.audio["QL/AllHaveStream"][0].stream, 1)
         self.failUnlessEqual(self.audio["QL/AllHaveStream"][1].stream, 2)
 
@@ -212,8 +212,8 @@ class TASF(TestCase):
         self.audio.save()
         self.audio = ASF(self.audio.filename)
         self.failUnlessEqual(self.audio["QL/NoLang"][0].language, None)
-        self.failUnlessEqual(self.audio["QL/OneHasLang"][0].language, 2)
-        self.failUnlessEqual(self.audio["QL/OneHasLang"][1].language, None)
+        self.failUnlessEqual(self.audio["QL/OneHasLang"][1].language, 2)
+        self.failUnlessEqual(self.audio["QL/OneHasLang"][0].language, None)
         self.failUnlessEqual(self.audio["QL/AllHaveLang"][0].language, 1)
         self.failUnlessEqual(self.audio["QL/AllHaveLang"][1].language, 2)
 
@@ -226,14 +226,15 @@ class TASF(TestCase):
             ]
         self.audio.save()
         self.audio = ASF(self.audio.filename)
+        # order not preserved here because they end up in different objects.
+        self.failUnlessEqual(self.audio["QL/Mix"][1].language, None)
+        self.failUnlessEqual(self.audio["QL/Mix"][1].stream, 1)
+        self.failUnlessEqual(self.audio["QL/Mix"][2].language, 2)
+        self.failUnlessEqual(self.audio["QL/Mix"][2].stream, 0)
+        self.failUnlessEqual(self.audio["QL/Mix"][3].language, 4)
+        self.failUnlessEqual(self.audio["QL/Mix"][3].stream, 3)
         self.failUnlessEqual(self.audio["QL/Mix"][0].language, None)
-        self.failUnlessEqual(self.audio["QL/Mix"][0].stream, 1)
-        self.failUnlessEqual(self.audio["QL/Mix"][1].language, 2)
-        self.failUnlessEqual(self.audio["QL/Mix"][1].stream, 0)
-        self.failUnlessEqual(self.audio["QL/Mix"][2].language, 4)
-        self.failUnlessEqual(self.audio["QL/Mix"][2].stream, 3)
-        self.failUnlessEqual(self.audio["QL/Mix"][3].language, None)
-        self.failUnlessEqual(self.audio["QL/Mix"][3].stream, None)
+        self.failUnlessEqual(self.audio["QL/Mix"][0].stream, None)
 
     def test_data_size(self):
         v = ASFValue("", UNICODE, data=b'4\xd8\x1e\xdd\x00\x00')
@@ -446,6 +447,20 @@ class TASFAttrDest(TestCase):
         audio.save()
         self.assertFalse(audio.to_content_description)
         self.assertTrue(audio.to_metadata_library)
+
+    def test_multi_order(self):
+        audio = ASF(self.filename)
+        audio["Author"] = [u"a", u"b", u"c"]
+        audio.save()
+        audio = ASF(self.filename)
+        self.assertEqual(audio["Author"], [u"a", u"b", u"c"])
+
+    def test_multi_order_extended(self):
+        audio = ASF(self.filename)
+        audio["WM/Composer"] = [u"a", u"b", u"c"]
+        audio.save()
+        audio = ASF(self.filename)
+        self.assertEqual(audio["WM/Composer"], [u"a", u"b", u"c"])
 
     def test_non_text_type(self):
         audio = ASF(self.filename)

@@ -10,6 +10,7 @@
 
   * Support writing multiple values for
     Author/Title/Copyright/Description/Rating :bug:`151`
+  * Fix read order for multi value tags
   * Various Python3 fixes
 
 * EasyID3: Add more tag mappings :bug:`136` (Ben Ockmore)
