@@ -1,6 +1,7 @@
 syntax: glob
 *.pyc
 docs/_build
+docs/_rtd_theme
 dist
 coverage/*.cover
 MANIFEST
