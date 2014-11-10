@@ -981,6 +981,7 @@ class AudioSampleEntry(object):
         sample_size (int): sample size in bits
         sample_rate (int): sample rate in Hz
         bitrate (int): bits per second (0 means unknown)
+        codec (string): audio codec, either 'mp4a' or 'alac'
 
     Can raise ValueError.
     """
@@ -989,9 +990,12 @@ class AudioSampleEntry(object):
     sample_size = 0
     sample_rate = 0
     bitrate = 0
+    kind = None
 
     def __init__(self, atom, fileobj):
-        if atom.name not in (b"mp4a", b"alac"):
+        if atom.name in (b"mp4a", b"alac"):
+            self.kind = atom.name.decode()
+        else:
             raise ValueError("Unsupported coding name %s" % atom.name)
 
         ok, data = atom.read(fileobj)
@@ -1107,12 +1111,14 @@ class MP4Info(StreamInfo):
     * channels -- number of audio channels
     * sample_rate -- audio sampling rate in Hz
     * bits_per_sample -- bits per sample
+    * codec -- either 'mp4a' or 'alac'
     """
 
     bitrate = 0
     channels = 0
     sample_rate = 0
     bits_per_sample = 0
+    kind = None
 
     def __init__(self, atoms, fileobj):
         for trak in list(atoms[b"moov"].findall(b"trak")):
@@ -1195,6 +1201,7 @@ class MP4Info(StreamInfo):
             self.bits_per_sample = entry.sample_size
             self.sample_rate = entry.sample_rate
             self.bitrate = entry.bitrate
+            self.kind = entry.kind
 
     def pprint(self):
         return "MPEG-4 audio, %.2f seconds, %d bps" % (

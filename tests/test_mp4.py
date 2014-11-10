@@ -461,6 +461,9 @@ class TMP4(TestCase):
     def test_length(self):
         self.failUnlessAlmostEqual(3.7, self.audio.info.length, 1)
 
+    def test_kind(self):
+        self.assertEqual(self.audio.info.kind, u'mp4a')
+
     def test_padding(self):
         self.audio["\xa9nam"] = u"wheeee" * 10
         self.audio.save()
@@ -889,6 +892,9 @@ class TMP4ALAC(TestCase):
 
     def test_bitrate(self):
         self.assertEqual(self.audio.info.bitrate, 2764)
+
+    def test_kind(self):
+        self.assertEqual(self.audio.info.kind, u'alac')
 
 add(TMP4ALAC)
 
