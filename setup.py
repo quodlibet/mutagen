@@ -64,7 +64,8 @@ class distcheck(sdist):
             assert included_files
 
             process = subprocess.Popen(["hg", "locate"],
-                                       stdout=subprocess.PIPE)
+                                       stdout=subprocess.PIPE,
+                                       universal_newlines=True)
             out, err = process.communicate()
             assert process.returncode == 0
 
@@ -72,8 +73,10 @@ class distcheck(sdist):
             for ignore in [".hgignore", ".hgtags"]:
                 tracked_files.remove(ignore)
 
-            assert not set(tracked_files) - set(included_files), \
-                "Not all tracked files included in tarball, update MANIFEST.in"
+            diff = set(tracked_files) - set(included_files)
+            assert not diff, (
+                "Not all tracked files included in tarball, check MANIFEST.in",
+                diff)
 
     def _check_dist(self):
         assert self.get_archive_files()
