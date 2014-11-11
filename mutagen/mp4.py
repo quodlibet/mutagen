@@ -1111,7 +1111,10 @@ class MP4Info(StreamInfo):
     * channels -- number of audio channels
     * sample_rate -- audio sampling rate in Hz
     * bits_per_sample -- bits per sample
-    * codec -- either 'mp4a' or 'alac'
+    * codec (string):
+        if starts with ``"mp4a"`` uses an mp4a audio codec,
+        if starts with ``"alac"`` uses the ALAC codec,
+        everything else means the codec is unknown.
     """
 
     bitrate = 0
