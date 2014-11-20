@@ -33,6 +33,10 @@ class TAtom(TestCase):
         fileobj = cBytesIO(b"\x00\x00\x00\x02atom")
         self.assertRaises(AtomError, Atom, fileobj)
 
+    def test_truncated(self):
+        self.assertRaises(AtomError, Atom, cBytesIO(b"\x00"))
+        self.assertRaises(AtomError, Atom, cBytesIO(b"\x00\x00\x00\x01atom"))
+
     def test_render_too_big(self):
         class TooBig(bytes):
             def __len__(self):

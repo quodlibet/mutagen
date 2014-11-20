@@ -36,11 +36,19 @@ class Atom(object):
     children = None
 
     def __init__(self, fileobj, level=0):
+        """May raise AtomError"""
+
         self.offset = fileobj.tell()
-        self.length, self.name = struct.unpack(">I4s", fileobj.read(8))
+        try:
+            self.length, self.name = struct.unpack(">I4s", fileobj.read(8))
+        except struct.error:
+            raise AtomError("truncated data")
         self._dataoffset = self.offset + 8
         if self.length == 1:
-            self.length, = struct.unpack(">Q", fileobj.read(8))
+            try:
+                self.length, = struct.unpack(">Q", fileobj.read(8))
+            except struct.error:
+                raise AtomError("truncated data")
             self._dataoffset += 8
             if self.length < 16:
                 raise AtomError(
