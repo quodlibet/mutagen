@@ -17,7 +17,8 @@ import codecs
 
 from fnmatch import fnmatchcase
 
-from ._compat import chr_, text_type, PY2, iteritems, iterbytes, integer_types
+from ._compat import chr_, text_type, PY2, iteritems, iterbytes, \
+    integer_types, xrange
 
 
 class MutagenError(Exception):
@@ -510,3 +511,88 @@ def split_escape(string, sep, maxsplit=None, escape_char="\\"):
                 current += char
     result.append(current)
     return result
+
+
+class BitReaderError(Exception):
+    pass
+
+
+class BitReader(object):
+
+    def __init__(self, fileobj):
+        self._fileobj = fileobj
+        self._buffer = 0
+        self._bits = 0
+        self._pos = 0
+
+    def bits(self, count):
+        """Reads `count` bits and returns an uint, MSB read first.
+
+        May raise BitReaderError if not enough data could be read or
+        IOError by the underlying file object.
+        """
+
+        if count < 0:
+            raise ValueError
+
+        if count > self._bits:
+            n_bytes = (count - self._bits + 7) // 8
+            data = self._fileobj.read(n_bytes)
+            if len(data) != n_bytes:
+                raise BitReaderError("not enough data")
+            self._pos += n_bytes
+            for b in bytearray(data):
+                self._buffer = (self._buffer << 8) | b
+            self._bits += n_bytes * 8
+
+        self._bits -= count
+        value = self._buffer >> self._bits
+        self._buffer &= (1 << self._bits) - 1
+        assert self._bits < 8
+        return value
+
+    def bytes(self, count):
+        """Returns a bytearray of length `count`. Works unaligned."""
+
+        if count < 0:
+            raise ValueError
+
+        return bytes(bytearray(self.bits(8) for _ in xrange(count)))
+
+    def skip(self, count):
+        """Skip `count` bits.
+
+        Might raise BitReaderError if there wasn't enough data to skip,
+        but might also fail on the next bits() instead.
+        """
+
+        if count < 0:
+            raise ValueError
+
+        if count <= self._bits:
+            self.bits(count)
+        else:
+            count -= self.align()
+            n_bytes = count // 8
+            self._fileobj.seek(n_bytes, 1)
+            self._pos += n_bytes
+            count -= n_bytes * 8
+            self.bits(count)
+
+    def get_position(self):
+        """Returns the amount of bits read or skipped so far"""
+
+        return self._pos * 8 - self._bits
+
+    def align(self):
+        """Align to the next byte, returns the amount of bits skipped"""
+
+        bits = self._bits
+        self._buffer = 0
+        self._bits = 0
+        return bits
+
+    def is_aligned(self):
+        """If we are currently aligned to bytes and nothing is buffered"""
+
+        return self._bits == 0

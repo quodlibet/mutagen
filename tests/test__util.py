@@ -1,6 +1,8 @@
 from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes
 from mutagen._util import decode_terminated, split_escape, dict_match, enum
-from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2
+from mutagen._util import BitReader, BitReaderError
+from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2, \
+    cBytesIO, xrange
 from tests import TestCase, add
 import random
 import mmap
@@ -602,3 +604,82 @@ class Tsplit_escape(TestCase):
 
 
 add(Tsplit_escape)
+
+
+class TBitReader(TestCase):
+
+    def test_bits(self):
+        data = b"\x12\x34\x56\x78\x89\xAB\xCD\xEF"
+        ref = cdata.uint64_be(data)
+
+        for i in xrange(64):
+            fo = cBytesIO(data)
+            r = BitReader(fo)
+            v = r.bits(i) << (64 - i) | r.bits(64 - i)
+            self.assertEqual(v, ref)
+
+    def test_read_too_much(self):
+        r = BitReader(cBytesIO(b""))
+        self.assertEqual(r.bits(0), 0)
+        self.assertRaises(BitReaderError, r.bits, 1)
+
+    def test_skip(self):
+        r = BitReader(cBytesIO(b"\xEF"))
+        r.skip(4)
+        self.assertEqual(r.bits(4), 0xf)
+
+    def test_skip_more(self):
+        r = BitReader(cBytesIO(b"\xAB\xCD"))
+        self.assertEqual(r.bits(4), 0xa)
+        r.skip(8)
+        self.assertEqual(r.bits(4), 0xd)
+        self.assertRaises(BitReaderError, r.bits, 1)
+
+    def test_skip_too_much(self):
+        r = BitReader(cBytesIO(b"\xAB\xCD"))
+        # aligned skips don't fail, but the following read will
+        r.skip(32 + 8)
+        self.assertRaises(BitReaderError, r.bits, 1)
+        self.assertRaises(BitReaderError, r.skip, 1)
+
+    def test_bytes(self):
+        r = BitReader(cBytesIO(b"\xAB\xCD\xEF"))
+        self.assertEqual(r.bytes(2), b"\xAB\xCD")
+        self.assertEqual(r.bytes(0), b"")
+
+    def test_bytes_unaligned(self):
+        r = BitReader(cBytesIO(b"\xAB\xCD\xEF"))
+        r.skip(4)
+        self.assertEqual(r.bytes(2), b"\xBC\xDE")
+
+    def test_get_position(self):
+        r = BitReader(cBytesIO(b"\xAB\xCD"))
+        self.assertEqual(r.get_position(), 0)
+        r.bits(3)
+        self.assertEqual(r.get_position(), 3)
+        r.skip(9)
+        self.assertEqual(r.get_position(), 3 + 9)
+        r.align()
+        self.assertEqual(r.get_position(), 16)
+
+    def test_align(self):
+        r = BitReader(cBytesIO(b"\xAB\xCD\xEF"))
+        r.skip(3)
+        self.assertEqual(r.align(), 5)
+        self.assertEqual(r.get_position(), 8)
+
+    def test_is_aligned(self):
+        r = BitReader(cBytesIO(b"\xAB\xCD\xEF"))
+        self.assertTrue(r.is_aligned())
+
+        r.skip(1)
+        self.assertFalse(r.is_aligned())
+        r.skip(7)
+        self.assertTrue(r.is_aligned())
+
+        r.bits(7)
+        self.assertFalse(r.is_aligned())
+        r.bits(1)
+        self.assertTrue(r.is_aligned())
+
+add(TBitReader)
