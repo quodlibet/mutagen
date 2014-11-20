@@ -374,8 +374,7 @@ class MP4Tags(DictProxy, Metadata):
         data = Atom.render(b"ilst", b"".join(values))
 
         # Find the old atoms.
-        fileobj = open(filename, "rb+")
-        try:
+        with open(filename, "rb+") as fileobj:
             try:
                 atoms = Atoms(fileobj)
             except AtomError as err:
@@ -387,8 +386,6 @@ class MP4Tags(DictProxy, Metadata):
                 self.__save_new(fileobj, atoms, data)
             else:
                 self.__save_existing(fileobj, atoms, path, data)
-        finally:
-            fileobj.close()
 
     def __pad_ilst(self, data, length=None):
         if length is None:
@@ -910,8 +907,7 @@ class MP4(FileType):
 
     def load(self, filename):
         self.filename = filename
-        fileobj = open(filename, "rb")
-        try:
+        with open(filename, "rb") as fileobj:
             try:
                 atoms = Atoms(fileobj)
             except AtomError as err:
@@ -933,8 +929,6 @@ class MP4(FileType):
                     raise
                 except Exception as err:
                     reraise(MP4MetadataError, err, sys.exc_info()[2])
-        finally:
-            fileobj.close()
 
     def add_tags(self):
         if self.tags is None:
