@@ -802,7 +802,12 @@ class MP4Info(StreamInfo):
     codec = u""
 
     def __init__(self, atoms, fileobj):
-        for trak in list(atoms[b"moov"].findall(b"trak")):
+        try:
+            moov = atoms[b"moov"]
+        except KeyError:
+            raise MP4StreamInfoError("not a MP4 file")
+
+        for trak in moov.findall(b"trak"):
             hdlr = trak[b"mdia", b"hdlr"]
             ok, data = hdlr.read(fileobj)
             if not ok:
@@ -911,10 +916,6 @@ class MP4(FileType):
                 atoms = Atoms(fileobj)
             except AtomError as err:
                 reraise(error, err, sys.exc_info()[2])
-
-            # ftyp is always the first atom in a valid MP4 file
-            if not atoms.atoms or atoms.atoms[0].name != b"ftyp":
-                raise error("Not a MP4 file")
 
             try:
                 self.info = MP4Info(atoms, fileobj)
