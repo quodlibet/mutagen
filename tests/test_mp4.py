@@ -7,7 +7,7 @@ from tempfile import mkstemp
 from tests import TestCase, add
 from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
                          MP4MetadataError, MP4FreeForm, error, AtomDataType,
-                         MP4MetadataValueError, AudioSampleEntry)
+                         MP4MetadataValueError, AudioSampleEntry, AtomError)
 from mutagen._util import cdata
 from os import devnull
 
@@ -27,11 +27,11 @@ class TAtom(TestCase):
     def test_length_64bit_less_than_16(self):
         fileobj = cBytesIO(b"\x00\x00\x00\x01atom"
                            b"\x00\x00\x00\x00\x00\x00\x00\x08" + b"\x00" * 8)
-        self.assertRaises(error, Atom, fileobj)
+        self.assertRaises(AtomError, Atom, fileobj)
 
     def test_length_less_than_8(self):
         fileobj = cBytesIO(b"\x00\x00\x00\x02atom")
-        self.assertRaises(MP4MetadataError, Atom, fileobj)
+        self.assertRaises(AtomError, Atom, fileobj)
 
     def test_render_too_big(self):
         class TooBig(bytes):
@@ -49,7 +49,7 @@ class TAtom(TestCase):
 
     def test_non_top_level_length_0_is_invalid(self):
         data = cBytesIO(struct.pack(">I4s", 0, b"whee"))
-        self.assertRaises(MP4MetadataError, Atom, data, level=1)
+        self.assertRaises(AtomError, Atom, data, level=1)
 
     def test_length_0(self):
         fileobj = cBytesIO(b"\x00\x00\x00\x00atom" + 40 * b"\x00")
