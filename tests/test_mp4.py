@@ -7,7 +7,9 @@ from tempfile import mkstemp
 from tests import TestCase, add
 from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
                          MP4MetadataError, MP4FreeForm, error, AtomDataType,
-                         MP4MetadataValueError, AudioSampleEntry, AtomError)
+                         MP4MetadataValueError, AtomError)
+from mutagen.mp4._util import parse_full_atom
+from mutagen.mp4._as_entry import AudioSampleEntry, ASEntryError
 from mutagen._util import cdata
 from os import devnull
 
@@ -466,7 +468,7 @@ class TMP4(TestCase):
         self.failUnlessAlmostEqual(3.7, self.audio.info.length, 1)
 
     def test_kind(self):
-        self.assertEqual(self.audio.info.codec, u'mp4a')
+        self.assertEqual(self.audio.info.codec, u'mp4a.40.2')
 
     def test_padding(self):
         self.audio["\xa9nam"] = u"wheeee" * 10
@@ -903,6 +905,17 @@ class TMP4ALAC(TestCase):
 add(TMP4ALAC)
 
 
+class TMP4Misc(TestCase):
+
+    def test_parse_full_atom(self):
+        p = parse_full_atom(b"\x01\x02\x03\x04\xff")
+        self.assertEqual(p, (1, 131844, b'\xff'))
+
+        self.assertRaises(ValueError, parse_full_atom, b"\x00\x00\x00")
+
+add(TMP4Misc)
+
+
 class TMP4AudioSampleEntry(TestCase):
 
     def test_alac(self):
@@ -917,7 +930,10 @@ class TMP4AudioSampleEntry(TestCase):
         fileobj = cBytesIO(atom_data)
         atom = Atom(fileobj)
         entry = AudioSampleEntry(atom, fileobj)
+        self.assertEqual(entry.bitrate, 0)
         self.assertEqual(entry.channels, 1)
+        self.assertEqual(entry.codec, "alac")
+        self.assertEqual(entry.codec_description, "ALAC")
         self.assertEqual(entry.sample_rate, 8000)
 
     def test_alac_2(self):
@@ -932,9 +948,78 @@ class TMP4AudioSampleEntry(TestCase):
         fileobj = cBytesIO(atom_data)
         atom = Atom(fileobj)
         entry = AudioSampleEntry(atom, fileobj)
-        self.assertEqual(entry.channels, 2)
-        self.assertEqual(entry.sample_rate, 88200)
         self.assertEqual(entry.bitrate, 2437845)
+        self.assertEqual(entry.channels, 2)
+        self.assertEqual(entry.codec, "alac")
+        self.assertEqual(entry.codec_description, "ALAC")
+        self.assertEqual(entry.sample_rate, 88200)
+
+    def test_pce(self):
+        atom_data = (
+            b'\x00\x00\x00dmp4a\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x02\x00\x10\x00\x00\x00\x00\xbb\x80'
+            b'\x00\x00\x00\x00\x00@esds\x00\x00\x00\x00\x03\x80\x80\x80/\x00'
+            b'\x00\x00\x04\x80\x80\x80!@\x15\x00\x15\x00\x00\x03\xed\xaa\x00'
+            b'\x03k\x00\x05\x80\x80\x80\x0f+\x01\x88\x02\xc4\x04\x90,\x10\x8c'
+            b'\x80\x00\x00\xed@\x06\x80\x80\x80\x01\x02')
+
+        fileobj = cBytesIO(atom_data)
+        atom = Atom(fileobj)
+        entry = AudioSampleEntry(atom, fileobj)
+
+        self.assertEqual(entry.bitrate, 224000)
+        self.assertEqual(entry.channels, 8)
+        self.assertEqual(entry.codec_description, "AAC LC+SBR")
+        self.assertEqual(entry.codec, "mp4a.40.2")
+        self.assertEqual(entry.sample_rate, 48000)
+        self.assertEqual(entry.sample_size, 16)
+
+    def test_sbr_ps_sig_1(self):
+        atom_data = (
+            b"\x00\x00\x00\\mp4a\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00"
+            b"\x00\x00\x00\x00\x00\x00\x02\x00\x10\x00\x00\x00\x00\xbb\x80\x00"
+            b"\x00\x00\x00\x008esds\x00\x00\x00\x00\x03\x80\x80\x80'\x00\x00"
+            b"\x00\x04\x80\x80\x80\x19@\x15\x00\x03\x00\x00\x00\xe9j\x00\x00"
+            b"\xda\xc0\x05\x80\x80\x80\x07\x13\x08V\xe5\x9dH\x80\x06\x80\x80"
+            b"\x80\x01\x02")
+
+        fileobj = cBytesIO(atom_data)
+        atom = Atom(fileobj)
+        entry = AudioSampleEntry(atom, fileobj)
+
+        self.assertEqual(entry.bitrate, 56000)
+        self.assertEqual(entry.channels, 2)
+        self.assertEqual(entry.codec_description, "AAC LC+SBR+PS")
+        self.assertEqual(entry.codec, "mp4a.40.2")
+        self.assertEqual(entry.sample_rate, 48000)
+        self.assertEqual(entry.sample_size, 16)
+
+    def test_als(self):
+        atom_data = (
+            b'\x00\x00\x00\x9dmp4a\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x02\x00\x00\x10\x00\x00\x00\x00\x07'
+            b'\xd0\x00\x00\x00\x00\x00yesds\x00\x00\x00\x00\x03k\x00\x00\x00'
+            b'\x04c@\x15\x10\xe7\xe6\x00W\xcbJ\x00W\xcbJ\x05T\xf8\x9e\x00\x0f'
+            b'\xa0\x00ALS\x00\x00\x00\x07\xd0\x00\x00\x0c\t\x01\xff$O\xff\x00'
+            b'g\xff\xfc\x80\x00\x00\x00,\x00\x00\x00\x00RIFF$$0\x00WAVEfmt '
+            b'\x10\x00\x00\x00\x01\x00\x00\x02\xd0\x07\x00\x00\x00@\x1f\x00'
+            b'\x00\x04\x10\x00data\x00$0\x00\xf6\xceF+\x06\x01\x02')
+
+        fileobj = cBytesIO(atom_data)
+        atom = Atom(fileobj)
+        entry = AudioSampleEntry(atom, fileobj)
+
+        self.assertEqual(entry.bitrate, 5753674)
+        self.assertEqual(entry.channels, 512)
+        self.assertEqual(entry.codec_description, "ALS")
+        self.assertEqual(entry.codec, "mp4a.40.36")
+        self.assertEqual(entry.sample_rate, 2000)
+        self.assertEqual(entry.sample_size, 16)
+
+    def test_error(self):
+        fileobj = cBytesIO(b"\x00" * 20)
+        atom = Atom(fileobj)
+        self.assertRaises(ASEntryError, AudioSampleEntry, atom, fileobj)
 
 add(TMP4AudioSampleEntry)
 

@@ -5,30 +5,14 @@
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.
 
-from mutagen._util import cdata
 from mutagen._compat import cBytesIO, xrange
+from mutagen._util import BitReader, BitReaderError, cdata
 from ._util import parse_full_atom
 from ._atom import Atom, AtomError
 
 
-def _parse_desc_length(data, offset):
-    """Returns the decoded value and the new offset in data after the value.
-    Can raise ValueError in case the value is too long or data too short.
-    """
-
-    value = 0
-    for i in xrange(4):
-        try:
-            b, offset = cdata.uint8_from(data, offset)
-        except cdata.error as e:
-            raise ValueError(e)
-        value = (value << 7) | (b & 0x7f)
-        if not b >> 7:
-            break
-    else:
-        raise ValueError("invalid descriptor length")
-
-    return value, offset
+class ASEntryError(Exception):
+    pass
 
 
 class AudioSampleEntry(object):
@@ -41,9 +25,11 @@ class AudioSampleEntry(object):
         sample_size (int): sample size in bits
         sample_rate (int): sample rate in Hz
         bitrate (int): bits per second (0 means unknown)
-        codec (string): audio codec, either 'mp4a' or 'alac'
+        codec (string):
+            audio codec, either 'mp4a[.*][.*]' (rfc6381) or 'alac'
+        codec_description (string): descriptive codec name e.g. "AAC LC+SBR"
 
-    Can raise ValueError.
+    Can raise ASEntryError.
     """
 
     channels = 0
@@ -51,45 +37,52 @@ class AudioSampleEntry(object):
     sample_rate = 0
     bitrate = 0
     codec = None
+    codec_description = None
 
     def __init__(self, atom, fileobj):
         if atom.name in (b"mp4a", b"alac"):
             self.codec = atom.name.decode()
         else:
-            raise ValueError("Unsupported coding name %s" % atom.name)
+            raise ASEntryError("Unsupported coding name %s" % atom.name)
 
         ok, data = atom.read(fileobj)
-        if not ok or len(data) < 28:
-            raise ValueError("too short %s atom" % atom.name)
+        if not ok:
+            raise ASEntryError("too short %s atom" % atom.name)
 
-        # SampleEntry
-        off = 6  # reserved
-        off += 2  # data_ref_index
+        fileobj = cBytesIO(data)
+        r = BitReader(fileobj)
 
-        # AudioSampleEntry
-        off += 8  # reserved
-        self.channels, off = cdata.uint16_be_from(data, off)
-        self.sample_size, off = cdata.uint16_be_from(data, off)
-        off += 2  # pre_defined
-        off += 2  # reserved
-        sample_rate, off = cdata.uint32_be_from(data, off)
-        # defined as Q16.16, but the fraction part seems unused..
-        # self.sample_rate = sample_rate * 2 ** (-16)
-        self.sample_rate = sample_rate >> 16
-        assert off == 28
+        try:
+            # SampleEntry
+            r.skip(6 * 8)  # reserved
+            r.skip(2 * 8)  # data_ref_index
 
-        fileobj = cBytesIO(data[off:])
+            # AudioSampleEntry
+            r.skip(8 * 8)  # reserved
+            self.channels = r.bits(16)
+            self.sample_size = r.bits(16)
+            r.skip(2 * 8)  # pre_defined
+            r.skip(2 * 8)  # reserved
+            self.sample_rate = r.bits(32) >> 16
+        except BitReaderError as e:
+            raise ASEntryError(e)
+
+        assert r.is_aligned()
 
         try:
             extra = Atom(fileobj)
         except AtomError as e:
-            raise ValueError(e)
+            raise ASEntryError(e)
 
         # esds only in mp4a atoms
-        if atom.name == b"mp4a" and extra.name == b"esds":
-            self._parse_esds(extra, fileobj)
-        elif atom.name == b"alac" and extra.name == b"alac":
-            self._parse_alac(extra, fileobj)
+        if atom.name == b"mp4a":
+            if extra.name == b"esds":
+                self._parse_esds(extra, fileobj)
+            self.codec_description = self.codec_description or "Unknown MP4A"
+        elif atom.name == b"alac":
+            if extra.name == b"alac":
+                self._parse_alac(extra, fileobj)
+            self.codec_description = "ALAC"
 
     def _parse_alac(self, atom, fileobj):
         # https://alac.macosforge.org/trac/browser/trunk/
@@ -99,63 +92,463 @@ class AudioSampleEntry(object):
 
         ok, data = atom.read(fileobj)
         if not ok:
-            raise ValueError("truncated %s atom" % atom.name)
+            raise ASEntryError("truncated %s atom" % atom.name)
 
-        version, flags, data = parse_full_atom(data)
-        if version != 0:
-            # unsupported version, ignore
-            return
-
-        # for some files the AudioSampleEntry values default to 44100/2chan
-        # and the real info is in the alac cookie, so prefer it
         try:
-            self.channels, off = cdata.uint8_from(data, 9)
-            off += 6  # skip some stuff
-            self.bitrate, off = cdata.uint32_be_from(data, off)
-            self.sample_rate, off = cdata.uint32_be_from(data, off)
-        except cdata.error as e:
-            raise ValueError(e)
+            version, flags, data = parse_full_atom(data)
+        except ValueError as e:
+            raise ASEntryError(e)
+
+        if version != 0:
+            raise ASEntryError("Unsupported version %d" % version)
+
+        fileobj = cBytesIO(data)
+        r = BitReader(fileobj)
+
+        try:
+            # for some files the AudioSampleEntry values default to 44100/2chan
+            # and the real info is in the alac cookie, so prefer it
+            r.skip(32)  # frameLength
+            compatibleVersion = r.bits(8)
+            if compatibleVersion != 0:
+                return
+            self.sample_size = r.bits(8)
+            r.skip(8 + 8 + 8)
+            self.channels = r.bits(8)
+            r.skip(16 + 32)
+            self.bitrate = r.bits(32)
+            self.sample_rate = r.bits(32)
+        except BitReaderError as e:
+            raise ASEntryError(e)
 
     def _parse_esds(self, esds, fileobj):
         assert esds.name == b"esds"
 
         ok, data = esds.read(fileobj)
         if not ok:
-            raise ValueError("truncated %s atom" % esds.name)
-
-        version, flags, data = parse_full_atom(data)
-        if version != 0:
-            # unsupported version, ignore
-            return
+            raise ASEntryError("truncated %s atom" % esds.name)
 
         try:
-            tag, off = cdata.uint8_from(data, 0)
-            ES_DescrTag = 0x03
-            if tag != ES_DescrTag:
-                raise ValueError("unexpected descriptor: %d" % tag)
+            version, flags, data = parse_full_atom(data)
+        except ValueError as e:
+            raise ASEntryError(e)
 
-            base_size, off = _parse_desc_length(data, off)
-            es_id, off = cdata.uint16_be_from(data, off)
-            es_flags, off = cdata.uint8_from(data, off)
-            streamDependenceFlag = cdata.test_bit(es_flags, 7)
-            URL_Flag = cdata.test_bit(es_flags, 6)
-            OCRstreamFlag = cdata.test_bit(es_flags, 5)
-            # streamPriority = es_flags & 0x1f
-            if streamDependenceFlag:
-                off += 2  # dependsOn_ES_ID
-            if URL_Flag:
-                url_len, off = cdata.uint8_from(data, off)
-                off += url_len  # URLstring
-            if OCRstreamFlag:
-                off += 2  # OCR_ES_Id
-            DecoderConfigDescrTag = 4
-            tag, off = cdata.uint8_from(data, off)
-            if tag != DecoderConfigDescrTag:
-                raise ValueError("unexpected DecoderConfigDescrTag %d" % tag)
+        if version != 0:
+            raise ASEntryError("Unsupported version %d" % version)
 
-            dec_conf_size, off = _parse_desc_length(data, off)
-            off += 9  # skip some stuff
-            # average bitrate
-            self.bitrate, off = cdata.uint32_be_from(data, off)
-        except cdata.error as e:
-            raise ValueError(e)
+        fileobj = cBytesIO(data)
+        r = BitReader(fileobj)
+
+        try:
+            tag = r.bits(8)
+            if tag != ES_Descriptor.TAG:
+                raise ASEntryError("unexpected descriptor: %d" % tag)
+            assert r.is_aligned()
+        except BitReaderError as e:
+            raise ASEntryError(e)
+
+        decSpecificInfo = ES_Descriptor.parse(fileobj)
+        dec_conf_desc = decSpecificInfo.decConfigDescr
+
+        self.bitrate = dec_conf_desc.avgBitrate
+        self.codec += dec_conf_desc.codec_param
+        self.codec_description = dec_conf_desc.codec_desc
+
+        decSpecificInfo = dec_conf_desc.decSpecificInfo
+        if decSpecificInfo is not None:
+            if decSpecificInfo.channels != 0:
+                self.channels = decSpecificInfo.channels
+
+            if decSpecificInfo.sample_rate != 0:
+                self.sample_rate = decSpecificInfo.sample_rate
+
+
+class DescriptorError(Exception):
+    pass
+
+
+class BaseDescriptor(object):
+
+    TAG = None
+
+    @classmethod
+    def _parse_desc_length_file(cls, fileobj):
+        """May raise ValueError"""
+
+        value = 0
+        for i in xrange(4):
+            try:
+                b = cdata.uint8(fileobj.read(1))
+            except cdata.error as e:
+                raise ValueError(e)
+            value = (value << 7) | (b & 0x7f)
+            if not b >> 7:
+                break
+        else:
+            raise ValueError("invalid descriptor length")
+
+        return value
+
+    @classmethod
+    def parse(cls, fileobj):
+        """Returns a parsed instance of the called type.
+        The file position is right after the descriptor after this returns.
+
+        Raises DescriptorError
+        """
+
+        try:
+            length = cls._parse_desc_length_file(fileobj)
+        except ValueError as e:
+            raise DescriptorError(e)
+        pos = fileobj.tell()
+        instance = cls(fileobj, length)
+        left = length - (fileobj.tell() - pos)
+        if left < 0:
+            raise DescriptorError("descriptor parsing read too much data")
+        fileobj.seek(left, 1)
+        return instance
+
+
+class ES_Descriptor(BaseDescriptor):
+
+    TAG = 0x3
+
+    def __init__(self, fileobj, length):
+        r = BitReader(fileobj)
+        try:
+            self.ES_ID = r.bits(16)
+            self.streamDependenceFlag = r.bits(1)
+            self.URL_Flag = r.bits(1)
+            self.OCRstreamFlag = r.bits(1)
+            self.streamPriority = r.bits(5)
+            if self.streamDependenceFlag:
+                self.dependsOn_ES_ID = r.bits(16)
+            if self.URL_Flag:
+                URLlength = r.bits(8)
+                self.URLstring = r.bytes(URLlength)
+            if self.OCRstreamFlag:
+                self.OCR_ES_Id = r.bits(16)
+
+            tag = r.bits(8)
+        except BitReaderError as e:
+            raise DescriptorError(e)
+
+        if tag != DecoderConfigDescriptor.TAG:
+            raise DescriptorError("unexpected DecoderConfigDescrTag %d" % tag)
+
+        assert r.is_aligned()
+        self.decConfigDescr = DecoderConfigDescriptor.parse(fileobj)
+
+
+class DecoderConfigDescriptor(BaseDescriptor):
+
+    TAG = 0x4
+
+    decSpecificInfo = None
+    """A DecoderSpecificInfo, optional"""
+
+    def __init__(self, fileobj, length):
+        """Raises DescriptorError"""
+
+        r = BitReader(fileobj)
+
+        try:
+            self.objectTypeIndication = r.bits(8)
+            self.streamType = r.bits(6)
+            self.upStream = r.bits(1)
+            self.reserved = r.bits(1)
+            self.bufferSizeDB = r.bits(24)
+            self.maxBitrate = r.bits(32)
+            self.avgBitrate = r.bits(32)
+
+            if (self.objectTypeIndication, self.streamType) != (0x40, 0x5):
+                return
+
+            # all from here is optional
+            if length * 8 == r.get_position():
+                return
+
+            tag = r.bits(8)
+        except BitReaderError as e:
+            raise DescriptorError(e)
+
+        if tag == DecoderSpecificInfo.TAG:
+            assert r.is_aligned()
+            self.decSpecificInfo = DecoderSpecificInfo.parse(fileobj)
+
+    @property
+    def codec_param(self):
+        """string"""
+
+        param = ".%X" % self.objectTypeIndication
+        info = self.decSpecificInfo
+        if info is not None:
+            param += ".%d" % info.audioObjectType
+        return param
+
+    @property
+    def codec_desc(self):
+        """string or None"""
+
+        info = self.decSpecificInfo
+        desc = None
+        if info is not None:
+            desc = info.description
+        return desc
+
+
+class DecoderSpecificInfo(BaseDescriptor):
+
+    TAG = 0x5
+
+    _TYPE_NAMES = [
+        None, "AAC MAIN", "AAC LC", "AAC SSR", "AAC LTP", "SBR",
+        "AAC scalable", "TwinVQ", "CELP", "HVXC", None, None, "TTSI",
+        "Main synthetic", "Wavetable synthesis", "General MIDI",
+        "Algorithmic Synthesis and Audio FX", "ER AAC LC", None, "ER AAC LTP",
+        "ER AAC scalable", "ER Twin VQ", "ER BSAC", "ER AAC LD", "ER CELP",
+        "ER HVXC", "ER HILN", "ER Parametric", "SSC", "PS", "MPEG Surround",
+        None, "Layer-1", "Layer-2", "Layer-3", "DST", "ALS", "SLS",
+        "SLS non-core", "ER AAC ELD", "SMR Simple", "SMR Main", "USAC",
+        "SAOC", "LD MPEG Surround", "USAC"
+    ]
+
+    _FREQS = [
+        96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000,
+        12000, 11025, 8000, 7350,
+    ]
+
+    @property
+    def description(self):
+        """string or None if unknown"""
+
+        name = None
+        try:
+            name = self._TYPE_NAMES[self.audioObjectType]
+        except IndexError:
+            pass
+        if name is None:
+            return
+        if self.sbrPresentFlag == 1:
+            name += "+SBR"
+        if self.psPresentFlag == 1:
+            name += "+PS"
+        return name
+
+    @property
+    def sample_rate(self):
+        """0 means unknown"""
+
+        if self.sbrPresentFlag == 1:
+            return self.extensionSamplingFrequency
+        elif self.sbrPresentFlag == 0:
+            return self.samplingFrequency
+        else:
+            # these are all types that support SBR
+            aot_can_sbr = (1, 2, 3, 4, 6, 17, 19, 20, 22)
+            if self.audioObjectType not in aot_can_sbr:
+                return self.samplingFrequency
+            # there shouldn't be SBR for > 48KHz
+            if self.samplingFrequency > 24000:
+                return self.samplingFrequency
+            # either samplingFrequency or samplingFrequency * 2
+            return 0
+
+    @property
+    def channels(self):
+        """channel count or 0 for unknown"""
+
+        # from program_config_element()
+        if hasattr(self, "pce_channels"):
+            return self.pce_channels
+
+        conf = getattr(
+            self, "extensionChannelConfiguration", self.channelConfiguration)
+
+        if conf == 1:
+            if self.psPresentFlag == -1:
+                return 0
+            elif self.psPresentFlag == 1:
+                return 2
+            else:
+                return 1
+        elif conf == 7:
+            return 8
+        elif conf > 7:
+            return 0
+        else:
+            return conf
+
+    def _get_audio_object_type(self, r):
+        """Raises BitReaderError"""
+
+        audioObjectType = r.bits(5)
+        if audioObjectType == 31:
+            audioObjectTypeExt = r.bits(6)
+            audioObjectType = 32 + audioObjectTypeExt
+        return audioObjectType
+
+    def _get_sampling_freq(self, r):
+        """Raises BitReaderError"""
+
+        samplingFrequencyIndex = r.bits(4)
+        if samplingFrequencyIndex == 0xf:
+            samplingFrequency = r.bits(24)
+        else:
+            try:
+                samplingFrequency = self._FREQS[samplingFrequencyIndex]
+            except IndexError:
+                samplingFrequency = 0
+        return samplingFrequency
+
+    def __init__(self, fileobj, length):
+        """Raises DescriptorError"""
+
+        r = BitReader(fileobj)
+        try:
+            self._parse(r, length)
+        except BitReaderError as e:
+            raise DescriptorError(e)
+
+    def _parse(self, r, length):
+        """Raises BitReaderError"""
+
+        def bits_left():
+            return length * 8 - r.get_position()
+
+        self.audioObjectType = self._get_audio_object_type(r)
+        self.samplingFrequency = self._get_sampling_freq(r)
+        self.channelConfiguration = r.bits(4)
+
+        self.sbrPresentFlag = -1
+        self.psPresentFlag = -1
+        if self.audioObjectType in (5, 29):
+            self.extensionAudioObjectType = 5
+            self.sbrPresentFlag = 1
+            if self.audioObjectType == 29:
+                self.psPresentFlag = 1
+            self.extensionSamplingFrequency = self._get_sampling_freq(r)
+            self.audioObjectType = self._get_audio_object_type(r)
+            if self.audioObjectType == 22:
+                self.extensionChannelConfiguration = r.bits(4)
+        else:
+            self.extensionAudioObjectType = 0
+
+        if self.audioObjectType in (1, 2, 3, 4, 6, 7, 17, 19, 20, 21, 22, 23):
+            try:
+                GASpecificConfig(r, self)
+            except NotImplementedError:
+                # unsupported, (warn?)
+                return
+        else:
+            # unsupported
+            return
+
+        if self.audioObjectType in (
+                17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 39):
+            epConfig = r.bits(2)
+            if epConfig in (2, 3):
+                # unsupported
+                return
+
+        if self.extensionAudioObjectType != 5 and bits_left() >= 16:
+            syncExtensionType = r.bits(11)
+            if syncExtensionType == 0x2b7:
+                self.extensionAudioObjectType = self._get_audio_object_type(r)
+
+                if self.extensionAudioObjectType == 5:
+                    self.sbrPresentFlag = r.bits(1)
+                    if self.sbrPresentFlag == 1:
+                        self.extensionSamplingFrequency = \
+                            self._get_sampling_freq(r)
+                        if bits_left() >= 12:
+                            syncExtensionType = r.bits(11)
+                            if syncExtensionType == 0x548:
+                                self.psPresentFlag = r.bits(1)
+
+                if self.extensionAudioObjectType == 22:
+                    self.sbrPresentFlag = r.bits(1)
+                    if self.sbrPresentFlag == 1:
+                        self.extensionSamplingFrequency = \
+                            self._get_sampling_freq(r)
+                    self.extensionChannelConfiguration = r.bits(4)
+
+
+def GASpecificConfig(r, info):
+    """Reads GASpecificConfig which is needed to get the data after that
+    (there is no length defined to skip it) and to read program_config_element
+    which can contain channel counts.
+
+    May raise BitReaderError on error or
+    NotImplementedError if some reserved data was set.
+    """
+
+    assert isinstance(info, DecoderSpecificInfo)
+
+    r.skip(1)  # frameLengthFlag
+    dependsOnCoreCoder = r.bits(1)
+    if dependsOnCoreCoder:
+        r.skip(14)
+    extensionFlag = r.bits(1)
+    if not info.channelConfiguration:
+        program_config_element(r, info)
+    if info.audioObjectType == 6 or info.audioObjectType == 20:
+        r.skip(3)
+    if extensionFlag:
+        if info.audioObjectType == 22:
+            r.skip(5 + 11)
+        if info.audioObjectType in (17, 19, 20, 23):
+            r.skip(1 + 1 + 1)
+        extensionFlag3 = r.bits(1)
+        if extensionFlag3 != 0:
+            raise NotImplementedError("extensionFlag3 set")
+
+
+def program_config_element(r, info):
+    """Reads the program_config_element and sets the channel count
+    in DecoderSpecificInfo.pce_channels
+
+    Raises BitReaderError
+    """
+
+    assert isinstance(info, DecoderSpecificInfo)
+
+    r.skip(4 + 2)  # element_instance_tag, object_type
+    r.skip(4)  # sampling_frequency_index
+    num_front_channel_elements = r.bits(4)
+    num_side_channel_elements = r.bits(4)
+    num_back_channel_elements = r.bits(4)
+    num_lfe_channel_elements = r.bits(2)
+    num_assoc_data_elements = r.bits(3)
+    num_valid_cc_elements = r.bits(4)
+
+    mono_mixdown_present = r.bits(1)
+    if mono_mixdown_present == 1:
+        r.skip(4)
+    stereo_mixdown_present = r.bits(1)
+    if stereo_mixdown_present == 1:
+        r.skip(4)
+    matrix_mixdown_idx_present = r.bits(1)
+    if matrix_mixdown_idx_present == 1:
+        r.skip(3)
+
+    elms = num_front_channel_elements + num_side_channel_elements + \
+        num_back_channel_elements
+    channels = 0
+    for i in xrange(elms):
+        channels += 1
+        element_is_cpe = r.bits(1)
+        if element_is_cpe:
+            channels += 1
+        r.skip(4)
+    channels += num_lfe_channel_elements
+
+    r.skip(4 * num_lfe_channel_elements)
+    r.skip(4 * num_assoc_data_elements)
+    r.skip(5 * num_valid_cc_elements)
+    r.align()
+    comment_field_bytes = r.bits(8)
+    r.skip(8 * comment_field_bytes)
+
+    info.pce_channels = channels

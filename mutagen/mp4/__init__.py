@@ -34,7 +34,7 @@ from mutagen._compat import (reraise, PY2, string_types, text_type, chr_,
                              iteritems, PY3, cBytesIO)
 from ._atom import Atoms, Atom, AtomError
 from ._util import parse_full_atom
-from ._as_entry import AudioSampleEntry
+from ._as_entry import AudioSampleEntry, ASEntryError
 
 
 class error(IOError, MutagenError):
@@ -787,9 +787,11 @@ class MP4Info(StreamInfo):
     * sample_rate -- audio sampling rate in Hz
     * bits_per_sample -- bits per sample
     * codec (string):
-        if starts with ``"mp4a"`` uses an mp4a audio codec,
-        if starts with ``"alac"`` uses the ALAC codec,
-        everything else means the codec is unknown.
+        * if starting with ``"mp4a"`` uses an mp4a audio codec
+          (see the codec parameter in rfc6381 for details e.g. ``"mp4a.40.2"``)
+        * if starting with ``"alac"`` uses the ALAC codec,
+        * everything else means the codec is unknown.
+    * codec_description (string): name of the codec used (ALAC, AAC LC, ...)
     """
 
     bitrate = 0
@@ -797,6 +799,7 @@ class MP4Info(StreamInfo):
     sample_rate = 0
     bits_per_sample = 0
     codec = u""
+    codec_name = u""
 
     def __init__(self, atoms, fileobj):
         try:
@@ -861,8 +864,15 @@ class MP4Info(StreamInfo):
 
         try:
             version, flags, data = parse_full_atom(data)
+        except ValueError as e:
+            raise MP4StreamInfoError(e)
+
+        if version != 0:
+            raise MP4StreamInfoError("Unsupported stsd version")
+
+        try:
             num_entries, offset = cdata.uint32_be_from(data, 0)
-        except (ValueError, cdata.error) as e:
+        except cdata.error as e:
             raise MP4StreamInfoError(e)
 
         if num_entries == 0:
@@ -877,7 +887,7 @@ class MP4Info(StreamInfo):
 
         try:
             entry = AudioSampleEntry(entry_atom, entry_fileobj)
-        except ValueError as e:
+        except ASEntryError as e:
             raise MP4StreamInfoError(e)
         else:
             self.channels = entry.channels
@@ -885,6 +895,7 @@ class MP4Info(StreamInfo):
             self.sample_rate = entry.sample_rate
             self.bitrate = entry.bitrate
             self.codec = entry.codec
+            self.codec_description = entry.codec_description
 
     def pprint(self):
         return "MPEG-4 audio, %.2f seconds, %d bps" % (
