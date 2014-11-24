@@ -523,7 +523,7 @@ class BitReader(object):
         self._fileobj = fileobj
         self._buffer = 0
         self._bits = 0
-        self._pos = 0
+        self._pos = fileobj.tell()
 
     def bits(self, count):
         """Reads `count` bits and returns an uint, MSB read first.
@@ -540,7 +540,6 @@ class BitReader(object):
             data = self._fileobj.read(n_bytes)
             if len(data) != n_bytes:
                 raise BitReaderError("not enough data")
-            self._pos += n_bytes
             for b in bytearray(data):
                 self._buffer = (self._buffer << 8) | b
             self._bits += n_bytes * 8
@@ -556,6 +555,13 @@ class BitReader(object):
 
         if count < 0:
             raise ValueError
+
+        # fast path
+        if self._bits == 0:
+            data = self._fileobj.read(count)
+            if len(data) != count:
+                raise BitReaderError("not enough data")
+            return data
 
         return bytes(bytearray(self.bits(8) for _ in xrange(count)))
 
@@ -575,14 +581,13 @@ class BitReader(object):
             count -= self.align()
             n_bytes = count // 8
             self._fileobj.seek(n_bytes, 1)
-            self._pos += n_bytes
             count -= n_bytes * 8
             self.bits(count)
 
     def get_position(self):
         """Returns the amount of bits read or skipped so far"""
 
-        return self._pos * 8 - self._bits
+        return (self._fileobj.tell() - self._pos) * 8 - self._bits
 
     def align(self):
         """Align to the next byte, returns the amount of bits skipped"""

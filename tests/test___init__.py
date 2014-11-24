@@ -21,6 +21,7 @@ from mutagen.monkeysaudio import MonkeysAudio
 from mutagen.optimfrog import OptimFROG
 from mutagen.asf import ASF
 from mutagen.aiff import AIFF
+from mutagen.aac import AAC
 from os import devnull
 
 
@@ -200,6 +201,11 @@ class TFile(TestCase):
             File(os.path.join(data_path, "8k-1ch-3.5s-silence.aif")), AIFF))
         self.failUnless(isinstance(
             File(os.path.join(data_path, "8k-4ch-1s-silence.aif")), AIFF))
+
+    def test_adts(self):
+        data_path = os.path.join("tests", "data")
+        self.failUnless(isinstance(
+            File(os.path.join(data_path, "empty.aac")), AAC))
 
     def test_id3_indicates_mp3_not_tta(self):
         header = b"ID3 the rest of this is garbage"

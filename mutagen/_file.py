@@ -208,9 +208,10 @@ def File(filename, options=None, easy=False):
         from mutagen.monkeysaudio import MonkeysAudio
         from mutagen.optimfrog import OptimFROG
         from mutagen.aiff import AIFF
+        from mutagen.aac import AAC
         options = [MP3, TrueAudio, OggTheora, OggSpeex, OggVorbis, OggFLAC,
                    FLAC, AIFF, APEv2File, MP4, ID3FileType, WavPack,
-                   Musepack, MonkeysAudio, OptimFROG, ASF, OggOpus]
+                   Musepack, MonkeysAudio, OptimFROG, ASF, OggOpus, AAC]
 
     if not options:
         return None
