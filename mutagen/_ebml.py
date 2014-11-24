@@ -337,7 +337,7 @@ class MasterElement(Element):
     _child_specs = {}
 
     def __init__(self, header, num_read_bytes=0):
-        self._children = []
+        self.children = []
 
         super(MasterElement, self).__init__(header, None,
                                             num_read_bytes=num_read_bytes)
@@ -352,7 +352,7 @@ class MasterElement(Element):
     def _write_data(self, buf):
         # Since children insert or delete bytes as needed, no need to
         # resize file within MasterElement.write
-        for child in self._children:
+        for child in self.children:
             # If the child was unrecognised, it can't have been
             # modified. Therefore, just skip this portion of the file.
             if isinstance(child, ElementHeader):
@@ -363,7 +363,7 @@ class MasterElement(Element):
     @property
     def num_write_bytes(self):
         result = 0
-        for chld in self._children:
+        for chld in self.children:
             if isinstance(chld, Element):
                 result += (chld.num_write_bytes + chld._header.num_write_bytes)
             else:
@@ -371,43 +371,16 @@ class MasterElement(Element):
 
         return result
 
-    def add_child(self, name, element, index=None):
-
-        if index is None:
-            self._children.append(element)
-        else:
-            self._children[index:index] = element
-
-        elements = getattr(self, name, None)
-        if isinstance(elements, list):
-            elements.append(element)
-        elif elements is None:
-            setattr(self, name, element)
-        else:
-            raise error('The spec for this element does not allow multiple '
-                        'elements to be set on the master.')
-
-    def delete_child(self, name):
-        # Find the spec which matches the name
-        elements = getattr(self, name, None)
-        if isinstance(elements, list):
-            _id = elements[0].id
-        elif elements is not None:
-            _id = elements.id
-        else:
-            raise AttributeError('Child element {} does not '
-                                 'exist.'.format(name))
-
-        self._children = [child for child in self._children if child.id != _id]
-        delattr(self, name)
-
     def _check_mandatory_children(self):
         # Check that all mandatory elements are set, otherwise raise Exception
+        # ... unless the element has a default, in which case it isn't really
+        # mandatory.
         mandatory_ids = [
-            k for k, v in self._child_specs.items() if v.mandatory
+            k for k, v in self._child_specs.items() if (
+                v.mandatory and (v.default is None))
         ]
 
-        for child in self._children:
+        for child in self.children:
             if isinstance(child, Element):
                 if child.id in mandatory_ids:
                     mandatory_ids.remove(child.id)
@@ -416,26 +389,6 @@ class MasterElement(Element):
             missing = ", ".join("0x{:02x}".format(m) for m in mandatory_ids)
             raise Exception("The following mandatory elements are "
                             "missing: {}".format(missing))
-
-    def _set_attributes(self):
-        # Set attributes
-        for child in self._children:
-            if not isinstance(child, Element):
-                continue
-
-            spec = self._child_specs[child.id]
-
-            try:
-                existing_element = getattr(self, spec.name)
-            except AttributeError:
-                if spec.multiple:
-                    child = [child]
-
-                setattr(self, spec.name, child)
-            else:
-                # Since we know the children are all valid already,
-                # this must be a multi-element
-                existing_element.append(child)
 
     def _read_children(self, buf):
         bytes_read = 0
@@ -451,38 +404,56 @@ class MasterElement(Element):
             if spec is None:
                 # Append ElementHeader, indicating element was unrecognised,
                 # then move on to the next element.
-                self._children.append(header)
+                self.children.append(header)
                 buf.seek(header.size, 1)
             else:
                 if not spec.multiple:
                     # Check that there are no elements with the same ID
-                    if any(child.id == spec.id for child in self._children):
+                    if any(child.id == spec.id for child in self.children):
                         raise Exception("Attempt to set multiple values for "
                                         "non-multi element")
 
                 new_element = spec.create_element(header, buf)
-                self._children.append(new_element)
+                self.children.append(new_element)
 
             bytes_read += header.size
 
         self._check_mandatory_children()
-        self._set_attributes()
 
     # Override byte_difference to ignore changes in child length, which are
     # already dealt with when writing children
     def byte_difference(self):
         return 0
 
+    def find_children(self, _id):
+        result = []
+        for child in self.children:
+            if not isinstance(child, Element):
+                continue
+
+            if child.id == _id:
+                result.append(child)
+
+        return result
+
+    def __str__(self):
+        return "[\n" + "\n".join(str(c) for c in self.children) + "\n]"
 
 class EBMLHeader(MasterElement):
     _child_specs = {
-        0x4286: ElementSpec(0x4286, 'ebml_version', UnsignedElement),
-        0x42F7: ElementSpec(0x42F7, 'ebml_read_version', UnsignedElement),
-        0x42F2: ElementSpec(0x42F2, 'ebml_max_id_length', UnsignedElement),
-        0x42F3: ElementSpec(0x42F3, 'ebml_max_size_length', UnsignedElement),
+        0x4286: ElementSpec(0x4286, 'ebml_version', UnsignedElement,
+                            default=1),
+        0x42F7: ElementSpec(0x42F7, 'ebml_read_version', UnsignedElement,
+                            default=1),
+        0x42F2: ElementSpec(0x42F2, 'ebml_max_id_length', UnsignedElement,
+                            default=4),
+        0x42F3: ElementSpec(0x42F3, 'ebml_max_size_length', UnsignedElement,
+                            default=8),
         0x4282: ElementSpec(0x4282, 'doc_type', ASCIIElement),
-        0x4287: ElementSpec(0x4287, 'doc_type_version', UnsignedElement),
-        0x4285: ElementSpec(0x4285, 'doc_type_read_version', UnsignedElement),
+        0x4287: ElementSpec(0x4287, 'doc_type_version', UnsignedElement,
+                            default=1),
+        0x4285: ElementSpec(0x4285, 'doc_type_read_version', UnsignedElement,
+                            default=1),
     }
 
 
