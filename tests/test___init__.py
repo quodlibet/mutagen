@@ -207,6 +207,11 @@ class TFile(TestCase):
         self.failUnless(isinstance(
             File(os.path.join(data_path, "empty.aac")), AAC))
 
+    def test_adif(self):
+        data_path = os.path.join("tests", "data")
+        self.failUnless(isinstance(
+            File(os.path.join(data_path, "adif.aac")), AAC))
+
     def test_id3_indicates_mp3_not_tta(self):
         header = b"ID3 the rest of this is garbage"
         fileobj = cBytesIO(header)

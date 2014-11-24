@@ -6,6 +6,7 @@
 # published by the Free Software Foundation.
 
 from mutagen._compat import cBytesIO, xrange
+from mutagen.aac import ProgramConfigElement
 from mutagen._util import BitReader, BitReaderError, cdata
 from ._util import parse_full_atom
 from ._atom import Atom, AtomError
@@ -359,7 +360,7 @@ class DecoderSpecificInfo(BaseDescriptor):
     def channels(self):
         """channel count or 0 for unknown"""
 
-        # from program_config_element()
+        # from ProgramConfigElement()
         if hasattr(self, "pce_channels"):
             return self.pce_channels
 
@@ -492,7 +493,8 @@ def GASpecificConfig(r, info):
         r.skip(14)
     extensionFlag = r.bits(1)
     if not info.channelConfiguration:
-        program_config_element(r, info)
+        pce = ProgramConfigElement(r)
+        info.pce_channels = pce.channels
     if info.audioObjectType == 6 or info.audioObjectType == 20:
         r.skip(3)
     if extensionFlag:
@@ -503,52 +505,3 @@ def GASpecificConfig(r, info):
         extensionFlag3 = r.bits(1)
         if extensionFlag3 != 0:
             raise NotImplementedError("extensionFlag3 set")
-
-
-def program_config_element(r, info):
-    """Reads the program_config_element and sets the channel count
-    in DecoderSpecificInfo.pce_channels
-
-    Raises BitReaderError
-    """
-
-    assert isinstance(info, DecoderSpecificInfo)
-
-    r.skip(4 + 2)  # element_instance_tag, object_type
-    r.skip(4)  # sampling_frequency_index
-    num_front_channel_elements = r.bits(4)
-    num_side_channel_elements = r.bits(4)
-    num_back_channel_elements = r.bits(4)
-    num_lfe_channel_elements = r.bits(2)
-    num_assoc_data_elements = r.bits(3)
-    num_valid_cc_elements = r.bits(4)
-
-    mono_mixdown_present = r.bits(1)
-    if mono_mixdown_present == 1:
-        r.skip(4)
-    stereo_mixdown_present = r.bits(1)
-    if stereo_mixdown_present == 1:
-        r.skip(4)
-    matrix_mixdown_idx_present = r.bits(1)
-    if matrix_mixdown_idx_present == 1:
-        r.skip(3)
-
-    elms = num_front_channel_elements + num_side_channel_elements + \
-        num_back_channel_elements
-    channels = 0
-    for i in xrange(elms):
-        channels += 1
-        element_is_cpe = r.bits(1)
-        if element_is_cpe:
-            channels += 1
-        r.skip(4)
-    channels += num_lfe_channel_elements
-
-    r.skip(4 * num_lfe_channel_elements)
-    r.skip(4 * num_assoc_data_elements)
-    r.skip(5 * num_valid_cc_elements)
-    r.align()
-    comment_field_bytes = r.bits(8)
-    r.skip(8 * comment_field_bytes)
-
-    info.pce_channels = channels

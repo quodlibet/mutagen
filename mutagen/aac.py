@@ -6,16 +6,23 @@
 # published by the Free Software Foundation.
 
 """
-ADTS - Audio Data Transport Stream (AAC streaming format)
-See ISO/IEC 13818-7
-
-TODO: ADIF
+ADTS - Audio Data Transport Stream
+ADIF - Audio Data Interchange Format
+See ISO/IEC 13818-7 / 14496-03
 """
 
 from mutagen import StreamInfo
 from mutagen._file import FileType
 from mutagen._util import BitReader, BitReaderError, MutagenError
 from mutagen._compat import endswith, xrange
+
+
+_FREQS = [
+    96000, 88200, 64000, 48000,
+    44100, 32000, 24000, 22050,
+    16000, 12000, 11025, 8000,
+    7350,
+]
 
 
 class _ADTSStream(object):
@@ -40,13 +47,6 @@ class _ADTSStream(object):
         if stream.sync(max_bytes):
             stream.offset = (r.get_position() - 12) // 8
             return stream
-
-    _FREQS = [
-        96000, 88200, 64000, 48000,
-        44100, 32000, 24000, 22050,
-        16000, 12000, 11025, 8000,
-        7350,
-    ]
 
     def sync(self, max_bytes):
         """Find the next sync.
@@ -93,7 +93,7 @@ class _ADTSStream(object):
         if self._samples == 0:
             return 0
 
-        return (8 * self._payload * self.frequency) / self._samples
+        return (8 * self._payload * self.frequency) // self._samples
 
     @property
     def samples(self):
@@ -133,7 +133,7 @@ class _ADTSStream(object):
 
         f_index = self._fixed_header_key[4]
         try:
-            return self._FREQS[f_index]
+            return _FREQS[f_index]
         except IndexError:
             return 0
 
@@ -204,6 +204,59 @@ class _ADTSStream(object):
         return True
 
 
+class ProgramConfigElement(object):
+
+    element_instance_tag = None
+    object_type = None
+    sampling_frequency_index = None
+    channels = None
+
+    def __init__(self, r):
+        """Reads the program_config_element()
+
+        Raises BitReaderError
+        """
+
+        self.element_instance_tag = r.bits(4)
+        self.object_type = r.bits(2)
+        self.sampling_frequency_index = r.bits(4)
+        num_front_channel_elements = r.bits(4)
+        num_side_channel_elements = r.bits(4)
+        num_back_channel_elements = r.bits(4)
+        num_lfe_channel_elements = r.bits(2)
+        num_assoc_data_elements = r.bits(3)
+        num_valid_cc_elements = r.bits(4)
+
+        mono_mixdown_present = r.bits(1)
+        if mono_mixdown_present == 1:
+            r.skip(4)
+        stereo_mixdown_present = r.bits(1)
+        if stereo_mixdown_present == 1:
+            r.skip(4)
+        matrix_mixdown_idx_present = r.bits(1)
+        if matrix_mixdown_idx_present == 1:
+            r.skip(3)
+
+        elms = num_front_channel_elements + num_side_channel_elements + \
+            num_back_channel_elements
+        channels = 0
+        for i in xrange(elms):
+            channels += 1
+            element_is_cpe = r.bits(1)
+            if element_is_cpe:
+                channels += 1
+            r.skip(4)
+        channels += num_lfe_channel_elements
+        self.channels = channels
+
+        r.skip(4 * num_lfe_channel_elements)
+        r.skip(4 * num_assoc_data_elements)
+        r.skip(5 * num_valid_cc_elements)
+        r.align()
+        comment_field_bytes = r.bits(8)
+        r.skip(8 * comment_field_bytes)
+
+
 class AACError(MutagenError):
     pass
 
@@ -218,8 +271,7 @@ class AACInfo(StreamInfo):
     * sample_rate -- audio sampling rate in Hz
     * bitrate -- audio bitrate, in bits per second
 
-    Both bitrate and length are an approximation based on the first few
-    frames in the stream.
+    The length of the stream is just a guess and might not be correct.
     """
 
     channels = 0
@@ -228,13 +280,6 @@ class AACInfo(StreamInfo):
     bitrate = 0
 
     def __init__(self, fileobj):
-        max_initial_read = 512
-        max_resync_read = 10
-        max_sync_tries = 10
-
-        frames_max = 100
-        frames_needed = 3
-
         # skip id3v2 header
         start_offset = 0
         header = fileobj.read(10)
@@ -242,6 +287,57 @@ class AACInfo(StreamInfo):
         if header.startswith(b"ID3"):
             size = BitPaddedInt(header[6:])
             start_offset = size + 10
+
+        fileobj.seek(start_offset)
+        adif = fileobj.read(4)
+        if adif == b"ADIF":
+            self._parse_adif(fileobj)
+            self._type = "ADIF"
+        else:
+            self._parse_adts(fileobj, start_offset)
+            self._type = "ADTS"
+
+    def _parse_adif(self, fileobj):
+        r = BitReader(fileobj)
+        try:
+            copyright_id_present = r.bits(1)
+            if copyright_id_present:
+                r.skip(72)  # copyright_id
+            r.skip(1 + 1)  # original_copy, home
+            bitstream_type = r.bits(1)
+            self.bitrate = r.bits(23)
+            npce = r.bits(4)
+            if bitstream_type == 0:
+                r.skip(20)  # adif_buffer_fullness
+
+            pce = ProgramConfigElement(r)
+            try:
+                self.sample_rate = _FREQS[pce.sampling_frequency_index]
+            except IndexError:
+                pass
+            self.channels = pce.channels
+
+            # other pces..
+            for i in xrange(npce):
+                ProgramConfigElement(r)
+            r.align()
+        except BitReaderError as e:
+            raise AACError(e)
+
+        # use bitrate + data size to guess length
+        start = fileobj.tell()
+        fileobj.seek(0, 2)
+        length = fileobj.tell() - start
+        if self.bitrate != 0:
+            self.length = (8.0 * length) / self.bitrate
+
+    def _parse_adts(self, fileobj, start_offset):
+        max_initial_read = 512
+        max_resync_read = 10
+        max_sync_tries = 10
+
+        frames_max = 100
+        frames_needed = 3
 
         # Try up to X times to find a sync word and read up to Y frames.
         # If more than Z frames are valid we assume a valid stream
@@ -277,8 +373,9 @@ class AACInfo(StreamInfo):
         self.length = float(s.samples * stream_size) / (s.size * s.frequency)
 
     def pprint(self):
-        return "AAC (ADTS), %d Hz, ~%.2f seconds, %d channel(s), ~%d bps" % (
-            self.sample_rate, self.length, self.channels, self.bitrate)
+        return "AAC (%s), %d Hz, %.2f seconds, %d channel(s), %d bps" % (
+            self._type, self.sample_rate, self.length, self.channels,
+            self.bitrate)
 
 
 class AAC(FileType):
@@ -293,7 +390,10 @@ class AAC(FileType):
     @staticmethod
     def score(filename, fileobj, header):
         filename = filename.lower()
-        return endswith(filename, ".aac") or endswith(filename, ".adts")
+        s = endswith(filename, ".aac") or endswith(filename, ".adts") or \
+            endswith(filename, ".adif")
+        s += b"ADIF" in header
+        return s
 
 
 Open = AAC
