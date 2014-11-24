@@ -331,6 +331,10 @@ class ElementSpec(object):
 
         return self.type.read(header, buf)
 
+    def default_element(self):
+        header = ElementHeader(self.id, None)
+        return self.type(header, self.default)
+
 
 class MasterElement(Element):
     # Child elements, in format {ID: ElementSpec(...)}
@@ -358,6 +362,13 @@ class MasterElement(Element):
             if isinstance(child, ElementHeader):
                 buf.seek(child.size, 1)
             else:
+                # Here, we check whether the child was previously present, and
+                # whether it has a default value - if both are true, then
+                # exclude.
+                if ((child.size is None) and
+                        (child == self._child_specs[child.id].default)):
+                    continue
+
                 child.write(buf)
 
     @property
@@ -371,13 +382,23 @@ class MasterElement(Element):
 
         return result
 
-    def _check_mandatory_children(self):
+    def _add_missing_defaults(self):
+        defaults = [
+            v for v in self._child_specs.values() if v.default is not None
+        ]
+
+        present_children = [c.id for c in self.children]
+
+        for spec in defaults:
+            if spec.id not in present_children:
+                self.children.append(spec.default_element())
+
+    def _check_mandatory_children_present(self):
         # Check that all mandatory elements are set, otherwise raise Exception
-        # ... unless the element has a default, in which case it isn't really
-        # mandatory.
+        # ... unless the element has a default, in which case add it to the list
+        # of elements.
         mandatory_ids = [
-            k for k, v in self._child_specs.items() if (
-                v.mandatory and (v.default is None))
+            k for k, v in self._child_specs.items() if v.mandatory
         ]
 
         for child in self.children:
@@ -418,7 +439,8 @@ class MasterElement(Element):
 
             bytes_read += header.size
 
-        self._check_mandatory_children()
+        self._add_missing_defaults()
+        self._check_mandatory_children_present()
 
     # Override byte_difference to ignore changes in child length, which are
     # already dealt with when writing children
@@ -438,6 +460,7 @@ class MasterElement(Element):
 
     def __str__(self):
         return "[\n" + "\n".join(str(c) for c in self.children) + "\n]"
+
 
 class EBMLHeader(MasterElement):
     _child_specs = {
