@@ -170,7 +170,7 @@ class TEBMLElement(TestCase):
     def test_master(self):
         header = ElementHeader(0x1A45DFA3, 0)
         ele = MasterElement(header)
-        ele._children = [
+        ele.children = [
             BinaryElement(ElementHeader(0x1A45DFA3, 4), b'\x00\x11\x22\x33'),
             UTF8Element(ElementHeader(0x1A45DFA3, 8), u'Test\u2019s'),
             ASCIIElement(ElementHeader(0x1A45DFA3, 4), u'abcd'),
@@ -195,26 +195,6 @@ class TEBMLElement(TestCase):
             b'\xdf\xa3\x88Test\xe2\x80\x99s\x1a\x45\xdf\xa3\x84abcd\x1a\x45'
             b'\xdf\xa3\x81\x64'
         )
-
-    def test_master_add_delete(self):
-        header = ElementHeader(0x1A45DFA3, 0)
-        ele = MasterElement(header)
-
-        ele.add_child('test', BinaryElement(ElementHeader(0x1A45DFA3, 4),
-                                            b'\x00\x11\x22\x33'))
-
-        self.assertTrue(hasattr(ele, 'test'))
-
-        ele.delete_child('test')
-        self.assertFalse(hasattr(ele, 'test'))
-
-        ele.add_child('test', [BinaryElement(ElementHeader(0x1A45DFA3, 4),
-                                             b'\x00\x11\x22\x33')])
-
-        ele.add_child('test', BinaryElement(ElementHeader(0x1A45DFA3, 4),
-                                            b'\x00\x11\x22\x33'))
-
-        self.assertEquals(len(ele.test), 2)
 
     def test_ebml_header(self):
         data = (b'\x1A\x45\xDF\xA3\x01\x00\x00\x00\x00\x00\x00\x23\x42\x86\x81'
@@ -246,7 +226,7 @@ class TEBMLElement(TestCase):
         buf = io.BytesIO(data)
         doc = Document(buf)
 
-        self.assertTrue(hasattr(doc, 'ebml'))
+        self.assertTrue(doc.find_children(0x1A45DFA3))
 
         buf = io.BytesIO()
         doc.write(buf)
