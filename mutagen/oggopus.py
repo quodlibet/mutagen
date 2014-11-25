@@ -19,6 +19,7 @@ __all__ = ["OggOpus", "Open", "delete"]
 import struct
 
 from mutagen import StreamInfo
+from mutagen._compat import BytesIO
 from mutagen._vorbis import VCommentDict
 from mutagen.ogg import OggPage, OggFileType, error as OggError
 
@@ -93,7 +94,16 @@ class OggOpusVComment(VCommentDict):
     def __init__(self, fileobj, info):
         pages = self.__get_comment_pages(fileobj, info)
         data = OggPage.to_packets(pages)[0][8:]  # Strip OpusTags
-        super(OggOpusVComment, self).__init__(data, framing=False)
+        fileobj = BytesIO(data)
+        super(OggOpusVComment, self).__init__(fileobj, framing=False)
+
+        # in case the LSB of the first byte after v-comment is 1, preserve the
+        # following data
+        padding_flag = fileobj.read(1)
+        if padding_flag and ord(padding_flag) & 0x1:
+            self._pad_data = padding_flag + fileobj.read()
+        else:
+            self._pad_data = b""
 
     def _inject(self, fileobj):
         fileobj.seek(0)
@@ -101,7 +111,7 @@ class OggOpusVComment(VCommentDict):
         old_pages = self.__get_comment_pages(fileobj, info)
 
         packets = OggPage.to_packets(old_pages)
-        packets[0] = b"OpusTags" + self.write(framing=False)
+        packets[0] = b"OpusTags" + self.write(framing=False) + self._pad_data
         new_pages = OggPage.from_packets(packets, old_pages[0].sequence)
         OggPage.replace(fileobj, old_pages, new_pages)
 

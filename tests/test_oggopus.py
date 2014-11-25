@@ -52,4 +52,26 @@ class TOggOpus(TOggFileType):
         page.packets[0] = bytes(data)
         self.failUnlessRaises(IOError, OggOpusInfo, BytesIO(page.write()))
 
+    def test_preserve_non_padding(self):
+        self.audio["FOO"] = ["BAR"]
+        self.audio.save()
+
+        extra_data = b"\xde\xad\xbe\xef"
+
+        with open(self.filename, "r+b") as fobj:
+            OggPage(fobj)  # header
+            page = OggPage(fobj)
+            data = OggPage.to_packets([page])[0]
+            data = data.rstrip(b"\x00") + b"\x01" + extra_data
+            new_pages = OggPage.from_packets([data], page.sequence)
+            OggPage.replace(fobj, [page], new_pages)
+
+        OggOpus(self.filename).save()
+
+        with open(self.filename, "rb") as fobj:
+            OggPage(fobj)  # header
+            page = OggPage(fobj)
+            data = OggPage.to_packets([page])[0]
+            self.assertTrue(data.endswith(extra_data))
+
 add(TOggOpus)
