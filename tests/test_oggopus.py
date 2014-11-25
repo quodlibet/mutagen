@@ -72,6 +72,6 @@ class TOggOpus(TOggFileType):
             OggPage(fobj)  # header
             page = OggPage(fobj)
             data = OggPage.to_packets([page])[0]
-            self.assertTrue(data.endswith(extra_data))
+            self.assertTrue(data.endswith(b"\x01" + extra_data))
 
 add(TOggOpus)
