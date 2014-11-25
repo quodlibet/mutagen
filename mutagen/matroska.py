@@ -88,6 +88,29 @@ class MatroskaDocument(Document):
     SEGMENT = 0x18538067
 
 
+class MatroskaValue(object):
+
+    def __init__(self, value, target_type, target):
+        self.value = value
+        self.target_type = target_type
+        self.target = target
+
+        # Initialize this for nested tags
+        self.values = {}
+
+    def add_tag(self, key, value):
+        values = self.values.get(key, [])
+        values.append(value)
+
+        self.values[key] = values
+
+    def delete_tag(self, key):
+        del self.values[key]
+
+    def __repr__(self):
+        return repr(self.value)
+
+
 class MatroskaTags(DictProxy, Metadata):
     """ Tags object for accessing Matroska metadata. Metadata is stored on a
     per-target basis. Each target is accessible as a key of the tags object,
@@ -120,25 +143,31 @@ class MatroskaTags(DictProxy, Metadata):
                 nonzero_uids = [x for x in target.children
                                 if (x.id in uid_ids) and (x != 0)]
 
-                if (target_type == 50) or (not nonzero_uids):
-                    tag_destination = self
-                elif target_type == 30:
-                    tag_destination = self[nonzero_uids[0]] = {}
-
                 for simple_tag in tag.find_children(Tag.SIMPLE_TAG):
                     key = simple_tag.find_children(SimpleTag.TAG_NAME)[0]
 
-                    str_value = simple_tag.find_children(SimpleTag.TAG_STRING)
-                    bin_value = simple_tag.find_children(SimpleTag.TAG_STRING)
+                    value = simple_tag.find_children(SimpleTag.TAG_STRING)
 
-                    if str_value:
-                        tag_destination[key] = text_type(str_value[0])
-                    elif bin_value:
-                        tag_destination[key] = bytes(bin_value[0])
+                    value = [text_type(x) for x in value]
+                    if not value:
+                        value = simple_tag.find_children(SimpleTag.TAG_BINARY)
+                        value = [bytes(x) for x in value]
+
+                    if not value:
+                        continue
+
+                    value = MatroskaValue(
+                        value[0], target_type,
+                        nonzero_uids[0] if nonzero_uids else 0
+                    )
+
+                    values = self.get(key, [])
+                    values.append(value)
+
+                    self[key] = values
 
     def save(self, filename):
-        pass
-        #self.doc.segment[0].tags[0].tag[0].simple_tag.clear()
+        raise NotImplementedError
 
 
 class Matroska(FileType):
