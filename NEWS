@@ -1,3 +1,24 @@
+1.27 - 2014.11.??
+-----------------
+
+* MP4:
+
+    * New MP4Info.codec for identifying the contained audio codec
+      e.g. ``"mp4a"``, ``"alac"``, ``"mp4a.40.2"``, ``"ac-3"`` etc. :pr:`6`
+    * New MP4Info.codec_description: name of the audio codec
+      e.g. ``"ALAC"``, ``"AAC LC"``, ``"AC-3"``
+
+* OggOpus:
+
+    * Preserve data after vorbis comment (
+      See https://tools.ietf.org/html/draft-ietf-codec-oggopus-05#section-5.2)
+      :bug:`202`
+
+* AAC:
+
+    * New AAC FileType. Supports loading ADTS/ADIF AAC files. :bug:`15`
+
+
 1.26 - 2014.11.10
 -----------------
 
