@@ -155,6 +155,8 @@ class StreamInfo(object):
     See the implementations for details.
     """
 
+    __module__ = "mutagen"
+
     def pprint(self):
         """Print stream information"""
 

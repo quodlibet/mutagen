@@ -24,6 +24,10 @@ Base Classes
     .. automethod:: save()
 
 
+.. autoclass:: mutagen.StreamInfo
+    :members: pprint
+
+
 .. autoclass:: mutagen.MutagenError
 
 

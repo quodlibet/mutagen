@@ -10,3 +10,4 @@ API
     ape
     mp4
     asf
+    aac

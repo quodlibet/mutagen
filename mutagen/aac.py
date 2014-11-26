@@ -6,9 +6,9 @@
 # published by the Free Software Foundation.
 
 """
-ADTS - Audio Data Transport Stream
-ADIF - Audio Data Interchange Format
-See ISO/IEC 13818-7 / 14496-03
+* ADTS - Audio Data Transport Stream
+* ADIF - Audio Data Interchange Format
+* See ISO/IEC 13818-7 / 14496-03
 """
 
 from mutagen import StreamInfo
@@ -379,6 +379,11 @@ class AACInfo(StreamInfo):
 
 
 class AAC(FileType):
+    """Load ADTS or ADIF streams containing AAC.
+
+    Tagging is not supported.
+    Use the ID3/APEv2 classes directly instead.
+    """
 
     _mimes = ["audio/x-aac"]
 
