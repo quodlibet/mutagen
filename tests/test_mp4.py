@@ -1039,6 +1039,28 @@ class TMP4AudioSampleEntry(TestCase):
         self.assertTrue(isinstance(entry.codec, text_type))
         self.assertTrue(isinstance(entry.codec_description, text_type))
 
+    def test_samr(self):
+        # parsing not implemented, values are wrong but at least it loads.
+        # should be Mono 7.95kbps 8KHz
+        atom_data = (
+            b'\x00\x00\x005samr\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x02\x00\x10\x00\x00\x00\x00\x1f@\x00'
+            b'\x00\x00\x00\x00\x11damrFFMP\x00\x81\xff\x00\x01')
+
+        fileobj = cBytesIO(atom_data)
+        atom = Atom(fileobj)
+        entry = AudioSampleEntry(atom, fileobj)
+
+        self.assertEqual(entry.bitrate, 0)
+        self.assertEqual(entry.channels, 2)
+        self.assertEqual(entry.codec_description, "SAMR")
+        self.assertEqual(entry.codec, "samr")
+        self.assertEqual(entry.sample_rate, 8000)
+        self.assertEqual(entry.sample_size, 16)
+
+        self.assertTrue(isinstance(entry.codec, text_type))
+        self.assertTrue(isinstance(entry.codec_description, text_type))
+
     def test_error(self):
         fileobj = cBytesIO(b"\x00" * 20)
         atom = Atom(fileobj)
