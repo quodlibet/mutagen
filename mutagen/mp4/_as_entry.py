@@ -177,7 +177,10 @@ class AudioSampleEntry(object):
         except BitReaderError as e:
             raise ASEntryError(e)
 
-        decSpecificInfo = ES_Descriptor.parse(fileobj)
+        try:
+            decSpecificInfo = ES_Descriptor.parse(fileobj)
+        except DescriptorError as e:
+            raise ASEntryError(e)
         dec_conf_desc = decSpecificInfo.decConfigDescr
 
         self.bitrate = dec_conf_desc.avgBitrate
@@ -245,6 +248,8 @@ class ES_Descriptor(BaseDescriptor):
     TAG = 0x3
 
     def __init__(self, fileobj, length):
+        """Raises DescriptorError"""
+
         r = BitReader(fileobj)
         try:
             self.ES_ID = r.bits(16)
