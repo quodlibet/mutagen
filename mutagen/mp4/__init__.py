@@ -789,9 +789,13 @@ class MP4Info(StreamInfo):
     * codec (string):
         * if starting with ``"mp4a"`` uses an mp4a audio codec
           (see the codec parameter in rfc6381 for details e.g. ``"mp4a.40.2"``)
-        * if starting with ``"alac"`` uses the ALAC codec,
-        * everything else means the codec is unknown.
-    * codec_description (string): name of the codec used (ALAC, AAC LC, ...)
+        * for everything else see a list of possible values at
+          http://www.mp4ra.org/codecs.html
+
+        e.g. ``"mp4a"``, ``"alac"``, ``"mp4a.40.2"``, ``"ac-3"`` etc.
+    * codec_description (string):
+        Name of the codec used (ALAC, AAC LC, AC-3...). Values might change in
+        the future, use for display purposes only.
     """
 
     bitrate = 0
@@ -898,8 +902,8 @@ class MP4Info(StreamInfo):
             self.codec_description = entry.codec_description
 
     def pprint(self):
-        return "MPEG-4 audio, %.2f seconds, %d bps" % (
-            self.length, self.bitrate)
+        return "MPEG-4 audio (%s), %.2f seconds, %d bps" % (
+            self.codec_description, self.length, self.bitrate)
 
 
 class MP4(FileType):
