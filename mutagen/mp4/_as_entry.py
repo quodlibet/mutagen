@@ -7,7 +7,7 @@
 
 from mutagen._compat import cBytesIO, xrange
 from mutagen.aac import ProgramConfigElement
-from mutagen._util import BitReader, BitReaderError, cdata
+from mutagen._util import BitReader, BitReaderError, cdata, text_type
 from ._util import parse_full_atom
 from ._atom import Atom, AtomError
 
@@ -41,14 +41,9 @@ class AudioSampleEntry(object):
     codec_description = None
 
     def __init__(self, atom, fileobj):
-        if atom.name in (b"mp4a", b"alac"):
-            self.codec = atom.name.decode()
-        else:
-            raise ASEntryError("Unsupported coding name %s" % atom.name)
-
         ok, data = atom.read(fileobj)
         if not ok:
-            raise ASEntryError("too short %s atom" % atom.name)
+            raise ASEntryError("too short %r atom" % atom.name)
 
         fileobj = cBytesIO(data)
         r = BitReader(fileobj)
@@ -75,15 +70,49 @@ class AudioSampleEntry(object):
         except AtomError as e:
             raise ASEntryError(e)
 
-        # esds only in mp4a atoms
-        if atom.name == b"mp4a":
-            if extra.name == b"esds":
-                self._parse_esds(extra, fileobj)
-            self.codec_description = self.codec_description or "Unknown MP4A"
-        elif atom.name == b"alac":
-            if extra.name == b"alac":
-                self._parse_alac(extra, fileobj)
-            self.codec_description = "ALAC"
+        self.codec = atom.name.decode("latin-1")
+        self.codec_description = None
+
+        if atom.name == b"mp4a" and extra.name == b"esds":
+            self._parse_esds(extra, fileobj)
+        elif atom.name == b"alac" and extra.name == b"alac":
+            self._parse_alac(extra, fileobj)
+        elif atom.name == b"ac-3" and extra.name == b"dac3":
+            self._parse_dac3(extra, fileobj)
+
+        if self.codec_description is None:
+            self.codec_description = self.codec.upper()
+
+    def _parse_dac3(self, atom, fileobj):
+        # ETSI TS 102 366
+
+        assert atom.name == b"dac3"
+
+        ok, data = atom.read(fileobj)
+        if not ok:
+            raise ASEntryError("truncated %s atom" % atom.name)
+        fileobj = cBytesIO(data)
+        r = BitReader(fileobj)
+
+        # sample_rate in AudioSampleEntry covers values in
+        # fscod2 and not just fscod, so ignore fscod here.
+        try:
+            r.skip(2 + 5 + 3)  # fscod, bsid, bsmod
+            acmod = r.bits(3)
+            lfeon = r.bits(1)
+            bit_rate_code = r.bits(5)
+            r.skip(5)  # reserved
+        except BitReaderError as e:
+            raise ASEntryError(e)
+
+        self.channels = [2, 1, 2, 3, 3, 4, 4, 5][acmod] + lfeon
+
+        try:
+            self.bitrate = [
+                32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192,
+                224, 256, 320, 384, 448, 512, 576, 640][bit_rate_code] * 1000
+        except IndexError:
+            pass
 
     def _parse_alac(self, atom, fileobj):
         # https://alac.macosforge.org/trac/browser/trunk/
@@ -282,10 +311,10 @@ class DecoderConfigDescriptor(BaseDescriptor):
     def codec_param(self):
         """string"""
 
-        param = ".%X" % self.objectTypeIndication
+        param = u".%X" % self.objectTypeIndication
         info = self.decSpecificInfo
         if info is not None:
-            param += ".%d" % info.audioObjectType
+            param += u".%d" % info.audioObjectType
         return param
 
     @property
@@ -335,7 +364,7 @@ class DecoderSpecificInfo(BaseDescriptor):
             name += "+SBR"
         if self.psPresentFlag == 1:
             name += "+PS"
-        return name
+        return text_type(name)
 
     @property
     def sample_rate(self):

@@ -2,7 +2,7 @@ import os
 import shutil
 import struct
 
-from mutagen._compat import cBytesIO, PY3
+from mutagen._compat import cBytesIO, PY3, text_type
 from tempfile import mkstemp
 from tests import TestCase, add
 from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
@@ -994,6 +994,9 @@ class TMP4AudioSampleEntry(TestCase):
         self.assertEqual(entry.sample_rate, 48000)
         self.assertEqual(entry.sample_size, 16)
 
+        self.assertTrue(isinstance(entry.codec, text_type))
+        self.assertTrue(isinstance(entry.codec_description, text_type))
+
     def test_als(self):
         atom_data = (
             b'\x00\x00\x00\x9dmp4a\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00'
@@ -1015,6 +1018,26 @@ class TMP4AudioSampleEntry(TestCase):
         self.assertEqual(entry.codec, "mp4a.40.36")
         self.assertEqual(entry.sample_rate, 2000)
         self.assertEqual(entry.sample_size, 16)
+
+    def test_ac3(self):
+        atom_data = (
+            b'\x00\x00\x00/ac-3\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x02\x00\x10\x00\x00\x00\x00V"\x00\x00'
+            b'\x00\x00\x00\x0bdac3R\t\x00')
+
+        fileobj = cBytesIO(atom_data)
+        atom = Atom(fileobj)
+        entry = AudioSampleEntry(atom, fileobj)
+
+        self.assertEqual(entry.bitrate, 128000)
+        self.assertEqual(entry.channels, 1)
+        self.assertEqual(entry.codec_description, "AC-3")
+        self.assertEqual(entry.codec, "ac-3")
+        self.assertEqual(entry.sample_rate, 22050)
+        self.assertEqual(entry.sample_size, 16)
+
+        self.assertTrue(isinstance(entry.codec, text_type))
+        self.assertTrue(isinstance(entry.codec_description, text_type))
 
     def test_error(self):
         fileobj = cBytesIO(b"\x00" * 20)
