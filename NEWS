@@ -1,11 +1,11 @@
-1.27 - 2014.11.??
+1.27 - 2014.11.28
 -----------------
 
 * MP4:
 
-    * New MP4Info.codec for identifying the contained audio codec
+    * New ``MP4Info.codec`` for identifying the contained audio codec
       e.g. ``"mp4a"``, ``"alac"``, ``"mp4a.40.2"``, ``"ac-3"`` etc. :pr:`6`
-    * New MP4Info.codec_description: name of the audio codec
+    * New ``MP4Info.codec_description``: name of the audio codec
       e.g. ``"ALAC"``, ``"AAC LC"``, ``"AC-3"``
 
 * OggOpus:
