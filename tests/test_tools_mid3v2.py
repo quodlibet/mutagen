@@ -44,6 +44,7 @@ class TMid3v2(_TTools):
         album = f["TALB"].text[0]
         for arg in ["-l", "--list"]:
             res, out = self.call(arg, self.filename)
+            self.assertFalse("b'" in out)
             self.failUnlessEqual(res, 0)
             self.failUnless("TALB=" + album in out)
 

@@ -223,7 +223,11 @@ def list_tags(filenames):
         except StandardError as err:
             print(str(err))
         else:
-            print(id3.pprint().encode(enc, "replace"))
+            pp = id3.pprint()
+            if PY3:
+                print(pp)
+            else:
+                print(pp.encode(enc, "replace"))
 
 
 def list_tags_raw(filenames):

@@ -37,6 +37,7 @@ class TMid3Iconv(_TTools):
     def test_debug(self):
         res, out = self.call("-d", "-p", self.filename)
         self.failIf(res)
+        self.assertFalse("b'" in out)
         self.failUnless("TCON=Silence" in out)
 
     def test_quiet(self):
