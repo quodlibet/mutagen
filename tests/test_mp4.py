@@ -913,6 +913,17 @@ class TMP4Misc(TestCase):
 
         self.assertRaises(ValueError, parse_full_atom, b"\x00\x00\x00")
 
+    def test_sort_items(self):
+        items = [
+            ("\xa9nam", ["foo"]),
+            ("gnre", ["fo"]),
+            ("----", ["123"]),
+            ("----", ["1234"]),
+        ]
+
+        sorted_items = sorted(items, key=MP4Tags._key_sort)
+        self.assertEqual(sorted_items, items)
+
 add(TMP4Misc)
 
 

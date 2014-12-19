@@ -328,14 +328,14 @@ class MP4Tags(DictProxy, Metadata):
         return b"moov.udta.meta.ilst" in atoms
 
     @staticmethod
-    def __key_sort(item):
+    def _key_sort(item):
         (key, v) = item
         # iTunes always writes the tags in order of "relevance", try
         # to copy it as closely as possible.
-        order = [b"\xa9nam", b"\xa9ART", b"\xa9wrt", b"\xa9alb",
-                 b"\xa9gen", b"gnre", b"trkn", b"disk",
-                 b"\xa9day", b"cpil", b"pgap", b"pcst", b"tmpo",
-                 b"\xa9too", b"----", b"covr", b"\xa9lyr"]
+        order = ["\xa9nam", "\xa9ART", "\xa9wrt", "\xa9alb",
+                 "\xa9gen", "gnre", "trkn", "disk",
+                 "\xa9day", "cpil", "pgap", "pcst", "tmpo",
+                 "\xa9too", "----", "covr", "\xa9lyr"]
         order = dict(zip(order, range(len(order))))
         last = len(order)
         # If there's no key-based way to distinguish, order by length.
@@ -347,7 +347,7 @@ class MP4Tags(DictProxy, Metadata):
         """Save the metadata to the given filename."""
 
         values = []
-        items = sorted(self.items(), key=self.__key_sort)
+        items = sorted(self.items(), key=self._key_sort)
         for key, value in items:
             atom_name = _key2name(key)[:4]
             if atom_name in self.__atoms:
