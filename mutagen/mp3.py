@@ -109,7 +109,7 @@ class MPEGInfo(StreamInfo):
             try:
                 id3, insize = struct.unpack('>3sxxx4s', idata)
             except struct.error:
-                id3, insize = '', 0
+                id3, insize = b'', 0
             insize = BitPaddedInt(insize)
             if id3 == b'ID3' and insize > 0:
                 offset = insize + 10
