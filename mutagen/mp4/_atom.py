@@ -184,7 +184,7 @@ class Atoms(object):
             if child.name == names[0]:
                 return child[names[1:]]
         else:
-            raise KeyError("%s not found" % names[0])
+            raise KeyError("%r not found" % names[0])
 
     def __repr__(self):
         return "\n".join([repr(child) for child in self.atoms])
