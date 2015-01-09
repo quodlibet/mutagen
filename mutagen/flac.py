@@ -503,6 +503,21 @@ class Picture(MetadataBlock):
     * colors -- number of colors for indexed palettes (like GIF),
       0 for non-indexed
     * data -- picture data
+
+    To create a picture from file (in order to add to a FLAC file),
+    instantiate this object without passing anything to the constructor and
+    then set the properties manually::
+
+        p = Picture()
+
+        with open("Folder.jpg", "rb") as f:
+            pic.data = f.read()
+
+        pic.type = APICType.COVER_FRONT
+        pic.mime = u"image/jpeg"
+        pic.width = 500
+        pic.height = 500
+        pic.depth = 16 # color depth
     """
 
     code = 6
