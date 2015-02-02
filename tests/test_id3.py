@@ -10,6 +10,7 @@ from mutagen.id3 import ID3, COMR, Frames, Frames_2_2, ID3Warning, \
 from mutagen.id3._util import BitPaddedInt
 from mutagen._compat import cBytesIO, PY2, iteritems, integer_types
 import warnings
+from tempfile import mkstemp
 warnings.simplefilter('error', ID3Warning)
 
 _22 = ID3()
@@ -416,7 +417,6 @@ class TestWriteID3v1(TestCase):
     SILENCE = os.path.join("tests", "data", "silence-44-s.mp3")
 
     def setUp(self):
-        from tempfile import mkstemp
         fd, self.filename = mkstemp(suffix='.mp3')
         os.close(fd)
         shutil.copy(self.SILENCE, self.filename)
@@ -1029,7 +1029,6 @@ class Issue97_UpgradeUnknown23(TestCase):
     SILENCE = os.path.join("tests", "data", "97-unknown-23-update.mp3")
 
     def setUp(self):
-        from tempfile import mkstemp
         fd, self.filename = mkstemp(suffix='.mp3')
         os.close(fd)
         shutil.copy(self.SILENCE, self.filename)
@@ -1598,7 +1597,6 @@ class WriteTo23(TestCase):
     SILENCE = os.path.join("tests", "data", "silence-44-s.mp3")
 
     def setUp(self):
-        from tempfile import mkstemp
         fd, self.filename = mkstemp(suffix='.mp3')
         os.close(fd)
         shutil.copy(self.SILENCE, self.filename)
@@ -1675,7 +1673,6 @@ class WriteTo23(TestCase):
 class Read22FrameNamesin23(TestCase):
 
     def test_PIC_in_23(self):
-        from tempfile import mkstemp
         fd, filename = mkstemp(suffix='.mp3')
         os.close(fd)
 
@@ -1702,7 +1699,6 @@ class ID3V1_vs_APEv2(TestCase):
     SILENCE = os.path.join("tests", "data", "silence-44-s.mp3")
 
     def setUp(self):
-        from tempfile import mkstemp
         fd, self.filename = mkstemp(suffix='.mp3')
         os.close(fd)
         shutil.copy(self.SILENCE, self.filename)
@@ -1779,6 +1775,29 @@ class TID3Misc(TestCase):
         self.assertTrue(determine_bpi(d, Frames) is BitPaddedInt)
 
 
+class TID3Corrupt(TestCase):
+
+    def setUp(self):
+        fd, self.filename = mkstemp(suffix='.mp3')
+        os.close(fd)
+        orig = os.path.join("tests", "data", "silence-44-s.mp3")
+        shutil.copy(orig, self.filename)
+
+    def tearDown(self):
+        os.remove(self.filename)
+
+    def test_header_too_small(self):
+        with open(self.filename, "r+b") as h:
+            h.truncate(5)
+        self.assertRaises(id3.error, ID3, self.filename)
+
+    def test_tag_too_small(self):
+        with open(self.filename, "r+b") as h:
+            h.truncate(50)
+        self.assertRaises(id3.error, ID3, self.filename)
+
+
+add(TID3Corrupt)
 add(TID3Misc)
 add(ID3V1_vs_APEv2)
 add(Read22FrameNamesin23)

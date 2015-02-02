@@ -92,7 +92,10 @@ class ID3(DictProxy, mutagen.Metadata):
         super(ID3, self).__init__(*args, **kwargs)
 
     def __fullread(self, size):
-        """ Read a certain number of bytes from the source file. """
+        """Read a certain number of bytes from the source file.
+
+        Raises ValueError on invalid size input or EOFError/IOError.
+        """
 
         try:
             if size < 0:
@@ -104,7 +107,7 @@ class ID3(DictProxy, mutagen.Metadata):
             pass
         data = self._fileobj.read(size)
         if len(data) != size:
-            raise EOFError
+            raise EOFError("Not enough data to read")
         self.__readbytes += size
         return data
 
@@ -160,7 +163,10 @@ class ID3(DictProxy, mutagen.Metadata):
                         frames = Frames
                     elif self._V22 <= self.version:
                         frames = Frames_2_2
-                data = self.__fullread(self.size - 10)
+                try:
+                    data = self.__fullread(self.size - 10)
+                except (ValueError, EOFError, IOError) as e:
+                    raise error(e)
                 for frame in self.__read_frames(data, frames=frames):
                     if isinstance(frame, Frame):
                         self.add(frame)
