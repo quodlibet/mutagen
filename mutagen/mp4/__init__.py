@@ -769,10 +769,10 @@ class MP4Tags(DictProxy, Metadata):
                 values.append("%s=%s" % (key, ", ".join(
                     ["[%d bytes of data]" % len(data) for data in value])))
             elif isinstance(value, list):
-                values.append("%s=%s" %
-                              (key, " / ".join(map(text_type, value))))
+                for v in value:
+                    values.append("%s=%r" % (key, v))
             else:
-                values.append("%s=%s" % (key, value))
+                values.append("%s=%r" % (key, value))
         return "\n".join(values)
 
 
