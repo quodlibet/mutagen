@@ -360,16 +360,16 @@ class MP4Tags(DictProxy, Metadata):
             except (TypeError, ValueError) as s:
                 reraise(MP4MetadataValueError, s, sys.exc_info()[2])
 
-        for atom_name, failed in iteritems(self._failed_atoms):
+        for key, failed in iteritems(self._failed_atoms):
             # don't write atoms back if we have added a new one with
             # the same name, this excludes freeform which can have
             # multiple atoms with the same key (most parsers seem to be able
             # to handle that)
-            if atom_name in self:
-                assert atom_name != b"----"
+            if key in self:
+                assert _key2name(key) != b"----"
                 continue
             for data in failed:
-                values.append(Atom.render(_key2name(atom_name), data))
+                values.append(Atom.render(_key2name(key), data))
 
         data = Atom.render(b"ilst", b"".join(values))
 
