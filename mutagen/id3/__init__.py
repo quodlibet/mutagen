@@ -1018,8 +1018,9 @@ class ID3FileType(mutagen.FileType):
         self.filename = filename
         try:
             self.tags = ID3(filename, **kwargs)
-        except error:
+        except ID3NoHeaderError:
             self.tags = None
+
         if self.tags is not None:
             try:
                 offset = self.tags.size
