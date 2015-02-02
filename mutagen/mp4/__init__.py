@@ -710,7 +710,7 @@ class MP4Tags(DictProxy, Metadata):
             try:
                 text = atom_data.decode("utf-8")
             except UnicodeDecodeError as e:
-                raise MP4MetadataError("%s: %s" % (atom.name, e))
+                raise MP4MetadataError("%s: %s" % (_name2key(atom.name), e))
 
             values.append(text)
 
