@@ -159,9 +159,9 @@ class ID3(DictProxy, mutagen.Metadata):
             else:
                 frames = self.__known_frames
                 if frames is None:
-                    if self._V23 <= self.version:
+                    if self.version >= self._V23:
                         frames = Frames
-                    elif self._V22 <= self.version:
+                    elif self.version >= self._V22:
                         frames = Frames_2_2
                 try:
                     data = self.__fullread(self.size - 10)
@@ -266,7 +266,7 @@ class ID3(DictProxy, mutagen.Metadata):
             if not BitPaddedInt.has_valid_padding(size):
                 raise ValueError("Header size not synchsafe")
 
-            if (self._V24 <= self.version) and (flags & 0x0f):
+            if (self.version >= self._V24) and (flags & 0x0f):
                 raise ValueError("%r has invalid flags %#02x" % (fn, flags))
             elif (self._V23 <= self.version < self._V24) and (flags & 0x1f):
                 raise ValueError("%r has invalid flags %#02x" % (fn, flags))
@@ -316,7 +316,7 @@ class ID3(DictProxy, mutagen.Metadata):
             except ValueError:
                 pass
 
-        if self._V23 <= self.version:
+        if self.version >= self._V23:
             bpi = self.__determine_bpi(data, frames)
             while data:
                 header = data[:10]
@@ -356,8 +356,7 @@ class ID3(DictProxy, mutagen.Metadata):
                         yield header + framedata
                     except ID3JunkFrameError:
                         pass
-
-        elif self._V22 <= self.version:
+        elif self.version >= self._V22:
             while data:
                 header = data[0:6]
                 try:

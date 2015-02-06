@@ -153,7 +153,7 @@ class Frame(object):
     def fromData(cls, id3, tflags, data):
         """Construct this ID3 frame from raw string data."""
 
-        if id3._V24 <= id3.version:
+        if id3.version >= id3._V24:
             if tflags & (Frame.FLAG24_COMPRESS | Frame.FLAG24_DATALEN):
                 # The data length int is syncsafe in 2.4 (but not 2.3).
                 # However, we don't actually need the data length int,
@@ -182,7 +182,7 @@ class Frame(object):
                         if id3.PEDANTIC:
                             raise ID3BadCompressedData('%s: %r' % (err, data))
 
-        elif id3._V23 <= id3.version:
+        elif id3.version >= id3._V23:
             if tflags & Frame.FLAG23_COMPRESS:
                 usize, = unpack('>L', data[:4])
                 data = data[4:]
