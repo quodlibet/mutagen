@@ -18,7 +18,7 @@ from ._specs import (
     EncodingSpec, ASPIIndexSpec, SizedIntegerSpec, IntegerSpec,
     VolumeAdjustmentsSpec, VolumePeakSpec, VolumeAdjustmentSpec,
     ChannelSpec, MultiSpec, SynchronizedTextSpec, KeyEventSpec, TimeStampSpec,
-    EncodedNumericPartTextSpec, EncodedNumericTextSpec)
+    EncodedNumericPartTextSpec, EncodedNumericTextSpec, SpecError)
 from .._compat import text_type, string_types, swap_to_string, iteritems
 
 
@@ -121,16 +121,19 @@ class Frame(object):
         return '%s(%s)' % (type(self).__name__, ', '.join(kw))
 
     def _readData(self, data):
+        """Raises ID3JunkFrameError"""
+
         odata = data
         for reader in self._framespec:
             if len(data):
                 try:
                     value, data = reader.read(self, data)
-                except UnicodeDecodeError:
-                    raise ID3JunkFrameError
+                except SpecError as e:
+                    raise ID3JunkFrameError(e)
             else:
-                raise ID3JunkFrameError
+                raise ID3JunkFrameError("no data left")
             setattr(self, reader.name, value)
+
         if data.strip(b'\x00'):
             warn('Leftover data: %s: %r (from %r)' % (
                  type(self).__name__, data, odata),
@@ -235,20 +238,30 @@ class FrameOpt(Frame):
                 setattr(other, checker.name, getattr(self, checker.name))
 
     def _readData(self, data):
+        """Raises ID3JunkFrameError"""
+
         odata = data
         for reader in self._framespec:
             if len(data):
-                value, data = reader.read(self, data)
+                try:
+                    value, data = reader.read(self, data)
+                except SpecError as e:
+                    raise ID3JunkFrameError(e)
             else:
-                raise ID3JunkFrameError
+                raise ID3JunkFrameError("no data left")
             setattr(self, reader.name, value)
+
         if data:
             for reader in self._optionalspec:
                 if len(data):
-                    value, data = reader.read(self, data)
+                    try:
+                        value, data = reader.read(self, data)
+                    except SpecError as e:
+                        raise ID3JunkFrameError(e)
                 else:
                     break
                 setattr(self, reader.name, value)
+
         if data.strip(b'\x00'):
             warn('Leftover data: %s: %r (from %r)' % (
                  type(self).__name__, data, odata),

@@ -3,7 +3,8 @@ import sys
 from tests import TestCase, add
 
 from mutagen._compat import PY2, PY3, text_type
-from mutagen.id3 import BitPaddedInt, unsynch, ID3JunkFrameError
+from mutagen.id3 import BitPaddedInt, unsynch
+from mutagen.id3._specs import SpecError
 
 
 class SpecSanityChecks(TestCase):
@@ -20,7 +21,7 @@ class SpecSanityChecks(TestCase):
         from mutagen.id3 import EncodingSpec
         s = EncodingSpec('name')
         self.assertEquals((3, b'abcdefg'), s.read(None, b'\x03abcdefg'))
-        self.assertRaises(ID3JunkFrameError, s.read, None, b'\x04abcdefg')
+        self.assertRaises(SpecError, s.read, None, b'\x04abcdefg')
         self.assertEquals(b'\x00', s.write(None, 0))
         self.assertRaises(TypeError, s.write, None, b'abc')
         self.assertRaises(TypeError, s.write, None, None)
@@ -33,7 +34,7 @@ class SpecSanityChecks(TestCase):
         self.assertEquals(b'\x00\x00\x00', s.write(None, None))
         self.assertEquals(b'\x00\x00\x00', s.write(None, '\x00'))
         self.assertEquals(b'a\x00\x00', s.write(None, 'a'))
-        self.assertRaises(ValueError, s.read, None, b'\xff')
+        self.assertRaises(SpecError, s.read, None, b'\xff')
 
     def test_binarydataspec(self):
         from mutagen.id3 import BinaryDataSpec
