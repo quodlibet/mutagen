@@ -3,7 +3,7 @@ import sys
 from tests import TestCase, add
 
 from mutagen._compat import PY2, PY3, text_type
-from mutagen.id3 import BitPaddedInt, unsynch
+from mutagen.id3 import BitPaddedInt, unsynch, ID3JunkFrameError
 
 
 class SpecSanityChecks(TestCase):
@@ -21,6 +21,7 @@ class SpecSanityChecks(TestCase):
         s = EncodingSpec('name')
         self.assertEquals((0, b'abcdefg'), s.read(None, b'abcdefg'))
         self.assertEquals((3, b'abcdefg'), s.read(None, b'\x03abcdefg'))
+        self.assertRaises(ID3JunkFrameError, s.read, None, b'\x04abcdefg')
         self.assertEquals(b'\x00', s.write(None, 0))
         self.assertRaises(TypeError, s.write, None, b'abc')
         self.assertRaises(TypeError, s.write, None, None)

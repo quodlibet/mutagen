@@ -272,7 +272,7 @@ class ID3Tags(TestCase):
 
     def test_badencoding(self):
         self.assertRaises(
-            IndexError, Frames["TPE1"].fromData, _24, 0, b"\x09ab")
+            ID3JunkFrameError, Frames["TPE1"].fromData, _24, 0, b"\x09ab")
         self.assertRaises(ValueError, Frames["TPE1"], encoding=9, text="ab")
 
     def test_badsync(self):
