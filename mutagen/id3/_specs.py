@@ -89,22 +89,27 @@ class Encoding(object):
 
 
 class EncodingSpec(ByteSpec):
+
     def read(self, frame, data):
         enc, data = super(EncodingSpec, self).read(frame, data)
-        if enc > 3:
-            raise ID3JunkFrameError("invalid encoding %r" % enc)
+        if enc not in (Encoding.LATIN1, Encoding.UTF16, Encoding.UTF16BE,
+                       Encoding.UTF8):
+            raise ID3JunkFrameError('Invalid Encoding: %r' % enc)
         return enc, data
 
     def validate(self, frame, value):
         if value is None:
             return None
-        if 0 <= value <= 3:
-            return value
-        raise ValueError('Invalid Encoding: %r' % value)
+        if value not in (Encoding.LATIN1, Encoding.UTF16, Encoding.UTF16BE,
+                         Encoding.UTF8):
+            raise ValueError('Invalid Encoding: %r' % value)
+        return value
 
     def _validate23(self, frame, value, **kwargs):
         # only 0, 1 are valid in v2.3, default to utf-16
-        return min(1, value)
+        if value not in (Encoding.LATIN1, Encoding.UTF16):
+            value = Encoding.UTF16
+        return value
 
 
 class StringSpec(Spec):
@@ -178,15 +183,13 @@ class BinaryDataSpec(Spec):
 
 
 class EncodedTextSpec(Spec):
-    # Okay, seriously. This is private and defined explicitly and
-    # completely by the ID3 specification. You can't just add
-    # encodings here however you want.
-    _encodings = (
-        ('latin1', b'\x00'),
-        ('utf16', b'\x00\x00'),
-        ('utf_16_be', b'\x00\x00'),
-        ('utf8', b'\x00')
-    )
+
+    _encodings = {
+        Encoding.LATIN1: ('latin1', b'\x00'),
+        Encoding.UTF16: ('utf16', b'\x00\x00'),
+        Encoding.UTF16BE: ('utf_16_be', b'\x00\x00'),
+        Encoding.UTF8: ('utf8', b'\x00'),
+    }
 
     def read(self, frame, data):
         enc, term = self._encodings[frame.encoding]
