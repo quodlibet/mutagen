@@ -91,12 +91,9 @@ class Encoding(object):
 class EncodingSpec(ByteSpec):
     def read(self, frame, data):
         enc, data = super(EncodingSpec, self).read(frame, data)
-        if enc < 16:
-            if enc > 3:
-                raise ID3JunkFrameError("invalid encoding")
-            return enc, data
-        else:
-            return 0, chr_(enc) + data
+        if enc > 3:
+            raise ID3JunkFrameError("invalid encoding %r" % enc)
+        return enc, data
 
     def validate(self, frame, value):
         if value is None:

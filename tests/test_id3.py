@@ -1124,14 +1124,6 @@ class BrokenDiscarded(TestCase):
 
 class BrokenButParsed(TestCase):
 
-    def test_missing_encoding(self):
-        from mutagen.id3 import TIT2
-        tag = TIT2.fromData(_23, 0x00, b'a test')
-        self.assertEquals(0, tag.encoding)
-        self.assertEquals('a test', tag)
-        self.assertEquals(['a test'], tag)
-        self.assertEquals(['a test'], tag.text)
-
     def test_zerolength_framedata(self):
         from mutagen.id3 import Frames
         id3 = ID3()
@@ -1201,7 +1193,7 @@ class BrokenButParsed(TestCase):
     def test_detect_23_ints_in_24_frames(self):
         from mutagen.id3 import Frames
         head = b'TIT1\x00\x00\x01\x00\x00\x00\x00'
-        tail = b'TPE1\x00\x00\x00\x04\x00\x00Yay!'
+        tail = b'TPE1\x00\x00\x00\x05\x00\x00\x00Yay!'
 
         tagsgood = list(
             _24._ID3__read_frames(head + b'a' * 127 + tail, Frames))

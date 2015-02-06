@@ -19,7 +19,6 @@ class SpecSanityChecks(TestCase):
     def test_encodingspec(self):
         from mutagen.id3 import EncodingSpec
         s = EncodingSpec('name')
-        self.assertEquals((0, b'abcdefg'), s.read(None, b'abcdefg'))
         self.assertEquals((3, b'abcdefg'), s.read(None, b'\x03abcdefg'))
         self.assertRaises(ID3JunkFrameError, s.read, None, b'\x04abcdefg')
         self.assertEquals(b'\x00', s.write(None, 0))
