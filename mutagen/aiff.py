@@ -20,7 +20,7 @@ from ._compat import endswith, text_type, PY3
 from mutagen import StreamInfo, FileType
 
 from mutagen.id3 import ID3
-from mutagen.id3._util import error as ID3Error
+from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
 from mutagen._util import insert_bytes, delete_bytes, MutagenError
 
 __all__ = ["AIFF", "Open", "delete"]
@@ -256,7 +256,7 @@ class _IFFID3(ID3):
         try:
             fileobj.seek(IFFFile(self._fileobj)[u'ID3'].data_offset)
         except (InvalidChunk, KeyError):
-            raise ID3Error()
+            raise ID3NoHeaderError("No ID3 chunk")
 
     def save(self, filename=None, v2_version=4, v23_sep='/'):
         """Save ID3v2 data to the AIFF file"""
@@ -348,8 +348,10 @@ class AIFF(FileType):
 
         try:
             self.tags = _IFFID3(filename, **kwargs)
-        except ID3Error:
+        except ID3NoHeaderError:
             self.tags = None
+        except ID3Error as e:
+            raise error(e)
 
         try:
             fileobj = open(filename, "rb")

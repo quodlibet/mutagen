@@ -140,6 +140,14 @@ class TAIFF(TestCase):
         self.aiff_tmp_no_id3.save()
         self.failUnless(AIFF(self.filename_2)["TIT1"] == "foobar")
 
+    def test_corrupt_tag(self):
+        with open(self.filename_1, "r+b") as h:
+            chunk = IFFFile(h)[u'ID3']
+            h.seek(chunk.data_offset)
+            h.seek(4, 1)
+            h.write(b"\xff\xff")
+        self.assertRaises(AIFFError, AIFF, self.filename_1)
+
     def tearDown(self):
         os.unlink(self.filename_1)
         os.unlink(self.filename_2)
