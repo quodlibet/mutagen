@@ -126,6 +126,7 @@ class ID3(DictProxy, mutagen.Metadata):
             raise ValueError("Only 3 and 4 possible for v2_version")
 
         self.filename = filename
+        self.unknown_frames = []
         self.__known_frames = known_frames
         self._fileobj = open(filename, 'rb')
         try:

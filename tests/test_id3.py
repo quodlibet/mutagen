@@ -230,6 +230,12 @@ class ID3Tags(TestCase):
         self.assertEquals(0, len(id3.keys()))
         self.assertEquals(9, len(id3.unknown_frames))
 
+    def test_unknown_reset(self):
+        id3 = ID3(self.silence, known_frames={})
+        self.assertEquals(9, len(id3.unknown_frames))
+        id3.load(self.silence, known_frames={})
+        self.assertEquals(9, len(id3.unknown_frames))
+
     def test_has_docs(self):
         for Kind in (list(Frames.values()) + list(Frames_2_2.values())):
             self.failUnless(Kind.__doc__, "%s has no docstring" % Kind)
