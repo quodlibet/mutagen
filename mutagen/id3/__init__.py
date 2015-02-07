@@ -78,8 +78,6 @@ class ID3(DictProxy, mutagen.Metadata):
     filename = None
     size = 0
     __flags = 0
-    __readbytes = 0
-    __crc = None
     __unknown_version = None
 
     _V24 = (2, 4, 0)
@@ -108,7 +106,6 @@ class ID3(DictProxy, mutagen.Metadata):
         data = self._fileobj.read(size)
         if len(data) != size:
             raise EOFError("Not enough data to read")
-        self.__readbytes += size
         return data
 
     def load(self, filename, known_frames=None, translate=True, v2_version=4):
@@ -286,7 +283,6 @@ class ID3(DictProxy, mutagen.Metadata):
                 self.__flags ^= 0x40
                 self.__extsize = 0
                 self._fileobj.seek(-4, 1)
-                self.__readbytes -= 4
             elif self.version >= self._V24:
                 # "Where the 'Extended header size' is the size of the whole
                 # extended header, stored as a 32 bit synchsafe integer."
@@ -398,8 +394,6 @@ class ID3(DictProxy, mutagen.Metadata):
     f_extended = property(lambda s: bool(s.__flags & 0x40))
     f_experimental = property(lambda s: bool(s.__flags & 0x20))
     f_footer = property(lambda s: bool(s.__flags & 0x10))
-
-    # f_crc = property(lambda s: bool(s.__extflags & 0x8000))
 
     def _prepare_framedata(self, v2_version, v23_sep):
         if v2_version == 3:
