@@ -160,17 +160,19 @@ class ID3Loading(TestCase):
         self.assertEquals(header._extdata, b'\x00\x00\x56\x78\x9a\xbc')
 
     def test_unsynch(self):
-        id3 = ID3()
-        id3._header = ID3Header()
-        id3._header.version = (2, 4, 0)
-        id3._header._flags = 0x80
+        header = ID3Header()
+        header.version = (2, 4, 0)
+        header._flags = 0x80
         badsync = b'\x00\xff\x00ab\x00'
+
         self.assertEquals(
-            id3._ID3__load_framedata(Frames["TPE2"], 0, badsync), [u"\xffab"])
-        id3._header._flags = 0x00
-        self.assertEquals(id3._ID3__load_framedata(
-            Frames["TPE2"], 0x02, badsync), [u"\xffab"])
-        tag = id3._ID3__load_framedata(Frames["TPE2"], 0, badsync)
+            Frames["TPE2"].fromData(header, 0, badsync), [u"\xffab"])
+
+        header._flags = 0x00
+        self.assertEquals(
+            Frames["TPE2"].fromData(header, 0x02, badsync), [u"\xffab"])
+
+        tag = Frames["TPE2"].fromData(header, 0, badsync)
         self.assertEquals(tag, [u"\xff", u"ab"])
 
     def test_load_v23_unsynch(self):

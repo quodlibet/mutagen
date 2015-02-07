@@ -353,12 +353,6 @@ class ID3(DictProxy, mutagen.Metadata):
         """Add a frame to the tag."""
         return self.loaded_frame(frame)
 
-    def __determine_bpi(self, data, frames):
-        if self.version < ID3Header._V24:
-            return int
-
-        return _determine_bpi(data, frames)
-
     def __read_frames(self, data, frames):
         assert self.version >= ID3Header._V22
 
@@ -369,7 +363,11 @@ class ID3(DictProxy, mutagen.Metadata):
                 pass
 
         if self.version >= ID3Header._V23:
-            bpi = self.__determine_bpi(data, frames)
+            if self.version < ID3Header._V24:
+                bpi = int
+            else:
+                bpi = _determine_bpi(data, frames)
+
             while data:
                 header = data[:10]
                 try:
@@ -403,7 +401,7 @@ class ID3(DictProxy, mutagen.Metadata):
                         yield header + framedata
                 else:
                     try:
-                        yield self.__load_framedata(tag, flags, framedata)
+                        yield tag.fromData(self._header, flags, framedata)
                     except NotImplementedError:
                         yield header + framedata
                     except ID3JunkFrameError:
@@ -437,15 +435,11 @@ class ID3(DictProxy, mutagen.Metadata):
                         yield header + framedata
                 else:
                     try:
-                        yield self.__load_framedata(tag, 0, framedata)
+                        yield tag.fromData(self._header, 0, framedata)
                     except NotImplementedError:
                         yield header + framedata
                     except ID3JunkFrameError:
                         pass
-
-    def __load_framedata(self, tag, flags, framedata):
-        assert self._header is not None
-        return tag.fromData(self._header, flags, framedata)
 
     def _prepare_framedata(self, v2_version, v23_sep):
         if v2_version == 3:
