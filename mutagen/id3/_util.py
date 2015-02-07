@@ -8,7 +8,7 @@
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
 
-from .._compat import long_, integer_types
+from .._compat import long_, integer_types, PY3
 from .._util import MutagenError
 
 
@@ -160,6 +160,8 @@ class BitPaddedInt(int, _BitPaddedMixin):
         self.bigendian = bigendian
         return self
 
-
-class BitPaddedLong(long_, _BitPaddedMixin):
-    pass
+if PY3:
+    BitPaddedLong = BitPaddedInt
+else:
+    class BitPaddedLong(long_, _BitPaddedMixin):
+        pass

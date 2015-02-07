@@ -3,7 +3,7 @@ import sys
 from tests import TestCase, add
 
 from mutagen._compat import PY2, PY3, text_type
-from mutagen.id3 import BitPaddedInt, unsynch
+from mutagen.id3 import BitPaddedInt, BitPaddedLong, unsynch
 from mutagen.id3._specs import SpecError
 
 
@@ -161,6 +161,15 @@ add(NoHashSpec)
 
 
 class BitPaddedIntTest(TestCase):
+
+    def test_long(self):
+        if PY2:
+            data = BitPaddedInt.to_str(sys.maxint + 1, width=16)
+            val = BitPaddedInt(data)
+            self.assertEqual(val, sys.maxint + 1)
+            self.assertTrue(isinstance(val, BitPaddedLong))
+        else:
+            self.assertTrue(BitPaddedInt is BitPaddedLong)
 
     def test_zero(self):
         self.assertEquals(BitPaddedInt(b'\x00\x00\x00\x00'), 0)
