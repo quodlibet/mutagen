@@ -59,6 +59,111 @@ class ID3v1SaveOptions(object):
     """ID3v1 tags will be created and/or updated"""
 
 
+def _fullread(fileobj, size):
+    """Read a certain number of bytes from the source file.
+
+    Raises ValueError on invalid size input or EOFError/IOError.
+    """
+
+    if size < 0:
+        raise ValueError('Requested bytes (%s) less than zero' % size)
+    data = fileobj.read(size)
+    if len(data) != size:
+        raise EOFError("Not enough data to read")
+    return data
+
+
+class ID3Header(object):
+
+    _V24 = (2, 4, 0)
+    _V23 = (2, 3, 0)
+    _V22 = (2, 2, 0)
+    _V11 = (1, 1)
+
+    f_unsynch = property(lambda s: bool(s._flags & 0x80))
+    f_extended = property(lambda s: bool(s._flags & 0x40))
+    f_experimental = property(lambda s: bool(s._flags & 0x20))
+    f_footer = property(lambda s: bool(s._flags & 0x10))
+
+    def __init__(self, fileobj=None, pedantic=True):
+        """Raises ID3NoHeaderError, ID3UnsupportedVersionError or error"""
+
+        if fileobj is None:
+            # for testing
+            self._flags = 0
+            return
+
+        fn = getattr(fileobj, "name", "<unknown>")
+        try:
+            data = _fullread(fileobj, 10)
+        except EOFError:
+            raise ID3NoHeaderError("%s: too small" % fn)
+
+        id3, vmaj, vrev, flags, size = unpack('>3sBBB4s', data)
+        self._flags = flags
+        self.size = BitPaddedInt(size) + 10
+        self.version = (2, vmaj, vrev)
+
+        if id3 != b'ID3':
+            raise ID3NoHeaderError("%r doesn't start with an ID3 tag" % fn)
+
+        if vmaj not in [2, 3, 4]:
+            raise ID3UnsupportedVersionError("%r ID3v2.%d not supported"
+                                             % (fn, vmaj))
+
+        if pedantic:
+            if not BitPaddedInt.has_valid_padding(size):
+                raise error("Header size not synchsafe")
+
+            if (self.version >= self._V24) and (flags & 0x0f):
+                raise error(
+                    "%r has invalid flags %#02x" % (fn, flags))
+            elif (self._V23 <= self.version < self._V24) and (flags & 0x1f):
+                raise error(
+                    "%r has invalid flags %#02x" % (fn, flags))
+
+        if self.f_extended:
+            try:
+                extsize_data = _fullread(fileobj, 4)
+            except EOFError:
+                raise error("%s: too small" % fn)
+
+            if PY3:
+                frame_id = extsize_data.decode("ascii", "replace")
+            else:
+                frame_id = extsize_data
+
+            if frame_id in Frames:
+                # Some tagger sets the extended header flag but
+                # doesn't write an extended header; in this case, the
+                # ID3 data follows immediately. Since no extended
+                # header is going to be long enough to actually match
+                # a frame, and if it's *not* a frame we're going to be
+                # completely lost anyway, this seems to be the most
+                # correct check.
+                # http://code.google.com/p/quodlibet/issues/detail?id=126
+                self._flags ^= 0x40
+                extsize = 0
+                fileobj.seek(-4, 1)
+            elif self.version >= self._V24:
+                # "Where the 'Extended header size' is the size of the whole
+                # extended header, stored as a 32 bit synchsafe integer."
+                extsize = BitPaddedInt(extsize_data) - 4
+                if pedantic:
+                    if not BitPaddedInt.has_valid_padding(extsize_data):
+                        raise error(
+                            "Extended header size not synchsafe")
+            else:
+                # "Where the 'Extended header size', currently 6 or 10 bytes,
+                # excludes itself."
+                extsize = unpack('>L', extsize_data)[0]
+
+            try:
+                self._extdata = _fullread(fileobj, extsize)
+            except EOFError:
+                raise error("%s: too small" % fn)
+
+
 class ID3(DictProxy, mutagen.Metadata):
     """A file with an ID3v2 tag.
 
@@ -72,21 +177,14 @@ class ID3(DictProxy, mutagen.Metadata):
     __module__ = "mutagen.id3"
 
     PEDANTIC = True
-    version = (2, 4, 0)
-    """ID3 tag version as a tuple (of the loaded file)"""
 
     filename = None
-    size = 0
-    __flags = 0
-    __unknown_version = None
-
-    _V24 = (2, 4, 0)
-    _V23 = (2, 3, 0)
-    _V22 = (2, 2, 0)
-    _V11 = (1, 1)
 
     def __init__(self, *args, **kwargs):
         self.unknown_frames = []
+        self.__unknown_version = None
+        self._header = None
+        self._version = (2, 4, 0)
         super(ID3, self).__init__(*args, **kwargs)
 
     def __fullread(self, size):
@@ -95,12 +193,41 @@ class ID3(DictProxy, mutagen.Metadata):
         Raises ValueError on invalid size input or EOFError/IOError.
         """
 
-        if size < 0:
-            raise ValueError('Requested bytes (%s) less than zero' % size)
-        data = self._fileobj.read(size)
-        if len(data) != size:
-            raise EOFError("Not enough data to read")
-        return data
+        return _fullread(self._fileobj, size)
+
+    @property
+    def version(self):
+        """ID3 tag version as a tuple (of the loaded file)"""
+
+        if self._header is not None:
+            return self._header.version
+        return self._version
+
+    @version.setter
+    def version(self, value):
+        self._version = value
+
+    @property
+    def f_unsynch(self):
+        if self._header is not None:
+            return self._header.f_unsynch
+        return False
+
+    @property
+    def f_extended(self):
+        if self._header is not None:
+            return self._header.f_extended
+        return False
+
+    @property
+    def size(self):
+        if self._header is not None:
+            return self._header.size
+        return 0
+
+    def _pre_load_header(self, fileobj):
+        # XXX: for aiff to adjust the offset..
+        pass
 
     def load(self, filename, known_frames=None, translate=True, v2_version=4):
         """Load tags from a filename.
@@ -128,28 +255,27 @@ class ID3(DictProxy, mutagen.Metadata):
         self.filename = filename
         self.unknown_frames = []
         self.__known_frames = known_frames
+        self._header = None
         self._fileobj = open(filename, 'rb')
         try:
+            self._pre_load_header(self._fileobj)
+
             try:
-                self._load_header()
-            except EOFError:
-                self.size = 0
-                raise ID3NoHeaderError("%s: too small" % filename)
+                self._header = ID3Header(self._fileobj, self.PEDANTIC)
             except (ID3NoHeaderError, ID3UnsupportedVersionError):
-                self.size = 0
                 frames, offset = _find_id3v1(self._fileobj)
                 if frames is None:
                     raise
 
-                self.version = self._V11
+                self.version = ID3Header._V11
                 for v in frames.values():
                     self.add(v)
             else:
                 frames = self.__known_frames
                 if frames is None:
-                    if self.version >= self._V23:
+                    if self.version >= ID3Header._V23:
                         frames = Frames
-                    elif self.version >= self._V22:
+                    elif self.version >= ID3Header._V22:
                         frames = Frames_2_2
                 try:
                     data = self.__fullread(self.size - 10)
@@ -235,74 +361,22 @@ class ID3(DictProxy, mutagen.Metadata):
         """Add a frame to the tag."""
         return self.loaded_frame(frame)
 
-    def _load_header(self):
-        fn = self.filename
-        data = self.__fullread(10)
-        id3, vmaj, vrev, flags, size = unpack('>3sBBB4s', data)
-        self.__flags = flags
-        self.size = BitPaddedInt(size) + 10
-        self.version = (2, vmaj, vrev)
-
-        if id3 != b'ID3':
-            raise ID3NoHeaderError("%r doesn't start with an ID3 tag" % fn)
-        if vmaj not in [2, 3, 4]:
-            raise ID3UnsupportedVersionError("%r ID3v2.%d not supported"
-                                             % (fn, vmaj))
-
-        if self.PEDANTIC:
-            if not BitPaddedInt.has_valid_padding(size):
-                raise ValueError("Header size not synchsafe")
-
-            if (self.version >= self._V24) and (flags & 0x0f):
-                raise ValueError("%r has invalid flags %#02x" % (fn, flags))
-            elif (self._V23 <= self.version < self._V24) and (flags & 0x1f):
-                raise ValueError("%r has invalid flags %#02x" % (fn, flags))
-
-        if self.f_extended:
-            extsize = self.__fullread(4)
-            frame_id = extsize.decode("ascii", "replace") if PY3 else extsize
-            if frame_id in Frames:
-                # Some tagger sets the extended header flag but
-                # doesn't write an extended header; in this case, the
-                # ID3 data follows immediately. Since no extended
-                # header is going to be long enough to actually match
-                # a frame, and if it's *not* a frame we're going to be
-                # completely lost anyway, this seems to be the most
-                # correct check.
-                # http://code.google.com/p/quodlibet/issues/detail?id=126
-                self.__flags ^= 0x40
-                self.__extsize = 0
-                self._fileobj.seek(-4, 1)
-            elif self.version >= self._V24:
-                # "Where the 'Extended header size' is the size of the whole
-                # extended header, stored as a 32 bit synchsafe integer."
-                self.__extsize = BitPaddedInt(extsize) - 4
-                if self.PEDANTIC:
-                    if not BitPaddedInt.has_valid_padding(extsize):
-                        raise ValueError("Extended header size not synchsafe")
-            else:
-                # "Where the 'Extended header size', currently 6 or 10 bytes,
-                # excludes itself."
-                self.__extsize = unpack('>L', extsize)[0]
-            if self.__extsize:
-                self.__extdata = self.__fullread(self.__extsize)
-            else:
-                self.__extdata = b""
-
     def __determine_bpi(self, data, frames):
-        if self.version < self._V24:
+        if self.version < ID3Header._V24:
             return int
 
         return _determine_bpi(data, frames)
 
     def __read_frames(self, data, frames):
-        if self.version < self._V24 and self.f_unsynch:
+        assert self.version >= ID3Header._V22
+
+        if self.version < ID3Header._V24 and self.f_unsynch:
             try:
                 data = unsynch.decode(data)
             except ValueError:
                 pass
 
-        if self.version >= self._V23:
+        if self.version >= ID3Header._V23:
             bpi = self.__determine_bpi(data, frames)
             while data:
                 header = data[:10]
@@ -342,7 +416,7 @@ class ID3(DictProxy, mutagen.Metadata):
                         yield header + framedata
                     except ID3JunkFrameError:
                         pass
-        elif self.version >= self._V22:
+        elif self.version >= ID3Header._V22:
             while data:
                 header = data[0:6]
                 try:
@@ -378,18 +452,14 @@ class ID3(DictProxy, mutagen.Metadata):
                         pass
 
     def __load_framedata(self, tag, flags, framedata):
-        return tag.fromData(self, flags, framedata)
-
-    f_unsynch = property(lambda s: bool(s.__flags & 0x80))
-    f_extended = property(lambda s: bool(s.__flags & 0x40))
-    f_experimental = property(lambda s: bool(s.__flags & 0x20))
-    f_footer = property(lambda s: bool(s.__flags & 0x10))
+        assert self._header is not None
+        return tag.fromData(self._header, flags, framedata)
 
     def _prepare_framedata(self, v2_version, v23_sep):
         if v2_version == 3:
-            version = self._V23
+            version = ID3Header._V23
         elif v2_version == 4:
-            version = self._V24
+            version = ID3Header._V24
         else:
             raise ValueError("Only 3 or 4 allowed for v2_version")
 
@@ -521,13 +591,14 @@ class ID3(DictProxy, mutagen.Metadata):
         delete(filename, delete_v1, delete_v2)
         self.clear()
 
-    def __save_frame(self, frame, name=None, version=_V24, v23_sep=None):
+    def __save_frame(self, frame, name=None, version=ID3Header._V24,
+                     v23_sep=None):
         flags = 0
         if self.PEDANTIC and isinstance(frame, TextFrame):
             if len(str(frame)) == 0:
                 return b''
 
-        if version == self._V23:
+        if version == ID3Header._V23:
             framev23 = frame._get_v23_frame(sep=v23_sep)
             framedata = framev23._writeData()
         else:
@@ -542,9 +613,9 @@ class ID3(DictProxy, mutagen.Metadata):
             # flags |= Frame.FLAG24_COMPRESS | Frame.FLAG24_DATALEN
             pass
 
-        if version == self._V24:
+        if version == ID3Header._V24:
             bits = 7
-        elif version == self._V23:
+        elif version == ID3Header._V23:
             bits = 8
         else:
             raise ValueError
@@ -598,7 +669,8 @@ class ID3(DictProxy, mutagen.Metadata):
             for frame in self.unknown_frames:
                 try:
                     name, size, flags = unpack('>4sLH', frame[:10])
-                    frame = BinaryFrame.fromData(self, flags, frame[10:])
+                    frame = BinaryFrame.fromData(
+                        self._header, flags, frame[10:])
                 except (struct.error, error):
                     continue
 

@@ -252,12 +252,11 @@ class AIFFInfo(StreamInfo):
 class _IFFID3(ID3):
     """A AIFF file with ID3v2 tags"""
 
-    def _load_header(self):
+    def _pre_load_header(self, fileobj):
         try:
-            self._fileobj.seek(IFFFile(self._fileobj)[u'ID3'].data_offset)
+            fileobj.seek(IFFFile(self._fileobj)[u'ID3'].data_offset)
         except (InvalidChunk, KeyError):
             raise ID3Error()
-        super(_IFFID3, self)._load_header()
 
     def save(self, filename=None, v2_version=4, v23_sep='/'):
         """Save ID3v2 data to the AIFF file"""

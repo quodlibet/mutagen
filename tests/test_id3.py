@@ -6,18 +6,18 @@ from tests import add
 from mutagen import id3
 from mutagen.apev2 import APEv2
 from mutagen.id3 import ID3, COMR, Frames, Frames_2_2, ID3Warning, \
-    ID3JunkFrameError
-from mutagen.id3._util import BitPaddedInt
+    ID3JunkFrameError, ID3Header, ID3UnsupportedVersionError
+from mutagen.id3._util import BitPaddedInt, error as ID3Error
 from mutagen._compat import cBytesIO, PY2, iteritems, integer_types
 import warnings
 from tempfile import mkstemp
 warnings.simplefilter('error', ID3Warning)
 
-_22 = ID3()
+_22 = ID3Header()
 _22.version = (2, 2, 0)
-_23 = ID3()
+_23 = ID3Header()
 _23.version = (2, 3, 0)
-_24 = ID3()
+_24 = ID3Header()
 _24.version = (2, 4, 0)
 
 
@@ -83,107 +83,91 @@ class ID3Loading(TestCase):
 
     def test_empty_file(self):
         name = self.empty
-        self.assertRaises(ValueError, ID3, filename=name)
+        self.assertRaises(ID3Error, ID3, filename=name)
 
     def test_nonexistent_file(self):
         name = join('tests', 'data', 'does', 'not', 'exist')
         self.assertRaises(EnvironmentError, ID3, name)
 
     def test_header_empty(self):
-        id3 = ID3()
-        id3._fileobj = open(self.empty, 'rb')
-        self.assertRaises(EOFError, id3._load_header)
+        fileobj = open(self.empty, 'rb')
+        self.assertRaises(ID3Error, ID3Header, fileobj)
 
     def test_header_silence(self):
-        id3 = ID3()
-        id3._fileobj = open(self.silence, 'rb')
-        id3._load_header()
-        self.assertEquals(id3.version, (2, 3, 0))
-        self.assertEquals(id3.size, 1314)
+        fileobj = open(self.silence, 'rb')
+        header = ID3Header(fileobj)
+        self.assertEquals(header.version, (2, 3, 0))
+        self.assertEquals(header.size, 1314)
 
     def test_header_2_4_invalid_flags(self):
-        id3 = ID3()
-        id3._fileobj = cBytesIO(b'ID3\x04\x00\x1f\x00\x00\x00\x00')
-        self.assertRaises(ValueError, id3._load_header)
+        fileobj = cBytesIO(b'ID3\x04\x00\x1f\x00\x00\x00\x00')
+        self.assertRaises(ID3Error, ID3Header, fileobj)
 
     def test_header_2_4_unsynch_size(self):
-        id3 = ID3()
-        id3._fileobj = cBytesIO(b'ID3\x04\x00\x10\x00\x00\x00\xFF')
-        self.assertRaises(ValueError, id3._load_header)
+        fileobj = cBytesIO(b'ID3\x04\x00\x10\x00\x00\x00\xFF')
+        self.assertRaises(ID3Error, ID3Header, fileobj)
 
     def test_header_2_4_allow_footer(self):
-        id3 = ID3()
-        id3._fileobj = cBytesIO(b'ID3\x04\x00\x10\x00\x00\x00\x00')
-        id3._load_header()
+        fileobj = cBytesIO(b'ID3\x04\x00\x10\x00\x00\x00\x00')
+        self.assertTrue(ID3Header(fileobj).f_footer)
 
     def test_header_2_3_invalid_flags(self):
-        id3 = ID3()
-        id3._fileobj = cBytesIO(b'ID3\x03\x00\x1f\x00\x00\x00\x00')
-        self.assertRaises(ValueError, id3._load_header)
-        id3._fileobj = cBytesIO(b'ID3\x03\x00\x0f\x00\x00\x00\x00')
-        self.assertRaises(ValueError, id3._load_header)
+        fileobj = cBytesIO(b'ID3\x03\x00\x1f\x00\x00\x00\x00')
+        self.assertRaises(ID3Error, ID3Header, fileobj)
+
+        fileobj = cBytesIO(b'ID3\x03\x00\x0f\x00\x00\x00\x00')
+        self.assertRaises(ID3Error, ID3Header, fileobj)
 
     def test_header_2_2(self):
-        id3 = ID3()
-        id3._fileobj = cBytesIO(b'ID3\x02\x00\x00\x00\x00\x00\x00')
-        id3._load_header()
-        self.assertEquals(id3.version, (2, 2, 0))
+        fileobj = cBytesIO(b'ID3\x02\x00\x00\x00\x00\x00\x00')
+        header = ID3Header(fileobj)
+        self.assertEquals(header.version, (2, 2, 0))
 
     def test_header_2_1(self):
-        id3 = ID3()
-        id3._fileobj = cBytesIO(b'ID3\x01\x00\x00\x00\x00\x00\x00')
-        self.assertRaises(NotImplementedError, id3._load_header)
+        fileobj = cBytesIO(b'ID3\x01\x00\x00\x00\x00\x00\x00')
+        self.assertRaises(ID3UnsupportedVersionError, ID3Header, fileobj)
 
     def test_header_too_small(self):
-        id3 = ID3()
-        id3._fileobj = cBytesIO(b'ID3\x01\x00\x00\x00\x00\x00')
-        self.assertRaises(EOFError, id3._load_header)
+        fileobj = cBytesIO(b'ID3\x01\x00\x00\x00\x00\x00')
+        self.assertRaises(ID3Error, ID3Header, fileobj)
 
     def test_header_2_4_extended(self):
-        id3 = ID3()
-        id3._fileobj = cBytesIO(
+        fileobj = cBytesIO(
             b'ID3\x04\x00\x40\x00\x00\x00\x00\x00\x00\x00\x05\x5a')
-        id3._load_header()
-        self.assertEquals(id3._ID3__extsize, 1)
-        self.assertEquals(id3._ID3__extdata, b'\x5a')
+        header = ID3Header(fileobj)
+        self.assertEquals(header._extdata, b'\x5a')
 
     def test_header_2_4_extended_unsynch_size(self):
-        id3 = ID3()
-        id3._fileobj = cBytesIO(
+        fileobj = cBytesIO(
             b'ID3\x04\x00\x40\x00\x00\x00\x00\x00\x00\x00\xFF\x5a')
-        self.assertRaises(ValueError, id3._load_header)
+        self.assertRaises(ID3Error, ID3Header, fileobj)
 
     def test_header_2_4_extended_but_not(self):
-        id3 = ID3()
-        id3._fileobj = cBytesIO(
+        fileobj = cBytesIO(
             b'ID3\x04\x00\x40\x00\x00\x00\x00TIT1\x00\x00\x00\x01a')
-        id3._load_header()
-        self.assertEquals(id3._ID3__extsize, 0)
-        self.assertEquals(id3._ID3__extdata, b'')
+        header = ID3Header(fileobj)
+        self.assertEquals(header._extdata, b'')
 
     def test_header_2_4_extended_but_not_but_not_tag(self):
-        id3 = ID3()
-        id3._fileobj = cBytesIO(
-            b'ID3\x04\x00\x40\x00\x00\x00\x00TIT9')
-        self.failUnlessRaises(EOFError, id3._load_header)
+        fileobj = cBytesIO(b'ID3\x04\x00\x40\x00\x00\x00\x00TIT9')
+        self.failUnlessRaises(ID3Error, ID3Header, fileobj)
 
     def test_header_2_3_extended(self):
-        id3 = ID3()
-        id3._fileobj = cBytesIO(
+        fileobj = cBytesIO(
             b'ID3\x03\x00\x40\x00\x00\x00\x00\x00\x00\x00\x06'
             b'\x00\x00\x56\x78\x9a\xbc')
-        id3._load_header()
-        self.assertEquals(id3._ID3__extsize, 6)
-        self.assertEquals(id3._ID3__extdata, b'\x00\x00\x56\x78\x9a\xbc')
+        header = ID3Header(fileobj)
+        self.assertEquals(header._extdata, b'\x00\x00\x56\x78\x9a\xbc')
 
     def test_unsynch(self):
         id3 = ID3()
-        id3.version = (2, 4, 0)
-        id3._ID3__flags = 0x80
+        id3._header = ID3Header()
+        id3._header.version = (2, 4, 0)
+        id3._header._flags = 0x80
         badsync = b'\x00\xff\x00ab\x00'
         self.assertEquals(
             id3._ID3__load_framedata(Frames["TPE2"], 0, badsync), [u"\xffab"])
-        id3._ID3__flags = 0x00
+        id3._header._flags = 0x00
         self.assertEquals(id3._ID3__load_framedata(
             Frames["TPE2"], 0x02, badsync), [u"\xffab"])
         tag = id3._ID3__load_framedata(Frames["TPE2"], 0, badsync)
@@ -1106,6 +1090,8 @@ class BrokenDiscarded(TestCase):
     def test_drops_truncated_frames(self):
         from mutagen.id3 import Frames
         id3 = ID3()
+        id3._header = ID3Header()
+        id3._header.version = (2, 4, 0)
         tail = b'\x00\x00\x00\x03\x00\x00' b'\x01\x02\x03'
         for head in b'RVA2 TXXX APIC'.split():
             data = head + tail
@@ -1155,9 +1141,9 @@ class BrokenButParsed(TestCase):
 
     def test_fake_zlib_pedantic(self):
         from mutagen.id3 import TPE1, Frame, ID3BadCompressedData
-        id3 = ID3()
-        id3.PEDANTIC = True
-        self.assertRaises(ID3BadCompressedData, TPE1.fromData, id3,
+        header = ID3Header()
+        header.version = (2, 4, 0)
+        self.assertRaises(ID3BadCompressedData, TPE1.fromData, header,
                           Frame.FLAG24_COMPRESS, b'\x03abcdefg')
 
     def test_zlib_bpi(self):
@@ -1171,9 +1157,10 @@ class BrokenButParsed(TestCase):
 
     def test_fake_zlib_nopedantic(self):
         from mutagen.id3 import TPE1, Frame
-        id3 = ID3()
-        id3.PEDANTIC = False
-        tpe1 = TPE1.fromData(id3, Frame.FLAG24_COMPRESS, b'\x03abcdefg')
+        header = ID3Header()
+        header.version = (2, 4, 0)
+        tpe1 = TPE1.fromData(header, Frame.FLAG24_COMPRESS, b'\x03abcdefg',
+                             pedantic=False)
         self.assertEquals(u'abcdefg', tpe1)
 
     def test_ql_0_12_missing_uncompressed_size(self):
@@ -1201,9 +1188,13 @@ class BrokenButParsed(TestCase):
         head = b'TIT1\x00\x00\x01\x00\x00\x00\x00'
         tail = b'TPE1\x00\x00\x00\x05\x00\x00\x00Yay!'
 
+        id3 = ID3()
+        id3._header = ID3Header()
+        id3._header.version = (2, 4, 0)
+
         tagsgood = list(
-            _24._ID3__read_frames(head + b'a' * 127 + tail, Frames))
-        tagsbad = list(_24._ID3__read_frames(head + b'a' * 255 + tail, Frames))
+            id3._ID3__read_frames(head + b'a' * 127 + tail, Frames))
+        tagsbad = list(id3._ID3__read_frames(head + b'a' * 255 + tail, Frames))
         self.assertEquals(2, len(tagsgood))
         self.assertEquals(2, len(tagsbad))
         self.assertEquals('a' * 127, tagsgood[0])
@@ -1211,8 +1202,8 @@ class BrokenButParsed(TestCase):
         self.assertEquals('Yay!', tagsgood[1])
         self.assertEquals('Yay!', tagsbad[1])
 
-        tagsgood = list(_24._ID3__read_frames(head + b'a' * 127, Frames))
-        tagsbad = list(_24._ID3__read_frames(head + b'a' * 255, Frames))
+        tagsgood = list(id3._ID3__read_frames(head + b'a' * 127, Frames))
+        tagsbad = list(id3._ID3__read_frames(head + b'a' * 255, Frames))
         self.assertEquals(1, len(tagsgood))
         self.assertEquals(1, len(tagsbad))
         self.assertEquals('a' * 127, tagsgood[0])
