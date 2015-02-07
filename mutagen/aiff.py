@@ -254,7 +254,7 @@ class _IFFID3(ID3):
 
     def _pre_load_header(self, fileobj):
         try:
-            fileobj.seek(IFFFile(self._fileobj)[u'ID3'].data_offset)
+            fileobj.seek(IFFFile(fileobj)[u'ID3'].data_offset)
         except (InvalidChunk, KeyError):
             raise ID3NoHeaderError("No ID3 chunk")
 

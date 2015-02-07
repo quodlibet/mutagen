@@ -6,7 +6,7 @@ from tests import add
 from mutagen import id3
 from mutagen.apev2 import APEv2
 from mutagen.id3 import ID3, COMR, Frames, Frames_2_2, ID3Warning, \
-    ID3JunkFrameError, ID3Header, ID3UnsupportedVersionError
+    ID3JunkFrameError, ID3Header, ID3UnsupportedVersionError, _fullread
 from mutagen.id3._util import BitPaddedInt, error as ID3Error
 from mutagen._compat import cBytesIO, PY2, iteritems, integer_types
 import warnings
@@ -178,10 +178,9 @@ class ID3Loading(TestCase):
         self.assertEquals(id3["TPE1"], ["Nina Simone"])
 
     def test_insane__ID3__fullread(self):
-        id3 = ID3()
-        id3._fileobj = cBytesIO()
-        self.assertRaises(ValueError, id3._ID3__fullread, -3)
-        self.assertRaises(EOFError, id3._ID3__fullread, 3)
+        fileobj = cBytesIO()
+        self.assertRaises(ValueError, _fullread, fileobj, -3)
+        self.assertRaises(EOFError, _fullread, fileobj, 3)
 
 
 class Issue21(TestCase):

@@ -187,14 +187,6 @@ class ID3(DictProxy, mutagen.Metadata):
         self._version = (2, 4, 0)
         super(ID3, self).__init__(*args, **kwargs)
 
-    def __fullread(self, size):
-        """Read a certain number of bytes from the source file.
-
-        Raises ValueError on invalid size input or EOFError/IOError.
-        """
-
-        return _fullread(self._fileobj, size)
-
     @property
     def version(self):
         """ID3 tag version as a tuple (of the loaded file)"""
@@ -256,14 +248,14 @@ class ID3(DictProxy, mutagen.Metadata):
         self.unknown_frames = []
         self.__known_frames = known_frames
         self._header = None
-        self._fileobj = open(filename, 'rb')
-        try:
-            self._pre_load_header(self._fileobj)
+
+        with open(filename, 'rb') as fileobj:
+            self._pre_load_header(fileobj)
 
             try:
-                self._header = ID3Header(self._fileobj, self.PEDANTIC)
+                self._header = ID3Header(fileobj, self.PEDANTIC)
             except (ID3NoHeaderError, ID3UnsupportedVersionError):
-                frames, offset = _find_id3v1(self._fileobj)
+                frames, offset = _find_id3v1(fileobj)
                 if frames is None:
                     raise
 
@@ -277,24 +269,24 @@ class ID3(DictProxy, mutagen.Metadata):
                         frames = Frames
                     elif self.version >= ID3Header._V22:
                         frames = Frames_2_2
+
                 try:
-                    data = self.__fullread(self.size - 10)
+                    data = _fullread(fileobj, self.size - 10)
                 except (ValueError, EOFError, IOError) as e:
                     raise error(e)
+
                 for frame in self.__read_frames(data, frames=frames):
                     if isinstance(frame, Frame):
                         self.add(frame)
                     else:
                         self.unknown_frames.append(frame)
                 self.__unknown_version = self.version[:2]
-        finally:
-            self._fileobj.close()
-            del self._fileobj
-            if translate:
-                if v2_version == 3:
-                    self.update_to_v23()
-                else:
-                    self.update_to_v24()
+
+        if translate:
+            if v2_version == 3:
+                self.update_to_v23()
+            else:
+                self.update_to_v24()
 
     def getall(self, key):
         """Return all frames with a given name (the list may be empty).
@@ -791,26 +783,26 @@ def delete(filename, delete_v1=True, delete_v2=True):
     * delete_v2 -- delete any ID3v2 tag
     """
 
-    f = open(filename, 'rb+')
+    with open(filename, 'rb+') as f:
 
-    if delete_v1:
-        tag, offset = _find_id3v1(f)
-        if tag is not None:
-            f.seek(offset, 2)
-            f.truncate()
+        if delete_v1:
+            tag, offset = _find_id3v1(f)
+            if tag is not None:
+                f.seek(offset, 2)
+                f.truncate()
 
-    # technically an insize=0 tag is invalid, but we delete it anyway
-    # (primarily because we used to write it)
-    if delete_v2:
-        f.seek(0, 0)
-        idata = f.read(10)
-        try:
-            id3, vmaj, vrev, flags, insize = unpack('>3sBBB4s', idata)
-        except struct.error:
-            id3, insize = b'', -1
-        insize = BitPaddedInt(insize)
-        if id3 == b'ID3' and insize >= 0:
-            delete_bytes(f, insize + 10, 0)
+        # technically an insize=0 tag is invalid, but we delete it anyway
+        # (primarily because we used to write it)
+        if delete_v2:
+            f.seek(0, 0)
+            idata = f.read(10)
+            try:
+                id3, vmaj, vrev, flags, insize = unpack('>3sBBB4s', idata)
+            except struct.error:
+                id3, insize = b'', -1
+            insize = BitPaddedInt(insize)
+            if id3 == b'ID3' and insize >= 0:
+                delete_bytes(f, insize + 10, 0)
 
 
 # support open(filename) as interface
@@ -1089,8 +1081,6 @@ class ID3FileType(mutagen.FileType):
                 offset = None
         else:
             offset = None
-        try:
-            fileobj = open(filename, "rb")
+
+        with open(filename, "rb") as fileobj:
             self.info = self._Info(fileobj, offset)
-        finally:
-            fileobj.close()
