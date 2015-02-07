@@ -95,14 +95,8 @@ class ID3(DictProxy, mutagen.Metadata):
         Raises ValueError on invalid size input or EOFError/IOError.
         """
 
-        try:
-            if size < 0:
-                raise ValueError('Requested bytes (%s) less than zero' % size)
-            if size > self.__filesize:
-                raise EOFError('Requested %#x of %#x (%s)' % (
-                    int(size), int(self.__filesize), self.filename))
-        except AttributeError:
-            pass
+        if size < 0:
+            raise ValueError('Requested bytes (%s) less than zero' % size)
         data = self._fileobj.read(size)
         if len(data) != size:
             raise EOFError("Not enough data to read")
@@ -131,19 +125,15 @@ class ID3(DictProxy, mutagen.Metadata):
         if v2_version not in (3, 4):
             raise ValueError("Only 3 and 4 possible for v2_version")
 
-        from os.path import getsize
-
         self.filename = filename
         self.__known_frames = known_frames
         self._fileobj = open(filename, 'rb')
-        self.__filesize = getsize(filename)
         try:
             try:
                 self._load_header()
             except EOFError:
                 self.size = 0
-                raise ID3NoHeaderError("%s: too small (%d bytes)" % (
-                    filename, self.__filesize))
+                raise ID3NoHeaderError("%s: too small" % filename)
             except (ID3NoHeaderError, ID3UnsupportedVersionError):
                 self.size = 0
                 frames, offset = _find_id3v1(self._fileobj)
@@ -173,7 +163,6 @@ class ID3(DictProxy, mutagen.Metadata):
         finally:
             self._fileobj.close()
             del self._fileobj
-            del self.__filesize
             if translate:
                 if v2_version == 3:
                     self.update_to_v23()

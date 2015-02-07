@@ -195,7 +195,7 @@ class ID3Loading(TestCase):
 
     def test_insane__ID3__fullread(self):
         id3 = ID3()
-        id3._ID3__filesize = 0
+        id3._fileobj = cBytesIO()
         self.assertRaises(ValueError, id3._ID3__fullread, -3)
         self.assertRaises(EOFError, id3._ID3__fullread, 3)
 
