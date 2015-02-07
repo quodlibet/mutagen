@@ -199,8 +199,6 @@ class Frame(object):
                         raise ID3BadCompressedData('%s: %r' % (err, data))
 
         frame = cls()
-        frame._rawdata = data
-        frame._flags = tflags
         frame._readData(data)
         return frame
 
