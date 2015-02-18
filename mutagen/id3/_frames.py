@@ -12,7 +12,7 @@ from struct import unpack
 
 from ._util import (
     ID3Warning, ID3JunkFrameError, ID3BadCompressedData,
-    ID3EncryptionUnsupportedError, ID3BadUnsynchData, unsynch)
+    ID3EncryptionUnsupportedError, unsynch)
 from ._specs import (
     BinaryDataSpec, StringSpec, Latin1TextSpec, EncodedTextSpec, ByteSpec,
     EncodingSpec, ASPIIndexSpec, SizedIntegerSpec, IntegerSpec,
@@ -168,8 +168,7 @@ class Frame(object):
                 try:
                     data = unsynch.decode(data)
                 except ValueError as err:
-                    if pedantic:
-                        raise ID3BadUnsynchData('%s: %r' % (err, data))
+                    warn('%s: %r' % (err, data), ID3Warning)
             if tflags & Frame.FLAG24_ENCRYPT:
                 raise ID3EncryptionUnsupportedError
             if tflags & Frame.FLAG24_COMPRESS:

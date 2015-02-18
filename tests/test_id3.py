@@ -267,8 +267,14 @@ class ID3Tags(TestCase):
         self.assertRaises(ValueError, Frames["TPE1"], encoding=9, text="ab")
 
     def test_badsync(self):
-        self.assertRaises(
-            ValueError, Frames["TPE1"].fromData, _24, 0x02, b"\x00\xff\xfe")
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+
+            Frames["TPE1"].fromData(_24, 0x02, b"\x00\xff\xfe")
+
+            self.assertEqual(len(w), 1)
+            self.assertTrue(issubclass(w[-1].category, ID3Warning))
+            self.assertTrue("sync" in str(w[-1].message))
 
     def test_noencrypt(self):
         self.assertRaises(

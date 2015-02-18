@@ -21,7 +21,7 @@ class ID3NoHeaderError(error, ValueError):
 
 
 class ID3BadUnsynchData(error, ValueError):
-    pass
+    """Deprecated"""
 
 
 class ID3BadCompressedData(error, ValueError):
