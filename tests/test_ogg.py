@@ -538,7 +538,12 @@ def call_oggz_validate(*args):
 def get_oggz_validate_version():
     """A version tuple or OSError if oggz-validate isn't available"""
 
-    output = subprocess.check_output(["oggz-validate", "--version"])
+    process = subprocess.Popen(["oggz-validate", "--version"],
+                               stdout=subprocess.PIPE)
+    output, unused_err = process.communicate()
+    retcode = process.poll()
+    if retcode != 0:
+        return (0,)
     lines = output.splitlines()
     if not lines:
         return (0,)
