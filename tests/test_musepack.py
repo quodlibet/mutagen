@@ -5,7 +5,7 @@ from tempfile import mkstemp
 from mutagen.id3 import ID3, TIT2
 from mutagen.musepack import Musepack, MusepackInfo, MusepackHeaderError
 from mutagen._compat import cBytesIO
-from tests import TestCase, add
+from tests import TestCase
 
 
 class TMusepack(TestCase):
@@ -99,8 +99,6 @@ class TMusepack(TestCase):
         self.assertEqual(info.channels, 2)
         self.assertEqual(info.samples, 3024084)
 
-add(TMusepack)
-
 
 class TMusepackWithID3(TestCase):
     SAMPLE = os.path.join("tests", "data", "click.mpc")
@@ -127,5 +125,3 @@ class TMusepackWithID3(TestCase):
         self.failUnlessEqual(id3['TIT2'], 'id3 title')
         f = Musepack(self.NEW)
         self.failUnlessEqual(f['title'], 'apev2 title')
-
-add(TMusepackWithID3)

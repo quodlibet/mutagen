@@ -1,6 +1,6 @@
 import sys
 
-from tests import TestCase, add
+from tests import TestCase
 
 from mutagen._compat import PY2, PY3, text_type
 from mutagen.id3 import BitPaddedInt, BitPaddedLong, unsynch
@@ -104,9 +104,6 @@ class SpecSanityChecks(TestCase):
         self.assertEquals(s.write(f, [(u"A", 100)]), b"A\x00\x00\x00\x00d")
 
 
-add(SpecSanityChecks)
-
-
 class SpecValidateChecks(TestCase):
 
     def test_volumeadjustmentspec(self):
@@ -148,16 +145,12 @@ class SpecValidateChecks(TestCase):
             self.assertEqual(s.validate(None, u"abc"), b"abc")
             self.assertRaises(ValueError, s.validate, None, u"\xf6\xe4\xfc")
 
-add(SpecValidateChecks)
-
 
 class NoHashSpec(TestCase):
 
     def test_spec(self):
         from mutagen.id3 import Spec
         self.failUnlessRaises(TypeError, {}.__setitem__, Spec("foo"), None)
-
-add(NoHashSpec)
 
 
 class BitPaddedIntTest(TestCase):
@@ -266,8 +259,6 @@ class BitPaddedIntTest(TestCase):
         self.failIf(BitPaddedInt.has_valid_padding(0x9f << 32, bits=6))
         self.failUnless(BitPaddedInt.has_valid_padding(0x3f << 16, bits=6))
 
-add(BitPaddedIntTest)
-
 
 class TestUnsynch(TestCase):
 
@@ -304,5 +295,3 @@ class TestUnsynch(TestCase):
         self.assertRaises(ValueError, unsynch.decode, b'\xff\xf0\x0f\x00')
         self.assertRaises(ValueError, unsynch.decode, b'\xff\xe0')
         self.assertRaises(ValueError, unsynch.decode, b'\xff')
-
-add(TestUnsynch)

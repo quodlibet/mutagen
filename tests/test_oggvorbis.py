@@ -4,12 +4,12 @@ import shutil
 from mutagen._compat import cBytesIO
 from mutagen.ogg import OggPage
 from mutagen.oggvorbis import OggVorbis, OggVorbisInfo, delete
-from tests import add
-from tests.test_ogg import TOggFileType
+from tests import TestCase
+from tests.test_ogg import TOggFileTypeMixin
 from tempfile import mkstemp
 
 
-class TOggVorbis(TOggFileType):
+class TOggVorbis(TestCase, TOggFileTypeMixin):
     Kind = OggVorbis
 
     def setUp(self):
@@ -18,6 +18,9 @@ class TOggVorbis(TOggFileType):
         os.close(fd)
         shutil.copy(original, self.filename)
         self.audio = self.Kind(self.filename)
+
+    def tearDown(self):
+        os.unlink(self.filename)
 
     def test_module_delete(self):
         delete(self.filename)
@@ -175,5 +178,3 @@ try:
 except ImportError:
     print("WARNING: Skipping Ogg Vorbis reference tests.")
     ogg = None
-
-add(TOggVorbis)

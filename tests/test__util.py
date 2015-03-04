@@ -3,7 +3,7 @@ from mutagen._util import decode_terminated, split_escape, dict_match, enum
 from mutagen._util import BitReader, BitReaderError
 from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2, \
     cBytesIO, xrange
-from tests import TestCase, add
+from tests import TestCase
 import random
 import mmap
 
@@ -120,8 +120,6 @@ class TDictMixin(TestCase):
     def tearDown(self):
         self.failUnlessEqual(self.fdict, self.rdict)
         self.failUnlessEqual(self.rdict, self.fdict)
-
-add(TDictMixin)
 
 
 class Tcdata(TestCase):
@@ -259,8 +257,6 @@ class Tcdata(TestCase):
         self.failIf(cdata.test_bit(v, 3))
         self.failIf(cdata.test_bit(v, 8))
         self.failIf(cdata.test_bit(v, 13))
-
-add(Tcdata)
 
 
 class FileHandling(TestCase):
@@ -427,8 +423,6 @@ class FileHandling(TestCase):
             fobj.seek(0)
             self.failUnless(fobj.read() == data)
 
-add(FileHandling)
-
 
 class FileHandlingMockedLock(FileHandling):
 
@@ -441,8 +435,8 @@ class FileHandlingMockedLock(FileHandling):
     def tearDown(self):
         fcntl.lockf = self._orig_lockf
 
-if fcntl:
-    add(FileHandlingMockedLock)
+if not fcntl:
+    del FileHandlingMockedLock
 
 
 class FileHandlingMockedMMapMove(FileHandling):
@@ -464,8 +458,6 @@ class FileHandlingMockedMMapMove(FileHandling):
     def tearDown(self):
         mmap.mmap = self._orig_mmap
 
-add(FileHandlingMockedMMapMove)
-
 
 class FileHandlingMockedMMap(FileHandling):
 
@@ -478,8 +470,6 @@ class FileHandlingMockedMMap(FileHandling):
 
     def tearDown(self):
         mmap.mmap = self._orig_mmap
-
-add(FileHandlingMockedMMap)
 
 
 class Tdict_match(TestCase):
@@ -497,8 +487,6 @@ class Tdict_match(TestCase):
         self.assertEqual(dict_match({"[ab]": 1}, "c"), None)
         self.assertEqual(dict_match({"[ab]": 1}, "[ab]"), None)
 
-add(Tdict_match)
-
 
 class Tenum(TestCase):
 
@@ -515,8 +503,6 @@ class Tenum(TestCase):
         self.assertEqual(repr(Foo(42)), "Foo(42)")
         self.assertEqual(str(Foo(42)), "42")
         self.assertEqual(str(Foo(1)), "1")
-
-add(Tenum)
 
 
 class Tdecode_terminated(TestCase):
@@ -556,8 +542,6 @@ class Tdecode_terminated(TestCase):
         self.assertRaises(
             UnicodeDecodeError, decode_terminated,
             truncated, "utf-8", strict=False)
-
-add(Tdecode_terminated)
 
 
 class Tsplit_escape(TestCase):
@@ -601,9 +585,6 @@ class Tsplit_escape(TestCase):
         parts = split_escape(u":", u":")
         self.assertEqual(parts, [u"", u""])
         self.assertTrue(all(isinstance(p, text_type) for p in parts))
-
-
-add(Tsplit_escape)
 
 
 class TBitReader(TestCase):
@@ -681,5 +662,3 @@ class TBitReader(TestCase):
         self.assertFalse(r.is_aligned())
         r.bits(1)
         self.assertTrue(r.is_aligned())
-
-add(TBitReader)

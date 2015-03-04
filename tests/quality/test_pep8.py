@@ -8,7 +8,7 @@ import os
 import glob
 import subprocess
 
-from tests import TestCase, add
+from tests import TestCase
 
 PEP8_NAME = "pep8"
 
@@ -72,5 +72,5 @@ class TPEP8(TestCase):
         self._run_package(tests)
 
 
-if has_pep8:
-    add(TPEP8)
+if not has_pep8:
+    del TPEP8

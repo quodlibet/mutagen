@@ -6,12 +6,12 @@ from tempfile import mkstemp
 from mutagen._compat import cBytesIO
 from mutagen.oggflac import OggFLAC, OggFLACStreamInfo, delete
 from mutagen.ogg import OggPage, error as OggError
-from tests import add
-from tests.test_ogg import TOggFileType
+from tests import TestCase
+from tests.test_ogg import TOggFileTypeMixin
 from tests.test_flac import have_flac, call_flac
 
 
-class TOggFLAC(TOggFileType):
+class TOggFLAC(TestCase, TOggFileTypeMixin):
     Kind = OggFLAC
 
     def setUp(self):
@@ -20,6 +20,9 @@ class TOggFLAC(TOggFileType):
         os.close(fd)
         shutil.copy(original, self.filename)
         self.audio = OggFLAC(self.filename)
+
+    def tearDown(self):
+        os.unlink(self.filename)
 
     def test_vendor(self):
         self.failUnless(
@@ -93,5 +96,3 @@ class TOggFLAC(TOggFileType):
 
     def test_mime(self):
         self.failUnless("audio/x-oggflac" in self.audio.mime)
-
-add(TOggFLAC)

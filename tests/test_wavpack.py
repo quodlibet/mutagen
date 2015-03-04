@@ -1,7 +1,7 @@
 import os
 
 from mutagen.wavpack import WavPack
-from tests import TestCase, add
+from tests import TestCase
 
 
 class TWavPack(TestCase):
@@ -31,8 +31,6 @@ class TWavPack(TestCase):
     def test_mime(self):
         self.failUnless("audio/x-wavpack" in self.audio.mime)
 
-add(TWavPack)
-
 
 class TWavPackNoLength(TestCase):
 
@@ -56,5 +54,3 @@ class TWavPackNoLength(TestCase):
 
     def test_mime(self):
         self.failUnless("audio/x-wavpack" in self.audio.mime)
-
-add(TWavPackNoLength)

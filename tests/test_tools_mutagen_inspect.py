@@ -1,7 +1,6 @@
 import os
 import glob
 
-from tests import add
 from tests.test_tools import _TTools
 
 
@@ -20,5 +19,3 @@ class TMutagenInspect(_TTools):
             self.failUnless(out.strip())
             self.failIf("Unknown file type" in out)
             self.failIf("Errno" in out)
-
-add(TMutagenInspect)

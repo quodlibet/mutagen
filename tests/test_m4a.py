@@ -3,7 +3,7 @@ import shutil
 
 from cStringIO import StringIO
 from tempfile import mkstemp
-from tests import TestCase, add
+from tests import TestCase
 
 import warnings
 warnings.simplefilter("ignore", DeprecationWarning)
@@ -42,7 +42,6 @@ class TAtom(TestCase):
         fileobj = StringIO("\x00\x00\x00\x00atom")
         Atom(fileobj)
         self.failUnlessEqual(fileobj.tell(), 8)
-add(TAtom)
 
 
 class TAtoms(TestCase):
@@ -67,7 +66,6 @@ class TAtoms(TestCase):
 
     def test_repr(self):
         repr(self.atoms)
-add(TAtoms)
 
 
 class TM4AInfo(TestCase):
@@ -88,7 +86,6 @@ class TM4AInfo(TestCase):
         atoms = Atoms(fileobj)
         info = M4AInfo(atoms, fileobj)
         self.failUnlessEqual(info.length, 8)
-add(TM4AInfo)
 
 
 class TM4ATags(TestCase):
@@ -137,15 +134,20 @@ class TM4ATags(TestCase):
         covr = Atom.render("covr", data)
         self.failUnlessRaises(M4AMetadataError, self.wrap_ilst, covr)
 
-add(TM4ATags)
-
 
 class TM4A(TestCase):
+
     def setUp(self):
         fd, self.filename = mkstemp(suffix='m4a')
         os.close(fd)
         shutil.copy(self.original, self.filename)
         self.audio = M4A(self.filename)
+
+    def tearDown(self):
+        os.unlink(self.filename)
+
+
+class TM4AMixin(object):
 
     def faad(self):
         if not have_faad:
@@ -240,11 +242,8 @@ class TM4A(TestCase):
     def test_mime(self):
         self.failUnless("audio/mp4" in self.audio.mime)
 
-    def tearDown(self):
-        os.unlink(self.filename)
 
-
-class TM4AHasTags(TM4A):
+class TM4AHasTags(TM4A, TM4AMixin):
     original = os.path.join("tests", "data", "has-tags.m4a")
 
     def test_save_simple(self):
@@ -269,13 +268,9 @@ class TM4AHasTags(TM4A):
         self.failUnlessRaises(
             IOError, M4A, os.path.join("tests", "data", "empty.ogg"))
 
-add(TM4AHasTags)
 
-
-class TM4ANoTags(TM4A):
+class TM4ANoTags(TM4A, TM4AMixin):
     original = os.path.join("tests", "data", "no-tags.m4a")
 
     def test_no_tags(self):
         self.failUnless(self.audio.tags is None)
-
-add(TM4ANoTags)

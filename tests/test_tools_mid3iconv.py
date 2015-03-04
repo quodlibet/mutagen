@@ -4,7 +4,6 @@ import shutil
 
 from mutagen.id3 import ID3
 
-from tests import add
 from tests.test_tools import _TTools
 
 
@@ -87,5 +86,3 @@ class TMid3Iconv(_TTools):
             data = h.read()
             self.failUnlessEqual(len(data), 128)
             self.failIf(ParseID3v1(data))
-
-add(TMid3Iconv)

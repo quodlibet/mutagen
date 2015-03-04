@@ -3,7 +3,6 @@ import shutil
 
 from tests import TestCase
 from mutagen._compat import cBytesIO
-from tests import add
 from mutagen.aiff import AIFF, AIFFInfo, delete, IFFFile, IFFChunk
 from mutagen.aiff import error as AIFFError
 from tempfile import mkstemp
@@ -152,16 +151,12 @@ class TAIFF(TestCase):
         os.unlink(self.filename_1)
         os.unlink(self.filename_2)
 
-add(TAIFF)
-
 
 class TAIFFInfo(TestCase):
 
     def test_empty(self):
         fileobj = cBytesIO(b"")
         self.failUnlessRaises(IOError, AIFFInfo, fileobj)
-
-add(TAIFFInfo)
 
 
 class TIFFFile(TestCase):
@@ -245,5 +240,3 @@ class TIFFFile(TestCase):
         self.file_2.close()
         self.file_1_tmp.close()
         self.file_2_tmp.close()
-
-add(TIFFFile)

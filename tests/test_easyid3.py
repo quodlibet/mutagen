@@ -1,7 +1,7 @@
 import os
 import shutil
 import pickle
-from tests import add, TestCase
+from tests import TestCase
 from mutagen.id3 import ID3FileType, ID3
 from mutagen.easyid3 import EasyID3, error as ID3Error
 from mutagen._compat import PY3
@@ -347,5 +347,3 @@ class TEasyID3(TestCase):
 
     def tearDown(self):
         os.unlink(self.filename)
-
-add(TEasyID3)

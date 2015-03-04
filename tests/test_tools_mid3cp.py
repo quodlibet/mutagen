@@ -16,7 +16,6 @@ from tempfile import mkstemp
 import shutil
 from mutagen.id3 import ID3, ParseID3v1
 
-from tests import add
 from tests.test_tools import _TTools
 
 
@@ -163,5 +162,3 @@ class TMid3cp(_TTools):
         ID3(self.filename).save()
         self.call(self.filename, blank_file)
         self.assertEqual(ID3(blank_file).version, (2, 4, 0))
-
-add(TMid3cp)

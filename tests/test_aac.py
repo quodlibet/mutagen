@@ -4,7 +4,7 @@ import shutil
 
 from mutagen.id3 import ID3, TIT1
 from mutagen.aac import AAC, AACError
-from tests import TestCase, add
+from tests import TestCase
 
 
 class TADTS(TestCase):
@@ -53,8 +53,6 @@ class TADTS(TestCase):
         self.assertEqual(self.aac.pprint(), self.aac_id3.pprint())
         self.assertTrue("ADTS" in self.aac.pprint())
 
-add(TADTS)
-
 
 class TADIF(TestCase):
 
@@ -101,5 +99,3 @@ class TADIF(TestCase):
     def test_pprint(self):
         self.assertEqual(self.aac.pprint(), self.aac_id3.pprint())
         self.assertTrue("ADIF" in self.aac.pprint())
-
-add(TADIF)

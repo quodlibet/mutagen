@@ -8,7 +8,7 @@ import os
 import re
 import sys
 
-from tests import TestCase, add
+from tests import TestCase
 
 from mutagen import _compat
 
@@ -84,5 +84,5 @@ class TPyFlakes(TestCase):
         self._run_package(tests)
 
 
-if pyflakes:
-    add(TPyFlakes)
+if not pyflakes:
+    del TPyFlakes

@@ -1,6 +1,6 @@
 import os
 import shutil
-from tests import add, TestCase
+from tests import TestCase
 from mutagen.easymp4 import EasyMP4, error as MP4Error
 from tempfile import mkstemp
 
@@ -146,5 +146,3 @@ class TEasyMP4(TestCase):
 
     def tearDown(self):
         os.unlink(self.filename)
-
-add(TEasyMP4)

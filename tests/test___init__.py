@@ -2,7 +2,7 @@ import os
 from tempfile import mkstemp
 import shutil
 
-from tests import TestCase, add
+from tests import TestCase
 from mutagen._compat import cBytesIO, PY3
 from mutagen import File, Metadata, FileType, MutagenError
 from mutagen.oggvorbis import OggVorbis
@@ -47,7 +47,6 @@ class TMetadata(TestCase):
         self.failUnlessRaises(NotImplementedError, self.FakeMeta().delete)
         self.failUnlessRaises(
             NotImplementedError, self.FakeMeta().delete, "filename")
-add(TMetadata)
 
 
 class TFileType(TestCase):
@@ -65,7 +64,6 @@ class TFileType(TestCase):
         self.vorbis["foobar"] = "quux"
         del(self.vorbis["foobar"])
         self.failIf("quux" in self.vorbis)
-add(TFileType)
 
 
 class TFile(TestCase):
@@ -233,8 +231,6 @@ class TFile(TestCase):
         self.failUnless(OggVorbis.score(filename, fileobj, header) <
                         OggTheora.score(filename, fileobj, header))
 
-add(TFile)
-
 
 class TFileUpperExt(TestCase):
     FILES = [
@@ -269,8 +265,6 @@ class TFileUpperExt(TestCase):
         for (path, instance) in self.checks:
             os.unlink(path)
 
-add(TFileUpperExt)
-
 
 class TModuleImportAll(TestCase):
 
@@ -299,5 +293,3 @@ class TModuleImportAll(TestCase):
     def test_errors(self):
         for mod in self.modules:
             self.assertTrue(issubclass(mod.error, MutagenError), msg=mod.error)
-
-add(TModuleImportAll)

@@ -3,7 +3,6 @@ import shutil
 
 from tests import TestCase
 from mutagen._compat import cBytesIO
-from tests import add
 from mutagen.mp3 import MP3, error as MP3Error, delete, MPEGInfo, EasyMP3
 from mutagen.id3 import ID3
 from tempfile import mkstemp
@@ -138,8 +137,6 @@ class TMP3(TestCase):
     def tearDown(self):
         os.unlink(self.filename)
 
-add(TMP3)
-
 
 class TMPEGInfo(TestCase):
 
@@ -151,7 +148,6 @@ class TMPEGInfo(TestCase):
     def test_empty(self):
         fileobj = cBytesIO(b"")
         self.failUnlessRaises(IOError, MPEGInfo, fileobj)
-add(TMPEGInfo)
 
 
 class TEasyMP3(TestCase):
@@ -182,7 +178,6 @@ class TEasyMP3(TestCase):
 
     def tearDown(self):
         os.unlink(self.filename)
-add(TEasyMP3)
 
 
 class Issue72_TooShortFile(TestCase):
@@ -190,4 +185,3 @@ class Issue72_TooShortFile(TestCase):
         mp3 = MP3(os.path.join('tests', 'data', 'too-short.mp3'))
         self.failUnlessEqual(mp3["TIT2"], "Track 10")
         self.failUnlessAlmostEqual(mp3.info.length, 0.03, 2)
-add(Issue72_TooShortFile)

@@ -2,7 +2,7 @@ import os
 import shutil
 from mutagen.trueaudio import TrueAudio, delete
 from mutagen.id3 import TIT1
-from tests import TestCase, add
+from tests import TestCase
 from tempfile import mkstemp
 
 
@@ -50,5 +50,3 @@ class TTrueAudio(TestCase):
 
     def test_mime(self):
         self.failUnless("audio/x-tta" in self.audio.mime)
-
-add(TTrueAudio)

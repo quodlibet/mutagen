@@ -1,7 +1,7 @@
 import os
 
 from mutagen.optimfrog import OptimFROG, OptimFROGHeaderError
-from tests import TestCase, add
+from tests import TestCase
 
 
 class TOptimFROG(TestCase):
@@ -33,5 +33,3 @@ class TOptimFROG(TestCase):
     def test_pprint(self):
         self.failUnless(self.ofr.pprint())
         self.failUnless(self.ofs.pprint())
-
-add(TOptimFROG)

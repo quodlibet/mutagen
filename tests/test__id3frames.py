@@ -1,4 +1,4 @@
-from tests import TestCase, add
+from tests import TestCase
 
 from mutagen.id3 import Frames, Frames_2_2, ID3, ID3Header
 from mutagen._compat import text_type
@@ -349,8 +349,6 @@ class FrameSanityChecks(TestCase):
         self.assertNotEquals(
             USER(lang="abc").HashKey, USER(lang="def").HashKey)
 
-add(FrameSanityChecks)
-
 
 class Genres(TestCase):
 
@@ -429,8 +427,6 @@ class Genres(TestCase):
         gen.genres = gen.genres
         self.assertEquals(gen.genres, [u"Unknown", u"genre"])
 
-add(Genres)
-
 
 class TimeStamp(TestCase):
 
@@ -499,8 +495,6 @@ class TimeStamp(TestCase):
         self.assert_(t < s < u)
         self.assert_(u > s > t)
 
-add(TimeStamp)
-
 
 class NoHashFrame(TestCase):
 
@@ -508,8 +502,6 @@ class NoHashFrame(TestCase):
         from mutagen.id3 import TIT1
         self.failUnlessRaises(
             TypeError, {}.__setitem__, TIT1(encoding=0, text="foo"), None)
-
-add(NoHashFrame)
 
 
 class FrameIDValidate(TestCase):
@@ -524,8 +516,6 @@ class FrameIDValidate(TestCase):
         self.failIf(is_valid_frame_id("MP3e"))
         self.failIf(is_valid_frame_id("+ABC"))
 
-add(FrameIDValidate)
-
 
 class TimeStampTextFrame(TestCase):
 
@@ -535,8 +525,6 @@ class TimeStampTextFrame(TestCase):
     def test_compare_to_unicode(self):
         frame = self.Frame(encoding=0, text=[u'1987', u'1988'])
         self.failUnlessEqual(frame, text_type(frame))
-
-add(TimeStampTextFrame)
 
 
 class TTextFrame(TestCase):
@@ -549,8 +537,6 @@ class TTextFrame(TestCase):
         frame.extend(["b", "c"])
         self.assertEqual(frame.text, ["a", "b", "c"])
 
-add(TTextFrame)
-
 
 class TRVA2(TestCase):
 
@@ -559,5 +545,3 @@ class TRVA2(TestCase):
         r = RVA2(gain=1, channel=1, peak=1)
         self.assertEqual(r, r)
         self.assertNotEqual(r, 42)
-
-add(TRVA2)

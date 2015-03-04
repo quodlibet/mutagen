@@ -5,11 +5,11 @@ from tempfile import mkstemp
 from mutagen._compat import BytesIO
 from mutagen.oggopus import OggOpus, OggOpusInfo, delete
 from mutagen.ogg import OggPage
-from tests import add
-from tests.test_ogg import TOggFileType
+from tests import TestCase
+from tests.test_ogg import TOggFileTypeMixin
 
 
-class TOggOpus(TOggFileType):
+class TOggOpus(TestCase, TOggFileTypeMixin):
     Kind = OggOpus
 
     def setUp(self):
@@ -18,6 +18,9 @@ class TOggOpus(TOggFileType):
         os.close(fd)
         shutil.copy(original, self.filename)
         self.audio = self.Kind(self.filename)
+
+    def tearDown(self):
+        os.unlink(self.filename)
 
     def test_length(self):
         self.failUnlessAlmostEqual(self.audio.info.length, 11.35, 2)
@@ -73,5 +76,3 @@ class TOggOpus(TOggFileType):
             page = OggPage(fobj)
             data = OggPage.to_packets([page])[0]
             self.assertTrue(data.endswith(b"\x01" + extra_data))
-
-add(TOggOpus)

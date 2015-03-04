@@ -1,6 +1,5 @@
 import os
 
-from tests import add
 from tests.test_tools import _TTools
 
 
@@ -13,5 +12,3 @@ class TMutagenPony(_TTools):
         res, out = self.call(base)
         self.failIf(res)
         self.failUnless("Report for %s" % base in out)
-
-add(TMutagenPony)

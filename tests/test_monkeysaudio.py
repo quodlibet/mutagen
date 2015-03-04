@@ -1,7 +1,7 @@
 import os
 
 from mutagen.monkeysaudio import MonkeysAudio, MonkeysAudioHeaderError
-from tests import TestCase, add
+from tests import TestCase
 
 
 class TMonkeysAudio(TestCase):
@@ -48,4 +48,3 @@ class TMonkeysAudio(TestCase):
     def test_pprint(self):
         self.failUnless(self.mac399.pprint())
         self.failUnless(self.mac396.pprint())
-add(TMonkeysAudio)

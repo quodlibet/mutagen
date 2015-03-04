@@ -6,11 +6,11 @@ from tempfile import mkstemp
 from mutagen._compat import cBytesIO
 from mutagen.oggtheora import OggTheora, OggTheoraInfo, delete
 from mutagen.ogg import OggPage
-from tests import add
-from tests.test_ogg import TOggFileType
+from tests import TestCase
+from tests.test_ogg import TOggFileTypeMixin
 
 
-class TOggTheora(TOggFileType):
+class TOggTheora(TestCase, TOggFileTypeMixin):
     Kind = OggTheora
 
     def setUp(self):
@@ -23,6 +23,9 @@ class TOggTheora(TOggFileType):
             os.path.join("tests", "data", "sample_length.oggtheora"))
         self.audio3 = OggTheora(
             os.path.join("tests", "data", "sample_bitrate.oggtheora"))
+
+    def tearDown(self):
+        os.unlink(self.filename)
 
     def test_theora_bad_version(self):
         page = OggPage(open(self.filename, "rb"))
@@ -63,5 +66,3 @@ class TOggTheora(TOggFileType):
 
     def test_mime(self):
         self.failUnless("video/x-theora" in self.audio.mime)
-
-add(TOggTheora)

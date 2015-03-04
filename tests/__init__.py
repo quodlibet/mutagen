@@ -7,8 +7,6 @@ import sys
 import unittest
 
 from unittest import TestCase as BaseTestCase
-suites = []
-add = suites.append
 
 from mutagen._compat import PY3
 
@@ -57,13 +55,30 @@ class TestCase(BaseTestCase):
 
 
 def import_tests():
+    tests = []
+
     for name in glob.glob(
             os.path.join(os.path.dirname(__file__), "test_*.py")):
         # skip m4a in py3k
         if sys.version_info[0] != 2 and "test_m4a" in name:
             continue
-        module = "tests." + os.path.basename(name)
-        __import__(module[:-3], {}, {}, [])
+        module_name = "tests." + os.path.basename(name)
+        mod = __import__(module_name[:-3], {}, {}, [])
+        mod = getattr(mod, os.path.basename(name)[:-3])
+
+        tests.extend(get_tests_from_mod(mod))
+
+    return list(set(tests))
+
+
+def get_tests_from_mod(mod):
+    tests = []
+    for name in dir(mod):
+        obj = getattr(mod, name)
+        if isinstance(obj, type) and issubclass(obj, BaseTestCase) and \
+                obj is not TestCase:
+            tests.append(obj)
+    return tests
 
 
 class Result(unittest.TestResult):
@@ -114,29 +129,28 @@ def check():
     from tests.quality import test_pep8
     from tests.quality import test_pyflakes
 
-    test_pep8, test_pyflakes
+    tests = get_tests_from_mod(test_pep8)
+    tests += get_tests_from_mod(test_pyflakes)
+
     runner = Runner()
     failures = 0
-    for test in suites:
+    for test in tests:
         failures += runner.run(test)
 
-    return len(suites), failures
+    return len(tests), failures
 
 
 def unit(run=[], exitfirst=False):
-    import_tests()
+    tests = import_tests()
 
     runner = Runner()
     failures = 0
-    count = 0
-    tests = [t for t in suites if not run or t.__name__ in run]
+    filtered = [t for t in tests if not run or t.__name__ in run]
 
-    for test in tests:
+    for test in filtered:
         if failures and exitfirst:
             break
 
         failures += runner.run(test)
 
-    count += len(tests)
-
-    return count, failures
+    return len(filtered), failures

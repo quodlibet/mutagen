@@ -7,7 +7,6 @@ import mutagen
 from mutagen.id3 import ID3
 from mutagen._compat import PY2
 
-from tests import add
 from tests.test_tools import _TTools
 
 
@@ -199,5 +198,3 @@ class TMid3v2(_TTools):
         res, out = self.call("--TALB", '\\', '-e', self.filename)
         self.failIfEqual(res, 0)
         self.failUnless("TALB" in out)
-
-add(TMid3v2)

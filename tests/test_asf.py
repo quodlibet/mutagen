@@ -1,7 +1,7 @@
 import os
 import shutil
 from tempfile import mkstemp
-from tests import TestCase, add
+from tests import TestCase
 
 from mutagen._compat import PY3, text_type, PY2
 from mutagen.asf import ASF, ASFHeaderError, ASFValue, UNICODE, DWORD, QWORD
@@ -20,8 +20,6 @@ class TASFFile(TestCase):
         self.failUnlessRaises(
             ASFHeaderError, ASF,
             os.path.join("tests", "data", "click.mpc"))
-
-add(TASFFile)
 
 
 class TASFInfo(TestCase):
@@ -54,8 +52,6 @@ class TASFInfo(TestCase):
         self.failUnlessEqual(self.wma2.info.channels, 2)
         self.failUnlessEqual(self.wma3.info.channels, 2)
 
-add(TASFInfo)
-
 
 class TASF(TestCase):
 
@@ -67,6 +63,9 @@ class TASF(TestCase):
 
     def tearDown(self):
         os.unlink(self.filename)
+
+
+class TASFMixin(object):
 
     def test_pprint(self):
         self.failUnless(self.audio.pprint())
@@ -358,22 +357,17 @@ class TASFAttributes(TestCase):
         self.assertEqual(repr(attr).replace("0L", "0"), "ASFQWordAttribute(0)")
         self.assertEqual(int(attr), 0)
 
-add(TASFAttributes)
 
-
-class TASFTags1(TASF):
+class TASFTags1(TASF, TASFMixin):
     original = os.path.join("tests", "data", "silence-1.wma")
-add(TASFTags1)
 
 
-class TASFTags2(TASF):
+class TASFTags2(TASF, TASFMixin):
     original = os.path.join("tests", "data", "silence-2.wma")
-add(TASFTags2)
 
 
-class TASFTags3(TASF):
+class TASFTags3(TASF, TASFMixin):
     original = os.path.join("tests", "data", "silence-3.wma")
-add(TASFTags3)
 
 
 class TASFIssue29(TestCase):
@@ -402,7 +396,6 @@ class TASFIssue29(TestCase):
         audio.save()
         audio = ASF(self.filename)
         self.failIf("Description" in audio)
-add(TASFIssue29)
 
 
 class TASFAttrDest(TestCase):
@@ -482,8 +475,6 @@ class TASFAttrDest(TestCase):
         self.assertEqual(new["Title"], [u""])
         self.assertFalse("Copyright" in new)
 
-add(TASFAttrDest)
-
 
 class TASFLargeValue(TestCase):
 
@@ -540,8 +531,6 @@ class TASFLargeValue(TestCase):
         self.failIf("QL/GuidObject" in audio.to_metadata)
         self.failIf("QL/GuidObject" not in dict(audio.to_metadata_library))
 
-add(TASFLargeValue)
-
 
 class TASFUpdateSize(TestCase):
     # http://code.google.com/p/mutagen/issues/detail?id=81#c4
@@ -564,5 +553,3 @@ class TASFUpdateSize(TestCase):
         for tag in audio.keys():
             del(audio[tag])
             audio.save()
-
-add(TASFUpdateSize)

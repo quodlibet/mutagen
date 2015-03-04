@@ -5,7 +5,7 @@ import subprocess
 
 from mutagen._compat import cBytesIO, PY3, text_type
 from tempfile import mkstemp
-from tests import TestCase, add
+from tests import TestCase
 from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
                          MP4MetadataError, MP4FreeForm, error, AtomDataType,
                          MP4MetadataValueError, AtomError)
@@ -86,8 +86,6 @@ class TAtom(TestCase):
         self.assertFalse(ok)
         self.assertEqual(data, payload)
 
-add(TAtom)
-
 
 class TAtoms(TestCase):
     filename = os.path.join("tests", "data", "has-tags.m4a")
@@ -120,7 +118,6 @@ class TAtoms(TestCase):
 
     def test_repr(self):
         repr(self.atoms)
-add(TAtoms)
 
 
 class TMP4Info(TestCase):
@@ -157,7 +154,6 @@ class TMP4Info(TestCase):
         atoms = Atoms(fileobj)
         info = MP4Info(atoms, fileobj)
         self.failUnlessEqual(info.length, 8)
-add(TMP4Info)
 
 
 class TMP4Tags(TestCase):
@@ -429,15 +425,20 @@ class TMP4Tags(TestCase):
         v = self.wrap_ilst(data)[key][0]
         self.failUnlessEqual(v.dataformat, AtomDataType.UTF8)
 
-add(TMP4Tags)
-
 
 class TMP4(TestCase):
+
     def setUp(self):
         fd, self.filename = mkstemp(suffix='.m4a')
         os.close(fd)
         shutil.copy(self.original, self.filename)
         self.audio = MP4(self.filename)
+
+    def tearDown(self):
+        os.unlink(self.filename)
+
+
+class TMP4Mixin(object):
 
     def faad(self):
         if not have_faad:
@@ -728,11 +729,8 @@ class TMP4(TestCase):
     def test_mime(self):
         self.failUnless("audio/mp4" in self.audio.mime)
 
-    def tearDown(self):
-        os.unlink(self.filename)
 
-
-class TMP4HasTags(TMP4):
+class TMP4HasTagsMixin(TMP4Mixin):
     def test_save_simple(self):
         self.audio.save()
         self.faad()
@@ -763,7 +761,7 @@ class TMP4HasTags(TMP4):
             error, "MP4", MP4, os.path.join("tests", "data", "empty.ogg"))
 
 
-class TMP4Datatypes(TMP4HasTags):
+class TMP4Datatypes(TMP4, TMP4HasTagsMixin):
     original = os.path.join("tests", "data", "has-tags.m4a")
 
     def test_has_freeform(self):
@@ -780,10 +778,8 @@ class TMP4Datatypes(TMP4HasTags):
         self.failUnlessEqual(covr[0].imageformat, MP4Cover.FORMAT_PNG)
         self.failUnlessEqual(covr[1].imageformat, MP4Cover.FORMAT_JPEG)
 
-add(TMP4Datatypes)
 
-
-class TMP4CovrWithName(TMP4):
+class TMP4CovrWithName(TMP4, TMP4Mixin):
     # http://bugs.musicbrainz.org/ticket/5894
     original = os.path.join("tests", "data", "covr-with-name.m4a")
 
@@ -794,10 +790,8 @@ class TMP4CovrWithName(TMP4):
         self.failUnlessEqual(covr[0].imageformat, MP4Cover.FORMAT_PNG)
         self.failUnlessEqual(covr[1].imageformat, MP4Cover.FORMAT_JPEG)
 
-add(TMP4CovrWithName)
 
-
-class TMP4HasTags64Bit(TMP4HasTags):
+class TMP4HasTags64Bit(TMP4, TMP4HasTagsMixin):
     original = os.path.join("tests", "data", "truncated-64bit.mp4")
 
     def test_has_covr(self):
@@ -813,10 +807,8 @@ class TMP4HasTags64Bit(TMP4HasTags):
         # This is only half a file, so FAAD segfaults. Can't test. :(
         pass
 
-add(TMP4HasTags64Bit)
 
-
-class TMP4NoTagsM4A(TMP4):
+class TMP4NoTagsM4A(TMP4, TMP4Mixin):
     original = os.path.join("tests", "data", "no-tags.m4a")
 
     def test_no_tags(self):
@@ -826,10 +818,8 @@ class TMP4NoTagsM4A(TMP4):
         self.audio.add_tags()
         self.failUnlessRaises(error, self.audio.add_tags)
 
-add(TMP4NoTagsM4A)
 
-
-class TMP4NoTags3G2(TMP4):
+class TMP4NoTags3G2(TMP4, TMP4Mixin):
     original = os.path.join("tests", "data", "no-tags.3g2")
 
     def test_no_tags(self):
@@ -843,8 +833,6 @@ class TMP4NoTags3G2(TMP4):
 
     def test_length(self):
         self.failUnlessAlmostEqual(15, self.audio.info.length, 1)
-
-add(TMP4NoTags3G2)
 
 
 class TMP4UpdateParents64Bit(TestCase):
@@ -873,8 +861,6 @@ class TMP4UpdateParents64Bit(TestCase):
     def tearDown(self):
         os.unlink(self.filename)
 
-add(TMP4UpdateParents64Bit)
-
 
 class TMP4ALAC(TestCase):
     original = os.path.join("tests", "data", "alac.m4a")
@@ -900,8 +886,6 @@ class TMP4ALAC(TestCase):
     def test_kind(self):
         self.assertEqual(self.audio.info.codec, u'alac')
 
-add(TMP4ALAC)
-
 
 class TMP4Misc(TestCase):
 
@@ -921,8 +905,6 @@ class TMP4Misc(TestCase):
 
         sorted_items = sorted(items, key=MP4Tags._key_sort)
         self.assertEqual(sorted_items, items)
-
-add(TMP4Misc)
 
 
 class TMP4AudioSampleEntry(TestCase):
@@ -1074,8 +1056,6 @@ class TMP4AudioSampleEntry(TestCase):
         fileobj = cBytesIO(b"\x00" * 20)
         atom = Atom(fileobj)
         self.assertRaises(ASEntryError, AudioSampleEntry, atom, fileobj)
-
-add(TMP4AudioSampleEntry)
 
 
 def call_faad(*args):

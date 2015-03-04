@@ -2,7 +2,6 @@ import os
 from tempfile import mkstemp
 import shutil
 
-from tests import add
 from tests.test_tools import _TTools
 
 
@@ -40,5 +39,3 @@ class TMOggSPlit(_TTools):
             stream_path = os.path.join(d, str(stream) + ".ogg")
             self.failUnless(os.path.exists(stream_path))
             os.unlink(stream_path)
-
-add(TMOggSPlit)

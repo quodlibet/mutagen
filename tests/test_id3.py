@@ -2,7 +2,6 @@ import os
 from os.path import join
 import shutil
 from tests import TestCase
-from tests import add
 from mutagen import id3
 from mutagen.apev2 import APEv2
 from mutagen.id3 import ID3, COMR, Frames, Frames_2_2, ID3Warning, \
@@ -202,7 +201,6 @@ class Issue21(TestCase):
 
     def test_tit2_value(self):
         self.failUnlessEqual(self.id3["TIT2"].text, [u"Punk To Funk"])
-add(Issue21)
 
 
 class ID3Tags(TestCase):
@@ -450,8 +448,6 @@ class TestWriteID3v1(TestCase):
     def tearDown(self):
         os.unlink(self.filename)
 
-add(TestWriteID3v1)
-
 
 class TestV22Tags(TestCase):
 
@@ -462,10 +458,9 @@ class TestV22Tags(TestCase):
     def test_tags(self):
         self.failUnless(self.tags["TRCK"].text == ["3/11"])
         self.failUnless(self.tags["TPE1"].text == ["Anais Mitchell"])
-add(TestV22Tags)
 
 
-def TestReadTags():
+def create_read_tag_tests():
     tests = [
         ['TALB', b'\x00a/b', 'a/b', '', dict(encoding=0)],
         ['TBPM', b'\x00120', '120', 120, dict(encoding=0)],
@@ -930,11 +925,14 @@ def TestReadTags():
         write_tests['test_write_%s_%d' % (tag, i)] = test_tag_write
 
     testcase = type('TestReadTags', (TestCase,), load_tests)
-    add(testcase)
+    assert testcase.__name__ not in globals()
+    globals()[testcase.__name__] = testcase
     testcase = type('TestReadReprTags', (TestCase,), repr_tests)
-    add(testcase)
+    assert testcase.__name__ not in globals()
+    globals()[testcase.__name__] = testcase
     testcase = type('TestReadWriteTags', (TestCase,), write_tests)
-    add(testcase)
+    assert testcase.__name__ not in globals()
+    globals()[testcase.__name__] = testcase
 
     from mutagen.id3 import Frames, Frames_2_2
     check = dict.fromkeys(list(Frames.keys()) + list(Frames_2_2.keys()))
@@ -944,10 +942,10 @@ def TestReadTags():
             self.assert_(tag in tested_tags)
         tested_tags['test_' + tag + '_tested'] = check
     testcase = type('TestTestedTags', (TestCase,), tested_tags)
-    add(testcase)
+    assert testcase.__name__ not in globals()
+    globals()[testcase.__name__] = testcase
 
-TestReadTags()
-del TestReadTags
+create_read_tag_tests()
 
 
 class UpdateTo24(TestCase):
@@ -1019,8 +1017,6 @@ class UpdateTo24(TestCase):
         id3.update_to_v24()
         self.assertFalse(id3.getall("TIME"))
 
-add(UpdateTo24)
-
 
 class Issue97_UpgradeUnknown23(TestCase):
     SILENCE = os.path.join("tests", "data", "97-unknown-23-update.mp3")
@@ -1074,8 +1070,6 @@ class Issue97_UpgradeUnknown23(TestCase):
 
     def tearDown(self):
         os.unlink(self.filename)
-
-add(Issue97_UpgradeUnknown23)
 
 
 class BrokenDiscarded(TestCase):
@@ -1792,28 +1786,7 @@ class TID3Corrupt(TestCase):
             h.truncate(50)
         self.assertRaises(id3.error, ID3, self.filename)
 
-
-add(TID3Corrupt)
-add(TID3Misc)
-add(ID3V1_vs_APEv2)
-add(Read22FrameNamesin23)
-add(ID3Loading)
-add(ID3GetSetDel)
-add(ID3Tags)
-add(ID3v1Tags)
-add(BrokenDiscarded)
-add(BrokenButParsed)
-add(WriteRoundtrip)
-add(OddWrites)
-add(BadTYER)
-add(BadPOPM)
-add(Issue69_BadV1Year)
-add(UpdateTo23)
-add(WriteTo23)
-
 try:
     import eyeD3
 except ImportError:
-    pass
-else:
-    add(WriteForEyeD3)
+    del WriteForEyeD3

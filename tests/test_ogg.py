@@ -4,7 +4,7 @@ import shutil
 import subprocess
 
 from mutagen._compat import BytesIO
-from tests import TestCase, add
+from tests import TestCase
 from mutagen.ogg import OggPage, error as OggError
 from mutagen._util import cdata
 from tempfile import mkstemp
@@ -371,10 +371,10 @@ class TOggPage(TestCase):
 
     def tearDown(self):
         self.fileobj.close()
-add(TOggPage)
 
 
-class TOggFileType(TestCase):
+class TOggFileTypeMixin(object):
+
     def scan_file(self):
         fileobj = open(self.filename, "rb")
         try:
@@ -517,9 +517,6 @@ class TOggFileType(TestCase):
 
     def test_mime_secondary(self):
         self.failUnless('application/ogg' in self.audio.mime)
-
-    def tearDown(self):
-        os.unlink(self.filename)
 
 
 def call_ogginfo(*args):

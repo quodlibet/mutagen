@@ -6,7 +6,7 @@ import shutil
 
 from tempfile import mkstemp
 
-from tests import TestCase, add
+from tests import TestCase
 
 import mutagen.apev2
 from mutagen._compat import PY3, text_type
@@ -35,8 +35,6 @@ class Tis_valid_apev2_key(TestCase):
         def test_py3(self):
             self.assertRaises(TypeError, is_valid_apev2_key, b"abc")
 
-add(Tis_valid_apev2_key)
-
 
 class TAPEInvalidItemCount(TestCase):
     # http://code.google.com/p/mutagen/issues/detail?id=145
@@ -44,8 +42,6 @@ class TAPEInvalidItemCount(TestCase):
     def test_load(self):
         x = mutagen.apev2.APEv2(INVAL_ITEM_COUNT)
         self.failUnlessEqual(len(x.keys()), 17)
-
-add(TAPEInvalidItemCount)
 
 
 class TAPEWriter(TestCase):
@@ -151,8 +147,6 @@ class TAPEWriter(TestCase):
         os.unlink(SAMPLE + ".justtag")
         os.unlink(SAMPLE + ".tag_at_start")
 
-add(TAPEWriter)
-
 
 class TAPEv2ThenID3v1Writer(TAPEWriter):
     offset = 128
@@ -171,8 +165,6 @@ class TAPEv2ThenID3v1Writer(TAPEWriter):
 
     def test_tag_at_start_write(self):
         pass
-
-add(TAPEv2ThenID3v1Writer)
 
 
 class TAPEv2(TestCase):
@@ -279,8 +271,6 @@ class TAPEv2(TestCase):
     def tearDown(self):
         os.unlink(self.filename)
 
-add(TAPEv2)
-
 
 class TAPEv2ThenID3v1(TAPEv2):
 
@@ -290,8 +280,6 @@ class TAPEv2ThenID3v1(TAPEv2):
         f.write(b"TAG" + b"\x00" * 125)
         f.close()
         self.audio = APEv2(self.filename)
-
-add(TAPEv2ThenID3v1)
 
 
 class TAPEv2WithLyrics2(TestCase):
@@ -303,8 +291,6 @@ class TAPEv2WithLyrics2(TestCase):
         self.failUnlessEqual(self.tag["MP3GAIN_MINMAX"], "000,179")
         self.failUnlessEqual(self.tag["REPLAYGAIN_TRACK_GAIN"], "-4.080000 dB")
         self.failUnlessEqual(self.tag["REPLAYGAIN_TRACK_PEAK"], "1.008101")
-
-add(TAPEv2WithLyrics2)
 
 
 class TAPEBinaryValue(TestCase):
@@ -331,8 +317,6 @@ class TAPEBinaryValue(TestCase):
     def test_type2(self):
         self.assertRaises(TypeError,
                           mutagen.apev2.APEValue, u"abc", mutagen.apev2.BINARY)
-
-add(TAPEBinaryValue)
 
 
 class TAPETextValue(TestCase):
@@ -398,8 +382,6 @@ class TAPETextValue(TestCase):
     def test_pprint(self):
         self.assertEqual(self.value.pprint(), "foo / bar / baz")
 
-add(TAPETextValue)
-
 
 class TAPEExtValue(TestCase):
 
@@ -429,8 +411,6 @@ class TAPEExtValue(TestCase):
     def test_pprint(self):
         self.assertEqual(self.value.pprint(), "[External] http://foo")
 
-add(TAPEExtValue)
-
 
 class TAPEv2File(TestCase):
 
@@ -450,5 +430,3 @@ class TAPEv2File(TestCase):
     def test_unknown_info(self):
         info = self.audio.info
         info.pprint()
-
-add(TAPEv2File)

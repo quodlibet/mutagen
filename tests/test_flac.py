@@ -2,7 +2,7 @@ import shutil
 import os
 import subprocess
 
-from tests import TestCase, add
+from tests import TestCase
 
 from mutagen.id3 import ID3, TIT2, ID3NoHeaderError
 from mutagen.flac import to_int_be, Padding, VCFLACDict, MetadataBlock, error
@@ -33,7 +33,6 @@ class Tto_int_be(TestCase):
 
     def test_long(self):
         self.failUnlessEqual(to_int_be(b"\x01\x00\x00\x00\x00"), 2 ** 32)
-add(Tto_int_be)
 
 
 class TVCFLACDict(TVCommentDict):
@@ -42,7 +41,6 @@ class TVCFLACDict(TVCommentDict):
 
     def test_roundtrip_vc(self):
         self.failUnlessEqual(self.c, VComment(self.c.write() + b"\x01"))
-add(TVCFLACDict)
 
 
 class TMetadataBlock(TestCase):
@@ -74,7 +72,6 @@ class TMetadataBlock(TestCase):
         length2 = len(MetadataBlock.writeblocks(blocks))
         self.failUnlessEqual(length1, length2)
         self.failUnlessEqual(len(blocks), 2)
-add(TMetadataBlock)
 
 
 class TStreamInfo(TestCase):
@@ -124,7 +121,6 @@ class TStreamInfo(TestCase):
 
     def test_roundtrip(self):
         self.failUnlessEqual(StreamInfo(self.i.write()), self.i)
-add(TStreamInfo)
 
 
 class TSeekTable(TestCase):
@@ -154,7 +150,6 @@ class TSeekTable(TestCase):
 
     def test_roundtrip(self):
         self.failUnlessEqual(SeekTable(self.st.write()), self.st)
-add(TSeekTable)
 
 
 class TCueSheet(TestCase):
@@ -211,7 +206,6 @@ class TCueSheet(TestCase):
 
     def test_roundtrip(self):
         self.failUnlessEqual(CueSheet(self.cs.write()), self.cs)
-add(TCueSheet)
 
 
 class TPicture(TestCase):
@@ -245,7 +239,6 @@ class TPicture(TestCase):
 
     def test_roundtrip(self):
         self.failUnlessEqual(Picture(self.p.write()), self.p)
-add(TPicture)
 
 
 class TPadding(TestCase):
@@ -268,7 +261,6 @@ class TPadding(TestCase):
     def test_change(self):
         self.b.length = 20
         self.failUnlessEqual(self.b.write(), b"\x00" * 20)
-add(TPadding)
 
 
 class TFLAC(TestCase):
@@ -497,7 +489,6 @@ class TFLAC(TestCase):
 
     def tearDown(self):
         os.unlink(self.NEW)
-add(TFLAC)
 
 
 class TFLACFile(TestCase):
@@ -507,8 +498,6 @@ class TFLACFile(TestCase):
         non-existant FLAC files"""
         filename = os.path.join("tests", "data", "doesntexist.flac")
         self.assertRaises(IOError, FLAC, filename)
-
-add(TFLACFile)
 
 
 class TFLACBadBlockSize(TestCase):
@@ -532,7 +521,6 @@ class TFLACBadBlockSize(TestCase):
 
     def test_inval_streaminfo(self):
         self.assertRaises(error, FLAC, self.INVAL_INFO)
-add(TFLACBadBlockSize)
 
 
 class TFLACBadBlockSizeWrite(TestCase):
@@ -553,8 +541,6 @@ class TFLACBadBlockSizeWrite(TestCase):
 
     def tearDown(self):
         os.unlink(self.NEW)
-
-add(TFLACBadBlockSizeWrite)
 
 
 class CVE20074619(TestCase):
@@ -635,8 +621,6 @@ class CVE20074619(TestCase):
 
     # Vulnerability 13 and 14 are specific to libFLAC and C/C++ memory
     # management schemes.
-
-add(CVE20074619)
 
 
 have_flac = True

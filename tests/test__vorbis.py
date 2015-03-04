@@ -1,4 +1,4 @@
-from tests import add, TestCase
+from tests import TestCase
 from mutagen._vorbis import VComment, VCommentDict, istag
 from mutagen._compat import text_type, PY3
 
@@ -35,8 +35,6 @@ class Tistag(TestCase):
     if PY3:
         def test_py3(self):
             self.failUnlessRaises(TypeError, istag, b"abc")
-
-add(Tistag)
 
 
 class TVComment(TestCase):
@@ -155,7 +153,6 @@ class TVComment(TestCase):
 
     def test_roundtrip(self):
         self.assertReallyEqual(self.c, VComment(self.c.write()))
-add(TVComment)
 
 
 class TVCommentDict(TestCase):
@@ -284,5 +281,3 @@ class TVCommentDict(TestCase):
             self.c.append((key, "value"))
         self.failUnlessEqual(len(self.c.keys()), 1)
         self.failUnlessEqual(len(self.c.as_dict()), 1)
-
-add(TVCommentDict)
