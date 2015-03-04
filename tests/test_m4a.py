@@ -1,6 +1,5 @@
 import os
 import shutil
-from os.path import devnull
 
 from cStringIO import StringIO
 from tempfile import mkstemp
@@ -10,6 +9,8 @@ import warnings
 warnings.simplefilter("ignore", DeprecationWarning)
 from mutagen.m4a import (M4A, Atom, Atoms, M4ATags, M4AInfo, delete, M4ACover,
                          M4AMetadataError)
+
+from tests.test_mp4 import have_faad, call_faad
 
 
 class TAtom(TestCase):
@@ -149,10 +150,7 @@ class TM4A(TestCase):
     def faad(self):
         if not have_faad:
             return
-        value = os.system(
-            "faad %s -o %s > %s 2> %s" % (
-                self.filename, devnull, devnull, devnull))
-        self.failIf(value and value != NOTFOUND)
+        self.assertEqual(call_faad("-w", self.filename), 0)
 
     def test_bitrate(self):
         self.failUnlessEqual(self.audio.info.bitrate, 2914)
@@ -281,10 +279,3 @@ class TM4ANoTags(TM4A):
         self.failUnless(self.audio.tags is None)
 
 add(TM4ANoTags)
-
-NOTFOUND = os.system("tools/notarealprogram 2> %s" % devnull)
-
-have_faad = True
-if os.system("faad 2> %s > %s" % (devnull, devnull)) == NOTFOUND:
-    have_faad = False
-    print "WARNING: Skipping FAAD reference tests."

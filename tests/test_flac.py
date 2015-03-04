@@ -1,6 +1,6 @@
 import shutil
 import os
-from os.path import devnull
+import subprocess
 
 from tests import TestCase, add
 
@@ -9,6 +9,12 @@ from mutagen.flac import to_int_be, Padding, VCFLACDict, MetadataBlock, error
 from mutagen.flac import StreamInfo, SeekTable, CueSheet, FLAC, delete, Picture
 from mutagen._compat import PY3
 from tests.test__vorbis import TVCommentDict, VComment
+
+
+def call_flac(*args):
+    with open(os.devnull, 'wb') as null:
+        return subprocess.call(
+            ["flac"] + list(args), stdout=null, stderr=subprocess.STDOUT)
 
 
 class Tto_int_be(TestCase):
@@ -390,9 +396,7 @@ class TFLAC(TestCase):
             return
         self.flac["faketag"] = "foobar" * 1000
         self.flac.save()
-        badval = os.system("tools/notarealprogram 2> %s" % devnull)
-        value = os.system("flac -t %s 2> %s" % (self.flac.filename, devnull))
-        self.failIf(value and value != badval)
+        self.failIf(call_flac("-t", self.flac.filename) != 0)
 
     def test_save_unknown_block(self):
         block = MetadataBlock(b"test block data")
@@ -628,9 +632,10 @@ class CVE20074619(TestCase):
 
 add(CVE20074619)
 
-NOTFOUND = os.system("tools/notarealprogram 2> %s" % devnull)
 
 have_flac = True
-if os.system("flac 2> %s > %s" % (devnull, devnull)) == NOTFOUND:
+try:
+    call_flac()
+except OSError:
     have_flac = False
     print("WARNING: Skipping FLAC reference tests.")

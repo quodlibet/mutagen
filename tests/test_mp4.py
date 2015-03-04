@@ -1,6 +1,7 @@
 import os
 import shutil
 import struct
+import subprocess
 
 from mutagen._compat import cBytesIO, PY3, text_type
 from tempfile import mkstemp
@@ -11,7 +12,6 @@ from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
 from mutagen.mp4._util import parse_full_atom
 from mutagen.mp4._as_entry import AudioSampleEntry, ASEntryError
 from mutagen._util import cdata
-from os import devnull
 
 
 class TAtom(TestCase):
@@ -442,9 +442,7 @@ class TMP4(TestCase):
     def faad(self):
         if not have_faad:
             return
-        value = os.system("faad %s -o %s > %s 2> %s" % (self.filename, devnull,
-                                                        devnull, devnull))
-        self.failIf(value and value != NOTFOUND)
+        self.assertEqual(call_faad("-w", self.filename), 0)
 
     def test_score(self):
         fileobj = open(self.filename, "rb")
@@ -1080,9 +1078,15 @@ class TMP4AudioSampleEntry(TestCase):
 add(TMP4AudioSampleEntry)
 
 
-NOTFOUND = os.system("tools/notarealprogram 2> %s" % devnull)
+def call_faad(*args):
+    with open(os.devnull, 'wb') as null:
+        return subprocess.call(
+            ["faad"] + list(args),
+            stdout=null, stderr=subprocess.STDOUT)
 
 have_faad = True
-if os.system("faad 2> %s > %s" % (devnull, devnull)) == NOTFOUND:
+try:
+    call_faad()
+except OSError:
     have_faad = False
     print("WARNING: Skipping FAAD reference tests.")

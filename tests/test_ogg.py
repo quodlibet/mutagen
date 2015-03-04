@@ -1,13 +1,13 @@
 import os
 import random
 import shutil
+import subprocess
 
 from mutagen._compat import BytesIO
 from tests import TestCase, add
 from mutagen.ogg import OggPage, error as OggError
 from mutagen._util import cdata
 from tempfile import mkstemp
-from os import devnull
 
 
 class TOggPage(TestCase):
@@ -481,17 +481,14 @@ class TOggFileType(TestCase):
     def ogg_reference(self, filename):
         self.scan_file()
         if have_ogginfo:
-            value = os.system("ogginfo %s > %s 2> %s" % (filename, devnull,
-                              devnull))
-            self.failIf(value and value != NOTFOUND,
-                        "ogginfo failed on %s" % filename)
+            self.assertEqual(call_ogginfo(filename), 0,
+                             msg="ogginfo failed on %s" % filename)
+
         if have_oggz_validate:
             if filename.endswith(".opus") and not have_oggz_validate_opus:
                 return
-            value = os.system(
-                "oggz-validate %s > %s" % (filename, devnull))
-            self.failIf(value and value != NOTFOUND,
-                        "oggz-validate failed on %s" % filename)
+            self.assertEqual(call_oggz_validate(filename), 0,
+                             msg="oggz-validate failed on %s" % filename)
 
     def test_ogg_reference_simple_save(self):
         self.audio.save()
@@ -524,25 +521,52 @@ class TOggFileType(TestCase):
     def tearDown(self):
         os.unlink(self.filename)
 
-NOTFOUND = os.system("tools/notarealprogram 2> %s" % devnull)
+
+def call_ogginfo(*args):
+    with open(os.devnull, 'wb') as null:
+        return subprocess.call(
+            ["ogginfo"] + list(args), stdout=null, stderr=subprocess.STDOUT)
+
+
+def call_oggz_validate(*args):
+    with open(os.devnull, 'wb') as null:
+        return subprocess.call(
+            ["oggz-validate"] + list(args),
+            stdout=null, stderr=subprocess.STDOUT)
+
+
+def get_oggz_validate_version():
+    """A version tuple or OSError if oggz-validate isn't available"""
+
+    output = subprocess.check_output(["oggz-validate", "--version"])
+    lines = output.splitlines()
+    if not lines:
+        return (0,)
+    parts = lines[0].split()
+    if not parts:
+        return (0,)
+    try:
+        return tuple(map(int, parts[-1].split(b".")))
+    except ValueError:
+        return (0,)
+
 
 have_ogginfo = True
-if os.system("ogginfo 2> %s > %s" % (devnull, devnull)) == NOTFOUND:
+try:
+    call_ogginfo()
+except OSError:
     have_ogginfo = False
     print("WARNING: Skipping ogginfo reference tests.")
+
+
 have_oggz_validate = True
 have_oggz_validate_opus = True
-if os.system("oggz-validate 2> %s > %s" % (devnull, devnull)) == NOTFOUND:
+try:
+    call_oggz_validate()
+except OSError:
     have_oggz_validate = False
     print("WARNING: Skipping oggz-validate reference tests.")
 else:
-    f = os.popen("oggz-validate --version")
-    try:
-        version_string = f.read()
-        version_part = version_string.split()[-1]
-        version = tuple(map(int, version_part.split(".")))
-        if version <= (0, 9, 9):
-            have_oggz_validate_opus = False
-            print("WARNING: Skipping oggz-validate reference tests for opus")
-    finally:
-        f.close()
+    if get_oggz_validate_version() <= (0, 9, 9):
+        have_oggz_validate_opus = False
+        print("WARNING: Skipping oggz-validate reference tests for opus")

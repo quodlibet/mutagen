@@ -8,7 +8,7 @@ from mutagen.oggflac import OggFLAC, OggFLACStreamInfo, delete
 from mutagen.ogg import OggPage, error as OggError
 from tests import add
 from tests.test_ogg import TOggFileType
-from os import devnull
+from tests.test_flac import have_flac, call_flac
 
 
 class TOggFLAC(TOggFileType):
@@ -45,8 +45,7 @@ class TOggFLAC(TOggFileType):
             return
         self.audio.save()
         self.scan_file()
-        value = os.system("flac --ogg -t %s 2> %s" % (self.filename, devnull))
-        self.failIf(value and value != NOTFOUND)
+        self.assertEqual(call_flac("--ogg", "-t", self.filename), 0)
 
     def test_flac_reference_really_big(self):
         if not have_flac:
@@ -54,8 +53,7 @@ class TOggFLAC(TOggFileType):
         self.test_really_big()
         self.audio.save()
         self.scan_file()
-        value = os.system("flac --ogg -t %s 2> %s" % (self.filename, devnull))
-        self.failIf(value and value != NOTFOUND)
+        self.assertEqual(call_flac("--ogg", "-t", self.filename), 0)
 
     def test_module_delete(self):
         delete(self.filename)
@@ -67,8 +65,7 @@ class TOggFLAC(TOggFileType):
             return
         self.audio.delete()
         self.scan_file()
-        value = os.system("flac --ogg -t %s 2> %s" % (self.filename, devnull))
-        self.failIf(value and value != NOTFOUND)
+        self.assertEqual(call_flac("--ogg", "-t", self.filename), 0)
 
     def test_flac_reference_medium_sized(self):
         if not have_flac:
@@ -76,8 +73,7 @@ class TOggFLAC(TOggFileType):
         self.audio["foobar"] = "foobar" * 1000
         self.audio.save()
         self.scan_file()
-        value = os.system("flac --ogg -t %s 2> %s" % (self.filename, devnull))
-        self.failIf(value and value != NOTFOUND)
+        self.assertEqual(call_flac("--ogg", "-t", self.filename), 0)
 
     def test_flac_reference_delete_readd(self):
         if not have_flac:
@@ -87,8 +83,7 @@ class TOggFLAC(TOggFileType):
         self.audio["foobar"] = "foobar" * 1000
         self.audio.save()
         self.scan_file()
-        value = os.system("flac --ogg -t %s 2> %s" % (self.filename, devnull))
-        self.failIf(value and value != NOTFOUND)
+        self.assertEqual(call_flac("--ogg", "-t", self.filename), 0)
 
     def test_not_my_ogg(self):
         fn = os.path.join('tests', 'data', 'empty.ogg')
@@ -100,10 +95,3 @@ class TOggFLAC(TOggFileType):
         self.failUnless("audio/x-oggflac" in self.audio.mime)
 
 add(TOggFLAC)
-
-NOTFOUND = os.system("tools/notarealprogram 2> %s" % devnull)
-
-have_flac = True
-if os.system("flac 2> %s > %s" % (devnull, devnull)) == NOTFOUND:
-    have_flac = False
-    print("WARNING: Skipping Ogg FLAC reference tests.")
