@@ -152,7 +152,7 @@ class Frame(object):
         return "[unrepresentable data]"
 
     @classmethod
-    def fromData(cls, id3, tflags, data, pedantic=True):
+    def fromData(cls, id3, tflags, data):
         """Construct this ID3 frame from raw string data.
 
         Raises:
@@ -187,9 +187,8 @@ class Frame(object):
                     try:
                         data = zlib.decompress(data)
                     except zlib.error as err:
-                        if pedantic:
-                            raise ID3JunkFrameError(
-                                'zlib: %s: %r' % (err, data))
+                        raise ID3JunkFrameError(
+                            'zlib: %s: %r' % (err, data))
 
         elif id3.version >= id3._V23:
             if tflags & Frame.FLAG23_COMPRESS:
@@ -201,8 +200,7 @@ class Frame(object):
                 try:
                     data = zlib.decompress(data)
                 except zlib.error as err:
-                    if pedantic:
-                        raise ID3JunkFrameError('zlib: %s: %r' % (err, data))
+                    raise ID3JunkFrameError('zlib: %s: %r' % (err, data))
 
         frame = cls()
         frame._readData(data)

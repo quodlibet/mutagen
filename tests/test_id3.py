@@ -1140,7 +1140,7 @@ class BrokenButParsed(TestCase):
             _24, 0, b'\x01\xff\xfeH\x00e\x00l\x00l\x00o\x00\x00')
         self.assertEquals(tpe1, [u'Hello'])
 
-    def test_fake_zlib_pedantic(self):
+    def test_fake_zlib(self):
         from mutagen.id3 import TPE1, Frame
         header = ID3Header()
         header.version = (2, 4, 0)
@@ -1155,14 +1155,6 @@ class BrokenButParsed(TestCase):
         datalen_size = data[4 + 4 + 2:4 + 4 + 2 + 4]
         self.failIf(
             max(datalen_size) >= b'\x80'[0], "data is not syncsafe: %r" % data)
-
-    def test_fake_zlib_nopedantic(self):
-        from mutagen.id3 import TPE1, Frame
-        header = ID3Header()
-        header.version = (2, 4, 0)
-        tpe1 = TPE1.fromData(header, Frame.FLAG24_COMPRESS, b'\x03abcdefg',
-                             pedantic=False)
-        self.assertEquals(u'abcdefg', tpe1)
 
     def test_ql_0_12_missing_uncompressed_size(self):
         from mutagen.id3 import TPE1

@@ -85,7 +85,7 @@ class ID3Header(object):
     f_experimental = property(lambda s: bool(s._flags & 0x20))
     f_footer = property(lambda s: bool(s._flags & 0x10))
 
-    def __init__(self, fileobj=None, pedantic=True):
+    def __init__(self, fileobj=None):
         """Raises ID3NoHeaderError, ID3UnsupportedVersionError or error"""
 
         if fileobj is None:
@@ -111,16 +111,15 @@ class ID3Header(object):
             raise ID3UnsupportedVersionError("%r ID3v2.%d not supported"
                                              % (fn, vmaj))
 
-        if pedantic:
-            if not BitPaddedInt.has_valid_padding(size):
-                raise error("Header size not synchsafe")
+        if not BitPaddedInt.has_valid_padding(size):
+            raise error("Header size not synchsafe")
 
-            if (self.version >= self._V24) and (flags & 0x0f):
-                raise error(
-                    "%r has invalid flags %#02x" % (fn, flags))
-            elif (self._V23 <= self.version < self._V24) and (flags & 0x1f):
-                raise error(
-                    "%r has invalid flags %#02x" % (fn, flags))
+        if (self.version >= self._V24) and (flags & 0x0f):
+            raise error(
+                "%r has invalid flags %#02x" % (fn, flags))
+        elif (self._V23 <= self.version < self._V24) and (flags & 0x1f):
+            raise error(
+                "%r has invalid flags %#02x" % (fn, flags))
 
         if self.f_extended:
             try:
@@ -149,10 +148,9 @@ class ID3Header(object):
                 # "Where the 'Extended header size' is the size of the whole
                 # extended header, stored as a 32 bit synchsafe integer."
                 extsize = BitPaddedInt(extsize_data) - 4
-                if pedantic:
-                    if not BitPaddedInt.has_valid_padding(extsize_data):
-                        raise error(
-                            "Extended header size not synchsafe")
+                if not BitPaddedInt.has_valid_padding(extsize_data):
+                    raise error(
+                        "Extended header size not synchsafe")
             else:
                 # "Where the 'Extended header size', currently 6 or 10 bytes,
                 # excludes itself."
@@ -177,6 +175,7 @@ class ID3(DictProxy, mutagen.Metadata):
     __module__ = "mutagen.id3"
 
     PEDANTIC = True
+    """Deprecated. Doesn't have any effect"""
 
     filename = None
 
@@ -253,7 +252,7 @@ class ID3(DictProxy, mutagen.Metadata):
             self._pre_load_header(fileobj)
 
             try:
-                self._header = ID3Header(fileobj, self.PEDANTIC)
+                self._header = ID3Header(fileobj)
             except (ID3NoHeaderError, ID3UnsupportedVersionError):
                 frames, offset = _find_id3v1(fileobj)
                 if frames is None:
@@ -581,7 +580,7 @@ class ID3(DictProxy, mutagen.Metadata):
     def __save_frame(self, frame, name=None, version=ID3Header._V24,
                      v23_sep=None):
         flags = 0
-        if self.PEDANTIC and isinstance(frame, TextFrame):
+        if isinstance(frame, TextFrame):
             if len(str(frame)) == 0:
                 return b''
 
