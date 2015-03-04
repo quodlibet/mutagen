@@ -134,7 +134,7 @@ def check():
 
     runner = Runner()
     failures = 0
-    for test in tests:
+    for test in sorted(tests, key=lambda c: c.__name__):
         failures += runner.run(test)
 
     return len(tests), failures
@@ -147,7 +147,7 @@ def unit(run=[], exitfirst=False):
     failures = 0
     filtered = [t for t in tests if not run or t.__name__ in run]
 
-    for test in filtered:
+    for test in sorted(filtered, key=lambda c: c.__name__):
         if failures and exitfirst:
             break
 
