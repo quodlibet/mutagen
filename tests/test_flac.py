@@ -569,6 +569,9 @@ class CVE20074619(TestCase):
         # decoding software."
         filename = os.path.join("tests", "data", "CVE-2007-4619-1.flac")
         self.failUnlessRaises(IOError, FLAC, filename)
+        # work around https://bitbucket.org/pypy/pypy/issue/1988
+        import gc
+        gc.collect()
 
     def test_2(self):
         # "The second vulnerability lies within the parsing of any
@@ -578,6 +581,9 @@ class CVE20074619(TestCase):
         # execute in the content of the decoding program."
         filename = os.path.join("tests", "data", "CVE-2007-4619-2.flac")
         self.failUnlessRaises(IOError, FLAC, filename)
+        # work around https://bitbucket.org/pypy/pypy/issue/1988
+        import gc
+        gc.collect()
 
     # "By inserting an overly long VORBIS Comment data string along
     # with an large VORBIS Comment data string size value (such as
