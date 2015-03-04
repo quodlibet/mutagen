@@ -11,8 +11,7 @@ from warnings import warn
 from struct import unpack
 
 from ._util import (
-    ID3Warning, ID3JunkFrameError, ID3BadCompressedData,
-    ID3EncryptionUnsupportedError, unsynch)
+    ID3Warning, ID3JunkFrameError, ID3EncryptionUnsupportedError, unsynch)
 from ._specs import (
     BinaryDataSpec, StringSpec, Latin1TextSpec, EncodedTextSpec, ByteSpec,
     EncodingSpec, ASPIIndexSpec, SizedIntegerSpec, IntegerSpec,
@@ -154,7 +153,14 @@ class Frame(object):
 
     @classmethod
     def fromData(cls, id3, tflags, data, pedantic=True):
-        """Construct this ID3 frame from raw string data."""
+        """Construct this ID3 frame from raw string data.
+
+        Raises:
+
+        ID3JunkFrameError in case parsing failed
+        NotImplementedError in case parsing isn't implemented
+        ID3EncryptionUnsupportedError in case the frame is encrypted.
+        """
 
         if id3.version >= id3._V24:
             if tflags & (Frame.FLAG24_COMPRESS | Frame.FLAG24_DATALEN):
@@ -182,7 +188,8 @@ class Frame(object):
                         data = zlib.decompress(data)
                     except zlib.error as err:
                         if pedantic:
-                            raise ID3BadCompressedData('%s: %r' % (err, data))
+                            raise ID3JunkFrameError(
+                                'zlib: %s: %r' % (err, data))
 
         elif id3.version >= id3._V23:
             if tflags & Frame.FLAG23_COMPRESS:
@@ -195,7 +202,7 @@ class Frame(object):
                     data = zlib.decompress(data)
                 except zlib.error as err:
                     if pedantic:
-                        raise ID3BadCompressedData('%s: %r' % (err, data))
+                        raise ID3JunkFrameError('zlib: %s: %r' % (err, data))
 
         frame = cls()
         frame._readData(data)

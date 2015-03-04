@@ -436,7 +436,8 @@ class ID3(DictProxy, mutagen.Metadata):
                 else:
                     try:
                         yield tag.fromData(self._header, 0, framedata)
-                    except NotImplementedError:
+                    except (ID3EncryptionUnsupportedError,
+                            NotImplementedError):
                         yield header + framedata
                     except ID3JunkFrameError:
                         pass
@@ -655,9 +656,13 @@ class ID3(DictProxy, mutagen.Metadata):
             for frame in self.unknown_frames:
                 try:
                     name, size, flags = unpack('>4sLH', frame[:10])
+                except struct.error:
+                    continue
+
+                try:
                     frame = BinaryFrame.fromData(
                         self._header, flags, frame[10:])
-                except (struct.error, error):
+                except (error, NotImplementedError):
                     continue
 
                 converted.append(self.__save_frame(frame, name=name))

@@ -20,18 +20,6 @@ class ID3NoHeaderError(error, ValueError):
     pass
 
 
-class ID3BadUnsynchData(error, ValueError):
-    """Deprecated"""
-
-
-class ID3BadCompressedData(error, ValueError):
-    pass
-
-
-class ID3TagError(error, ValueError):
-    pass
-
-
 class ID3UnsupportedVersionError(error, NotImplementedError):
     pass
 
@@ -165,3 +153,15 @@ if PY3:
 else:
     class BitPaddedLong(long_, _BitPaddedMixin):
         pass
+
+
+class ID3BadUnsynchData(error, ValueError):
+    """Deprecated"""
+
+
+class ID3BadCompressedData(error, ValueError):
+    """Deprecated"""
+
+
+class ID3TagError(error, ValueError):
+    """Deprecated"""

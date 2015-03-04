@@ -1141,10 +1141,10 @@ class BrokenButParsed(TestCase):
         self.assertEquals(tpe1, [u'Hello'])
 
     def test_fake_zlib_pedantic(self):
-        from mutagen.id3 import TPE1, Frame, ID3BadCompressedData
+        from mutagen.id3 import TPE1, Frame
         header = ID3Header()
         header.version = (2, 4, 0)
-        self.assertRaises(ID3BadCompressedData, TPE1.fromData, header,
+        self.assertRaises(ID3JunkFrameError, TPE1.fromData, header,
                           Frame.FLAG24_COMPRESS, b'\x03abcdefg')
 
     def test_zlib_bpi(self):
