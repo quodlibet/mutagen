@@ -242,7 +242,7 @@ class FrameSanityChecks(TestCase):
 
     def test_zlib_latin1(self):
         from mutagen.id3 import TPE1
-        tag = TPE1.fromData(
+        tag = TPE1._fromData(
             _24._header, 0x9, b'\x00\x00\x00\x0f'
             b'x\x9cc(\xc9\xc8,V\x00\xa2D\xfd\x92\xd4\xe2\x12\x00&\x7f\x05%'
         )
@@ -251,13 +251,13 @@ class FrameSanityChecks(TestCase):
 
     def test_datalen_but_not_compressed(self):
         from mutagen.id3 import TPE1
-        tag = TPE1.fromData(_24._header, 0x01, b'\x00\x00\x00\x06\x00A test')
+        tag = TPE1._fromData(_24._header, 0x01, b'\x00\x00\x00\x06\x00A test')
         self.assertEquals(tag.encoding, 0)
         self.assertEquals(tag, ['A test'])
 
     def test_utf8(self):
         from mutagen.id3 import TPE1
-        tag = TPE1.fromData(_23._header, 0x00, b'\x03this is a test')
+        tag = TPE1._fromData(_23._header, 0x00, b'\x03this is a test')
         self.assertEquals(tag.encoding, 3)
         self.assertEquals(tag, 'this is a test')
 
@@ -265,11 +265,11 @@ class FrameSanityChecks(TestCase):
         from mutagen.id3 import TPE1
         data = (b'\x00\x00\x00\x1fx\x9cc\xfc\xff\xaf\x84!\x83!\x93\xa1\x98A'
                 b'\x01J&2\xe83\x940\xa4\x02\xd9%\x0c\x00\x87\xc6\x07#')
-        tag = TPE1.fromData(_23._header, 0x80, data)
+        tag = TPE1._fromData(_23._header, 0x80, data)
         self.assertEquals(tag.encoding, 1)
         self.assertEquals(tag, ['this is a/test'])
 
-        tag = TPE1.fromData(_24._header, 0x08, data)
+        tag = TPE1._fromData(_24._header, 0x08, data)
         self.assertEquals(tag.encoding, 1)
         self.assertEquals(tag, ['this is a/test'])
 

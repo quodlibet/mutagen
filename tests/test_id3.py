@@ -165,13 +165,13 @@ class ID3Loading(TestCase):
         badsync = b'\x00\xff\x00ab\x00'
 
         self.assertEquals(
-            Frames["TPE2"].fromData(header, 0, badsync), [u"\xffab"])
+            Frames["TPE2"]._fromData(header, 0, badsync), [u"\xffab"])
 
         header._flags = 0x00
         self.assertEquals(
-            Frames["TPE2"].fromData(header, 0x02, badsync), [u"\xffab"])
+            Frames["TPE2"]._fromData(header, 0x02, badsync), [u"\xffab"])
 
-        tag = Frames["TPE2"].fromData(header, 0, badsync)
+        tag = Frames["TPE2"]._fromData(header, 0, badsync)
         self.assertEquals(tag, [u"\xff", u"ab"])
 
     def test_load_v23_unsynch(self):
@@ -261,14 +261,14 @@ class ID3Tags(TestCase):
 
     def test_badencoding(self):
         self.assertRaises(
-            ID3JunkFrameError, Frames["TPE1"].fromData, _24, 0, b"\x09ab")
+            ID3JunkFrameError, Frames["TPE1"]._fromData, _24, 0, b"\x09ab")
         self.assertRaises(ValueError, Frames["TPE1"], encoding=9, text="ab")
 
     def test_badsync(self):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
 
-            Frames["TPE1"].fromData(_24, 0x02, b"\x00\xff\xfe")
+            Frames["TPE1"]._fromData(_24, 0x02, b"\x00\xff\xfe")
 
             self.assertEqual(len(w), 1)
             self.assertTrue(issubclass(w[-1].category, ID3Warning))
@@ -276,27 +276,27 @@ class ID3Tags(TestCase):
 
     def test_noencrypt(self):
         self.assertRaises(
-            NotImplementedError, Frames["TPE1"].fromData, _24, 0x04, b"\x00")
+            NotImplementedError, Frames["TPE1"]._fromData, _24, 0x04, b"\x00")
         self.assertRaises(
-            NotImplementedError, Frames["TPE1"].fromData, _23, 0x40, b"\x00")
+            NotImplementedError, Frames["TPE1"]._fromData, _23, 0x40, b"\x00")
 
     def test_badcompress(self):
         self.assertRaises(
-            ValueError, Frames["TPE1"].fromData, _24, 0x08,
+            ValueError, Frames["TPE1"]._fromData, _24, 0x08,
             b"\x00\x00\x00\x00#")
         self.assertRaises(
-            ValueError, Frames["TPE1"].fromData, _23, 0x80,
+            ValueError, Frames["TPE1"]._fromData, _23, 0x80,
             b"\x00\x00\x00\x00#")
 
     def test_junkframe(self):
-        self.assertRaises(ValueError, Frames["TPE1"].fromData, _24, 0, b"")
+        self.assertRaises(ValueError, Frames["TPE1"]._fromData, _24, 0, b"")
 
     def test_bad_sylt(self):
         self.assertRaises(
-            ID3JunkFrameError, Frames["SYLT"].fromData, _24, 0x0,
+            ID3JunkFrameError, Frames["SYLT"]._fromData, _24, 0x0,
             b"\x00eng\x01description\x00foobar")
         self.assertRaises(
-            ID3JunkFrameError, Frames["SYLT"].fromData, _24, 0x0,
+            ID3JunkFrameError, Frames["SYLT"]._fromData, _24, 0x0,
             b"\x00eng\x01description\x00foobar\x00\xFF\xFF\xFF")
 
     def test_extradata(self):
@@ -867,7 +867,7 @@ def create_read_tag_tests():
             from operator import pos
             id3 = __import__('mutagen.id3', globals(), locals(), [tag])
             TAG = getattr(id3, tag)
-            tag = TAG.fromData(_23, 0, data)
+            tag = TAG._fromData(_23, 0, data)
             self.failUnless(tag.HashKey)
             self.failUnless(tag.pprint())
             self.assertEquals(value, tag)
@@ -895,7 +895,7 @@ def create_read_tag_tests():
             from mutagen.id3 import ID3TimeStamp
             id3 = __import__('mutagen.id3', globals(), locals(), [tag])
             TAG = getattr(id3, tag)
-            tag = TAG.fromData(_23, 0, data)
+            tag = TAG._fromData(_23, 0, data)
             tag2 = eval(repr(tag), {TAG.__name__: TAG,
                         'ID3TimeStamp': ID3TimeStamp})
             self.assertEquals(type(tag), type(tag2))
@@ -916,9 +916,9 @@ def create_read_tag_tests():
         def test_tag_write(self, tag=tag, data=data):
             id3 = __import__('mutagen.id3', globals(), locals(), [tag])
             TAG = getattr(id3, tag)
-            tag = TAG.fromData(_24, 0, data)
+            tag = TAG._fromData(_24, 0, data)
             towrite = tag._writeData()
-            tag2 = TAG.fromData(_24, 0, towrite)
+            tag2 = TAG._fromData(_24, 0, towrite)
             for spec in TAG._framespec:
                 attr = spec.name
                 self.assertEquals(getattr(tag, attr), getattr(tag2, attr))
@@ -1076,17 +1076,17 @@ class BrokenDiscarded(TestCase):
 
     def test_empty(self):
         from mutagen.id3 import TPE1, ID3JunkFrameError
-        self.assertRaises(ID3JunkFrameError, TPE1.fromData, _24, 0x00, b'')
+        self.assertRaises(ID3JunkFrameError, TPE1._fromData, _24, 0x00, b'')
 
     def test_wacky_truncated_RVA2(self):
         from mutagen.id3 import RVA2, ID3JunkFrameError
         data = b'\x01{\xf0\x10\xff\xff\x00'
-        self.assertRaises(ID3JunkFrameError, RVA2.fromData, _24, 0x00, data)
+        self.assertRaises(ID3JunkFrameError, RVA2._fromData, _24, 0x00, data)
 
     def test_bad_number_of_bits_RVA2(self):
         from mutagen.id3 import RVA2, ID3JunkFrameError
         data = b'\x00\x00\x01\xe6\xfc\x10{\xd7'
-        self.assertRaises(ID3JunkFrameError, RVA2.fromData, _24, 0x00, data)
+        self.assertRaises(ID3JunkFrameError, RVA2._fromData, _24, 0x00, data)
 
     def test_drops_truncated_frames(self):
         from mutagen.id3 import Frames
@@ -1112,7 +1112,7 @@ class BrokenDiscarded(TestCase):
         from mutagen.id3 import COMM, ID3JunkFrameError
         # 7 bytes of "UTF16" data.
         data = b'\x01\x00\x00\x00\xff\xfe\x00\xff\xfeh\x00'
-        self.assertRaises(ID3JunkFrameError, COMM.fromData, _24, 0x00, data)
+        self.assertRaises(ID3JunkFrameError, COMM._fromData, _24, 0x00, data)
 
 
 class BrokenButParsed(TestCase):
@@ -1128,15 +1128,15 @@ class BrokenButParsed(TestCase):
 
     def test_lengthone_utf16(self):
         from mutagen.id3 import TPE1
-        tpe1 = TPE1.fromData(_24, 0, b'\x01\x00')
+        tpe1 = TPE1._fromData(_24, 0, b'\x01\x00')
         self.assertEquals(u'', tpe1)
-        tpe1 = TPE1.fromData(_24, 0, b'\x01\x00\x00\x00\x00')
+        tpe1 = TPE1._fromData(_24, 0, b'\x01\x00\x00\x00\x00')
         self.assertEquals([u'', u''], tpe1)
 
     def test_utf16_wrongnullterm(self):
         # issue 169
         from mutagen.id3 import TPE1
-        tpe1 = TPE1.fromData(
+        tpe1 = TPE1._fromData(
             _24, 0, b'\x01\xff\xfeH\x00e\x00l\x00l\x00o\x00\x00')
         self.assertEquals(tpe1, [u'Hello'])
 
@@ -1144,7 +1144,7 @@ class BrokenButParsed(TestCase):
         from mutagen.id3 import TPE1, Frame
         header = ID3Header()
         header.version = (2, 4, 0)
-        self.assertRaises(ID3JunkFrameError, TPE1.fromData, header,
+        self.assertRaises(ID3JunkFrameError, TPE1._fromData, header,
                           Frame.FLAG24_COMPRESS, b'\x03abcdefg')
 
     def test_zlib_bpi(self):
@@ -1158,7 +1158,7 @@ class BrokenButParsed(TestCase):
 
     def test_ql_0_12_missing_uncompressed_size(self):
         from mutagen.id3 import TPE1
-        tag = TPE1.fromData(
+        tag = TPE1._fromData(
             _24, 0x08,
             b'x\x9cc\xfc\xff\xaf\x84!\x83!\x93'
             b'\xa1\x98A\x01J&2\xe83\x940\xa4\x02\xd9%\x0c\x00\x87\xc6\x07#'
@@ -1168,7 +1168,7 @@ class BrokenButParsed(TestCase):
 
     def test_zlib_latin1_missing_datalen(self):
         from mutagen.id3 import TPE1
-        tag = TPE1.fromData(
+        tag = TPE1._fromData(
             _24, 0x8,
             b'\x00\x00\x00\x0f'
             b'x\x9cc(\xc9\xc8,V\x00\xa2D\xfd\x92\xd4\xe2\x12\x00&\x7f\x05%'

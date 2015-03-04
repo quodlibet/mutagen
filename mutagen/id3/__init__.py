@@ -400,7 +400,7 @@ class ID3(DictProxy, mutagen.Metadata):
                         yield header + framedata
                 else:
                     try:
-                        yield tag.fromData(self._header, flags, framedata)
+                        yield tag._fromData(self._header, flags, framedata)
                     except NotImplementedError:
                         yield header + framedata
                     except ID3JunkFrameError:
@@ -434,7 +434,7 @@ class ID3(DictProxy, mutagen.Metadata):
                         yield header + framedata
                 else:
                     try:
-                        yield tag.fromData(self._header, 0, framedata)
+                        yield tag._fromData(self._header, 0, framedata)
                     except (ID3EncryptionUnsupportedError,
                             NotImplementedError):
                         yield header + framedata
@@ -659,7 +659,7 @@ class ID3(DictProxy, mutagen.Metadata):
                     continue
 
                 try:
-                    frame = BinaryFrame.fromData(
+                    frame = BinaryFrame._fromData(
                         self._header, flags, frame[10:])
                 except (error, NotImplementedError):
                     continue

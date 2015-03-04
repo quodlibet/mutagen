@@ -152,7 +152,7 @@ class Frame(object):
         return "[unrepresentable data]"
 
     @classmethod
-    def fromData(cls, id3, tflags, data):
+    def _fromData(cls, id3, tflags, data):
         """Construct this ID3 frame from raw string data.
 
         Raises:
