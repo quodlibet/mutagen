@@ -106,7 +106,10 @@ def print_(*objects, **kwargs):
     for text in objects:
         if isinstance(text, text_type):
             if PY3:
-                text = text.encode(encoding, 'surrogateescape')
+                try:
+                    text = text.encode(encoding, 'surrogateescape')
+                except UnicodeEncodeError:
+                    text = text.encode(encoding, 'replace')
             else:
                 text = text.encode(encoding, 'replace')
         parts.append(text)
