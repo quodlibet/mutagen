@@ -11,22 +11,22 @@
 tag loading and saving.
 """
 
-from __future__ import print_function
-
 import sys
 import os.path
 from optparse import OptionParser
 import mutagen
 import mutagen.id3
 from mutagen._util import SignalHandler
+from mutagen._compat import print_, text_type
 
 
 VERSION = (0, 1)
 _sig = SignalHandler()
 
 
-def printerr(msg):
-    print(msg, file=sys.stderr)
+def printerr(*args, **kwargs):
+    kwargs.setdefault("file", sys.stderr)
+    print_(*args, **kwargs)
 
 
 class ID3OptionParser(OptionParser):
@@ -51,14 +51,14 @@ def copy(src, dst, write_v1=True, excluded_tags=None, verbose=False):
     try:
         id3 = mutagen.id3.ID3(src, translate=False)
     except mutagen.id3.ID3NoHeaderError:
-        printerr("No ID3 header found in %s" % src)
+        printerr(u"No ID3 header found in ", src)
         return 1
     except StandardError as err:
-        print_(str(err))
+        printerr(str(err))
         return 1
     else:
         if verbose:
-            printerr("File %s contains:" % src)
+            printerr(u"File", src, u"contains:")
             printerr(id3.pprint())
 
         for tag in excluded_tags:
@@ -75,11 +75,11 @@ def copy(src, dst, write_v1=True, excluded_tags=None, verbose=False):
         try:
             id3.save(dst, v1=(2 if write_v1 else 0), v2_version=v2_version)
         except StandardError as err:
-            printerr("Error saving %s:\n%s" % (dst, str(err)))
+            printerr(u"Error saving", dst, u":\n%s" % text_type(err))
             return 1
         else:
             if verbose:
-                printerr("Successfully saved %s" % dst)
+                printerr(u"Successfully saved", dst)
             return 0
 
 
@@ -100,17 +100,17 @@ def main(argv):
     (src, dst) = args
 
     if not os.path.isfile(src):
-        printerr("File not found: '%s'" % src)
+        printerr(u"File not found:", src)
         parser.print_help(file=sys.stderr)
         return 1
 
     if not os.path.isfile(dst):
-        printerr("File not found: '%s'" % dst)
+        printerr(u"File not found:", dst)
         parser.print_help(file=sys.stderr)
         return 1
 
     if os.path.samefile(src, dst):
-        printerr("Source and destination files are the same!")
+        printerr(u"Source and destination files are the same!")
         parser.print_help(file=sys.stderr)
         return 1
 

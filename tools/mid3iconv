@@ -13,7 +13,7 @@ from optparse import OptionParser
 
 import mutagen
 import mutagen.id3
-from mutagen._compat import PY3
+from mutagen._compat import PY3, print_, text_type
 from mutagen._util import SignalHandler
 
 
@@ -21,8 +21,8 @@ VERSION = (0, 3)
 _sig = SignalHandler()
 
 
-def getpreferredencoding(*args):
-    return locale.getpreferredencoding(*args) or "utf-8"
+def getpreferredencoding():
+    return locale.getpreferredencoding() or "utf-8"
 
 
 def isascii(string):
@@ -71,7 +71,7 @@ def update(options, filenames):
     for filename in filenames:
         with _sig.block():
             if verbose != "quiet":
-                print("Updating", filename)
+                print_(u"Updating", filename)
 
             if has_id3v1(filename) and not noupdate and force_v1:
                 mutagen.id3.delete(filename, False, True)
@@ -80,11 +80,10 @@ def update(options, filenames):
                 id3 = mutagen.id3.ID3(filename)
             except mutagen.id3.ID3NoHeaderError:
                 if verbose != "quiet":
-                    print("No ID3 header found; skipping...")
+                    print_(u"No ID3 header found; skipping...")
                 continue
             except Exception as err:
-                sys.stderr.write(str(err))
-                sys.stderr.flush()
+                print_(text_type(err), file=sys.stderr)
                 continue
 
             for tag in filter(lambda t: t.startswith(("T", "COMM")), id3):
@@ -107,13 +106,8 @@ def update(options, filenames):
                     else:
                         frame.encoding = 1
 
-            enc = getpreferredencoding()
             if verbose == "debug":
-                pp = id3.pprint()
-                if PY3:
-                    print(pp)
-                else:
-                    print(pp.encode(enc, "replace"))
+                print_(id3.pprint())
 
             if not noupdate:
                 if remove_v1:

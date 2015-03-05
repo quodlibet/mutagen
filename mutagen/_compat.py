@@ -6,7 +6,9 @@
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
 
+import os
 import sys
+import locale
 
 
 PY2 = sys.version_info[0] == 2
@@ -82,3 +84,42 @@ elif PY3:
 
     def swap_to_string(cls):
         return cls
+
+
+def print_(*objects, **kwargs):
+    """A print which supports bytes and str+surrogates under python3.
+
+    Arguments:
+        objects: one or more bytes/text
+        linesep (bool): whether a line separator should be appended
+        sep (bool): whether objects should be printed separated by spaces
+    """
+
+    encoding = locale.getpreferredencoding() or "utf-8"
+    linesep = kwargs.pop("linesep", True)
+    sep = kwargs.pop("sep", True)
+    file_ = kwargs.pop("file", sys.stdout)
+    if linesep:
+        objects = list(objects) + [os.linesep]
+
+    parts = []
+    for text in objects:
+        if isinstance(text, text_type):
+            if PY3:
+                text = text.encode(encoding, 'surrogateescape')
+            else:
+                text = text.encode(encoding, 'replace')
+        parts.append(text)
+
+    data = (b" " if sep else b"").join(parts)
+    try:
+        fileno = file_.fileno()
+    except (AttributeError, OSError, ValueError):
+        # for tests when stdout is replaced
+        try:
+            file_.write(data)
+        except TypeError:
+            file_.write(data.decode(encoding, "replace"))
+    else:
+        file_.flush()
+        os.write(fileno, data)
