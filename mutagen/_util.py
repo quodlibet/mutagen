@@ -12,8 +12,11 @@ You should not rely on the interfaces here being stable. They are
 intended for internal use in Mutagen only.
 """
 
+import os
 import struct
 import codecs
+import signal
+import contextlib
 
 from fnmatch import fnmatchcase
 
@@ -601,3 +604,35 @@ class BitReader(object):
         """If we are currently aligned to bytes and nothing is buffered"""
 
         return self._bits == 0
+
+
+class SignalHandler(object):
+
+    def __init__(self):
+        self._interrupted = False
+        self._nosig = False
+        self._init = False
+
+    def init(self):
+        signal.signal(signal.SIGINT, self._handler)
+        signal.signal(signal.SIGTERM, self._handler)
+        if os.name == "nt":
+            signal.signal(signal.SIGHUP, self._handler)
+
+    def _handler(self, signum, frame):
+        self._interrupted = True
+        if not self._nosig:
+            raise SystemExit("Aborted...")
+
+    @contextlib.contextmanager
+    def block(self):
+        """While this context manager is active any signals for aborting
+        the process will be queued and exit the program once the context
+        is left.
+        """
+
+        self._nosig = True
+        yield
+        self._nosig = False
+        if self._interrupted:
+            raise SystemExit("Aborted...")

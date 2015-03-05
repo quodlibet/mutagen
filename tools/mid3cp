@@ -18,8 +18,11 @@ import os.path
 from optparse import OptionParser
 import mutagen
 import mutagen.id3
+from mutagen._util import SignalHandler
+
 
 VERSION = (0, 1)
+_sig = SignalHandler()
 
 
 def printerr(msg):
@@ -114,8 +117,10 @@ def main(argv):
     # Strip tags - "-x FOO" adds whitespace at the beginning of the tag name
     excluded_tags = [x.strip() for x in options.x]
 
-    return copy(src, dst, options.write_v1, excluded_tags, options.verbose)
+    with _sig.block():
+        return copy(src, dst, options.write_v1, excluded_tags, options.verbose)
 
 
 if __name__ == "__main__":
+    _sig.init()
     sys.exit(main(sys.argv))

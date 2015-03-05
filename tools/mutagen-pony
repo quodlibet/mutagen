@@ -9,6 +9,8 @@ import os
 import sys
 import traceback
 
+from mutagen._util import SignalHandler
+
 
 class Report(object):
     def __init__(self, pathname):
@@ -87,8 +89,6 @@ def check_dir(path):
             ffn = os.path.join(path, fn)
             try:
                 mp3 = MP3(ffn)
-            except KeyboardInterrupt:
-                raise
             except Exception:
                 rep.error(ffn)
             else:
@@ -109,4 +109,5 @@ def main(argv):
 
 
 if __name__ == "__main__":
+    SignalHandler().init()
     main(sys.argv)

@@ -11,6 +11,8 @@ import locale
 
 from optparse import OptionParser
 
+from mutagen._util import SignalHandler
+
 
 def main(argv):
     from mutagen import File
@@ -31,12 +33,11 @@ def main(argv):
             print("- " + File(filename).pprint().encode(enc, 'replace'))
         except AttributeError:
             print("- Unknown file type")
-        except KeyboardInterrupt:
-            raise
         except Exception as err:
             print(str(err))
         print
 
 
 if __name__ == "__main__":
+    SignalHandler().init()
     main(sys.argv)
