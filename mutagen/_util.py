@@ -616,7 +616,7 @@ class SignalHandler(object):
     def init(self):
         signal.signal(signal.SIGINT, self._handler)
         signal.signal(signal.SIGTERM, self._handler)
-        if os.name == "nt":
+        if os.name != "nt":
             signal.signal(signal.SIGHUP, self._handler)
 
     def _handler(self, signum, frame):
