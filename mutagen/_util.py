@@ -13,6 +13,7 @@ intended for internal use in Mutagen only.
 """
 
 import os
+import sys
 import struct
 import codecs
 import signal
@@ -636,3 +637,33 @@ class SignalHandler(object):
         self._nosig = False
         if self._interrupted:
             raise SystemExit("Aborted...")
+
+
+def set_win32_unicode_argv():
+    if os.name != "nt" or not PY2:
+        return
+
+    import ctypes
+    from ctypes import cdll, windll, wintypes
+
+    GetCommandLineW = cdll.kernel32.GetCommandLineW
+    GetCommandLineW.argtypes = []
+    GetCommandLineW.restype = wintypes.LPCWSTR
+
+    CommandLineToArgvW = windll.shell32.CommandLineToArgvW
+    CommandLineToArgvW.argtypes = [
+        wintypes.LPCWSTR, ctypes.POINTER(ctypes.c_int)]
+    CommandLineToArgvW.restype = ctypes.POINTER(wintypes.LPWSTR)
+
+    LocalFree = windll.kernel32.LocalFree
+    LocalFree.argtypes = [wintypes.HLOCAL]
+    LocalFree.restype = wintypes.HLOCAL
+
+    argc = ctypes.c_int()
+    argv = CommandLineToArgvW(GetCommandLineW(), ctypes.byref(argc))
+    if not argv:
+        return
+
+    sys.argv = argv[max(0, argc.value - len(sys.argv)):argc.value]
+
+    LocalFree(argv)

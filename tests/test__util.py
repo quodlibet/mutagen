@@ -1,10 +1,12 @@
 from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes
 from mutagen._util import decode_terminated, split_escape, dict_match, enum
-from mutagen._util import BitReader, BitReaderError
+from mutagen._util import BitReader, BitReaderError, set_win32_unicode_argv
 from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2, \
     cBytesIO, xrange
 from tests import TestCase
 import random
+import sys
+import os
 import mmap
 
 try:
@@ -662,3 +664,15 @@ class TBitReader(TestCase):
         self.assertFalse(r.is_aligned())
         r.bits(1)
         self.assertTrue(r.is_aligned())
+
+
+class Tset_win32_unicode_argv(TestCase):
+
+    def test_main(self):
+        old_argv = sys.argv
+        try:
+            set_win32_unicode_argv()
+            if os.name == "nt":
+                self.assertTrue(isinstance(sys.argv[0], text_type))
+        finally:
+            sys.argv = old_argv

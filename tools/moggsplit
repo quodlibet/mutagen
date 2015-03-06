@@ -12,7 +12,7 @@ import sys
 from optparse import OptionParser
 
 import mutagen.ogg
-from mutagen._util import SignalHandler
+from mutagen._util import SignalHandler, set_win32_unicode_argv
 
 
 _sig = SignalHandler()
@@ -69,5 +69,6 @@ def main(argv):
                 f.close()
 
 if __name__ == "__main__":
+    set_win32_unicode_argv()
     _sig.init()
     main(sys.argv)
