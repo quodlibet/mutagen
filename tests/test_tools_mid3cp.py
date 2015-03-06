@@ -40,10 +40,8 @@ class TMid3cp(_TTools):
         self.failUnless("Usage:" in err)
 
     def test_src_equal_dst(self):
-        res, out, err = self.call2(self.filename, self.filename)
-        self.assertNotEqual(res, 0)
-        self.failUnless("the same" in err)
-        self.failUnless("Usage:" in err)
+        res = self.call2(self.filename, self.filename)[0]
+        self.assertEqual(res, 0)
 
     def test_copy(self):
         fd, blank_file = mkstemp(suffix='.mp3')
@@ -140,7 +138,7 @@ class TMid3cp(_TTools):
         self.assertTrue(status)
 
         status, out, err = self.call2(self.filename, self.filename)
-        self.assertTrue(status)
+        self.assertFalse(status)
 
         status, out, err = self.call2(blank_file, self.filename)
         self.assertTrue(status)

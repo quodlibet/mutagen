@@ -109,11 +109,6 @@ def main(argv):
         parser.print_help(file=sys.stderr)
         return 1
 
-    if os.path.samefile(src, dst):
-        printerr(u"Source and destination files are the same!")
-        parser.print_help(file=sys.stderr)
-        return 1
-
     # Strip tags - "-x FOO" adds whitespace at the beginning of the tag name
     excluded_tags = [x.strip() for x in options.x]
 
