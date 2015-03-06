@@ -138,7 +138,6 @@ class test_cmd(Command):
 
     def initialize_options(self):
         self.to_run = []
-        self.quick = False
         self.exitfirst = False
 
     def finalize_options(self):
@@ -176,15 +175,13 @@ class quality_cmd(Command):
 
 class coverage_cmd(Command):
     description = "generate test coverage data"
-    user_options = [
-        ("quick", None, "don't run slow mmap-failing tests"),
-    ]
+    user_options = []
 
     def initialize_options(self):
-        self.quick = None
+        pass
 
     def finalize_options(self):
-        self.quick = bool(self.quick)
+        pass
 
     def run(self):
         try:
@@ -203,7 +200,6 @@ class coverage_cmd(Command):
         cov.start()
 
         cmd = self.reinitialize_command("test")
-        cmd.quick = self.quick
         cmd.ensure_finalized()
         cmd.run()
 
