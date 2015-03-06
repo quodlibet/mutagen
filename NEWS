@@ -1,22 +1,46 @@
+1.28 - 2015.03.06
+-----------------
+
+* Various minor fixes to make mutagen behave the same under Python3 as under
+  Python2.
+* Update gpl text :bug:`205`
+* Documentation: Add example for how to create a new flac.Picture :bug:`209`
+
+* ID3:
+
+  * Various error handling fixes (:bug:`110`, :bug:`211`, ...)
+  * Don't hide ID3 loading errors with ID3FileType.
+  * In case a synch safe marked frame isn't sync safe, only warn :bug:`210`
+  * Removed PEDANTIC mode
+
+* Tools:
+
+  * Add signal handling :bug:`170`
+  * mid3cp: Make it work under Windows.
+  * mutagen-inspect: Make it work under Windows+Python3 :bug:`216`
+  * Support unicode file paths under Windows+Python2 :bug:`214`
+  * Support file paths with invalid encoding under Unix+Python3.
+
+
 1.27 - 2014.11.28
 -----------------
 
 * MP4:
 
-    * New ``MP4Info.codec`` for identifying the contained audio codec
-      e.g. ``"mp4a"``, ``"alac"``, ``"mp4a.40.2"``, ``"ac-3"`` etc. :pr:`6`
-    * New ``MP4Info.codec_description``: name of the audio codec
-      e.g. ``"ALAC"``, ``"AAC LC"``, ``"AC-3"``
+  * New ``MP4Info.codec`` for identifying the contained audio codec
+    e.g. ``"mp4a"``, ``"alac"``, ``"mp4a.40.2"``, ``"ac-3"`` etc. :pr:`6`
+  * New ``MP4Info.codec_description``: name of the audio codec
+    e.g. ``"ALAC"``, ``"AAC LC"``, ``"AC-3"``
 
 * OggOpus:
 
-    * Preserve data after vorbis comment (
-      See https://tools.ietf.org/html/draft-ietf-codec-oggopus-05#section-5.2)
-      :bug:`202`
+  * Preserve data after vorbis comment (
+    See https://tools.ietf.org/html/draft-ietf-codec-oggopus-05#section-5.2)
+    :bug:`202`
 
 * AAC:
 
-    * New AAC FileType. Supports loading ADTS/ADIF AAC files. :bug:`15`
+  * New AAC FileType. Supports loading ADTS/ADIF AAC files. :bug:`15`
 
 
 1.26 - 2014.11.10
