@@ -68,7 +68,7 @@ def list_frames_2_2(option, opt, value, parser):
     items = mutagen.id3.Frames_2_2.items()
     items.sort()
     for name, frame in items:
-        print(u"    --%s    %s" % (name, frame.__doc__.split("\n")[0]))
+        print_(u"    --%s    %s" % (name, frame.__doc__.split("\n")[0]))
     raise SystemExit
 
 
@@ -82,7 +82,7 @@ def delete_tags(filenames, v1, v2):
     for filename in filenames:
         with _sig.block():
             if verbose:
-                print_(u"deleting ID3 tag info in", filename)
+                print_(u"deleting ID3 tag info in", filename, file=sys.stderr)
             mutagen.id3.delete(filename, v1, v2)
 
 
@@ -91,14 +91,15 @@ def delete_frames(deletes, filenames):
     for filename in filenames:
         with _sig.block():
             if verbose:
-                print_(u"deleting %s from" % deletes, filename)
+                print_(u"deleting %s from" % deletes, filename, file=sys.stderr)
             try:
                 id3 = mutagen.id3.ID3(filename)
             except mutagen.id3.ID3NoHeaderError:
                 if verbose:
-                    print_(u"No ID3 header found; skipping.")
+                    print_(u"No ID3 header found; skipping.", file=sys.stderr)
             except Exception as err:
-                print_(text_type(err))
+                print_(text_type(err), file=sys.stderr)
+                raise SystemExit(1)
             else:
                 for frame in frames:
                     id3.delall(frame)
@@ -125,13 +126,13 @@ def write_files(edits, filenames, escape):
             try:
                 value = unescape_bytes(value)
             except ValueError as err:
-                print_(u"%s: %s" % (frame, text_type(err)))
+                print_(u"%s: %s" % (frame, text_type(err)), file=sys.stderr)
                 raise SystemExit(1)
 
         try:
             value = value.decode(enc)
         except UnicodeDecodeError as err:
-            print_(u"%s: %s" % (frame, text_type(err)))
+            print_(u"%s: %s" % (frame, text_type(err)), file=sys.stderr)
             raise SystemExit(1)
 
         encoded_edits.append((frame, value))
@@ -158,15 +159,16 @@ def write_files(edits, filenames, escape):
     for filename in filenames:
         with _sig.block():
             if verbose:
-                print_(u"Writing", filename)
+                print_(u"Writing", filename, file=sys.stderr)
             try:
                 id3 = mutagen.id3.ID3(filename)
             except mutagen.id3.ID3NoHeaderError:
                 if verbose:
-                    print_(u"No ID3 header found; creating a new tag")
+                    print_(u"No ID3 header found; creating a new tag",
+                          file=sys.stderr)
                 id3 = mutagen.id3.ID3()
             except Exception as err:
-                print_(str(err))
+                print_(str(err), file=sys.stderr)
                 continue
             for (frame, vlist) in edits.items():
                 if frame == "POPM":
@@ -220,8 +222,11 @@ def list_tags(filenames):
         print_("IDv2 tag info for", filename)
         try:
             id3 = mutagen.id3.ID3(filename, translate=False)
+        except mutagen.id3.ID3NoHeaderError:
+            print_(u"No ID3 header found; skipping.")
         except Exception as err:
-            print_(text_type(err))
+            print_(text_type(err), file=sys.stderr)
+            raise SystemExit(1)
         else:
             print_(id3.pprint())
 
@@ -231,8 +236,11 @@ def list_tags_raw(filenames):
         print_("Raw IDv2 tag info for", filename)
         try:
             id3 = mutagen.id3.ID3(filename, translate=False)
+        except mutagen.id3.ID3NoHeaderError:
+            print_(u"No ID3 header found; skipping.")
         except Exception as err:
-            print_(text_type(err))
+            print_(text_type(err), file=sys.stderr)
+            raise SystemExit(1)
         else:
             for frame in id3.values():
                 print_(text_type(repr(frame)))

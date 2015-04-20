@@ -28,8 +28,8 @@ class TMid3v2(_TTools):
     def test_no_tags(self):
         f = ID3(self.filename)
         f.delete()
-        out = self.call("-l", self.filename)[1]
-        self.assertTrue("doesn't start with an ID3 tag" in out)
+        res, out, err = self.call2("-l", self.filename)
+        self.assertTrue("No ID3 header found" in out)
 
     def test_list_genres(self):
         for arg in ["-L", "--list-genres"]:
@@ -172,9 +172,9 @@ class TMid3v2(_TTools):
         self.assertEqual(f.getall("TPE1")[0], text.decode(enc))
 
     def test_invalid_encoding_escaped(self):
-        res, out = self.call("--TALB", '\\xff\\x81', '-e', self.filename)
+        res, out, err = self.call2("--TALB", '\\xff\\x81', '-e', self.filename)
         self.failIfEqual(res, 0)
-        self.failUnless("TALB" in out)
+        self.failUnless("TALB" in err)
 
     def test_invalid_encoding(self):
         value = b"\xff\xff\x81"
@@ -192,15 +192,15 @@ class TMid3v2(_TTools):
 
         if not PY2:
             value = value.decode(enc, "surrogateescape")
-        res, out = self.call("--TALB", value, self.filename)
+        res, out, err = self.call2("--TALB", value, self.filename)
         self.failIfEqual(res, 0)
-        self.failUnless("TALB" in out)
+        self.failUnless("TALB" in err)
 
     def test_invalid_escape(self):
-        res, out = self.call("--TALB", '\\xaz', '-e', self.filename)
+        res, out, err = self.call2("--TALB", '\\xaz', '-e', self.filename)
         self.failIfEqual(res, 0)
-        self.failUnless("TALB" in out)
+        self.failUnless("TALB" in err)
 
-        res, out = self.call("--TALB", '\\', '-e', self.filename)
+        res, out, err = self.call2("--TALB", '\\', '-e', self.filename)
         self.failIfEqual(res, 0)
-        self.failUnless("TALB" in out)
+        self.failUnless("TALB" in err)
