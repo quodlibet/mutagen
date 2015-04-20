@@ -25,6 +25,12 @@ class TMid3v2(_TTools):
         super(TMid3v2, self).tearDown()
         os.unlink(self.filename)
 
+    def test_no_tags(self):
+        f = ID3(self.filename)
+        f.delete()
+        out = self.call("-l", self.filename)[1]
+        self.assertTrue("doesn't start with an ID3 tag" in out)
+
     def test_list_genres(self):
         for arg in ["-L", "--list-genres"]:
             res, out = self.call(arg)
