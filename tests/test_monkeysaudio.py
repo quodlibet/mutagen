@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os
 
 from mutagen.monkeysaudio import MonkeysAudio, MonkeysAudioHeaderError

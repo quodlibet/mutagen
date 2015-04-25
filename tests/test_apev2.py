@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # FIXME: This test suite is a mess, a lot of it dates from PyMusepack so
 # it doesn't match the other Mutagen test conventions/quality.
 

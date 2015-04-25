@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from tests import TestCase
 
 from mutagen.id3 import Frames, Frames_2_2, ID3, ID3Header

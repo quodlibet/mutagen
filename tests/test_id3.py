@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os
 from os.path import join
 import shutil

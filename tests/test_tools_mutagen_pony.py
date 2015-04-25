@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os
 
 from tests.test_tools import _TTools

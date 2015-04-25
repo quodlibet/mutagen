@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes
 from mutagen._util import decode_terminated, split_escape, dict_match, enum
 from mutagen._util import BitReader, BitReaderError, get_win32_unicode_argv
