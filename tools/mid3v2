@@ -14,7 +14,7 @@ from optparse import OptionParser, SUPPRESS_HELP
 
 import mutagen
 import mutagen.id3
-from mutagen._util import split_escape, SignalHandler, set_win32_unicode_argv
+from mutagen._util import split_escape, SignalHandler, get_win32_unicode_argv
 from mutagen._compat import PY2, PY3, text_type, print_
 
 
@@ -352,6 +352,6 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    set_win32_unicode_argv()
+    argv = get_win32_unicode_argv()
     _sig.init()
-    main(sys.argv)
+    main(argv)

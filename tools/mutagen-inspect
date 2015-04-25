@@ -11,7 +11,7 @@ import locale
 
 from optparse import OptionParser
 
-from mutagen._util import SignalHandler, set_win32_unicode_argv
+from mutagen._util import SignalHandler, get_win32_unicode_argv
 from mutagen._compat import print_, text_type
 
 
@@ -39,6 +39,6 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    set_win32_unicode_argv()
+    argv = get_win32_unicode_argv()
     SignalHandler().init()
-    main(sys.argv)
+    main(argv)

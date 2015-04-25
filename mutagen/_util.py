@@ -639,9 +639,11 @@ class SignalHandler(object):
             raise SystemExit("Aborted...")
 
 
-def set_win32_unicode_argv():
+def get_win32_unicode_argv():
+    """Returns a unicode argv under Windows and standard sys.argv otherwise"""
+
     if os.name != "nt" or not PY2:
-        return
+        return sys.argv
 
     import ctypes
     from ctypes import cdll, windll, wintypes
@@ -664,6 +666,8 @@ def set_win32_unicode_argv():
     if not argv:
         return
 
-    sys.argv = argv[max(0, argc.value - len(sys.argv)):argc.value]
+    res = argv[max(0, argc.value - len(sys.argv)):argc.value]
 
     LocalFree(argv)
+
+    return res
