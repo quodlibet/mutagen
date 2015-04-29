@@ -49,11 +49,11 @@ class _TTools(TestCase):
             out_val = out.getvalue()
             if not out_val:
                 out_val = fsnative()
-            self.assertTrue(is_fsnative(out_val))
+            self.assertTrue(is_fsnative(out_val), msg=repr(out_val))
             err_val = err.getvalue()
             if not err_val:
                 err_val = fsnative()
-            self.assertTrue(is_fsnative(err_val))
+            self.assertTrue(is_fsnative(err_val), msg=repr(err_val))
             return (ret, out_val, err_val)
         finally:
             sys.stdout = old_stdout

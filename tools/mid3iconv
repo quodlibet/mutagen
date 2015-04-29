@@ -14,7 +14,8 @@ from optparse import OptionParser
 import mutagen
 import mutagen.id3
 from mutagen._compat import PY3, text_type
-from mutagen._util import SignalHandler, get_win32_unicode_argv, print_
+from mutagen._util import SignalHandler, get_win32_unicode_argv, print_, \
+    fsnative as fsn
 
 
 VERSION = (0, 3)
@@ -148,18 +149,18 @@ def main(argv):
         "-d", "--debug", action="store_const", dest="verbose",
         const="debug", help="Output updated tags")
 
-    for i, arg in enumerate(sys.argv):
+    for i, arg in enumerate(argv):
         if arg == "-v1":
-            sys.argv[i] = "--force-v1"
+            argv[i] = fsn(u"--force-v1")
         elif arg == "-removev1":
-            sys.argv[i] = "--remove-v1"
+            argv[i] = fsn(u"--remove-v1")
 
     (options, args) = parser.parse_args(argv[1:])
 
     if args:
         update(options, args)
     else:
-        parser.print_help()
+        print_(parser.format_help())
 
 if __name__ == "__main__":
     argv = get_win32_unicode_argv()

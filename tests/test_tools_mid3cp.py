@@ -15,6 +15,7 @@ import os
 from tempfile import mkstemp
 import shutil
 from mutagen.id3 import ID3, ParseID3v1
+from mutagen._util import fsnative as fsn
 
 from tests.test_tools import _TTools
 
@@ -25,8 +26,9 @@ class TMid3cp(_TTools):
 
     def setUp(self):
         super(TMid3cp, self).setUp()
-        original = os.path.join('tests', 'data', 'silence-44-s.mp3')
-        fd, self.filename = mkstemp(suffix='.mp3')
+        original = os.path.join(
+            fsn(u'tests'), fsn(u'data'), fsn(u'silence-44-s.mp3'))
+        fd, self.filename = mkstemp(suffix=fsn(u'öäü.mp3'))
         os.close(fd)
         shutil.copy(original, self.filename)
 
@@ -44,7 +46,7 @@ class TMid3cp(_TTools):
         self.assertEqual(res, 0)
 
     def test_copy(self):
-        fd, blank_file = mkstemp(suffix='.mp3')
+        fd, blank_file = mkstemp(suffix=fsn(u'.mp3'))
         os.close(fd)
 
         res = self.call(self.filename, blank_file)[0]
@@ -64,10 +66,10 @@ class TMid3cp(_TTools):
         os.unlink(blank_file)
 
     def test_include_id3v1(self):
-        fd, blank_file = mkstemp(suffix='.mp3')
+        fd, blank_file = mkstemp(suffix=fsn(u'.mp3'))
         os.close(fd)
 
-        self.call('--write-v1', self.filename, blank_file)
+        self.call(fsn(u'--write-v1'), self.filename, blank_file)
 
         fileobj = open(blank_file, 'rb')
         fileobj.seek(-128, 2)
@@ -78,10 +80,10 @@ class TMid3cp(_TTools):
         self.failUnless(frames)
 
     def test_exclude_single_tag(self):
-        fd, blank_file = mkstemp(suffix='.mp3')
+        fd, blank_file = mkstemp(suffix=fsn(u'.mp3'))
         os.close(fd)
 
-        self.call('-x TLEN', self.filename, blank_file)
+        self.call(fsn(u'-x'), fsn(u'TLEN'), self.filename, blank_file)
 
         original_id3 = ID3(self.filename)
         copied_id3 = ID3(blank_file)
@@ -90,10 +92,11 @@ class TMid3cp(_TTools):
         self.failIf('TLEN' in copied_id3)
 
     def test_exclude_multiple_tag(self):
-        fd, blank_file = mkstemp(suffix='.mp3')
+        fd, blank_file = mkstemp(suffix=fsn(u'.mp3'))
         os.close(fd)
 
-        self.call('-x TLEN', '-x TCON', '-x TALB', self.filename, blank_file)
+        self.call(fsn(u'-x'), fsn(u'TLEN'), fsn(u'-x'), fsn(u'TCON'),
+                  fsn(u'-x'), fsn(u'TALB'), self.filename, blank_file)
 
         original_id3 = ID3(self.filename)
         copied_id3 = ID3(blank_file)
@@ -106,32 +109,32 @@ class TMid3cp(_TTools):
         self.failIf('TALB' in copied_id3)
 
     def test_no_src_header(self):
-        fd, blank_file1 = mkstemp(suffix='.mp3')
+        fd, blank_file1 = mkstemp(suffix=fsn(u'.mp3'))
         os.close(fd)
 
-        fd, blank_file2 = mkstemp(suffix='.mp3')
+        fd, blank_file2 = mkstemp(suffix=fsn(u'.mp3'))
         os.close(fd)
 
         err = self.call2(blank_file1, blank_file2)[2]
         self.failUnless("No ID3 header found" in err)
 
     def test_verbose(self):
-        fd, blank_file = mkstemp(suffix='.mp3')
+        fd, blank_file = mkstemp(suffix=fsn(u'.mp3'))
         os.close(fd)
 
-        err = self.call2(self.filename, "--verbose", blank_file)[2]
+        err = self.call2(self.filename, fsn(u"--verbose"), blank_file)[2]
         self.failUnless('mp3 contains:' in err)
         self.failUnless('Successfully saved' in err)
 
     def test_quiet(self):
-        fd, blank_file = mkstemp(suffix='.mp3')
+        fd, blank_file = mkstemp(suffix=fsn(u'.mp3'))
         os.close(fd)
 
         out = self.call(self.filename, blank_file)[1]
         self.failIf(out)
 
     def test_exit_status(self):
-        fd, blank_file = mkstemp(suffix='.mp3')
+        fd, blank_file = mkstemp(suffix=fsn(u'.mp3'))
         os.close(fd)
 
         status, out, err = self.call2(self.filename)
@@ -143,14 +146,14 @@ class TMid3cp(_TTools):
         status, out, err = self.call2(blank_file, self.filename)
         self.assertTrue(status)
 
-        status, out, err = self.call2("", self.filename)
+        status, out, err = self.call2(fsn(u""), self.filename)
         self.assertTrue(status)
 
         status, out, err = self.call2(self.filename, blank_file)
         self.assertFalse(status)
 
     def test_v23_v24(self):
-        fd, blank_file = mkstemp(suffix='.mp3')
+        fd, blank_file = mkstemp(suffix=fsn(u'.mp3'))
         os.close(fd)
 
         self.assertEqual(ID3(self.filename).version, (2, 3, 0))

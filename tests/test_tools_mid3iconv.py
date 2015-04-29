@@ -5,6 +5,8 @@ from tempfile import mkstemp
 import shutil
 
 from mutagen.id3 import ID3
+from mutagen._util import fsnative as fsn
+from mutagen._compat import text_type
 
 from tests.test_tools import _TTools
 
@@ -21,8 +23,9 @@ class TMid3Iconv(_TTools):
 
     def setUp(self):
         super(TMid3Iconv, self).setUp()
-        original = os.path.join('tests', 'data', 'silence-44-s.mp3')
-        fd, self.filename = mkstemp(suffix='.mp3')
+        original = os.path.join(
+            fsn(u'tests'), fsn(u'data'), fsn(u'silence-44-s.mp3'))
+        fd, self.filename = mkstemp(suffix=fsn(u'.mp3'))
         os.close(fd)
         shutil.copy(original, self.filename)
 
@@ -36,13 +39,13 @@ class TMid3Iconv(_TTools):
         self.failUnless("Usage:" in out)
 
     def test_debug(self):
-        res, out = self.call("-d", "-p", self.filename)
+        res, out = self.call(fsn(u"-d"), fsn(u"-p"), self.filename)
         self.failIf(res)
         self.assertFalse("b'" in out)
         self.failUnless("TCON=Silence" in out)
 
     def test_quiet(self):
-        res, out = self.call("-q", self.filename)
+        res, out = self.call(fsn(u"-q"), self.filename)
         self.failIf(res)
         self.failIf(out)
 
@@ -59,7 +62,8 @@ class TMid3Iconv(_TTools):
             f = ID3(self.filename)
             f.add(TALB(text=[AMBIGUOUS.decode("latin-1")], encoding=0))
             f.save()
-            res, out = self.call("-d", "-e", codec, self.filename)
+            res, out = self.call(
+                fsn(u"-d"), fsn(u"-e"), fsn(text_type(codec)), self.filename)
             f = ID3(self.filename)
             self.failUnlessEqual(f["TALB"].encoding, 1)
             self.failUnlessEqual(f["TALB"].text[0], AMBIGUOUS.decode(codec))
@@ -73,7 +77,8 @@ class TMid3Iconv(_TTools):
                          text=[AMBIGUOUS.decode("latin-1")])
             f.add(frame)
             f.save()
-            res, out = self.call("-d", "-e", codec, self.filename)
+            res, out = self.call(
+                fsn(u"-d"), fsn(u"-e"), fsn(text_type(codec)), self.filename)
             f = ID3(self.filename)
             new_frame = f[frame.HashKey]
             self.failUnlessEqual(new_frame.encoding, 1)
@@ -81,7 +86,7 @@ class TMid3Iconv(_TTools):
 
     def test_remove_v1(self):
         from mutagen.id3 import ParseID3v1
-        res, out = self.call("--remove-v1", self.filename)
+        res, out = self.call(fsn(u"--remove-v1"), self.filename)
 
         with open(self.filename, "rb") as h:
             h.seek(-128, 2)
