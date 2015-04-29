@@ -13,10 +13,10 @@ tag loading and saving.
 
 import sys
 import os.path
-from optparse import OptionParser
 import mutagen
 import mutagen.id3
-from mutagen._util import SignalHandler, get_win32_unicode_argv, print_
+from mutagen._util import SignalHandler, get_win32_unicode_argv, print_, \
+    OptionParser
 from mutagen._compat import text_type
 
 
@@ -95,19 +95,19 @@ def main(argv):
     (options, args) = parser.parse_args(argv[1:])
 
     if len(args) != 2:
-        print_(parser.format_help(), file=sys.stderr)
+        parser.print_help(file=sys.stderr)
         return 1
 
     (src, dst) = args
 
     if not os.path.isfile(src):
         print_(u"File not found:", src, file=sys.stderr)
-        print_(parser.format_help(), file=sys.stderr)
+        parser.print_help(file=sys.stderr)
         return 1
 
     if not os.path.isfile(dst):
         printerr(u"File not found:", dst, file=sys.stderr)
-        print_(parser.format_help())
+        parser.print_help(file=sys.stderr)
         return 1
 
     # Strip tags - "-x FOO" adds whitespace at the beginning of the tag name

@@ -9,13 +9,11 @@
 import sys
 import locale
 
-from optparse import OptionParser
-
 import mutagen
 import mutagen.id3
 from mutagen._compat import PY3, text_type
 from mutagen._util import SignalHandler, get_win32_unicode_argv, print_, \
-    fsnative as fsn
+    fsnative as fsn, OptionParser
 
 
 VERSION = (0, 3)
@@ -160,7 +158,7 @@ def main(argv):
     if args:
         update(options, args)
     else:
-        print_(parser.format_help())
+        parser.print_help()
 
 if __name__ == "__main__":
     argv = get_win32_unicode_argv()

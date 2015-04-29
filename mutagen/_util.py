@@ -21,6 +21,7 @@ import codecs
 import signal
 import locale
 import contextlib
+import optparse
 
 from fnmatch import fnmatchcase
 
@@ -725,7 +726,9 @@ def print_(*objects, **kwargs):
 
     linesep = kwargs.pop("linesep", True)
     sep = kwargs.pop("sep", True)
-    file_ = kwargs.pop("file", sys.stdout)
+    file_ = kwargs.pop("file", None)
+    if file_ is None:
+        file_ = sys.stdout
 
     if os.name == "nt":
         new_kwargs = {
@@ -764,3 +767,10 @@ def print_(*objects, **kwargs):
     else:
         file_.flush()
         os.write(fileno, data)
+
+
+class OptionParser(optparse.OptionParser):
+    """OptionParser subclass which supports printing Unicode under Windows"""
+
+    def print_help(self, file=None):
+        print_(self.format_help(), file=file)

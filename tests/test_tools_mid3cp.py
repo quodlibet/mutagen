@@ -75,6 +75,9 @@ class TMid3cp(_TTools):
         # mutagen, so no need to check them
         self.failUnless(frames)
 
+    def test_exclude_tag_unicode(self):
+        self.call(fsn(u'-x'), fsn(u''), self.filename, self.blank_file)
+
     def test_exclude_single_tag(self):
         self.call(fsn(u'-x'), fsn(u'TLEN'), self.filename, self.blank_file)
 
