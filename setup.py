@@ -102,8 +102,6 @@ class distcheck(sdist):
         self.spawn([sys.executable, "setup.py", "build_sphinx"])
         self.spawn([sys.executable, "setup.py", "install",
                     "--prefix", "../prefix", "--record", "../log.txt"])
-        os.environ["LC_ALL"] = "C"
-        self.spawn([sys.executable, "setup.py", "test"])
         os.chdir(old_pwd)
 
     def run(self):
