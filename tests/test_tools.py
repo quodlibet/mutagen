@@ -4,7 +4,7 @@ import os
 import sys
 import imp
 
-from mutagen._compat import StringIO, text_type
+from mutagen._compat import StringIO, text_type, PY2
 from mutagen._toolsutil import fsnative, is_fsnative
 
 from tests import TestCase
@@ -47,13 +47,11 @@ class _TTools(TestCase):
                 ret = e.code
             ret = ret or 0
             out_val = out.getvalue()
-            if not out_val:
-                out_val = fsnative()
-            self.assertTrue(is_fsnative(out_val), msg=repr(out_val))
             err_val = err.getvalue()
-            if not err_val:
-                err_val = fsnative()
-            self.assertTrue(is_fsnative(err_val), msg=repr(err_val))
+            if os.name == "nt" and PY2:
+                encoding = getattr(sys.stdout, "encoding", None) or "utf-8"
+                out_val = text_type(out_val, encoding)
+                err_val = text_type(err_val, encoding)
             return (ret, out_val, err_val)
         finally:
             sys.stdout = old_stdout

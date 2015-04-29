@@ -6,8 +6,6 @@
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.
 
-from __future__ import print_function
-
 import os
 import sys
 import signal
@@ -179,15 +177,10 @@ def print_(*objects, **kwargs):
         file_ = sys.stdout
 
     if os.name == "nt":
-        new_kwargs = {
-            "sep": u" " if sep else u"",
-            "file": file_,
-            "end": u"\n" if linesep else u"",
-        }
-        print(*objects, **new_kwargs)
-        return
+        encoding = getattr(sys.stdout, "encoding", None) or "utf-8"
+    else:
+        encoding = fsencoding()
 
-    encoding = fsencoding()
     if linesep:
         objects = list(objects) + [os.linesep]
 
