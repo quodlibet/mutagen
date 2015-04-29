@@ -19,7 +19,7 @@ class TSourceEncoding(TestCase):
     """
 
     def _check_encoding(self, path):
-        with open(path, "rb") as h:
+        with open(path, "r") as h:
             match = None
             for i, line in enumerate(h):
                 # https://www.python.org/dev/peps/pep-0263/
