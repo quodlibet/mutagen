@@ -13,8 +13,8 @@ from optparse import OptionParser
 
 import mutagen
 import mutagen.id3
-from mutagen._compat import PY3, print_, text_type
-from mutagen._util import SignalHandler, get_win32_unicode_argv
+from mutagen._compat import PY3, text_type
+from mutagen._util import SignalHandler, get_win32_unicode_argv, print_
 
 
 VERSION = (0, 3)

@@ -17,8 +17,8 @@ from optparse import OptionParser, SUPPRESS_HELP
 import mutagen
 import mutagen.id3
 from mutagen._util import split_escape, SignalHandler, \
-    get_win32_unicode_argv, fsnative, is_fsnative, fsencoding
-from mutagen._compat import PY2, PY3, text_type, print_
+    get_win32_unicode_argv, fsnative, is_fsnative, fsencoding, print_
+from mutagen._compat import PY2, PY3, text_type
 
 
 VERSION = (1, 3)
