@@ -7,7 +7,8 @@
 
 from mutagen._compat import cBytesIO, xrange
 from mutagen.aac import ProgramConfigElement
-from mutagen._util import BitReader, BitReaderError, cdata, text_type
+from mutagen._util import BitReader, BitReaderError, cdata
+from mutagen._compat import text_type
 from ._util import parse_full_atom
 from ._atom import Atom, AtomError
 

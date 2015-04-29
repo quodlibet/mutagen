@@ -11,7 +11,7 @@ import unittest
 from unittest import TestCase as BaseTestCase
 
 from mutagen._compat import PY3
-from mutagen._util import fsencoding
+from mutagen._toolsutil import fsencoding
 
 
 if os.name != "nt":

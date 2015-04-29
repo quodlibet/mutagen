@@ -4,7 +4,7 @@ import os
 
 from tests.test_tools import _TTools
 
-from mutagen._util import fsnative as fsn
+from mutagen._toolsutil import fsnative as fsn
 
 
 class TMutagenPony(_TTools):

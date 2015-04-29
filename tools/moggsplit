@@ -10,7 +10,8 @@ import os
 import sys
 
 import mutagen.ogg
-from mutagen._util import SignalHandler, get_win32_unicode_argv, OptionParser
+from mutagen._toolsutil import SignalHandler, get_win32_unicode_argv, \
+    OptionParser
 
 
 _sig = SignalHandler()

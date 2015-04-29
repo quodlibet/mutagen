@@ -9,7 +9,7 @@
 import sys
 import locale
 
-from mutagen._util import SignalHandler, get_win32_unicode_argv, print_, \
+from mutagen._toolsutil import SignalHandler, get_win32_unicode_argv, print_, \
     OptionParser
 from mutagen._compat import text_type
 

@@ -5,7 +5,7 @@ import sys
 import imp
 
 from mutagen._compat import StringIO, text_type
-from mutagen._util import fsnative, is_fsnative
+from mutagen._toolsutil import fsnative, is_fsnative
 
 from tests import TestCase
 

@@ -16,7 +16,7 @@ from optparse import SUPPRESS_HELP
 
 import mutagen
 import mutagen.id3
-from mutagen._util import split_escape, SignalHandler, OptionParser,\
+from mutagen._toolsutil import split_escape, SignalHandler, OptionParser,\
     get_win32_unicode_argv, fsnative, is_fsnative, fsencoding, print_
 from mutagen._compat import PY2, PY3, text_type
 

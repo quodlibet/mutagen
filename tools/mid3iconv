@@ -12,7 +12,7 @@ import locale
 import mutagen
 import mutagen.id3
 from mutagen._compat import PY3, text_type
-from mutagen._util import SignalHandler, get_win32_unicode_argv, print_, \
+from mutagen._toolsutil import SignalHandler, get_win32_unicode_argv, print_, \
     fsnative as fsn, OptionParser
 
 

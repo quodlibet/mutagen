@@ -9,7 +9,7 @@ import os
 import sys
 import traceback
 
-from mutagen._util import SignalHandler, get_win32_unicode_argv, print_
+from mutagen._toolsutil import SignalHandler, get_win32_unicode_argv, print_
 
 
 class Report(object):

@@ -8,7 +8,7 @@ import locale
 import mutagen
 from mutagen.id3 import ID3
 from mutagen._compat import PY2, PY3
-from mutagen._util import fsnative as fsn, is_fsnative as isfsn
+from mutagen._toolsutil import fsnative as fsn, is_fsnative as isfsn
 
 from tests.test_tools import _TTools
 

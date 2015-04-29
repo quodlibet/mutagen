@@ -5,7 +5,7 @@ from tempfile import mkstemp
 import shutil
 
 from mutagen._compat import text_type
-from mutagen._util import fsnative as fsn
+from mutagen._toolsutil import fsnative as fsn
 
 from tests.test_tools import _TTools
 
