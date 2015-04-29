@@ -6,6 +6,8 @@
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.
 
+from __future__ import print_function
+
 """Utility classes for Mutagen.
 
 You should not rely on the interfaces here being stable. They are
@@ -721,10 +723,20 @@ def print_(*objects, **kwargs):
         sep (bool): whether objects should be printed separated by spaces
     """
 
-    encoding = fsencoding()
     linesep = kwargs.pop("linesep", True)
     sep = kwargs.pop("sep", True)
     file_ = kwargs.pop("file", sys.stdout)
+
+    if os.name == "nt":
+        new_kwargs = {
+            "sep": u" " if sep else u"",
+            "file": file_,
+            "end": u"\n" if linesep else u"",
+        }
+        print(*objects, **new_kwargs)
+        return
+
+    encoding = fsencoding()
     if linesep:
         objects = list(objects) + [os.linesep]
 
