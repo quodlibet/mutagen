@@ -17,7 +17,7 @@ CODECS = ["utf8", "latin-1", "Windows-1255", "gbk"]
 
 class TMid3Iconv(_TTools):
 
-    TOOL_NAME = "mid3iconv"
+    TOOL_NAME = u"mid3iconv"
 
     def setUp(self):
         super(TMid3Iconv, self).setUp()

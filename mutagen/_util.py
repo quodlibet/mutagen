@@ -17,12 +17,13 @@ import sys
 import struct
 import codecs
 import signal
+import locale
 import contextlib
 
 from fnmatch import fnmatchcase
 
 from ._compat import chr_, text_type, PY2, iteritems, iterbytes, \
-    integer_types, xrange
+    integer_types, xrange, PY3
 
 
 class MutagenError(Exception):
@@ -671,3 +672,38 @@ def get_win32_unicode_argv():
     LocalFree(argv)
 
     return res
+
+
+def fsencoding():
+    """The encoding used for paths, argv, environ, stdout and stdin"""
+
+    if os.name == "nt":
+        return ""
+
+    return locale.getpreferredencoding() or "utf-8"
+
+
+def fsnative(text=u""):
+    """Returns the passed text converted to the preferred path type
+    for each platform.
+    """
+
+    assert isinstance(text, text_type)
+
+    if os.name == "nt" or PY3:
+        return text
+    else:
+        return text.encode(fsencoding(), "replace")
+    return text
+
+
+def is_fsnative(arg):
+    """If the passed value is of the preferred path type for each platform.
+    Note that on Python3+linux, paths can be bytes or str but this returns
+    False for bytes there.
+    """
+
+    if PY3 or os.name == "nt":
+        return isinstance(arg, text_type)
+    else:
+        return isinstance(arg, bytes)

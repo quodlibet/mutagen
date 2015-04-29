@@ -21,7 +21,7 @@ from tests.test_tools import _TTools
 
 class TMid3cp(_TTools):
 
-    TOOL_NAME = "mid3cp"
+    TOOL_NAME = u"mid3cp"
 
     def setUp(self):
         super(TMid3cp, self).setUp()

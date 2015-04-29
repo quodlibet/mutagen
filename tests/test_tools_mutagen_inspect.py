@@ -8,7 +8,7 @@ from tests.test_tools import _TTools
 
 class TMutagenInspect(_TTools):
 
-    TOOL_NAME = "mutagen-inspect"
+    TOOL_NAME = u"mutagen-inspect"
 
     def test_basic(self):
         base = os.path.join('tests', 'data')

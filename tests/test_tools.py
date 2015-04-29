@@ -4,13 +4,14 @@ import os
 import sys
 import imp
 
-from mutagen._compat import StringIO
+from mutagen._compat import StringIO, text_type
+from mutagen._util import fsnative, is_fsnative
 
 from tests import TestCase
 
 
 def get_var(tool_name, entry="main"):
-    tool_path = os.path.join("tools", tool_name)
+    tool_path = os.path.join("tools", fsnative(tool_name))
     dont_write_bytecode = sys.dont_write_bytecode
     sys.dont_write_bytecode = True
     try:
@@ -24,6 +25,7 @@ class _TTools(TestCase):
     TOOL_NAME = None
 
     def setUp(self):
+        self.assertTrue(isinstance(self.TOOL_NAME, text_type))
         self._main = get_var(self.TOOL_NAME)
 
     def get_var(self, name):
@@ -31,7 +33,7 @@ class _TTools(TestCase):
 
     def call2(self, *args):
         for arg in args:
-            assert isinstance(arg, str)
+            self.assertTrue(is_fsnative(arg))
         old_stdout = sys.stdout
         old_stderr = sys.stderr
         try:
@@ -40,11 +42,19 @@ class _TTools(TestCase):
             sys.stdout = out
             sys.stderr = err
             try:
-                ret = self._main([self.TOOL_NAME] + list(args))
+                ret = self._main([fsnative(self.TOOL_NAME)] + list(args))
             except SystemExit as e:
                 ret = e.code
             ret = ret or 0
-            return (ret, out.getvalue(), err.getvalue())
+            out_val = out.getvalue()
+            if not out_val:
+                out_val = fsnative()
+            self.assertTrue(is_fsnative(out_val))
+            err_val = err.getvalue()
+            if not err_val:
+                err_val = fsnative()
+            self.assertTrue(is_fsnative(err_val))
+            return (ret, out_val, err_val)
         finally:
             sys.stdout = old_stdout
             sys.stderr = old_stderr

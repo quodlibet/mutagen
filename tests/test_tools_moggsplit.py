@@ -9,7 +9,7 @@ from tests.test_tools import _TTools
 
 class TMOggSPlit(_TTools):
 
-    TOOL_NAME = "moggsplit"
+    TOOL_NAME = u"moggsplit"
 
     def setUp(self):
         super(TMOggSPlit, self).setUp()

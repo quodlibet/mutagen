@@ -7,7 +7,7 @@ from tests.test_tools import _TTools
 
 class TMutagenPony(_TTools):
 
-    TOOL_NAME = "mutagen-pony"
+    TOOL_NAME = u"mutagen-pony"
 
     def test_basic(self):
         base = os.path.join('tests', 'data')
