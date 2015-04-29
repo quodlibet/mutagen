@@ -11,6 +11,15 @@ import unittest
 from unittest import TestCase as BaseTestCase
 
 from mutagen._compat import PY3
+from mutagen._util import fsencoding
+
+
+if os.name != "nt":
+    try:
+        u"öäü".encode(fsencoding())
+    except ValueError:
+        raise RuntimeError("This test suite needs a unicode locale encoding. "
+                           "Try setting LANG=C.UTF-8")
 
 
 class TestCase(BaseTestCase):
