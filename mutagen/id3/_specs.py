@@ -8,11 +8,10 @@
 
 import struct
 from struct import unpack, pack
-from warnings import warn
 
 from .._compat import text_type, chr_, PY3, swap_to_string, string_types
 from .._util import total_ordering, decode_terminated, enum
-from ._util import ID3Warning, BitPaddedInt
+from ._util import BitPaddedInt
 
 
 class SpecError(Exception):
@@ -531,12 +530,14 @@ class ASPIIndexSpec(Spec):
             format = "B"
             size = 1
         else:
-            warn("invalid bit count in ASPI (%d)" % frame.b, ID3Warning)
-            return [], data
+            raise SpecError("invalid bit count in ASPI (%d)" % frame.b)
 
         indexes = data[:frame.N * size]
         data = data[frame.N * size:]
-        return list(struct.unpack(">" + format * frame.N, indexes)), data
+        try:
+            return list(struct.unpack(">" + format * frame.N, indexes)), data
+        except struct.error as e:
+            raise SpecError(e)
 
     def write(self, frame, values):
         if frame.b == 16:

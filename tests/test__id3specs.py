@@ -11,6 +11,17 @@ from mutagen.id3._specs import SpecError
 
 class SpecSanityChecks(TestCase):
 
+    def test_aspiindexspec(self):
+        from mutagen.id3 import ASPIIndexSpec
+        from mutagen.id3 import ASPI
+
+        frame = ASPI(b=16, N=2)
+        s = ASPIIndexSpec('name')
+        self.assertRaises(SpecError, s.read, frame, b'')
+        self.assertEqual(s.read(frame, b'\x01\x00\x00\x01'), ([256, 1], b""))
+        frame = ASPI(b=42)
+        self.assertRaises(SpecError, s.read, frame, b'')
+
     def test_bytespec(self):
         from mutagen.id3 import ByteSpec
         s = ByteSpec('name')
