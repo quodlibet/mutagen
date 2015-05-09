@@ -1,3 +1,12 @@
+1.29 - 2015.05.09
+-----------------
+
+* mid3v2: Fix an error under Python 3 with files without tags :bug:`219`
+* mid3v2: Various Windows+Python2+Unicode fixes :bug:`214`
+* Don't emit warnings during loading (ID3Warning) :bug:`223`
+* py.test support
+
+
 1.28 - 2015.03.06
 -----------------
 
