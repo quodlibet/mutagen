@@ -5,7 +5,7 @@ import shutil
 
 from cStringIO import StringIO
 from tempfile import mkstemp
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 
 import warnings
 warnings.simplefilter("ignore", DeprecationWarning)
@@ -47,7 +47,7 @@ class TAtom(TestCase):
 
 
 class TAtoms(TestCase):
-    filename = os.path.join("tests", "data", "has-tags.m4a")
+    filename = os.path.join(DATA_DIR, "has-tags.m4a")
 
     def setUp(self):
         self.atoms = Atoms(open(self.filename, "rb"))
@@ -246,7 +246,7 @@ class TM4AMixin(object):
 
 
 class TM4AHasTags(TM4A, TM4AMixin):
-    original = os.path.join("tests", "data", "has-tags.m4a")
+    original = os.path.join(DATA_DIR, "has-tags.m4a")
 
     def test_save_simple(self):
         self.audio.save()
@@ -268,11 +268,11 @@ class TM4AHasTags(TM4A, TM4AMixin):
 
     def test_not_my_file(self):
         self.failUnlessRaises(
-            IOError, M4A, os.path.join("tests", "data", "empty.ogg"))
+            IOError, M4A, os.path.join(DATA_DIR, "empty.ogg"))
 
 
 class TM4ANoTags(TM4A, TM4AMixin):
-    original = os.path.join("tests", "data", "no-tags.m4a")
+    original = os.path.join(DATA_DIR, "no-tags.m4a")
 
     def test_no_tags(self):
         self.failUnless(self.audio.tags is None)

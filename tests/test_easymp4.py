@@ -2,7 +2,7 @@
 
 import os
 import shutil
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 from mutagen.easymp4 import EasyMP4, error as MP4Error
 from tempfile import mkstemp
 
@@ -12,7 +12,7 @@ class TEasyMP4(TestCase):
     def setUp(self):
         fd, self.filename = mkstemp('.mp4')
         os.close(fd)
-        empty = os.path.join('tests', 'data', 'has-tags.m4a')
+        empty = os.path.join(DATA_DIR, 'has-tags.m4a')
         shutil.copy(empty, self.filename)
         self.mp4 = EasyMP4(self.filename)
         self.mp4.delete()
@@ -25,11 +25,11 @@ class TEasyMP4(TestCase):
         self.failIf("foo" in self.mp4)
 
     def test_empty_file(self):
-        empty = os.path.join('tests', 'data', 'emptyfile.mp3')
+        empty = os.path.join(DATA_DIR, 'emptyfile.mp3')
         self.assertRaises(MP4Error, EasyMP4, filename=empty)
 
     def test_nonexistent_file(self):
-        empty = os.path.join('tests', 'data', 'does', 'not', 'exist')
+        empty = os.path.join(DATA_DIR, 'does', 'not', 'exist')
         self.assertRaises(IOError, EasyMP4, filename=empty)
 
     def test_write_single(self):

@@ -8,7 +8,7 @@ from tempfile import mkstemp
 from mutagen._compat import cBytesIO
 from mutagen.oggflac import OggFLAC, OggFLACStreamInfo, delete
 from mutagen.ogg import OggPage, error as OggError
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 from tests.test_ogg import TOggFileTypeMixin
 from tests.test_flac import have_flac, call_flac
 
@@ -17,7 +17,7 @@ class TOggFLAC(TestCase, TOggFileTypeMixin):
     Kind = OggFLAC
 
     def setUp(self):
-        original = os.path.join("tests", "data", "empty.oggflac")
+        original = os.path.join(DATA_DIR, "empty.oggflac")
         fd, self.filename = mkstemp(suffix='.ogg')
         os.close(fd)
         shutil.copy(original, self.filename)
@@ -91,7 +91,7 @@ class TOggFLAC(TestCase, TOggFileTypeMixin):
         self.assertEqual(call_flac("--ogg", "-t", self.filename), 0)
 
     def test_not_my_ogg(self):
-        fn = os.path.join('tests', 'data', 'empty.ogg')
+        fn = os.path.join(DATA_DIR, 'empty.ogg')
         self.failUnlessRaises(IOError, type(self.audio), fn)
         self.failUnlessRaises(IOError, self.audio.save, fn)
         self.failUnlessRaises(IOError, self.audio.delete, fn)

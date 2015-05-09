@@ -9,6 +9,7 @@ from mutagen._toolsutil import fsnative as fsn
 from mutagen._compat import text_type
 
 from tests.test_tools import _TTools
+from tests import DATA_DIR
 
 
 AMBIGUOUS = b"\xc3\xae\xc3\xa5\xc3\xb4\xc3\xb2 \xc3\xa0\xc3\xa9\xc3\xa7\xc3" \
@@ -23,8 +24,7 @@ class TMid3Iconv(_TTools):
 
     def setUp(self):
         super(TMid3Iconv, self).setUp()
-        original = os.path.join(
-            fsn(u'tests'), fsn(u'data'), fsn(u'silence-44-s.mp3'))
+        original = os.path.join(DATA_DIR, fsn(u'silence-44-s.mp3'))
         fd, self.filename = mkstemp(suffix=fsn(u'.mp3'))
         os.close(fd)
         shutil.copy(original, self.filename)

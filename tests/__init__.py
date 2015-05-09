@@ -11,7 +11,13 @@ import unittest
 from unittest import TestCase as BaseTestCase
 
 from mutagen._compat import PY3
-from mutagen._toolsutil import fsencoding
+from mutagen._toolsutil import fsencoding, is_fsnative
+
+
+DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
+if os.name == "nt" and not PY3:
+    DATA_DIR = DATA_DIR.decode("ascii")
+assert is_fsnative(DATA_DIR)
 
 
 if os.name != "nt":

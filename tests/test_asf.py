@@ -3,7 +3,7 @@
 import os
 import shutil
 from tempfile import mkstemp
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 
 from mutagen._compat import PY3, text_type, PY2
 from mutagen.asf import ASF, ASFHeaderError, ASFValue, UNICODE, DWORD, QWORD
@@ -18,21 +18,21 @@ class TASFFile(TestCase):
     def test_not_my_file(self):
         self.failUnlessRaises(
             ASFHeaderError, ASF,
-            os.path.join("tests", "data", "empty.ogg"))
+            os.path.join(DATA_DIR, "empty.ogg"))
         self.failUnlessRaises(
             ASFHeaderError, ASF,
-            os.path.join("tests", "data", "click.mpc"))
+            os.path.join(DATA_DIR, "click.mpc"))
 
 
 class TASFInfo(TestCase):
 
     def setUp(self):
         # WMA 9.1 64kbps CBR 48khz
-        self.wma1 = ASF(os.path.join("tests", "data", "silence-1.wma"))
+        self.wma1 = ASF(os.path.join(DATA_DIR, "silence-1.wma"))
         # WMA 9.1 Professional 192kbps VBR 44khz
-        self.wma2 = ASF(os.path.join("tests", "data", "silence-2.wma"))
+        self.wma2 = ASF(os.path.join(DATA_DIR, "silence-2.wma"))
         # WMA 9.1 Lossless 44khz
-        self.wma3 = ASF(os.path.join("tests", "data", "silence-3.wma"))
+        self.wma3 = ASF(os.path.join(DATA_DIR, "silence-3.wma"))
 
     def test_length(self):
         self.failUnlessAlmostEqual(self.wma1.info.length, 3.7, 1)
@@ -361,19 +361,19 @@ class TASFAttributes(TestCase):
 
 
 class TASFTags1(TASF, TASFMixin):
-    original = os.path.join("tests", "data", "silence-1.wma")
+    original = os.path.join(DATA_DIR, "silence-1.wma")
 
 
 class TASFTags2(TASF, TASFMixin):
-    original = os.path.join("tests", "data", "silence-2.wma")
+    original = os.path.join(DATA_DIR, "silence-2.wma")
 
 
 class TASFTags3(TASF, TASFMixin):
-    original = os.path.join("tests", "data", "silence-3.wma")
+    original = os.path.join(DATA_DIR, "silence-3.wma")
 
 
 class TASFIssue29(TestCase):
-    original = os.path.join("tests", "data", "issue_29.wma")
+    original = os.path.join(DATA_DIR, "issue_29.wma")
 
     def setUp(self):
         fd, self.filename = mkstemp(suffix='wma')
@@ -402,7 +402,7 @@ class TASFIssue29(TestCase):
 
 class TASFAttrDest(TestCase):
 
-    original = os.path.join("tests", "data", "silence-1.wma")
+    original = os.path.join(DATA_DIR, "silence-1.wma")
 
     def setUp(self):
         fd, self.filename = mkstemp(suffix='wma')
@@ -480,7 +480,7 @@ class TASFAttrDest(TestCase):
 
 class TASFLargeValue(TestCase):
 
-    original = os.path.join("tests", "data", "silence-1.wma")
+    original = os.path.join(DATA_DIR, "silence-1.wma")
 
     def setUp(self):
         fd, self.filename = mkstemp(suffix='wma')
@@ -537,7 +537,7 @@ class TASFLargeValue(TestCase):
 class TASFUpdateSize(TestCase):
     # http://code.google.com/p/mutagen/issues/detail?id=81#c4
 
-    original = os.path.join("tests", "data", "silence-1.wma")
+    original = os.path.join(DATA_DIR, "silence-1.wma")
 
     def setUp(self):
         fd, self.filename = mkstemp(suffix='wma')

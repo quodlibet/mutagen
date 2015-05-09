@@ -11,6 +11,7 @@ from mutagen._compat import PY2, PY3
 from mutagen._toolsutil import fsnative as fsn, is_fsnative as isfsn
 
 from tests.test_tools import _TTools
+from tests import DATA_DIR
 
 
 class TMid3v2(_TTools):
@@ -19,8 +20,7 @@ class TMid3v2(_TTools):
 
     def setUp(self):
         super(TMid3v2, self).setUp()
-        original = os.path.join(
-            fsn(u'tests'), fsn(u'data'), fsn(u'silence-44-s.mp3'))
+        original = os.path.join(DATA_DIR, fsn(u'silence-44-s.mp3'))
         fd, self.filename = mkstemp(suffix=fsn(u'öäü.mp3'))
         assert isfsn(self.filename)
         os.close(fd)

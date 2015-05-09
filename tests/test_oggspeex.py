@@ -6,7 +6,7 @@ import shutil
 from mutagen._compat import cBytesIO
 from mutagen.ogg import OggPage
 from mutagen.oggspeex import OggSpeex, OggSpeexInfo, delete
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 from tests.test_ogg import TOggFileTypeMixin
 from tempfile import mkstemp
 
@@ -15,7 +15,7 @@ class TOggSpeex(TestCase, TOggFileTypeMixin):
     Kind = OggSpeex
 
     def setUp(self):
-        original = os.path.join("tests", "data", "empty.spx")
+        original = os.path.join(DATA_DIR, "empty.spx")
         fd, self.filename = mkstemp(suffix='.ogg')
         os.close(fd)
         shutil.copy(original, self.filename)
@@ -49,14 +49,14 @@ class TOggSpeex(TestCase, TOggFileTypeMixin):
         self.failUnlessRaises(KeyError, self.audio.tags.__getitem__, "vendor")
 
     def test_not_my_ogg(self):
-        fn = os.path.join('tests', 'data', 'empty.oggflac')
+        fn = os.path.join(DATA_DIR, 'empty.oggflac')
         self.failUnlessRaises(IOError, type(self.audio), fn)
         self.failUnlessRaises(IOError, self.audio.save, fn)
         self.failUnlessRaises(IOError, self.audio.delete, fn)
 
     def test_multiplexed_in_headers(self):
         shutil.copy(
-            os.path.join("tests", "data", "multiplexed.spx"), self.filename)
+            os.path.join(DATA_DIR, "multiplexed.spx"), self.filename)
         audio = self.Kind(self.filename)
         audio.tags["foo"] = ["bar"]
         audio.save()

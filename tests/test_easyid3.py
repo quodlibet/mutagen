@@ -3,7 +3,7 @@
 import os
 import shutil
 import pickle
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 from mutagen.id3 import ID3FileType, ID3
 from mutagen.easyid3 import EasyID3, error as ID3Error
 from mutagen._compat import PY3
@@ -15,12 +15,12 @@ class TEasyID3(TestCase):
     def setUp(self):
         fd, self.filename = mkstemp('.mp3')
         os.close(fd)
-        empty = os.path.join('tests', 'data', 'emptyfile.mp3')
+        empty = os.path.join(DATA_DIR, 'emptyfile.mp3')
         shutil.copy(empty, self.filename)
         self.id3 = EasyID3()
 
     def test_remember_ctr(self):
-        empty = os.path.join('tests', 'data', 'emptyfile.mp3')
+        empty = os.path.join(DATA_DIR, 'emptyfile.mp3')
         mp3 = ID3FileType(empty, ID3=EasyID3)
         self.failIf(mp3.tags)
         mp3["artist"] = ["testing"]
@@ -53,11 +53,11 @@ class TEasyID3(TestCase):
             self.failIf(self.id3.has_key("foo"))
 
     def test_empty_file(self):
-        empty = os.path.join('tests', 'data', 'emptyfile.mp3')
+        empty = os.path.join(DATA_DIR, 'emptyfile.mp3')
         self.assertRaises(ID3Error, EasyID3, filename=empty)
 
     def test_nonexistent_file(self):
-        empty = os.path.join('tests', 'data', 'does', 'not', 'exist')
+        empty = os.path.join(DATA_DIR, 'does', 'not', 'exist')
         self.assertRaises(IOError, EasyID3, filename=empty)
 
     def test_write_single(self):

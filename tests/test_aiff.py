@@ -3,7 +3,7 @@
 import os
 import shutil
 
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 from mutagen._compat import cBytesIO
 from mutagen.aiff import AIFF, AIFFInfo, delete, IFFFile, IFFChunk
 from mutagen.aiff import error as AIFFError
@@ -11,14 +11,14 @@ from tempfile import mkstemp
 
 
 class TAIFF(TestCase):
-    silence_1 = os.path.join('tests', 'data', '11k-1ch-2s-silence.aif')
-    silence_2 = os.path.join('tests', 'data', '48k-2ch-s16-silence.aif')
-    silence_3 = os.path.join('tests', 'data', '8k-1ch-1s-silence.aif')
-    silence_4 = os.path.join('tests', 'data', '8k-1ch-3.5s-silence.aif')
-    silence_5 = os.path.join('tests', 'data', '8k-4ch-1s-silence.aif')
+    silence_1 = os.path.join(DATA_DIR, '11k-1ch-2s-silence.aif')
+    silence_2 = os.path.join(DATA_DIR, '48k-2ch-s16-silence.aif')
+    silence_3 = os.path.join(DATA_DIR, '8k-1ch-1s-silence.aif')
+    silence_4 = os.path.join(DATA_DIR, '8k-1ch-3.5s-silence.aif')
+    silence_5 = os.path.join(DATA_DIR, '8k-4ch-1s-silence.aif')
 
-    has_tags = os.path.join('tests', 'data', 'with-id3.aif')
-    no_tags = os.path.join('tests', 'data', '8k-1ch-1s-silence.aif')
+    has_tags = os.path.join(DATA_DIR, 'with-id3.aif')
+    no_tags = os.path.join(DATA_DIR, '8k-1ch-1s-silence.aif')
 
     def setUp(self):
         fd, self.filename_1 = mkstemp(suffix='.aif')
@@ -75,7 +75,7 @@ class TAIFF(TestCase):
 
     def test_notaiff(self):
         self.failUnlessRaises(
-            AIFFError, AIFF, os.path.join('tests', 'data', 'empty.ofr'))
+            AIFFError, AIFF, os.path.join(DATA_DIR, 'empty.ofr'))
 
     def test_pprint(self):
         self.failUnless(self.aiff_1.pprint())
@@ -162,8 +162,8 @@ class TAIFFInfo(TestCase):
 
 
 class TIFFFile(TestCase):
-    has_tags = os.path.join('tests', 'data', 'with-id3.aif')
-    no_tags = os.path.join('tests', 'data', '8k-1ch-1s-silence.aif')
+    has_tags = os.path.join(DATA_DIR, 'with-id3.aif')
+    no_tags = os.path.join(DATA_DIR, '8k-1ch-1s-silence.aif')
 
     def setUp(self):
         self.file_1 = open(self.has_tags, 'rb')

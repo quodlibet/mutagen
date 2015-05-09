@@ -6,13 +6,13 @@ import shutil
 
 from mutagen.id3 import ID3, TIT1
 from mutagen.aac import AAC, AACError
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 
 
 class TADTS(TestCase):
 
     def setUp(self):
-        original = os.path.join("tests", "data", "empty.aac")
+        original = os.path.join(DATA_DIR, "empty.aac")
         fd, self.filename = mkstemp(suffix='.aac')
         os.close(fd)
         shutil.copy(original, self.filename)
@@ -45,11 +45,11 @@ class TADTS(TestCase):
     def test_not_my_file(self):
         self.failUnlessRaises(
             AACError, AAC,
-            os.path.join("tests", "data", "empty.ogg"))
+            os.path.join(DATA_DIR, "empty.ogg"))
 
         self.failUnlessRaises(
             AACError, AAC,
-            os.path.join("tests", "data", "silence-44-s.mp3"))
+            os.path.join(DATA_DIR, "silence-44-s.mp3"))
 
     def test_pprint(self):
         self.assertEqual(self.aac.pprint(), self.aac_id3.pprint())
@@ -59,7 +59,7 @@ class TADTS(TestCase):
 class TADIF(TestCase):
 
     def setUp(self):
-        original = os.path.join("tests", "data", "adif.aac")
+        original = os.path.join(DATA_DIR, "adif.aac")
         fd, self.filename = mkstemp(suffix='.aac')
         os.close(fd)
         shutil.copy(original, self.filename)
@@ -92,11 +92,11 @@ class TADIF(TestCase):
     def test_not_my_file(self):
         self.failUnlessRaises(
             AACError, AAC,
-            os.path.join("tests", "data", "empty.ogg"))
+            os.path.join(DATA_DIR, "empty.ogg"))
 
         self.failUnlessRaises(
             AACError, AAC,
-            os.path.join("tests", "data", "silence-44-s.mp3"))
+            os.path.join(DATA_DIR, "silence-44-s.mp3"))
 
     def test_pprint(self):
         self.assertEqual(self.aac.pprint(), self.aac_id3.pprint())

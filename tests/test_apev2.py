@@ -7,19 +7,18 @@ import shutil
 
 from tempfile import mkstemp
 
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 
 import mutagen.apev2
 from mutagen._compat import PY3, text_type
 from mutagen.apev2 import APEv2File, APEv2, is_valid_apev2_key, APEBadItemError
 
 
-DIR = os.path.dirname(__file__)
-SAMPLE = os.path.join(DIR, "data", "click.mpc")
-OLD = os.path.join(DIR, "data", "oldtag.apev2")
-BROKEN = os.path.join(DIR, "data", "brokentag.apev2")
-LYRICS2 = os.path.join(DIR, "data", "apev2-lyricsv2.mp3")
-INVAL_ITEM_COUNT = os.path.join(DIR, "data", "145-invalid-item-count.apev2")
+SAMPLE = os.path.join(DATA_DIR, "click.mpc")
+OLD = os.path.join(DATA_DIR, "oldtag.apev2")
+BROKEN = os.path.join(DATA_DIR, "brokentag.apev2")
+LYRICS2 = os.path.join(DATA_DIR, "apev2-lyricsv2.mp3")
+INVAL_ITEM_COUNT = os.path.join(DATA_DIR, "145-invalid-item-count.apev2")
 
 
 class Tis_valid_apev2_key(TestCase):
@@ -101,7 +100,7 @@ class TAPEWriter(TestCase):
     def test_empty(self):
         self.failUnlessRaises(
             IOError, mutagen.apev2.APEv2,
-            os.path.join("tests", "data", "emptyfile.mp3"))
+            os.path.join(DATA_DIR, "emptyfile.mp3"))
 
     def test_tag_at_start(self):
         filename = SAMPLE + ".tag_at_start"
@@ -210,14 +209,14 @@ class TAPEv2(TestCase):
 
     def test_module_delete_empty(self):
         from mutagen.apev2 import delete
-        delete(os.path.join("tests", "data", "emptyfile.mp3"))
+        delete(os.path.join(DATA_DIR, "emptyfile.mp3"))
 
     def test_invalid(self):
         self.failUnlessRaises(IOError, mutagen.apev2.APEv2, "dne")
 
     def test_no_tag(self):
         self.failUnlessRaises(IOError, mutagen.apev2.APEv2,
-                              os.path.join("tests", "data", "empty.mp3"))
+                              os.path.join(DATA_DIR, "empty.mp3"))
 
     def test_cases(self):
         self.failUnlessEqual(self.audio["artist"], self.audio["ARTIST"])
@@ -416,10 +415,10 @@ class TAPEExtValue(TestCase):
 class TAPEv2File(TestCase):
 
     def setUp(self):
-        self.audio = APEv2File("tests/data/click.mpc")
+        self.audio = APEv2File(os.path.join(DATA_DIR, "click.mpc"))
 
     def test_empty(self):
-        f = APEv2File(os.path.join(DIR, "data", "xing.mp3"))
+        f = APEv2File(os.path.join(DATA_DIR, "xing.mp3"))
         self.assertFalse(f.items())
 
     def test_add_tags(self):

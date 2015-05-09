@@ -4,14 +4,14 @@ import os
 import shutil
 from mutagen.trueaudio import TrueAudio, delete
 from mutagen.id3 import TIT1
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 from tempfile import mkstemp
 
 
 class TTrueAudio(TestCase):
 
     def setUp(self):
-        self.audio = TrueAudio(os.path.join("tests", "data", "empty.tta"))
+        self.audio = TrueAudio(os.path.join(DATA_DIR, "empty.tta"))
 
     def test_tags(self):
         self.failUnless(self.audio.tags is None)
@@ -23,11 +23,11 @@ class TTrueAudio(TestCase):
         self.failUnlessEqual(44100, self.audio.info.sample_rate)
 
     def test_not_my_file(self):
-        filename = os.path.join("tests", "data", "empty.ogg")
+        filename = os.path.join(DATA_DIR, "empty.ogg")
         self.failUnlessRaises(IOError, TrueAudio, filename)
 
     def test_module_delete(self):
-        delete(os.path.join("tests", "data", "empty.tta"))
+        delete(os.path.join(DATA_DIR, "empty.tta"))
 
     def test_delete(self):
         self.audio.delete()

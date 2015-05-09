@@ -7,21 +7,21 @@ from tempfile import mkstemp
 from mutagen.id3 import ID3, TIT2
 from mutagen.musepack import Musepack, MusepackInfo, MusepackHeaderError
 from mutagen._compat import cBytesIO
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 
 
 class TMusepack(TestCase):
 
     def setUp(self):
-        self.sv8 = Musepack(os.path.join("tests", "data", "sv8_header.mpc"))
-        self.sv7 = Musepack(os.path.join("tests", "data", "click.mpc"))
-        self.sv5 = Musepack(os.path.join("tests", "data", "sv5_header.mpc"))
-        self.sv4 = Musepack(os.path.join("tests", "data", "sv4_header.mpc"))
+        self.sv8 = Musepack(os.path.join(DATA_DIR, "sv8_header.mpc"))
+        self.sv7 = Musepack(os.path.join(DATA_DIR, "click.mpc"))
+        self.sv5 = Musepack(os.path.join(DATA_DIR, "sv5_header.mpc"))
+        self.sv4 = Musepack(os.path.join(DATA_DIR, "sv4_header.mpc"))
 
     def test_bad_header(self):
         self.failUnlessRaises(
             MusepackHeaderError,
-            Musepack, os.path.join("tests", "data", "almostempty.mpc"))
+            Musepack, os.path.join(DATA_DIR, "almostempty.mpc"))
 
     def test_channels(self):
         self.failUnlessEqual(self.sv8.info.channels, 2)
@@ -65,10 +65,10 @@ class TMusepack(TestCase):
     def test_not_my_file(self):
         self.failUnlessRaises(
             MusepackHeaderError, Musepack,
-            os.path.join("tests", "data", "empty.ogg"))
+            os.path.join(DATA_DIR, "empty.ogg"))
         self.failUnlessRaises(
             MusepackHeaderError, Musepack,
-            os.path.join("tests", "data", "emptyfile.mp3"))
+            os.path.join(DATA_DIR, "emptyfile.mp3"))
 
     def test_almost_my_file(self):
         self.failUnlessRaises(
@@ -103,7 +103,7 @@ class TMusepack(TestCase):
 
 
 class TMusepackWithID3(TestCase):
-    SAMPLE = os.path.join("tests", "data", "click.mpc")
+    SAMPLE = os.path.join(DATA_DIR, "click.mpc")
 
     def setUp(self):
         fd, self.NEW = mkstemp(suffix='mpc')

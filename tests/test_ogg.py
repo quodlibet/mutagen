@@ -6,7 +6,7 @@ import shutil
 import subprocess
 
 from mutagen._compat import BytesIO
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 from mutagen.ogg import OggPage, error as OggError
 from mutagen._util import cdata
 from tempfile import mkstemp
@@ -15,7 +15,7 @@ from tempfile import mkstemp
 class TOggPage(TestCase):
 
     def setUp(self):
-        self.fileobj = open(os.path.join("tests", "data", "empty.ogg"), "rb")
+        self.fileobj = open(os.path.join(DATA_DIR, "empty.ogg"), "rb")
         self.page = OggPage(self.fileobj)
 
         pages = [OggPage(), OggPage(), OggPage()]
@@ -125,7 +125,7 @@ class TOggPage(TestCase):
         try:
             fd, filename = mkstemp(suffix=".ogg")
             os.close(fd)
-            shutil.copy(os.path.join("tests", "data", "multipagecomment.ogg"),
+            shutil.copy(os.path.join(DATA_DIR, "multipagecomment.ogg"),
                         filename)
             fileobj = open(filename, "rb+")
             OggPage.renumber(fileobj, 1002429366, 20)
@@ -470,15 +470,15 @@ class TOggFileTypeMixin(object):
 
     def test_invalid_open(self):
         self.failUnlessRaises(IOError, self.Kind,
-                              os.path.join('tests', 'data', 'xing.mp3'))
+                              os.path.join(DATA_DIR, 'xing.mp3'))
 
     def test_invalid_delete(self):
         self.failUnlessRaises(IOError, self.audio.delete,
-                              os.path.join('tests', 'data', 'xing.mp3'))
+                              os.path.join(DATA_DIR, 'xing.mp3'))
 
     def test_invalid_save(self):
         self.failUnlessRaises(IOError, self.audio.save,
-                              os.path.join('tests', 'data', 'xing.mp3'))
+                              os.path.join(DATA_DIR, 'xing.mp3'))
 
     def ogg_reference(self, filename):
         self.scan_file()

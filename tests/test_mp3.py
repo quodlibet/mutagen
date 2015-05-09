@@ -3,7 +3,7 @@
 import os
 import shutil
 
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 from mutagen._compat import cBytesIO
 from mutagen.mp3 import MP3, error as MP3Error, delete, MPEGInfo, EasyMP3
 from mutagen.id3 import ID3
@@ -11,13 +11,13 @@ from tempfile import mkstemp
 
 
 class TMP3(TestCase):
-    silence = os.path.join('tests', 'data', 'silence-44-s.mp3')
-    silence_nov2 = os.path.join('tests', 'data', 'silence-44-s-v1.mp3')
-    silence_mpeg2 = os.path.join('tests', 'data', 'silence-44-s-mpeg2.mp3')
-    silence_mpeg25 = os.path.join('tests', 'data', 'silence-44-s-mpeg25.mp3')
+    silence = os.path.join(DATA_DIR, 'silence-44-s.mp3')
+    silence_nov2 = os.path.join(DATA_DIR, 'silence-44-s-v1.mp3')
+    silence_mpeg2 = os.path.join(DATA_DIR, 'silence-44-s-mpeg2.mp3')
+    silence_mpeg25 = os.path.join(DATA_DIR, 'silence-44-s-mpeg25.mp3')
 
     def setUp(self):
-        original = os.path.join("tests", "data", "silence-44-s.mp3")
+        original = os.path.join(DATA_DIR, "silence-44-s.mp3")
         fd, self.filename = mkstemp(suffix='.mp3')
         os.close(fd)
         shutil.copy(original, self.filename)
@@ -63,7 +63,7 @@ class TMP3(TestCase):
 
     def test_notmp3(self):
         self.failUnlessRaises(
-            MP3Error, MP3, os.path.join('tests', 'data', 'empty.ofr'))
+            MP3Error, MP3, os.path.join(DATA_DIR, 'empty.ofr'))
 
     def test_sketchy(self):
         self.failIf(self.mp3.info.sketchy)
@@ -72,7 +72,7 @@ class TMP3(TestCase):
         self.failIf(self.mp3_4.info.sketchy)
 
     def test_sketchy_notmp3(self):
-        notmp3 = MP3(os.path.join("tests", "data", "silence-44-s.flac"))
+        notmp3 = MP3(os.path.join(DATA_DIR, "silence-44-s.flac"))
         self.failUnless(notmp3.info.sketchy)
 
     def test_pprint(self):
@@ -83,16 +83,16 @@ class TMP3(TestCase):
         self.failUnless(self.mp3.pprint())
 
     def test_xing(self):
-        mp3 = MP3(os.path.join("tests", "data", "xing.mp3"))
+        mp3 = MP3(os.path.join(DATA_DIR, "xing.mp3"))
         self.failUnlessEqual(int(round(mp3.info.length)), 26122)
         self.failUnlessEqual(mp3.info.bitrate, 306)
 
     def test_vbri(self):
-        mp3 = MP3(os.path.join("tests", "data", "vbri.mp3"))
+        mp3 = MP3(os.path.join(DATA_DIR, "vbri.mp3"))
         self.failUnlessEqual(int(round(mp3.info.length)), 222)
 
     def test_empty_xing(self):
-        MP3(os.path.join("tests", "data", "bad-xing.mp3"))
+        MP3(os.path.join(DATA_DIR, "bad-xing.mp3"))
 
     def test_delete(self):
         self.mp3.delete()
@@ -109,19 +109,19 @@ class TMP3(TestCase):
         self.failUnless(MP3(self.filename)["TIT1"] == "foobar")
 
     def test_load_non_id3(self):
-        filename = os.path.join("tests", "data", "apev2-lyricsv2.mp3")
+        filename = os.path.join(DATA_DIR, "apev2-lyricsv2.mp3")
         from mutagen.apev2 import APEv2
         mp3 = MP3(filename, ID3=APEv2)
         self.failUnless("replaygain_track_peak" in mp3.tags)
 
     def test_add_tags(self):
-        mp3 = MP3(os.path.join("tests", "data", "xing.mp3"))
+        mp3 = MP3(os.path.join(DATA_DIR, "xing.mp3"))
         self.failIf(mp3.tags)
         mp3.add_tags()
         self.failUnless(isinstance(mp3.tags, ID3))
 
     def test_add_tags_already_there(self):
-        mp3 = MP3(os.path.join("tests", "data", "silence-44-s.mp3"))
+        mp3 = MP3(os.path.join(DATA_DIR, "silence-44-s.mp3"))
         self.failUnless(mp3.tags)
         self.failUnlessRaises(Exception, mp3.add_tags)
 
@@ -143,7 +143,7 @@ class TMP3(TestCase):
 class TMPEGInfo(TestCase):
 
     def test_not_real_file(self):
-        filename = os.path.join("tests", "data", "silence-44-s-v1.mp3")
+        filename = os.path.join(DATA_DIR, "silence-44-s-v1.mp3")
         fileobj = cBytesIO(open(filename, "rb").read(20))
         MPEGInfo(fileobj)
 
@@ -155,7 +155,7 @@ class TMPEGInfo(TestCase):
 class TEasyMP3(TestCase):
 
     def setUp(self):
-        original = os.path.join("tests", "data", "silence-44-s.mp3")
+        original = os.path.join(DATA_DIR, "silence-44-s.mp3")
         fd, self.filename = mkstemp(suffix='.mp3')
         os.close(fd)
         shutil.copy(original, self.filename)
@@ -184,6 +184,6 @@ class TEasyMP3(TestCase):
 
 class Issue72_TooShortFile(TestCase):
     def test_load(self):
-        mp3 = MP3(os.path.join('tests', 'data', 'too-short.mp3'))
+        mp3 = MP3(os.path.join(DATA_DIR, 'too-short.mp3'))
         self.failUnlessEqual(mp3["TIT2"], "Track 10")
         self.failUnlessAlmostEqual(mp3.info.length, 0.03, 2)

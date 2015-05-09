@@ -3,18 +3,15 @@
 import os
 
 from mutagen.monkeysaudio import MonkeysAudio, MonkeysAudioHeaderError
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 
 
 class TMonkeysAudio(TestCase):
 
     def setUp(self):
-        self.mac399 = MonkeysAudio(os.path.join("tests", "data",
-                                                "mac-399.ape"))
-        self.mac396 = MonkeysAudio(os.path.join("tests", "data",
-                                                "mac-396.ape"))
-        self.mac390 = MonkeysAudio(os.path.join("tests", "data",
-                                                "mac-390-hdr.ape"))
+        self.mac399 = MonkeysAudio(os.path.join(DATA_DIR, "mac-399.ape"))
+        self.mac396 = MonkeysAudio(os.path.join(DATA_DIR, "mac-396.ape"))
+        self.mac390 = MonkeysAudio(os.path.join(DATA_DIR, "mac-390-hdr.ape"))
 
     def test_channels(self):
         self.failUnlessEqual(self.mac399.info.channels, 2)
@@ -39,10 +36,10 @@ class TMonkeysAudio(TestCase):
     def test_not_my_file(self):
         self.failUnlessRaises(
             MonkeysAudioHeaderError, MonkeysAudio,
-            os.path.join("tests", "data", "empty.ogg"))
+            os.path.join(DATA_DIR, "empty.ogg"))
         self.failUnlessRaises(
             MonkeysAudioHeaderError, MonkeysAudio,
-            os.path.join("tests", "data", "click.mpc"))
+            os.path.join(DATA_DIR, "click.mpc"))
 
     def test_mime(self):
         self.failUnless("audio/x-ape" in self.mac399.mime)

@@ -3,14 +3,14 @@
 import os
 
 from mutagen.optimfrog import OptimFROG, OptimFROGHeaderError
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 
 
 class TOptimFROG(TestCase):
 
     def setUp(self):
-        self.ofr = OptimFROG(os.path.join("tests", "data", "empty.ofr"))
-        self.ofs = OptimFROG(os.path.join("tests", "data", "empty.ofs"))
+        self.ofr = OptimFROG(os.path.join(DATA_DIR, "empty.ofr"))
+        self.ofs = OptimFROG(os.path.join(DATA_DIR, "empty.ofs"))
 
     def test_channels(self):
         self.failUnlessEqual(self.ofr.info.channels, 2)
@@ -27,10 +27,10 @@ class TOptimFROG(TestCase):
     def test_not_my_file(self):
         self.failUnlessRaises(
             OptimFROGHeaderError, OptimFROG,
-            os.path.join("tests", "data", "empty.ogg"))
+            os.path.join(DATA_DIR, "empty.ogg"))
         self.failUnlessRaises(
             OptimFROGHeaderError, OptimFROG,
-            os.path.join("tests", "data", "click.mpc"))
+            os.path.join(DATA_DIR, "click.mpc"))
 
     def test_pprint(self):
         self.failUnless(self.ofr.pprint())

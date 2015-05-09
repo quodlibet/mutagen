@@ -3,7 +3,7 @@
 import os
 from os.path import join
 import shutil
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 from mutagen import id3
 from mutagen.apev2 import APEv2
 from mutagen.id3 import ID3, COMR, Frames, Frames_2_2, ID3Warning, \
@@ -78,16 +78,16 @@ class ID3GetSetDel(TestCase):
 
 class ID3Loading(TestCase):
 
-    empty = join('tests', 'data', 'emptyfile.mp3')
-    silence = join('tests', 'data', 'silence-44-s.mp3')
-    unsynch = join('tests', 'data', 'id3v23_unsynch.id3')
+    empty = join(DATA_DIR, 'emptyfile.mp3')
+    silence = join(DATA_DIR, 'silence-44-s.mp3')
+    unsynch = join(DATA_DIR, 'id3v23_unsynch.id3')
 
     def test_empty_file(self):
         name = self.empty
         self.assertRaises(ID3Error, ID3, filename=name)
 
     def test_nonexistent_file(self):
-        name = join('tests', 'data', 'does', 'not', 'exist')
+        name = join(DATA_DIR, 'does', 'not', 'exist')
         self.assertRaises(EnvironmentError, ID3, name)
 
     def test_header_empty(self):
@@ -192,7 +192,7 @@ class Issue21(TestCase):
     # Ensure the extended header is turned off, and the frames are
     # read.
     def setUp(self):
-        self.id3 = ID3(join('tests', 'data', 'issue_21.id3'))
+        self.id3 = ID3(join(DATA_DIR, 'issue_21.id3'))
 
     def test_no_ext(self):
         self.failIf(self.id3.f_extended)
@@ -208,7 +208,7 @@ class Issue21(TestCase):
 class ID3Tags(TestCase):
 
     def setUp(self):
-        self.silence = join('tests', 'data', 'silence-44-s.mp3')
+        self.silence = join(DATA_DIR, 'silence-44-s.mp3')
 
     def test_None(self):
         id3 = ID3(self.silence, known_frames={})
@@ -305,7 +305,7 @@ class ID3Tags(TestCase):
 class ID3v1Tags(TestCase):
 
     def setUp(self):
-        self.silence = join('tests', 'data', 'silence-44-s-v1.mp3')
+        self.silence = join(DATA_DIR, 'silence-44-s-v1.mp3')
         self.id3 = ID3(self.silence)
 
     def test_album(self):
@@ -404,7 +404,7 @@ class ID3v1Tags(TestCase):
 
 
 class TestWriteID3v1(TestCase):
-    SILENCE = os.path.join("tests", "data", "silence-44-s.mp3")
+    SILENCE = os.path.join(DATA_DIR, "silence-44-s.mp3")
 
     def setUp(self):
         fd, self.filename = mkstemp(suffix='.mp3')
@@ -447,7 +447,7 @@ class TestWriteID3v1(TestCase):
 class TestV22Tags(TestCase):
 
     def setUp(self):
-        filename = os.path.join("tests", "data", "id3v22-test.mp3")
+        filename = os.path.join(DATA_DIR, "id3v22-test.mp3")
         self.tags = ID3(filename)
 
     def test_tags(self):
@@ -1014,7 +1014,7 @@ class UpdateTo24(TestCase):
 
 
 class Issue97_UpgradeUnknown23(TestCase):
-    SILENCE = os.path.join("tests", "data", "97-unknown-23-update.mp3")
+    SILENCE = os.path.join(DATA_DIR, "97-unknown-23-update.mp3")
 
     def setUp(self):
         fd, self.filename = mkstemp(suffix='.mp3')
@@ -1199,8 +1199,8 @@ class BrokenButParsed(TestCase):
 
 
 class OddWrites(TestCase):
-    silence = join('tests', 'data', 'silence-44-s.mp3')
-    newsilence = join('tests', 'data', 'silence-written.mp3')
+    silence = join(DATA_DIR, 'silence-44-s.mp3')
+    newsilence = join(DATA_DIR, 'silence-written.mp3')
 
     def setUp(self):
         shutil.copy(self.silence, self.newsilence)
@@ -1231,8 +1231,8 @@ class OddWrites(TestCase):
 
 
 class WriteRoundtrip(TestCase):
-    silence = join('tests', 'data', 'silence-44-s.mp3')
-    newsilence = join('tests', 'data', 'silence-written.mp3')
+    silence = join(DATA_DIR, 'silence-44-s.mp3')
+    newsilence = join(DATA_DIR, 'silence-written.mp3')
 
     def setUp(self):
         shutil.copy(self.silence, self.newsilence)
@@ -1355,8 +1355,8 @@ class WriteRoundtrip(TestCase):
 
 
 class WriteForEyeD3(TestCase):
-    silence = join('tests', 'data', 'silence-44-s.mp3')
-    newsilence = join('tests', 'data', 'silence-written.mp3')
+    silence = join(DATA_DIR, 'silence-44-s.mp3')
+    newsilence = join(DATA_DIR, 'silence-written.mp3')
 
     def setUp(self):
         shutil.copy(self.silence, self.newsilence)
@@ -1403,7 +1403,7 @@ class WriteForEyeD3(TestCase):
 
 class BadTYER(TestCase):
 
-    filename = join('tests', 'data', 'bad-TYER-frame.mp3')
+    filename = join(DATA_DIR, 'bad-TYER-frame.mp3')
 
     def setUp(self):
         self.audio = ID3(self.filename)
@@ -1420,8 +1420,8 @@ class BadTYER(TestCase):
 
 class BadPOPM(TestCase):
 
-    filename = join('tests', 'data', 'bad-POPM-frame.mp3')
-    newfilename = join('tests', 'data', 'bad-POPM-frame-written.mp3')
+    filename = join(DATA_DIR, 'bad-POPM-frame.mp3')
+    newfilename = join(DATA_DIR, 'bad-POPM-frame-written.mp3')
 
     def setUp(self):
         shutil.copy(self.filename, self.newfilename)
@@ -1571,7 +1571,7 @@ class UpdateTo23(TestCase):
 
 class WriteTo23(TestCase):
 
-    SILENCE = os.path.join("tests", "data", "silence-44-s.mp3")
+    SILENCE = os.path.join(DATA_DIR, "silence-44-s.mp3")
 
     def setUp(self):
         fd, self.filename = mkstemp(suffix='.mp3')
@@ -1673,7 +1673,7 @@ class Read22FrameNamesin23(TestCase):
 
 
 class ID3V1_vs_APEv2(TestCase):
-    SILENCE = os.path.join("tests", "data", "silence-44-s.mp3")
+    SILENCE = os.path.join(DATA_DIR, "silence-44-s.mp3")
 
     def setUp(self):
         fd, self.filename = mkstemp(suffix='.mp3')
@@ -1757,7 +1757,7 @@ class TID3Corrupt(TestCase):
     def setUp(self):
         fd, self.filename = mkstemp(suffix='.mp3')
         os.close(fd)
-        orig = os.path.join("tests", "data", "silence-44-s.mp3")
+        orig = os.path.join(DATA_DIR, "silence-44-s.mp3")
         shutil.copy(orig, self.filename)
 
     def tearDown(self):

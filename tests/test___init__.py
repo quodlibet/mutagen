@@ -4,7 +4,7 @@ import os
 from tempfile import mkstemp
 import shutil
 
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 from mutagen._compat import cBytesIO, PY3
 from mutagen import File, Metadata, FileType, MutagenError
 from mutagen.oggvorbis import OggVorbis
@@ -54,7 +54,7 @@ class TMetadata(TestCase):
 class TFileType(TestCase):
 
     def setUp(self):
-        self.vorbis = File(os.path.join("tests", "data", "empty.ogg"))
+        self.vorbis = File(os.path.join(DATA_DIR, "empty.ogg"))
 
     def test_delitem_not_there(self):
         self.failUnlessRaises(KeyError, self.vorbis.__delitem__, "foobar")
@@ -78,7 +78,7 @@ class TFile(TestCase):
         self.failUnless(File(__file__) is None)
 
     def test_empty(self):
-        filename = os.path.join("tests", "data", "empty")
+        filename = os.path.join(DATA_DIR, "empty")
         open(filename, "wb").close()
         try:
             self.failUnless(File(filename) is None)
@@ -90,127 +90,124 @@ class TFile(TestCase):
 
     def test_no_options(self):
         for filename in ["empty.ogg", "empty.oggflac", "silence-44-s.mp3"]:
-            filename = os.path.join("tests", "data", "empty.ogg")
+            filename = os.path.join(DATA_DIR, "empty.ogg")
             self.failIf(File(filename, options=[]))
 
     def test_oggvorbis(self):
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "empty.ogg")), OggVorbis))
+            File(os.path.join(DATA_DIR, "empty.ogg")), OggVorbis))
 
     def test_oggflac(self):
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "empty.oggflac")), OggFLAC))
+            File(os.path.join(DATA_DIR, "empty.oggflac")), OggFLAC))
 
     def test_oggspeex(self):
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "empty.spx")), OggSpeex))
+            File(os.path.join(DATA_DIR, "empty.spx")), OggSpeex))
 
     def test_oggtheora(self):
         self.failUnless(isinstance(File(
-            os.path.join("tests", "data", "sample.oggtheora")), OggTheora))
+            os.path.join(DATA_DIR, "sample.oggtheora")), OggTheora))
 
     def test_oggopus(self):
         self.failUnless(isinstance(File(
-            os.path.join("tests", "data", "example.opus")), OggOpus))
+            os.path.join(DATA_DIR, "example.opus")), OggOpus))
 
     def test_mp3(self):
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "bad-xing.mp3")), MP3))
+            File(os.path.join(DATA_DIR, "bad-xing.mp3")), MP3))
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "xing.mp3")), MP3))
+            File(os.path.join(DATA_DIR, "xing.mp3")), MP3))
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "silence-44-s.mp3")), MP3))
+            File(os.path.join(DATA_DIR, "silence-44-s.mp3")), MP3))
 
     def test_easy_mp3(self):
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "silence-44-s.mp3"), easy=True),
+            File(os.path.join(DATA_DIR, "silence-44-s.mp3"), easy=True),
             EasyMP3))
 
     def test_flac(self):
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "silence-44-s.flac")), FLAC))
+            File(os.path.join(DATA_DIR, "silence-44-s.flac")), FLAC))
 
     def test_musepack(self):
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "click.mpc")), Musepack))
+            File(os.path.join(DATA_DIR, "click.mpc")), Musepack))
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "sv4_header.mpc")), Musepack))
+            File(os.path.join(DATA_DIR, "sv4_header.mpc")), Musepack))
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "sv5_header.mpc")), Musepack))
+            File(os.path.join(DATA_DIR, "sv5_header.mpc")), Musepack))
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "sv8_header.mpc")), Musepack))
+            File(os.path.join(DATA_DIR, "sv8_header.mpc")), Musepack))
 
     def test_monkeysaudio(self):
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "mac-399.ape")), MonkeysAudio))
+            File(os.path.join(DATA_DIR, "mac-399.ape")), MonkeysAudio))
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "mac-396.ape")), MonkeysAudio))
+            File(os.path.join(DATA_DIR, "mac-396.ape")), MonkeysAudio))
 
     def test_apev2(self):
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "oldtag.apev2")), APEv2File))
+            File(os.path.join(DATA_DIR, "oldtag.apev2")), APEv2File))
 
     def test_tta(self):
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "empty.tta")), TrueAudio))
+            File(os.path.join(DATA_DIR, "empty.tta")), TrueAudio))
 
     def test_easy_tta(self):
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "empty.tta"), easy=True),
+            File(os.path.join(DATA_DIR, "empty.tta"), easy=True),
             EasyTrueAudio))
 
     def test_wavpack(self):
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "silence-44-s.wv")), WavPack))
+            File(os.path.join(DATA_DIR, "silence-44-s.wv")), WavPack))
 
     def test_mp4(self):
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "has-tags.m4a")), MP4))
+            File(os.path.join(DATA_DIR, "has-tags.m4a")), MP4))
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "no-tags.m4a")), MP4))
+            File(os.path.join(DATA_DIR, "no-tags.m4a")), MP4))
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "no-tags.3g2")), MP4))
+            File(os.path.join(DATA_DIR, "no-tags.3g2")), MP4))
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "truncated-64bit.mp4")), MP4))
+            File(os.path.join(DATA_DIR, "truncated-64bit.mp4")), MP4))
 
     def test_optimfrog(self):
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "empty.ofr")), OptimFROG))
+            File(os.path.join(DATA_DIR, "empty.ofr")), OptimFROG))
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "empty.ofs")), OptimFROG))
+            File(os.path.join(DATA_DIR, "empty.ofs")), OptimFROG))
 
     def test_asf(self):
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "silence-1.wma")), ASF))
+            File(os.path.join(DATA_DIR, "silence-1.wma")), ASF))
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "silence-2.wma")), ASF))
+            File(os.path.join(DATA_DIR, "silence-2.wma")), ASF))
         self.failUnless(isinstance(
-            File(os.path.join("tests", "data", "silence-3.wma")), ASF))
+            File(os.path.join(DATA_DIR, "silence-3.wma")), ASF))
 
     def test_aiff(self):
-        data_path = os.path.join("tests", "data")
         self.failUnless(isinstance(
-            File(os.path.join(data_path, "with-id3.aif")), AIFF))
+            File(os.path.join(DATA_DIR, "with-id3.aif")), AIFF))
         self.failUnless(isinstance(
-            File(os.path.join(data_path, "11k-1ch-2s-silence.aif")), AIFF))
+            File(os.path.join(DATA_DIR, "11k-1ch-2s-silence.aif")), AIFF))
         self.failUnless(isinstance(
-            File(os.path.join(data_path, "48k-2ch-s16-silence.aif")), AIFF))
+            File(os.path.join(DATA_DIR, "48k-2ch-s16-silence.aif")), AIFF))
         self.failUnless(isinstance(
-            File(os.path.join(data_path, "8k-1ch-1s-silence.aif")), AIFF))
+            File(os.path.join(DATA_DIR, "8k-1ch-1s-silence.aif")), AIFF))
         self.failUnless(isinstance(
-            File(os.path.join(data_path, "8k-1ch-3.5s-silence.aif")), AIFF))
+            File(os.path.join(DATA_DIR, "8k-1ch-3.5s-silence.aif")), AIFF))
         self.failUnless(isinstance(
-            File(os.path.join(data_path, "8k-4ch-1s-silence.aif")), AIFF))
+            File(os.path.join(DATA_DIR, "8k-4ch-1s-silence.aif")), AIFF))
 
     def test_adts(self):
-        data_path = os.path.join("tests", "data")
         self.failUnless(isinstance(
-            File(os.path.join(data_path, "empty.aac")), AAC))
+            File(os.path.join(DATA_DIR, "empty.aac")), AAC))
 
     def test_adif(self):
-        data_path = os.path.join("tests", "data")
         self.failUnless(isinstance(
-            File(os.path.join(data_path, "adif.aac")), AAC))
+            File(os.path.join(DATA_DIR, "adif.aac")), AAC))
 
     def test_id3_indicates_mp3_not_tta(self):
         header = b"ID3 the rest of this is garbage"
@@ -236,11 +233,11 @@ class TFile(TestCase):
 
 class TFileUpperExt(TestCase):
     FILES = [
-        (os.path.join("tests", "data", "empty.ofr"), OptimFROG),
-        (os.path.join("tests", "data", "sv5_header.mpc"), Musepack),
-        (os.path.join("tests", "data", "silence-3.wma"), ASF),
-        (os.path.join("tests", "data", "truncated-64bit.mp4"), MP4),
-        (os.path.join("tests", "data", "silence-44-s.flac"), FLAC),
+        (os.path.join(DATA_DIR, "empty.ofr"), OptimFROG),
+        (os.path.join(DATA_DIR, "sv5_header.mpc"), Musepack),
+        (os.path.join(DATA_DIR, "silence-3.wma"), ASF),
+        (os.path.join(DATA_DIR, "truncated-64bit.mp4"), MP4),
+        (os.path.join(DATA_DIR, "silence-44-s.flac"), FLAC),
     ]
 
     def setUp(self):

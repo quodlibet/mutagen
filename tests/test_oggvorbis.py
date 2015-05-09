@@ -6,7 +6,7 @@ import shutil
 from mutagen._compat import cBytesIO
 from mutagen.ogg import OggPage
 from mutagen.oggvorbis import OggVorbis, OggVorbisInfo, delete
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 from tests.test_ogg import TOggFileTypeMixin
 from tempfile import mkstemp
 
@@ -15,7 +15,7 @@ class TOggVorbis(TestCase, TOggFileTypeMixin):
     Kind = OggVorbis
 
     def setUp(self):
-        original = os.path.join("tests", "data", "empty.ogg")
+        original = os.path.join(DATA_DIR, "empty.ogg")
         fd, self.filename = mkstemp(suffix='.ogg')
         os.close(fd)
         shutil.copy(original, self.filename)
@@ -123,7 +123,7 @@ class TOggVorbis(TestCase, TOggFileTypeMixin):
 
     def test_huge_tag(self):
         vorbis = self.Kind(
-            os.path.join("tests", "data", "multipagecomment.ogg"))
+            os.path.join(DATA_DIR, "multipagecomment.ogg"))
         self.failUnless("big" in vorbis.tags)
         self.failUnless("bigger" in vorbis.tags)
         self.failUnlessEqual(vorbis.tags["big"], ["foobar" * 10000])
@@ -131,13 +131,13 @@ class TOggVorbis(TestCase, TOggFileTypeMixin):
         self.scan_file()
 
     def test_not_my_ogg(self):
-        fn = os.path.join('tests', 'data', 'empty.oggflac')
+        fn = os.path.join(DATA_DIR, 'empty.oggflac')
         self.failUnlessRaises(IOError, type(self.audio), fn)
         self.failUnlessRaises(IOError, self.audio.save, fn)
         self.failUnlessRaises(IOError, self.audio.delete, fn)
 
     def test_save_split_setup_packet(self):
-        fn = os.path.join("tests", "data", "multipage-setup.ogg")
+        fn = os.path.join(DATA_DIR, "multipage-setup.ogg")
         shutil.copy(fn, self.filename)
         audio = OggVorbis(self.filename)
         tags = audio.tags
@@ -158,7 +158,7 @@ class TOggVorbis(TestCase, TOggFileTypeMixin):
     def test_save_grown_split_setup_packet_reference(self):
         if ogg is None:
             return
-        fn = os.path.join("tests", "data", "multipage-setup.ogg")
+        fn = os.path.join(DATA_DIR, "multipage-setup.ogg")
         shutil.copy(fn, self.filename)
         audio = OggVorbis(self.filename)
         audio["foobar"] = ["quux" * 50000]

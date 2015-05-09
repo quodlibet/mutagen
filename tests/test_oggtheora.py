@@ -8,7 +8,7 @@ from tempfile import mkstemp
 from mutagen._compat import cBytesIO
 from mutagen.oggtheora import OggTheora, OggTheoraInfo, delete
 from mutagen.ogg import OggPage
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 from tests.test_ogg import TOggFileTypeMixin
 
 
@@ -16,15 +16,15 @@ class TOggTheora(TestCase, TOggFileTypeMixin):
     Kind = OggTheora
 
     def setUp(self):
-        original = os.path.join("tests", "data", "sample.oggtheora")
+        original = os.path.join(DATA_DIR, "sample.oggtheora")
         fd, self.filename = mkstemp(suffix='.ogg')
         os.close(fd)
         shutil.copy(original, self.filename)
         self.audio = OggTheora(self.filename)
         self.audio2 = OggTheora(
-            os.path.join("tests", "data", "sample_length.oggtheora"))
+            os.path.join(DATA_DIR, "sample_length.oggtheora"))
         self.audio3 = OggTheora(
-            os.path.join("tests", "data", "sample_bitrate.oggtheora"))
+            os.path.join(DATA_DIR, "sample_bitrate.oggtheora"))
 
     def tearDown(self):
         os.unlink(self.filename)
@@ -49,7 +49,7 @@ class TOggTheora(TestCase, TOggFileTypeMixin):
         self.failUnlessRaises(KeyError, self.audio.tags.__getitem__, "vendor")
 
     def test_not_my_ogg(self):
-        fn = os.path.join('tests', 'data', 'empty.ogg')
+        fn = os.path.join(DATA_DIR, 'empty.ogg')
         self.failUnlessRaises(IOError, type(self.audio), fn)
         self.failUnlessRaises(IOError, self.audio.save, fn)
         self.failUnlessRaises(IOError, self.audio.delete, fn)

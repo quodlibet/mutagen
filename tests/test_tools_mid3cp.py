@@ -18,6 +18,7 @@ from mutagen.id3 import ID3, ParseID3v1
 from mutagen._toolsutil import fsnative as fsn
 
 from tests.test_tools import _TTools
+from tests import DATA_DIR
 
 
 class TMid3cp(_TTools):
@@ -26,8 +27,7 @@ class TMid3cp(_TTools):
 
     def setUp(self):
         super(TMid3cp, self).setUp()
-        original = os.path.join(
-            fsn(u'tests'), fsn(u'data'), fsn(u'silence-44-s.mp3'))
+        original = os.path.join(DATA_DIR, fsn(u'silence-44-s.mp3'))
         fd, self.filename = mkstemp(suffix=fsn(u'öäü.mp3'))
         os.close(fd)
         shutil.copy(original, self.filename)

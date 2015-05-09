@@ -4,6 +4,7 @@ import os
 import sys
 import imp
 
+import mutagen
 from mutagen._compat import StringIO, text_type, PY2
 from mutagen._toolsutil import fsnative, is_fsnative
 
@@ -11,7 +12,8 @@ from tests import TestCase
 
 
 def get_var(tool_name, entry="main"):
-    tool_path = os.path.join("tools", fsnative(tool_name))
+    tool_path = os.path.join(
+        mutagen.__path__[0], "..", "tools", fsnative(tool_name))
     dont_write_bytecode = sys.dont_write_bytecode
     sys.dont_write_bytecode = True
     try:

@@ -4,7 +4,7 @@ import shutil
 import os
 import subprocess
 
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 
 from mutagen.id3 import ID3, TIT2, ID3NoHeaderError
 from mutagen.flac import to_int_be, Padding, VCFLACDict, MetadataBlock, error
@@ -126,7 +126,7 @@ class TStreamInfo(TestCase):
 
 
 class TSeekTable(TestCase):
-    SAMPLE = os.path.join("tests", "data", "silence-44-s.flac")
+    SAMPLE = os.path.join(DATA_DIR, "silence-44-s.flac")
 
     def setUp(self):
         self.flac = FLAC(self.SAMPLE)
@@ -155,7 +155,7 @@ class TSeekTable(TestCase):
 
 
 class TCueSheet(TestCase):
-    SAMPLE = os.path.join("tests", "data", "silence-44-s.flac")
+    SAMPLE = os.path.join(DATA_DIR, "silence-44-s.flac")
 
     def setUp(self):
         self.flac = FLAC(self.SAMPLE)
@@ -211,7 +211,7 @@ class TCueSheet(TestCase):
 
 
 class TPicture(TestCase):
-    SAMPLE = os.path.join("tests", "data", "silence-44-s.flac")
+    SAMPLE = os.path.join(DATA_DIR, "silence-44-s.flac")
 
     def setUp(self):
         self.flac = FLAC(self.SAMPLE)
@@ -266,7 +266,7 @@ class TPadding(TestCase):
 
 
 class TFLAC(TestCase):
-    SAMPLE = os.path.join("tests", "data", "silence-44-s.flac")
+    SAMPLE = os.path.join(DATA_DIR, "silence-44-s.flac")
     NEW = SAMPLE + ".new"
 
     def setUp(self):
@@ -366,14 +366,14 @@ class TFLAC(TestCase):
         self.failUnlessEqual(f["faketag"], ["foo"])
 
     def test_add_vc(self):
-        f = FLAC(os.path.join("tests", "data", "no-tags.flac"))
+        f = FLAC(os.path.join(DATA_DIR, "no-tags.flac"))
         self.failIf(f.tags)
         f.add_tags()
         self.failUnless(f.tags == [])
         self.failUnlessRaises(ValueError, f.add_tags)
 
     def test_add_vc_implicit(self):
-        f = FLAC(os.path.join("tests", "data", "no-tags.flac"))
+        f = FLAC(os.path.join(DATA_DIR, "no-tags.flac"))
         self.failIf(f.tags)
         f["foo"] = "bar"
         self.failUnless(f.tags == [("foo", "bar")])
@@ -382,7 +382,7 @@ class TFLAC(TestCase):
     def test_ooming_vc_header(self):
         # issue 112: Malformed FLAC Vorbis header causes out of memory error
         # http://code.google.com/p/mutagen/issues/detail?id=112
-        self.assertRaises(IOError, FLAC, os.path.join('tests', 'data',
+        self.assertRaises(IOError, FLAC, os.path.join(DATA_DIR,
                                                       'ooming-header.flac'))
 
     def test_with_real_flac(self):
@@ -417,11 +417,11 @@ class TFLAC(TestCase):
 
     def test_load_invalid_flac(self):
         self.failUnlessRaises(
-            IOError, FLAC, os.path.join("tests", "data", "xing.mp3"))
+            IOError, FLAC, os.path.join(DATA_DIR, "xing.mp3"))
 
     def test_save_invalid_flac(self):
         self.failUnlessRaises(
-            IOError, self.flac.save, os.path.join("tests", "data", "xing.mp3"))
+            IOError, self.flac.save, os.path.join(DATA_DIR, "xing.mp3"))
 
     def test_pprint(self):
         self.failUnless(self.flac.pprint())
@@ -484,10 +484,10 @@ class TFLAC(TestCase):
         self.failUnless("audio/x-flac" in self.flac.mime)
 
     def test_variable_block_size(self):
-        FLAC(os.path.join("tests", "data", "variable-block.flac"))
+        FLAC(os.path.join(DATA_DIR, "variable-block.flac"))
 
     def test_load_flac_with_application_block(self):
-        FLAC(os.path.join("tests", "data", "flac_application.flac"))
+        FLAC(os.path.join(DATA_DIR, "flac_application.flac"))
 
     def tearDown(self):
         os.unlink(self.NEW)
@@ -498,16 +498,15 @@ class TFLACFile(TestCase):
     def test_open_nonexistant(self):
         """mutagen 1.2 raises UnboundLocalError, then it tries to open
         non-existant FLAC files"""
-        filename = os.path.join("tests", "data", "doesntexist.flac")
+        filename = os.path.join(DATA_DIR, "doesntexist.flac")
         self.assertRaises(IOError, FLAC, filename)
 
 
 class TFLACBadBlockSize(TestCase):
-    TOO_SHORT = os.path.join("tests", "data", "52-too-short-block-size.flac")
-    TOO_SHORT_2 = os.path.join("tests", "data",
-                               "106-short-picture-block-size.flac")
-    OVERWRITTEN = os.path.join("tests", "data", "52-overwritten-metadata.flac")
-    INVAL_INFO = os.path.join("tests", "data", "106-invalid-streaminfo.flac")
+    TOO_SHORT = os.path.join(DATA_DIR, "52-too-short-block-size.flac")
+    TOO_SHORT_2 = os.path.join(DATA_DIR, "106-short-picture-block-size.flac")
+    OVERWRITTEN = os.path.join(DATA_DIR, "52-overwritten-metadata.flac")
+    INVAL_INFO = os.path.join(DATA_DIR, "106-invalid-streaminfo.flac")
 
     def test_too_short_read(self):
         flac = FLAC(self.TOO_SHORT)
@@ -526,7 +525,7 @@ class TFLACBadBlockSize(TestCase):
 
 
 class TFLACBadBlockSizeWrite(TestCase):
-    TOO_SHORT = os.path.join("tests", "data", "52-too-short-block-size.flac")
+    TOO_SHORT = os.path.join(DATA_DIR, "52-too-short-block-size.flac")
     NEW = TOO_SHORT + ".new"
 
     def setUp(self):
@@ -555,7 +554,7 @@ class CVE20074619(TestCase):
         # "Editing any Metadata Block Size value to a large value such
         # as 0xFFFFFFFF may result in a heap based overflow in the
         # decoding software."
-        filename = os.path.join("tests", "data", "CVE-2007-4619-1.flac")
+        filename = os.path.join(DATA_DIR, "CVE-2007-4619-1.flac")
         self.failUnlessRaises(IOError, FLAC, filename)
         # work around https://bitbucket.org/pypy/pypy/issue/1988
         import gc
@@ -567,7 +566,7 @@ class CVE20074619(TestCase):
         # an overly large size, such as 0xFFFFFFF, could also result
         # in another heap-based overflow allowing arbitrary code to
         # execute in the content of the decoding program."
-        filename = os.path.join("tests", "data", "CVE-2007-4619-2.flac")
+        filename = os.path.join(DATA_DIR, "CVE-2007-4619-2.flac")
         self.failUnlessRaises(IOError, FLAC, filename)
         # work around https://bitbucket.org/pypy/pypy/issue/1988
         import gc
@@ -602,11 +601,11 @@ class CVE20074619(TestCase):
     # impossible to store in a FLAC file.
 
     def test_12_read(self):
-        filename = os.path.join("tests", "data", "CVE-2007-4619-12.flac")
+        filename = os.path.join(DATA_DIR, "CVE-2007-4619-12.flac")
         self.failUnlessRaises(IOError, FLAC, filename)
 
     def test_12_write_too_big(self):
-        filename = os.path.join("tests", "data", "silence-44-s.flac")
+        filename = os.path.join(DATA_DIR, "silence-44-s.flac")
         f = FLAC(filename)
         # This size is too big to be an integer.
         f.metadata_blocks[-1].length = 0xFFFFFFFFFFFFFFFF
@@ -614,7 +613,7 @@ class CVE20074619(TestCase):
 
     def test_12_write_too_big_for_flac(self):
         from mutagen.flac import MetadataBlock
-        filename = os.path.join("tests", "data", "silence-44-s.flac")
+        filename = os.path.join(DATA_DIR, "silence-44-s.flac")
         f = FLAC(filename)
         # This size is too big to be in a FLAC block but is overwise fine.
         f.metadata_blocks[-1].length = 0x1FFFFFF

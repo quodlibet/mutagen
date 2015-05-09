@@ -7,7 +7,7 @@ import subprocess
 
 from mutagen._compat import cBytesIO, PY3, text_type
 from tempfile import mkstemp
-from tests import TestCase
+from tests import TestCase, DATA_DIR
 from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
                          MP4MetadataError, MP4FreeForm, error, AtomDataType,
                          MP4MetadataValueError, AtomError)
@@ -90,7 +90,7 @@ class TAtom(TestCase):
 
 
 class TAtoms(TestCase):
-    filename = os.path.join("tests", "data", "has-tags.m4a")
+    filename = os.path.join(DATA_DIR, "has-tags.m4a")
 
     def setUp(self):
         self.atoms = Atoms(open(self.filename, "rb"))
@@ -316,7 +316,7 @@ class TMP4Tags(TestCase):
         self.assertFalse(tags)
 
         # save it into an existing mp4
-        original = os.path.join("tests", "data", "has-tags.m4a")
+        original = os.path.join(DATA_DIR, "has-tags.m4a")
         fd, filename = mkstemp(suffix='.mp4')
         os.close(fd)
         shutil.copy(original, filename)
@@ -760,11 +760,11 @@ class TMP4HasTagsMixin(TMP4Mixin):
     def test_not_my_file(self):
         # should raise something like "Not a MP4 file"
         self.failUnlessRaisesRegexp(
-            error, "MP4", MP4, os.path.join("tests", "data", "empty.ogg"))
+            error, "MP4", MP4, os.path.join(DATA_DIR, "empty.ogg"))
 
 
 class TMP4Datatypes(TMP4, TMP4HasTagsMixin):
-    original = os.path.join("tests", "data", "has-tags.m4a")
+    original = os.path.join(DATA_DIR, "has-tags.m4a")
 
     def test_has_freeform(self):
         key = "----:com.apple.iTunes:iTunNORM"
@@ -783,7 +783,7 @@ class TMP4Datatypes(TMP4, TMP4HasTagsMixin):
 
 class TMP4CovrWithName(TMP4, TMP4Mixin):
     # http://bugs.musicbrainz.org/ticket/5894
-    original = os.path.join("tests", "data", "covr-with-name.m4a")
+    original = os.path.join(DATA_DIR, "covr-with-name.m4a")
 
     def test_has_covr(self):
         self.failUnless('covr' in self.audio.tags)
@@ -794,7 +794,7 @@ class TMP4CovrWithName(TMP4, TMP4Mixin):
 
 
 class TMP4HasTags64Bit(TMP4, TMP4HasTagsMixin):
-    original = os.path.join("tests", "data", "truncated-64bit.mp4")
+    original = os.path.join(DATA_DIR, "truncated-64bit.mp4")
 
     def test_has_covr(self):
         pass
@@ -811,7 +811,7 @@ class TMP4HasTags64Bit(TMP4, TMP4HasTagsMixin):
 
 
 class TMP4NoTagsM4A(TMP4, TMP4Mixin):
-    original = os.path.join("tests", "data", "no-tags.m4a")
+    original = os.path.join(DATA_DIR, "no-tags.m4a")
 
     def test_no_tags(self):
         self.failUnless(self.audio.tags is None)
@@ -822,7 +822,7 @@ class TMP4NoTagsM4A(TMP4, TMP4Mixin):
 
 
 class TMP4NoTags3G2(TMP4, TMP4Mixin):
-    original = os.path.join("tests", "data", "no-tags.3g2")
+    original = os.path.join(DATA_DIR, "no-tags.3g2")
 
     def test_no_tags(self):
         self.failUnless(self.audio.tags is None)
@@ -838,7 +838,7 @@ class TMP4NoTags3G2(TMP4, TMP4Mixin):
 
 
 class TMP4UpdateParents64Bit(TestCase):
-    original = os.path.join("tests", "data", "64bit.mp4")
+    original = os.path.join(DATA_DIR, "64bit.mp4")
 
     def setUp(self):
         fd, self.filename = mkstemp(suffix='.mp4')
@@ -865,7 +865,7 @@ class TMP4UpdateParents64Bit(TestCase):
 
 
 class TMP4ALAC(TestCase):
-    original = os.path.join("tests", "data", "alac.m4a")
+    original = os.path.join(DATA_DIR, "alac.m4a")
 
     def setUp(self):
         self.audio = MP4(self.original)
