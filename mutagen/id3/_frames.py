@@ -7,11 +7,9 @@
 # published by the Free Software Foundation.
 
 import zlib
-from warnings import warn
 from struct import unpack
 
-from ._util import (
-    ID3Warning, ID3JunkFrameError, ID3EncryptionUnsupportedError, unsynch)
+from ._util import ID3JunkFrameError, ID3EncryptionUnsupportedError, unsynch
 from ._specs import (
     BinaryDataSpec, StringSpec, Latin1TextSpec, EncodedTextSpec, ByteSpec,
     EncodingSpec, ASPIIndexSpec, SizedIntegerSpec, IntegerSpec,
@@ -120,9 +118,8 @@ class Frame(object):
         return '%s(%s)' % (type(self).__name__, ', '.join(kw))
 
     def _readData(self, data):
-        """Raises ID3JunkFrameError"""
+        """Raises ID3JunkFrameError; Returns leftover data"""
 
-        odata = data
         for reader in self._framespec:
             if len(data):
                 try:
@@ -133,10 +130,7 @@ class Frame(object):
                 raise ID3JunkFrameError("no data left")
             setattr(self, reader.name, value)
 
-        if data.strip(b'\x00'):
-            warn('Leftover data: %s: %r (from %r)' % (
-                 type(self).__name__, data, odata),
-                 ID3Warning)
+        return data
 
     def _writeData(self):
         data = []
@@ -244,9 +238,8 @@ class FrameOpt(Frame):
                 setattr(other, checker.name, getattr(self, checker.name))
 
     def _readData(self, data):
-        """Raises ID3JunkFrameError"""
+        """Raises ID3JunkFrameError; Returns leftover data"""
 
-        odata = data
         for reader in self._framespec:
             if len(data):
                 try:
@@ -268,10 +261,7 @@ class FrameOpt(Frame):
                     break
                 setattr(self, reader.name, value)
 
-        if data.strip(b'\x00'):
-            warn('Leftover data: %s: %r (from %r)' % (
-                 type(self).__name__, data, odata),
-                 ID3Warning)
+        return data
 
     def _writeData(self):
         data = []

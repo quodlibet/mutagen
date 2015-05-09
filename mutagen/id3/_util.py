@@ -32,10 +32,6 @@ class ID3JunkFrameError(error, ValueError):
     pass
 
 
-class ID3Warning(error, UserWarning):
-    pass
-
-
 class unsynch(object):
     @staticmethod
     def decode(value):
@@ -164,4 +160,8 @@ class ID3BadCompressedData(error, ValueError):
 
 
 class ID3TagError(error, ValueError):
+    """Deprecated"""
+
+
+class ID3Warning(error, UserWarning):
     """Deprecated"""

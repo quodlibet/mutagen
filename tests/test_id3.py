@@ -297,10 +297,9 @@ class ID3Tags(TestCase):
 
     def test_extradata(self):
         from mutagen.id3 import RVRB, RBUF
-        self.assertRaises(ID3Warning, RVRB()._readData, b'L1R1BBFFFFPP#xyz')
-        self.assertRaises(
-            ID3Warning, RBUF()._readData,
-            b'\x00\x01\x00\x01\x00\x00\x00\x00#xyz')
+        self.assertEqual(RVRB()._readData(b'L1R1BBFFFFPP#xyz'), b'#xyz')
+        self.assertEqual(
+            RBUF()._readData(b'\x00\x01\x00\x01\x00\x00\x00\x00#xyz'), b'#xyz')
 
 
 class ID3v1Tags(TestCase):
