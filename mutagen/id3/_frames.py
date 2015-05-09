@@ -173,8 +173,12 @@ class Frame(object):
             if tflags & Frame.FLAG24_UNSYNCH or id3.f_unsynch:
                 try:
                     data = unsynch.decode(data)
-                except ValueError as err:
-                    warn('%s: %r' % (err, data), ID3Warning)
+                except ValueError:
+                    # Some things write synch-unsafe data with either the frame
+                    # or global unsynch flag set. Try to load them as is.
+                    # https://bitbucket.org/lazka/mutagen/issue/210
+                    # https://bitbucket.org/lazka/mutagen/issue/223
+                    pass
             if tflags & Frame.FLAG24_ENCRYPT:
                 raise ID3EncryptionUnsupportedError
             if tflags & Frame.FLAG24_COMPRESS:
