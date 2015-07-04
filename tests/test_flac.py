@@ -545,10 +545,10 @@ class TFLACBadBlockSizeWrite(TestCase):
         self.failIf(b"Tunng" in data)
 
 
-class TFLACBadBlcokSizeOverflow(TestCase):
+class TFLACBadBlockSizeOverflow(TestCase):
 
     def setUp(self):
-        fd, self.filename = mkstemp(".apev2")
+        fd, self.filename = mkstemp(".flac")
         os.close(fd)
         shutil.copy(os.path.join(DATA_DIR, "silence-44-s.flac"), self.filename)
 
