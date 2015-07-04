@@ -268,13 +268,15 @@ class TPadding(TestCase):
 
 class TFLAC(TestCase):
     SAMPLE = os.path.join(DATA_DIR, "silence-44-s.flac")
-    NEW = SAMPLE + ".new"
 
     def setUp(self):
+        fd, self.NEW = mkstemp(".flac")
+        os.close(fd)
         shutil.copy(self.SAMPLE, self.NEW)
-        self.failUnlessEqual(open(self.SAMPLE, "rb").read(),
-                             open(self.NEW, "rb").read())
         self.flac = FLAC(self.NEW)
+
+    def tearDown(self):
+        os.unlink(self.NEW)
 
     def test_delete(self):
         self.failUnless(self.flac.tags)
@@ -490,9 +492,6 @@ class TFLAC(TestCase):
     def test_load_flac_with_application_block(self):
         FLAC(os.path.join(DATA_DIR, "flac_application.flac"))
 
-    def tearDown(self):
-        os.unlink(self.NEW)
-
 
 class TFLACFile(TestCase):
 
@@ -527,10 +526,14 @@ class TFLACBadBlockSize(TestCase):
 
 class TFLACBadBlockSizeWrite(TestCase):
     TOO_SHORT = os.path.join(DATA_DIR, "52-too-short-block-size.flac")
-    NEW = TOO_SHORT + ".new"
 
     def setUp(self):
+        fd, self.NEW = mkstemp(".flac")
+        os.close(fd)
         shutil.copy(self.TOO_SHORT, self.NEW)
+
+    def tearDown(self):
+        os.unlink(self.NEW)
 
     def test_write_reread(self):
         flac = FLAC(self.NEW)
@@ -540,9 +543,6 @@ class TFLACBadBlockSizeWrite(TestCase):
         self.failUnlessEqual(flac["title"], flac2["title"])
         data = open(self.NEW, "rb").read(1024)
         self.failIf(b"Tunng" in data)
-
-    def tearDown(self):
-        os.unlink(self.NEW)
 
 
 class TFLACBadBlcokSizeOverflow(TestCase):
