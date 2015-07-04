@@ -3,6 +3,7 @@
 import shutil
 import os
 import subprocess
+from tempfile import mkstemp
 
 from tests import TestCase, DATA_DIR
 
@@ -542,6 +543,49 @@ class TFLACBadBlockSizeWrite(TestCase):
 
     def tearDown(self):
         os.unlink(self.NEW)
+
+
+class TFLACBadBlcokSizeOverflow(TestCase):
+
+    def setUp(self):
+        fd, self.filename = mkstemp(".apev2")
+        os.close(fd)
+        shutil.copy(os.path.join(DATA_DIR, "silence-44-s.flac"), self.filename)
+
+    def tearDown(self):
+        os.unlink(self.filename)
+
+    def test_largest_valid(self):
+        f = FLAC(self.filename)
+        pic = Picture()
+        pic.data = b"\x00" * (2 ** 24 - 32)
+        self.assertEqual(len(pic.write()), 2 ** 24)
+        f.add_picture(pic)
+        f.save()
+
+    def test_smallest_invalid(self):
+        f = FLAC(self.filename)
+        pic = Picture()
+        pic.data = b"\x00" * (2 ** 24 - 31)
+        f.add_picture(pic)
+        self.assertRaises(error, f.save)
+
+    def test_invalid_overflow_recover_and_save_back(self):
+        # save a picture which is too large for flac, but still write it
+        # with a wrong block size
+        f = FLAC(self.filename)
+        f.clear_pictures()
+        pic = Picture()
+        pic.data = b"\x00" * (2 ** 24 - 31)
+        pic._invalid_overflow_size = 42
+        f.add_picture(pic)
+        f.save()
+
+        # make sure we can read it and save it again
+        f = FLAC(self.filename)
+        self.assertTrue(f.pictures)
+        self.assertEqual(len(f.pictures[0].data), 2 ** 24 - 31)
+        f.save()
 
 
 class CVE20074619(TestCase):

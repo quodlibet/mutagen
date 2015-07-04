@@ -83,6 +83,13 @@ class MetadataBlock(object):
     """
 
     _distrust_size = False
+    """For block types setting this, we don't trust the size field and
+    use the size of the content instead."""
+
+    _invalid_overflow_size = -1
+    """In case the real size was bigger than what is representable by the
+    24 bit size field, we save the wrong specified size here. This can
+    only be set if _distrust_size is True"""
 
     def __init__(self, data):
         """Parse the given data string or file-like as a metadata block.
@@ -106,15 +113,26 @@ class MetadataBlock(object):
     @staticmethod
     def writeblocks(blocks):
         """Render metadata block as a byte string."""
+
         data = []
-        codes = [[block.code, block.write()] for block in blocks]
-        codes[-1][0] |= 128
-        for code, datum in codes:
-            byte = chr_(code)
-            if len(datum) > 2 ** 24:
-                raise error("block is too long to write")
-            length = struct.pack(">I", len(datum))[-3:]
-            data.append(byte + length + datum)
+        for i, block in enumerate(blocks):
+            is_last = (i == len(blocks) - 1)
+            code = (block.code | 128) if is_last else block.code
+            datum = block.write()
+            size = len(datum)
+            if size > 2 ** 24:
+                if block._distrust_size and block._invalid_overflow_size != -1:
+                    # The original size of this block was (1) wrong and (2)
+                    # the real size doesn't allow us to save the file
+                    # according to the spec (too big for 24 bit uint). Instead
+                    # simply write back the original wrong size.. at least
+                    # we don't make the file more "broken" as it is.
+                    size = block._invalid_overflow_size
+                else:
+                    raise error("block is too long to write")
+            assert not size > 2 ** 24
+            length = struct.pack(">I", size)[-3:]
+            data.extend([chr_(code), length, datum])
         return b"".join(data)
 
     @staticmethod
@@ -658,7 +676,11 @@ class FLAC(mutagen.FileType):
             # http://code.google.com/p/mutagen/issues/detail?id=52
             # ..same for the Picture block:
             # http://code.google.com/p/mutagen/issues/detail?id=106
+            start = fileobj.tell()
             block = block_type(fileobj)
+            real_size = fileobj.tell() - start
+            if real_size > 2 ** 24:
+                block._invalid_overflow_size = size
         else:
             data = fileobj.read(size)
             block = block_type(data)
