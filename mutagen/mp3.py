@@ -12,6 +12,7 @@ import os
 import struct
 
 from ._compat import endswith
+from ._mp3util import XingHeader, XingHeaderError, VBRIHeader, VBRIHeaderError
 from mutagen import StreamInfo
 from mutagen._util import MutagenError
 from mutagen.id3 import ID3FileType, BitPaddedInt, delete
@@ -207,38 +208,38 @@ class MPEGInfo(StreamInfo):
 
         # Try to find/parse the Xing header, which trumps the above length
         # and bitrate calculation.
-        fileobj.seek(offset, 0)
-        data = fileobj.read(32768)
+
+        if self.layer != 3:
+            return
+
+        # Xing
+        xing_offset = XingHeader.get_offset(self)
+        fileobj.seek(offset + frame_1 + xing_offset, 0)
         try:
-            xing = data[:-4].index(b"Xing")
-        except ValueError:
-            # Try to find/parse the VBRI header, which trumps the above length
-            # calculation.
-            try:
-                vbri = data[:-24].index(b"VBRI")
-            except ValueError:
-                pass
-            else:
-                # If a VBRI header was found, this is definitely MPEG audio.
-                self.sketchy = False
-                vbri_version = struct.unpack('>H', data[vbri + 4:vbri + 6])[0]
-                if vbri_version == 1:
-                    frame_count = struct.unpack(
-                        '>I', data[vbri + 14:vbri + 18])[0]
-                    samples = float(frame_size * frame_count)
-                    self.length = (samples / self.sample_rate) or self.length
+            xing = XingHeader(fileobj)
+        except XingHeaderError:
+            pass
         else:
-            # If a Xing header was found, this is definitely MPEG audio.
             self.sketchy = False
-            flags = struct.unpack('>I', data[xing + 4:xing + 8])[0]
-            if flags & 0x1:
-                frame_count = struct.unpack('>I', data[xing + 8:xing + 12])[0]
-                samples = float(frame_size * frame_count)
-                self.length = (samples / self.sample_rate) or self.length
-            if flags & 0x2:
-                bitrate_data = struct.unpack(
-                    '>I', data[xing + 12:xing + 16])[0]
-                self.bitrate = int((bitrate_data * 8) // self.length)
+            if xing.frames != -1:
+                self.length = float(
+                    frame_size * xing.frames) / self.sample_rate
+            if xing.bytes != -1 and self.length:
+                self.bitrate = int((xing.bytes * 8) / self.length)
+            return
+
+        # VBRI
+        vbri_offset = VBRIHeader.get_offset(self)
+        fileobj.seek(offset + frame_1 + vbri_offset, 0)
+        try:
+            vbri = VBRIHeader(fileobj)
+        except VBRIHeaderError:
+            pass
+        else:
+            self.sketchy = False
+            self.length = float(frame_size * vbri.frames) / self.sample_rate
+            if self.length:
+                self.bitrate = int((vbri.bytes * 8) / self.length)
 
     def pprint(self):
         s = "MPEG %s layer %d, %d bps, %s Hz, %.2f seconds" % (

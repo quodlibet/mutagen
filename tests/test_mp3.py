@@ -6,6 +6,8 @@ import shutil
 from tests import TestCase, DATA_DIR
 from mutagen._compat import cBytesIO
 from mutagen.mp3 import MP3, error as MP3Error, delete, MPEGInfo, EasyMP3
+from mutagen._mp3util import XingHeader, XingHeaderError, VBRIHeader, \
+    VBRIHeaderError
 from mutagen.id3 import ID3
 from tempfile import mkstemp
 
@@ -84,15 +86,18 @@ class TMP3(TestCase):
 
     def test_xing(self):
         mp3 = MP3(os.path.join(DATA_DIR, "xing.mp3"))
-        self.failUnlessEqual(int(round(mp3.info.length)), 26122)
-        self.failUnlessEqual(mp3.info.bitrate, 306)
+        self.assertAlmostEqual(mp3.info.length, 2.052, 3)
+        self.assertEqual(mp3.info.bitrate, 32000)
 
     def test_vbri(self):
         mp3 = MP3(os.path.join(DATA_DIR, "vbri.mp3"))
-        self.failUnlessEqual(int(round(mp3.info.length)), 222)
+        self.assertAlmostEqual(mp3.info.length, 222.19755, 3)
+        self.assertEqual(mp3.info.bitrate, 233260)
 
     def test_empty_xing(self):
-        MP3(os.path.join(DATA_DIR, "bad-xing.mp3"))
+        mp3 = MP3(os.path.join(DATA_DIR, "bad-xing.mp3"))
+        self.assertEqual(mp3.info.length, 0)
+        self.assertEqual(mp3.info.bitrate, 48000)
 
     def test_delete(self):
         self.mp3.delete()
@@ -187,3 +192,63 @@ class Issue72_TooShortFile(TestCase):
         mp3 = MP3(os.path.join(DATA_DIR, 'too-short.mp3'))
         self.failUnlessEqual(mp3["TIT2"], "Track 10")
         self.failUnlessAlmostEqual(mp3.info.length, 0.03, 2)
+
+
+class TXingHeader(TestCase):
+
+    def test_valid_info_header(self):
+        data = (b'Info\x00\x00\x00\x0f\x00\x00:>\x00\xed\xbd8\x00\x03\x05\x07'
+                b'\n\r\x0f\x12\x14\x17\x1a\x1c\x1e"$&)+.1359;=@CEGJLORTVZ\\^ac'
+                b'fikmqsux{}\x80\x82\x84\x87\x8a\x8c\x8e\x92\x94\x96\x99\x9c'
+                b'\x9e\xa1\xa3\xa5\xa9\xab\xad\xb0\xb3\xb5\xb8\xba\xbd\xc0\xc2'
+                b'\xc4\xc6\xca\xcc\xce\xd1\xd4\xd6\xd9\xdb\xdd\xe1\xe3\xe5\xe8'
+                b'\xeb\xed\xf0\xf2\xf5\xf8\xfa\xfc\x00\x00\x009')
+
+        fileobj = cBytesIO(data)
+        xing = XingHeader(fileobj)
+        self.assertEqual(xing.bytes, 15580472)
+        self.assertEqual(xing.frames, 14910)
+        self.assertEqual(xing.vbr_scale, 57)
+        self.assertTrue(xing.toc)
+        self.assertEqual(len(xing.toc), 100)
+        self.assertEqual(sum(xing.toc), 12625)  # only for coverage..
+
+        XingHeader(cBytesIO(data.replace(b'Info', b'Xing')))
+
+    def test_invalid(self):
+        self.assertRaises(XingHeaderError, XingHeader, cBytesIO(b""))
+        self.assertRaises(XingHeaderError, XingHeader, cBytesIO(b"Xing"))
+        self.assertRaises(XingHeaderError, XingHeader, cBytesIO(b"aaaa"))
+
+    def test_get_offset(self):
+        mp3 = MP3(os.path.join(DATA_DIR, "silence-44-s.mp3"))
+        self.assertEqual(XingHeader.get_offset(mp3.info), 36)
+
+
+class TVBRIHeader(TestCase):
+
+    def test_valid(self):
+        # parts of the trailing toc zeroed...
+        data = (b'VBRI\x00\x01\t1\x00d\x00\x0c\xb05\x00\x00\x049\x00\x87\x00'
+                b'\x01\x00\x02\x00\x08\n0\x19H\x18\xe0\x18x\x18\xe0\x18x\x19H'
+                b'\x18\xe0\x19H\x18\xe0\x18\xe0\x18x' + b'\x00' * 300)
+
+        fileobj = cBytesIO(data)
+        vbri = VBRIHeader(fileobj)
+        self.assertEqual(vbri.bytes, 831541)
+        self.assertEqual(vbri.frames, 1081)
+        self.assertEqual(vbri.quality, 100)
+        self.assertEqual(vbri.version, 1)
+        self.assertEqual(vbri.toc_frames, 8)
+        self.assertTrue(vbri.toc)
+        self.assertEqual(len(vbri.toc), 135)
+        self.assertEqual(sum(vbri.toc), 72656)
+
+    def test_invalid(self):
+        self.assertRaises(VBRIHeaderError, VBRIHeader, cBytesIO(b""))
+        self.assertRaises(VBRIHeaderError, VBRIHeader, cBytesIO(b"VBRI"))
+        self.assertRaises(VBRIHeaderError, VBRIHeader, cBytesIO(b"Xing"))
+
+    def test_get_offset(self):
+        mp3 = MP3(os.path.join(DATA_DIR, "silence-44-s.mp3"))
+        self.assertEqual(VBRIHeader.get_offset(mp3.info), 36)
