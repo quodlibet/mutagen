@@ -10,6 +10,8 @@ http://www.codeproject.com/Articles/8295/MPEG-Audio-Frame-Header
 http://wiki.hydrogenaud.io/index.php?title=MP3
 """
 
+from functools import partial
+
 from ._util import cdata
 from ._compat import xrange
 
@@ -154,8 +156,6 @@ class VBRIHeader(object):
         toc_data = fileobj.read(toc_size)
         if len(toc_data) != toc_size:
             raise VBRIHeaderError("VBRI header truncated")
-
-        from functools import partial
 
         self.toc = []
         if toc_entry_size == 2:
