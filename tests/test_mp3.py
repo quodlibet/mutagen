@@ -7,7 +7,7 @@ from tests import TestCase, DATA_DIR
 from mutagen._compat import cBytesIO
 from mutagen.mp3 import MP3, error as MP3Error, delete, MPEGInfo, EasyMP3
 from mutagen._mp3util import XingHeader, XingHeaderError, VBRIHeader, \
-    VBRIHeaderError
+    VBRIHeaderError, LAMEHeader, LAMEError
 from mutagen.id3 import ID3
 from tempfile import mkstemp
 
@@ -252,3 +252,43 @@ class TVBRIHeader(TestCase):
     def test_get_offset(self):
         mp3 = MP3(os.path.join(DATA_DIR, "silence-44-s.mp3"))
         self.assertEqual(VBRIHeader.get_offset(mp3.info), 36)
+
+
+class TLAMEHeader(TestCase):
+
+    def test_version(self):
+
+        def parse(data):
+            data = cBytesIO(data + b"\x00" * (20 - len(data)))
+            return LAMEHeader.parse_version(data)
+
+        self.assertEqual(parse(b"LAME3.80"), (u"3.80", False))
+        self.assertEqual(parse(b"LAME3.80 "), (u"3.80", False))
+        self.assertEqual(parse(b"LAME3.88 (beta)"), (u"3.88 (beta)", False))
+        self.assertEqual(parse(b"LAME3.90 (alpha)"), (u"3.90 (alpha)", False))
+        self.assertEqual(parse(b"LAME3.90 "), (u"3.90.0+", True))
+        self.assertEqual(parse(b"LAME3.96a"), (u"3.96 (alpha)", True))
+        self.assertEqual(parse(b"LAME3.96b"), (u"3.96 (beta)", True))
+        self.assertEqual(parse(b"LAME3.96x"), (u"3.96 (?)", True))
+        self.assertEqual(parse(b"LAME3.98 "), (u"3.98.0", True))
+        self.assertEqual(parse(b"LAME3.96r"), (u"3.96.1+", True))
+        self.assertEqual(parse(b"L3.99r"), (u"3.99.1+", True))
+        self.assertEqual(parse(b"LAME3100r"), (u"3.100.1+", True))
+
+    def test_invalid(self):
+
+        def parse(data):
+            data = cBytesIO(data + b"\x00" * (20 - len(data)))
+            return LAMEHeader.parse_version(data)
+
+        self.assertRaises(LAMEError, parse, b"")
+        self.assertRaises(LAMEError, parse, b"LAME")
+        self.assertRaises(LAMEError, parse, b"LAME3.999")
+
+    def test_real(self):
+        with open(os.path.join(DATA_DIR, "lame.mp3"), "rb") as h:
+            h.seek(36, 0)
+            xing = XingHeader(h)
+            self.assertEqual(xing.lame_version, u"3.99.1+")
+            self.assertTrue(xing.lame_header)
+            self.assertEqual(xing.lame_header.track_gain_adjustment, 6.0)

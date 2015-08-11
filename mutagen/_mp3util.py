@@ -10,10 +10,236 @@ http://www.codeproject.com/Articles/8295/MPEG-Audio-Frame-Header
 http://wiki.hydrogenaud.io/index.php?title=MP3
 """
 
+import struct
 from functools import partial
 
-from ._util import cdata
-from ._compat import xrange
+from ._util import cdata, BitReader
+from ._compat import xrange, iterbytes, cBytesIO
+
+
+class LAMEError(Exception):
+    pass
+
+
+class LAMEHeader(object):
+    """http://gabriel.mp3-tech.org/mp3infotag.html"""
+
+    vbr_method = 0
+    """0: unknown, 1: CBR, 2: ABR, 3/4/5: VBR, others: see the docs"""
+
+    lowpass_filter = 0
+    """lowpass filter value in Hz. 0 means unknown"""
+
+    quality = -1
+    """Encoding quality: 0..9"""
+
+    vbr_quality = -1
+    """VBR quality: 0..9"""
+
+    track_peak = None
+    """Peak signal amplitude as float. None if unknown."""
+
+    track_gain_origin = 0
+    """see the docs"""
+
+    track_gain_adjustment = None
+    """Track gain adjustment as float (for 83db replay gain) or None"""
+
+    album_gain_origin = 0
+    """see the docs"""
+
+    album_gain_adjustment = None
+    """Album gain adjustment as float (for 83db replay gain) or None"""
+
+    encoding_flags = 0
+    """see docs"""
+
+    ath_type = -1
+    """see docs"""
+
+    bitrate = -1
+    """Bitrate in kbps. For VBR the minimum bitrate, for anything else
+    (CBR, ABR, ..) the target bitrate.
+    """
+
+    encoder_delay_start = 0
+    """Encoder delay in samples"""
+
+    encoder_padding_end = 0
+    """Padding in samples added at the end"""
+
+    source_sample_frequency_enum = -1
+    """see docs"""
+
+    unwise_setting_used = False
+    """see docs"""
+
+    stereo_mode = 0
+    """see docs"""
+
+    noise_shaping = 0
+    """see docs"""
+
+    mp3_gain = 0
+    """Applied MP3 gain -127..127. Factor is 2 ** (mp3_gain / 4)"""
+
+    surround_info = 0
+    """see docs"""
+
+    preset_used = 0
+    """lame preset"""
+
+    music_length = 0
+    """Length in bytes excluding any ID3 tags"""
+
+    music_crc = -1
+    """CRC16 of the data specified by music_length"""
+
+    header_crc = -1
+    """CRC16 of this header and everything before (not checked)"""
+
+    def __init__(self, xing, fileobj):
+        """Raises LAMEError if parsing fails"""
+
+        payload = fileobj.read(27)
+        if len(payload) != 27:
+            raise LAMEError("Not enough data")
+
+        # extended lame header
+        r = BitReader(cBytesIO(payload))
+        revision = r.bits(4)
+        if revision != 0:
+            raise LAMEError("unsupported header revision %d" % revision)
+
+        self.vbr_method = r.bits(4)
+        self.lowpass_filter = r.bits(8) * 100
+
+        # these have a different meaning for lame; expose them again here
+        self.quality = (100 - xing.vbr_scale) % 10
+        self.vbr_quality = (100 - xing.vbr_scale) // 10
+
+        track_peak_data = r.bytes(4)
+        if track_peak_data == b"\x00\x00\x00\x00":
+            self.track_peak = None
+        else:
+            self.track_peak = struct.unpack("<f", track_peak_data)[0]
+
+        track_gain_type = r.bits(3)
+        self.track_gain_origin = r.bits(3)
+        sign = r.bits(1)
+        gain_adj = r.bits(9) / 10.0
+        if sign:
+            gain_adj *= -1
+        if track_gain_type == 1:
+            self.track_gain_adjustment = gain_adj
+        else:
+            self.track_gain_adjustment = None
+        assert r.is_aligned()
+
+        album_gain_type = r.bits(3)
+        self.album_gain_origin = r.bits(3)
+        sign = r.bits(1)
+        album_gain_adj = r.bits(9) / 10.0
+        if album_gain_type == 2:
+            self.album_gain_adjustment = album_gain_adj
+        else:
+            self.album_gain_adjustment = None
+
+        self.encoding_flags = r.bits(4)
+        self.ath_type = r.bits(4)
+
+        self.bitrate = r.bits(8)
+
+        self.encoder_delay_start = r.bits(12)
+        self.encoder_padding_end = r.bits(12)
+
+        self.source_sample_frequency_enum = r.bits(2)
+        self.unwise_setting_used = r.bits(1)
+        self.stereo_mode = r.bits(3)
+        self.noise_shaping = r.bits(2)
+
+        sign = r.bits(1)
+        mp3_gain = r.bits(7)
+        if sign:
+            mp3_gain *= -1
+        self.mp3_gain = mp3_gain
+
+        r.skip(2)
+        self.surround_info = r.bits(3)
+        self.preset_used = r.bits(11)
+        self.music_length = r.bits(32)
+        self.music_crc = r.bits(16)
+
+        self.header_crc = r.bits(16)
+        assert r.is_aligned()
+
+    @classmethod
+    def parse_version(cls, fileobj):
+        """Returns a version string and True if a LAMEHeader follows.
+        The passed file object will be positioned right before the
+        lame header if True.
+
+        Raises LAMEError if there is no lame version info.
+        """
+
+        # http://wiki.hydrogenaud.io/index.php?title=LAME_version_string
+
+        data = fileobj.read(20)
+        if len(data) != 20:
+            raise LAMEError("Not a lame header")
+        if not data.startswith((b"LAME", b"L3.99")):
+            raise LAMEError("Not a lame header")
+
+        data = data.lstrip(b"EMAL")
+        major, data = data[0:1], data[1:].lstrip(b".")
+        minor = b""
+        for c in iterbytes(data):
+            if not c.isdigit():
+                break
+            minor += c
+        data = data[len(minor):]
+
+        try:
+            major = int(major.decode("ascii"))
+            minor = int(minor.decode("ascii"))
+        except ValueError:
+            raise LAMEError
+
+        # the extended header was added sometimes in the 3.90 cycle
+        # e.g. "LAME3.90 (alpha)" should still stop here.
+        # (I have seen such a file)
+        if (major, minor) < (3, 90) or (
+                (major, minor) == (3, 90) and data[-11] == b"("):
+            flag = data.strip(b"\x00").rstrip().decode("ascii")
+            return u"%d.%d%s" % (major, minor, flag), False
+
+        if len(data) <= 11:
+            raise LAMEError("Invalid version: too long")
+
+        flag = data[:-11].rstrip(b"\x00")
+
+        flag_string = u""
+        patch = u""
+        if flag == b"a":
+            flag_string = u" (alpha)"
+        elif flag == b"b":
+            flag_string = u" (beta)"
+        elif flag == b"r":
+            patch = u".1+"
+        elif flag == b" ":
+            if (major, minor) > (3, 96):
+                patch = u".0"
+            else:
+                patch = u".0+"
+        elif flag == b"":
+            patch = u".0+"
+        else:
+            flag_string = u" (?)"
+
+        # extended header, seek back to 9 bytes for the caller
+        fileobj.seek(-11, 1)
+
+        return u"%d.%d%s%s" % (major, minor, patch, flag_string), True
 
 
 class XingHeaderError(Exception):
@@ -43,6 +269,12 @@ class XingHeader(object):
 
     vbr_scale = -1
     """VBR quality indicator 0-100. -1 if unknown"""
+
+    lame_header = None
+    """A LAMEHeader instance or None"""
+
+    lame_version = u""
+    """The version of the LAME encoder e.g. '3.99.0'. Empty if unknown"""
 
     def __init__(self, fileobj):
         """Parses the Xing header or raises XingHeaderError.
@@ -79,6 +311,13 @@ class XingHeader(object):
             if len(data) != 4:
                 raise XingHeaderError("Xing header truncated")
             self.vbr_scale = cdata.uint32_be(data)
+
+        try:
+            self.lame_version, has_header = LAMEHeader.parse_version(fileobj)
+            if has_header:
+                self.lame_header = LAMEHeader(self, fileobj)
+        except LAMEError:
+            pass
 
     @classmethod
     def get_offset(cls, info):
