@@ -42,8 +42,8 @@ class TMP3(TestCase):
     def test_length(self):
         self.assertAlmostEquals(self.mp3.info.length, 3.77, 2)
         self.assertAlmostEquals(self.mp3_2.info.length, 3.77, 2)
-        self.assertAlmostEquals(self.mp3_3.info.length, 3.77, 2)
-        self.assertAlmostEquals(self.mp3_4.info.length, 3.84, 2)
+        self.assertAlmostEquals(self.mp3_3.info.length, 3.68475, 4)
+        self.assertAlmostEquals(self.mp3_4.info.length, 3.68475, 4)
 
     def test_version(self):
         self.failUnlessEqual(self.mp3.info.version, 1)
@@ -60,8 +60,8 @@ class TMP3(TestCase):
     def test_bitrate(self):
         self.failUnlessEqual(self.mp3.info.bitrate, 32000)
         self.failUnlessEqual(self.mp3_2.info.bitrate, 32000)
-        self.failUnlessEqual(self.mp3_3.info.bitrate, 18191)
-        self.failUnlessEqual(self.mp3_4.info.bitrate, 9300)
+        self.failUnlessEqual(self.mp3_3.info.bitrate, 18602)
+        self.failUnlessEqual(self.mp3_4.info.bitrate, 9691)
 
     def test_notmp3(self):
         self.failUnlessRaises(
@@ -292,3 +292,7 @@ class TLAMEHeader(TestCase):
             self.assertEqual(xing.lame_version, u"3.99.1+")
             self.assertTrue(xing.lame_header)
             self.assertEqual(xing.lame_header.track_gain_adjustment, 6.0)
+
+    def test_length(self):
+        mp3 = MP3(os.path.join(DATA_DIR, "lame.mp3"))
+        self.assertAlmostEqual(mp3.info.length, 0.06160, 4)

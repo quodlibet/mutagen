@@ -222,8 +222,11 @@ class MPEGInfo(StreamInfo):
         else:
             self.sketchy = False
             if xing.frames != -1:
-                self.length = float(
-                    frame_size * xing.frames) / self.sample_rate
+                samples = frame_size * xing.frames
+                if xing.lame_header is not None:
+                    samples -= xing.lame_header.encoder_delay_start
+                    samples -= xing.lame_header.encoder_padding_end
+                self.length = float(samples) / self.sample_rate
             if xing.bytes != -1 and self.length:
                 self.bitrate = int((xing.bytes * 8) / self.length)
             return
