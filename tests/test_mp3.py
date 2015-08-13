@@ -36,6 +36,12 @@ class TMP3(TestCase):
         self.failUnlessEqual(self.mp3_3.info.mode, JOINTSTEREO)
         self.failUnlessEqual(self.mp3_4.info.mode, JOINTSTEREO)
 
+    def test_channels(self):
+        self.assertEqual(self.mp3.info.channels, 2)
+        self.assertEqual(self.mp3_2.info.channels, 2)
+        self.assertEqual(self.mp3_3.info.channels, 2)
+        self.assertEqual(self.mp3_4.info.channels, 2)
+
     def test_encoder_info(self):
         self.assertEqual(self.mp3.info.encoder_info, u"")
         self.assertTrue(isinstance(self.mp3.info.encoder_info, text_type))

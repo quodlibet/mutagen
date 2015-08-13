@@ -87,6 +87,7 @@ class MPEGInfo(StreamInfo):
     Useful attributes:
 
     * length -- audio length, in seconds
+    * channels -- number of audio channels
     * bitrate -- audio bitrate, in bits per second
     * sketchy -- if true, the file may not be valid MPEG audio
     * encoder_info -- a string containing encoder name and possibly version.
@@ -215,6 +216,8 @@ class MPEGInfo(StreamInfo):
                     break
         else:
             raise HeaderNotFoundError("can't sync to an MPEG frame")
+
+        self.channels = 1 if self.mode == MONO else 2
 
         # There is a serious problem here, which is that many flags
         # in an MPEG header are backwards.
