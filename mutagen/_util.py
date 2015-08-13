@@ -73,12 +73,12 @@ def enum(cls):
     def str_(self):
         if self in map_:
             return "%s.%s" % (type(self).__name__, map_[self])
-        return "%d" % self
+        return "%d" % int(self)
 
     def repr_(self):
         if self in map_:
-            return "<%s.%s: %d>" % (type(self).__name__, map_[self], self)
-        return "%d" % self
+            return "<%s.%s: %d>" % (type(self).__name__, map_[self], int(self))
+        return "%d" % int(self)
 
     setattr(new_type, "__repr__", repr_)
     setattr(new_type, "__str__", str_)
