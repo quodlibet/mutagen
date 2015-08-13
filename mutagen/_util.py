@@ -70,13 +70,18 @@ def enum(cls):
             setattr(new_type, key, value_instance)
             map_[value] = key
 
-    def repr_(self):
+    def str_(self):
         if self in map_:
             return "%s.%s" % (type(self).__name__, map_[self])
-        else:
-            return "%s(%s)" % (type(self).__name__, self)
+        return "%d" % self
+
+    def repr_(self):
+        if self in map_:
+            return "<%s.%s: %d>" % (type(self).__name__, map_[self], self)
+        return "%d" % self
 
     setattr(new_type, "__repr__", repr_)
+    setattr(new_type, "__str__", str_)
 
     return new_type
 

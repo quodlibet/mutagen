@@ -500,11 +500,16 @@ class Tenum(TestCase):
 
         self.assertEqual(Foo.FOO, 1)
         self.assertTrue(isinstance(Foo.FOO, Foo))
-        self.assertEqual(repr(Foo.FOO), "Foo.FOO")
-        self.assertEqual(repr(Foo(3)), "Foo.BAR")
-        self.assertEqual(repr(Foo(42)), "Foo(42)")
+        self.assertEqual(repr(Foo.FOO), "<Foo.FOO: 1>")
+        self.assertEqual(repr(Foo(3)), "<Foo.BAR: 3>")
+        self.assertEqual(repr(Foo(42)), "42")
         self.assertEqual(str(Foo(42)), "42")
-        self.assertEqual(str(Foo(1)), "1")
+        self.assertEqual(int(Foo(42)), 42)
+        self.assertEqual(str(Foo(1)), "Foo.FOO")
+        self.assertEqual(int(Foo(1)), 1)
+
+        self.assertTrue(isinstance(str(Foo.FOO), str))
+        self.assertTrue(isinstance(repr(Foo.FOO), str))
 
 
 class Tdecode_terminated(TestCase):
