@@ -301,7 +301,7 @@ class MPEGInfo(StreamInfo):
     def pprint(self):
         info = str(self.bitrate_mode).split(".", 1)[-1]
         if self.bitrate_mode == BitrateMode.UNKNOWN:
-            info = u"???"
+            info = u"CBR?"
         if self.encoder_info:
             info += ", %s" % self.encoder_info
         s = u"MPEG %s layer %d, %d bps (%s), %s Hz, %d chn, %.2f seconds" % (
