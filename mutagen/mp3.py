@@ -299,11 +299,16 @@ class MPEGInfo(StreamInfo):
                 self.bitrate = int((vbri.bytes * 8) / self.length)
 
     def pprint(self):
-        s = "MPEG %s layer %d, %d bps, %s Hz, %.2f seconds" % (
-            self.version, self.layer, self.bitrate, self.sample_rate,
-            self.length)
+        info = str(self.bitrate_mode).split(".", 1)[-1]
+        if self.bitrate_mode == BitrateMode.UNKNOWN:
+            info = u"???"
+        if self.encoder_info:
+            info += ", %s" % self.encoder_info
+        s = u"MPEG %s layer %d, %d bps (%s), %s Hz, %d chn, %.2f seconds" % (
+            self.version, self.layer, self.bitrate, info,
+            self.sample_rate, self.channels, self.length)
         if self.sketchy:
-            s += " (sketchy)"
+            s += u" (sketchy)"
         return s
 
 

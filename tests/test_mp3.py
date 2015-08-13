@@ -101,6 +101,12 @@ class TMP3(TestCase):
     def test_pprint(self):
         self.failUnless(self.mp3.pprint())
 
+    def test_info_pprint(self):
+        res = self.mp3.info.pprint()
+        self.assertTrue(res)
+        self.assertTrue(isinstance(res, text_type))
+        self.assertTrue(res.startswith(u"MPEG 1 layer 3"))
+
     def test_pprint_no_tags(self):
         self.mp3.tags = None
         self.failUnless(self.mp3.pprint())
