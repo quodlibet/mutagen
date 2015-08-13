@@ -4,8 +4,9 @@ import os
 import shutil
 
 from tests import TestCase, DATA_DIR
-from mutagen._compat import cBytesIO
-from mutagen.mp3 import MP3, error as MP3Error, delete, MPEGInfo, EasyMP3
+from mutagen._compat import cBytesIO, text_type
+from mutagen.mp3 import MP3, error as MP3Error, delete, MPEGInfo, EasyMP3, \
+    BitrateMode
 from mutagen._mp3util import XingHeader, XingHeaderError, VBRIHeader, \
     VBRIHeaderError, LAMEHeader, LAMEError
 from mutagen.id3 import ID3
@@ -34,6 +35,20 @@ class TMP3(TestCase):
         self.failUnlessEqual(self.mp3_2.info.mode, JOINTSTEREO)
         self.failUnlessEqual(self.mp3_3.info.mode, JOINTSTEREO)
         self.failUnlessEqual(self.mp3_4.info.mode, JOINTSTEREO)
+
+    def test_encoder_info(self):
+        self.assertEqual(self.mp3.info.encoder_info, u"")
+        self.assertTrue(isinstance(self.mp3.info.encoder_info, text_type))
+        self.assertEqual(self.mp3_2.info.encoder_info, u"")
+        self.assertEqual(self.mp3_3.info.encoder_info, u"LAME 3.98.1+")
+        self.assertEqual(self.mp3_4.info.encoder_info, u"LAME 3.98.1+")
+        self.assertTrue(isinstance(self.mp3_4.info.encoder_info, text_type))
+
+    def test_bitrate_mode(self):
+        self.failUnlessEqual(self.mp3.info.bitrate_mode, BitrateMode.UNKNOWN)
+        self.failUnlessEqual(self.mp3_2.info.bitrate_mode, BitrateMode.UNKNOWN)
+        self.failUnlessEqual(self.mp3_3.info.bitrate_mode, BitrateMode.VBR)
+        self.failUnlessEqual(self.mp3_4.info.bitrate_mode, BitrateMode.VBR)
 
     def test_id3(self):
         self.failUnlessEqual(self.mp3.tags, ID3(self.silence))
@@ -212,6 +227,7 @@ class TXingHeader(TestCase):
         self.assertTrue(xing.toc)
         self.assertEqual(len(xing.toc), 100)
         self.assertEqual(sum(xing.toc), 12625)  # only for coverage..
+        self.assertEqual(xing.is_info, True)
 
         XingHeader(cBytesIO(data.replace(b'Info', b'Xing')))
 

@@ -276,6 +276,9 @@ class XingHeader(object):
     lame_version = u""
     """The version of the LAME encoder e.g. '3.99.0'. Empty if unknown"""
 
+    is_info = False
+    """If the header started with 'Info' and not 'Xing'"""
+
     def __init__(self, fileobj):
         """Parses the Xing header or raises XingHeaderError.
 
@@ -285,6 +288,8 @@ class XingHeader(object):
         data = fileobj.read(8)
         if len(data) != 8 or data[:4] not in (b"Xing", b"Info"):
             raise XingHeaderError("Not a Xing header")
+
+        self.is_info = (data[:4] == b"Info")
 
         flags = cdata.uint32_be_from(data, 4)[0]
 

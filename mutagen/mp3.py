@@ -14,7 +14,7 @@ import struct
 from ._compat import endswith
 from ._mp3util import XingHeader, XingHeaderError, VBRIHeader, VBRIHeaderError
 from mutagen import StreamInfo
-from mutagen._util import MutagenError
+from mutagen._util import MutagenError, enum
 from mutagen.id3 import ID3FileType, BitPaddedInt, delete
 
 __all__ = ["MP3", "Open", "delete", "MP3"]
@@ -30,6 +30,45 @@ class HeaderNotFoundError(error, IOError):
 
 class InvalidMPEGHeader(error, IOError):
     pass
+
+
+@enum
+class BitrateMode(object):
+
+    UNKNOWN = 0
+    """Probably a CBR file, but not sure"""
+
+    CBR = 1
+    """Constant Bitrate"""
+
+    VBR = 2
+    """Variable Bitrate"""
+
+    ABR = 3
+    """Average Bitrate (a variant of VBR)"""
+
+
+def _guess_xing_bitrate_mode(xing):
+
+    if xing.lame_header:
+        lame = xing.lame_header
+        if lame.vbr_method in (1, 8):
+            return BitrateMode.CBR
+        elif lame.vbr_method in (2, 9):
+            return BitrateMode.ABR
+        elif lame.vbr_method in (3, 4, 5, 6):
+            return BitrateMode.VBR
+        # everything else undefined, continue guessing
+
+    # info tags get only written by lame for cbr files
+    if xing.is_info:
+        return BitrateMode.CBR
+
+    # older lame and non-lame with some variant of vbr
+    if xing.vbr_scale != -1 or xing.lame_version:
+        return BitrateMode.VBR
+
+    return BitrateMode.UNKNOWN
 
 
 # Mode values.
@@ -50,6 +89,11 @@ class MPEGInfo(StreamInfo):
     * length -- audio length, in seconds
     * bitrate -- audio bitrate, in bits per second
     * sketchy -- if true, the file may not be valid MPEG audio
+    * encoder_info -- a string containing encoder name and possibly version.
+                      In case a lame tag is present this will start with
+                      ``"LAME "``, if unknown it is empty, otherwise the
+                      text format is undefined.
+    * bitrate_mode -- a :class:`BitrateMode`
 
     Useless attributes:
 
@@ -87,6 +131,8 @@ class MPEGInfo(StreamInfo):
     }
 
     sketchy = False
+    encoder_info = u""
+    bitrate_mode = BitrateMode.UNKNOWN
 
     def __init__(self, fileobj, offset=None):
         """Parse MPEG stream information from a file-like object.
@@ -221,6 +267,7 @@ class MPEGInfo(StreamInfo):
             pass
         else:
             self.sketchy = False
+            self.bitrate_mode = _guess_xing_bitrate_mode(xing)
             if xing.frames != -1:
                 samples = frame_size * xing.frames
                 if xing.lame_header is not None:
@@ -229,6 +276,8 @@ class MPEGInfo(StreamInfo):
                 self.length = float(samples) / self.sample_rate
             if xing.bytes != -1 and self.length:
                 self.bitrate = int((xing.bytes * 8) / self.length)
+            if xing.lame_version:
+                self.encoder_info = u"LAME %s" % xing.lame_version
             return
 
         # VBRI
@@ -239,6 +288,8 @@ class MPEGInfo(StreamInfo):
         except VBRIHeaderError:
             pass
         else:
+            self.bitrate_mode = BitrateMode.VBR
+            self.encoder_info = u"FhG"
             self.sketchy = False
             self.length = float(frame_size * vbri.frames) / self.sample_rate
             if self.length:
