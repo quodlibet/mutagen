@@ -231,7 +231,7 @@ class LAMEHeader(object):
                 patch = u".0"
             else:
                 patch = u".0+"
-        elif flag == b"":
+        elif flag == b"" or flag == b".":
             patch = u".0+"
         else:
             flag_string = u" (?)"

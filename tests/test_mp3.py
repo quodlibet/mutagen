@@ -302,6 +302,7 @@ class TLAMEHeader(TestCase):
         self.assertEqual(parse(b"LAME3.96r"), (u"3.96.1+", True))
         self.assertEqual(parse(b"L3.99r"), (u"3.99.1+", True))
         self.assertEqual(parse(b"LAME3100r"), (u"3.100.1+", True))
+        self.assertEqual(parse(b"LAME3.90.\x03\xbe\x00"), (u"3.90.0+", True))
 
     def test_invalid(self):
 
