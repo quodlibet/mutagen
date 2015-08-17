@@ -13,6 +13,11 @@ ID3 Frames
     id3_frames
 
 
+.. autoclass:: mutagen.id3.PictureType
+    :members:
+    :member-order: bysource
+
+
 ID3
 ---
 

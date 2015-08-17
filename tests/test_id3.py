@@ -1722,6 +1722,7 @@ class TID3Misc(TestCase):
     def test_main(self):
         self.assertEqual(id3.Encoding.UTF8, 3)
         self.assertEqual(id3.ID3v1SaveOptions.UPDATE, 1)
+        self.assertEqual(id3.PictureType.COVER_FRONT, 3)
 
     def test_determine_bpi(self):
         determine_bpi = id3._determine_bpi
