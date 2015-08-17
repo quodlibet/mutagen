@@ -531,7 +531,7 @@ class Picture(MetadataBlock):
         with open("Folder.jpg", "rb") as f:
             pic.data = f.read()
 
-        pic.type = APICType.COVER_FRONT
+        pic.type = id3.PictureType.COVER_FRONT
         pic.mime = u"image/jpeg"
         pic.width = 500
         pic.height = 500
