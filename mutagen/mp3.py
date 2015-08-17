@@ -96,6 +96,10 @@ class MPEGInfo(StreamInfo):
                       text format is undefined.
     * bitrate_mode -- a :class:`BitrateMode`
 
+    * track_gain -- replaygain track gain (89db) or None
+    * track_peak -- replaygain track peak or None
+    * album_gain -- replaygain album gain (89db) or None
+
     Useless attributes:
 
     * version -- MPEG version (1, 2, 2.5)
@@ -134,6 +138,7 @@ class MPEGInfo(StreamInfo):
     sketchy = False
     encoder_info = u""
     bitrate_mode = BitrateMode.UNKNOWN
+    track_gain = track_peak = album_gain = album_peak = None
 
     def __init__(self, fileobj, offset=None):
         """Parse MPEG stream information from a file-like object.
@@ -269,18 +274,23 @@ class MPEGInfo(StreamInfo):
         except XingHeaderError:
             pass
         else:
+            lame = xing.lame_header
             self.sketchy = False
             self.bitrate_mode = _guess_xing_bitrate_mode(xing)
             if xing.frames != -1:
                 samples = frame_size * xing.frames
-                if xing.lame_header is not None:
-                    samples -= xing.lame_header.encoder_delay_start
-                    samples -= xing.lame_header.encoder_padding_end
+                if lame is not None:
+                    samples -= lame.encoder_delay_start
+                    samples -= lame.encoder_padding_end
                 self.length = float(samples) / self.sample_rate
             if xing.bytes != -1 and self.length:
                 self.bitrate = int((xing.bytes * 8) / self.length)
             if xing.lame_version:
                 self.encoder_info = u"LAME %s" % xing.lame_version
+            if lame is not None:
+                self.track_gain = lame.track_gain_adjustment
+                self.track_peak = lame.track_peak
+                self.album_gain = lame.album_gain_adjustment
             return
 
         # VBRI

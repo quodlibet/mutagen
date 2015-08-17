@@ -18,6 +18,8 @@ class TMP3(TestCase):
     silence_nov2 = os.path.join(DATA_DIR, 'silence-44-s-v1.mp3')
     silence_mpeg2 = os.path.join(DATA_DIR, 'silence-44-s-mpeg2.mp3')
     silence_mpeg25 = os.path.join(DATA_DIR, 'silence-44-s-mpeg25.mp3')
+    lame = os.path.join(DATA_DIR, 'lame.mp3')
+    lame_peak = os.path.join(DATA_DIR, 'lame-peak.mp3')
 
     def setUp(self):
         original = os.path.join(DATA_DIR, "silence-44-s.mp3")
@@ -28,6 +30,8 @@ class TMP3(TestCase):
         self.mp3_2 = MP3(self.silence_nov2)
         self.mp3_3 = MP3(self.silence_mpeg2)
         self.mp3_4 = MP3(self.silence_mpeg25)
+        self.mp3_lame = MP3(self.lame)
+        self.mp3_lame_peak = MP3(self.lame_peak)
 
     def test_mode(self):
         from mutagen.mp3 import JOINTSTEREO
@@ -35,6 +39,17 @@ class TMP3(TestCase):
         self.failUnlessEqual(self.mp3_2.info.mode, JOINTSTEREO)
         self.failUnlessEqual(self.mp3_3.info.mode, JOINTSTEREO)
         self.failUnlessEqual(self.mp3_4.info.mode, JOINTSTEREO)
+
+    def test_replaygain(self):
+        self.assertEqual(self.mp3_3.info.track_gain, 51.0)
+        self.assertEqual(self.mp3_4.info.track_gain, 51.0)
+        self.assertEqual(self.mp3_lame.info.track_gain, 6.0)
+        self.assertAlmostEqual(self.mp3_lame_peak.info.track_gain, 6.8, 1)
+        self.assertAlmostEqual(self.mp3_lame_peak.info.track_peak, 0.21856, 4)
+
+        self.assertTrue(self.mp3.info.track_gain is None)
+        self.assertTrue(self.mp3.info.track_peak is None)
+        self.assertTrue(self.mp3.info.album_gain is None)
 
     def test_channels(self):
         self.assertEqual(self.mp3.info.channels, 2)

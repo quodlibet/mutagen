@@ -43,13 +43,13 @@ class LAMEHeader(object):
     """see the docs"""
 
     track_gain_adjustment = None
-    """Track gain adjustment as float (for 83db replay gain) or None"""
+    """Track gain adjustment as float (for 89db replay gain) or None"""
 
     album_gain_origin = 0
     """see the docs"""
 
     album_gain_adjustment = None
-    """Album gain adjustment as float (for 83db replay gain) or None"""
+    """Album gain adjustment as float (for 89db replay gain) or None"""
 
     encoding_flags = 0
     """see docs"""
@@ -122,8 +122,9 @@ class LAMEHeader(object):
         if track_peak_data == b"\x00\x00\x00\x00":
             self.track_peak = None
         else:
-            self.track_peak = struct.unpack("<f", track_peak_data)[0]
-
+            # see PutLameVBR() in LAME's VbrTag.c
+            self.track_peak = (
+                cdata.uint32_be(track_peak_data) - 0.5) / 2 ** 23
         track_gain_type = r.bits(3)
         self.track_gain_origin = r.bits(3)
         sign = r.bits(1)
