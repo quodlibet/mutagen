@@ -56,7 +56,7 @@ class PictureType(object):
     COMPOSER = 11
     """Composer"""
 
-    LYRISCIST = 12
+    LYRICIST = 12
     """Lyricist/text writer"""
 
     RECORDING_LOCATION = 13
