@@ -761,19 +761,26 @@ class MP4Tags(DictProxy, Metadata):
         __atoms[name] = (__parse_text, __render_text)
 
     def pprint(self):
+
+        def to_line(key, value):
+            assert isinstance(key, text_type)
+            if isinstance(value, text_type):
+                return u"%s=%s" % (key, value)
+            return u"%s=%r" % (key, value)
+
         values = []
-        for key, value in iteritems(self):
+        for key, value in sorted(iteritems(self)):
             if not isinstance(key, text_type):
                 key = key.decode("latin-1")
             if key == "covr":
-                values.append("%s=%s" % (key, ", ".join(
-                    ["[%d bytes of data]" % len(data) for data in value])))
+                values.append(u"%s=%s" % (key, u", ".join(
+                    [u"[%d bytes of data]" % len(data) for data in value])))
             elif isinstance(value, list):
                 for v in value:
-                    values.append("%s=%r" % (key, v))
+                    values.append(to_line(key, v))
             else:
-                values.append("%s=%r" % (key, value))
-        return "\n".join(values)
+                values.append(to_line(key, value))
+        return u"\n".join(values)
 
 
 class MP4Info(StreamInfo):

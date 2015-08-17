@@ -662,6 +662,7 @@ class TMP4Mixin(object):
 
     def test_pprint(self):
         self.failUnless(self.audio.pprint())
+        self.assertTrue(isinstance(self.audio.pprint(), text_type))
 
     def test_pprint_binary(self):
         self.audio["covr"] = [b"\x00\xa9\garbage"]
@@ -779,6 +780,10 @@ class TMP4Datatypes(TMP4, TMP4HasTagsMixin):
         self.failUnlessEqual(len(covr), 2)
         self.failUnlessEqual(covr[0].imageformat, MP4Cover.FORMAT_PNG)
         self.failUnlessEqual(covr[1].imageformat, MP4Cover.FORMAT_JPEG)
+
+    def test_pprint(self):
+        text = self.audio.tags.pprint().splitlines()
+        self.assertTrue(u"©ART=Test Artist" in text)
 
 
 class TMP4CovrWithName(TMP4, TMP4Mixin):
