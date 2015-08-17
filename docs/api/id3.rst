@@ -18,6 +18,10 @@ ID3 Frames
     :member-order: bysource
 
 
+.. autoclass:: mutagen.id3.Encoding
+    :members:
+    :member-order: bysource
+
 ID3
 ---
 

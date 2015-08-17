@@ -157,10 +157,19 @@ class SizedIntegerSpec(Spec):
 
 @enum
 class Encoding(object):
+    """Text Encoding"""
+
     LATIN1 = 0
+    """ISO-8859-1"""
+
     UTF16 = 1
+    """UTF-16 with BOM"""
+
     UTF16BE = 2
+    """UTF-16BE without BOM"""
+
     UTF8 = 3
+    """UTF-8"""
 
 
 class EncodingSpec(ByteSpec):
