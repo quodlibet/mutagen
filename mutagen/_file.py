@@ -108,10 +108,9 @@ class FileType(DictMixin):
             warnings.warn(
                 "save(filename=...) is deprecated, reload the file",
                 DeprecationWarning)
+
         if self.tags is not None:
             return self.tags.save(filename, **kwargs)
-        else:
-            raise ValueError("no tags in file")
 
     def pprint(self):
         """Print stream information and comment key=value pairs."""

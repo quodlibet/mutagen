@@ -100,7 +100,8 @@ class TAIFF(TestCase):
 
     def test_save_no_tags(self):
         self.aiff_tmp_id3.tags = None
-        self.failUnlessRaises(ValueError, self.aiff_tmp_id3.save)
+        self.aiff_tmp_id3.save()
+        self.assertTrue(self.aiff_tmp_id3.tags is None)
 
     def test_add_tags_already_there(self):
         self.failUnless(self.aiff_tmp_id3.tags)

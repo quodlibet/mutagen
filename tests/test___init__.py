@@ -56,6 +56,15 @@ class TFileType(TestCase):
     def setUp(self):
         self.vorbis = File(os.path.join(DATA_DIR, "empty.ogg"))
 
+        fd, filename = mkstemp(".mp3")
+        os.close(fd)
+        shutil.copy(os.path.join(DATA_DIR, "xing.mp3"), filename)
+        self.mp3_notags = File(filename)
+        self.mp3_filename = filename
+
+    def tearDown(self):
+        os.remove(self.mp3_filename)
+
     def test_delitem_not_there(self):
         self.failUnlessRaises(KeyError, self.vorbis.__delitem__, "foobar")
 
@@ -66,6 +75,11 @@ class TFileType(TestCase):
         self.vorbis["foobar"] = "quux"
         del(self.vorbis["foobar"])
         self.failIf("quux" in self.vorbis)
+
+    def test_save_no_tags(self):
+        self.assertTrue(self.mp3_notags.tags is None)
+        self.mp3_notags.save()
+        self.assertTrue(self.mp3_notags.tags is None)
 
 
 class TFile(TestCase):

@@ -174,7 +174,8 @@ class TMP3(TestCase):
 
     def test_save_no_tags(self):
         self.mp3.tags = None
-        self.failUnlessRaises(ValueError, self.mp3.save)
+        self.mp3.save()
+        self.assertTrue(self.mp3.tags is None)
 
     def test_mime(self):
         self.failUnless("audio/mp3" in self.mp3.mime)
