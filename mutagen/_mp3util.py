@@ -10,7 +10,6 @@ http://www.codeproject.com/Articles/8295/MPEG-Audio-Frame-Header
 http://wiki.hydrogenaud.io/index.php?title=MP3
 """
 
-import struct
 from functools import partial
 
 from ._util import cdata, BitReader
