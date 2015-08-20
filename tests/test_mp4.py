@@ -5,7 +5,7 @@ import shutil
 import struct
 import subprocess
 
-from mutagen._compat import cBytesIO, PY3, text_type
+from mutagen._compat import cBytesIO, PY3, text_type, PY2
 from tempfile import mkstemp
 from tests import TestCase, DATA_DIR
 from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
@@ -539,24 +539,6 @@ class TMP4Mixin(object):
         self.set_key('----:net.sacredchao.Mutagen:test key',
                      [MP4FreeForm(b'woooo', 142, 42)])
 
-    def test_freeform_cmp(self):
-        self.assertReallyEqual(
-            MP4FreeForm(b'woooo', 142, 42), MP4FreeForm(b'woooo', 142, 42))
-        self.assertReallyNotEqual(
-            MP4FreeForm(b'woooo', 142, 43), MP4FreeForm(b'woooo', 142, 42))
-        self.assertReallyNotEqual(
-            MP4FreeForm(b'woooo', 143, 42), MP4FreeForm(b'woooo', 142, 42))
-        self.assertReallyNotEqual(
-            MP4FreeForm(b'wooox', 142, 42), MP4FreeForm(b'woooo', 142, 42))
-
-    def test_cover_cmp(self):
-        self.assertReallyEqual(
-            MP4Cover(b'woooo', 142), MP4Cover(b'woooo', 142))
-        self.assertReallyNotEqual(
-            MP4Cover(b'woooo', 143), MP4Cover(b'woooo', 142))
-        self.assertReallyNotEqual(
-            MP4Cover(b'woooo', 142), MP4Cover(b'wooox', 142))
-
     def test_invalid_text(self):
         self.assertRaises(
             MP4MetadataValueError, self.set_key, '\xa9nam', [b'\xff'])
@@ -912,6 +894,44 @@ class TMP4Misc(TestCase):
 
         sorted_items = sorted(items, key=MP4Tags._key_sort)
         self.assertEqual(sorted_items, items)
+
+
+class TMP4Freeform(TestCase):
+
+    def test_cmp(self):
+        self.assertReallyEqual(
+            MP4FreeForm(b'woooo', 142, 42), MP4FreeForm(b'woooo', 142, 42))
+        self.assertReallyNotEqual(
+            MP4FreeForm(b'woooo', 142, 43), MP4FreeForm(b'woooo', 142, 42))
+        self.assertReallyNotEqual(
+            MP4FreeForm(b'woooo', 143, 42), MP4FreeForm(b'woooo', 142, 42))
+        self.assertReallyNotEqual(
+            MP4FreeForm(b'wooox', 142, 42), MP4FreeForm(b'woooo', 142, 42))
+
+    def test_cmp_bytes(self):
+        self.assertReallyEqual(MP4FreeForm(b'woooo'), b"woooo")
+        self.assertReallyNotEqual(MP4FreeForm(b'woooo'), b"foo")
+        if PY2:
+            self.assertReallyEqual(MP4FreeForm(b'woooo'), u"woooo")
+            self.assertReallyNotEqual(MP4FreeForm(b'woooo'), u"foo")
+
+
+class TMP4Cover(TestCase):
+
+    def test_cmp(self):
+        self.assertReallyEqual(
+            MP4Cover(b'woooo', 142), MP4Cover(b'woooo', 142))
+        self.assertReallyNotEqual(
+            MP4Cover(b'woooo', 143), MP4Cover(b'woooo', 142))
+        self.assertReallyNotEqual(
+            MP4Cover(b'woooo', 142), MP4Cover(b'wooox', 142))
+
+    def test_cmp_bytes(self):
+        self.assertReallyEqual(MP4Cover(b'woooo'), b"woooo")
+        self.assertReallyNotEqual(MP4Cover(b'woooo'), b"foo")
+        if PY2:
+            self.assertReallyEqual(MP4Cover(b'woooo'), u"woooo")
+            self.assertReallyNotEqual(MP4Cover(b'woooo'), u"foo")
 
 
 class TMP4AudioSampleEntry(TestCase):

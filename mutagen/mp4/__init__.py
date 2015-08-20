@@ -149,15 +149,10 @@ class MP4Cover(bytes):
 
     def __eq__(self, other):
         if not isinstance(other, MP4Cover):
-            return NotImplemented
+            return bytes(self) == other
 
-        if not bytes.__eq__(self, other):
-            return False
-
-        if self.imageformat != other.imageformat:
-            return False
-
-        return True
+        return (bytes(self) == bytes(other) and
+                self.imageformat == other.imageformat)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -191,18 +186,11 @@ class MP4FreeForm(bytes):
 
     def __eq__(self, other):
         if not isinstance(other, MP4FreeForm):
-            return NotImplemented
+            return bytes(self) == other
 
-        if not bytes.__eq__(self, other):
-            return False
-
-        if self.dataformat != other.dataformat:
-            return False
-
-        if self.version != other.version:
-            return False
-
-        return True
+        return (bytes(self) == bytes(other) and
+                self.dataformat == other.dataformat and
+                self.version == other.version)
 
     def __ne__(self, other):
         return not self.__eq__(other)
