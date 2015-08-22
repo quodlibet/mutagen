@@ -1,3 +1,42 @@
+1.30 - 2015.08.22
+-----------------
+
+* FLAC:
+
+  * Fix :meth:`flac.FLAC.save` in case the source contained a too large
+    (invalid but recovered) image block :bug:`226`
+
+* MP3:
+
+  * Improved length and bitrate accuracy:
+
+    * Read lame "Info" tags for improved bitrate/length accuracy
+    * Use bytes info of VBRI headers for improved bitrate accuracy
+    * Subtract encoder delay/padding from length for improved length accuracy
+      (especially for short tracks)
+    * Fix rare false identification of Xing headers :bug:`182`
+
+  * New :class:`mp3.MPEGInfo`.encoder_info attribute containing the encoder
+    name and version :bug:`66`
+  * New :class:`mp3.MPEGInfo`.bitrate_mode attribute exposing if the file is
+    VBR, ABR or CBR :bug:`24` :bug:`66`
+  * New :class:`mp3.MPEGInfo`.channels attribute providing the channel count
+  * New :class:`mp3.MPEGInfo`.track_gain/track_peak/album_gain values exposing
+    the replaygain info provided by the lame header :bug:`36`
+
+* ID3:
+
+  * New :class:`id3.PictureType` enum for the picture type used in APIC frames :bug:`222`
+
+* MP4:
+
+  * Fix MP4FreeForm.__eq__ and MP4Cover.__eq__ when comparing with bytes
+    :bug:`218`
+
+* Don't raise on :meth:`FileType.save` if there are no tags. :bug:`227`
+* Minor fixes: :bug:`228`
+
+
 1.29 - 2015.05.09
 -----------------
 
