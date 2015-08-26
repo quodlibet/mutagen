@@ -94,28 +94,55 @@ class IFFChunk(object):
 
         self.size = self.HEADER_SIZE + self.data_size
         self.data_offset = fileobj.tell()
-        self.data = None
 
     def read(self):
         """Read the chunks data"""
+
         self.__fileobj.seek(self.data_offset)
-        self.data = self.__fileobj.read(self.data_size)
+        return self.__fileobj.read(self.data_size)
+
+    def write(self, data):
+        """Write the chunk data"""
+
+        if len(data) > self.data_size:
+            raise ValueError
+
+        self.__fileobj.seek(self.data_offset)
+        self.__fileobj.write(data)
 
     def delete(self):
         """Removes the chunk from the file"""
+
         delete_bytes(self.__fileobj, self.size, self.offset)
         if self.parent_chunk is not None:
-            self.parent_chunk.resize(self.parent_chunk.data_size - self.size)
+            self.parent_chunk._update_size(
+                self.parent_chunk.data_size - self.size)
 
-    def resize(self, data_size):
+    def _update_size(self, data_size):
         """Update the size of the chunk"""
+
         self.__fileobj.seek(self.offset + 4)
         self.__fileobj.write(pack('>I', data_size))
         if self.parent_chunk is not None:
             size_diff = self.data_size - data_size
-            self.parent_chunk.resize(self.parent_chunk.data_size - size_diff)
+            self.parent_chunk._update_size(
+                self.parent_chunk.data_size - size_diff)
         self.data_size = data_size
         self.size = data_size + self.HEADER_SIZE
+
+    def resize(self, new_data_size):
+        """Resize the file and update the chunk sizes"""
+
+        if new_data_size > self.data_size:
+            insert_at = self.data_offset + self.data_size
+            insert_size = new_data_size - self.data_size
+            insert_bytes(self.__fileobj, insert_size, insert_at)
+            self._update_size(new_data_size)
+        elif new_data_size < self.data_size:
+            delete_size = self.data_size - new_data_size
+            delete_at = self.data_offset + self.data_size - delete_size
+            delete_bytes(self.__fileobj, delete_size, delete_at)
+            self._update_size(new_data_size)
 
 
 class IFFFile(object):
@@ -202,7 +229,7 @@ class IFFFile(object):
         self.__fileobj.write(pack('>4si', id_.ljust(4).encode('ascii'), 0))
         self.__fileobj.seek(self.__next_offset)
         chunk = IFFChunk(self.__fileobj, self[u'FORM'])
-        self[u'FORM'].resize(self[u'FORM'].data_size + chunk.size)
+        self[u'FORM']._update_size(self[u'FORM'].data_size + chunk.size)
 
         self.__chunks[id_] = chunk
         self.__next_offset = chunk.offset + chunk.size
@@ -234,9 +261,9 @@ class AIFFInfo(StreamInfo):
         except KeyError as e:
             raise error(str(e))
 
-        common_chunk.read()
+        data = common_chunk.read()
 
-        info = struct.unpack('>hLh10s', common_chunk.data[:18])
+        info = struct.unpack('>hLh10s', data[:18])
         channels, frame_count, sample_size, sample_rate = info
 
         self.sample_rate = int(read_float(sample_rate))
@@ -284,21 +311,8 @@ class _IFFID3(ID3):
             new_size = len(data)
             new_size += new_size % 2  # pad byte
             assert new_size % 2 == 0
-
-            # Resize the chunk if necessary, including pad byte
-            if new_size > chunk.data_size:
-                insert_at = chunk.data_offset + chunk.data_size
-                insert_size = new_size - chunk.data_size
-                insert_bytes(fileobj, insert_size, insert_at)
-                chunk.resize(new_size)
-            elif new_size < chunk.data_size:
-                delete_size = chunk.data_size - new_size
-                delete_at = chunk.data_offset + chunk.data_size - delete_size
-                delete_bytes(fileobj, delete_size, delete_at)
-                chunk.resize(new_size)
-
-            fileobj.seek(chunk.data_offset)
-            fileobj.write(data)
+            chunk.resize(new_size)
+            chunk.write(data)
 
     def delete(self, filename=None):
         """Completely removes the ID3 chunk from the AIFF file"""

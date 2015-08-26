@@ -231,6 +231,11 @@ class TIFFFile(TestCase):
 
     def test_child_chunk_resize(self):
         self.iff_1_tmp['ID3'].resize(128)
+
+        id3 = self.iff_1_tmp['ID3']
+        id3.write(b"\xff" * 128)
+        self.assertEqual(id3.read(), b"\xff" * 128)
+
         self.failUnlessEqual(IFFFile(self.file_1_tmp)['ID3'].data_size, 128)
         self.failUnlessEqual(IFFFile(self.file_1_tmp)['FORM'].data_size, 16182)
 
