@@ -200,65 +200,67 @@ class TIFFFile(TestCase):
         self.iff_2_tmp = IFFFile(self.file_2_tmp)
 
     def test_has_chunks(self):
-        self.failUnless('FORM' in self.iff_1)
-        self.failUnless('COMM' in self.iff_1)
-        self.failUnless('SSND' in self.iff_1)
-        self.failUnless('ID3' in self.iff_1)
+        self.failUnless(u'FORM' in self.iff_1)
+        self.failUnless(u'COMM' in self.iff_1)
+        self.failUnless(u'SSND' in self.iff_1)
+        self.failUnless(u'ID3' in self.iff_1)
 
-        self.failUnless('FORM' in self.iff_2)
-        self.failUnless('COMM' in self.iff_2)
-        self.failUnless('SSND' in self.iff_2)
+        self.failUnless(u'FORM' in self.iff_2)
+        self.failUnless(u'COMM' in self.iff_2)
+        self.failUnless(u'SSND' in self.iff_2)
 
     def test_is_chunks(self):
-        self.failUnless(isinstance(self.iff_1['FORM'], IFFChunk))
-        self.failUnless(isinstance(self.iff_1['COMM'], IFFChunk))
-        self.failUnless(isinstance(self.iff_1['SSND'], IFFChunk))
-        self.failUnless(isinstance(self.iff_1['ID3'], IFFChunk))
+        self.failUnless(isinstance(self.iff_1[u'FORM'], IFFChunk))
+        self.failUnless(isinstance(self.iff_1[u'COMM'], IFFChunk))
+        self.failUnless(isinstance(self.iff_1[u'SSND'], IFFChunk))
+        self.failUnless(isinstance(self.iff_1[u'ID3'], IFFChunk))
 
     def test_chunk_size(self):
-        self.failUnlessEqual(self.iff_1['FORM'].size, 17096)
-        self.failUnlessEqual(self.iff_2['FORM'].size, 16054)
+        self.failUnlessEqual(self.iff_1[u'FORM'].size, 17096)
+        self.failUnlessEqual(self.iff_2[u'FORM'].size, 16054)
 
     def test_chunk_data_size(self):
-        self.failUnlessEqual(self.iff_1['FORM'].data_size, 17088)
-        self.failUnlessEqual(self.iff_2['FORM'].data_size, 16046)
+        self.failUnlessEqual(self.iff_1[u'FORM'].data_size, 17088)
+        self.failUnlessEqual(self.iff_2[u'FORM'].data_size, 16046)
 
     def test_FORM_chunk_resize(self):
-        self.iff_1_tmp['FORM'].resize(17000)
-        self.failUnlessEqual(IFFFile(self.file_1_tmp)['FORM'].data_size, 17000)
-        self.iff_2_tmp['FORM'].resize(0)
-        self.failUnlessEqual(IFFFile(self.file_2_tmp)['FORM'].data_size, 0)
+        self.iff_1_tmp[u'FORM'].resize(17000)
+        self.failUnlessEqual(
+            IFFFile(self.file_1_tmp)[u'FORM'].data_size, 17000)
+        self.iff_2_tmp[u'FORM'].resize(0)
+        self.failUnlessEqual(IFFFile(self.file_2_tmp)[u'FORM'].data_size, 0)
 
     def test_child_chunk_resize(self):
-        self.iff_1_tmp['ID3'].resize(128)
+        self.iff_1_tmp[u'ID3'].resize(128)
 
-        id3 = self.iff_1_tmp['ID3']
+        id3 = self.iff_1_tmp[u'ID3']
         id3.write(b"\xff" * 128)
         self.assertEqual(id3.read(), b"\xff" * 128)
 
-        self.failUnlessEqual(IFFFile(self.file_1_tmp)['ID3'].data_size, 128)
-        self.failUnlessEqual(IFFFile(self.file_1_tmp)['FORM'].data_size, 16182)
+        self.failUnlessEqual(IFFFile(self.file_1_tmp)[u'ID3'].data_size, 128)
+        self.failUnlessEqual(
+            IFFFile(self.file_1_tmp)[u'FORM'].data_size, 16182)
 
     def test_chunk_delete(self):
-        del self.iff_1_tmp['ID3']
-        self.failIf('ID3' in self.iff_1_tmp)
-        self.failIf('ID3' in IFFFile(self.file_1_tmp))
-        self.failUnlessEqual(IFFFile(self.file_1_tmp)['FORM'].size, 16054)
-        del self.iff_2_tmp['SSND']
-        self.failIf('SSND' in self.iff_2_tmp)
-        self.failIf('SSND' in IFFFile(self.file_2_tmp))
-        self.failUnlessEqual(IFFFile(self.file_2_tmp)['FORM'].size, 38)
+        del self.iff_1_tmp[u'ID3']
+        self.failIf(u'ID3' in self.iff_1_tmp)
+        self.failIf(u'ID3' in IFFFile(self.file_1_tmp))
+        self.failUnlessEqual(IFFFile(self.file_1_tmp)[u'FORM'].size, 16054)
+        del self.iff_2_tmp[u'SSND']
+        self.failIf(u'SSND' in self.iff_2_tmp)
+        self.failIf(u'SSND' in IFFFile(self.file_2_tmp))
+        self.failUnlessEqual(IFFFile(self.file_2_tmp)[u'FORM'].size, 38)
 
     def test_insert_chunk(self):
-        self.iff_2_tmp.insert_chunk('ID3')
+        self.iff_2_tmp.insert_chunk(u'ID3')
 
         new_iff = IFFFile(self.file_2_tmp)
-        self.failUnless('ID3' in new_iff)
-        self.failUnless(isinstance(new_iff['ID3'], IFFChunk))
-        self.failUnlessEqual(new_iff['FORM'].size, 16062)
-        self.failUnlessEqual(new_iff['FORM'].data_size, 16054)
-        self.failUnlessEqual(new_iff['ID3'].size, 8)
-        self.failUnlessEqual(new_iff['ID3'].data_size, 0)
+        self.failUnless(u'ID3' in new_iff)
+        self.failUnless(isinstance(new_iff[u'ID3'], IFFChunk))
+        self.failUnlessEqual(new_iff[u'FORM'].size, 16062)
+        self.failUnlessEqual(new_iff[u'FORM'].data_size, 16054)
+        self.failUnlessEqual(new_iff[u'ID3'].size, 8)
+        self.failUnlessEqual(new_iff[u'ID3'].data_size, 0)
 
     def tearDown(self):
         self.file_1.close()

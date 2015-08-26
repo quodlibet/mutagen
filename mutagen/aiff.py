@@ -9,15 +9,11 @@
 
 """AIFF audio stream information and tags."""
 
-# NOTE from Ben Ockmore - according to the Py3k migration guidelines, AIFF
-# chunk keys should be unicode in Py3k, and unicode or bytes in Py2k (ASCII).
-# To make this easier, chunk keys should be stored internally as unicode.
-
 import sys
 import struct
 from struct import pack
 
-from ._compat import endswith, text_type, PY3, reraise
+from ._compat import endswith, text_type, reraise
 from mutagen import StreamInfo, FileType
 
 from mutagen.id3 import ID3
@@ -40,14 +36,7 @@ _HUGE_VAL = 1.79769313486231e+308
 
 
 def is_valid_chunk_id(id):
-    if not isinstance(id, text_type):
-        if PY3:
-            raise TypeError("AIFF chunk must be unicode")
-
-        try:
-            id = id.decode('ascii')
-        except UnicodeDecodeError:
-            return False
+    assert isinstance(id, text_type)
 
     return ((len(id) <= 4) and (min(id) >= u' ') and
             (max(id) <= u'~'))
@@ -86,8 +75,10 @@ class IFFChunk(object):
 
         self.id, self.data_size = struct.unpack('>4si', header)
 
-        if not isinstance(self.id, text_type):
+        try:
             self.id = self.id.decode('ascii')
+        except UnicodeDecodeError:
+            raise InvalidChunk()
 
         if not is_valid_chunk_id(self.id):
             raise InvalidChunk()
@@ -182,8 +173,7 @@ class IFFFile(object):
     def __contains__(self, id_):
         """Check if the IFF file contains a specific chunk"""
 
-        if not isinstance(id_, text_type):
-            id_ = id_.decode('ascii')
+        assert isinstance(id_, text_type)
 
         if not is_valid_chunk_id(id_):
             raise KeyError("AIFF key must be four ASCII characters.")
@@ -193,8 +183,7 @@ class IFFFile(object):
     def __getitem__(self, id_):
         """Get a chunk from the IFF file"""
 
-        if not isinstance(id_, text_type):
-            id_ = id_.decode('ascii')
+        assert isinstance(id_, text_type)
 
         if not is_valid_chunk_id(id_):
             raise KeyError("AIFF key must be four ASCII characters.")
@@ -208,8 +197,7 @@ class IFFFile(object):
     def __delitem__(self, id_):
         """Remove a chunk from the IFF file"""
 
-        if not isinstance(id_, text_type):
-            id_ = id_.decode('ascii')
+        assert isinstance(id_, text_type)
 
         if not is_valid_chunk_id(id_):
             raise KeyError("AIFF key must be four ASCII characters.")
@@ -219,8 +207,7 @@ class IFFFile(object):
     def insert_chunk(self, id_):
         """Insert a new chunk at the end of the IFF file"""
 
-        if not isinstance(id_, text_type):
-            id_ = id_.decode('ascii')
+        assert isinstance(id_, text_type)
 
         if not is_valid_chunk_id(id_):
             raise KeyError("AIFF key must be four ASCII characters.")
