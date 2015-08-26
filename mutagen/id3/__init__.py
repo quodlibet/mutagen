@@ -441,7 +441,7 @@ class ID3(DictProxy, mutagen.Metadata):
                     except ID3JunkFrameError:
                         pass
 
-    def _prepare_framedata(self, v2_version, v23_sep):
+    def _prepare_data(self, available, v2_version, v23_sep):
         if v2_version == 3:
             version = ID3Header._V23
         elif v2_version == 4:
@@ -465,27 +465,23 @@ class ID3(DictProxy, mutagen.Metadata):
             framedata.extend(data for data in self.unknown_frames
                              if len(data) > 10)
 
-        return b''.join(framedata)
-
-    def _prepare_id3_header(self, original_header, framesize, v2_version):
-        try:
-            id3, vmaj, vrev, flags, insize = \
-                unpack('>3sBBB4s', original_header)
-        except struct.error:
-            id3, insize = b'', 0
-        insize = BitPaddedInt(insize)
-        if id3 != b'ID3':
-            insize = -10
-
-        if insize >= framesize:
-            outsize = insize
+        needed = sum(map(len, framedata)) + 10
+        if available >= needed:
+            new_size = needed
         else:
-            outsize = (framesize + 1023) & ~0x3FF
+            new_size = (needed + 1023) & ~0x3FF
 
-        framesize = BitPaddedInt.to_str(outsize, width=4)
-        header = pack('>3sBBB4s', b'ID3', v2_version, 0, 0, framesize)
+        new_framesize = BitPaddedInt.to_str(new_size - 10, width=4)
+        header = pack('>3sBBB4s', b'ID3', v2_version, 0, 0, new_framesize)
 
-        return (header, outsize, insize)
+        data = bytearray(header)
+        for frame in framedata:
+            data += frame
+        assert new_size >= len(data)
+        data += (new_size - len(data)) * b'\x00'
+        assert new_size == len(data)
+
+        return data
 
     def save(self, filename=None, v1=1, v2_version=4, v23_sep='/'):
         """Save changes to a file.
@@ -511,20 +507,9 @@ class ID3(DictProxy, mutagen.Metadata):
         The lack of a way to update only an ID3v1 tag is intentional.
         """
 
-        framedata = self._prepare_framedata(v2_version, v23_sep)
-        framesize = len(framedata)
-
-        if not framedata:
-            try:
-                self.delete(filename)
-            except EnvironmentError as err:
-                from errno import ENOENT
-                if err.errno != ENOENT:
-                    raise
-            return
-
         if filename is None:
             filename = self.filename
+
         try:
             f = open(filename, 'rb+')
         except IOError as err:
@@ -533,16 +518,20 @@ class ID3(DictProxy, mutagen.Metadata):
                 raise
             f = open(filename, 'ab')  # create, then reopen
             f = open(filename, 'rb+')
+
         try:
-            idata = f.read(10)
+            try:
+                header = ID3Header(f)
+            except ID3NoHeaderError:
+                old_size = 0
+            else:
+                old_size = header.size
 
-            header = self._prepare_id3_header(idata, framesize, v2_version)
-            header, outsize, insize = header
+            data = self._prepare_data(old_size, v2_version, v23_sep)
+            new_size = len(data)
 
-            data = header + framedata + (b'\x00' * (outsize - framesize))
-
-            if (insize < outsize):
-                insert_bytes(f, outsize - insize, insize + 10)
+            if (old_size < new_size):
+                insert_bytes(f, new_size - old_size, old_size)
             f.seek(0)
             f.write(data)
 

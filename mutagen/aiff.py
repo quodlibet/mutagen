@@ -261,9 +261,6 @@ class _IFFID3(ID3):
     def save(self, filename=None, v2_version=4, v23_sep='/'):
         """Save ID3v2 data to the AIFF file"""
 
-        framedata = self._prepare_framedata(v2_version, v23_sep)
-        framesize = len(framedata)
-
         if filename is None:
             filename = self.filename
 
@@ -279,14 +276,8 @@ class _IFFID3(ID3):
             chunk = iff_file[u'ID3']
             fileobj.seek(chunk.data_offset)
 
-            header = fileobj.read(10)
-            header = self._prepare_id3_header(header, framesize, v2_version)
-            header, new_size, _ = header
-
-            data = header + framedata + (b'\x00' * (new_size - framesize))
-
-            # Include ID3 header size in 'new_size' calculation
-            new_size += 10
+            data = self._prepare_data(0, v2_version, v23_sep)
+            new_size = len(data)
 
             # Expand the chunk if necessary, including pad byte
             if new_size > chunk.size:
