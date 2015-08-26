@@ -274,10 +274,9 @@ class _IFFID3(ID3):
                 iff_file.insert_chunk(u'ID3')
 
             chunk = iff_file[u'ID3']
-            fileobj.seek(chunk.data_offset)
 
             try:
-                data = self._prepare_data(fileobj, chunk.size, v2_version,
+                data = self._prepare_data(fileobj, chunk.data_size, v2_version,
                                           v23_sep, padding)
             except ID3Error as e:
                 reraise(error, e, sys.exc_info()[2])
@@ -287,14 +286,14 @@ class _IFFID3(ID3):
             assert new_size % 2 == 0
 
             # Resize the chunk if necessary, including pad byte
-            if new_size > chunk.size:
-                insert_at = chunk.offset + chunk.size
-                insert_size = new_size - chunk.size
+            if new_size > chunk.data_size:
+                insert_at = chunk.data_offset + chunk.data_size
+                insert_size = new_size - chunk.data_size
                 insert_bytes(fileobj, insert_size, insert_at)
                 chunk.resize(new_size)
-            elif new_size < chunk.size:
-                delete_size = chunk.size - new_size
-                delete_at = chunk.offset + chunk.size - delete_size
+            elif new_size < chunk.data_size:
+                delete_size = chunk.data_size - new_size
+                delete_at = chunk.data_offset + chunk.data_size - delete_size
                 delete_bytes(fileobj, delete_size, delete_at)
                 chunk.resize(new_size)
 

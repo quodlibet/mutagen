@@ -152,9 +152,9 @@ class TAIFF(TestCase):
 
     def test_padding(self):
         AIFF(self.filename_1).save()
-        self.assertEqual(AIFF(self.filename_1).tags._padding, 1010)
+        self.assertEqual(AIFF(self.filename_1).tags._padding, 1002)
         AIFF(self.filename_1).save()
-        self.assertEqual(AIFF(self.filename_1).tags._padding, 1010)
+        self.assertEqual(AIFF(self.filename_1).tags._padding, 1002)
 
         tags = AIFF(self.filename_1)
         tags.save(padding=lambda x: 1)
