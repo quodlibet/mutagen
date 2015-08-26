@@ -1761,6 +1761,12 @@ class TID3Corrupt(TestCase):
             h.truncate(50)
         self.assertRaises(id3.error, ID3, self.filename)
 
+    def test_save(self):
+        with open(self.filename, "r+b") as h:
+            h.seek(5, 0)
+            h.write(b"nope")
+        self.assertRaises(id3.error, ID3().save, self.filename)
+
 try:
     import eyeD3
 except ImportError:

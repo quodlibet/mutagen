@@ -505,6 +505,8 @@ class ID3(DictProxy, mutagen.Metadata):
         tags, you must call method update_to_v23 before saving the file.
 
         The lack of a way to update only an ID3v1 tag is intentional.
+
+        Can raise id3.error.
         """
 
         if filename is None:
