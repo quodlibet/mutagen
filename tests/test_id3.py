@@ -1764,6 +1764,20 @@ class TID3Padding(TestCase):
         tag = ID3(self.filename)
         self.assertEqual(tag._padding, 1166)
 
+    def test_remove_add_padding(self):
+        ID3(self.filename).save()
+
+        tag = ID3(self.filename)
+        old_padding = tag._padding
+        old_size = os.path.getsize(self.filename)
+        tag.save(padding=lambda x: 0)
+        self.assertEqual(os.path.getsize(self.filename),
+                         old_size - old_padding)
+        old_size = old_size - old_padding
+        tag.save(padding=lambda x: 137)
+        self.assertEqual(os.path.getsize(self.filename),
+                         old_size + 137)
+
 
 class TID3Corrupt(TestCase):
 

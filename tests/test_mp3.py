@@ -155,6 +155,10 @@ class TMP3(TestCase):
         self.mp3.save()
         self.failUnless(MP3(self.filename)["TIT1"] == "foobar")
 
+    def test_save_padding(self):
+        self.mp3.save(padding=lambda x: 42)
+        self.assertEqual(MP3(self.filename).tags._padding, 42)
+
     def test_load_non_id3(self):
         filename = os.path.join(DATA_DIR, "apev2-lyricsv2.mp3")
         from mutagen.apev2 import APEv2

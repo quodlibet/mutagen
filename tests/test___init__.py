@@ -6,7 +6,7 @@ import shutil
 
 from tests import TestCase, DATA_DIR
 from mutagen._compat import cBytesIO, PY3
-from mutagen import File, Metadata, FileType, MutagenError
+from mutagen import File, Metadata, FileType, MutagenError, PaddingInfo
 from mutagen.oggvorbis import OggVorbis
 from mutagen.oggflac import OggFLAC
 from mutagen.oggspeex import OggSpeex
@@ -49,6 +49,38 @@ class TMetadata(TestCase):
         self.failUnlessRaises(NotImplementedError, self.FakeMeta().delete)
         self.failUnlessRaises(
             NotImplementedError, self.FakeMeta().delete, "filename")
+
+
+class TPaddingInfo(TestCase):
+
+    def test_error(self):
+        self.assertRaises(ValueError, PaddingInfo, 10, 0)
+        self.assertRaises(ValueError, PaddingInfo, 0, -10)
+
+    def test_props(self):
+        info = PaddingInfo(10, 100)
+        self.assertEqual(info.size, 90)
+        self.assertEqual(info.padding, 10)
+
+        info = PaddingInfo(-10, 100)
+        self.assertEqual(info.size, 110)
+        self.assertEqual(info.padding, -10)
+
+    def test_default_strategy(self):
+        s = 100000
+        self.assertEqual(PaddingInfo(10, s).get_default_padding(), 10)
+        self.assertEqual(PaddingInfo(-10, s).get_default_padding(), 1524)
+        self.assertEqual(PaddingInfo(0, s).get_default_padding(), 0)
+        self.assertEqual(PaddingInfo(10000, s).get_default_padding(), 1474)
+
+        self.assertEqual(PaddingInfo(10, -1).get_default_padding(), 10)
+        self.assertEqual(PaddingInfo(-10, -1).get_default_padding(), 1024)
+        self.assertEqual(PaddingInfo(1050, -1).get_default_padding(), 1050)
+        self.assertEqual(PaddingInfo(10000, -1).get_default_padding(), 1024)
+
+    def test_repr(self):
+        info = PaddingInfo(10, 100)
+        self.assertEqual(repr(info), "<PaddingInfo size=90 padding=10>")
 
 
 class TFileType(TestCase):

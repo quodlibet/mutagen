@@ -28,6 +28,10 @@ Base Classes
     :members: pprint
 
 
+.. autoclass:: mutagen.PaddingInfo()
+    :members:
+
+
 .. autoclass:: mutagen.MutagenError
 
 

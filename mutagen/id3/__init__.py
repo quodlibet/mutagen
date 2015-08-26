@@ -38,7 +38,8 @@ import errno
 from struct import unpack, pack, error as StructError
 
 import mutagen
-from mutagen._util import insert_bytes, delete_bytes, DictProxy, enum
+from mutagen._util import insert_bytes, delete_bytes, DictProxy, enum, get_size
+from mutagen._tags import PaddingInfo
 from .._compat import chr_, PY3
 
 from ._util import *
@@ -444,7 +445,7 @@ class ID3(DictProxy, mutagen.Metadata):
                     except ID3JunkFrameError:
                         pass
 
-    def _prepare_data(self, available, v2_version, v23_sep):
+    def _prepare_data(self, fileobj, available, v2_version, v23_sep, pad_func):
         if v2_version == 3:
             version = ID3Header._V23
         elif v2_version == 4:
@@ -469,10 +470,12 @@ class ID3(DictProxy, mutagen.Metadata):
                              if len(data) > 10)
 
         needed = sum(map(len, framedata)) + 10
-        if available >= needed:
-            new_size = available
-        else:
-            new_size = (needed + 1023) & ~0x3FF
+
+        info = PaddingInfo(available - needed, get_size(fileobj))
+        new_padding = info._get_padding(pad_func)
+        if new_padding < 0:
+            raise error("invalid padding")
+        new_size = needed + new_padding
 
         new_framesize = BitPaddedInt.to_str(new_size - 10, width=4)
         header = pack('>3sBBB4s', b'ID3', v2_version, 0, 0, new_framesize)
@@ -486,7 +489,8 @@ class ID3(DictProxy, mutagen.Metadata):
 
         return data
 
-    def save(self, filename=None, v1=1, v2_version=4, v23_sep='/'):
+    def save(self, filename=None, v1=1, v2_version=4, v23_sep='/',
+             padding=None):
         """Save changes to a file.
 
         Args:
@@ -503,6 +507,10 @@ class ID3(DictProxy, mutagen.Metadata):
                 the separator used to join multiple text values
                 if v2_version == 3. Defaults to '/' but if it's None
                 will be the ID3v2v2.4 null separator.
+            padding (function):
+                A function taking a PaddingInfo which should
+                return the amount of padding to use. If None (default)
+                will default to something reasonable.
 
         By default Mutagen saves ID3v2.4 tags. If you want to save ID3v2.3
         tags, you must call method update_to_v23 before saving the file.
@@ -532,11 +540,14 @@ class ID3(DictProxy, mutagen.Metadata):
             else:
                 old_size = header.size
 
-            data = self._prepare_data(old_size, v2_version, v23_sep)
+            data = self._prepare_data(
+                f, old_size, v2_version, v23_sep, padding)
             new_size = len(data)
 
             if (old_size < new_size):
                 insert_bytes(f, new_size - old_size, old_size)
+            elif (old_size > new_size):
+                delete_bytes(f, old_size - new_size, new_size)
             f.seek(0)
             f.write(data)
 

@@ -272,6 +272,21 @@ class cdata(object):
 _fill_cdata(cdata)
 
 
+def get_size(fileobj):
+    """Returns the size of the file object. The position when passed in will
+    be preserved if no error occurs.
+
+    In case of an error raises IOError.
+    """
+
+    old_pos = fileobj.tell()
+    try:
+        fileobj.seek(0, 2)
+        return fileobj.tell()
+    finally:
+        fileobj.seek(old_pos, 0)
+
+
 def lock(fileobj):
     """Lock a file object 'safely'.
 

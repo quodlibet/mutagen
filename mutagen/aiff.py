@@ -258,7 +258,7 @@ class _IFFID3(ID3):
         except (InvalidChunk, KeyError):
             raise ID3NoHeaderError("No ID3 chunk")
 
-    def save(self, filename=None, v2_version=4, v23_sep='/'):
+    def save(self, filename=None, v2_version=4, v23_sep='/', padding=None):
         """Save ID3v2 data to the AIFF file"""
 
         if filename is None:
@@ -276,14 +276,22 @@ class _IFFID3(ID3):
             chunk = iff_file[u'ID3']
             fileobj.seek(chunk.data_offset)
 
-            data = self._prepare_data(0, v2_version, v23_sep)
+            data = self._prepare_data(fileobj, chunk.size, v2_version, v23_sep,
+                                      padding)
             new_size = len(data)
+            new_size += new_size % 2  # pad byte
+            assert new_size % 2 == 0
 
-            # Expand the chunk if necessary, including pad byte
+            # Resize the chunk if necessary, including pad byte
             if new_size > chunk.size:
                 insert_at = chunk.offset + chunk.size
-                insert_size = new_size - chunk.size + new_size % 2
+                insert_size = new_size - chunk.size
                 insert_bytes(fileobj, insert_size, insert_at)
+                chunk.resize(new_size)
+            elif new_size < chunk.size:
+                delete_size = chunk.size - new_size
+                delete_at = chunk.offset + chunk.size - delete_size
+                delete_bytes(fileobj, delete_size, delete_at)
                 chunk.resize(new_size)
 
             fileobj.seek(chunk.data_offset)

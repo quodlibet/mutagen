@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes
-from mutagen._util import decode_terminated, dict_match, enum
+from mutagen._util import decode_terminated, dict_match, enum, get_size
 from mutagen._util import BitReader, BitReaderError
 from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2, \
     cBytesIO, xrange
@@ -510,6 +510,16 @@ class Tenum(TestCase):
 
         self.assertTrue(isinstance(str(Foo.FOO), str))
         self.assertTrue(isinstance(repr(Foo.FOO), str))
+
+
+class Tget_size(TestCase):
+
+    def test_get_size(self):
+        f = cBytesIO(b"foo")
+        f.seek(1, 0)
+        self.assertEqual(f.tell(), 1)
+        self.assertEqual(get_size(f), 3)
+        self.assertEqual(f.tell(), 1)
 
 
 class Tdecode_terminated(TestCase):

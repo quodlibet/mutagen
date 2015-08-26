@@ -150,6 +150,20 @@ class TAIFF(TestCase):
             h.write(b"\xff\xff")
         self.assertRaises(AIFFError, AIFF, self.filename_1)
 
+    def test_padding(self):
+        AIFF(self.filename_1).save()
+        self.assertEqual(AIFF(self.filename_1).tags._padding, 1010)
+        AIFF(self.filename_1).save()
+        self.assertEqual(AIFF(self.filename_1).tags._padding, 1010)
+
+        tags = AIFF(self.filename_1)
+        tags.save(padding=lambda x: 1)
+        self.assertEqual(AIFF(self.filename_1).tags._padding, 1)
+
+        tags = AIFF(self.filename_1)
+        tags.save(padding=lambda x: 100)
+        self.assertEqual(AIFF(self.filename_1).tags._padding, 100)
+
     def tearDown(self):
         os.unlink(self.filename_1)
         os.unlink(self.filename_2)
