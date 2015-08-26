@@ -31,21 +31,12 @@ class PaddingInfo(object):
     more data needs to be added as padding is available)
     """
 
-    size = -1
-    """The size of the file in bytes after saving minus padding or -1 if
-    unknown.
-    """
+    size = 0
+    """The amount of data following the padding"""
 
-    def __init__(self, padding, filesize):
+    def __init__(self, padding, size):
         self.padding = padding
-        if filesize >= 0:
-            self.size = filesize - padding
-            if self.size < 0:
-                raise ValueError("Invalid padding")
-        elif filesize == -1:
-            self.size = -1
-        else:
-            raise ValueError("Invalid filesize")
+        self.size = size
 
     def get_default_padding(self):
         """The default implementation which tries to select a reasonable
@@ -55,12 +46,8 @@ class PaddingInfo(object):
         :rtype: int
         """
 
-        # larger files are slower to resize, so try to leave more padding there
-        high = 1024 * 5
-        low = 1024
-        if self.size != -1:
-            high += self.size // 40  # 2.5%
-            low += self.size // 200  # 0.5%
+        high = 1024 * 5 + self.size // 40  # 2.5%
+        low = 1024 + self.size // 200  # 0.5%
 
         if self.padding >= 0:
             # enough padding left

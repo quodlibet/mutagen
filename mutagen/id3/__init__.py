@@ -38,7 +38,7 @@ import errno
 from struct import unpack, pack, error as StructError
 
 import mutagen
-from mutagen._util import insert_bytes, delete_bytes, DictProxy, enum, get_size
+from mutagen._util import insert_bytes, delete_bytes, DictProxy, enum
 from mutagen._tags import PaddingInfo
 from .._compat import chr_, PY3
 
@@ -445,7 +445,8 @@ class ID3(DictProxy, mutagen.Metadata):
                     except ID3JunkFrameError:
                         pass
 
-    def _prepare_data(self, fileobj, available, v2_version, v23_sep, pad_func):
+    def _prepare_data(self, fileobj, start, available, v2_version, v23_sep,
+                      pad_func):
         if v2_version == 3:
             version = ID3Header._V23
         elif v2_version == 4:
@@ -471,7 +472,10 @@ class ID3(DictProxy, mutagen.Metadata):
 
         needed = sum(map(len, framedata)) + 10
 
-        info = PaddingInfo(available - needed, get_size(fileobj))
+        fileobj.seek(0, 2)
+        trailing_size = fileobj.tell() - start
+
+        info = PaddingInfo(available - needed, trailing_size)
         new_padding = info._get_padding(pad_func)
         if new_padding < 0:
             raise error("invalid padding")
@@ -541,7 +545,7 @@ class ID3(DictProxy, mutagen.Metadata):
                 old_size = header.size
 
             data = self._prepare_data(
-                f, old_size, v2_version, v23_sep, padding)
+                f, 0, old_size, v2_version, v23_sep, padding)
             new_size = len(data)
 
             if (old_size < new_size):
