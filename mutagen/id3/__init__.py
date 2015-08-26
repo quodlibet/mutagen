@@ -247,6 +247,7 @@ class ID3(DictProxy, mutagen.Metadata):
         self.unknown_frames = []
         self.__known_frames = known_frames
         self._header = None
+        self._padding = 0  # for testing
 
         with open(filename, 'rb') as fileobj:
             self._pre_load_header(fileobj)
@@ -379,6 +380,7 @@ class ID3(DictProxy, mutagen.Metadata):
                 size = bpi(size)
                 framedata = data[10:10 + size]
                 data = data[10 + size:]
+                self._padding = len(data)
                 if size == 0:
                     continue  # drop empty frames
 
@@ -418,6 +420,7 @@ class ID3(DictProxy, mutagen.Metadata):
 
                 framedata = data[6:6 + size]
                 data = data[6 + size:]
+                self._padding = len(data)
                 if size == 0:
                     continue  # drop empty frames
 
