@@ -368,11 +368,8 @@ class AIFF(FileType):
         except ID3Error as e:
             raise error(e)
 
-        try:
-            fileobj = open(filename, "rb")
+        with open(filename, "rb") as fileobj:
             self.info = AIFFInfo(fileobj)
-        finally:
-            fileobj.close()
 
 
 Open = AIFF
