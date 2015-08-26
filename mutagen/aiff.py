@@ -13,10 +13,11 @@
 # chunk keys should be unicode in Py3k, and unicode or bytes in Py2k (ASCII).
 # To make this easier, chunk keys should be stored internally as unicode.
 
+import sys
 import struct
 from struct import pack
 
-from ._compat import endswith, text_type, PY3
+from ._compat import endswith, text_type, PY3, reraise
 from mutagen import StreamInfo, FileType
 
 from mutagen.id3 import ID3
@@ -276,8 +277,12 @@ class _IFFID3(ID3):
             chunk = iff_file[u'ID3']
             fileobj.seek(chunk.data_offset)
 
-            data = self._prepare_data(fileobj, chunk.size, v2_version, v23_sep,
-                                      padding)
+            try:
+                data = self._prepare_data(fileobj, chunk.size, v2_version,
+                                          v23_sep, padding)
+            except ID3Error as e:
+                reraise(error, e, sys.exc_info()[2])
+
             new_size = len(data)
             new_size += new_size % 2  # pad byte
             assert new_size % 2 == 0
