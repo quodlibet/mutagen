@@ -267,10 +267,9 @@ class _IFFID3(ID3):
 
         # Unlike the parent ID3.save method, we won't save to a blank file
         # since we would have to construct a empty AIFF file
-        fileobj = open(filename, 'rb+')
-        iff_file = IFFFile(fileobj)
+        with open(filename, 'rb+') as fileobj:
+            iff_file = IFFFile(fileobj)
 
-        try:
             if u'ID3' not in iff_file:
                 iff_file.insert_chunk(u'ID3')
 
@@ -301,8 +300,6 @@ class _IFFID3(ID3):
 
             fileobj.seek(chunk.data_offset)
             fileobj.write(data)
-        finally:
-            fileobj.close()
 
     def delete(self, filename=None):
         """Completely removes the ID3 chunk from the AIFF file"""
