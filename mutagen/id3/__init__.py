@@ -470,7 +470,7 @@ class ID3(DictProxy, mutagen.Metadata):
 
         needed = sum(map(len, framedata)) + 10
         if available >= needed:
-            new_size = needed
+            new_size = available
         else:
             new_size = (needed + 1023) & ~0x3FF
 

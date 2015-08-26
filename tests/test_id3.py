@@ -90,6 +90,10 @@ class ID3Loading(TestCase):
         name = join(DATA_DIR, 'does', 'not', 'exist')
         self.assertRaises(EnvironmentError, ID3, name)
 
+    def test_read_padding(self):
+        self.assertEqual(ID3(self.silence)._padding, 1142)
+        self.assertEqual(ID3(self.unsynch)._padding, 0)
+
     def test_header_empty(self):
         fileobj = open(self.empty, 'rb')
         self.assertRaises(ID3Error, ID3Header, fileobj)
@@ -1738,6 +1742,27 @@ class TID3Misc(TestCase):
         d = get_frame_data(b"TPE2", 1000) + get_frame_data(b"TPE2", 10) + \
                 b"\x01" * 875
         self.assertTrue(determine_bpi(d, Frames) is BitPaddedInt)
+
+
+class TID3Padding(TestCase):
+
+    def setUp(self):
+        fd, self.filename = mkstemp(suffix='.mp3')
+        os.close(fd)
+        orig = os.path.join(DATA_DIR, "silence-44-s.mp3")
+        shutil.copy(orig, self.filename)
+
+    def tearDown(self):
+        os.remove(self.filename)
+
+    def test_fill_all(self):
+        tag = ID3(self.filename)
+        self.assertEqual(tag._padding, 1142)
+        tag.delall("TPE1")
+        # saving should increase the padding not decrease the tag size
+        tag.save()
+        tag = ID3(self.filename)
+        self.assertEqual(tag._padding, 1166)
 
 
 class TID3Corrupt(TestCase):
