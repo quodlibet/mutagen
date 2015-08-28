@@ -2,7 +2,7 @@
 
 from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes
 from mutagen._util import decode_terminated, dict_match, enum, get_size
-from mutagen._util import BitReader, BitReaderError
+from mutagen._util import BitReader, BitReaderError, resize_bytes
 from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2, \
     cBytesIO, xrange
 from tests import TestCase
@@ -273,6 +273,21 @@ class FileHandling(TestCase):
     def read(self, fobj):
         fobj.seek(0, 0)
         return fobj.read()
+
+    def test_resize_decrease(self):
+        o = self.file(b'abcd')
+        resize_bytes(o, 2, 1, 1)
+        self.assertEqual(self.read(o), b"abd")
+
+    def test_resize_increase(self):
+        o = self.file(b'abcd')
+        resize_bytes(o, 2, 4, 1)
+        self.assertEqual(self.read(o), b"abcd\x00d")
+
+    def test_resize_nothing(self):
+        o = self.file(b'abcd')
+        resize_bytes(o, 2, 2, 1)
+        self.assertEqual(self.read(o), b"abcd")
 
     def test_insert_into_empty(self):
         o = self.file(b'')

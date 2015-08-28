@@ -433,6 +433,21 @@ def delete_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
             unlock(fobj)
 
 
+def resize_bytes(fobj, old_size, new_size, offset):
+    """Resize an area in a file adding and deleting at the end of it.
+    Does nothing if no resizing is needed.
+    """
+
+    if new_size < old_size:
+        delete_size = old_size - new_size
+        delete_at = offset + new_size
+        delete_bytes(fobj, delete_size, delete_at)
+    elif new_size > old_size:
+        insert_size = new_size - old_size
+        insert_at = offset + old_size
+        insert_bytes(fobj, insert_size, insert_at)
+
+
 def dict_match(d, key, default=None):
     """Like __getitem__ but works as if the keys() are all filename patterns.
     Returns the value of any dict key that matches the passed key.

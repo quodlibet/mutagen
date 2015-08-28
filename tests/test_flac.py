@@ -66,30 +66,28 @@ class TMetadataBlock(TestCase):
 
         max_data_size = 2 ** 24 - 1
         block = SomeBlock(b"\x00" * max_data_size)
-        data = MetadataBlock.writeblocks([block])
+        data = MetadataBlock._writeblock(block)
         self.assertEqual(data[:4], b"\xff\xff\xff\xff")
         header_size = 4
         self.assertEqual(len(data), max_data_size + header_size)
 
         block = SomeBlock(b"\x00" * (max_data_size + 1))
-        self.assertRaises(error, MetadataBlock.writeblocks, [block])
-
-    def test_writeblocks(self):
-        blocks = [Padding(b"\x00" * 20), Padding(b"\x00" * 30)]
-        self.failUnlessEqual(len(MetadataBlock.writeblocks(blocks)), 58)
+        self.assertRaises(error, MetadataBlock._writeblock, block)
 
     def test_ctr_garbage(self):
         self.failUnlessRaises(TypeError, StreamInfo, 12)
 
-    def test_group_padding(self):
-        blocks = [Padding(b"\x00" * 20), Padding(b"\x00" * 30),
-                  MetadataBlock(b"foobar")]
-        blocks[-1].code = 0
-        length1 = len(MetadataBlock.writeblocks(blocks))
-        MetadataBlock.group_padding(blocks)
-        length2 = len(MetadataBlock.writeblocks(blocks))
-        self.failUnlessEqual(length1, length2)
-        self.failUnlessEqual(len(blocks), 2)
+    def test_too_large(self):
+        block = Picture()
+        block.data = b"\x00" * 0x1FFFFFF
+        self.assertRaises(
+            error, MetadataBlock._writeblocks, [block], 0, 0, None)
+
+    def test_too_large_padding(self):
+        block = Padding()
+        self.assertEqual(
+            len(MetadataBlock._writeblocks([block], 0, 0, lambda x: 2 ** 24)),
+            2**24 - 1 + 4)
 
 
 class TStreamInfo(TestCase):
@@ -292,6 +290,45 @@ class TFLAC(TestCase):
 
     def tearDown(self):
         os.unlink(self.NEW)
+
+    def test_padding(self):
+        for pad in [0, 42, 2**24 - 1, 2 ** 24]:
+            self.flac.save(padding=lambda x: pad)
+            new = FLAC(self.flac.filename)
+            expected = min(2**24 - 1, pad)
+            self.assertEqual(new.metadata_blocks[-1].length, expected)
+
+    def test_save_multiple_padding(self):
+        # we don't touch existing padding blocks on save, but will
+        # replace them in the file with one at the end
+
+        def num_padding(f):
+            blocks = f.metadata_blocks
+            return len([b for b in blocks if isinstance(b, Padding)])
+
+        num_blocks = num_padding(self.flac)
+        self.assertEqual(num_blocks, 1)
+        block = Padding()
+        block.length = 42
+        self.flac.metadata_blocks.append(block)
+        block = Padding()
+        block.length = 24
+        self.flac.metadata_blocks.append(block)
+        self.flac.save()
+        self.assertEqual(num_padding(self.flac), num_blocks + 2)
+
+        new = FLAC(self.flac.filename)
+        self.assertEqual(num_padding(new), 1)
+        self.assertTrue(isinstance(new.metadata_blocks[-1], Padding))
+
+    def test_increase_size_new_padding(self):
+        self.assertEqual(self.flac.metadata_blocks[-1].length, 3060)
+        value = u"foo" * 100
+        self.flac[u"foo"] = [value]
+        self.flac.save()
+        new = FLAC(self.NEW)
+        self.assertEqual(new.metadata_blocks[-1].length, 2752)
+        self.assertEqual(new[u"foo"], [value])
 
     def test_delete(self):
         self.failUnless(self.flac.tags)
@@ -669,15 +706,6 @@ class CVE20074619(TestCase):
         # This size is too big to be an integer.
         f.metadata_blocks[-1].length = 0xFFFFFFFFFFFFFFFF
         self.failUnlessRaises(IOError, f.metadata_blocks[-1].write)
-
-    def test_12_write_too_big_for_flac(self):
-        from mutagen.flac import MetadataBlock
-        filename = os.path.join(DATA_DIR, "silence-44-s.flac")
-        f = FLAC(filename)
-        # This size is too big to be in a FLAC block but is overwise fine.
-        f.metadata_blocks[-1].length = 0x1FFFFFF
-        self.failUnlessRaises(
-            IOError, MetadataBlock.writeblocks, [f.metadata_blocks[-1]])
 
     # Vulnerability 13 and 14 are specific to libFLAC and C/C++ memory
     # management schemes.
