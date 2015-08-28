@@ -535,6 +535,10 @@ class TFLAC(TestCase):
         f = FLAC(self.NEW)
         self.failUnlessEqual(f['title'], ['vc title'])
 
+    def test_save_on_mp3(self):
+        path = os.path.join(DATA_DIR, "silence-44-s.mp3")
+        self.assertRaises(error, self.flac.save, path)
+
     def test_mime(self):
         self.failUnless("audio/x-flac" in self.flac.mime)
 
