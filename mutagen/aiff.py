@@ -18,7 +18,7 @@ from mutagen import StreamInfo, FileType
 
 from mutagen.id3 import ID3
 from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
-from mutagen._util import insert_bytes, delete_bytes, MutagenError
+from mutagen._util import resize_bytes, delete_bytes, MutagenError
 
 __all__ = ["AIFF", "Open", "delete"]
 
@@ -124,16 +124,9 @@ class IFFChunk(object):
     def resize(self, new_data_size):
         """Resize the file and update the chunk sizes"""
 
-        if new_data_size > self.data_size:
-            insert_at = self.data_offset + self.data_size
-            insert_size = new_data_size - self.data_size
-            insert_bytes(self.__fileobj, insert_size, insert_at)
-            self._update_size(new_data_size)
-        elif new_data_size < self.data_size:
-            delete_size = self.data_size - new_data_size
-            delete_at = self.data_offset + self.data_size - delete_size
-            delete_bytes(self.__fileobj, delete_size, delete_at)
-            self._update_size(new_data_size)
+        resize_bytes(
+            self.__fileobj, self.data_size, new_data_size, self.data_offset)
+        self._update_size(new_data_size)
 
 
 class IFFFile(object):
