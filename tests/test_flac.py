@@ -59,6 +59,21 @@ class TMetadataBlock(TestCase):
         b.data = b"quux"
         self.failUnlessEqual(b.write(), b"quux")
 
+    def test_write_read_max_size(self):
+
+        class SomeBlock(MetadataBlock):
+            code = 255
+
+        max_data_size = 2 ** 24 - 1
+        block = SomeBlock(b"\x00" * max_data_size)
+        data = MetadataBlock.writeblocks([block])
+        self.assertEqual(data[:4], b"\xff\xff\xff\xff")
+        header_size = 4
+        self.assertEqual(len(data), max_data_size + header_size)
+
+        block = SomeBlock(b"\x00" * (max_data_size + 1))
+        self.assertRaises(error, MetadataBlock.writeblocks, [block])
+
     def test_writeblocks(self):
         blocks = [Padding(b"\x00" * 20), Padding(b"\x00" * 30)]
         self.failUnlessEqual(len(MetadataBlock.writeblocks(blocks)), 58)
@@ -558,15 +573,15 @@ class TFLACBadBlockSizeOverflow(TestCase):
     def test_largest_valid(self):
         f = FLAC(self.filename)
         pic = Picture()
-        pic.data = b"\x00" * (2 ** 24 - 32)
-        self.assertEqual(len(pic.write()), 2 ** 24)
+        pic.data = b"\x00" * (2 ** 24 - 1 - 32)
+        self.assertEqual(len(pic.write()), 2 ** 24 - 1)
         f.add_picture(pic)
         f.save()
 
     def test_smallest_invalid(self):
         f = FLAC(self.filename)
         pic = Picture()
-        pic.data = b"\x00" * (2 ** 24 - 31)
+        pic.data = b"\x00" * (2 ** 24 - 32)
         f.add_picture(pic)
         self.assertRaises(error, f.save)
 
@@ -576,7 +591,7 @@ class TFLACBadBlockSizeOverflow(TestCase):
         f = FLAC(self.filename)
         f.clear_pictures()
         pic = Picture()
-        pic.data = b"\x00" * (2 ** 24 - 31)
+        pic.data = b"\x00" * (2 ** 24 - 32)
         pic._invalid_overflow_size = 42
         f.add_picture(pic)
         f.save()
@@ -584,7 +599,7 @@ class TFLACBadBlockSizeOverflow(TestCase):
         # make sure we can read it and save it again
         f = FLAC(self.filename)
         self.assertTrue(f.pictures)
-        self.assertEqual(len(f.pictures[0].data), 2 ** 24 - 31)
+        self.assertEqual(len(f.pictures[0].data), 2 ** 24 - 32)
         f.save()
 
 

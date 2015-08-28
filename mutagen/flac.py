@@ -91,6 +91,8 @@ class MetadataBlock(object):
     24 bit size field, we save the wrong specified size here. This can
     only be set if _distrust_size is True"""
 
+    _MAX_SIZE = 2 ** 24 - 1
+
     def __init__(self, data):
         """Parse the given data string or file-like as a metadata block.
         The metadata header should not be included."""
@@ -110,8 +112,8 @@ class MetadataBlock(object):
     def write(self):
         return self.data
 
-    @staticmethod
-    def writeblocks(blocks):
+    @classmethod
+    def writeblocks(cls, blocks):
         """Render metadata block as a byte string."""
 
         data = []
@@ -120,7 +122,7 @@ class MetadataBlock(object):
             code = (block.code | 128) if is_last else block.code
             datum = block.write()
             size = len(datum)
-            if size > 2 ** 24:
+            if size > cls._MAX_SIZE:
                 if block._distrust_size and block._invalid_overflow_size != -1:
                     # The original size of this block was (1) wrong and (2)
                     # the real size doesn't allow us to save the file
@@ -130,7 +132,7 @@ class MetadataBlock(object):
                     size = block._invalid_overflow_size
                 else:
                     raise error("block is too long to write")
-            assert not size > 2 ** 24
+            assert not size > cls._MAX_SIZE
             length = struct.pack(">I", size)[-3:]
             data.extend([chr_(code), length, datum])
         return b"".join(data)
@@ -679,7 +681,7 @@ class FLAC(mutagen.FileType):
             start = fileobj.tell()
             block = block_type(fileobj)
             real_size = fileobj.tell() - start
-            if real_size > 2 ** 24:
+            if real_size > MetadataBlock._MAX_SIZE:
                 block._invalid_overflow_size = size
         else:
             data = fileobj.read(size)
