@@ -293,6 +293,8 @@ class _IFFID3(ID3):
             new_size += new_size % 2  # pad byte
             assert new_size % 2 == 0
             chunk.resize(new_size)
+            data += (new_size - len(data)) * b'\x00'
+            assert new_size == len(data)
             chunk.write(data)
 
     def delete(self, filename=None):
