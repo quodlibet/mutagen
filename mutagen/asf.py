@@ -531,14 +531,27 @@ class UnknownObject(BaseObject):
         self.GUID = guid
 
 
+def _GUID(s):
+    assert len(s) == 36
+
+    p = struct.pack
+    return b"".join([
+        p("<IHH", int(s[:8], 16), int(s[9:13], 16), int(s[14:18], 16)),
+        p(">H", int(s[19:23], 16)),
+        p(">Q", int(s[24:], 16))[2:],
+        ])
+
+
 class HeaderObject(object):
     """ASF header."""
-    GUID = b"\x30\x26\xB2\x75\x8E\x66\xCF\x11\xA6\xD9\x00\xAA\x00\x62\xCE\x6C"
+
+    GUID = _GUID("75B22630-668E-11CF-A6D9-00AA0062CE6C")
 
 
 class ContentDescriptionObject(BaseObject):
     """Content description."""
-    GUID = b"\x33\x26\xB2\x75\x8E\x66\xCF\x11\xA6\xD9\x00\xAA\x00\x62\xCE\x6C"
+
+    GUID = _GUID("75B22633-668E-11CF-A6D9-00AA0062CE6C")
 
     NAMES = [
         u"Title",
@@ -582,7 +595,8 @@ class ContentDescriptionObject(BaseObject):
 
 class ExtendedContentDescriptionObject(BaseObject):
     """Extended content description."""
-    GUID = b"\x40\xA4\xD0\xD2\x07\xE3\xD2\x11\x97\xF0\x00\xA0\xC9\x5E\xA8\x50"
+
+    GUID = _GUID("D2D0A440-E307-11D2-97F0-00A0C95EA850")
 
     def parse(self, asf, data, fileobj, size):
         super(ExtendedContentDescriptionObject, self).parse(
@@ -612,7 +626,8 @@ class ExtendedContentDescriptionObject(BaseObject):
 
 class FilePropertiesObject(BaseObject):
     """File properties."""
-    GUID = b"\xA1\xDC\xAB\x8C\x47\xA9\xCF\x11\x8E\xE4\x00\xC0\x0C\x20\x53\x65"
+
+    GUID = _GUID("8CABDCA1-A947-11CF-8EE4-00C00C205365")
 
     def parse(self, asf, data, fileobj, size):
         super(FilePropertiesObject, self).parse(asf, data, fileobj, size)
@@ -622,7 +637,8 @@ class FilePropertiesObject(BaseObject):
 
 class StreamPropertiesObject(BaseObject):
     """Stream properties."""
-    GUID = b"\x91\x07\xDC\xB7\xB7\xA9\xCF\x11\x8E\xE6\x00\xC0\x0C\x20\x53\x65"
+
+    GUID = _GUID("B7DC0791-A9B7-11CF-8EE6-00C00C205365")
 
     def parse(self, asf, data, fileobj, size):
         super(StreamPropertiesObject, self).parse(asf, data, fileobj, size)
@@ -634,7 +650,8 @@ class StreamPropertiesObject(BaseObject):
 
 class HeaderExtensionObject(BaseObject):
     """Header extension."""
-    GUID = b"\xb5\x03\xbf_.\xa9\xcf\x11\x8e\xe3\x00\xc0\x0c Se"
+
+    GUID = _GUID("5FBF03B5-A92E-11CF-8EE3-00C00C205365")
 
     def parse(self, asf, data, fileobj, size):
         super(HeaderExtensionObject, self).parse(asf, data, fileobj, size)
@@ -664,7 +681,8 @@ class HeaderExtensionObject(BaseObject):
 
 class MetadataObject(BaseObject):
     """Metadata description."""
-    GUID = b"\xea\xcb\xf8\xc5\xaf[wH\x84g\xaa\x8cD\xfaL\xca"
+
+    GUID = _GUID("C5F8CBEA-5BAF-4877-8467-AA8C44FA4CCA")
 
     def parse(self, asf, data, fileobj, size):
         super(MetadataObject, self).parse(asf, data, fileobj, size)
@@ -695,7 +713,8 @@ class MetadataObject(BaseObject):
 
 class MetadataLibraryObject(BaseObject):
     """Metadata library description."""
-    GUID = b"\x94\x1c#D\x98\x94\xd1I\xa1A\x1d\x13NEpT"
+
+    GUID = _GUID("44231C94-9498-49D1-A141-1D134E457054")
 
     def parse(self, asf, data, fileobj, size):
         super(MetadataLibraryObject, self).parse(asf, data, fileobj, size)
