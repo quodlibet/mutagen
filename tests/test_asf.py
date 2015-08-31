@@ -7,7 +7,7 @@ from tests import TestCase, DATA_DIR
 
 from mutagen._compat import PY3, text_type, PY2
 from mutagen.asf import ASF, ASFHeaderError, ASFValue, UNICODE, DWORD, QWORD
-from mutagen.asf import BOOL, WORD, BYTEARRAY, GUID
+from mutagen.asf import BOOL, WORD, BYTEARRAY, GUID, _GUID, _GUID_STR
 from mutagen.asf import ASFUnicodeAttribute, ASFError, ASFByteArrayAttribute, \
     ASFBoolAttribute, ASFDWordAttribute, ASFQWordAttribute, ASFWordAttribute, \
     ASFGUIDAttribute
@@ -22,6 +22,16 @@ class TASFFile(TestCase):
         self.failUnlessRaises(
             ASFHeaderError, ASF,
             os.path.join(DATA_DIR, "click.mpc"))
+
+
+class TASFMisc(TestCase):
+
+    def test_guid(self):
+        ex = "75B22633-668E-11CF-A6D9-00AA0062CE6C"
+        b = _GUID(ex)
+        self.assertEqual(len(b), 16)
+        self.assertTrue(isinstance(b, bytes))
+        self.assertEqual(_GUID_STR(b), ex)
 
 
 class TASFInfo(TestCase):
@@ -53,6 +63,34 @@ class TASFInfo(TestCase):
         self.failUnlessEqual(self.wma1.info.channels, 2)
         self.failUnlessEqual(self.wma2.info.channels, 2)
         self.failUnlessEqual(self.wma3.info.channels, 2)
+
+    def test_codec_type(self):
+        self.assertEqual(self.wma1.info.codec_type,
+                         "Windows Media Audio 9 Standard")
+        self.assertEqual(self.wma2.info.codec_type,
+                         "Windows Media Audio 9 Professional")
+        self.assertEqual(self.wma3.info.codec_type,
+                         "Windows Media Audio 9 Lossless")
+
+    def test_codec_name(self):
+        self.assertEqual(self.wma1.info.codec_name,
+            "Windows Media Audio 9.1")
+        self.assertEqual(self.wma2.info.codec_name,
+            "Windows Media Audio 9.1 Professional")
+        self.assertEqual(self.wma3.info.codec_name,
+            "Windows Media Audio 9.1 Lossless")
+
+    def test_codec_description(self):
+        self.assertEqual(self.wma1.info.codec_description,
+            "64 kbps, 48 kHz, stereo 2-pass CBR")
+        self.assertEqual(self.wma2.info.codec_description,
+            "192 kbps, 44 kHz, 2 channel 24 bit 2-pass VBR")
+        self.assertEqual(self.wma3.info.codec_description,
+            "VBR Quality 100, 44 kHz, 2 channel 16 bit 1-pass VBR")
+
+    def test_pprint(self):
+        self.assertTrue(self.wma1.info.pprint())
+        self.assertTrue(isinstance(self.wma1.info.pprint(), text_type))
 
 
 class TASF(TestCase):

@@ -9,5 +9,6 @@ ASF
     :undoc-members:
 
 .. autoclass:: mutagen.asf.ASFInfo
+    :show-inheritance:
     :members:
     :undoc-members:

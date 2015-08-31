@@ -8,6 +8,12 @@ Main Module
 Base Classes
 ~~~~~~~~~~~~
 
+.. class:: text()
+
+    This type only exists for documentation purposes. It represents
+    :obj:`unicode` under Python 2 and :obj:`str` under Python 3.
+
+
 .. autoclass:: mutagen.FileType(filename)
     :members: pprint, add_tags, mime
     :show-inheritance:
