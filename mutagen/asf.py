@@ -15,7 +15,7 @@ __all__ = ["ASF", "Open"]
 import sys
 import struct
 from mutagen import FileType, Metadata, StreamInfo
-from mutagen._util import (insert_bytes, delete_bytes, DictMixin,
+from mutagen._util import (resize_bytes, DictMixin,
                            total_ordering, MutagenError, cdata)
 from ._compat import swap_to_string, text_type, PY2, string_types, reraise, \
     xrange, long_, PY3
@@ -1189,10 +1189,7 @@ class ASF(FileType):
 
         with open(self.filename, "rb+") as fileobj:
             size = len(data)
-            if size > self.size:
-                insert_bytes(fileobj, size - self.size, self.size)
-            if size < self.size:
-                delete_bytes(fileobj, self.size - size, 0)
+            resize_bytes(fileobj, self.size, size, 0)
             fileobj.seek(0)
             fileobj.write(data)
 
