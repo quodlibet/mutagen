@@ -617,7 +617,6 @@ class TASFSave(TestCase):
         self.assertTrue(ext.get_child(MetadataLibraryObject.GUID))
 
     def test_keep_others(self):
-        header = self.audio._header
         self.audio.save()
         new = ASF(self.filename)
         self.assertTrue(new._header.get_child(CodecListObject.GUID))
