@@ -23,7 +23,10 @@ class ASFHeaderError(error):
     pass
 
 
-def _GUID(s):
+def guid2bytes(s):
+    """Converts a GUID to the serialized bytes representation"""
+
+    assert isinstance(s, str)
     assert len(s) == 36
 
     p = struct.pack
@@ -34,7 +37,9 @@ def _GUID(s):
         ])
 
 
-def _GUID_STR(s):
+def bytes2guid(s):
+    """Converts a serialized GUID to a text GUID"""
+
     assert isinstance(s, bytes)
 
     u = struct.unpack

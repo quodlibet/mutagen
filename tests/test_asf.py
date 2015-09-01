@@ -8,7 +8,7 @@ from tests import TestCase, DATA_DIR
 from mutagen._compat import PY3, text_type, PY2
 from mutagen.asf import ASF, ASFHeaderError, ASFValue, UNICODE, DWORD, QWORD
 from mutagen.asf import BOOL, WORD, BYTEARRAY, GUID
-from mutagen.asf._util import _GUID, _GUID_STR
+from mutagen.asf._util import guid2bytes, bytes2guid
 from mutagen.asf import ASFUnicodeAttribute, ASFError, ASFByteArrayAttribute, \
     ASFBoolAttribute, ASFDWordAttribute, ASFQWordAttribute, ASFWordAttribute, \
     ASFGUIDAttribute
@@ -29,10 +29,10 @@ class TASFMisc(TestCase):
 
     def test_guid(self):
         ex = "75B22633-668E-11CF-A6D9-00AA0062CE6C"
-        b = _GUID(ex)
+        b = guid2bytes(ex)
         self.assertEqual(len(b), 16)
         self.assertTrue(isinstance(b, bytes))
-        self.assertEqual(_GUID_STR(b), ex)
+        self.assertEqual(bytes2guid(b), ex)
 
 
 class TASFInfo(TestCase):

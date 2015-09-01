@@ -16,7 +16,7 @@ from mutagen._util import resize_bytes, DictMixin
 from mutagen._compat import string_types, xrange, long_, PY3
 
 from ._util import error, ASFError, ASFHeaderError
-from ._objects import BaseObject, HeaderObject, UnknownObject, \
+from ._objects import BaseObject, HeaderObject, \
     MetadataLibraryObject, MetadataObject, ExtendedContentDescriptionObject, \
     HeaderExtensionObject, ContentDescriptionObject
 from ._attrs import ASFGUIDAttribute, ASFWordAttribute, ASFQWordAttribute, \
@@ -280,10 +280,7 @@ class ASF(FileType):
 
     def __read_object(self, fileobj):
         guid, size = struct.unpack("<16sQ", fileobj.read(24))
-        if guid in BaseObject._TYPES:
-            obj = BaseObject._TYPES[guid]()
-        else:
-            obj = UnknownObject(guid)
+        obj = BaseObject._get_object(guid)
         data = fileobj.read(size - 24)
         obj.parse(self, data, fileobj, size)
         self.objects.append(obj)

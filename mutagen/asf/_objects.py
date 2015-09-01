@@ -11,8 +11,8 @@ import struct
 from mutagen._util import cdata
 from mutagen._compat import text_type, xrange
 
-from ._util import _GUID, _GUID_STR, CODECS, ASFError
-from ._attrs import _attribute_types, ASFUnicodeAttribute
+from ._util import guid2bytes, bytes2guid, CODECS, ASFError
+from ._attrs import ASFBaseAttribute, ASFUnicodeAttribute
 
 
 class BaseObject(object):
@@ -33,14 +33,21 @@ class BaseObject(object):
         cls._TYPES[other.GUID] = other
         return other
 
+    @classmethod
+    def _get_object(cls, guid):
+        if guid in cls._TYPES:
+            return cls._TYPES[guid]()
+        else:
+            return UnknownObject(guid)
+
     def __repr__(self):
-        return "<%s GUID=%s>" % (type(self).__name__, _GUID_STR(self.GUID))
+        return "<%s GUID=%s>" % (type(self).__name__, bytes2guid(self.GUID))
 
 
 class HeaderObject(object):
     """ASF header."""
 
-    GUID = _GUID("75B22630-668E-11CF-A6D9-00AA0062CE6C")
+    GUID = guid2bytes("75B22630-668E-11CF-A6D9-00AA0062CE6C")
 
 
 class UnknownObject(BaseObject):
@@ -55,7 +62,7 @@ class UnknownObject(BaseObject):
 class ContentDescriptionObject(BaseObject):
     """Content description."""
 
-    GUID = _GUID("75B22633-668E-11CF-A6D9-00AA0062CE6C")
+    GUID = guid2bytes("75B22633-668E-11CF-A6D9-00AA0062CE6C")
 
     NAMES = [
         u"Title",
@@ -101,7 +108,7 @@ class ContentDescriptionObject(BaseObject):
 class ExtendedContentDescriptionObject(BaseObject):
     """Extended content description."""
 
-    GUID = _GUID("D2D0A440-E307-11D2-97F0-00A0C95EA850")
+    GUID = guid2bytes("D2D0A440-E307-11D2-97F0-00A0C95EA850")
 
     def parse(self, asf, data, fileobj, size):
         super(ExtendedContentDescriptionObject, self).parse(
@@ -119,7 +126,7 @@ class ExtendedContentDescriptionObject(BaseObject):
             pos += 4
             value = data[pos:pos + value_length]
             pos += value_length
-            attr = _attribute_types[value_type](data=value)
+            attr = ASFBaseAttribute._get_type(value_type)(data=value)
             asf._tags.setdefault(self.GUID, []).append((name, attr))
 
     def render(self, asf):
@@ -133,7 +140,7 @@ class ExtendedContentDescriptionObject(BaseObject):
 class FilePropertiesObject(BaseObject):
     """File properties."""
 
-    GUID = _GUID("8CABDCA1-A947-11CF-8EE4-00C00C205365")
+    GUID = guid2bytes("8CABDCA1-A947-11CF-8EE4-00C00C205365")
 
     def parse(self, asf, data, fileobj, size):
         super(FilePropertiesObject, self).parse(asf, data, fileobj, size)
@@ -145,7 +152,7 @@ class FilePropertiesObject(BaseObject):
 class StreamPropertiesObject(BaseObject):
     """Stream properties."""
 
-    GUID = _GUID("B7DC0791-A9B7-11CF-8EE6-00C00C205365")
+    GUID = guid2bytes("B7DC0791-A9B7-11CF-8EE6-00C00C205365")
 
     def parse(self, asf, data, fileobj, size):
         super(StreamPropertiesObject, self).parse(asf, data, fileobj, size)
@@ -159,7 +166,7 @@ class StreamPropertiesObject(BaseObject):
 class CodecListObject(BaseObject):
     """Codec List"""
 
-    GUID = _GUID("86D15240-311D-11D0-A3A4-00A0C90348F6")
+    GUID = guid2bytes("86D15240-311D-11D0-A3A4-00A0C90348F6")
 
     def _parse_entry(self, data, offset):
         """can raise cdata.error"""
@@ -220,35 +227,35 @@ class CodecListObject(BaseObject):
 class PaddingObject(BaseObject):
     """Padding object"""
 
-    GUID = _GUID("1806D474-CADF-4509-A4BA-9AABCB96AAE8")
+    GUID = guid2bytes("1806D474-CADF-4509-A4BA-9AABCB96AAE8")
 
 
 @BaseObject._register
 class StreamBitratePropertiesObject(BaseObject):
     """Stream bitrate properties"""
 
-    GUID = _GUID("7BF875CE-468D-11D1-8D82-006097C9A2B2")
+    GUID = guid2bytes("7BF875CE-468D-11D1-8D82-006097C9A2B2")
 
 
 @BaseObject._register
 class ContentEncryptionObject(BaseObject):
     """Content encryption"""
 
-    GUID = _GUID("2211B3FB-BD23-11D2-B4B7-00A0C955FC6E")
+    GUID = guid2bytes("2211B3FB-BD23-11D2-B4B7-00A0C955FC6E")
 
 
 @BaseObject._register
 class ExtendedContentEncryptionObject(BaseObject):
     """Extended content encryption"""
 
-    GUID = _GUID("298AE614-2622-4C17-B935-DAE07EE9289C")
+    GUID = guid2bytes("298AE614-2622-4C17-B935-DAE07EE9289C")
 
 
 @BaseObject._register
 class HeaderExtensionObject(BaseObject):
     """Header extension."""
 
-    GUID = _GUID("5FBF03B5-A92E-11CF-8EE3-00C00C205365")
+    GUID = guid2bytes("5FBF03B5-A92E-11CF-8EE3-00C00C205365")
 
     def parse(self, asf, data, fileobj, size):
         super(HeaderExtensionObject, self).parse(asf, data, fileobj, size)
@@ -259,10 +266,7 @@ class HeaderExtensionObject(BaseObject):
         while datapos < datasize:
             guid, size = struct.unpack(
                 "<16sQ", data[22 + datapos:22 + datapos + 24])
-            if guid in self._TYPES:
-                obj = self._TYPES[guid]()
-            else:
-                obj = UnknownObject(guid)
+            obj = BaseObject._get_object(guid)
             obj.parse(asf, data[22 + datapos + 24:22 + datapos + size],
                       fileobj, size)
             self.objects.append(obj)
@@ -280,7 +284,7 @@ class HeaderExtensionObject(BaseObject):
 class MetadataObject(BaseObject):
     """Metadata description."""
 
-    GUID = _GUID("C5F8CBEA-5BAF-4877-8467-AA8C44FA4CCA")
+    GUID = guid2bytes("C5F8CBEA-5BAF-4877-8467-AA8C44FA4CCA")
 
     def parse(self, asf, data, fileobj, size):
         super(MetadataObject, self).parse(asf, data, fileobj, size)
@@ -299,7 +303,7 @@ class MetadataObject(BaseObject):
             args = {'data': value, 'stream': stream}
             if value_type == 2:
                 args['dword'] = False
-            attr = _attribute_types[value_type](**args)
+            attr = ASFBaseAttribute._get_type(value_type)(**args)
             asf._tags.setdefault(self.GUID, []).append((name, attr))
 
     def render(self, asf):
@@ -313,7 +317,7 @@ class MetadataObject(BaseObject):
 class MetadataLibraryObject(BaseObject):
     """Metadata library description."""
 
-    GUID = _GUID("44231C94-9498-49D1-A141-1D134E457054")
+    GUID = guid2bytes("44231C94-9498-49D1-A141-1D134E457054")
 
     def parse(self, asf, data, fileobj, size):
         super(MetadataLibraryObject, self).parse(asf, data, fileobj, size)
@@ -332,7 +336,7 @@ class MetadataLibraryObject(BaseObject):
             args = {'data': value, 'language': language, 'stream': stream}
             if value_type == 2:
                 args['dword'] = False
-            attr = _attribute_types[value_type](**args)
+            attr = ASFBaseAttribute._get_type(value_type)(**args)
             asf._tags.setdefault(self.GUID, []).append((name, attr))
 
     def render(self, asf):

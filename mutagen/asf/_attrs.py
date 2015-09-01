@@ -17,7 +17,10 @@ from ._util import ASFError
 
 class ASFBaseAttribute(object):
     """Generic attribute."""
+
     TYPE = None
+
+    _TYPES = {}
 
     def __init__(self, value=None, data=None, language=None,
                  stream=None, **kwargs):
@@ -32,6 +35,17 @@ class ASFBaseAttribute(object):
                 self.value = None
             else:
                 self.value = self._validate(value)
+
+    @classmethod
+    def _register(cls, other):
+        cls._TYPES[other.TYPE] = other
+        return other
+
+    @classmethod
+    def _get_type(cls, type_):
+        """Raises KeyError"""
+
+        return cls._TYPES[type_]
 
     def _validate(self, value):
         """Raises TypeError or ValueError in case the user supplied value
@@ -78,6 +92,7 @@ class ASFBaseAttribute(object):
                             len(name), self.TYPE, len(data)) + name + data)
 
 
+@ASFBaseAttribute._register
 @swap_to_string
 @total_ordering
 class ASFUnicodeAttribute(ASFBaseAttribute):
@@ -119,6 +134,7 @@ class ASFUnicodeAttribute(ASFBaseAttribute):
     __hash__ = ASFBaseAttribute.__hash__
 
 
+@ASFBaseAttribute._register
 @swap_to_string
 @total_ordering
 class ASFByteArrayAttribute(ASFBaseAttribute):
@@ -156,10 +172,12 @@ class ASFByteArrayAttribute(ASFBaseAttribute):
     __hash__ = ASFBaseAttribute.__hash__
 
 
+@ASFBaseAttribute._register
 @swap_to_string
 @total_ordering
 class ASFBoolAttribute(ASFBaseAttribute):
     """Bool attribute."""
+
     TYPE = 0x0002
 
     def parse(self, data, dword=True):
@@ -198,6 +216,7 @@ class ASFBoolAttribute(ASFBaseAttribute):
     __hash__ = ASFBaseAttribute.__hash__
 
 
+@ASFBaseAttribute._register
 @swap_to_string
 @total_ordering
 class ASFDWordAttribute(ASFBaseAttribute):
@@ -237,6 +256,7 @@ class ASFDWordAttribute(ASFBaseAttribute):
     __hash__ = ASFBaseAttribute.__hash__
 
 
+@ASFBaseAttribute._register
 @swap_to_string
 @total_ordering
 class ASFQWordAttribute(ASFBaseAttribute):
@@ -276,6 +296,7 @@ class ASFQWordAttribute(ASFBaseAttribute):
     __hash__ = ASFBaseAttribute.__hash__
 
 
+@ASFBaseAttribute._register
 @swap_to_string
 @total_ordering
 class ASFWordAttribute(ASFBaseAttribute):
@@ -315,6 +336,7 @@ class ASFWordAttribute(ASFBaseAttribute):
     __hash__ = ASFBaseAttribute.__hash__
 
 
+@ASFBaseAttribute._register
 @swap_to_string
 @total_ordering
 class ASFGUIDAttribute(ASFBaseAttribute):
@@ -354,19 +376,8 @@ class ASFGUIDAttribute(ASFBaseAttribute):
 
 def ASFValue(value, kind, **kwargs):
     try:
-        attr_type = _attribute_types[kind]
+        attr_type = ASFBaseAttribute._get_type(kind)
     except KeyError:
         raise ValueError("Unknown value type %r" % kind)
     else:
         return attr_type(value=value, **kwargs)
-
-
-_attribute_types = {
-    ASFUnicodeAttribute.TYPE: ASFUnicodeAttribute,
-    ASFByteArrayAttribute.TYPE: ASFByteArrayAttribute,
-    ASFBoolAttribute.TYPE: ASFBoolAttribute,
-    ASFDWordAttribute.TYPE: ASFDWordAttribute,
-    ASFQWordAttribute.TYPE: ASFQWordAttribute,
-    ASFWordAttribute.TYPE: ASFWordAttribute,
-    ASFGUIDAttribute.TYPE: ASFGUIDAttribute,
-}
