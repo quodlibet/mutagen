@@ -7,7 +7,8 @@ from tests import TestCase, DATA_DIR
 
 from mutagen._compat import PY3, text_type, PY2
 from mutagen.asf import ASF, ASFHeaderError, ASFValue, UNICODE, DWORD, QWORD
-from mutagen.asf import BOOL, WORD, BYTEARRAY, GUID, _GUID, _GUID_STR
+from mutagen.asf import BOOL, WORD, BYTEARRAY, GUID
+from mutagen.asf._util import _GUID, _GUID_STR
 from mutagen.asf import ASFUnicodeAttribute, ASFError, ASFByteArrayAttribute, \
     ASFBoolAttribute, ASFDWordAttribute, ASFQWordAttribute, ASFWordAttribute, \
     ASFGUIDAttribute
