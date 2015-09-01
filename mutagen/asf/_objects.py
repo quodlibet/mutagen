@@ -8,8 +8,9 @@
 
 import struct
 
-from mutagen._util import cdata
+from mutagen._util import cdata, get_size
 from mutagen._compat import text_type, xrange
+from mutagen._tags import PaddingInfo
 
 from ._util import guid2bytes, bytes2guid, CODECS, ASFError, ASFHeaderError
 from ._attrs import ASFBaseAttribute, ASFUnicodeAttribute
@@ -23,6 +24,7 @@ class BaseObject(object):
 
     def __init__(self):
         self.objects = []
+        self.data = b""
 
     def parse(self, asf, data):
         self.data = data
@@ -106,13 +108,45 @@ class HeaderObject(BaseObject):
 
         return struct.unpack("<QL", header[16:28])
 
-    def render(self, asf):
-        # Render the header
-        data = b"".join([obj.render(asf) for obj in self.objects])
+    def render_full(self, asf, fileobj, available, padding_func):
+        # Render everything except padding
+        num_objects = 0
+        data = bytearray()
+        for obj in self.objects:
+            if obj.GUID == PaddingObject.GUID:
+                continue
+            data += obj.render(asf)
+            num_objects += 1
+
+        # calculate how much space we need at least
+        padding_obj = PaddingObject()
+        header_size = len(HeaderObject.GUID) + 14
+        padding_overhead = len(padding_obj.render(asf))
+        needed_size = len(data) + header_size + padding_overhead
+
+        # ask the user for padding adjustments
+        file_size = get_size(fileobj)
+        content_size = file_size - available
+        assert content_size >= 0
+        info = PaddingInfo(available - needed_size, content_size)
+
+        # add padding
+        padding = info._get_padding(padding_func)
+        padding_obj.parse(asf, b"\x00" * padding)
+        data += padding_obj.render(asf)
+        num_objects += 1
+
         data = (HeaderObject.GUID +
-                struct.pack("<QL", len(data) + 30, len(self.objects)) +
+                struct.pack("<QL", len(data) + 30, num_objects) +
                 b"\x01\x02" + data)
+
         return data
+
+    def parse(self, asf, data):
+        raise NotImplementedError
+
+    def render(self, asf):
+        raise NotImplementedError
 
 
 @BaseObject._register
@@ -324,7 +358,14 @@ class HeaderExtensionObject(BaseObject):
             datapos += size
 
     def render(self, asf):
-        data = b"".join(obj.render(asf) for obj in self.objects)
+        data = bytearray()
+        for obj in self.objects:
+            # some files have the padding in the extension header, but we
+            # want to add it at the end of the top level header. Just
+            # skip padding at this level.
+            if obj.GUID == PaddingObject.GUID:
+                continue
+            data += obj.render(asf)
         return (self.GUID + struct.pack("<Q", 24 + 16 + 6 + len(data)) +
                 b"\x11\xD2\xD3\xAB\xBA\xA9\xcf\x11" +
                 b"\x8E\xE6\x00\xC0\x0C\x20\x53\x65" +

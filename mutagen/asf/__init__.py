@@ -193,7 +193,15 @@ class ASF(FileType):
 
             assert not self._tags
 
-    def save(self):
+    def save(self, padding=None):
+        """Save tag changes back to the loaded file.
+
+        :param padding: A callback which returns the amount of padding to use.
+            See :class:`mutagen.PaddingInfo`
+
+        :raises mutagen.asf.error: In case saving fails
+        """
+
         # Move attributes to the right objects
         self.to_content_description = {}
         self.to_extended_content_description = {}
@@ -239,7 +247,7 @@ class ASF(FileType):
         # Render to file
         with open(self.filename, "rb+") as fileobj:
             old_size = header.parse_size(fileobj)[0]
-            data = header.render(self)
+            data = header.render_full(self, fileobj, old_size, padding)
             size = len(data)
             resize_bytes(fileobj, old_size, size, 0)
             fileobj.seek(0)

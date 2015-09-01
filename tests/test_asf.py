@@ -11,7 +11,7 @@ from mutagen.asf import BOOL, WORD, BYTEARRAY, GUID
 from mutagen.asf._util import guid2bytes, bytes2guid
 from mutagen.asf._objects import ContentDescriptionObject, \
     ExtendedContentDescriptionObject, HeaderExtensionObject, \
-    MetadataObject, MetadataLibraryObject, CodecListObject
+    MetadataObject, MetadataLibraryObject, CodecListObject, PaddingObject
 from mutagen.asf import ASFUnicodeAttribute, ASFError, ASFByteArrayAttribute, \
     ASFBoolAttribute, ASFDWordAttribute, ASFQWordAttribute, ASFWordAttribute, \
     ASFGUIDAttribute
@@ -587,7 +587,7 @@ class TASFSave(TestCase):
     original = os.path.join(DATA_DIR, "silence-1.wma")
 
     def setUp(self):
-        fd, self.filename = mkstemp(suffix='wma')
+        fd, self.filename = mkstemp(suffix='.wma')
         os.close(fd)
         shutil.copy(self.original, self.filename)
         self.audio = ASF(self.filename)
@@ -620,3 +620,22 @@ class TASFSave(TestCase):
         self.audio.save()
         new = ASF(self.filename)
         self.assertTrue(new._header.get_child(CodecListObject.GUID))
+
+    def test_padding(self):
+        old_tags = sorted(self.audio.items())
+
+        def get_padding(fn):
+            header = ASF(fn)._header
+            return len(header.get_child(PaddingObject.GUID).data)
+
+        for i in [0, 1, 2, 3, 42, 100, 5000, 30432, 1]:
+
+            def padding_cb(info):
+                self.assertEqual(info.size, 30432)
+                return i
+
+            self.audio.save(padding=padding_cb)
+            self.assertEqual(get_padding(self.filename), i)
+
+        last = ASF(self.filename)
+        self.assertEqual(sorted(last.items()), old_tags)
