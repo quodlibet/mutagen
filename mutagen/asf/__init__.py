@@ -28,18 +28,34 @@ error, ASFError, ASFHeaderError, ASFValue
 
 
 class ASFInfo(StreamInfo):
-    """ASF stream information.
+    """ASF stream information."""
 
-    :ivar float length: Length in seconds
-    :ivar int sample_rate: Sample rate in Hz
-    :ivar int bitrate: Bitrate in bps
-    :ivar int channels: Number of channels
-    :ivar text codec_type: Name of the codec type of the first audio stream or
-        an empty string if unknown. Example: "Windows Media Audio 9 Standard"
-    :ivar text codec_name: Name and maybe version of the codec used. Example:
-        "Windows Media Audio 9.1"
-    :ivar text codec_description: Further information on the codec used.
-        Example: "64 kbps, 48 kHz, stereo 2-pass CBR"
+    length = 0.0
+    """Length in seconds (`float`)"""
+
+    sample_rate = 0
+    """Sample rate in Hz (`int`)"""
+
+    bitrate = 0
+    """Bitrate in bps (`int`)"""
+
+    channels = 0
+    """Number of channels (`int`)"""
+
+    codec_type = u""
+    """Name of the codec type of the first audio stream or
+    an empty string if unknown. Example: ``Windows Media Audio 9 Standard``
+    (:class:`mutagen.text`)
+    """
+
+    codec_name = u""
+    """Name and maybe version of the codec used. Example:
+    ``Windows Media Audio 9.1`` (:class:`mutagen.text`)
+    """
+
+    codec_description = u""
+    """Further information on the codec used.
+    Example: ``64 kbps, 48 kHz, stereo 2-pass CBR`` (:class:`mutagen.text`)
     """
 
     def __init__(self):
@@ -65,9 +81,6 @@ class ASFInfo(StreamInfo):
 
 class ASFTags(list, DictMixin, Metadata):
     """Dictionary containing ASF attributes."""
-
-    def pprint(self):
-        return "\n".join("%s=%s" % (k, v) for k, v in self)
 
     def __getitem__(self, key):
         """A list of values for the key.
@@ -115,7 +128,6 @@ class ASFTags(list, DictMixin, Metadata):
         Setting a value overwrites all old ones. The value may be a
         list of Unicode or UTF-8 strings, or a single Unicode or UTF-8
         string.
-
         """
 
         # PY3 only
@@ -150,31 +162,64 @@ class ASFTags(list, DictMixin, Metadata):
         self.extend(to_append)
 
     def keys(self):
-        """Return all keys in the comment."""
+        """Return a sequence of all keys in the comment."""
+
         return self and set(next(iter(zip(*self))))
 
     def as_dict(self):
         """Return a copy of the comment data in a real dict."""
+
         d = {}
         for key, value in self:
             d.setdefault(key, []).append(value)
         return d
 
+    def pprint(self):
+        """Returns a string containing all key, value pairs.
+
+        :rtype: text
+        """
+
+        return "\n".join("%s=%s" % (k, v) for k, v in self)
+
 
 UNICODE = ASFUnicodeAttribute.TYPE
+"""Unicode string type"""
+
 BYTEARRAY = ASFByteArrayAttribute.TYPE
+"""Byte array type"""
+
 BOOL = ASFBoolAttribute.TYPE
+"""Bool type"""
+
 DWORD = ASFDWordAttribute.TYPE
+""""DWord type (uint32)"""
+
 QWORD = ASFQWordAttribute.TYPE
+"""QWord type (uint64)"""
+
 WORD = ASFWordAttribute.TYPE
+"""Word type (uint16)"""
+
 GUID = ASFGUIDAttribute.TYPE
+"""GUID type"""
 
 
 class ASF(FileType):
-    """An ASF file, probably containing WMA or WMV."""
+    """An ASF file, probably containing WMA or WMV.
+
+    :param filename: a filename to load
+    :raises mutagen.asf.error: In case loading fails
+    """
 
     _mimes = ["audio/x-ms-wma", "audio/x-ms-wmv", "video/x-ms-asf",
               "audio/x-wma", "video/x-wmv"]
+
+    info = None
+    """A `ASFInfo` instance"""
+
+    tags = None
+    """A `ASFTags` instance"""
 
     def load(self, filename):
         self.filename = filename

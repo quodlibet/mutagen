@@ -12,7 +12,7 @@ from mutagen._util import MutagenError
 
 
 class error(IOError, MutagenError):
-    pass
+    """Error raised by :mod:`mutagen.asf`"""
 
 
 class ASFError(error):

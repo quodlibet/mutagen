@@ -26,6 +26,8 @@ class MutagenError(Exception):
     .. versionadded:: 1.25
     """
 
+    __module__ = "mutagen"
+
 
 def total_ordering(cls):
     assert "__eq__" in cls.__dict__

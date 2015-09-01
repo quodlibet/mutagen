@@ -21,3 +21,6 @@ release = mutagen.version_string
 exclude_patterns = ['_build']
 bug_url_template = "http://bitbucket.org/lazka/mutagen/issue/%s"
 pr_url_template = "http://bitbucket.org/lazka/mutagen/pull-request/%s"
+
+autodoc_member_order = "bysource"
+default_role = "obj"

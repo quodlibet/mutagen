@@ -22,6 +22,15 @@ class ASFBaseAttribute(object):
 
     _TYPES = {}
 
+    value = None
+    """The Python value of this attribute (type depends on the class)"""
+
+    language = None
+    """Language"""
+
+    stream = None
+    """Stream"""
+
     def __init__(self, value=None, data=None, language=None,
                  stream=None, **kwargs):
         self.language = language
@@ -96,7 +105,13 @@ class ASFBaseAttribute(object):
 @swap_to_string
 @total_ordering
 class ASFUnicodeAttribute(ASFBaseAttribute):
-    """Unicode string attribute."""
+    """Unicode string attribute.
+
+    ::
+
+        ASFUnicodeAttribute(u'some text')
+    """
+
     TYPE = 0x0000
 
     def parse(self, data):
@@ -138,7 +153,12 @@ class ASFUnicodeAttribute(ASFBaseAttribute):
 @swap_to_string
 @total_ordering
 class ASFByteArrayAttribute(ASFBaseAttribute):
-    """Byte array attribute."""
+    """Byte array attribute.
+
+    ::
+
+        ASFByteArrayAttribute(b'1234')
+    """
     TYPE = 0x0001
 
     def parse(self, data):
@@ -176,7 +196,12 @@ class ASFByteArrayAttribute(ASFBaseAttribute):
 @swap_to_string
 @total_ordering
 class ASFBoolAttribute(ASFBaseAttribute):
-    """Bool attribute."""
+    """Bool attribute.
+
+    ::
+
+        ASFBoolAttribute(True)
+    """
 
     TYPE = 0x0002
 
@@ -220,7 +245,13 @@ class ASFBoolAttribute(ASFBaseAttribute):
 @swap_to_string
 @total_ordering
 class ASFDWordAttribute(ASFBaseAttribute):
-    """DWORD attribute."""
+    """DWORD attribute.
+
+    ::
+
+        ASFDWordAttribute(42)
+    """
+
     TYPE = 0x0003
 
     def parse(self, data):
@@ -260,7 +291,13 @@ class ASFDWordAttribute(ASFBaseAttribute):
 @swap_to_string
 @total_ordering
 class ASFQWordAttribute(ASFBaseAttribute):
-    """QWORD attribute."""
+    """QWORD attribute.
+
+    ::
+
+        ASFQWordAttribute(42)
+    """
+
     TYPE = 0x0004
 
     def parse(self, data):
@@ -300,7 +337,13 @@ class ASFQWordAttribute(ASFBaseAttribute):
 @swap_to_string
 @total_ordering
 class ASFWordAttribute(ASFBaseAttribute):
-    """WORD attribute."""
+    """WORD attribute.
+
+    ::
+
+        ASFWordAttribute(42)
+    """
+
     TYPE = 0x0005
 
     def parse(self, data):
@@ -341,6 +384,7 @@ class ASFWordAttribute(ASFBaseAttribute):
 @total_ordering
 class ASFGUIDAttribute(ASFBaseAttribute):
     """GUID attribute."""
+
     TYPE = 0x0006
 
     def parse(self, data):
@@ -375,6 +419,17 @@ class ASFGUIDAttribute(ASFBaseAttribute):
 
 
 def ASFValue(value, kind, **kwargs):
+    """Create a tag value of a specific kind.
+
+    ::
+
+        ASFValue(u"My Value", UNICODE)
+
+    :rtype: ASFBaseAttribute
+    :raises TypeError: in case a wrong type was passed
+    :raises ValueError: in case the value can't be be represented as ASFValue.
+    """
+
     try:
         attr_type = ASFBaseAttribute._get_type(kind)
     except KeyError:
