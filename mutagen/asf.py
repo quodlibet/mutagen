@@ -535,7 +535,9 @@ _attribute_types = {
 
 class BaseObject(object):
     """Base ASF object."""
+
     GUID = None
+    _TYPES = {}
 
     def parse(self, asf, data, fileobj, size):
         self.data = data
@@ -543,6 +545,14 @@ class BaseObject(object):
     def render(self, asf):
         data = self.GUID + struct.pack("<Q", len(self.data) + 24) + self.data
         return data
+
+    @classmethod
+    def _register(cls, other):
+        cls._TYPES[other.GUID] = other
+        return other
+
+    def __repr__(self):
+        return "<%s GUID=%s>" % (type(self).__name__, _GUID_STR(self.GUID))
 
 
 class UnknownObject(BaseObject):
@@ -573,12 +583,14 @@ def _GUID_STR(s):
     return "%08X-%04X-%04X-%04X-%012X" % tuple(v)
 
 
+@BaseObject._register
 class HeaderObject(object):
     """ASF header."""
 
     GUID = _GUID("75B22630-668E-11CF-A6D9-00AA0062CE6C")
 
 
+@BaseObject._register
 class ContentDescriptionObject(BaseObject):
     """Content description."""
 
@@ -624,6 +636,7 @@ class ContentDescriptionObject(BaseObject):
         return self.GUID + struct.pack("<Q", 24 + len(data)) + data
 
 
+@BaseObject._register
 class ExtendedContentDescriptionObject(BaseObject):
     """Extended content description."""
 
@@ -655,6 +668,7 @@ class ExtendedContentDescriptionObject(BaseObject):
         return self.GUID + data
 
 
+@BaseObject._register
 class FilePropertiesObject(BaseObject):
     """File properties."""
 
@@ -666,6 +680,7 @@ class FilePropertiesObject(BaseObject):
         asf.info.length = (length / 10000000.0) - (preroll / 1000.0)
 
 
+@BaseObject._register
 class StreamPropertiesObject(BaseObject):
     """Stream properties."""
 
@@ -945,6 +960,7 @@ _CODECS = {
 }
 
 
+@BaseObject._register
 class CodecListObject(BaseObject):
     """Codec List"""
 
@@ -1005,6 +1021,35 @@ class CodecListObject(BaseObject):
                 return
 
 
+@BaseObject._register
+class PaddingObject(BaseObject):
+    """Padding object"""
+
+    GUID = _GUID("1806D474-CADF-4509-A4BA-9AABCB96AAE8")
+
+
+@BaseObject._register
+class StreamBitratePropertiesObject(BaseObject):
+    """Stream bitrate properties"""
+
+    GUID = _GUID("7BF875CE-468D-11D1-8D82-006097C9A2B2")
+
+
+@BaseObject._register
+class ContentEncryptionObject(BaseObject):
+    """Content encryption"""
+
+    GUID = _GUID("2211B3FB-BD23-11D2-B4B7-00A0C955FC6E")
+
+
+@BaseObject._register
+class ExtendedContentEncryptionObject(BaseObject):
+    """Extended content encryption"""
+
+    GUID = _GUID("298AE614-2622-4C17-B935-DAE07EE9289C")
+
+
+@BaseObject._register
 class HeaderExtensionObject(BaseObject):
     """Header extension."""
 
@@ -1019,8 +1064,8 @@ class HeaderExtensionObject(BaseObject):
         while datapos < datasize:
             guid, size = struct.unpack(
                 "<16sQ", data[22 + datapos:22 + datapos + 24])
-            if guid in _object_types:
-                obj = _object_types[guid]()
+            if guid in self._TYPES:
+                obj = self._TYPES[guid]()
             else:
                 obj = UnknownObject(guid)
             obj.parse(asf, data[22 + datapos + 24:22 + datapos + size],
@@ -1036,6 +1081,7 @@ class HeaderExtensionObject(BaseObject):
                 b"\x06\x00" + struct.pack("<I", len(data)) + data)
 
 
+@BaseObject._register
 class MetadataObject(BaseObject):
     """Metadata description."""
 
@@ -1068,6 +1114,7 @@ class MetadataObject(BaseObject):
                 data)
 
 
+@BaseObject._register
 class MetadataLibraryObject(BaseObject):
     """Metadata library description."""
 
@@ -1098,18 +1145,6 @@ class MetadataLibraryObject(BaseObject):
         data = b"".join([attr.render_ml(name) for (name, attr) in attrs])
         return (self.GUID + struct.pack("<QH", 26 + len(data), len(attrs)) +
                 data)
-
-
-_object_types = {
-    ExtendedContentDescriptionObject.GUID: ExtendedContentDescriptionObject,
-    ContentDescriptionObject.GUID: ContentDescriptionObject,
-    FilePropertiesObject.GUID: FilePropertiesObject,
-    StreamPropertiesObject.GUID: StreamPropertiesObject,
-    HeaderExtensionObject.GUID: HeaderExtensionObject,
-    MetadataLibraryObject.GUID: MetadataLibraryObject,
-    MetadataObject.GUID: MetadataObject,
-    CodecListObject.GUID: CodecListObject,
-}
 
 
 class ASF(FileType):
@@ -1221,8 +1256,8 @@ class ASF(FileType):
 
     def __read_object(self, fileobj):
         guid, size = struct.unpack("<16sQ", fileobj.read(24))
-        if guid in _object_types:
-            obj = _object_types[guid]()
+        if guid in BaseObject._TYPES:
+            obj = BaseObject._TYPES[guid]()
         else:
             obj = UnknownObject(guid)
         data = fileobj.read(size - 24)
