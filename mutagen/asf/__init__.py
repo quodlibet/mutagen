@@ -10,15 +10,14 @@
 
 __all__ = ["ASF", "Open"]
 
-import struct
 from mutagen import FileType, Metadata, StreamInfo
 from mutagen._util import resize_bytes, DictMixin
-from mutagen._compat import string_types, xrange, long_, PY3
+from mutagen._compat import string_types, long_, PY3
 
 from ._util import error, ASFError, ASFHeaderError
-from ._objects import BaseObject, HeaderObject, \
-    MetadataLibraryObject, MetadataObject, ExtendedContentDescriptionObject, \
-    HeaderExtensionObject, ContentDescriptionObject
+from ._objects import HeaderObject, MetadataLibraryObject, MetadataObject, \
+    ExtendedContentDescriptionObject, HeaderExtensionObject, \
+    ContentDescriptionObject
 from ._attrs import ASFGUIDAttribute, ASFWordAttribute, ASFQWordAttribute, \
     ASFDWordAttribute, ASFBoolAttribute, ASFByteArrayAttribute, \
     ASFUnicodeAttribute, ASFBaseAttribute, ASFValue
@@ -179,16 +178,20 @@ class ASF(FileType):
 
     def load(self, filename):
         self.filename = filename
+        self.info = ASFInfo()
+        self.tags = ASFTags()
+
         with open(filename, "rb") as fileobj:
-            self.size = 0
-            self.size1 = 0
-            self.size2 = 0
-            self.offset1 = 0
-            self.offset2 = 0
-            self.num_objects = 0
-            self.info = ASFInfo()
-            self.tags = ASFTags()
-            self.__read_file(fileobj)
+            self._tags = {}
+
+            self._header = HeaderObject.parse_full(self, fileobj)
+
+            for guid in [ContentDescriptionObject.GUID,
+                    ExtendedContentDescriptionObject.GUID, MetadataObject.GUID,
+                    MetadataLibraryObject.GUID]:
+                self.tags.extend(self._tags.pop(guid, []))
+
+            assert not self._tags
 
     def save(self):
         # Move attributes to the right objects
@@ -219,71 +222,28 @@ class ASF(FileType):
                     self.to_metadata_library.append((name, value))
 
         # Add missing objects
-        if not self.content_description_obj:
-            self.content_description_obj = \
-                ContentDescriptionObject()
-            self.objects.append(self.content_description_obj)
-        if not self.extended_content_description_obj:
-            self.extended_content_description_obj = \
-                ExtendedContentDescriptionObject()
-            self.objects.append(self.extended_content_description_obj)
-        if not self.header_extension_obj:
-            self.header_extension_obj = \
-                HeaderExtensionObject()
-            self.objects.append(self.header_extension_obj)
-        if not self.metadata_obj:
-            self.metadata_obj = \
-                MetadataObject()
-            self.header_extension_obj.objects.append(self.metadata_obj)
-        if not self.metadata_library_obj:
-            self.metadata_library_obj = \
-                MetadataLibraryObject()
-            self.header_extension_obj.objects.append(self.metadata_library_obj)
+        header = self._header
+        if header.get_child(ContentDescriptionObject.GUID) is None:
+            header.objects.append(ContentDescriptionObject())
+        if header.get_child(ExtendedContentDescriptionObject.GUID) is None:
+            header.objects.append(ExtendedContentDescriptionObject())
+        header_ext = header.get_child(HeaderExtensionObject.GUID)
+        if header_ext is None:
+            header_ext = HeaderExtensionObject()
+            header.objects.append(header_ext)
+        if header_ext.get_child(MetadataObject.GUID) is None:
+            header_ext.objects.append(MetadataObject())
+        if header_ext.get_child(MetadataLibraryObject.GUID) is None:
+            header_ext.objects.append(MetadataLibraryObject())
 
-        # Render the header
-        data = b"".join([obj.render(self) for obj in self.objects])
-        data = (HeaderObject.GUID +
-                struct.pack("<QL", len(data) + 30, len(self.objects)) +
-                b"\x01\x02" + data)
-
+        # Render to file
         with open(self.filename, "rb+") as fileobj:
+            old_size = header.parse_size(fileobj)[0]
+            data = header.render(self)
             size = len(data)
-            resize_bytes(fileobj, self.size, size, 0)
+            resize_bytes(fileobj, old_size, size, 0)
             fileobj.seek(0)
             fileobj.write(data)
-
-        self.size = size
-        self.num_objects = len(self.objects)
-
-    def __read_file(self, fileobj):
-        header = fileobj.read(30)
-        if len(header) != 30 or header[:16] != HeaderObject.GUID:
-            raise ASFHeaderError("Not an ASF file.")
-
-        self.extended_content_description_obj = None
-        self.content_description_obj = None
-        self.header_extension_obj = None
-        self.metadata_obj = None
-        self.metadata_library_obj = None
-
-        self.size, self.num_objects = struct.unpack("<QL", header[16:28])
-        self.objects = []
-        self._tags = {}
-        for i in xrange(self.num_objects):
-            self.__read_object(fileobj)
-
-        for guid in [ContentDescriptionObject.GUID,
-                ExtendedContentDescriptionObject.GUID, MetadataObject.GUID,
-                MetadataLibraryObject.GUID]:
-            self.tags.extend(self._tags.pop(guid, []))
-        assert not self._tags
-
-    def __read_object(self, fileobj):
-        guid, size = struct.unpack("<16sQ", fileobj.read(24))
-        obj = BaseObject._get_object(guid)
-        data = fileobj.read(size - 24)
-        obj.parse(self, data, fileobj, size)
-        self.objects.append(obj)
 
     @staticmethod
     def score(filename, fileobj, header):

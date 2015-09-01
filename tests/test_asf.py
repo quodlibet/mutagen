@@ -9,6 +9,9 @@ from mutagen._compat import PY3, text_type, PY2
 from mutagen.asf import ASF, ASFHeaderError, ASFValue, UNICODE, DWORD, QWORD
 from mutagen.asf import BOOL, WORD, BYTEARRAY, GUID
 from mutagen.asf._util import guid2bytes, bytes2guid
+from mutagen.asf._objects import ContentDescriptionObject, \
+    ExtendedContentDescriptionObject, HeaderExtensionObject, \
+    MetadataObject, MetadataLibraryObject, CodecListObject
 from mutagen.asf import ASFUnicodeAttribute, ASFError, ASFByteArrayAttribute, \
     ASFBoolAttribute, ASFDWordAttribute, ASFQWordAttribute, ASFWordAttribute, \
     ASFGUIDAttribute
@@ -107,6 +110,11 @@ class TASF(TestCase):
 
 
 class TASFMixin(object):
+
+    def test_header_object_misc(self):
+        header = self.audio._header
+        header.pprint()
+        repr(header)
 
     def test_pprint(self):
         self.failUnless(self.audio.pprint())
@@ -573,7 +581,7 @@ class TASFLargeValue(TestCase):
         self.failIf("QL/GuidObject" not in dict(audio.to_metadata_library))
 
 
-class TASFUpdateSize(TestCase):
+class TASFSave(TestCase):
     # http://code.google.com/p/mutagen/issues/detail?id=81#c4
 
     original = os.path.join(DATA_DIR, "silence-1.wma")
@@ -582,15 +590,34 @@ class TASFUpdateSize(TestCase):
         fd, self.filename = mkstemp(suffix='wma')
         os.close(fd)
         shutil.copy(self.original, self.filename)
-        audio = ASF(self.filename)
-        audio["large_value1"] = "#" * 50000
-        audio.save()
+        self.audio = ASF(self.filename)
 
     def tearDown(self):
         os.unlink(self.filename)
 
     def test_multiple_delete(self):
+        self.audio["large_value1"] = "#" * 50000
+        self.audio.save()
+
         audio = ASF(self.filename)
         for tag in audio.keys():
             del(audio[tag])
             audio.save()
+
+    def test_readd_objects(self):
+        header = self.audio._header
+        del header.objects[:]
+        self.audio.save()
+        self.assertTrue(header.get_child(ContentDescriptionObject.GUID))
+        self.assertTrue(
+            header.get_child(ExtendedContentDescriptionObject.GUID))
+        self.assertTrue(header.get_child(HeaderExtensionObject.GUID))
+        ext = header.get_child(HeaderExtensionObject.GUID)
+        self.assertTrue(ext.get_child(MetadataObject.GUID))
+        self.assertTrue(ext.get_child(MetadataLibraryObject.GUID))
+
+    def test_keep_others(self):
+        header = self.audio._header
+        self.audio.save()
+        new = ASF(self.filename)
+        self.assertTrue(new._header.get_child(CodecListObject.GUID))
