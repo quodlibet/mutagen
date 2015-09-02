@@ -233,7 +233,8 @@ class FilePropertiesObject(BaseObject):
     def parse(self, asf, data):
         super(FilePropertiesObject, self).parse(asf, data)
         length, _, preroll = struct.unpack("<QQQ", data[40:64])
-        asf.info.length = (length / 10000000.0) - (preroll / 1000.0)
+        # there are files where preroll is larger than length, limit to >= 0
+        asf.info.length = max((length / 10000000.0) - (preroll / 1000.0), 0.0)
 
 
 @BaseObject._register
