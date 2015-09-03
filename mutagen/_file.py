@@ -218,16 +218,14 @@ def File(filename, options=None, easy=False):
     if not options:
         return None
 
-    fileobj = open(filename, "rb")
-    try:
+    with open(filename, "rb") as fileobj:
         header = fileobj.read(128)
         # Sort by name after score. Otherwise import order affects
         # Kind sort order, which affects treatment of things with
         # equals scores.
         results = [(Kind.score(filename, fileobj, header), Kind.__name__)
                    for Kind in options]
-    finally:
-        fileobj.close()
+
     results = list(zip(results, options))
     results.sort()
     (score, name), Kind = results[-1]

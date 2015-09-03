@@ -75,6 +75,7 @@ class OggFLACStreamInfo(StreamInfo):
 
 
 class OggFLACVComment(VCFLACDict):
+
     def load(self, data, info, errors='replace'):
         # data should be pointing at the start of an Ogg page, after
         # the first FLAC page.

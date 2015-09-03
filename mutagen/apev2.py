@@ -273,11 +273,9 @@ class APEv2(_CIDictProxy, Metadata):
         """Load tags from a filename."""
 
         self.filename = filename
-        fileobj = open(filename, "rb")
-        try:
+        with open(filename, "rb") as fileobj:
             data = _APEv2Data(fileobj)
-        finally:
-            fileobj.close()
+
         if data.tag:
             self.clear()
             self.__parse_tag(data.tag, data.items)
@@ -459,13 +457,11 @@ class APEv2(_CIDictProxy, Metadata):
         """Remove tags from a file."""
 
         filename = filename or self.filename
-        fileobj = open(filename, "r+b")
-        try:
+        with open(filename, "r+b") as fileobj:
             data = _APEv2Data(fileobj)
             if data.start is not None and data.size is not None:
                 delete_bytes(fileobj, data.end - data.start, data.start)
-        finally:
-            fileobj.close()
+
         self.clear()
 
 

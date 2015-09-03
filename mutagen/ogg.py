@@ -454,8 +454,7 @@ class OggFileType(FileType):
         """Load file information from a filename."""
 
         self.filename = filename
-        fileobj = open(filename, "rb")
-        try:
+        with open(filename, "rb") as fileobj:
             try:
                 self.info = self._Info(fileobj)
                 self.tags = self._Tags(fileobj, self.info)
@@ -464,8 +463,6 @@ class OggFileType(FileType):
                 reraise(self._Error, e, sys.exc_info()[2])
             except EOFError:
                 raise self._Error("no appropriate stream found")
-        finally:
-            fileobj.close()
 
     def delete(self, filename=None):
         """Remove tags from a file.
@@ -477,16 +474,13 @@ class OggFileType(FileType):
             filename = self.filename
 
         self.tags.clear()
-        fileobj = open(filename, "rb+")
-        try:
+        with open(filename, "rb+") as fileobj:
             try:
                 self.tags._inject(fileobj, None)
             except error as e:
                 reraise(self._Error, e, sys.exc_info()[2])
             except EOFError:
                 raise self._Error("no appropriate stream found")
-        finally:
-            fileobj.close()
 
     def save(self, filename=None, padding=None):
         """Save a tag to a file.

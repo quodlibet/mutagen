@@ -127,12 +127,10 @@ class TOggPage(TestCase):
             os.close(fd)
             shutil.copy(os.path.join(DATA_DIR, "multipagecomment.ogg"),
                         filename)
-            fileobj = open(filename, "rb+")
-            OggPage.renumber(fileobj, 1002429366, 20)
-            fileobj.close()
-            fileobj = open(filename, "rb+")
-            OggPage.renumber(fileobj, 1002429366, 0)
-            fileobj.close()
+            with open(filename, "rb+") as fileobj:
+                OggPage.renumber(fileobj, 1002429366, 20)
+            with open(filename, "rb+") as fileobj:
+                OggPage.renumber(fileobj, 1002429366, 0)
         finally:
             try:
                 os.unlink(filename)
@@ -380,15 +378,12 @@ class TOggFileTypeMixin(object):
     PADDING_SUPPORT = True
 
     def scan_file(self):
-        fileobj = open(self.filename, "rb")
-        try:
+        with open(self.filename, "rb") as fileobj:
             try:
                 while True:
                     OggPage(fileobj)
             except EOFError:
                 pass
-        finally:
-            fileobj.close()
 
     def test_pprint_empty(self):
         self.audio.pprint()
