@@ -21,7 +21,8 @@ import struct
 
 from ._compat import cBytesIO
 
-from mutagen.flac import StreamInfo, VCFLACDict, StrictFileObject
+from mutagen import StreamInfo
+from mutagen.flac import StreamInfo as FLACStreamInfo, error as FLACError
 from mutagen._vorbis import VCommentDict
 from mutagen.ogg import OggPage, OggFileType, error as OggError
 
@@ -35,23 +36,21 @@ class OggFLACHeaderError(error):
 
 
 class OggFLACStreamInfo(StreamInfo):
-    """Ogg FLAC general header and stream info.
+    """Ogg FLAC stream info."""
 
-    This encompasses the Ogg wrapper for the FLAC STREAMINFO metadata
-    block, as well as the Ogg codec setup that precedes it.
-    """
+    length = 0
+    """File length in seconds, as a float"""
 
-    packets = 0
-    serial = 0
+    channels = 0
+    """Number of channels"""
 
-    def load(self, data):
-        # Ogg expects file objects that don't raise on read
-        if isinstance(data, StrictFileObject):
-            data = data._fileobj
+    sample_rate = 0
+    """Sample rate in Hz"""
 
-        page = OggPage(data)
+    def __init__(self, fileobj):
+        page = OggPage(fileobj)
         while not page.packets[0].startswith(b"\x7FFLAC"):
-            page = OggPage(data)
+            page = OggPage(fileobj)
         major, minor, self.packets, flac = struct.unpack(
             ">BBH4s", page.packets[0][5:13])
         if flac != b"fLaC":
@@ -62,8 +61,16 @@ class OggFLACStreamInfo(StreamInfo):
         self.serial = page.serial
 
         # Skip over the block header.
-        stringobj = StrictFileObject(cBytesIO(page.packets[0][17:]))
-        super(OggFLACStreamInfo, self).load(stringobj)
+        stringobj = cBytesIO(page.packets[0][17:])
+
+        try:
+            flac_info = FLACStreamInfo(stringobj)
+        except FLACError as e:
+            raise OggFLACHeaderError(e)
+
+        for attr in ["min_blocksize", "max_blocksize", "sample_rate",
+                     "channels", "bits_per_sample", "total_samples", "length"]:
+            setattr(self, attr, getattr(flac_info, attr))
 
     def _post_tags(self, fileobj):
         if self.length:
@@ -72,7 +79,8 @@ class OggFLACStreamInfo(StreamInfo):
         self.length = page.position / float(self.sample_rate)
 
     def pprint(self):
-        return u"Ogg " + super(OggFLACStreamInfo, self).pprint()
+        return u"Ogg FLAC, %.2f seconds, %d Hz" % (
+            self.length, self.sample_rate)
 
 
 class OggFLACVComment(VCommentDict):

@@ -99,3 +99,6 @@ class TOggFLAC(TestCase, TOggFileTypeMixin):
 
     def test_mime(self):
         self.failUnless("audio/x-oggflac" in self.audio.mime)
+
+    def test_info_pprint(self):
+        self.assertTrue(self.audio.info.pprint().startswith(u"Ogg FLAC"))
