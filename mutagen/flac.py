@@ -649,14 +649,18 @@ class FLAC(mutagen.FileType):
 
     Attributes:
 
-    * info -- stream information (length, bitrate, sample rate)
-    * tags -- metadata tags, if any
     * cuesheet -- CueSheet object, if any
     * seektable -- SeekTable object, if any
     * pictures -- list of embedded pictures
     """
 
     _mimes = ["audio/x-flac", "application/x-flac"]
+
+    info = None
+    """A `StreamInfo`"""
+
+    tags = None
+    """A `VCommentDict`"""
 
     METADATA_BLOCKS = [StreamInfo, Padding, None, SeekTable, VCFLACDict,
                        CueSheet, Picture]

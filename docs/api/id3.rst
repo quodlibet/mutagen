@@ -1,5 +1,5 @@
-ID3v2
-=====
+ID3
+===
 
 .. automodule:: mutagen.id3
 
@@ -48,54 +48,3 @@ EasyID3
     :show-inheritance:
     :members:
     :exclude-members: ID3
-
-
-MP3
----
-
-.. automodule:: mutagen.mp3
-
-.. autoclass:: mutagen.mp3.MP3(filename, ID3=None)
-    :show-inheritance:
-    :members:
-
-.. autoclass:: mutagen.mp3.MPEGInfo()
-    :members:
-
-.. autoclass:: mutagen.mp3.BitrateMode()
-    :members:
-
-.. autoclass:: mutagen.mp3.EasyMP3(filename, ID3=None)
-    :show-inheritance:
-    :members:
-    :exclude-members: ID3
-
-
-TrueAudio
----------
-
-.. automodule:: mutagen.trueaudio
-
-.. autoclass:: mutagen.trueaudio.TrueAudio(filename, ID3=None)
-    :show-inheritance:
-    :members:
-
-.. autoclass:: mutagen.trueaudio.TrueAudioInfo()
-    :members:
-
-.. autoclass:: mutagen.trueaudio.EasyTrueAudio(filename, ID3=None)
-    :show-inheritance:
-    :members:
-    :exclude-members: ID3
-
-AIFF
-----
-
-.. automodule:: mutagen.aiff
-
-.. autoclass:: mutagen.aiff.AIFF(filename)
-    :show-inheritance:
-    :members:
-
-.. autoclass:: mutagen.aiff.AIFFInfo()
-    :members:

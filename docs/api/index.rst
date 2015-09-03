@@ -4,10 +4,19 @@ API
 .. toctree::
 
     base
-    id3
-    flac
-    ogg
-    ape
-    mp4
-    asf
     aac
+    aiff
+    ape
+    asf
+    flac
+    id3
+    mp3
+    mp4
+    ogg
+    oggflac
+    oggopus
+    oggspeex
+    oggtheora
+    oggvorbis
+    trueaudio
+    vcomment

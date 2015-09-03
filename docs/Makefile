@@ -1,5 +1,5 @@
 all: _rtd_theme
-	sphinx-build -Dhtml_theme=_rtd_theme -Dhtml_theme_path=. -b html -n . _build
+	sphinx-build -E -Dhtml_theme=_rtd_theme -Dhtml_theme_path=. -b html -n . _build
 
 clean:
 	rm -rf _build _rtd_theme

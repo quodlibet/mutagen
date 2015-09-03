@@ -8,7 +8,7 @@ FLAC
     :members:
     :exclude-members: vc, METADATA_BLOCKS
 
-.. autoclass:: mutagen.flac.StreamInfo
+.. autoclass:: mutagen.flac.StreamInfo()
     :members:
 
 .. autoclass:: mutagen.flac.Picture

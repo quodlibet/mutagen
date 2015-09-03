@@ -38,11 +38,6 @@ class OggFLACStreamInfo(StreamInfo):
 
     This encompasses the Ogg wrapper for the FLAC STREAMINFO metadata
     block, as well as the Ogg codec setup that precedes it.
-
-    Attributes (in addition to StreamInfo's):
-
-    * packets -- number of metadata packets
-    * serial -- Ogg logical stream serial number
     """
 
     packets = 0
@@ -131,6 +126,12 @@ class OggFLAC(OggFileType):
     _Tags = OggFLACVComment
     _Error = OggFLACHeaderError
     _mimes = ["audio/x-oggflac"]
+
+    info = None
+    """A `OggFLACStreamInfo`"""
+
+    tags = None
+    """A `VCommentDict`"""
 
     @staticmethod
     def score(filename, fileobj, header):

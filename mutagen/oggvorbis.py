@@ -33,15 +33,19 @@ class OggVorbisHeaderError(error):
 
 
 class OggVorbisInfo(StreamInfo):
-    """Ogg Vorbis stream information.
-
-    Attributes:
-
-    * length - file length in seconds, as a float
-    * bitrate - nominal ('average') bitrate in bits per second, as an int
-    """
+    """Ogg Vorbis stream information."""
 
     length = 0
+    """File length in seconds, as a float"""
+
+    channels = 0
+    """Number of channels"""
+
+    bitrate = 0
+    """Nominal ('average') bitrate in bits per second, as an int"""
+
+    sample_rate = 0
+    """Sample rate in Hz"""
 
     def __init__(self, fileobj):
         page = OggPage(fileobj)
@@ -124,6 +128,12 @@ class OggVorbis(OggFileType):
     _Tags = OggVCommentDict
     _Error = OggVorbisHeaderError
     _mimes = ["audio/vorbis", "audio/x-vorbis"]
+
+    info = None
+    """A `OggVorbisInfo`"""
+
+    tags = None
+    """A `VCommentDict`"""
 
     @staticmethod
     def score(filename, fileobj, header):

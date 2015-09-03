@@ -33,15 +33,13 @@ class OggOpusHeaderError(error):
 
 
 class OggOpusInfo(StreamInfo):
-    """Ogg Opus stream information.
-
-    Attributes:
-
-    * length - file length in seconds, as a float
-    * channels - number of channels
-    """
+    """Ogg Opus stream information."""
 
     length = 0
+    """File length in seconds, as a float"""
+
+    channels = 0
+    """Number of channels"""
 
     def __init__(self, fileobj):
         page = OggPage(fileobj)
@@ -123,6 +121,12 @@ class OggOpus(OggFileType):
     _Tags = OggOpusVComment
     _Error = OggOpusHeaderError
     _mimes = ["audio/ogg", "audio/ogg; codecs=opus"]
+
+    info = None
+    """A `OggOpusInfo`"""
+
+    tags = None
+    """A `VCommentDict`"""
 
     @staticmethod
     def score(filename, fileobj, header):
