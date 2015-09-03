@@ -65,3 +65,6 @@ class TOggSpeex(TestCase, TOggFileTypeMixin):
 
     def test_mime(self):
         self.failUnless("audio/x-speex" in self.audio.mime)
+
+    def test_init_padding(self):
+        self.assertEqual(self.audio.tags._padding, 0)

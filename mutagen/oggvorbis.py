@@ -21,6 +21,8 @@ import struct
 
 from mutagen import StreamInfo
 from mutagen._vorbis import VCommentDict
+from mutagen._util import get_size
+from mutagen._tags import PaddingInfo
 from mutagen.ogg import OggPage, OggFileType, error as OggError
 
 
@@ -95,8 +97,9 @@ class OggVCommentDict(VCommentDict):
                 complete = page.complete or (len(page.packets) > 1)
         data = OggPage.to_packets(pages)[0][7:]  # Strip off "\x03vorbis".
         super(OggVCommentDict, self).__init__(data)
+        self._padding = len(data) - self._size
 
-    def _inject(self, fileobj):
+    def _inject(self, fileobj, padding_func):
         """Write tag data into the Vorbis comment packet/page."""
 
         # Find the old pages in the file; we'll need to remove them,
@@ -114,8 +117,15 @@ class OggVCommentDict(VCommentDict):
 
         packets = OggPage.to_packets(old_pages, strict=False)
 
+        content_size = get_size(fileobj) - len(packets[0])  # approx
+        vcomment_data = b"\x03vorbis" + self.write()
+        padding_left = len(packets[0]) - len(vcomment_data)
+
+        info = PaddingInfo(padding_left, content_size)
+        new_padding = info._get_padding(padding_func)
+
         # Set the new comment packet.
-        packets[0] = b"\x03vorbis" + self.write()
+        packets[0] = vcomment_data + b"\x00" * new_padding
 
         new_pages = OggPage.from_packets(packets, old_pages[0].sequence)
         OggPage.replace(fileobj, old_pages, new_pages)

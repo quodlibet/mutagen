@@ -75,6 +75,7 @@ class VComment(mutagen.Metadata, list):
     vendor = u"Mutagen " + mutagen.version_string
 
     def __init__(self, data=None, *args, **kwargs):
+        self._size = 0
         # Collect the args to pass to load, this lets child classes
         # override just load and get equivalent magic for the
         # constructor.
@@ -83,7 +84,9 @@ class VComment(mutagen.Metadata, list):
                 data = BytesIO(data)
             elif not hasattr(data, 'read'):
                 raise TypeError("VComment requires bytes or a file-like")
+            start = data.tell()
             self.load(data, *args, **kwargs)
+            self._size = data.tell() - start
 
     def load(self, fileobj, errors='replace', framing=True):
         """Parse a Vorbis comment from a file-like object.

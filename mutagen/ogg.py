@@ -480,7 +480,7 @@ class OggFileType(FileType):
         fileobj = open(filename, "rb+")
         try:
             try:
-                self.tags._inject(fileobj)
+                self.tags._inject(fileobj, None)
             except error as e:
                 reraise(self._Error, e, sys.exc_info()[2])
             except EOFError:
@@ -488,7 +488,7 @@ class OggFileType(FileType):
         finally:
             fileobj.close()
 
-    def save(self, filename=None):
+    def save(self, filename=None, padding=None):
         """Save a tag to a file.
 
         If no filename is given, the one most recently loaded is used.
@@ -499,7 +499,7 @@ class OggFileType(FileType):
         fileobj = open(filename, "rb+")
         try:
             try:
-                self.tags._inject(fileobj)
+                self.tags._inject(fileobj, padding)
             except error as e:
                 reraise(self._Error, e, sys.exc_info()[2])
             except EOFError:

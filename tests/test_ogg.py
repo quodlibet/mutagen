@@ -377,6 +377,8 @@ class TOggPage(TestCase):
 
 class TOggFileTypeMixin(object):
 
+    PADDING_SUPPORT = True
+
     def scan_file(self):
         fileobj = open(self.filename, "rb")
         try:
@@ -519,6 +521,20 @@ class TOggFileTypeMixin(object):
 
     def test_mime_secondary(self):
         self.failUnless('application/ogg' in self.audio.mime)
+
+    def test_padding(self):
+        if not self.PADDING_SUPPORT:
+            return
+
+        self.audio.clear()
+        self.audio["foo"] = ["bar"]
+
+        for i in [0, 1, 2, 42, 5000, 4999]:
+            self.audio.save(padding=lambda x: i)
+            new = self.Kind(self.filename)
+            self.assertEqual(new.tags._padding, i)
+            self.assertEqual(new["foo"], ["bar"])
+            self.ogg_reference(self.filename)
 
 
 def call_ogginfo(*args):

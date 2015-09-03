@@ -22,7 +22,8 @@ __all__ = ["OggSpeex", "Open", "delete"]
 from mutagen import StreamInfo
 from mutagen._vorbis import VCommentDict
 from mutagen.ogg import OggPage, OggFileType, error as OggError
-from mutagen._util import cdata
+from mutagen._util import cdata, get_size
+from mutagen._tags import PaddingInfo
 
 
 class error(OggError):
@@ -80,10 +81,11 @@ class OggSpeexVComment(VCommentDict):
             if page.serial == info.serial:
                 pages.append(page)
                 complete = page.complete or (len(page.packets) > 1)
-        data = OggPage.to_packets(pages)[0] + b"\x01"
+        data = OggPage.to_packets(pages)[0]
         super(OggSpeexVComment, self).__init__(data, framing=False)
+        self._padding = len(data) - self._size
 
-    def _inject(self, fileobj):
+    def _inject(self, fileobj, padding_func):
         """Write tag data into the Speex comment packet/page."""
 
         fileobj.seek(0)
@@ -110,8 +112,15 @@ class OggSpeexVComment(VCommentDict):
 
         packets = OggPage.to_packets(old_pages, strict=False)
 
+        content_size = get_size(fileobj) - len(packets[0])  # approx
+        vcomment_data = self.write(framing=False)
+        padding_left = len(packets[0]) - len(vcomment_data)
+
+        info = PaddingInfo(padding_left, content_size)
+        new_padding = info._get_padding(padding_func)
+
         # Set the new comment packet.
-        packets[0] = self.write(framing=False)
+        packets[0] = vcomment_data + b"\x00" * new_padding
 
         new_pages = OggPage.from_packets(packets, old_pages[0].sequence)
         OggPage.replace(fileobj, old_pages, new_pages)

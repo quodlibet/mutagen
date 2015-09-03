@@ -15,6 +15,7 @@ from tests.test_flac import have_flac, call_flac
 
 class TOggFLAC(TestCase, TOggFileTypeMixin):
     Kind = OggFLAC
+    PADDING_SUPPORT = False
 
     def setUp(self):
         original = os.path.join(DATA_DIR, "empty.oggflac")

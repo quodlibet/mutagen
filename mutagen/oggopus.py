@@ -20,6 +20,8 @@ import struct
 
 from mutagen import StreamInfo
 from mutagen._compat import BytesIO
+from mutagen._util import get_size
+from mutagen._tags import PaddingInfo
 from mutagen._vorbis import VCommentDict
 from mutagen.ogg import OggPage, OggFileType, error as OggError
 
@@ -94,22 +96,36 @@ class OggOpusVComment(VCommentDict):
         data = OggPage.to_packets(pages)[0][8:]  # Strip OpusTags
         fileobj = BytesIO(data)
         super(OggOpusVComment, self).__init__(fileobj, framing=False)
+        self._padding = len(data) - self._size
 
         # in case the LSB of the first byte after v-comment is 1, preserve the
         # following data
         padding_flag = fileobj.read(1)
         if padding_flag and ord(padding_flag) & 0x1:
             self._pad_data = padding_flag + fileobj.read()
+            self._padding = 0  # we have to preserve, so no padding
         else:
             self._pad_data = b""
 
-    def _inject(self, fileobj):
+    def _inject(self, fileobj, padding_func):
         fileobj.seek(0)
         info = OggOpusInfo(fileobj)
         old_pages = self.__get_comment_pages(fileobj, info)
 
         packets = OggPage.to_packets(old_pages)
-        packets[0] = b"OpusTags" + self.write(framing=False) + self._pad_data
+        vcomment_data = b"OpusTags" + self.write(framing=False)
+
+        if self._pad_data:
+            # if we have padding data to preserver we can't add more padding
+            # as long as we don't know the structure of what follows
+            packets[0] = vcomment_data + self._pad_data
+        else:
+            content_size = get_size(fileobj) - len(packets[0])  # approx
+            padding_left = len(packets[0]) - len(vcomment_data)
+            info = PaddingInfo(padding_left, content_size)
+            new_padding = info._get_padding(padding_func)
+            packets[0] = vcomment_data + b"\x00" * new_padding
+
         new_pages = OggPage.from_packets(packets, old_pages[0].sequence)
         OggPage.replace(fileobj, old_pages, new_pages)
 

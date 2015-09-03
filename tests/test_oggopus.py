@@ -78,3 +78,8 @@ class TOggOpus(TestCase, TOggFileTypeMixin):
             page = OggPage(fobj)
             data = OggPage.to_packets([page])[0]
             self.assertTrue(data.endswith(b"\x01" + extra_data))
+
+        self.assertEqual(OggOpus(self.filename).tags._padding, 0)
+
+    def test_init_padding(self):
+        self.assertEqual(self.audio.tags._padding, 196)

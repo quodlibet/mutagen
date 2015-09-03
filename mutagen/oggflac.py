@@ -88,7 +88,7 @@ class OggFLACVComment(VCFLACDict):
         comment = cBytesIO(OggPage.to_packets(pages)[0][4:])
         super(OggFLACVComment, self).load(comment, errors=errors)
 
-    def _inject(self, fileobj):
+    def _inject(self, fileobj, padding_func):
         """Write tag data into the FLAC Vorbis comment packet/page."""
 
         # Ogg FLAC has no convenient data marker like Vorbis, but the
@@ -132,6 +132,9 @@ class OggFLAC(OggFileType):
 
     tags = None
     """A `VCommentDict`"""
+
+    def save(self, filename=None):
+        return super(OggFLAC, self).save(filename)
 
     @staticmethod
     def score(filename, fileobj, header):
