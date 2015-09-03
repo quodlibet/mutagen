@@ -22,6 +22,7 @@ import struct
 from ._compat import cBytesIO
 
 from mutagen.flac import StreamInfo, VCFLACDict, StrictFileObject
+from mutagen._vorbis import VCommentDict
 from mutagen.ogg import OggPage, OggFileType, error as OggError
 
 
@@ -74,20 +75,20 @@ class OggFLACStreamInfo(StreamInfo):
         return u"Ogg " + super(OggFLACStreamInfo, self).pprint()
 
 
-class OggFLACVComment(VCFLACDict):
+class OggFLACVComment(VCommentDict):
 
-    def load(self, data, info, errors='replace'):
+    def __init__(self, fileobj, info):
         # data should be pointing at the start of an Ogg page, after
         # the first FLAC page.
         pages = []
         complete = False
         while not complete:
-            page = OggPage(data)
+            page = OggPage(fileobj)
             if page.serial == info.serial:
                 pages.append(page)
                 complete = page.complete or (len(page.packets) > 1)
         comment = cBytesIO(OggPage.to_packets(pages)[0][4:])
-        super(OggFLACVComment, self).load(comment, errors=errors)
+        super(OggFLACVComment, self).__init__(comment, framing=False)
 
     def _inject(self, fileobj, padding_func):
         """Write tag data into the FLAC Vorbis comment packet/page."""
@@ -112,7 +113,7 @@ class OggFLACVComment(VCFLACDict):
         packets = OggPage.to_packets(old_pages, strict=False)
 
         # Set the new comment block.
-        data = self.write()
+        data = self.write(framing=False)
         data = packets[0][:1] + struct.pack(">I", len(data))[-3:] + data
         packets[0] = data
 
