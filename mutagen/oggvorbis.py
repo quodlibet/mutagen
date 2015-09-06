@@ -127,7 +127,7 @@ class OggVCommentDict(VCommentDict):
         # Set the new comment packet.
         packets[0] = vcomment_data + b"\x00" * new_padding
 
-        new_pages = OggPage.from_packets(packets, old_pages[0].sequence)
+        new_pages = OggPage._from_packets_try_preserve(packets, old_pages)
         OggPage.replace(fileobj, old_pages, new_pages)
 
 

@@ -9,6 +9,7 @@ from mutagen._compat import BytesIO
 from tests import TestCase, DATA_DIR
 from mutagen.ogg import OggPage, error as OggError
 from mutagen._util import cdata
+from mutagen import _util
 from tempfile import mkstemp
 
 
@@ -125,6 +126,52 @@ class TOggPage(TestCase):
         second = OggPage(fileobj)
         self.assertEqual(second.serial, 24)
         self.assertEqual(OggPage.to_packets([second], strict=True), [b"bar"])
+
+    def test_replace_fast_path(self):
+        # create interleaved pages
+        fileobj = BytesIO()
+        pages = [OggPage(), OggPage(), OggPage()]
+        pages[0].serial = 42
+        pages[0].sequence = 0
+        pages[0].packets = [b"foo"]
+        pages[1].serial = 24
+        pages[1].sequence = 0
+        pages[1].packets = [b"bar"]
+        pages[2].serial = 42
+        pages[2].sequence = 1
+        pages[2].packets = [b"baz"]
+        for page in pages:
+            fileobj.write(page.write())
+
+        fileobj.seek(0, 0)
+        pages_from_file = [OggPage(fileobj), OggPage(fileobj),
+                           OggPage(fileobj)]
+
+        old_pages = [pages_from_file[0], pages_from_file[2]]
+        packets = OggPage.to_packets(old_pages, strict=True)
+        self.assertEqual(packets, [b"foo", b"baz"])
+        new_packets = [b"111", b"222"]
+        new_pages = OggPage._from_packets_try_preserve(new_packets, old_pages)
+        self.assertEqual(len(new_pages), 2)
+
+        # remove insert_bytes, so we can be sure the fast path was taken
+        old_insert_bytes = _util.insert_bytes
+        _util.insert_bytes = None
+        try:
+            OggPage.replace(fileobj, old_pages, new_pages)
+        finally:
+            _util.insert_bytes = old_insert_bytes
+
+        # validate that the new data was written and the other pages
+        # are untouched
+        fileobj.seek(0, 0)
+        pages_from_file = [OggPage(fileobj), OggPage(fileobj),
+                           OggPage(fileobj)]
+        packets = OggPage.to_packets(
+            [pages_from_file[0], pages_from_file[2]], strict=True)
+        self.assertEqual(packets, [b"111", b"222"])
+        packets = OggPage.to_packets([pages_from_file[1]], strict=True)
+        self.assertEqual(packets, [b"bar"])
 
     def test_replace_continued(self):
         # take a partial packet and replace it with a new page

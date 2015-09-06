@@ -395,14 +395,25 @@ class OggPage(object):
         if not new_pages[-1].complete and len(new_pages[-1].packets) == 1:
             new_pages[-1].position = -1
 
-        new_data = b"".join(cls.write(p) for p in new_pages)
+        new_data = [cls.write(p) for p in new_pages]
+        new_sizes = [len(d) for d in new_data]
+        same_layout = (new_sizes == [p.size for p in old_pages])
+
+        if same_layout:
+            # fast path, same number of pages with the same sizes.
+            # simply rewrite them
+            for old_page, data in zip(old_pages, new_data):
+                fileobj.seek(old_page.offset, 0)
+                fileobj.write(data)
+            return
 
         # Make room in the file for the new data.
-        delta = len(new_data)
+        delta = sum(new_sizes)
         fileobj.seek(old_pages[0].offset, 0)
         insert_bytes(fileobj, delta, old_pages[0].offset)
         fileobj.seek(old_pages[0].offset, 0)
-        fileobj.write(new_data)
+        for data in new_data:
+            fileobj.write(data)
         new_data_end = old_pages[0].offset + delta
 
         # Go through the old pages and delete them. Since we shifted
