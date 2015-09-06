@@ -35,23 +35,6 @@ class OggFLACHeaderError(error):
     pass
 
 
-def _find_header_page(fileobj):
-    """Raises OggFLACHeaderError"""
-
-    try:
-        page = OggPage(fileobj)
-        while not page.packets[0].startswith(b"\x7FFLAC"):
-            page = OggPage(fileobj)
-    except EOFError:
-        raise OggFLACHeaderError("Couldn't find header")
-
-    # required by the spec
-    if not page.complete or not page.first:
-        raise OggFLACHeaderError("Invalid header")
-
-    return page
-
-
 class OggFLACStreamInfo(StreamInfo):
     """Ogg FLAC stream info."""
 
@@ -65,17 +48,14 @@ class OggFLACStreamInfo(StreamInfo):
     """Sample rate in Hz"""
 
     def __init__(self, fileobj):
-        page = _find_header_page(fileobj)
-        packets = OggPage.to_packets([page])
-        assert len(packets)
-
+        page = OggPage(fileobj)
+        while not page.packets[0].startswith(b"\x7FFLAC"):
+            page = OggPage(fileobj)
         major, minor, self.packets, flac = struct.unpack(
-            ">BBH4s", packets[0][5:13])
-
+            ">BBH4s", page.packets[0][5:13])
         if flac != b"fLaC":
             raise OggFLACHeaderError("invalid FLAC marker (%r)" % flac)
-
-        if (major, minor) != (1, 0):
+        elif (major, minor) != (1, 0):
             raise OggFLACHeaderError(
                 "unknown mapping version: %d.%d" % (major, minor))
         self.serial = page.serial
@@ -105,48 +85,46 @@ class OggFLACStreamInfo(StreamInfo):
 
 class OggFLACVComment(VCommentDict):
 
-    def __get_flac_pages(self, fileobj, serial):
-        pages = []
-        for page in OggPage._iter_stream(fileobj, serial):
-            if not page.continued:
-                packet = page.packets[0]
-                if not packet or not 0x01 <= (ord(packet[0:1]) & 0x7F) <= 0x7E:
-                    break
-            if page.position not in (0, -1):
-                raise error("Invalid metadata ogg pages")
-            pages.append(page)
-
-        if not pages or not pages[-1].complete:
-            raise error("Invalid metadata ogg pages")
-
-        return pages
-
     def __init__(self, fileobj, info):
         # data should be pointing at the start of an Ogg page, after
         # the first FLAC page.
-        pages = self.__get_flac_pages(fileobj, info.serial)
+        pages = []
+        complete = False
+        while not complete:
+            page = OggPage(fileobj)
+            if page.serial == info.serial:
+                pages.append(page)
+                complete = page.complete or (len(page.packets) > 1)
         comment = cBytesIO(OggPage.to_packets(pages)[0][4:])
         super(OggFLACVComment, self).__init__(comment, framing=False)
 
     def _inject(self, fileobj, padding_func):
         """Write tag data into the FLAC Vorbis comment packet/page."""
 
+        # Ogg FLAC has no convenient data marker like Vorbis, but the
+        # second packet - and second page - must be the comment data.
         fileobj.seek(0)
+        page = OggPage(fileobj)
+        while not page.packets[0].startswith(b"\x7FFLAC"):
+            page = OggPage(fileobj)
 
-        # get the header page
-        header = _find_header_page(fileobj)
+        first_page = page
+        while not (page.sequence == 1 and page.serial == first_page.serial):
+            page = OggPage(fileobj)
 
-        # get all flac frames
-        old_pages = self.__get_flac_pages(fileobj, header.serial)
+        old_pages = [page]
+        while not (old_pages[-1].complete or len(old_pages[-1].packets) > 1):
+            page = OggPage(fileobj)
+            if page.serial == first_page.serial:
+                old_pages.append(page)
 
-        # the last packet finishes the page -> strict
-        packets = OggPage.to_packets(old_pages, strict=True)
-        # rewrite the first one (guaranteed to be a vcomment by the spec)
+        packets = OggPage.to_packets(old_pages, strict=False)
+
+        # Set the new comment block.
         data = self.write(framing=False)
         data = packets[0][:1] + struct.pack(">I", len(data))[-3:] + data
         packets[0] = data
 
-        # write new pages back
         new_pages = OggPage.from_packets(packets, old_pages[0].sequence)
         OggPage.replace(fileobj, old_pages, new_pages)
 

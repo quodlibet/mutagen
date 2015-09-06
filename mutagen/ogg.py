@@ -110,21 +110,6 @@ class OggPage(object):
         if [len(p) for p in self.packets] != lacings:
             raise error("unable to read full data")
 
-    @classmethod
-    def _iter_stream(self, fileobj, serial):
-        """Yields all pages from the same stream"""
-
-        while True:
-            try:
-                page = OggPage(fileobj)
-            except EOFError:
-                break
-            else:
-                if page.serial == serial:
-                    yield page
-                    if page.last:
-                        break
-
     def __eq__(self, other):
         """Two Ogg pages are the same if they write the same data."""
         try:
