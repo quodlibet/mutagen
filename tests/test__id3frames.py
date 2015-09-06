@@ -3,7 +3,7 @@
 from tests import TestCase
 
 from mutagen.id3 import Frames, Frames_2_2, ID3, ID3Header
-from mutagen._compat import text_type
+from mutagen._compat import text_type, xrange
 
 _22 = ID3()
 _22._header = ID3Header()
@@ -366,11 +366,11 @@ class Genres(TestCase):
         self.assertEquals(self._g(""), [])
 
     def test_num(self):
-        for i in range(len(self.GENRES)):
+        for i in xrange(len(self.GENRES)):
             self.assertEquals(self._g("%02d" % i), [self.GENRES[i]])
 
     def test_parened_num(self):
-        for i in range(len(self.GENRES)):
+        for i in xrange(len(self.GENRES)):
             self.assertEquals(self._g("(%02d)" % i), [self.GENRES[i]])
 
     def test_unknown(self):

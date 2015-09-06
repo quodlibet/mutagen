@@ -8,6 +8,7 @@
 import warnings
 
 from mutagen._util import DictMixin
+from mutagen._compat import izip
 
 
 class FileType(DictMixin):
@@ -226,7 +227,7 @@ def File(filename, options=None, easy=False):
         results = [(Kind.score(filename, fileobj, header), Kind.__name__)
                    for Kind in options]
 
-    results = list(zip(results, options))
+    results = list(izip(results, options))
     results.sort()
     (score, name), Kind = results[-1]
     if score > 0:

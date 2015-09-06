@@ -17,7 +17,8 @@ import codecs
 
 from fnmatch import fnmatchcase
 
-from ._compat import chr_, PY2, iteritems, iterbytes, integer_types, xrange
+from ._compat import chr_, PY2, iteritems, iterbytes, integer_types, xrange, \
+    izip
 
 
 class MutagenError(Exception):
@@ -130,7 +131,7 @@ class DictMixin(object):
         itervalues = lambda self: iter(self.values())
 
     def items(self):
-        return list(zip(self.keys(), self.values()))
+        return list(izip(self.keys(), self.values()))
 
     if PY2:
         iteritems = lambda s: iter(s.items())
@@ -265,8 +266,8 @@ class cdata(object):
     error = error
 
     bitswap = b''.join(
-        chr_(sum(((val >> i) & 1) << (7 - i) for i in range(8)))
-        for val in range(256))
+        chr_(sum(((val >> i) & 1) << (7 - i) for i in xrange(8)))
+        for val in xrange(256))
 
     test_bit = staticmethod(lambda value, n: bool((value >> n) & 1))
 

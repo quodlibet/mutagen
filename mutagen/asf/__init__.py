@@ -12,7 +12,7 @@ __all__ = ["ASF", "Open"]
 
 from mutagen import FileType, Metadata, StreamInfo
 from mutagen._util import resize_bytes, DictMixin
-from mutagen._compat import string_types, long_, PY3
+from mutagen._compat import string_types, long_, PY3, izip
 
 from ._util import error, ASFError, ASFHeaderError
 from ._objects import HeaderObject, MetadataLibraryObject, MetadataObject, \
@@ -164,7 +164,7 @@ class ASFTags(list, DictMixin, Metadata):
     def keys(self):
         """Return a sequence of all keys in the comment."""
 
-        return self and set(next(iter(zip(*self))))
+        return self and set(next(izip(*self)))
 
     def as_dict(self):
         """Return a copy of the comment data in a real dict."""

@@ -9,8 +9,9 @@
 import struct
 from struct import unpack, pack
 
-from .._compat import text_type, chr_, PY3, swap_to_string, string_types
-from .._util import total_ordering, decode_terminated, enum
+from .._compat import text_type, chr_, PY3, swap_to_string, string_types, \
+    xrange
+from .._util import total_ordering, decode_terminated, enum, izip
 from ._util import BitPaddedInt
 
 
@@ -325,7 +326,7 @@ class MultiSpec(Spec):
                 data.append(self.specs[0].write(frame, v))
         else:
             for record in value:
-                for v, s in zip(record, self.specs):
+                for v, s in izip(record, self.specs):
                     data.append(s.write(frame, v))
         return b''.join(data)
 
@@ -339,14 +340,14 @@ class MultiSpec(Spec):
                 return [self.specs[0].validate(frame, v) for v in value]
             else:
                 return [
-                    [s.validate(frame, v) for (v, s) in zip(val, self.specs)]
+                    [s.validate(frame, v) for (v, s) in izip(val, self.specs)]
                     for val in value]
         raise ValueError('Invalid MultiSpec data: %r' % value)
 
     def _validate23(self, frame, value, **kwargs):
         if len(self.specs) != 1:
             return [[s._validate23(frame, v, **kwargs)
-                     for (v, s) in zip(val, self.specs)]
+                     for (v, s) in izip(val, self.specs)]
                     for val in value]
 
         spec = self.specs[0]
@@ -475,7 +476,7 @@ class TimeStampSpec(EncodedTextSpec):
 
 class ChannelSpec(ByteSpec):
     (OTHER, MASTER, FRONTRIGHT, FRONTLEFT, BACKRIGHT, BACKLEFT, FRONTCENTRE,
-     BACKCENTRE, SUBWOOFER) = range(9)
+     BACKCENTRE, SUBWOOFER) = xrange(9)
 
 
 class VolumeAdjustmentSpec(Spec):
@@ -510,7 +511,7 @@ class VolumePeakSpec(Spec):
         if vol_bytes + 1 > len(data):
             raise SpecError("not enough frame data")
         shift = ((8 - (bits & 7)) & 7) + (4 - vol_bytes) * 8
-        for i in range(1, vol_bytes + 1):
+        for i in xrange(1, vol_bytes + 1):
             peak *= 256
             peak += data_array[i]
         peak *= 2 ** shift

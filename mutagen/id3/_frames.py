@@ -16,7 +16,7 @@ from ._specs import (
     VolumeAdjustmentsSpec, VolumePeakSpec, VolumeAdjustmentSpec,
     ChannelSpec, MultiSpec, SynchronizedTextSpec, KeyEventSpec, TimeStampSpec,
     EncodedNumericPartTextSpec, EncodedNumericTextSpec, SpecError)
-from .._compat import text_type, string_types, swap_to_string, iteritems
+from .._compat import text_type, string_types, swap_to_string, iteritems, izip
 
 
 def is_valid_frame_id(frame_id):
@@ -61,7 +61,7 @@ class Frame(object):
             # ask the sub class to fill in our data
             other._to_other(self)
         else:
-            for checker, val in zip(self._framespec, args):
+            for checker, val in izip(self._framespec, args):
                 setattr(self, checker.name, checker.validate(self, val))
             for checker in self._framespec[len(args):]:
                 try:

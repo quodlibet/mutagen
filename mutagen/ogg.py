@@ -22,7 +22,7 @@ import zlib
 
 from mutagen import FileType
 from mutagen._util import cdata, insert_bytes, delete_bytes, MutagenError
-from ._compat import cBytesIO, reraise, chr_
+from ._compat import cBytesIO, reraise, chr_, izip, xrange
 
 
 class error(IOError, MutagenError):
@@ -381,7 +381,8 @@ class OggPage(object):
 
         # Number the new pages starting from the first old page.
         first = old_pages[0].sequence
-        for page, seq in zip(new_pages, range(first, first + len(new_pages))):
+        for page, seq in izip(new_pages,
+                              xrange(first, first + len(new_pages))):
             page.sequence = seq
             page.serial = old_pages[0].serial
 
@@ -402,7 +403,7 @@ class OggPage(object):
         if same_layout:
             # fast path, same number of pages with the same sizes.
             # simply rewrite them
-            for old_page, data in zip(old_pages, new_data):
+            for old_page, data in izip(old_pages, new_data):
                 fileobj.seek(old_page.offset, 0)
                 fileobj.write(data)
             return

@@ -16,6 +16,7 @@ if PY2:
     from StringIO import StringIO
     BytesIO = StringIO
     from cStringIO import StringIO as cBytesIO
+    from itertools import izip
 
     long_ = long
     integer_types = (int, long)
@@ -57,6 +58,7 @@ elif PY3:
     string_types = (str,)
     text_type = str
 
+    izip = zip
     xrange = range
     cmp = lambda a, b: (a > b) - (a < b)
     chr_ = lambda x: bytes([x])

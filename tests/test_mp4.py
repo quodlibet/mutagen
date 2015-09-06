@@ -5,7 +5,7 @@ import shutil
 import struct
 import subprocess
 
-from mutagen._compat import cBytesIO, PY3, text_type, PY2
+from mutagen._compat import cBytesIO, PY3, text_type, PY2, izip
 from tempfile import mkstemp
 from tests import TestCase, DATA_DIR
 from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
@@ -708,7 +708,7 @@ class TMP4Mixin(object):
         self.audio["\xa9nam"] = "wheeeeeeee"
         self.audio.save()
         bb = self.__read_offsets(self.filename)
-        for a, b in zip(aa, bb):
+        for a, b in izip(aa, bb):
             self.failUnlessEqual(a, b)
 
     def test_mime(self):

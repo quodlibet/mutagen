@@ -9,7 +9,7 @@ from mutagen.apev2 import APEv2
 from mutagen.id3 import ID3, COMR, Frames, Frames_2_2, ID3Warning, \
     ID3JunkFrameError, ID3Header, ID3UnsupportedVersionError, _fullread
 from mutagen.id3._util import BitPaddedInt, error as ID3Error
-from mutagen._compat import cBytesIO, PY2, iteritems, integer_types
+from mutagen._compat import cBytesIO, PY2, iteritems, integer_types, izip
 import warnings
 from tempfile import mkstemp
 warnings.simplefilter('error', ID3Warning)
@@ -877,7 +877,7 @@ def create_read_tag_tests():
                 if not isinstance(value, list):
                     value = [value]
                     t = [t]
-                for value, t in zip(value, iter(t)):
+                for value, t in izip(value, iter(t)):
                     if isinstance(value, float):
                         self.failUnlessAlmostEqual(value, getattr(t, attr), 5)
                     else:

@@ -377,7 +377,7 @@ class FileHandling(TestCase):
         # This appears to be due to ANSI C limitations in read/write on rb+
         # files. The problematic behavior only showed up in our mmap fallback
         # code for transfers of this or similar sizes.
-        data = u''.join(map(text_type, range(12574)))  # 51760 bytes
+        data = u''.join(map(text_type, xrange(12574)))  # 51760 bytes
         data = data.encode("ascii")
         o = self.file(data)
         insert_bytes(o, 6106, 79)
@@ -387,7 +387,7 @@ class FileHandling(TestCase):
         # This appears to be due to ANSI C limitations in read/write on rb+
         # files. The problematic behavior only showed up in our mmap fallback
         # code for transfers of this or similar sizes.
-        data = u''.join(map(text_type, range(12574)))  # 51760 bytes
+        data = u''.join(map(text_type, xrange(12574)))  # 51760 bytes
         data = data.encode("ascii")
         o = self.file(data[:6106 + 79] + data[79:])
         delete_bytes(o, 6106, 79)
@@ -408,13 +408,13 @@ class FileHandling(TestCase):
                         min_change_size < max_change_size and
                         min_buffer_size < max_buffer_size,
                         "Given testing parameters make this test useless")
-        for j in range(num_runs):
+        for j in xrange(num_runs):
             data = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ" * 1024
             fobj = self.file(data)
             filesize = len(data)
             # Generate the list of changes to apply
             changes = []
-            for i in range(num_changes):
+            for i in xrange(num_changes):
                 change_size = random.randrange(
                     min_change_size, max_change_size)
                 change_offset = random.randrange(0, filesize)

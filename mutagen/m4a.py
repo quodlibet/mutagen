@@ -31,7 +31,7 @@ import sys
 
 from cStringIO import StringIO
 
-from ._compat import reraise
+from ._compat import reraise, izip, xrange
 from mutagen import FileType, Metadata, StreamInfo
 from mutagen._constants import GENRES
 from mutagen._util import cdata, insert_bytes, delete_bytes, DictProxy, \
@@ -246,7 +246,7 @@ class M4ATags(DictProxy, Metadata):
                  "\xa9gen", "gnre", "trkn", "disk",
                  "\xa9day", "cpil", "tmpo", "\xa9too",
                  "----", "covr", "\xa9lyr"]
-        order = dict(zip(order, range(len(order))))
+        order = dict(izip(order, xrange(len(order))))
         last = len(order)
         # If there's no key-based way to distinguish, order by length.
         # If there's still no way, go by string comparison on the

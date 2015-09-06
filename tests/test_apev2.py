@@ -10,7 +10,7 @@ from tempfile import mkstemp
 from tests import TestCase, DATA_DIR
 
 import mutagen.apev2
-from mutagen._compat import PY3, text_type
+from mutagen._compat import PY3, text_type, izip, xrange
 from mutagen.apev2 import APEv2File, APEv2, is_valid_apev2_key, APEBadItemError
 
 
@@ -229,7 +229,7 @@ class TAPEv2(TestCase):
 
         self.failUnlessEqual(
             self.audio.items(),
-            list(zip(self.audio.keys(), self.audio.values())))
+            list(izip(self.audio.keys(), self.audio.values())))
 
     def test_key_type(self):
         key = self.audio.keys()[0]
@@ -351,7 +351,7 @@ class TAPETextValue(TestCase):
         self.value[2] = self.sample[2] = 'baz'
 
     def test_getitem(self):
-        for i in range(len(self.value)):
+        for i in xrange(len(self.value)):
             self.failUnlessEqual(self.sample[i], self.value[i])
 
     def test_delitem(self):

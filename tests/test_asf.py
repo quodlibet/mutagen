@@ -5,7 +5,7 @@ import shutil
 from tempfile import mkstemp
 from tests import TestCase, DATA_DIR
 
-from mutagen._compat import PY3, text_type, PY2
+from mutagen._compat import PY3, text_type, PY2, izip
 from mutagen.asf import ASF, ASFHeaderError, ASFValue, UNICODE, DWORD, QWORD
 from mutagen.asf import BOOL, WORD, BYTEARRAY, GUID
 from mutagen.asf._util import guid2bytes, bytes2guid
@@ -129,7 +129,7 @@ class TASFMixin(object):
         self.failUnless(key in self.audio.tags.as_dict().keys())
         newvalue = self.audio[key]
         if isinstance(newvalue, list):
-            for a, b in zip(sorted(newvalue), sorted(result or value)):
+            for a, b in izip(sorted(newvalue), sorted(result or value)):
                 self.failUnlessEqual(a, b)
         else:
             self.failUnlessEqual(self.audio[key], result or value)

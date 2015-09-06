@@ -61,7 +61,7 @@ def is_valid_apev2_key(key):
 #  1: Item contains binary information
 #  2: Item is a locator of external stored information [e.g. URL]
 #  3: reserved"
-TEXT, BINARY, EXTERNAL = range(3)
+TEXT, BINARY, EXTERNAL = xrange(3)
 
 HAS_HEADER = 1 << 31
 HAS_NO_FOOTER = 1 << 30

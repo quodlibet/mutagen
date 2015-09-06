@@ -26,7 +26,7 @@ import struct
 from ._vorbis import VCommentDict
 import mutagen
 
-from ._compat import cBytesIO, endswith, chr_
+from ._compat import cBytesIO, endswith, chr_, xrange
 from mutagen._util import resize_bytes, MutagenError, get_size
 from mutagen._tags import PaddingInfo
 from mutagen.id3 import BitPaddedInt
@@ -470,7 +470,7 @@ class CueSheet(MetadataBlock):
         self.lead_in_samples = lead_in_samples
         self.compact_disc = bool(flags & 0x80)
         self.tracks = []
-        for i in range(num_tracks):
+        for i in xrange(num_tracks):
             track = data.read(self.__CUESHEET_TRACK_SIZE)
             start_offset, track_number, isrc_padded, flags, num_indexes = \
                 struct.unpack(self.__CUESHEET_TRACK_FORMAT, track)
@@ -479,7 +479,7 @@ class CueSheet(MetadataBlock):
             pre_emphasis = bool(flags & 0x40)
             val = CueSheetTrack(
                 track_number, start_offset, isrc, type_, pre_emphasis)
-            for j in range(num_indexes):
+            for j in xrange(num_indexes):
                 index = data.read(self.__CUESHEET_TRACKINDEX_SIZE)
                 index_offset, index_number = struct.unpack(
                     self.__CUESHEET_TRACKINDEX_FORMAT, index)

@@ -11,7 +11,7 @@
 import os
 import struct
 
-from ._compat import endswith
+from ._compat import endswith, xrange
 from ._mp3util import XingHeader, XingHeaderError, VBRIHeader, VBRIHeaderError
 from mutagen import StreamInfo
 from mutagen._util import MutagenError, enum
@@ -72,7 +72,7 @@ def _guess_xing_bitrate_mode(xing):
 
 
 # Mode values.
-STEREO, JOINTSTEREO, DUALCHANNEL, MONO = range(4)
+STEREO, JOINTSTEREO, DUALCHANNEL, MONO = xrange(4)
 
 
 class MPEGInfo(StreamInfo):
@@ -125,7 +125,7 @@ class MPEGInfo(StreamInfo):
     }
 
     __BITRATE[(2, 3)] = __BITRATE[(2, 2)]
-    for i in range(1, 4):
+    for i in xrange(1, 4):
         __BITRATE[(2.5, i)] = __BITRATE[(2, i)]
 
     # Map version to sample rates.

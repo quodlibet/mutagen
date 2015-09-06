@@ -9,7 +9,7 @@
 import struct
 
 from mutagen._util import cdata, get_size
-from mutagen._compat import text_type, xrange
+from mutagen._compat import text_type, xrange, izip
 from mutagen._tags import PaddingInfo
 
 from ._util import guid2bytes, bytes2guid, CODECS, ASFError, ASFHeaderError
@@ -176,7 +176,7 @@ class ContentDescriptionObject(BaseObject):
                 texts.append(None)
             pos = end
 
-        for key, value in zip(self.NAMES, texts):
+        for key, value in izip(self.NAMES, texts):
             if value is not None:
                 value = ASFUnicodeAttribute(value=value)
                 asf._tags.setdefault(self.GUID, []).append((key, value))

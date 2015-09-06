@@ -31,7 +31,7 @@ from mutagen._constants import GENRES
 from mutagen._util import (cdata, insert_bytes, DictProxy, MutagenError,
                            hashable, enum)
 from mutagen._compat import (reraise, PY2, string_types, text_type, chr_,
-                             iteritems, PY3, cBytesIO)
+                             iteritems, PY3, cBytesIO, izip, xrange)
 from ._atom import Atoms, Atom, AtomError
 from ._util import parse_full_atom
 from ._as_entry import AudioSampleEntry, ASEntryError
@@ -324,7 +324,7 @@ class MP4Tags(DictProxy, Metadata):
                  "\xa9gen", "gnre", "trkn", "disk",
                  "\xa9day", "cpil", "pgap", "pcst", "tmpo",
                  "\xa9too", "----", "covr", "\xa9lyr"]
-        order = dict(zip(order, range(len(order))))
+        order = dict(izip(order, xrange(len(order))))
         last = len(order)
         # If there's no key-based way to distinguish, order by length.
         # If there's still no way, go by string comparison on the
