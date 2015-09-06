@@ -88,6 +88,73 @@ class TOggPage(TestCase):
         self.failUnlessEqual(len(pages), 2)
         self.failUnlessEqual(OggPage.to_packets(pages), packets)
 
+    def test_replace(self):
+        # create interleaved pages
+        fileobj = BytesIO()
+        pages = [OggPage(), OggPage(), OggPage()]
+        pages[0].serial = 42
+        pages[0].sequence = 0
+        pages[0].packets = [b"foo"]
+        pages[1].serial = 24
+        pages[1].sequence = 0
+        pages[1].packets = [b"bar"]
+        pages[2].serial = 42
+        pages[2].sequence = 1
+        pages[2].packets = [b"baz"]
+        for page in pages:
+            fileobj.write(page.write())
+
+        fileobj.seek(0, 0)
+        pages_from_file = [OggPage(fileobj), OggPage(fileobj),
+                           OggPage(fileobj)]
+
+        old_pages = [pages_from_file[0], pages_from_file[2]]
+        packets = OggPage.to_packets(old_pages, strict=True)
+        self.assertEqual(packets, [b"foo", b"baz"])
+        new_packets = [b"1111", b"2222"]
+        new_pages = OggPage.from_packets(new_packets,
+                                         sequence=old_pages[0].sequence)
+        self.assertEqual(len(new_pages), 1)
+        OggPage.replace(fileobj, old_pages, new_pages)
+
+        fileobj.seek(0, 0)
+        first = OggPage(fileobj)
+        self.assertEqual(first.serial, 42)
+        self.assertEqual(OggPage.to_packets([first], strict=True),
+                         [b"1111", b"2222"])
+        second = OggPage(fileobj)
+        self.assertEqual(second.serial, 24)
+        self.assertEqual(OggPage.to_packets([second], strict=True), [b"bar"])
+
+    def test_replace_continued(self):
+        # take a partial packet and replace it with a new page
+        # replace() should make it spanning again
+        fileobj = BytesIO()
+        pages = [OggPage(), OggPage()]
+        pages[0].serial = 1
+        pages[0].sequence = 0
+        pages[0].complete = False
+        pages[0].packets = [b"foo"]
+        pages[1].serial = 1
+        pages[1].sequence = 1
+        pages[1].continued = True
+        pages[1].packets = [b"bar"]
+        fileobj = BytesIO()
+        for page in pages:
+            fileobj.write(page.write())
+
+        fileobj.seek(0, 0)
+        pages_from_file = [OggPage(fileobj), OggPage(fileobj)]
+        self.assertEqual(OggPage.to_packets(pages_from_file), [b"foobar"])
+        packets_part = OggPage.to_packets([pages_from_file[0]])
+        self.assertEqual(packets_part, [b"foo"])
+        new_pages = OggPage.from_packets([b"quuux"])
+        OggPage.replace(fileobj, [pages_from_file[0]], new_pages)
+
+        fileobj.seek(0, 0)
+        written = OggPage.to_packets([OggPage(fileobj), OggPage(fileobj)])
+        self.assertEquals(written, [b"quuuxbar"])
+
     def test_renumber(self):
         self.failUnlessEqual(
             [page.sequence for page in self.pages], [0, 1, 2])

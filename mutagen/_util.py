@@ -308,7 +308,8 @@ def lock(fileobj):
     else:
         try:
             fcntl.lockf(fileobj, fcntl.LOCK_EX)
-        except IOError:
+        except (IOError, TypeError):
+            # TypeError: in case of BytesIO()
             # FIXME: There's possibly a lot of complicated
             # logic that needs to go here in case the IOError
             # is EACCES or EAGAIN.
@@ -354,8 +355,8 @@ def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
                 file_map.move(offset + size, offset, movesize)
             finally:
                 file_map.close()
-        except (ValueError, EnvironmentError, ImportError):
-            # handle broken mmap scenarios
+        except (ValueError, EnvironmentError, ImportError, AttributeError):
+            # handle broken mmap scenarios, BytesIO()
             locked = lock(fobj)
             fobj.truncate(filesize)
 
@@ -417,8 +418,8 @@ def delete_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
                     file_map.move(offset, offset + size, movesize)
                 finally:
                     file_map.close()
-            except (ValueError, EnvironmentError, ImportError):
-                # handle broken mmap scenarios
+            except (ValueError, EnvironmentError, ImportError, AttributeError):
+                # handle broken mmap scenarios, BytesIO()
                 locked = lock(fobj)
                 fobj.seek(offset + size)
                 buf = fobj.read(BUFFER_SIZE)
