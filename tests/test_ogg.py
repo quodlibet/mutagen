@@ -206,6 +206,26 @@ class TOggPage(TestCase):
         self.failUnless(pages[1].continued)
         self.failUnlessEqual(OggPage.to_packets(pages), packets)
 
+    def test__from_packets_try_preserve(self):
+        # if the packet layout matches, just create pages with
+        # the same layout and copy things over
+        packets = [b"1" * 100000, b"2" * 100000, b"3" * 100000]
+        pages = OggPage.from_packets(packets, sequence=42, default_size=977)
+        new_pages = OggPage._from_packets_try_preserve(packets, pages)
+        self.assertEqual(pages, new_pages)
+
+        # zero case
+        new_pages = OggPage._from_packets_try_preserve([], pages)
+        self.assertEqual(new_pages, [])
+
+        # if the layout doesn't match we should fall back to creating new
+        # pages starting with the sequence of the first given page
+        other_packets = list(packets)
+        other_packets[1] += b"\xff"
+        other_pages = OggPage.from_packets(other_packets, 42)
+        new_pages = OggPage._from_packets_try_preserve(other_packets, pages)
+        self.assertEqual(new_pages, other_pages)
+
     def test_random_data_roundtrip(self):
         try:
             random_file = open("/dev/urandom", "rb")

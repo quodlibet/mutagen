@@ -272,6 +272,39 @@ class OggPage(object):
 
         return [b"".join(p) for p in packets]
 
+    @classmethod
+    def _from_packets_try_preserve(cls, packets, old_pages):
+        """Like from_packets but in case the size and number of the packets
+        is the same as in the given pages the layout of the pages will
+        be copied (the page size and number will match).
+
+        If the packets don't match this behaves like::
+
+            OggPage.from_packets(packets, sequence=old_pages[0].sequence)
+        """
+
+        old_packets = cls.to_packets(old_pages)
+
+        if [len(p) for p in packets] != [len(p) for p in old_packets]:
+            # doesn't match, fall back
+            return cls.from_packets(packets, old_pages[0].sequence)
+
+        new_data = b"".join(packets)
+        new_pages = []
+        for old in old_pages:
+            new = OggPage()
+            new.sequence = old.sequence
+            new.complete = old.complete
+            new.continued = old.continued
+            new.position = old.position
+            for p in old.packets:
+                data, new_data = new_data[:len(p)], new_data[len(p):]
+                new.packets.append(data)
+            new_pages.append(new)
+        assert not new_data
+
+        return new_pages
+
     @staticmethod
     def from_packets(packets, sequence=0, default_size=4096,
                      wiggle_room=2048):
