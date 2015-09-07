@@ -26,7 +26,9 @@ class TAtom(TestCase):
     def test_length_1(self):
         fileobj = cBytesIO(b"\x00\x00\x00\x01atom"
                            b"\x00\x00\x00\x00\x00\x00\x00\x10" + b"\x00" * 16)
-        self.failUnlessEqual(Atom(fileobj).length, 16)
+        atom = Atom(fileobj)
+        self.failUnlessEqual(atom.length, 16)
+        self.failUnlessEqual(atom.datalength, 0)
 
     def test_length_64bit_less_than_16(self):
         fileobj = cBytesIO(b"\x00\x00\x00\x01atom"
@@ -64,6 +66,7 @@ class TAtom(TestCase):
         atom = Atom(fileobj)
         self.failUnlessEqual(fileobj.tell(), 48)
         self.failUnlessEqual(atom.length, 48)
+        self.failUnlessEqual(atom.datalength, 40)
 
     def test_length_0_container(self):
         data = cBytesIO(struct.pack(">I4s", 0, b"moov") +
@@ -766,6 +769,9 @@ class TMP4Datatypes(TMP4, TMP4HasTagsMixin):
     def test_pprint(self):
         text = self.audio.tags.pprint().splitlines()
         self.assertTrue(u"©ART=Test Artist" in text)
+
+    def test_get_padding(self):
+        self.assertEqual(self.audio._padding, 1634)
 
 
 class TMP4CovrWithName(TMP4, TMP4Mixin):

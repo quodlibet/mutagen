@@ -27,6 +27,7 @@ class Atom(object):
     Attributes:
     children -- list child atoms (or None for non-container atoms)
     length -- length of this atom, including length and name
+    datalength = -- length of this atom without length, name
     name -- four byte name of the atom, as a str
     offset -- location in the constructor-given fileobj of this atom
 
@@ -74,13 +75,16 @@ class Atom(object):
         else:
             fileobj.seek(self.offset + self.length, 0)
 
+    @property
+    def datalength(self):
+        return self.length - (self._dataoffset - self.offset)
+
     def read(self, fileobj):
         """Return if all data could be read and the atom payload"""
 
         fileobj.seek(self._dataoffset, 0)
-        length = self.length - (self._dataoffset - self.offset)
-        data = fileobj.read(length)
-        return len(data) == length, data
+        data = fileobj.read(self.datalength)
+        return len(data) == self.datalength, data
 
     @staticmethod
     def render(name, data):

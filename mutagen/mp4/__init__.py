@@ -214,6 +214,29 @@ def _key2name(key):
     return key.encode("latin-1")
 
 
+def _find_padding(atom_path):
+    # Check for padding "free" atom
+    # XXX: we only use them if they are adjacent to ilst, and only one.
+    # and there also is a top level free atom which we could use maybe..?
+
+    meta, ilst = atom_path[-2:]
+    assert meta.name == b"meta" and ilst.name == b"ilst"
+    index = meta.children.index(ilst)
+    try:
+        prev = meta.children[index - 1]
+        if prev.name == b"free":
+            return prev
+    except IndexError:
+        pass
+
+    try:
+        next_ = meta.children[index + 1]
+        if next_.name == b"free":
+            return next_
+    except IndexError:
+        pass
+
+
 class MP4Tags(DictProxy, Metadata):
     r"""Dictionary containing Apple iTunes metadata list key/values.
 
@@ -286,9 +309,14 @@ class MP4Tags(DictProxy, Metadata):
 
     def load(self, atoms, fileobj):
         try:
-            ilst = atoms[b"moov.udta.meta.ilst"]
+            path = atoms.path(b"moov", b"udta", b"meta", b"ilst")
         except KeyError as key:
             raise MP4MetadataError(key)
+
+        free = _find_padding(path)
+        self._padding = free.datalength if free is not None else 0
+
+        ilst = path[-1]
         for atom in ilst.children:
             ok, data = atom.read(fileobj)
             if not ok:
@@ -399,26 +427,15 @@ class MP4Tags(DictProxy, Metadata):
 
     def __save_existing(self, fileobj, atoms, path, data):
         # Replace the old ilst atom.
-        ilst = path.pop()
+        ilst = path[-1]
         offset = ilst.offset
         length = ilst.length
 
-        # Check for padding "free" atoms
-        meta = path[-1]
-        index = meta.children.index(ilst)
-        try:
-            prev = meta.children[index - 1]
-            if prev.name == b"free":
-                offset = prev.offset
-                length += prev.length
-        except IndexError:
-            pass
-        try:
-            next = meta.children[index + 1]
-            if next.name == b"free":
-                length += next.length
-        except IndexError:
-            pass
+        # use adjacent free atom if there is one
+        free = _find_padding(path)
+        if free is not None:
+            offset = min(offset, free.offset)
+            length += free.length
 
         delta = len(data) - length
         if delta > 0 or (delta < 0 and delta > -8):
@@ -431,7 +448,7 @@ class MP4Tags(DictProxy, Metadata):
 
         fileobj.seek(offset)
         fileobj.write(data)
-        self.__update_parents(fileobj, path, delta)
+        self.__update_parents(fileobj, path[:-1], delta)
         self.__update_offsets(fileobj, atoms, delta, offset)
 
     def __update_parents(self, fileobj, path, delta):
@@ -932,6 +949,7 @@ class MP4(FileType):
 
             if not MP4Tags._can_load(atoms):
                 self.tags = None
+                self._padding = 0
             else:
                 try:
                     self.tags = self.MP4Tags(atoms, fileobj)
@@ -939,6 +957,8 @@ class MP4(FileType):
                     raise
                 except Exception as err:
                     reraise(MP4MetadataError, err, sys.exc_info()[2])
+                else:
+                    self._padding = self.tags._padding
 
     def add_tags(self):
         if self.tags is None:
