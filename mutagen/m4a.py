@@ -40,13 +40,13 @@ class M4AMetadataValueError(ValueError, M4AMetadataError):
 __all__ = ['M4A', 'Open', 'delete', 'M4ACover']
 
 
-class M4ACover(str):
+class M4ACover(bytes):
 
     FORMAT_JPEG = 0x0D
     FORMAT_PNG = 0x0E
 
     def __new__(cls, data, imageformat=None):
-        self = str.__new__(cls, data)
+        self = bytes.__new__(cls, data)
         if imageformat is None:
             imageformat = M4ACover.FORMAT_JPEG
         self.imageformat = imageformat
