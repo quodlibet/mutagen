@@ -76,9 +76,6 @@ def import_tests():
 
     for name in glob.glob(
             os.path.join(os.path.dirname(__file__), "test_*.py")):
-        # skip m4a in py3k
-        if sys.version_info[0] != 2 and "test_m4a" in name:
-            continue
         module_name = "tests." + os.path.basename(name)
         mod = __import__(module_name[:-3], {}, {}, [])
         mod = getattr(mod, os.path.basename(name)[:-3])
