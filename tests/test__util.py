@@ -441,21 +441,6 @@ class FileHandling(TestCase):
             self.failUnless(fobj.read() == data)
 
 
-class FileHandlingMockedLock(FileHandling):
-
-    def setUp(self):
-        def MockLockF(*args, **kwargs):
-            raise IOError
-        self._orig_lockf = fcntl.lockf
-        fcntl.lockf = MockLockF
-
-    def tearDown(self):
-        fcntl.lockf = self._orig_lockf
-
-if not fcntl:
-    del FileHandlingMockedLock
-
-
 class FileHandlingMockedMMapMove(FileHandling):
 
     def setUp(self):
