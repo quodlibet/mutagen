@@ -21,7 +21,7 @@ import sys
 import zlib
 
 from mutagen import FileType
-from mutagen._util import cdata, insert_bytes, delete_bytes, MutagenError
+from mutagen._util import cdata, resize_bytes, MutagenError
 from ._compat import cBytesIO, reraise, chr_, izip, xrange
 
 
@@ -379,6 +379,9 @@ class OggPage(object):
         such, it must be opened r+b or w+b.
         """
 
+        if not len(old_pages) or not len(new_pages):
+            raise ValueError("empty pages list not allowed")
+
         # Number the new pages starting from the first old page.
         first = old_pages[0].sequence
         for page, seq in izip(new_pages,
@@ -397,34 +400,27 @@ class OggPage(object):
             new_pages[-1].position = -1
 
         new_data = [cls.write(p) for p in new_pages]
-        new_sizes = [len(d) for d in new_data]
-        same_layout = (new_sizes == [p.size for p in old_pages])
 
-        if same_layout:
-            # fast path, same number of pages with the same sizes.
-            # simply rewrite them
-            for old_page, data in izip(old_pages, new_data):
-                fileobj.seek(old_page.offset, 0)
-                fileobj.write(data)
-            return
+        # Add dummy data or merge the remaining data together so multiple
+        # new pages replace an old one
+        pages_diff = len(old_pages) - len(new_data)
+        if pages_diff > 0:
+            new_data.extend([b""] * pages_diff)
+        elif pages_diff < 0:
+            new_data[pages_diff - 1:] = [b"".join(new_data[pages_diff - 1:])]
 
-        # Make room in the file for the new data.
-        delta = sum(new_sizes)
-        fileobj.seek(old_pages[0].offset, 0)
-        insert_bytes(fileobj, delta, old_pages[0].offset)
-        fileobj.seek(old_pages[0].offset, 0)
-        for data in new_data:
+        # Replace pages one by one. If the sizes match no resize happens.
+        offset_adjust = 0
+        new_data_end = None
+        assert len(old_pages) == len(new_data)
+        for old_page, data in izip(old_pages, new_data):
+            offset = old_page.offset + offset_adjust
+            data_size = len(data)
+            resize_bytes(fileobj, old_page.size, data_size, offset)
+            fileobj.seek(offset, 0)
             fileobj.write(data)
-        new_data_end = old_pages[0].offset + delta
-
-        # Go through the old pages and delete them. Since we shifted
-        # the data down the file, we need to adjust their offsets. We
-        # also need to go backwards, so we don't adjust the deltas of
-        # the other pages.
-        old_pages.reverse()
-        for old_page in old_pages:
-            adj_offset = old_page.offset + delta
-            delete_bytes(fileobj, old_page.size, adj_offset)
+            new_data_end = offset + data_size
+            offset_adjust += (data_size - old_page.size)
 
         # Finally, if there's any discrepency in length, we need to
         # renumber the pages for the logical stream.
