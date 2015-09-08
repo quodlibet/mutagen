@@ -577,6 +577,16 @@ class TOggFileTypeMixin(object):
 
         self.scan_file()
 
+    def test_delete_remove_padding(self):
+        if not self.PADDING_SUPPORT:
+            return
+        self.audio.clear()
+        self.audio.save(padding=lambda x: 0)
+        filesize = os.path.getsize(self.audio.filename)
+        self.audio.delete()
+        # deleting shouldn't add padding
+        self.assertTrue(os.path.getsize(self.audio.filename) <= filesize)
+
     def test_really_big(self):
         self.audio["foo"] = "foo" * (2 ** 16)
         self.audio["bar"] = "bar" * (2 ** 16)

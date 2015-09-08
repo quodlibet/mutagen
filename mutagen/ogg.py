@@ -515,9 +515,11 @@ class OggFileType(FileType):
             filename = self.filename
 
         self.tags.clear()
+        # TODO: we should delegate the deletion to the subclass and not through
+        # _inject.
         with open(filename, "rb+") as fileobj:
             try:
-                self.tags._inject(fileobj, None)
+                self.tags._inject(fileobj, lambda x: 0)
             except error as e:
                 reraise(self._Error, e, sys.exc_info()[2])
             except EOFError:
