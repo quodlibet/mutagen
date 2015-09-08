@@ -238,7 +238,7 @@ class ASF(FileType):
 
             assert not self._tags
 
-    def save(self, padding=None):
+    def save(self, filename=None, padding=None):
         """Save tag changes back to the loaded file.
 
         :param padding: A callback which returns the amount of padding to use.
@@ -246,6 +246,9 @@ class ASF(FileType):
 
         :raises mutagen.asf.error: In case saving fails
         """
+
+        if filename is not None and filename != self.filename:
+            raise ValueError("saving to another file not supported atm")
 
         # Move attributes to the right objects
         self.to_content_description = {}

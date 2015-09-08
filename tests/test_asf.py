@@ -595,6 +595,9 @@ class TASFSave(TestCase):
     def tearDown(self):
         os.unlink(self.filename)
 
+    def test_save_filename(self):
+        self.audio.save(self.audio.filename)
+
     def test_multiple_delete(self):
         self.audio["large_value1"] = "#" * 50000
         self.audio.save()
