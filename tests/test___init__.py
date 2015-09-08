@@ -315,9 +315,6 @@ class TModuleImportAll(TestCase):
         modules = set(os.path.splitext(f)[0] for f in files)
         modules = [f for f in modules if not f.startswith("_")]
 
-        if PY3 and 'm4a' in modules:
-            modules.remove('m4a')
-
         self.modules = []
         for module in modules:
             mod = getattr(__import__("mutagen." + module), module)
