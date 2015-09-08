@@ -770,6 +770,14 @@ class TMP4HasTagsMixin(TMP4Mixin):
         self.failUnlessRaisesRegexp(
             error, "MP4", MP4, os.path.join(DATA_DIR, "empty.ogg"))
 
+    def test_delete_remove_padding(self):
+        self.audio.clear()
+        self.audio.tags['foob'] = u"foo"
+        self.audio.save(padding=lambda x: 0)
+        filesize = os.path.getsize(self.audio.filename)
+        self.audio.delete()
+        self.assertTrue(os.path.getsize(self.audio.filename) < filesize)
+
 
 class TMP4Datatypes(TMP4, TMP4HasTagsMixin):
     original = os.path.join(DATA_DIR, "has-tags.m4a")

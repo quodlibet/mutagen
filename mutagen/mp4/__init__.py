@@ -771,7 +771,7 @@ class MP4Tags(DictProxy, Metadata):
 
         self._failed_atoms.clear()
         self.clear()
-        self.save(filename)
+        self.save(filename, padding=lambda x: 0)
 
     __atoms = {
         b"----": (__parse_freeform, __render_freeform),
