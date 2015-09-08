@@ -89,7 +89,18 @@ class FileType(DictMixin):
             return self.tags.keys()
 
     def delete(self, filename=None):
-        """Remove tags from a file."""
+        """Remove tags from a file.
+
+        In cases where the tagging format is independent of the file type
+        (for example `mutagen.ID3`) all traces of the tagging format will
+        be removed.
+        In cases where the tag is part of the file type, all tags and
+        padding will be removed.
+
+        The tags attribute will be cleared as well if there is one.
+
+        Does nothing if the file has no tags.
+        """
 
         if self.tags is not None:
             if filename is None:

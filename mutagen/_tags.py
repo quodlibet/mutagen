@@ -92,6 +92,10 @@ class Metadata(object):
         raise NotImplementedError
 
     def delete(self, filename=None):
-        """Remove tags from a file."""
+        """Remove tags from a file.
+
+        In most cases this means any traces of the tag will be removed
+        from the file.
+        """
 
         raise NotImplementedError
