@@ -737,12 +737,12 @@ class FLAC(mutagen.FileType):
         """
         if filename is None:
             filename = self.filename
-        for s in list(self.metadata_blocks):
-            if isinstance(s, VCFLACDict):
-                self.metadata_blocks.remove(s)
-                self.tags = None
-                self.save()
-                break
+
+        if self.tags is not None:
+            self.metadata_blocks.remove(self.tags)
+            self.save(padding=lambda x: 0)
+            self.metadata_blocks.append(self.tags)
+            self.tags.clear()
 
     vc = property(lambda s: s.tags, doc="Alias for tags; don't use this.")
 

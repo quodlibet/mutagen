@@ -333,9 +333,10 @@ class TFLAC(TestCase):
     def test_delete(self):
         self.failUnless(self.flac.tags)
         self.flac.delete()
-        self.failIf(self.flac.tags)
+        self.assertTrue(self.flac.tags is not None)
+        self.assertFalse(self.flac.tags)
         flac = FLAC(self.NEW)
-        self.failIf(flac.tags)
+        self.assertTrue(flac.tags is None)
 
     def test_module_delete(self):
         delete(self.NEW)
