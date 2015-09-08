@@ -109,7 +109,8 @@ class WavPackInfo(StreamInfo):
         self.length = float(samples) / self.sample_rate
 
     def pprint(self):
-        return "WavPack, %.2f seconds, %d Hz" % (self.length, self.sample_rate)
+        return u"WavPack, %.2f seconds, %d Hz" % (self.length,
+                                                  self.sample_rate)
 
 
 class WavPack(APEv2File):

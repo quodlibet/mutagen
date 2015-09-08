@@ -255,7 +255,7 @@ class StreamInfo(MetadataBlock, mutagen.StreamInfo):
         return f.getvalue()
 
     def pprint(self):
-        return "FLAC, %.2f seconds, %d Hz" % (self.length, self.sample_rate)
+        return u"FLAC, %.2f seconds, %d Hz" % (self.length, self.sample_rate)
 
 
 class SeekPoint(tuple):

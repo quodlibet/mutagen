@@ -373,7 +373,7 @@ class AACInfo(StreamInfo):
         self.length = float(s.samples * stream_size) / (s.size * s.frequency)
 
     def pprint(self):
-        return "AAC (%s), %d Hz, %.2f seconds, %d channel(s), %d bps" % (
+        return u"AAC (%s), %d Hz, %.2f seconds, %d channel(s), %d bps" % (
             self._type, self.sample_rate, self.length, self.channels,
             self.bitrate)
 
