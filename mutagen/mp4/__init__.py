@@ -26,10 +26,10 @@ were all consulted.
 import struct
 import sys
 
-from mutagen import FileType, Metadata, StreamInfo
+from mutagen import FileType, Metadata, StreamInfo, PaddingInfo
 from mutagen._constants import GENRES
 from mutagen._util import (cdata, insert_bytes, DictProxy, MutagenError,
-                           hashable, enum)
+                           hashable, enum, get_size, resize_bytes)
 from mutagen._compat import (reraise, PY2, string_types, text_type, chr_,
                              iteritems, PY3, cBytesIO, izip, xrange)
 from ._atom import Atoms, Atom, AtomError
@@ -359,7 +359,7 @@ class MP4Tags(DictProxy, Metadata):
         # values, so we at least have something determinstic.
         return (order.get(key[:4], last), len(repr(v)), repr(v))
 
-    def save(self, filename):
+    def save(self, filename, padding=None):
         """Save the metadata to the given filename."""
 
         values = []
@@ -396,63 +396,93 @@ class MP4Tags(DictProxy, Metadata):
             except AtomError as err:
                 reraise(error, err, sys.exc_info()[2])
 
-            try:
-                path = atoms.path(b"moov", b"udta", b"meta", b"ilst")
-            except KeyError:
-                self.__save_new(fileobj, atoms, data)
-            else:
-                self.__save_existing(fileobj, atoms, path, data)
+            self.__save(fileobj, atoms, data, padding)
+
+    def __save(self, fileobj, atoms, data, padding):
+        try:
+            path = atoms.path(b"moov", b"udta", b"meta", b"ilst")
+        except KeyError:
+            self.__save_new(fileobj, atoms, data, padding)
+        else:
+            self.__save_existing(fileobj, atoms, path, data, padding)
 
     def __pad_ilst(self, data, length=None):
         if length is None:
             length = ((len(data) + 1023) & ~1023) - len(data)
         return Atom.render(b"free", b"\x00" * length)
 
-    def __save_new(self, fileobj, atoms, ilst):
+    def __save_new(self, fileobj, atoms, ilst_data, padding_func):
         hdlr = Atom.render(b"hdlr", b"\x00" * 8 + b"mdirappl" + b"\x00" * 9)
-        meta = Atom.render(
-            b"meta", b"\x00\x00\x00\x00" + hdlr + ilst + self.__pad_ilst(ilst))
+        meta_data = b"\x00\x00\x00\x00" + hdlr + ilst_data
+
         try:
             path = atoms.path(b"moov", b"udta")
         except KeyError:
-            # moov.udta not found -- create one
             path = atoms.path(b"moov")
-            meta = Atom.render(b"udta", meta)
-        offset = path[-1].offset + 8
-        insert_bytes(fileobj, len(meta), offset)
-        fileobj.seek(offset)
-        fileobj.write(meta)
-        self.__update_parents(fileobj, path, len(meta))
-        self.__update_offsets(fileobj, atoms, len(meta), offset)
 
-    def __save_existing(self, fileobj, atoms, path, data):
+        offset = path[-1]._dataoffset
+
+        # ignoring some atom overhead... but we don't have padding left anyway
+        # and padding_size is guaranteed to be less than zero
+        content_size = get_size(fileobj) - offset
+        padding_size = -len(meta_data)
+        assert padding_size < 0
+        info = PaddingInfo(padding_size, content_size)
+        new_padding = info._get_padding(padding_func)
+        new_padding = min(0xFFFFFFFF, new_padding)
+
+        free = Atom.render(b"free", b"\x00" * new_padding)
+        meta = Atom.render(b"meta", meta_data + free)
+        if path[-1].name != b"udta":
+            # moov.udta not found -- create one
+            data = Atom.render(b"udta", meta)
+        else:
+            data = meta
+
+        insert_bytes(fileobj, len(data), offset)
+        fileobj.seek(offset)
+        fileobj.write(data)
+        self.__update_parents(fileobj, path, len(data))
+        self.__update_offsets(fileobj, atoms, len(data), offset)
+
+    def __save_existing(self, fileobj, atoms, path, ilst_data, padding_func):
         # Replace the old ilst atom.
         ilst = path[-1]
         offset = ilst.offset
         length = ilst.length
 
-        # use adjacent free atom if there is one
+        # Use adjacent free atom if there is one
         free = _find_padding(path)
         if free is not None:
             offset = min(offset, free.offset)
             length += free.length
 
-        delta = len(data) - length
-        if delta > 0 or (delta < 0 and delta > -8):
-            data += self.__pad_ilst(data)
-            delta = len(data) - length
-            insert_bytes(fileobj, delta, offset)
-        elif delta < 0:
-            data += self.__pad_ilst(data, -delta - 8)
-            delta = 0
+        # Always add a padding atom to make things easier
+        padding_overhead = len(Atom.render(b"free", b""))
+        content_size = get_size(fileobj) - (offset + length)
+        padding_size = length - (len(ilst_data) + padding_overhead)
+        info = PaddingInfo(padding_size, content_size)
+        new_padding = info._get_padding(padding_func)
+        # Limit padding size so we can be sure the free atom overhead is as we
+        # calculated above (see Atom.render)
+        new_padding = min(0xFFFFFFFF, new_padding)
+
+        ilst_data += Atom.render(b"free", b"\x00" * new_padding)
+
+        resize_bytes(fileobj, length, len(ilst_data), offset)
+        delta = len(ilst_data) - length
 
         fileobj.seek(offset)
-        fileobj.write(data)
+        fileobj.write(ilst_data)
         self.__update_parents(fileobj, path[:-1], delta)
         self.__update_offsets(fileobj, atoms, delta, offset)
 
     def __update_parents(self, fileobj, path, delta):
         """Update all parent atoms with the new size."""
+
+        if delta == 0:
+            return
+
         for atom in path:
             fileobj.seek(atom.offset)
             size = cdata.uint_be(fileobj.read(4))

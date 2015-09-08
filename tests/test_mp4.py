@@ -486,35 +486,37 @@ class TMP4Mixin(object):
     def test_padding_2(self):
         self.audio["\xa9nam"] = u"wheeee" * 10
         self.audio.save()
+
         # Reorder "free" and "ilst" atoms
-        fileobj = open(self.audio.filename, "rb+")
-        atoms = Atoms(fileobj)
-        meta = atoms[b"moov", b"udta", b"meta"]
-        meta_length1 = meta.length
-        ilst = meta[b"ilst", ]
-        free = meta[b"free", ]
-        self.failUnlessEqual(ilst.offset + ilst.length, free.offset)
-        fileobj.seek(ilst.offset)
-        ilst_data = fileobj.read(ilst.length)
-        fileobj.seek(free.offset)
-        free_data = fileobj.read(free.length)
-        fileobj.seek(ilst.offset)
-        fileobj.write(free_data + ilst_data)
-        fileobj.close()
-        fileobj = open(self.audio.filename, "rb+")
-        atoms = Atoms(fileobj)
-        meta = atoms[b"moov", b"udta", b"meta"]
-        ilst = meta[b"ilst", ]
-        free = meta[b"free", ]
-        self.failUnlessEqual(free.offset + free.length, ilst.offset)
-        fileobj.close()
+        with open(self.audio.filename, "rb+") as fileobj:
+            atoms = Atoms(fileobj)
+            meta = atoms[b"moov", b"udta", b"meta"]
+            meta_length1 = meta.length
+            ilst = meta[b"ilst", ]
+            free = meta[b"free", ]
+            self.failUnlessEqual(ilst.offset + ilst.length, free.offset)
+            fileobj.seek(ilst.offset)
+            ilst_data = fileobj.read(ilst.length)
+            fileobj.seek(free.offset)
+            free_data = fileobj.read(free.length)
+            fileobj.seek(ilst.offset)
+            fileobj.write(free_data + ilst_data)
+
+        with open(self.audio.filename, "rb+") as fileobj:
+            atoms = Atoms(fileobj)
+            meta = atoms[b"moov", b"udta", b"meta"]
+            ilst = meta[b"ilst", ]
+            free = meta[b"free", ]
+            self.failUnlessEqual(free.offset + free.length, ilst.offset)
+
         # Save the file
         self.audio["\xa9nam"] = u"wheeee" * 11
         self.audio.save()
+
         # Check the order of "free" and "ilst" atoms
-        fileobj = open(self.audio.filename, "rb+")
-        atoms = Atoms(fileobj)
-        fileobj.close()
+        with open(self.audio.filename, "rb+") as fileobj:
+            atoms = Atoms(fileobj)
+
         meta = atoms[b"moov", b"udta", b"meta"]
         ilst = meta[b"ilst", ]
         free = meta[b"free", ]
@@ -717,6 +719,26 @@ class TMP4Mixin(object):
     def test_mime(self):
         self.failUnless("audio/mp4" in self.audio.mime)
 
+    def test_set_init_padding_zero(self):
+        if self.audio.tags is None:
+            self.audio.add_tags()
+        self.audio.save(padding=lambda x: 0)
+        self.assertEqual(MP4(self.audio.filename)._padding, 0)
+
+    def test_set_init_padding_large(self):
+        if self.audio.tags is None:
+            self.audio.add_tags()
+        self.audio.save(padding=lambda x: 5000)
+        self.assertEqual(MP4(self.audio.filename)._padding, 5000)
+
+    def test_set_various_padding(self):
+        if self.audio.tags is None:
+            self.audio.add_tags()
+        for i in [0, 1, 2, 3, 1024, 983, 5000, 0, 1]:
+            self.audio.save(padding=lambda x: i)
+            self.assertEqual(MP4(self.audio.filename)._padding, i)
+            self.faad()
+
 
 class TMP4HasTagsMixin(TMP4Mixin):
     def test_save_simple(self):
@@ -845,13 +867,13 @@ class TMP4UpdateParents64Bit(TestCase):
             self.assertEqual(61, atoms.atoms[0].children[0].length)
             tags = MP4Tags(atoms, fileobj)
             tags['pgap'] = True
-            tags.save(self.filename)
+            tags.save(self.filename, padding=lambda x: 0)
 
         with open(self.filename, "rb") as fileobj:
             atoms = Atoms(fileobj)
             # original size + 'pgap' size + padding
-            self.assertEqual(77 + 25 + 974, atoms.atoms[0].length)
-            self.assertEqual(61 + 25 + 974, atoms.atoms[0].children[0].length)
+            self.assertEqual(77 + 25 + 8, atoms.atoms[0].length)
+            self.assertEqual(61 + 25 + 8, atoms.atoms[0].children[0].length)
 
     def tearDown(self):
         os.unlink(self.filename)
