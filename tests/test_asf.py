@@ -116,6 +116,13 @@ class TASFMixin(object):
         header.pprint()
         repr(header)
 
+    def test_delete(self):
+        self.audio["QL/Bla"] = u"Foooooooooooooooooo"
+        self.audio.save(padding=lambda x: 0)
+        filesize = os.path.getsize(self.audio.filename)
+        self.audio.delete()
+        self.assertTrue(os.path.getsize(self.audio.filename) < filesize)
+
     def test_pprint(self):
         self.failUnless(self.audio.pprint())
 

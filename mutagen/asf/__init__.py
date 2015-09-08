@@ -301,6 +301,14 @@ class ASF(FileType):
             fileobj.seek(0)
             fileobj.write(data)
 
+    def delete(self, filename=None):
+
+        if filename is not None and filename != self.filename:
+            raise ValueError("saving to another file not supported atm")
+
+        self.tags.clear()
+        self.save(padding=lambda x: 0)
+
     @staticmethod
     def score(filename, fileobj, header):
         return header.startswith(HeaderObject.GUID) * 2
