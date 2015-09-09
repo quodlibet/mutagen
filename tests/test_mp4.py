@@ -323,27 +323,31 @@ class TMP4Tags(TestCase):
         fd, filename = mkstemp(suffix='.mp4')
         os.close(fd)
         shutil.copy(original, filename)
-        delete(filename)
+        try:
+            delete(filename)
 
-        # it should still end up in the file
-        tags.save(filename)
-        with open(filename, "rb") as h:
-            self.assertTrue(b"wheeee" in h.read())
+            # it should still end up in the file
+            tags.save(filename)
+            with open(filename, "rb") as h:
+                self.assertTrue(b"wheeee" in h.read())
 
-        # if we define our own aART throw away the broken one
-        tags["aART"] = ["new"]
-        tags.save(filename)
-        with open(filename, "rb") as h:
-            self.assertFalse(b"wheeee" in h.read())
+            # if we define our own aART throw away the broken one
+            tags["aART"] = ["new"]
+            tags.save(filename)
+            with open(filename, "rb") as h:
+                self.assertFalse(b"wheeee" in h.read())
 
-        # add the broken one back and delete all tags including the broken one
-        del tags["aART"]
-        tags.save(filename)
-        with open(filename, "rb") as h:
-            self.assertTrue(b"wheeee" in h.read())
-        delete(filename)
-        with open(filename, "rb") as h:
-            self.assertFalse(b"wheeee" in h.read())
+            # add the broken one back and delete all tags including
+            # the broken one
+            del tags["aART"]
+            tags.save(filename)
+            with open(filename, "rb") as h:
+                self.assertTrue(b"wheeee" in h.read())
+            delete(filename)
+            with open(filename, "rb") as h:
+                self.assertFalse(b"wheeee" in h.read())
+        finally:
+            os.unlink(filename)
 
     def test_render_freeform(self):
         data = (

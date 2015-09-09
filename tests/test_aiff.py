@@ -189,15 +189,23 @@ class TIFFFile(TestCase):
         self.file_2 = open(self.no_tags, 'rb')
         self.iff_2 = IFFFile(self.file_2)
 
-        fd_1, tmp_1_name = mkstemp(suffix='.aif')
-        shutil.copy(self.has_tags, tmp_1_name)
-        self.file_1_tmp = open(tmp_1_name, 'rb+')
+        fd_1, self.tmp_1_name = mkstemp(suffix='.aif')
+        shutil.copy(self.has_tags, self.tmp_1_name)
+        self.file_1_tmp = open(self.tmp_1_name, 'rb+')
         self.iff_1_tmp = IFFFile(self.file_1_tmp)
 
-        fd_2, tmp_2_name = mkstemp(suffix='.aif')
-        shutil.copy(self.no_tags, tmp_2_name)
-        self.file_2_tmp = open(tmp_2_name, 'rb+')
+        fd_2, self.tmp_2_name = mkstemp(suffix='.aif')
+        shutil.copy(self.no_tags, self.tmp_2_name)
+        self.file_2_tmp = open(self.tmp_2_name, 'rb+')
         self.iff_2_tmp = IFFFile(self.file_2_tmp)
+
+    def tearDown(self):
+        self.file_1.close()
+        self.file_2.close()
+        self.file_1_tmp.close()
+        self.file_2_tmp.close()
+        os.unlink(self.tmp_1_name)
+        os.unlink(self.tmp_2_name)
 
     def test_has_chunks(self):
         self.failUnless(u'FORM' in self.iff_1)
@@ -261,9 +269,3 @@ class TIFFFile(TestCase):
         self.failUnlessEqual(new_iff[u'FORM'].data_size, 16054)
         self.failUnlessEqual(new_iff[u'ID3'].size, 8)
         self.failUnlessEqual(new_iff[u'ID3'].data_size, 0)
-
-    def tearDown(self):
-        self.file_1.close()
-        self.file_2.close()
-        self.file_1_tmp.close()
-        self.file_2_tmp.close()
