@@ -698,7 +698,7 @@ class APEv2File(FileType):
         if self.tags is None:
             self.tags = APEv2()
         else:
-            raise ValueError("%r already has tags: %r" % (self, self.tags))
+            raise error("%r already has tags: %r" % (self, self.tags))
 
     @staticmethod
     def score(filename, fileobj, header):

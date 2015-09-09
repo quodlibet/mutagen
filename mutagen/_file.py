@@ -138,7 +138,8 @@ class FileType(DictMixin):
     def add_tags(self):
         """Adds new tags to the file.
 
-        Raises if tags already exist.
+        Raises `mutagen.MutagenError` if tags already exist or adding is not
+        possible.
         """
 
         raise NotImplementedError

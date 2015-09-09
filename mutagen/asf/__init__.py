@@ -301,6 +301,9 @@ class ASF(FileType):
             fileobj.seek(0)
             fileobj.write(data)
 
+    def add_tags(self):
+        raise ASFError
+
     def delete(self, filename=None):
 
         if filename is not None and filename != self.filename:

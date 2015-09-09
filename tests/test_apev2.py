@@ -11,7 +11,8 @@ from tests import TestCase, DATA_DIR
 
 import mutagen.apev2
 from mutagen._compat import PY3, text_type, izip, xrange
-from mutagen.apev2 import APEv2File, APEv2, is_valid_apev2_key, APEBadItemError
+from mutagen.apev2 import APEv2File, APEv2, is_valid_apev2_key, \
+    APEBadItemError, error as APEv2Error
 
 
 SAMPLE = os.path.join(DATA_DIR, "click.mpc")
@@ -425,7 +426,7 @@ class TAPEv2File(TestCase):
         self.failUnless(self.audio.tags is None)
         self.audio.add_tags()
         self.failUnless(self.audio.tags is not None)
-        self.failUnlessRaises(ValueError, self.audio.add_tags)
+        self.failUnlessRaises(APEv2Error, self.audio.add_tags)
 
     def test_unknown_info(self):
         info = self.audio.info

@@ -525,6 +525,9 @@ class OggFileType(FileType):
             except EOFError:
                 raise self._Error("no appropriate stream found")
 
+    def add_tags(self):
+        raise self._Error
+
     def save(self, filename=None, padding=None):
         """Save a tag to a file.
 

@@ -124,6 +124,9 @@ class TAbstractFileType(object):
     def tearDown(self):
         os.remove(self.filename)
 
+    def test_filename(self):
+        self.assertEqual(self.audio.filename, self.filename)
+
     def test_file(self):
         self.assertTrue(isinstance(File(self.PATH), self.KIND))
 
@@ -143,6 +146,42 @@ class TAbstractFileType(object):
     def test_mime(self):
         self.assertTrue(self.audio.mime)
         self.assertTrue(isinstance(self.audio.mime, list))
+
+    def test_load(self):
+        x = self.KIND()
+        x.load(self.filename)
+        x.save()
+
+    def test_delete(self):
+        self.audio.delete(self.filename)
+        self.audio.delete()
+
+    def test_save(self):
+        self.audio.save(self.filename)
+        self.audio.save()
+
+    def test_add_tags(self):
+        had_tags = self.audio.tags is not None
+        try:
+            self.audio.add_tags()
+        except MutagenError:
+            pass
+        else:
+            self.assertFalse(had_tags)
+            self.assertTrue(self.audio.tags is not None)
+        self.assertRaises(MutagenError, self.audio.add_tags)
+
+    def test_score(self):
+        with open(self.filename, "rb") as fileobj:
+            header = fileobj.read(128)
+            self.KIND.score(self.filename, fileobj, header)
+
+    def test_dict(self):
+        self.audio.keys()
+        self.assertRaises(KeyError, self.audio.__delitem__, "nopenopenopenope")
+        for key, value in self.audio.items():
+            del self.audio[key]
+            self.audio[key] = value
 
 
 _FILETYPES = {

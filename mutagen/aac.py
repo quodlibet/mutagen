@@ -392,6 +392,9 @@ class AAC(FileType):
         with open(filename, "rb") as h:
             self.info = AACInfo(h)
 
+    def add_tags(self):
+        raise AACError("doesn't support tags")
+
     @staticmethod
     def score(filename, fileobj, header):
         filename = filename.lower()
