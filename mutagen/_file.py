@@ -100,6 +100,8 @@ class FileType(DictMixin):
         The tags attribute will be cleared as well if there is one.
 
         Does nothing if the file has no tags.
+
+        :raises mutagen.MutagenError: if deleting wasn't possible
         """
 
         if self.tags is not None:
@@ -112,7 +114,10 @@ class FileType(DictMixin):
             return self.tags.delete(filename)
 
     def save(self, filename=None, **kwargs):
-        """Save metadata tags."""
+        """Save metadata tags.
+
+        :raises mutagen.MutagenError: if saving wasn't possible
+        """
 
         if filename is None:
             filename = self.filename
@@ -138,8 +143,8 @@ class FileType(DictMixin):
     def add_tags(self):
         """Adds new tags to the file.
 
-        Raises `mutagen.MutagenError` if tags already exist or adding is not
-        possible.
+        :raises mutagen.MutagenError: if tags already exist or adding is not
+            possible.
         """
 
         raise NotImplementedError
