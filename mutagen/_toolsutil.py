@@ -12,6 +12,7 @@ import signal
 import locale
 import contextlib
 import optparse
+import ctypes
 
 from ._compat import text_type, PY2, PY3, iterbytes
 
@@ -176,38 +177,51 @@ def print_(*objects, **kwargs):
     if file_ is None:
         file_ = sys.stdout
 
+    old_cp = None
     if os.name == "nt":
-        encoding = getattr(sys.stdout, "encoding", None) or "utf-8"
+        # Try to force the output to cp65001 aka utf-8.
+        # If that fails use the current one (most likely cp850, so
+        # most of unicode will be replaced with '?')
+        encoding = "utf-8"
+        old_cp = ctypes.windll.kernel32.GetConsoleOutputCP()
+        if ctypes.windll.kernel32.SetConsoleOutputCP(65001) == 0:
+            encoding = getattr(sys.stdout, "encoding", None) or "utf-8"
+            old_cp = None
     else:
         encoding = fsencoding()
 
-    if linesep:
-        objects = list(objects) + [os.linesep]
-
-    parts = []
-    for text in objects:
-        if isinstance(text, text_type):
-            if PY3:
-                try:
-                    text = text.encode(encoding, 'surrogateescape')
-                except UnicodeEncodeError:
-                    text = text.encode(encoding, 'replace')
-            else:
-                text = text.encode(encoding, 'replace')
-        parts.append(text)
-
-    data = (b" " if sep else b"").join(parts)
     try:
-        fileno = file_.fileno()
-    except (AttributeError, OSError, ValueError):
-        # for tests when stdout is replaced
+        if linesep:
+            objects = list(objects) + [os.linesep]
+
+        parts = []
+        for text in objects:
+            if isinstance(text, text_type):
+                if PY3:
+                    try:
+                        text = text.encode(encoding, 'surrogateescape')
+                    except UnicodeEncodeError:
+                        text = text.encode(encoding, 'replace')
+                else:
+                    text = text.encode(encoding, 'replace')
+            parts.append(text)
+
+        data = (b" " if sep else b"").join(parts)
         try:
-            file_.write(data)
-        except TypeError:
-            file_.write(data.decode(encoding, "replace"))
-    else:
-        file_.flush()
-        os.write(fileno, data)
+            fileno = file_.fileno()
+        except (AttributeError, OSError, ValueError):
+            # for tests when stdout is replaced
+            try:
+                file_.write(data)
+            except TypeError:
+                file_.write(data.decode(encoding, "replace"))
+        else:
+            file_.flush()
+            os.write(fileno, data)
+    finally:
+        # reset the code page to what we had before
+        if old_cp is not None:
+            ctypes.windll.kernel32.SetConsoleOutputCP(old_cp)
 
 
 class OptionParser(optparse.OptionParser):
