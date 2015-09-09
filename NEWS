@@ -1,3 +1,22 @@
+1.31 - 2015.09.??
+-----------------
+
+* New padding control API for flac/id3/mp4/asf/ogg/aiff and everything
+  based on it, except oggflac :bug:`229`
+* Mutagen will now reduce padding on save if there is lots of it.
+* delete() will remove padding in addition to tags.
+
+* ASF:
+
+  * Padding support :bug:`201`
+  * Don't report negative lengths for some broken files
+  * New :class:`asf.ASFInfo`.codec_type/codec_name/codec_description
+
+* OGG: Padding support for Opus/Vorbis/Theora/Speex
+* M4A: Implementation removed. Every operation will raise. Use mp4 instead.
+* Tools: Support Unicode output under Windows :bug:`232`
+
+
 1.30 - 2015.08.22
 -----------------
 
