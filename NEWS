@@ -11,6 +11,7 @@
   * Padding support :bug:`201`
   * Don't report negative lengths for some broken files
   * New :class:`asf.ASFInfo`.codec_type/codec_name/codec_description
+  * Implement ASF.delete()
 
 * OGG: Padding support for Opus/Vorbis/Theora/Speex
 * M4A: Implementation removed. Every operation will raise. Use mp4 instead.
