@@ -65,14 +65,14 @@ class TPaddingInfo(TestCase):
     def test_default_strategy(self):
         s = 100000
         self.assertEqual(PaddingInfo(10, s).get_default_padding(), 10)
-        self.assertEqual(PaddingInfo(-10, s).get_default_padding(), 1524)
+        self.assertEqual(PaddingInfo(-10, s).get_default_padding(), 1124)
         self.assertEqual(PaddingInfo(0, s).get_default_padding(), 0)
-        self.assertEqual(PaddingInfo(10000, s).get_default_padding(), 1524)
+        self.assertEqual(PaddingInfo(20000, s).get_default_padding(), 1124)
 
         self.assertEqual(PaddingInfo(10, 0).get_default_padding(), 10)
         self.assertEqual(PaddingInfo(-10, 0).get_default_padding(), 1024)
         self.assertEqual(PaddingInfo(1050, 0).get_default_padding(), 1050)
-        self.assertEqual(PaddingInfo(10000, 0).get_default_padding(), 1024)
+        self.assertEqual(PaddingInfo(20000, 0).get_default_padding(), 1024)
 
     def test_repr(self):
         info = PaddingInfo(10, 100)

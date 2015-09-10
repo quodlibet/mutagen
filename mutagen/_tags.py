@@ -46,8 +46,8 @@ class PaddingInfo(object):
         :rtype: int
         """
 
-        high = 1024 * 5 + self.size // 40  # 2.5%
-        low = 1024 + self.size // 200  # 0.5%
+        high = 1024 * 10 + self.size // 100  # 10 KiB + 1% of trailing data
+        low = 1024 + self.size // 1000  # 1 KiB + 0.1% of trailing data
 
         if self.padding >= 0:
             # enough padding left
