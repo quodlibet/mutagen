@@ -406,11 +406,6 @@ class MP4Tags(DictProxy, Metadata):
         else:
             self.__save_existing(fileobj, atoms, path, data, padding)
 
-    def __pad_ilst(self, data, length=None):
-        if length is None:
-            length = ((len(data) + 1023) & ~1023) - len(data)
-        return Atom.render(b"free", b"\x00" * length)
-
     def __save_new(self, fileobj, atoms, ilst_data, padding_func):
         hdlr = Atom.render(b"hdlr", b"\x00" * 8 + b"mdirappl" + b"\x00" * 9)
         meta_data = b"\x00\x00\x00\x00" + hdlr + ilst_data
