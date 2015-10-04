@@ -3,7 +3,7 @@
 from tests import TestCase
 
 from mutagen.id3 import Frames, Frames_2_2, ID3, ID3Header
-from mutagen._compat import text_type, xrange
+from mutagen._compat import text_type, xrange, PY2
 
 _22 = ID3()
 _22._header = ID3Header()
@@ -138,9 +138,27 @@ class FrameSanityChecks(TestCase):
     def test_APIC(self):
         from mutagen.id3 import APIC
 
-        frame = APIC(encoding=0, mime="m", type=3, desc="d", data=b"\x42")
+        frame = APIC(encoding=0, mime=u"m", type=3, desc=u"d", data=b"\x42")
         self.assertEqual(frame.HashKey, "APIC:d")
         frame._pprint()
+
+    def test_APIC_repr(self):
+        from mutagen.id3 import APIC
+
+        frame = APIC(encoding=0, mime=u"m", type=3, desc=u"d", data=b"\x42")
+        if PY2:
+            expected = (
+                "APIC(encoding=<Encoding.LATIN1: 0>, mime=u'm', "
+                "type=<PictureType.COVER_FRONT: 3>, desc=u'd', data='B')")
+        else:
+            expected = (
+                "APIC(encoding=<Encoding.LATIN1: 0>, mime='m', "
+                "type=<PictureType.COVER_FRONT: 3>, desc='d', data=b'B')")
+
+        self.assertEqual(repr(frame), expected)
+        new_frame = APIC()
+        new_frame._readData(frame._writeData())
+        self.assertEqual(repr(new_frame), expected)
 
     def test_EQU2(self):
         from mutagen.id3 import EQU2

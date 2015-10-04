@@ -891,17 +891,9 @@ def create_read_tag_tests():
         load_tests['test_%s_%d' % (tag, i)] = test_tag
 
         def test_tag_repr(self, tag=tag, data=data):
-            from mutagen.id3 import ID3TimeStamp
             id3 = __import__('mutagen.id3', globals(), locals(), [tag])
             TAG = getattr(id3, tag)
             tag = TAG._fromData(_23, 0, data)
-            tag2 = eval(repr(tag), {TAG.__name__: TAG,
-                        'ID3TimeStamp': ID3TimeStamp})
-            self.assertEquals(type(tag), type(tag2))
-            for spec in TAG._framespec:
-                attr = spec.name
-                self.assertEquals(getattr(tag, attr), getattr(tag2, attr))
-
             self.assertTrue(isinstance(tag.__str__(), str))
             if PY2:
                 if hasattr(tag, "__unicode__"):

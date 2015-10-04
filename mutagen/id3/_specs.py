@@ -131,6 +131,19 @@ class ByteSpec(Spec):
         return value
 
 
+class PictureTypeSpec(ByteSpec):
+
+    def read(self, frame, data):
+        value, data = ByteSpec.read(self, frame, data)
+        return PictureType(value), data
+
+    def validate(self, frame, value):
+        value = ByteSpec.validate(self, frame, value)
+        if value is not None:
+            return PictureType(value)
+        return value
+
+
 class IntegerSpec(Spec):
     def read(self, frame, data):
         return int(BitPaddedInt(data, bits=8)), b''
@@ -180,7 +193,7 @@ class EncodingSpec(ByteSpec):
         if enc not in (Encoding.LATIN1, Encoding.UTF16, Encoding.UTF16BE,
                        Encoding.UTF8):
             raise SpecError('Invalid Encoding: %r' % enc)
-        return enc, data
+        return Encoding(enc), data
 
     def validate(self, frame, value):
         if value is None:
@@ -188,7 +201,7 @@ class EncodingSpec(ByteSpec):
         if value not in (Encoding.LATIN1, Encoding.UTF16, Encoding.UTF16BE,
                          Encoding.UTF8):
             raise ValueError('Invalid Encoding: %r' % value)
-        return value
+        return Encoding(value)
 
     def _validate23(self, frame, value, **kwargs):
         # only 0, 1 are valid in v2.3, default to utf-16

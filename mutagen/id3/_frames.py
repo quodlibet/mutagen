@@ -15,7 +15,8 @@ from ._specs import (
     EncodingSpec, ASPIIndexSpec, SizedIntegerSpec, IntegerSpec,
     VolumeAdjustmentsSpec, VolumePeakSpec, VolumeAdjustmentSpec,
     ChannelSpec, MultiSpec, SynchronizedTextSpec, KeyEventSpec, TimeStampSpec,
-    EncodedNumericPartTextSpec, EncodedNumericTextSpec, SpecError)
+    EncodedNumericPartTextSpec, EncodedNumericTextSpec, SpecError,
+    PictureTypeSpec)
 from .._compat import text_type, string_types, swap_to_string, iteritems, izip
 
 
@@ -1104,7 +1105,7 @@ class APIC(Frame):
     _framespec = [
         EncodingSpec('encoding'),
         Latin1TextSpec('mime'),
-        ByteSpec('type'),
+        PictureTypeSpec('type'),
         EncodedTextSpec('desc'),
         BinaryDataSpec('data'),
     ]
@@ -1834,7 +1835,7 @@ class PIC(APIC):
     _framespec = [
         EncodingSpec('encoding'),
         StringSpec('mime', 3),
-        ByteSpec('type'),
+        PictureTypeSpec('type'),
         EncodedTextSpec('desc'),
         BinaryDataSpec('data')
     ]
