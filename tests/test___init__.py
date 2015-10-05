@@ -24,6 +24,7 @@ from mutagen.optimfrog import OptimFROG
 from mutagen.asf import ASF
 from mutagen.aiff import AIFF
 from mutagen.aac import AAC
+from mutagen.smf import SMF
 from os import devnull
 
 
@@ -234,6 +235,9 @@ _FILETYPES = {
         os.path.join(DATA_DIR, "no-tags.m4a"),
         os.path.join(DATA_DIR, "no-tags.3g2"),
         os.path.join(DATA_DIR, "truncated-64bit.mp4"),
+    ],
+    SMF: [
+        os.path.join(DATA_DIR, "sample.mid"),
     ],
 }
 
