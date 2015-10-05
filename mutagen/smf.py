@@ -61,7 +61,7 @@ def _read_track(chunk):
                 data = chunk[off:off + num]
                 if len(data) != 3:
                     raise SMFError
-                tempo = struct.unpack(">I", b"\x00" + data)[0]
+                tempo = struct.unpack(">I", b"\x00" + bytes(data))[0]
                 tempos.append((deltasum, TEMPO, tempo))
             off += num
         elif event_type in (0xF0, 0xF7):
