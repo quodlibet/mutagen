@@ -654,7 +654,7 @@ class FLAC(mutagen.FileType):
     * pictures -- list of embedded pictures
     """
 
-    _mimes = ["audio/x-flac", "application/x-flac"]
+    _mimes = ["audio/flac", "audio/x-flac", "application/x-flac"]
 
     info = None
     """A `StreamInfo`"""
