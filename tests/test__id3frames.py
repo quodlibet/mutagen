@@ -58,6 +58,10 @@ class FrameSanityChecks(TestCase):
         self.assertEqual(new.url, url)
         self.assertEqual(new.data, b"\x00")
 
+        frame = LNK(frameid="o_O")
+        new = LINK(frame)
+        self.assertEqual(new.frameid, "o_O ")
+
     def test_SIGN(self):
         from mutagen.id3 import SIGN
         frame = SIGN(group=1, sig=b"foo")

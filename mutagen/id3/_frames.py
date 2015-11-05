@@ -1906,7 +1906,10 @@ class LNK(LINK):
         if isinstance(other, LNK):
             other.frameid = self.frameid
         else:
-            other.frameid = Frames_2_2[self.frameid].__bases__[0].__name__
+            try:
+                other.frameid = Frames_2_2[self.frameid].__bases__[0].__name__
+            except KeyError:
+                other.frameid = self.frameid.ljust(4)
         other.url = self.url
         if hasattr(self, "data"):
             other.data = self.data
