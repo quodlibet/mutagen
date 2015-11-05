@@ -228,6 +228,13 @@ class FrameOpt(Frame):
             else:
                 break
 
+    def __setattr__(self, name, value):
+        for checker in self._optionalspec:
+            if checker.name == name:
+                self.__dict__[name] = checker.validate(self, value)
+                return
+        super(FrameOpt, self).__setattr__(name, value)
+
     def _to_other(self, other):
         super(FrameOpt, self)._to_other(other)
 
