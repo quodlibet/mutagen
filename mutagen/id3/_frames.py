@@ -224,8 +224,7 @@ class FrameOpt(Frame):
         super(FrameOpt, self).__init__(*args, **kwargs)
         for spec in self._optionalspec:
             if spec.name in kwargs:
-                validated = spec.validate(self, kwargs[spec.name])
-                setattr(self, spec.name, validated)
+                setattr(self, spec.name, kwargs[spec.name])
             else:
                 break
 
