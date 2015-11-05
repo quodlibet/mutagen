@@ -5,13 +5,14 @@ import shutil
 from tempfile import mkstemp
 from tests import TestCase, DATA_DIR
 
-from mutagen._compat import PY3, text_type, PY2, izip
+from mutagen._compat import PY3, text_type, PY2, izip, cBytesIO
 from mutagen.asf import ASF, ASFHeaderError, ASFValue, UNICODE, DWORD, QWORD
 from mutagen.asf import BOOL, WORD, BYTEARRAY, GUID
 from mutagen.asf._util import guid2bytes, bytes2guid
 from mutagen.asf._objects import ContentDescriptionObject, \
     ExtendedContentDescriptionObject, HeaderExtensionObject, \
-    MetadataObject, MetadataLibraryObject, CodecListObject, PaddingObject
+    MetadataObject, MetadataLibraryObject, CodecListObject, PaddingObject, \
+    HeaderObject
 from mutagen.asf import ASFUnicodeAttribute, ASFError, ASFByteArrayAttribute, \
     ASFBoolAttribute, ASFDWordAttribute, ASFQWordAttribute, ASFWordAttribute, \
     ASFGUIDAttribute
@@ -452,6 +453,19 @@ class TASFIssue29(TestCase):
         audio.save()
         audio = ASF(self.filename)
         self.failIf("Description" in audio)
+
+
+class TASFObjects(TestCase):
+
+    filename = os.path.join(DATA_DIR, "silence-1.wma")
+
+    def test_invalid_header(self):
+        asf = ASF()
+        fileobj = cBytesIO(
+            b"0&\xb2u\x8ef\xcf\x11\xa6\xd9\x00\xaa\x00b\xcel\x19\xbf\x01\x00"
+            b"\x00\x00\x00\x00\x07\x00\x00\x00\x01\x02")
+        self.assertRaises(
+            ASFHeaderError, HeaderObject.parse_full, asf, fileobj)
 
 
 class TASFAttrDest(TestCase):
