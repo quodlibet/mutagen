@@ -86,6 +86,8 @@ class HeaderObject(BaseObject):
         header = cls()
 
         remaining_header, num_objects = cls.parse_size(fileobj)
+        remaining_header -= 30
+
         for i in xrange(num_objects):
             guid, size = struct.unpack("<16sQ", fileobj.read(24))
             obj = BaseObject._get_object(guid)
