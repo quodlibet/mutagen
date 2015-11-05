@@ -63,14 +63,16 @@ class Frame(object):
             other._to_other(self)
         else:
             for checker, val in izip(self._framespec, args):
-                setattr(self, checker.name, checker.validate(self, val))
+                setattr(self, checker.name, val)
             for checker in self._framespec[len(args):]:
-                try:
-                    validated = checker.validate(
-                        self, kwargs.get(checker.name, None))
-                except ValueError as e:
-                    raise ValueError("%s: %s" % (checker.name, e))
-                setattr(self, checker.name, validated)
+                setattr(self, checker.name, kwargs.get(checker.name))
+
+    def __setattr__(self, name, value):
+        for checker in self._framespec:
+            if checker.name == name:
+                self.__dict__[name] = checker.validate(self, value)
+                return
+        super(Frame, self).__setattr__(name, value)
 
     def _to_other(self, other):
         # this impl covers subclasses with the same framespec
