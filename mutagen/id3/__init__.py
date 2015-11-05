@@ -635,11 +635,6 @@ class ID3(DictProxy, mutagen.Metadata):
             # Get rid of "(xx)Foobr" format.
             self["TCON"].genres = self["TCON"].genres
 
-        # ID3v2.2 LNK frames are just way too different to upgrade.
-        for frame in self.getall("LINK"):
-            if len(frame.frameid) != 4:
-                del self[frame.HashKey]
-
         mimes = {"PNG": "image/png", "JPG": "image/jpeg"}
         for pic in self.getall("APIC"):
             if pic.mime in mimes:

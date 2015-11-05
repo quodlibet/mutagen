@@ -48,6 +48,16 @@ class FrameSanityChecks(TestCase):
         new = APIC(frame)
         self.assertEqual(new.mime, "foo")
 
+    def test_LNK_upgrade(self):
+        from mutagen.id3 import LNK, LINK
+        url = "http://foo.bar"
+
+        frame = LNK(frameid="PIC", url=url, data=b"\x00")
+        new = LINK(frame)
+        self.assertEqual(new.frameid, "APIC")
+        self.assertEqual(new.url, url)
+        self.assertEqual(new.data, b"\x00")
+
     def test_SIGN(self):
         from mutagen.id3 import SIGN
         frame = SIGN(group=1, sig=b"foo")

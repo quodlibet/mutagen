@@ -955,7 +955,7 @@ class UpdateTo24(TestCase):
         id3.version = (2, 2)
         id3.add(LNK(frameid="PIC", url="http://foo.bar"))
         id3.update_to_v24()
-        self.assertFalse(id3.getall("LINK"))
+        self.assertTrue(id3.getall("LINK"))
 
     def test_tyer(self):
         from mutagen.id3 import TYER
