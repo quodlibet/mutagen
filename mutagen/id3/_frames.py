@@ -63,14 +63,16 @@ class Frame(object):
             other._to_other(self)
         else:
             for checker, val in izip(self._framespec, args):
-                setattr(self, checker.name, checker.validate(self, val))
+                setattr(self, checker.name, val)
             for checker in self._framespec[len(args):]:
-                try:
-                    validated = checker.validate(
-                        self, kwargs.get(checker.name, None))
-                except ValueError as e:
-                    raise ValueError("%s: %s" % (checker.name, e))
-                setattr(self, checker.name, validated)
+                setattr(self, checker.name, kwargs.get(checker.name))
+
+    def __setattr__(self, name, value):
+        for checker in self._framespec:
+            if checker.name == name:
+                self.__dict__[name] = checker.validate(self, value)
+                return
+        super(Frame, self).__setattr__(name, value)
 
     def _to_other(self, other):
         # this impl covers subclasses with the same framespec
@@ -222,10 +224,16 @@ class FrameOpt(Frame):
         super(FrameOpt, self).__init__(*args, **kwargs)
         for spec in self._optionalspec:
             if spec.name in kwargs:
-                validated = spec.validate(self, kwargs[spec.name])
-                setattr(self, spec.name, validated)
+                setattr(self, spec.name, kwargs[spec.name])
             else:
                 break
+
+    def __setattr__(self, name, value):
+        for checker in self._optionalspec:
+            if checker.name == name:
+                self.__dict__[name] = checker.validate(self, value)
+                return
+        super(FrameOpt, self).__setattr__(name, value)
 
     def _to_other(self, other):
         super(FrameOpt, self)._to_other(other)
@@ -1895,7 +1903,13 @@ class LNK(LINK):
         if not isinstance(other, LINK):
             raise TypeError
 
-        other.frameid = self.frameid
+        if isinstance(other, LNK):
+            other.frameid = self.frameid
+        else:
+            try:
+                other.frameid = Frames_2_2[self.frameid].__bases__[0].__name__
+            except KeyError:
+                other.frameid = self.frameid.ljust(4)
         other.url = self.url
         if hasattr(self, "data"):
             other.data = self.data
