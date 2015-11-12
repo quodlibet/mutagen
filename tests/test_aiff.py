@@ -190,11 +190,13 @@ class TIFFFile(TestCase):
         self.iff_2 = IFFFile(self.file_2)
 
         fd_1, self.tmp_1_name = mkstemp(suffix='.aif')
+        os.close(fd_1)
         shutil.copy(self.has_tags, self.tmp_1_name)
         self.file_1_tmp = open(self.tmp_1_name, 'rb+')
         self.iff_1_tmp = IFFFile(self.file_1_tmp)
 
         fd_2, self.tmp_2_name = mkstemp(suffix='.aif')
+        os.close(fd_2)
         shutil.copy(self.no_tags, self.tmp_2_name)
         self.file_2_tmp = open(self.tmp_2_name, 'rb+')
         self.iff_2_tmp = IFFFile(self.file_2_tmp)
