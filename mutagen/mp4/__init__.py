@@ -337,6 +337,7 @@ class MP4Tags(DictProxy, Metadata):
     def __setitem__(self, key, value):
         if not isinstance(key, str):
             raise TypeError("key has to be str")
+        self._render(key, value)
         super(MP4Tags, self).__setitem__(key, value)
 
     @classmethod
@@ -359,20 +360,23 @@ class MP4Tags(DictProxy, Metadata):
         # values, so we at least have something determinstic.
         return (order.get(key[:4], last), len(repr(v)), repr(v))
 
+    def _render(self, key, value):
+        atom_name = _key2name(key)[:4]
+        if atom_name in self.__atoms:
+            render_func = self.__atoms[atom_name][1]
+        else:
+            render_func = type(self).__render_text
+
+        return render_func(self, key, value)
+
     def save(self, filename, padding=None):
         """Save the metadata to the given filename."""
 
         values = []
         items = sorted(self.items(), key=self._key_sort)
         for key, value in items:
-            atom_name = _key2name(key)[:4]
-            if atom_name in self.__atoms:
-                render_func = self.__atoms[atom_name][1]
-            else:
-                render_func = type(self).__render_text
-
             try:
-                values.append(render_func(self, key, value))
+                values.append(self._render(key, value))
             except (TypeError, ValueError) as s:
                 reraise(MP4MetadataValueError, s, sys.exc_info()[2])
 
@@ -616,7 +620,11 @@ class MP4Tags(DictProxy, Metadata):
 
     def __render_pair(self, key, value):
         data = []
-        for (track, total) in value:
+        for v in value:
+            try:
+                track, total = v
+            except TypeError:
+                raise ValueError
             if 0 <= track < 1 << 16 and 0 <= total < 1 << 16:
                 data.append(struct.pack(">4H", 0, track, total, 0))
             else:
@@ -756,7 +764,10 @@ class MP4Tags(DictProxy, Metadata):
             if not isinstance(v, text_type):
                 if PY3:
                     raise TypeError("%r not str" % v)
-                v = v.decode("utf-8")
+                try:
+                    v = v.decode("utf-8")
+                except (AttributeError, UnicodeDecodeError) as e:
+                    raise TypeError(e)
             encoded.append(v.encode("utf-8"))
 
         return self.__render_data(key, 0, flags, encoded)

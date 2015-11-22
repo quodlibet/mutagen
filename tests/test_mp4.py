@@ -407,7 +407,7 @@ class TMP4Tags(TestCase):
     def test_pprint_non_text_list(self):
         tags = MP4Tags()
         tags["tmpo"] = [120, 121]
-        tags["trck"] = [(1, 2), (3, 4)]
+        tags["trkn"] = [(1, 2), (3, 4)]
         tags.pprint()
 
     def test_freeform_data(self):
@@ -453,6 +453,9 @@ class TMP4Mixin(object):
         if not have_faad:
             return
         self.assertEqual(call_faad("-w", self.filename), 0)
+
+    def test_set_inval(self):
+        self.assertRaises(TypeError, self.audio.__setitem__, "\xa9nam", 42)
 
     def test_score(self):
         fileobj = open(self.filename, "rb")
@@ -540,7 +543,7 @@ class TMP4Mixin(object):
         try:
             self.set_key('\xa9nam', [b'\xe3\x82\x8a\xe3\x81\x8b'],
                          result=[u'\u308a\u304b'])
-        except MP4MetadataValueError:
+        except TypeError:
             if not PY3:
                 raise
 
@@ -550,7 +553,7 @@ class TMP4Mixin(object):
 
     def test_invalid_text(self):
         self.assertRaises(
-            MP4MetadataValueError, self.set_key, '\xa9nam', [b'\xff'])
+            TypeError, self.audio.__setitem__, '\xa9nam', [b'\xff'])
 
     def test_save_text(self):
         self.set_key('\xa9nam', [u"Some test name"])
