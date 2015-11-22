@@ -10,7 +10,7 @@ from tempfile import mkstemp
 from tests import TestCase, DATA_DIR
 from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
                          MP4MetadataError, MP4FreeForm, error, AtomDataType,
-                         MP4MetadataValueError, AtomError)
+                         MP4MetadataValueError, AtomError, _item_sort_key)
 from mutagen.mp4._util import parse_full_atom
 from mutagen.mp4._as_entry import AudioSampleEntry, ASEntryError
 from mutagen._util import cdata
@@ -935,7 +935,7 @@ class TMP4Misc(TestCase):
             ("----", ["1234"]),
         ]
 
-        sorted_items = sorted(items, key=MP4Tags._key_sort)
+        sorted_items = sorted(items, key=lambda kv: _item_sort_key(*kv))
         self.assertEqual(sorted_items, items)
 
 

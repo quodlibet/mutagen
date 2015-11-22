@@ -237,6 +237,21 @@ def _find_padding(atom_path):
         pass
 
 
+def _item_sort_key(key, value):
+    # iTunes always writes the tags in order of "relevance", try
+    # to copy it as closely as possible.
+    order = ["\xa9nam", "\xa9ART", "\xa9wrt", "\xa9alb",
+             "\xa9gen", "gnre", "trkn", "disk",
+             "\xa9day", "cpil", "pgap", "pcst", "tmpo",
+             "\xa9too", "----", "covr", "\xa9lyr"]
+    order = dict(izip(order, xrange(len(order))))
+    last = len(order)
+    # If there's no key-based way to distinguish, order by length.
+    # If there's still no way, go by string comparison on the
+    # values, so we at least have something determinstic.
+    return (order.get(key[:4], last), len(repr(value)), repr(value))
+
+
 class MP4Tags(DictProxy, Metadata):
     r"""Dictionary containing Apple iTunes metadata list key/values.
 
@@ -344,22 +359,6 @@ class MP4Tags(DictProxy, Metadata):
     def _can_load(cls, atoms):
         return b"moov.udta.meta.ilst" in atoms
 
-    @staticmethod
-    def _key_sort(item):
-        (key, v) = item
-        # iTunes always writes the tags in order of "relevance", try
-        # to copy it as closely as possible.
-        order = ["\xa9nam", "\xa9ART", "\xa9wrt", "\xa9alb",
-                 "\xa9gen", "gnre", "trkn", "disk",
-                 "\xa9day", "cpil", "pgap", "pcst", "tmpo",
-                 "\xa9too", "----", "covr", "\xa9lyr"]
-        order = dict(izip(order, xrange(len(order))))
-        last = len(order)
-        # If there's no key-based way to distinguish, order by length.
-        # If there's still no way, go by string comparison on the
-        # values, so we at least have something determinstic.
-        return (order.get(key[:4], last), len(repr(v)), repr(v))
-
     def _render(self, key, value):
         atom_name = _key2name(key)[:4]
         if atom_name in self.__atoms:
@@ -373,7 +372,7 @@ class MP4Tags(DictProxy, Metadata):
         """Save the metadata to the given filename."""
 
         values = []
-        items = sorted(self.items(), key=self._key_sort)
+        items = sorted(self.items(), key=lambda kv: _item_sort_key(*kv))
         for key, value in items:
             try:
                 values.append(self._render(key, value))
