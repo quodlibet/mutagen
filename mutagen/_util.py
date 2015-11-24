@@ -14,6 +14,7 @@ intended for internal use in Mutagen only.
 
 import struct
 import codecs
+import os
 
 from fnmatch import fnmatchcase
 
@@ -290,6 +291,14 @@ def get_size(fileobj):
         fileobj.seek(old_pos, 0)
 
 
+def _create_mmap(fobj, length):
+    import mmap
+    if os.name == "nt":
+        return mmap.mmap(fobj.fileno(), length)
+    else:
+        return mmap.mmap(fobj.fileno(), length, mmap.MAP_PRIVATE)
+
+
 def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
     """Insert size bytes of empty space starting at offset.
 
@@ -308,8 +317,7 @@ def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
     fobj.flush()
 
     try:
-        import mmap
-        file_map = mmap.mmap(fobj.fileno(), filesize + size, mmap.MAP_PRIVATE)
+        file_map = _create_mmap(fobj, filesize + size)
         try:
             file_map.move(offset + size, offset, movesize)
         finally:
@@ -367,8 +375,7 @@ def delete_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
     if movesize > 0:
         fobj.flush()
         try:
-            import mmap
-            file_map = mmap.mmap(fobj.fileno(), filesize)
+            file_map = _create_mmap(fobj, filesize)
             try:
                 file_map.move(offset, offset + size, movesize)
             finally:
