@@ -309,7 +309,7 @@ def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
 
     try:
         import mmap
-        file_map = mmap.mmap(fobj.fileno(), filesize + size)
+        file_map = mmap.mmap(fobj.fileno(), filesize + size, mmap.MAP_PRIVATE)
         try:
             file_map.move(offset + size, offset, movesize)
         finally:
