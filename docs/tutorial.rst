@@ -69,7 +69,7 @@ the title of an ID3 tag, you need to do the following::
 
 If you use the ID3 module, you should familiarize yourself with how
 ID3v2 tags are stored, by reading the the details of the ID3v2
-standard at http://www.id3.org/develop.html.
+standard at http://id3.org/id3v2.4.0-structure.
 
 
 ID3 Versions
