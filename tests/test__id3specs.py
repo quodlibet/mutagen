@@ -102,8 +102,13 @@ class SpecSanityChecks(TestCase):
         # utf-16
         f.encoding = 1
         self.assertEqual(s.read(f, s.write(f, values)), (values, b""))
-        self.assertEquals(
-            s.write(f, [(u"A", 100)]), b"\xff\xfeA\x00\x00\x00\x00\x00\x00d")
+        data = s.write(f, [(u"A", 100)])
+        if sys.byteorder == 'little':
+            self.assertEquals(
+                data, b"\xff\xfeA\x00\x00\x00\x00\x00\x00d")
+        else:
+            self.assertEquals(
+                data, b"\xfe\xff\x00A\x00\x00\x00\x00\x00d")
 
         # utf-16be
         f.encoding = 2
