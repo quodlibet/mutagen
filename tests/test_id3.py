@@ -7,7 +7,7 @@ from tests import TestCase, DATA_DIR
 from mutagen import id3
 from mutagen.apev2 import APEv2
 from mutagen.id3 import ID3, COMR, Frames, Frames_2_2, ID3Warning, \
-    ID3JunkFrameError, ID3Header, ID3UnsupportedVersionError, _fullread
+    ID3JunkFrameError, ID3Header, ID3UnsupportedVersionError, _fullread, TIT2
 from mutagen.id3._util import BitPaddedInt, error as ID3Error
 from mutagen._compat import cBytesIO, PY2, iteritems, integer_types, izip
 import warnings
@@ -25,20 +25,25 @@ _24.version = (2, 4, 0)
 class ID3GetSetDel(TestCase):
 
     def setUp(self):
+        self.frames = [
+            TIT2(text=["1"]), TIT2(text=["2"]),
+            TIT2(text=["3"]), TIT2(text=["4"])]
         self.i = ID3()
-        self.i["BLAH"] = 1
-        self.i["QUUX"] = 2
-        self.i["FOOB:ar"] = 3
-        self.i["FOOB:az"] = 4
+        self.i["BLAH"] = self.frames[0]
+        self.i["QUUX"] = self.frames[1]
+        self.i["FOOB:ar"] = self.frames[2]
+        self.i["FOOB:az"] = self.frames[3]
 
     def test_getnormal(self):
-        self.assertEquals(self.i.getall("BLAH"), [1])
-        self.assertEquals(self.i.getall("QUUX"), [2])
-        self.assertEquals(self.i.getall("FOOB:ar"), [3])
-        self.assertEquals(self.i.getall("FOOB:az"), [4])
+        self.assertEquals(self.i.getall("BLAH"), [self.frames[0]])
+        self.assertEquals(self.i.getall("QUUX"), [self.frames[1]])
+        self.assertEquals(self.i.getall("FOOB:ar"), [self.frames[2]])
+        self.assertEquals(self.i.getall("FOOB:az"), [self.frames[3]])
 
     def test_getlist(self):
-        self.assert_(self.i.getall("FOOB") in [[3, 4], [4, 3]])
+        self.assertTrue(
+            self.i.getall("FOOB") in [[self.frames[2], self.frames[3]],
+                                      [self.frames[3], self.frames[2]]])
 
     def test_delnormal(self):
         self.assert_("BLAH" in self.i)
@@ -47,7 +52,7 @@ class ID3GetSetDel(TestCase):
 
     def test_delone(self):
         self.i.delall("FOOB:ar")
-        self.assertEquals(self.i.getall("FOOB"), [4])
+        self.assertEquals(self.i.getall("FOOB"), [self.frames[3]])
 
     def test_delall(self):
         self.assert_("FOOB:ar" in self.i)
@@ -57,17 +62,21 @@ class ID3GetSetDel(TestCase):
         self.assert_("FOOB:az" not in self.i)
 
     def test_setone(self):
-        class TEST(object):
-            HashKey = "FOOB:ar"
+        class TEST(TIT2):
+            HashKey = ""
+
         t = TEST()
+        t.HashKey = "FOOB:ar"
         self.i.setall("FOOB", [t])
         self.assertEquals(self.i["FOOB:ar"], t)
         self.assertEquals(self.i.getall("FOOB"), [t])
 
     def test_settwo(self):
-        class TEST(object):
-            HashKey = "FOOB:ar"
+        class TEST(TIT2):
+            HashKey = ""
+
         t = TEST()
+        t.HashKey = "FOOB:ar"
         t2 = TEST()
         t2.HashKey = "FOOB:az"
         self.i.setall("FOOB", [t, t2])
@@ -213,6 +222,10 @@ class ID3Tags(TestCase):
 
     def setUp(self):
         self.silence = join(DATA_DIR, 'silence-44-s.mp3')
+
+    def test_set_wrong_type(self):
+        id3 = ID3(self.silence)
+        self.assertRaises(TypeError, id3.__setitem__, "FOO", object())
 
     def test_None(self):
         id3 = ID3(self.silence, known_frames={})

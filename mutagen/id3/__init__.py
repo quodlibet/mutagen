@@ -354,6 +354,11 @@ class ID3(DictProxy, mutagen.Metadata):
         """Add a frame to the tag."""
         return self.loaded_frame(frame)
 
+    def __setitem__(self, key, tag):
+        if not isinstance(tag, Frame):
+            raise TypeError("%r not a Frame instance" % tag)
+        super(ID3, self).__setitem__(key, tag)
+
     def __read_frames(self, data, frames):
         assert self.version >= ID3Header._V22
 
