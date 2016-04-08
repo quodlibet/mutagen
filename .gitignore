@@ -1,4 +1,3 @@
-syntax: glob
 *.pyc
 docs/_build
 docs/_rtd_theme
