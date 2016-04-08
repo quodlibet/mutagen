@@ -220,7 +220,7 @@ class TEasyMP3(TestCase):
         self.failIf("composer" in self.mp3)
 
     def test_length(self):
-        # http://code.google.com/p/mutagen/issues/detail?id=125
+        # https://github.com/quodlibet/mutagen/issues/125
         # easyid3, normal id3 and mpeg loading without tags should skip
         # the tags and get the right offset of the first frame
         easy = self.mp3.info

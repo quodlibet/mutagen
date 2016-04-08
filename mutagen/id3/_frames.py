@@ -173,8 +173,8 @@ class Frame(object):
                 except ValueError:
                     # Some things write synch-unsafe data with either the frame
                     # or global unsynch flag set. Try to load them as is.
-                    # https://bitbucket.org/lazka/mutagen/issue/210
-                    # https://bitbucket.org/lazka/mutagen/issue/223
+                    # https://github.com/quodlibet/mutagen/issues/210
+                    # https://github.com/quodlibet/mutagen/issues/223
                     pass
             if tflags & Frame.FLAG24_ENCRYPT:
                 raise ID3EncryptionUnsupportedError

@@ -19,8 +19,8 @@ copyright = u'2014, Joe Wreschnig, Michael Urman, Lukáš Lalinský, ' \
 version = mutagen.version_string
 release = mutagen.version_string
 exclude_patterns = ['_build']
-bug_url_template = "http://bitbucket.org/lazka/mutagen/issue/%s"
-pr_url_template = "http://bitbucket.org/lazka/mutagen/pull-request/%s"
+bug_url_template = "https://github.com/quodlibet/mutagen/issues/%s"
+pr_url_template = "https://github.com/quodlibet/mutagen/pull/%s"
 
 autodoc_member_order = "bysource"
 default_role = "obj"

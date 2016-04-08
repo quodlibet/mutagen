@@ -689,9 +689,9 @@ class FLAC(mutagen.FileType):
             # so we have to too.  Instead of parsing the size
             # given, parse an actual Vorbis comment, leaving
             # fileobj in the right position.
-            # http://code.google.com/p/mutagen/issues/detail?id=52
+            # https://github.com/quodlibet/mutagen/issues/52
             # ..same for the Picture block:
-            # http://code.google.com/p/mutagen/issues/detail?id=106
+            # https://github.com/quodlibet/mutagen/issues/106
             start = fileobj.tell()
             block = block_type(fileobj)
             real_size = fileobj.tell() - start

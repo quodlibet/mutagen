@@ -173,7 +173,7 @@ class TMP4Tags(TestCase):
     def test_parse_multiple_atoms(self):
         # while we don't write multiple values as multiple atoms
         # still read them
-        # https://bitbucket.org/lazka/mutagen/issue/165
+        # https://github.com/quodlibet/mutagen/issues/165
         data = Atom.render(b"data", b"\x00\x00\x00\x01" + b"\x00" * 4 + b"foo")
         grp1 = Atom.render(b"\xa9grp", data)
         data = Atom.render(b"data", b"\x00\x00\x00\x01" + b"\x00" * 4 + b"bar")
@@ -411,7 +411,7 @@ class TMP4Tags(TestCase):
         tags.pprint()
 
     def test_freeform_data(self):
-        # http://code.google.com/p/mutagen/issues/detail?id=103
+        # https://github.com/quodlibet/mutagen/issues/103
         key = "----:com.apple.iTunes:Encoding Params"
         value = (b"vers\x00\x00\x00\x01acbf\x00\x00\x00\x01brat\x00\x01\xf4"
                  b"\x00cdcv\x00\x01\x05\x04")

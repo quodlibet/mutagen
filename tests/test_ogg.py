@@ -479,7 +479,7 @@ class TOggPage(TestCase):
     def test_crc_py25(self):
         # Make sure page.write can handle both signed/unsigned int
         # return values of crc32.
-        # http://code.google.com/p/mutagen/issues/detail?id=63
+        # https://github.com/quodlibet/mutagen/issues/63
         # http://docs.python.org/library/zlib.html#zlib.crc32
 
         import zlib

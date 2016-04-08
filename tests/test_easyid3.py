@@ -197,7 +197,7 @@ class TEasyID3(TestCase):
         self.failUnlessRaises(KeyError, self.id3.__delitem__, "performer:bar")
 
     def test_txxx_empty(self):
-        # http://code.google.com/p/mutagen/issues/detail?id=135
+        # https://github.com/quodlibet/mutagen/issues/135
         self.id3["asin"] = ""
 
     def test_txxx_set_get(self):
@@ -301,7 +301,7 @@ class TEasyID3(TestCase):
         self.failIf("replaygain_bar_gain" in self.id3.keys())
 
     def test_pickle(self):
-        # http://code.google.com/p/mutagen/issues/detail?id=102
+        # https://github.com/quodlibet/mutagen/issues/102
         pickle.dumps(self.id3)
 
     def test_get_fallback(self):

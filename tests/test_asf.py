@@ -593,7 +593,7 @@ class TASFLargeValue(TestCase):
         self.failIf("QL/LargeObject" not in dict(audio.to_metadata_library))
 
     def test_save_guid(self):
-        # http://code.google.com/p/mutagen/issues/detail?id=81
+        # https://github.com/quodlibet/mutagen/issues/81
         audio = ASF(self.filename)
         audio["QL/GuidObject"] = [ASFValue(b" " * 16, GUID)]
         audio.save()
@@ -603,7 +603,7 @@ class TASFLargeValue(TestCase):
 
 
 class TASFSave(TestCase):
-    # http://code.google.com/p/mutagen/issues/detail?id=81#c4
+    # https://github.com/quodlibet/mutagen/issues/81#issuecomment-207014936
 
     original = os.path.join(DATA_DIR, "silence-1.wma")
 

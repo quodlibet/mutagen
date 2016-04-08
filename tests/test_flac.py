@@ -100,7 +100,7 @@ class TStreamInfo(TestCase):
         self.i = StreamInfo(self.data)
 
     def test_invalid(self):
-        # http://code.google.com/p/mutagen/issues/detail?id=117
+        # https://github.com/quodlibet/mutagen/issues/117
         self.failUnlessRaises(error, StreamInfo, self.data_invalid)
 
     def test_blocksize(self):
@@ -437,7 +437,7 @@ class TFLAC(TestCase):
 
     def test_ooming_vc_header(self):
         # issue 112: Malformed FLAC Vorbis header causes out of memory error
-        # http://code.google.com/p/mutagen/issues/detail?id=112
+        # https://github.com/quodlibet/mutagen/issues/112
         self.assertRaises(IOError, FLAC, os.path.join(DATA_DIR,
                                                       'ooming-header.flac'))
 

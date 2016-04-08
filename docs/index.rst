@@ -22,7 +22,7 @@ Mutagen Documentation
 .. note::
 
     This documentation is still incomplete and it's recommended to read the
-    `source <https://bitbucket.org/lazka/mutagen/src/default/mutagen>`__
+    `source <https://github.com/quodlibet/mutagen>`__
     for the full details.
 
 What is Mutagen?
@@ -46,11 +46,11 @@ There is a :doc:`brief tutorial with several API examples.
 Where do I get it?
 ------------------
 
-Mutagen is hosted on `Bitbucket <http://bitbucket.org/lazka/mutagen>`_. The 
+Mutagen is hosted on `GitHub <https://github.com/quodlibet/mutagen>`_. The 
 `download page <https://bitbucket.org/lazka/mutagen/downloads>`_ will have the 
-latest version or check out the Mercurial repository::
+latest version or check out the git repository::
 
-    $ hg clone https://bitbucket.org/lazka/mutagen
+    $ git clone https://github.com/quodlibet/mutagen.git
 
 Why Mutagen?
 ------------
@@ -80,7 +80,7 @@ collection.
 
 The following software projects are using Mutagen for tagging:
 
-* `Ex Falso and Quod Libet <http://code.google.com/p/quodlibet/>`_, a flexible tagger and player
+* `Ex Falso and Quod Libet <https://github.com/quodlibet/quodlibet>`_, a flexible tagger and player
 * `Beets <http://beets.radbox.org/>`_, a music library manager and MusicBrainz tagger
 * `Picard <http://musicbrainz.org/doc/PicardQt>`_, cross-platform MusicBrainz tagger
 * `Puddletag <http://puddletag.sourceforge.net/>`_, an audio tag editor
@@ -99,4 +99,4 @@ For historical and practical reasons, Mutagen shares a `mailing list
 (#quodlibet on irc.oftc.net) with Quod Libet. If you need help using Mutagen 
 or would like to discuss the library, please use the mailing list. Bugs and 
 patches should go to the `issue tracker 
-<https://bitbucket.org/lazka/mutagen/issues>`_.
+<https://github.com/quodlibet/mutagen/issues>`_.

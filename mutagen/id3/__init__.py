@@ -141,7 +141,7 @@ class ID3Header(object):
                 # a frame, and if it's *not* a frame we're going to be
                 # completely lost anyway, this seems to be the most
                 # correct check.
-                # http://code.google.com/p/quodlibet/issues/detail?id=126
+                # https://github.com/quodlibet/quodlibet/issues/126
                 self._flags ^= 0x40
                 extsize = 0
                 fileobj.seek(-4, 1)

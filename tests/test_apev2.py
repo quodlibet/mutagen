@@ -38,7 +38,7 @@ class Tis_valid_apev2_key(TestCase):
 
 
 class TAPEInvalidItemCount(TestCase):
-    # http://code.google.com/p/mutagen/issues/detail?id=145
+    # https://github.com/quodlibet/mutagen/issues/145
 
     def test_load(self):
         x = mutagen.apev2.APEv2(INVAL_ITEM_COUNT)
@@ -136,7 +136,7 @@ class TAPEWriter(TestCase):
         self.failIf("foobar" in tag.keys())
 
     def test_unicode_key(self):
-        # http://code.google.com/p/mutagen/issues/detail?id=123
+        # https://github.com/quodlibet/mutagen/issues/123
         tag = mutagen.apev2.APEv2(SAMPLE + ".new")
         tag["abc"] = u'\xf6\xe4\xfc'
         tag[u"cba"] = "abc"
