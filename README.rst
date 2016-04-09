@@ -17,8 +17,15 @@ dependencies outside the Python standard library.
 Installing
 ----------
 
- $ ./setup.py build
- $ su -c "./setup.py install"
+::
+
+    pip install mutagen
+
+or
+
+::
+
+    sudo apt-get install python-mutagen python3-mutagen
 
 
 Documentation
@@ -29,7 +36,7 @@ the source code and the sphinx documentation in the docs/ directory.
 
 To build the docs (needs sphinx):
 
- $ ./setup.py build_sphinx
+    ./setup.py build_sphinx
 
 The tools/ directory contains several useful examples.
 
@@ -44,15 +51,19 @@ Testing the Module
 .. image:: https://travis-ci.org/quodlibet/mutagen.svg?branch=master
     :target: https://travis-ci.org/quodlibet/mutagen
 
-To test Mutagen's MP3 reading support, run
- $ tools/mutagen-pony <your top-level MP3 directory here>
+To test Mutagen's MP3 reading support, run:
+
+    mutagen-pony <your top-level MP3 directory here>
+
 Mutagen will try to load all of them, and report any errors.
 
-To look at the tags in files, run
- $ tools/mutagen-inspect filename ...
+To look at the tags in files, run:
 
-To run our test suite,
- $ ./setup.py test
+    mutagen-inspect filename ...
+
+To run our test suite:
+
+    ./setup.py test
 
 
 Compatibility/Bugs
