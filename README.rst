@@ -41,6 +41,9 @@ The docs are also hosted on readthedocs.org:
 Testing the Module
 ------------------
 
+.. image:: https://travis-ci.org/quodlibet/mutagen.svg?branch=master
+    :target: https://travis-ci.org/quodlibet/mutagen
+
 To test Mutagen's MP3 reading support, run
  $ tools/mutagen-pony <your top-level MP3 directory here>
 Mutagen will try to load all of them, and report any errors.
