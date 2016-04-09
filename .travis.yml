@@ -8,4 +8,5 @@ python:
   - "3.5"
   - "nightly"
   - "pypy"
+  - "pypy3"
 script: python setup.py test
