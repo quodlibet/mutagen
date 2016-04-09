@@ -8,6 +8,7 @@ sys.path.insert(0, dir_)
 sys.path.insert(0, os.path.abspath(os.path.join(dir_, "..")))
 import mutagen
 
+needs_sphinx = "1.3"
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'ext']
 intersphinx_mapping = {'python': ('http://docs.python.org/2.7', None)}
@@ -24,3 +25,5 @@ pr_url_template = "https://github.com/quodlibet/mutagen/pull/%s"
 
 autodoc_member_order = "bysource"
 default_role = "obj"
+
+html_theme = "sphinx_rtd_theme"
