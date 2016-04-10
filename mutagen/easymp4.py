@@ -6,7 +6,7 @@
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
 
-from mutagen import Metadata
+from mutagen import Tags
 from mutagen._util import DictMixin, dict_match
 from mutagen.mp4 import MP4, MP4Tags, error, delete
 from ._compat import PY2, text_type, PY3
@@ -19,7 +19,7 @@ class EasyMP4KeyError(error, KeyError, ValueError):
     pass
 
 
-class EasyMP4Tags(DictMixin, Metadata):
+class EasyMP4Tags(DictMixin, Tags):
     """A file with MPEG-4 iTunes metadata.
 
     Like Vorbis comments, EasyMP4Tags keys are case-insensitive ASCII

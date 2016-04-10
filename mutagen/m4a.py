@@ -13,7 +13,7 @@ since 1.31: mutagen.m4a will no longer work; any operation that could fail
 
 import warnings
 
-from mutagen import FileType, Metadata, StreamInfo
+from mutagen import FileType, Tags, StreamInfo
 from ._util import DictProxy, MutagenError
 
 warnings.warn(
@@ -53,7 +53,7 @@ class M4ACover(bytes):
         return self
 
 
-class M4ATags(DictProxy, Metadata):
+class M4ATags(DictProxy, Tags):
 
     def load(self, atoms, fileobj):
         raise error("deprecated")

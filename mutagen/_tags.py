@@ -71,10 +71,28 @@ class PaddingInfo(object):
             type(self).__name__, self.size, self.padding)
 
 
-class Metadata(object):
-    """An abstract dict-like object.
+class Tags(object):
+    """`Tags` is the base class for many of the tag objects in Mutagen.
 
-    Metadata is the base class for many of the tag objects in Mutagen.
+    In many cases it has a dict like interface.
+    """
+
+    __module__ = "mutagen"
+
+    def pprint(self):
+        """
+        :returns: tag information
+        :rtype: mutagen.text
+        """
+
+        raise NotImplementedError
+
+
+class Metadata(Tags):
+    """Like :class:`Tags` but for standalone tagging formats that are not
+    solely managed by a container format.
+
+    Provides methods to load, save and delete tags.
     """
 
     __module__ = "mutagen"
@@ -83,11 +101,14 @@ class Metadata(object):
         if args or kwargs:
             self.load(*args, **kwargs)
 
-    def load(self, *args, **kwargs):
+    def load(self, filename, **kwargs):
         raise NotImplementedError
 
     def save(self, filename=None):
-        """Save changes to a file."""
+        """Save changes to a file.
+
+        :raises mutagen.MutagenError: if saving wasn't possible
+        """
 
         raise NotImplementedError
 
@@ -96,6 +117,8 @@ class Metadata(object):
 
         In most cases this means any traces of the tag will be removed
         from the file.
+
+        :raises mutagen.MutagenError: if deleting wasn't possible
         """
 
         raise NotImplementedError

@@ -23,6 +23,11 @@ Base Classes
     .. automethod:: save()
 
 
+.. autoclass:: mutagen.Tags
+
+    .. automethod:: pprint()
+
+
 .. autoclass:: mutagen.Metadata
 
     .. automethod:: delete()

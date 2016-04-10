@@ -16,8 +16,8 @@ class FileType(DictMixin):
 
     Attributes:
 
-    * info -- stream information (length, bitrate, sample rate)
-    * tags -- metadata tags, if any
+    * info -- :class:`StreamInfo` -- (length, bitrate, sample rate)
+    * tags -- :class:`Tags` -- metadata tags, if any
 
     Each file format has different potential tags and stream
     information.

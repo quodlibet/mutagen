@@ -10,7 +10,7 @@
 
 __all__ = ["ASF", "Open"]
 
-from mutagen import FileType, Metadata, StreamInfo
+from mutagen import FileType, Tags, StreamInfo
 from mutagen._util import resize_bytes, DictMixin
 from mutagen._compat import string_types, long_, PY3, izip
 
@@ -79,7 +79,7 @@ class ASFInfo(StreamInfo):
         return s
 
 
-class ASFTags(list, DictMixin, Metadata):
+class ASFTags(list, DictMixin, Tags):
     """Dictionary containing ASF attributes."""
 
     def __getitem__(self, key):

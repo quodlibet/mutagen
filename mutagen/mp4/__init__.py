@@ -26,7 +26,7 @@ were all consulted.
 import struct
 import sys
 
-from mutagen import FileType, Metadata, StreamInfo, PaddingInfo
+from mutagen import FileType, Tags, StreamInfo, PaddingInfo
 from mutagen._constants import GENRES
 from mutagen._util import (cdata, insert_bytes, DictProxy, MutagenError,
                            hashable, enum, get_size, resize_bytes)
@@ -252,7 +252,7 @@ def _item_sort_key(key, value):
     return (order.get(key[:4], last), len(repr(value)), repr(value))
 
 
-class MP4Tags(DictProxy, Metadata):
+class MP4Tags(DictProxy, Tags):
     r"""Dictionary containing Apple iTunes metadata list key/values.
 
     Keys are four byte identifiers, except for freeform ('----')
@@ -320,7 +320,9 @@ class MP4Tags(DictProxy, Metadata):
 
     def __init__(self, *args, **kwargs):
         self._failed_atoms = {}
-        super(MP4Tags, self).__init__(*args, **kwargs)
+        super(MP4Tags, self).__init__()
+        if args or kwargs:
+            self.load(*args, **kwargs)
 
     def load(self, atoms, fileobj):
         try:
@@ -994,6 +996,12 @@ class MP4(FileType):
                     reraise(MP4MetadataError, err, sys.exc_info()[2])
                 else:
                     self._padding = self.tags._padding
+
+    def save(self, filename=None, padding=None):
+        super(MP4, self).save(filename, padding=padding)
+
+    def delete(self, filename=None):
+        super(MP4, self).delete(filename)
 
     def add_tags(self):
         if self.tags is None:

@@ -57,7 +57,7 @@ class VorbisEncodingError(error):
     pass
 
 
-class VComment(mutagen.Metadata, list):
+class VComment(mutagen.Tags, list):
     """A Vorbis comment parser, accessor, and renderer.
 
     All comment ordering is preserved. A VComment is a list of
