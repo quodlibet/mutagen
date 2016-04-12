@@ -52,7 +52,7 @@ matrix:
 install:
   - if [ "$TYPE" == "windows" ]; then sudo dpkg --add-architecture i386; fi
   - if [ "$TYPE" == "windows" ]; then travis_retry sudo apt-get update -q; fi
-  - if [ "$TYPE" == "windows" ]; then travis_retry sudo apt-get install -y wine xvfb; fi
+  - if [ "$TYPE" == "windows" ]; then travis_retry sudo apt-get install --no-install-recommends -y wine xvfb; fi
 
 script:
   - if [ "$TYPE" == "linux" ]; then ./setup.py test; fi
