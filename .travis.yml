@@ -1,11 +1,54 @@
-dist: trusty
-language: python
-python:
-  - "2.6"
-  - "2.7"
-  - "3.3"
-  - "3.4"
-  - "3.5"
-  - "nightly"
-  - "pypy"
-script: python setup.py test
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      language: python
+      python: "2.6"
+      env: TYPE="linux" PYVER="2.6"
+    - os: linux
+      dist: trusty
+      language: python
+      python: "2.7"
+      env: TYPE="linux" PYVER="2.7"
+    - os: linux
+      dist: trusty
+      language: python
+      python: "3.3"
+      env: TYPE="linux" PYVER="3.3"
+    - os: linux
+      dist: trusty
+      language: python
+      python: "3.4"
+      env: TYPE="linux" PYVER="3.4"
+    - os: linux
+      dist: trusty
+      language: python
+      python: "3.5"
+      env: TYPE="linux" PYVER="3.5"
+    - os: linux
+      dist: trusty
+      language: python
+      python: "nightly"
+      env: TYPE="linux" PYVER="nightly"
+    - os: linux
+      dist: trusty
+      language: python
+      python: "pypy"
+      env: TYPE="linux" PYVER="pypy"
+    - os: linux
+      language: generic
+      sudo: required
+      dist: trusty
+      env: TYPE="windows" PYVER="2.7"
+    - os: linux
+      language: generic
+      sudo: required
+      dist: trusty
+      env: TYPE="windows" PYVER="3.4"
+
+install:
+  - if [ "$TYPE" == "windows" ]; then sudo apt-get install -y wine; fi
+
+script:
+  - if [ "$TYPE" == "linux" ]; then ./setup.py test; fi
+  - if [ "$TYPE" == "windows" ]; then ./run_wine.sh "$PYVER" ./setup.py test; fi
