@@ -45,6 +45,9 @@ matrix:
       sudo: required
       dist: trusty
       env: TYPE="windows" PYVER="3.4"
+    - os: osx
+      language: generic
+      env: TYPE="osx" PYVER="??"
 
 install:
   - if [ "$TYPE" == "windows" ]; then sudo dpkg --add-architecture i386; fi
@@ -53,4 +56,5 @@ install:
 
 script:
   - if [ "$TYPE" == "linux" ]; then ./setup.py test; fi
+  - if [ "$TYPE" == "osx" ]; then python ./setup.py test; fi
   - if [ "$TYPE" == "windows" ]; then xvfb-run -a ./run_wine.sh "$PYVER" ./setup.py test; fi
