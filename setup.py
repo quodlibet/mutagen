@@ -57,21 +57,21 @@ class distcheck(sdist):
         assert self.get_archive_files()
 
         # make sure MANIFEST.in includes all tracked files
-        if subprocess.call(["hg", "status"],
+        if subprocess.call(["git", "status"],
                            stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE) == 0:
             # contains the packaged files after run() is finished
             included_files = self.filelist.files
             assert included_files
 
-            process = subprocess.Popen(["hg", "locate"],
-                                       stdout=subprocess.PIPE,
-                                       universal_newlines=True)
+            process = subprocess.Popen(
+                ["git", "ls-tree", "-r", "HEAD", "--name-only"],
+                stdout=subprocess.PIPE, universal_newlines=True)
             out, err = process.communicate()
             assert process.returncode == 0
 
             tracked_files = out.splitlines()
-            for ignore in [".hgignore", ".hgtags"]:
+            for ignore in [".travis.yml", "run_wine.sh", ".gitignore"]:
                 tracked_files.remove(ignore)
 
             diff = set(tracked_files) - set(included_files)
