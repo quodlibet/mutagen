@@ -1,3 +1,22 @@
+1.32 - 2016.05.02
+-----------------
+
+* Add basic SMF (Standard MIDI File) support (:mod:`mutagen.smf`)
+* FLAC: add ``audio/flac`` mime type. :bug:`235`
+* ASF: Fixed crash when object size is longer than the header and file length
+  (Ben Ockmore)
+* ID3: Validate attributes set after frame creation :bb-pr:`8`
+  (Daniel Plachotich)
+* MP4: validate values in ``__setitem__`` so things don't fail in save()
+  :bug:`236`
+* tests: Fix SynchronizedTextSpec test on big-endian machines :bug:`247`
+  (Daniel Plachotich)
+* ID3: do type checking in ``__setitem__`` :bug:`251`
+* Building the documentation now requires sphinx >= 1.3
+* New :class:`mutagen.Tags` base class for tags
+* Moved from Bitbucket to GitHub
+
+
 1.31 - 2015.09.10
 -----------------
 
@@ -96,7 +115,7 @@
 * MP4:
 
   * New ``MP4Info.codec`` for identifying the contained audio codec
-    e.g. ``"mp4a"``, ``"alac"``, ``"mp4a.40.2"``, ``"ac-3"`` etc. :pr:`6`
+    e.g. ``"mp4a"``, ``"alac"``, ``"mp4a.40.2"``, ``"ac-3"`` etc. :bb-pr:`6`
   * New ``MP4Info.codec_description``: name of the audio codec
     e.g. ``"ALAC"``, ``"AAC LC"``, ``"AC-3"``
 
@@ -117,7 +136,7 @@
 * MP4:
 
   * Parse channels/sample_rate/bits_per_sample/bitrate for ALAC files
-    :bug:`199` :pr:`5` (Adrian Sampson, Christoph Reiter)
+    :bug:`199` :bb-pr:`5` (Adrian Sampson, Christoph Reiter)
 
 * ASF:
 
@@ -132,7 +151,7 @@
 
 * docs:
 
-  * New logo :pr:`4` (Samuel Messner)
+  * New logo :bb-pr:`4` (Samuel Messner)
   * Add examples for handling cover art in vorbiscomment :bug:`200`
   * Add examples for id3v2.3
 
