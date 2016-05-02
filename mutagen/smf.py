@@ -168,6 +168,7 @@ class SMFInfo(StreamInfo):
         """Raises SMFError"""
 
         self.length = _read_midi_length(fileobj)
+        """Length in seconds"""
 
     def pprint(self):
         return u"SMF, %.2f seconds" % self.length

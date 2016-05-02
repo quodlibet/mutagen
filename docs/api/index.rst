@@ -21,7 +21,7 @@ API
     oggtheora
     oggvorbis
     optimfrog
+    smf
     trueaudio
     vcomment
     wavpack
-
