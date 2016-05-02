@@ -219,7 +219,13 @@ else:
     data_files = []
 
 if __name__ == "__main__":
-    from mutagen import version_string
+    from mutagen import version
+
+    # convert to a setuptools compatible version string
+    if version[-1] == -1:
+        version_string = ".".join(map(str, version[:-1])) + ".dev0"
+    else:
+        version_string = ".".join(map(str, version))
 
     cmd_classes = {
         "clean": clean,
