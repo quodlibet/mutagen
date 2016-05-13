@@ -347,5 +347,12 @@ class TEasyID3(TestCase):
         self.id3.ListFallback = list_func
         self.failUnlessEqual(self.id3.keys(), ["somekey"])
 
+    def test_text_tags(self):
+        for tag in ["albumartist", "performer"]:
+            self.id3[tag] = u"foo"
+            self.id3.save(self.filename)
+            id3 = EasyID3(self.filename)
+            self.failUnlessEqual(id3[tag], [u"foo"])
+
     def tearDown(self):
         os.unlink(self.filename)
