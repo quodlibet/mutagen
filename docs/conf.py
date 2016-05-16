@@ -28,3 +28,7 @@ autodoc_member_order = "bysource"
 default_role = "obj"
 
 html_theme = "sphinx_rtd_theme"
+html_favicon = "images/favicon.ico"
+html_theme_options = {
+    "display_version": False,
+}
