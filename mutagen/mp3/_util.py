@@ -12,8 +12,8 @@ http://wiki.hydrogenaud.io/index.php?title=MP3
 
 from functools import partial
 
-from ._util import cdata, BitReader
-from ._compat import xrange, iterbytes, cBytesIO
+from mutagen._util import cdata, BitReader
+from mutagen._compat import xrange, iterbytes, cBytesIO
 
 
 class LAMEError(Exception):

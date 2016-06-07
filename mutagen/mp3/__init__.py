@@ -11,11 +11,13 @@
 import os
 import struct
 
-from ._compat import endswith, xrange
-from ._mp3util import XingHeader, XingHeaderError, VBRIHeader, VBRIHeaderError
 from mutagen import StreamInfo
 from mutagen._util import MutagenError, enum
+from mutagen._compat import endswith, xrange
 from mutagen.id3 import ID3FileType, BitPaddedInt, delete
+
+from ._util import XingHeader, XingHeaderError, VBRIHeader, VBRIHeaderError
+
 
 __all__ = ["MP3", "Open", "delete", "MP3"]
 

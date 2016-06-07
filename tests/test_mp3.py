@@ -7,7 +7,7 @@ from tests import TestCase, DATA_DIR
 from mutagen._compat import cBytesIO, text_type
 from mutagen.mp3 import MP3, error as MP3Error, delete, MPEGInfo, EasyMP3, \
     BitrateMode
-from mutagen._mp3util import XingHeader, XingHeaderError, VBRIHeader, \
+from mutagen.mp3._util import XingHeader, XingHeaderError, VBRIHeader, \
     VBRIHeaderError, LAMEHeader, LAMEError
 from mutagen.id3 import ID3
 from tempfile import mkstemp
