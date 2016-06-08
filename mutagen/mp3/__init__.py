@@ -8,11 +8,10 @@
 
 """MPEG audio stream information and tags."""
 
-import os
 import struct
 
 from mutagen import StreamInfo
-from mutagen._util import MutagenError, enum
+from mutagen._util import MutagenError, enum, BitReader, BitReaderError
 from mutagen._compat import endswith, xrange
 from mutagen.id3 import ID3FileType, BitPaddedInt, delete
 
@@ -77,6 +76,204 @@ def _guess_xing_bitrate_mode(xing):
 STEREO, JOINTSTEREO, DUALCHANNEL, MONO = xrange(4)
 
 
+class MPEGFrame(object):
+
+    # Map (version, layer) tuples to bitrates.
+    __BITRATE = {
+        (1, 1): [0, 32, 64, 96, 128, 160, 192, 224,
+                 256, 288, 320, 352, 384, 416, 448],
+        (1, 2): [0, 32, 48, 56, 64, 80, 96, 112, 128,
+                 160, 192, 224, 256, 320, 384],
+        (1, 3): [0, 32, 40, 48, 56, 64, 80, 96, 112,
+                 128, 160, 192, 224, 256, 320],
+        (2, 1): [0, 32, 48, 56, 64, 80, 96, 112, 128,
+                 144, 160, 176, 192, 224, 256],
+        (2, 2): [0, 8, 16, 24, 32, 40, 48, 56, 64,
+                 80, 96, 112, 128, 144, 160],
+    }
+
+    __BITRATE[(2, 3)] = __BITRATE[(2, 2)]
+    for i in xrange(1, 4):
+        __BITRATE[(2.5, i)] = __BITRATE[(2, i)]
+
+    # Map version to sample rates.
+    __RATES = {
+        1: [44100, 48000, 32000],
+        2: [22050, 24000, 16000],
+        2.5: [11025, 12000, 8000]
+    }
+
+    sketchy = False
+
+    def __init__(self, fileobj):
+        """Raises HeaderNotFoundError"""
+
+        self.frame_offset = fileobj.tell()
+
+        r = BitReader(fileobj)
+        try:
+            if r.bits(11) != 0x7ff:
+                raise HeaderNotFoundError("invalid sync")
+            version = r.bits(2)
+            layer = r.bits(2)
+            protection = r.bits(1)
+            bitrate = r.bits(4)
+            sample_rate = r.bits(2)
+            padding = r.bits(1)
+            r.skip(1) # private
+            self.mode = r.bits(2)
+            r.skip(6)
+        except BitReaderError:
+            raise HeaderNotFoundError("truncated header")
+
+        assert r.get_position() == 32 and r.is_aligned()
+
+        # try to be strict here to redice the chance of a false positive
+        if version == 1 or layer == 0 or sample_rate == 0x3 or \
+                bitrate == 0xf or bitrate == 0:
+            raise HeaderNotFoundError("invalid header")
+
+        self.channels = 1 if self.mode == MONO else 2
+
+        self.version = [2.5, None, 2, 1][version]
+        self.layer = 4 - layer
+        self.protected = not protection
+        self.padding = bool(padding)
+
+        self.bitrate = self.__BITRATE[(self.version, self.layer)][bitrate]
+        self.bitrate *= 1000
+        self.sample_rate = self.__RATES[self.version][sample_rate]
+
+        if self.layer == 1:
+            frame_size = 384
+            slot = 4
+        elif self.version >= 2 and self.layer == 3:
+            frame_size = 576
+            slot = 1
+        else:
+            frame_size = 1152
+            slot = 1
+
+        frame_length = (
+            ((frame_size // 8 * self.bitrate) // self.sample_rate)
+             + padding) * slot
+
+        self.sketchy = True
+
+        # Try to find/parse the Xing header, which trumps the above length
+        # and bitrate calculation.
+        if self.layer == 3:
+            self._parse_vbr_header(fileobj, self.frame_offset, frame_size)
+
+        fileobj.seek(self.frame_offset + frame_length, 0)
+
+    def _parse_vbr_header(self, fileobj, frame_offset, frame_size):
+        """Does not raise"""
+
+        # Xing
+        xing_offset = XingHeader.get_offset(self)
+        fileobj.seek(frame_offset + xing_offset, 0)
+        try:
+            xing = XingHeader(fileobj)
+        except XingHeaderError:
+            pass
+        else:
+            lame = xing.lame_header
+            self.sketchy = False
+            self.bitrate_mode = _guess_xing_bitrate_mode(xing)
+            if xing.frames != -1:
+                samples = frame_size * xing.frames
+                if lame is not None:
+                    samples -= lame.encoder_delay_start
+                    samples -= lame.encoder_padding_end
+                self.length = float(samples) / self.sample_rate
+            if xing.bytes != -1 and self.length:
+                self.bitrate = int((xing.bytes * 8) / self.length)
+            if xing.lame_version:
+                self.encoder_info = u"LAME %s" % xing.lame_version
+            if lame is not None:
+                self.track_gain = lame.track_gain_adjustment
+                self.track_peak = lame.track_peak
+                self.album_gain = lame.album_gain_adjustment
+            return
+
+        # VBRI
+        vbri_offset = VBRIHeader.get_offset(self)
+        fileobj.seek(frame_offset + vbri_offset, 0)
+        try:
+            vbri = VBRIHeader(fileobj)
+        except VBRIHeaderError:
+            pass
+        else:
+            self.bitrate_mode = BitrateMode.VBR
+            self.encoder_info = u"FhG"
+            self.sketchy = False
+            self.length = float(frame_size * vbri.frames) / self.sample_rate
+            if self.length:
+                self.bitrate = int((vbri.bytes * 8) / self.length)
+
+
+def skip_id3(fileobj):
+    """Might raise IOError"""
+
+    # WMP writes multiple id3s, so skip as many as we find
+    while True:
+        idata = fileobj.read(10)
+        try:
+            id3, insize = struct.unpack('>3sxxx4s', idata)
+        except struct.error:
+            id3, insize = b'', 0
+        insize = BitPaddedInt(insize)
+        if id3 == b'ID3' and insize > 0:
+            fileobj.seek(insize, 1)
+        else:
+            fileobj.seek(-len(idata), 1)
+            break
+
+
+def iter_sync(fileobj, max_read):
+    """Iterate over a fileobj and yields on each mpeg sync.
+
+    When yielding the fileobj offset is right before the sync and can be
+    changed between iterations without affecting the iteration process.
+
+    Might raise IOError.
+    """
+
+    read = 0
+    size = 2
+    last_byte = b""
+    is_second = lambda b: ord(b) & 0xe0 == 0xe0
+
+    while read < max_read:
+        data_offset = fileobj.tell()
+        new_data = fileobj.read(min(max_read - read, size))
+        if not new_data:
+            return
+        read += len(new_data)
+
+        if last_byte == b"\xff" and is_second(new_data[0:1]):
+            fileobj.seek(data_offset - 1, 0)
+            yield
+
+        size *= 2
+        last_byte = new_data[-1:]
+
+        find_offset = 0
+        while True:
+            index = new_data.find(b"\xff", find_offset)
+            # if not found or the last byte -> read more
+            if index == -1 or index == len(new_data) - 1:
+                break
+
+            if is_second(new_data[index + 1:index + 2]):
+                fileobj.seek(data_offset + index, 0)
+                yield
+            find_offset = index + 1
+
+        fileobj.seek(data_offset + len(new_data), 0)
+
+
 class MPEGInfo(StreamInfo):
     """MPEG audio stream information
 
@@ -112,31 +309,6 @@ class MPEGInfo(StreamInfo):
     * sample_rate -- audio sample rate, in Hz
     """
 
-    # Map (version, layer) tuples to bitrates.
-    __BITRATE = {
-        (1, 1): [0, 32, 64, 96, 128, 160, 192, 224,
-                 256, 288, 320, 352, 384, 416, 448],
-        (1, 2): [0, 32, 48, 56, 64, 80, 96, 112, 128,
-                 160, 192, 224, 256, 320, 384],
-        (1, 3): [0, 32, 40, 48, 56, 64, 80, 96, 112,
-                 128, 160, 192, 224, 256, 320],
-        (2, 1): [0, 32, 48, 56, 64, 80, 96, 112, 128,
-                 144, 160, 176, 192, 224, 256],
-        (2, 2): [0, 8, 16, 24, 32, 40, 48, 56, 64,
-                 80, 96, 112, 128, 144, 160],
-    }
-
-    __BITRATE[(2, 3)] = __BITRATE[(2, 2)]
-    for i in xrange(1, 4):
-        __BITRATE[(2.5, i)] = __BITRATE[(2, i)]
-
-    # Map version to sample rates.
-    __RATES = {
-        1: [44100, 48000, 32000],
-        2: [22050, 24000, 16000],
-        2.5: [11025, 12000, 8000]
-    }
-
     sketchy = False
     encoder_info = u""
     bitrate_mode = BitrateMode.UNKNOWN
@@ -151,164 +323,73 @@ class MPEGInfo(StreamInfo):
         loading files significantly faster.
         """
 
-        try:
-            size = os.path.getsize(fileobj.name)
-        except (IOError, OSError, AttributeError):
-            fileobj.seek(0, 2)
-            size = fileobj.tell()
-
-        # If we don't get an offset, try to skip an ID3v2 tag.
         if offset is None:
             fileobj.seek(0, 0)
-            idata = fileobj.read(10)
-            try:
-                id3, insize = struct.unpack('>3sxxx4s', idata)
-            except struct.error:
-                id3, insize = b'', 0
-            insize = BitPaddedInt(insize)
-            if id3 == b'ID3' and insize > 0:
-                offset = insize + 10
-            else:
-                offset = 0
+        else:
+            fileobj.seek(offset, 0)
 
-        # Try to find two valid headers (meaning, very likely MPEG data)
-        # at the given offset, 30% through the file, 60% through the file,
-        # and 90% through the file.
-        for i in [offset, 0.3 * size, 0.6 * size, 0.9 * size]:
-            try:
-                self.__try(fileobj, int(i), size - offset)
-            except error:
-                pass
-            else:
+        # skip anyway, because wmp stacks multiple id3 tags
+        skip_id3(fileobj)
+
+        # find a sync in the first 1024K, give up after some invalid syncs
+        max_read = 1024 * 1024
+        max_syncs = 128
+        enough_frames = 4
+        min_frames = 2
+
+        self.sketchy = True
+        frames = []
+        first_frame = None
+
+        for _ in iter_sync(fileobj, max_read):
+            max_syncs -= 1
+            if max_syncs <= 0:
                 break
-        # If we can't find any two consecutive frames, try to find just
-        # one frame back at the original offset given.
-        else:
-            self.__try(fileobj, offset, size - offset, False)
-            self.sketchy = True
 
-    def __try(self, fileobj, offset, real_size, check_second=True):
-        # This is going to be one really long function; bear with it,
-        # because there's not really a sane point to cut it up.
-        fileobj.seek(offset, 0)
-
-        # We "know" we have an MPEG file if we find two frames that look like
-        # valid MPEG data. If we can't find them in 32k of reads, something
-        # is horribly wrong (the longest frame can only be about 4k). This
-        # is assuming the offset didn't lie.
-        data = fileobj.read(32768)
-
-        frame_1 = data.find(b"\xff")
-        while 0 <= frame_1 <= (len(data) - 4):
-            frame_data = struct.unpack(">I", data[frame_1:frame_1 + 4])[0]
-            if ((frame_data >> 16) & 0xE0) != 0xE0:
-                frame_1 = data.find(b"\xff", frame_1 + 2)
-            else:
-                version = (frame_data >> 19) & 0x3
-                layer = (frame_data >> 17) & 0x3
-                protection = (frame_data >> 16) & 0x1
-                bitrate = (frame_data >> 12) & 0xF
-                sample_rate = (frame_data >> 10) & 0x3
-                padding = (frame_data >> 9) & 0x1
-                # private = (frame_data >> 8) & 0x1
-                self.mode = (frame_data >> 6) & 0x3
-                # mode_extension = (frame_data >> 4) & 0x3
-                # copyright = (frame_data >> 3) & 0x1
-                # original = (frame_data >> 2) & 0x1
-                # emphasis = (frame_data >> 0) & 0x3
-                if (version == 1 or layer == 0 or sample_rate == 0x3 or
-                        bitrate == 0 or bitrate == 0xF):
-                    frame_1 = data.find(b"\xff", frame_1 + 2)
-                else:
+            for _ in xrange(enough_frames):
+                try:
+                    frame = MPEGFrame(fileobj)
+                except HeaderNotFoundError:
                     break
-        else:
-            raise HeaderNotFoundError("can't sync to an MPEG frame")
+                frames.append(frame)
+                if not frame.sketchy:
+                    break
 
-        self.channels = 1 if self.mode == MONO else 2
+           # if we have min frames, save it in case this is all we get
+            if len(frames) >= min_frames and first_frame is None:
+                first_frame = frames[0]
 
-        # There is a serious problem here, which is that many flags
-        # in an MPEG header are backwards.
-        self.version = [2.5, None, 2, 1][version]
-        self.layer = 4 - layer
-        self.protected = not protection
-        self.padding = bool(padding)
+            # if the last frame was a non-sketchy one (has a valid vbr header)
+            # we use that
+            if frames and not frames[-1].sketchy:
+                first_frame = frames[-1]
+                self.sketchy = False
+                break
 
-        self.bitrate = self.__BITRATE[(self.version, self.layer)][bitrate]
-        self.bitrate *= 1000
-        self.sample_rate = self.__RATES[self.version][sample_rate]
+            # if we have enough valid frames, use the first
+            if len(frames) >= enough_frames:
+                first_frame = frames[0]
+                self.sketchy = False
+                break
 
-        if self.layer == 1:
-            frame_length = (
-                (12 * self.bitrate // self.sample_rate) + padding) * 4
-            frame_size = 384
-        elif self.version >= 2 and self.layer == 3:
-            frame_length = (72 * self.bitrate // self.sample_rate) + padding
-            frame_size = 576
-        else:
-            frame_length = (144 * self.bitrate // self.sample_rate) + padding
-            frame_size = 1152
+            # otherwise start over with the next sync
+            del frames[:]
 
-        if check_second:
-            possible = int(frame_1 + frame_length)
-            if possible > len(data) + 4:
-                raise HeaderNotFoundError("can't sync to second MPEG frame")
-            try:
-                frame_data = struct.unpack(
-                    ">H", data[possible:possible + 2])[0]
-            except struct.error:
-                raise HeaderNotFoundError("can't sync to second MPEG frame")
-            if (frame_data & 0xFFE0) != 0xFFE0:
-                raise HeaderNotFoundError("can't sync to second MPEG frame")
+        if first_frame is None:
+            raise HeaderNotFoundError("can't sync to MPEG frame")
 
-        self.length = 8 * real_size / float(self.bitrate)
+        assert first_frame
 
-        # Try to find/parse the Xing header, which trumps the above length
-        # and bitrate calculation.
+        self.length = -1
+        sketchy = self.sketchy
+        self.__dict__.update(first_frame.__dict__)
+        self.sketchy = sketchy
 
-        if self.layer != 3:
-            return
-
-        # Xing
-        xing_offset = XingHeader.get_offset(self)
-        fileobj.seek(offset + frame_1 + xing_offset, 0)
-        try:
-            xing = XingHeader(fileobj)
-        except XingHeaderError:
-            pass
-        else:
-            lame = xing.lame_header
-            self.sketchy = False
-            self.bitrate_mode = _guess_xing_bitrate_mode(xing)
-            if xing.frames != -1:
-                samples = frame_size * xing.frames
-                if lame is not None:
-                    samples -= lame.encoder_delay_start
-                    samples -= lame.encoder_padding_end
-                self.length = float(samples) / self.sample_rate
-            if xing.bytes != -1 and self.length:
-                self.bitrate = int((xing.bytes * 8) / self.length)
-            if xing.lame_version:
-                self.encoder_info = u"LAME %s" % xing.lame_version
-            if lame is not None:
-                self.track_gain = lame.track_gain_adjustment
-                self.track_peak = lame.track_peak
-                self.album_gain = lame.album_gain_adjustment
-            return
-
-        # VBRI
-        vbri_offset = VBRIHeader.get_offset(self)
-        fileobj.seek(offset + frame_1 + vbri_offset, 0)
-        try:
-            vbri = VBRIHeader(fileobj)
-        except VBRIHeaderError:
-            pass
-        else:
-            self.bitrate_mode = BitrateMode.VBR
-            self.encoder_info = u"FhG"
-            self.sketchy = False
-            self.length = float(frame_size * vbri.frames) / self.sample_rate
-            if self.length:
-                self.bitrate = int((vbri.bytes * 8) / self.length)
+        # no length, estimate based on file size
+        if self.length == -1:
+            fileobj.seek(0, 2)
+            content_size = fileobj.tell() - first_frame.frame_offset
+            self.length = 8 * content_size / float(self.bitrate)
 
     def pprint(self):
         info = str(self.bitrate_mode).split(".", 1)[-1]

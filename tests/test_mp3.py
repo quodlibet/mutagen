@@ -4,13 +4,37 @@ import os
 import shutil
 
 from tests import TestCase, DATA_DIR
-from mutagen._compat import cBytesIO, text_type
+from mutagen._compat import cBytesIO, text_type, xrange
 from mutagen.mp3 import MP3, error as MP3Error, delete, MPEGInfo, EasyMP3, \
-    BitrateMode
+    BitrateMode, iter_sync
 from mutagen.mp3._util import XingHeader, XingHeaderError, VBRIHeader, \
     VBRIHeaderError, LAMEHeader, LAMEError
 from mutagen.id3 import ID3
 from tempfile import mkstemp
+
+
+class TMP3Util(TestCase):
+
+    def test_find_sync(self):
+
+        def get_syncs(fileobj, max_read):
+            start = fileobj.tell()
+            pos = []
+            for i in iter_sync(fileobj, max_read):
+                pos.append(fileobj.tell() - start)
+            return pos
+
+        self.assertEqual(get_syncs(cBytesIO(b"abc"), 100), [])
+        self.assertEqual(get_syncs(cBytesIO(b""), 100), [])
+        self.assertEqual(get_syncs(cBytesIO(b"a\xff\xe0"), 1), [])
+
+        self.assertEqual(get_syncs(cBytesIO(b"a\xff\xc0\xff\xe0"), 100), [3])
+        self.assertEqual(
+            get_syncs(cBytesIO(b"a\xff\xe0\xff\xe0\xff\xe0"), 100), [1, 3, 5])
+
+        for i in xrange(400):
+            fileobj = cBytesIO(b"\x00" * i + b"\xff\xe0")
+            self.assertEqual(get_syncs(fileobj, 100 + i), [i])
 
 
 class TMP3(TestCase):
@@ -103,6 +127,13 @@ class TMP3(TestCase):
         self.failUnlessRaises(
             MP3Error, MP3, os.path.join(DATA_DIR, 'empty.ofr'))
 
+        self.failUnlessRaises(
+            MP3Error, MP3, os.path.join(DATA_DIR, 'emptyfile.mp3'))
+
+    def test_too_short(self):
+        self.failUnlessRaises(
+            MP3Error, MP3, os.path.join(DATA_DIR, 'too-short.mp3'))
+
     def test_sketchy(self):
         self.failIf(self.mp3.info.sketchy)
         self.failIf(self.mp3_2.info.sketchy)
@@ -112,6 +143,7 @@ class TMP3(TestCase):
     def test_sketchy_notmp3(self):
         notmp3 = MP3(os.path.join(DATA_DIR, "silence-44-s.flac"))
         self.failUnless(notmp3.info.sketchy)
+        self.assertTrue(u"sketchy" in notmp3.info.pprint())
 
     def test_pprint(self):
         self.failUnless(self.mp3.pprint())
@@ -197,7 +229,7 @@ class TMPEGInfo(TestCase):
     def test_not_real_file(self):
         filename = os.path.join(DATA_DIR, "silence-44-s-v1.mp3")
         fileobj = cBytesIO(open(filename, "rb").read(20))
-        MPEGInfo(fileobj)
+        self.failUnlessRaises(MP3Error, MPEGInfo, fileobj)
 
     def test_empty(self):
         fileobj = cBytesIO(b"")
@@ -232,13 +264,6 @@ class TEasyMP3(TestCase):
 
     def tearDown(self):
         os.unlink(self.filename)
-
-
-class Issue72_TooShortFile(TestCase):
-    def test_load(self):
-        mp3 = MP3(os.path.join(DATA_DIR, 'too-short.mp3'))
-        self.failUnlessEqual(mp3["TIT2"], "Track 10")
-        self.failUnlessAlmostEqual(mp3.info.length, 0.03, 2)
 
 
 class TXingHeader(TestCase):
