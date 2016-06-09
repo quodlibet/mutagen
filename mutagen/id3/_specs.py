@@ -84,6 +84,9 @@ class PictureType(object):
     PUBLISHER_LOGOTYPE = 20
     """Publisher/Studio logotype"""
 
+    def _pprint(self):
+        return text_type(self).split(".", 1)[-1].lower().replace("_", " ")
+
 
 class SpecError(Exception):
     pass

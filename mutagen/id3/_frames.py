@@ -1134,8 +1134,12 @@ class APIC(Frame):
             super(APIC, self)._validate_from_22(other, checker)
 
     def _pprint(self):
-        return "%s (%s, %d bytes)" % (
-            self.desc, self.mime, len(self.data))
+        type_desc = text_type(self.type)
+        if hasattr(self.type, "_pprint"):
+            type_desc = self.type._pprint()
+
+        return "%s, %s (%s, %d bytes)" % (
+            type_desc, self.desc, self.mime, len(self.data))
 
 
 class PCNT(Frame):

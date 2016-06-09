@@ -4,6 +4,7 @@ from tests import TestCase
 
 from mutagen.id3 import Frames, Frames_2_2, ID3, ID3Header
 from mutagen._compat import text_type, xrange, PY2
+from mutagen.id3 import APIC
 
 _22 = ID3()
 _22._header = ID3Header()
@@ -34,7 +35,7 @@ class FrameSanityChecks(TestCase):
         self.assertFalse(hasattr(new, "data"))
 
     def test_PIC_upgrade(self):
-        from mutagen.id3 import PIC, APIC
+        from mutagen.id3 import PIC
         frame = PIC(encoding=0, mime="PNG", desc="bla", type=3, data=b"\x00")
         new = APIC(frame)
         self.assertEqual(new.encoding, 0)
@@ -148,31 +149,6 @@ class FrameSanityChecks(TestCase):
         frame = POPM(email="e", rating=42)
         self.assertEqual(frame.HashKey, "POPM:e")
         frame._pprint()
-
-    def test_APIC(self):
-        from mutagen.id3 import APIC
-
-        frame = APIC(encoding=0, mime=u"m", type=3, desc=u"d", data=b"\x42")
-        self.assertEqual(frame.HashKey, "APIC:d")
-        frame._pprint()
-
-    def test_APIC_repr(self):
-        from mutagen.id3 import APIC
-
-        frame = APIC(encoding=0, mime=u"m", type=3, desc=u"d", data=b"\x42")
-        if PY2:
-            expected = (
-                "APIC(encoding=<Encoding.LATIN1: 0>, mime=u'm', "
-                "type=<PictureType.COVER_FRONT: 3>, desc=u'd', data='B')")
-        else:
-            expected = (
-                "APIC(encoding=<Encoding.LATIN1: 0>, mime='m', "
-                "type=<PictureType.COVER_FRONT: 3>, desc='d', data=b'B')")
-
-        self.assertEqual(repr(frame), expected)
-        new_frame = APIC()
-        new_frame._readData(frame._writeData())
-        self.assertEqual(repr(new_frame), expected)
 
     def test_EQU2(self):
         from mutagen.id3 import EQU2
@@ -356,11 +332,6 @@ class FrameSanityChecks(TestCase):
         from mutagen.id3 import RVA2
         self.assertEquals(RVA2(gain=1).HashKey, RVA2(gain=2).HashKey)
         self.assertNotEquals(RVA2(desc="a").HashKey, RVA2(desc="b").HashKey)
-
-    def test_multi_APIC(self):
-        from mutagen.id3 import APIC
-        self.assertEquals(APIC(data=b"1").HashKey, APIC(data=b"2").HashKey)
-        self.assertNotEquals(APIC(desc="a").HashKey, APIC(desc="b").HashKey)
 
     def test_multi_POPM(self):
         from mutagen.id3 import POPM
@@ -579,3 +550,35 @@ class TRVA2(TestCase):
         r = RVA2(gain=1, channel=1, peak=1)
         self.assertEqual(r, r)
         self.assertNotEqual(r, 42)
+
+
+class TAPIC(TestCase):
+
+    def test_hash(self):
+        frame = APIC(encoding=0, mime=u"m", type=3, desc=u"d", data=b"\x42")
+        self.assertEqual(frame.HashKey, "APIC:d")
+
+    def test_pprint(self):
+        frame = APIC(
+            encoding=0, mime=u"mime", type=3, desc=u"desc", data=b"\x42")
+        self.assertEqual(frame._pprint(), u"cover front, desc (mime, 1 bytes)")
+
+    def test_multi(self):
+        self.assertEquals(APIC(data=b"1").HashKey, APIC(data=b"2").HashKey)
+        self.assertNotEquals(APIC(desc="a").HashKey, APIC(desc="b").HashKey)
+
+    def test_repr(self):
+        frame = APIC(encoding=0, mime=u"m", type=3, desc=u"d", data=b"\x42")
+        if PY2:
+            expected = (
+                "APIC(encoding=<Encoding.LATIN1: 0>, mime=u'm', "
+                "type=<PictureType.COVER_FRONT: 3>, desc=u'd', data='B')")
+        else:
+            expected = (
+                "APIC(encoding=<Encoding.LATIN1: 0>, mime='m', "
+                "type=<PictureType.COVER_FRONT: 3>, desc='d', data=b'B')")
+
+        self.assertEqual(repr(frame), expected)
+        new_frame = APIC()
+        new_frame._readData(frame._writeData())
+        self.assertEqual(repr(new_frame), expected)
