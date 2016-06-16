@@ -21,7 +21,7 @@ import sys
 import zlib
 
 from mutagen import FileType
-from mutagen._util import cdata, resize_bytes, MutagenError
+from mutagen._util import cdata, resize_bytes, MutagenError, loadfile
 from ._compat import cBytesIO, reraise, chr_, izip, xrange
 
 
@@ -491,19 +491,21 @@ class OggFileType(FileType):
     _Error = None
     _mimes = ["application/ogg", "application/x-ogg"]
 
-    def load(self, filename):
+    @loadfile()
+    def load(self, filething):
         """Load file information from a filename."""
 
-        self.filename = filename
-        with open(filename, "rb") as fileobj:
-            try:
-                self.info = self._Info(fileobj)
-                self.tags = self._Tags(fileobj, self.info)
-                self.info._post_tags(fileobj)
-            except error as e:
-                reraise(self._Error, e, sys.exc_info()[2])
-            except EOFError:
-                raise self._Error("no appropriate stream found")
+        self.filename = filething.filename
+        fileobj = filething.fileobj
+
+        try:
+            self.info = self._Info(fileobj)
+            self.tags = self._Tags(fileobj, self.info)
+            self.info._post_tags(fileobj)
+        except error as e:
+            reraise(self._Error, e, sys.exc_info()[2])
+        except EOFError:
+            raise self._Error("no appropriate stream found")
 
     def delete(self, filename=None):
         """Remove tags from a file.

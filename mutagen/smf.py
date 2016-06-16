@@ -11,6 +11,7 @@ import struct
 
 from mutagen import StreamInfo, MutagenError
 from mutagen._file import FileType
+from mutagen._util import loadfile
 from mutagen._compat import xrange, endswith
 
 
@@ -179,11 +180,11 @@ class SMF(FileType):
 
     _mimes = ["audio/midi", "audio/x-midi"]
 
-    def load(self, filename):
-        self.filename = filename
+    @loadfile()
+    def load(self, filething):
+        self.filename = filething.filename
         try:
-            with open(filename, "rb") as h:
-                self.info = SMFInfo(h)
+            self.info = SMFInfo(filething.fileobj)
         except IOError as e:
             raise SMFError(e)
 

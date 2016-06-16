@@ -7,7 +7,7 @@
 
 import warnings
 
-from mutagen._util import DictMixin
+from mutagen._util import DictMixin, loadfile
 from mutagen._compat import izip
 
 
@@ -34,12 +34,12 @@ class FileType(DictMixin):
     filename = None
     _mimes = ["application/octet-stream"]
 
-    def __init__(self, filename=None, *args, **kwargs):
-        if filename is None:
+    def __init__(self, *args, **kwargs):
+        if not args and not kwargs:
             warnings.warn("FileType constructor requires a filename",
                           DeprecationWarning)
         else:
-            self.load(filename, *args, **kwargs)
+            self.load(*args, **kwargs)
 
     def load(self, filename, *args, **kwargs):
         raise NotImplementedError
@@ -181,7 +181,8 @@ class StreamInfo(object):
         raise NotImplementedError
 
 
-def File(filename, options=None, easy=False):
+@loadfile(method=False)
+def File(filething, options=None, easy=False):
     """Guess the type of the file and try to open it.
 
     The file type is decided by several things, such as the first 128
@@ -238,18 +239,20 @@ def File(filename, options=None, easy=False):
     if not options:
         return None
 
-    with open(filename, "rb") as fileobj:
-        header = fileobj.read(128)
-        # Sort by name after score. Otherwise import order affects
-        # Kind sort order, which affects treatment of things with
-        # equals scores.
-        results = [(Kind.score(filename, fileobj, header), Kind.__name__)
-                   for Kind in options]
+    fileobj = filething.fileobj
+
+    header = fileobj.read(128)
+    # Sort by name after score. Otherwise import order affects
+    # Kind sort order, which affects treatment of things with
+    # equals scores.
+    results = [(Kind.score(filething.name, fileobj, header), Kind.__name__)
+               for Kind in options]
 
     results = list(izip(results, options))
     results.sort()
     (score, name), Kind = results[-1]
     if score > 0:
-        return Kind(filename)
+        fileobj.seek(0, 0)
+        return Kind(fileobj)
     else:
         return None

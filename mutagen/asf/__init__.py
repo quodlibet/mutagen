@@ -11,7 +11,7 @@
 __all__ = ["ASF", "Open"]
 
 from mutagen import FileType, Tags, StreamInfo
-from mutagen._util import resize_bytes, DictMixin
+from mutagen._util import resize_bytes, DictMixin, loadfile
 from mutagen._compat import string_types, long_, PY3, izip
 
 from ._util import error, ASFError, ASFHeaderError
@@ -221,22 +221,23 @@ class ASF(FileType):
     tags = None
     """A `ASFTags` instance"""
 
-    def load(self, filename):
-        self.filename = filename
+    @loadfile()
+    def load(self, filething):
+        self.filename = filething.filename
+        fileobj = filething.fileobj
+
         self.info = ASFInfo()
         self.tags = ASFTags()
 
-        with open(filename, "rb") as fileobj:
-            self._tags = {}
+        self._tags = {}
+        self._header = HeaderObject.parse_full(self, fileobj)
 
-            self._header = HeaderObject.parse_full(self, fileobj)
+        for guid in [ContentDescriptionObject.GUID,
+                ExtendedContentDescriptionObject.GUID, MetadataObject.GUID,
+                MetadataLibraryObject.GUID]:
+            self.tags.extend(self._tags.pop(guid, []))
 
-            for guid in [ContentDescriptionObject.GUID,
-                    ExtendedContentDescriptionObject.GUID, MetadataObject.GUID,
-                    MetadataLibraryObject.GUID]:
-                self.tags.extend(self._tags.pop(guid, []))
-
-            assert not self._tags
+        assert not self._tags
 
     def save(self, filename=None, padding=None):
         """Save tag changes back to the loaded file.

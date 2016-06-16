@@ -38,7 +38,7 @@ import errno
 from struct import unpack, pack, error as StructError
 
 import mutagen
-from mutagen._util import insert_bytes, delete_bytes, DictProxy, enum
+from mutagen._util import insert_bytes, delete_bytes, DictProxy, enum, loadfile
 from mutagen._tags import PaddingInfo
 from .._compat import chr_, PY3
 
@@ -221,7 +221,8 @@ class ID3(DictProxy, mutagen.Metadata):
         # XXX: for aiff to adjust the offset..
         pass
 
-    def load(self, filename, known_frames=None, translate=True, v2_version=4):
+    @loadfile()
+    def load(self, filething, known_frames=None, translate=True, v2_version=4):
         """Load tags from a filename.
 
         Keyword arguments:
@@ -241,47 +242,48 @@ class ID3(DictProxy, mutagen.Metadata):
             mutagen.id3.ID3(filename, known_frames=my_frames)
         """
 
+        self.filename = filething.filename
+        fileobj = filething.fileobj
+
         if v2_version not in (3, 4):
             raise ValueError("Only 3 and 4 possible for v2_version")
 
-        self.filename = filename
         self.unknown_frames = []
         self.__known_frames = known_frames
         self._header = None
         self._padding = 0  # for testing
 
-        with open(filename, 'rb') as fileobj:
-            self._pre_load_header(fileobj)
+        self._pre_load_header(fileobj)
+
+        try:
+            self._header = ID3Header(fileobj)
+        except (ID3NoHeaderError, ID3UnsupportedVersionError):
+            frames, offset = _find_id3v1(fileobj)
+            if frames is None:
+                raise
+
+            self.version = ID3Header._V11
+            for v in frames.values():
+                self.add(v)
+        else:
+            frames = self.__known_frames
+            if frames is None:
+                if self.version >= ID3Header._V23:
+                    frames = Frames
+                elif self.version >= ID3Header._V22:
+                    frames = Frames_2_2
 
             try:
-                self._header = ID3Header(fileobj)
-            except (ID3NoHeaderError, ID3UnsupportedVersionError):
-                frames, offset = _find_id3v1(fileobj)
-                if frames is None:
-                    raise
+                data = _fullread(fileobj, self.size - 10)
+            except (ValueError, EOFError, IOError) as e:
+                raise error(e)
 
-                self.version = ID3Header._V11
-                for v in frames.values():
-                    self.add(v)
-            else:
-                frames = self.__known_frames
-                if frames is None:
-                    if self.version >= ID3Header._V23:
-                        frames = Frames
-                    elif self.version >= ID3Header._V22:
-                        frames = Frames_2_2
-
-                try:
-                    data = _fullread(fileobj, self.size - 10)
-                except (ValueError, EOFError, IOError) as e:
-                    raise error(e)
-
-                for frame in self.__read_frames(data, frames=frames):
-                    if isinstance(frame, Frame):
-                        self.add(frame)
-                    else:
-                        self.unknown_frames.append(frame)
-                self.__unknown_version = self.version[:2]
+            for frame in self.__read_frames(data, frames=frames):
+                if isinstance(frame, Frame):
+                    self.add(frame)
+                else:
+                    self.unknown_frames.append(frame)
+            self.__unknown_version = self.version[:2]
 
         if translate:
             if v2_version == 3:
@@ -1062,12 +1064,16 @@ class ID3FileType(mutagen.FileType):
         else:
             raise error("an ID3 tag already exists")
 
-    def load(self, filename, ID3=None, **kwargs):
+    @loadfile()
+    def load(self, filething, ID3=None, **kwargs):
         """Load stream and tag information from a file.
 
         A custom tag reader may be used in instead of the default
         mutagen.id3.ID3 object, e.g. an EasyID3 reader.
         """
+
+        self.filename = filething.filename
+        fileobj = filething.fileobj
 
         if ID3 is None:
             ID3 = self.ID3
@@ -1075,9 +1081,9 @@ class ID3FileType(mutagen.FileType):
             # If this was initialized with EasyID3, remember that for
             # when tags are auto-instantiated in add_tags.
             self.ID3 = ID3
-        self.filename = filename
+
         try:
-            self.tags = ID3(filename, **kwargs)
+            self.tags = ID3(fileobj, **kwargs)
         except ID3NoHeaderError:
             self.tags = None
 
@@ -1089,5 +1095,4 @@ class ID3FileType(mutagen.FileType):
         else:
             offset = None
 
-        with open(filename, "rb") as fileobj:
-            self.info = self._Info(fileobj, offset)
+        self.info = self._Info(fileobj, offset)

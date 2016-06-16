@@ -18,7 +18,7 @@ from mutagen import StreamInfo, FileType
 
 from mutagen.id3 import ID3
 from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
-from mutagen._util import resize_bytes, delete_bytes, MutagenError
+from mutagen._util import resize_bytes, delete_bytes, MutagenError, loadfile
 
 __all__ = ["AIFF", "Open", "delete"]
 
@@ -185,7 +185,7 @@ class IFFFile(object):
             return self.__chunks[id_]
         except KeyError:
             raise KeyError(
-                "%r has no %r chunk" % (self.__fileobj.name, id_))
+                "%r has no %r chunk" % (self.__fileobj, id_))
 
     def __delitem__(self, id_):
         """Remove a chunk from the IFF file"""
@@ -339,19 +339,24 @@ class AIFF(FileType):
         else:
             raise error("an ID3 tag already exists")
 
-    def load(self, filename, **kwargs):
+    @loadfile()
+    def load(self, filething, **kwargs):
         """Load stream and tag information from a file."""
-        self.filename = filename
+
+        self.filename = filething.filename
+        fileobj = filething.fileobj
 
         try:
-            self.tags = _IFFID3(filename, **kwargs)
+            self.tags = _IFFID3(fileobj, **kwargs)
         except ID3NoHeaderError:
             self.tags = None
         except ID3Error as e:
             raise error(e)
+        else:
+            self.tags.filename = self.filename
 
-        with open(filename, "rb") as fileobj:
-            self.info = AIFFInfo(fileobj)
+        fileobj.seek(0, 0)
+        self.info = AIFFInfo(fileobj)
 
 
 Open = AIFF

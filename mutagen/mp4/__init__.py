@@ -29,7 +29,7 @@ import sys
 from mutagen import FileType, Tags, StreamInfo, PaddingInfo
 from mutagen._constants import GENRES
 from mutagen._util import (cdata, insert_bytes, DictProxy, MutagenError,
-                           hashable, enum, get_size, resize_bytes)
+                           hashable, enum, get_size, resize_bytes, loadfile)
 from mutagen._compat import (reraise, PY2, string_types, text_type, chr_,
                              iteritems, PY3, cBytesIO, izip, xrange)
 from ._atom import Atoms, Atom, AtomError
@@ -969,33 +969,35 @@ class MP4(FileType):
 
     _mimes = ["audio/mp4", "audio/x-m4a", "audio/mpeg4", "audio/aac"]
 
-    def load(self, filename):
-        self.filename = filename
-        with open(filename, "rb") as fileobj:
-            try:
-                atoms = Atoms(fileobj)
-            except AtomError as err:
-                reraise(error, err, sys.exc_info()[2])
+    @loadfile()
+    def load(self, filething):
+        self.filename = filething.filename
+        fileobj = filething.fileobj
 
+        try:
+            atoms = Atoms(fileobj)
+        except AtomError as err:
+            reraise(error, err, sys.exc_info()[2])
+
+        try:
+            self.info = MP4Info(atoms, fileobj)
+        except error:
+            raise
+        except Exception as err:
+            reraise(MP4StreamInfoError, err, sys.exc_info()[2])
+
+        if not MP4Tags._can_load(atoms):
+            self.tags = None
+            self._padding = 0
+        else:
             try:
-                self.info = MP4Info(atoms, fileobj)
+                self.tags = self.MP4Tags(atoms, fileobj)
             except error:
                 raise
             except Exception as err:
-                reraise(MP4StreamInfoError, err, sys.exc_info()[2])
-
-            if not MP4Tags._can_load(atoms):
-                self.tags = None
-                self._padding = 0
+                reraise(MP4MetadataError, err, sys.exc_info()[2])
             else:
-                try:
-                    self.tags = self.MP4Tags(atoms, fileobj)
-                except error:
-                    raise
-                except Exception as err:
-                    reraise(MP4MetadataError, err, sys.exc_info()[2])
-                else:
-                    self._padding = self.tags._padding
+                self._padding = self.tags._padding
 
     def save(self, filename=None, padding=None):
         super(MP4, self).save(filename, padding=padding)

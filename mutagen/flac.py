@@ -27,7 +27,7 @@ from ._vorbis import VCommentDict
 import mutagen
 
 from ._compat import cBytesIO, endswith, chr_, xrange
-from mutagen._util import resize_bytes, MutagenError, get_size
+from mutagen._util import resize_bytes, MutagenError, get_size, loadfile
 from mutagen._tags import PaddingInfo
 from mutagen.id3 import BitPaddedInt
 from functools import reduce
@@ -746,21 +746,22 @@ class FLAC(mutagen.FileType):
 
     vc = property(lambda s: s.tags, doc="Alias for tags; don't use this.")
 
-    def load(self, filename):
+    @loadfile()
+    def load(self, filething):
         """Load file information from a filename."""
+
+        self.filename = filething.filename
+        fileobj = filething.fileobj
 
         self.metadata_blocks = []
         self.tags = None
         self.cuesheet = None
         self.seektable = None
-        self.filename = filename
-        fileobj = StrictFileObject(open(filename, "rb"))
-        try:
-            self.__check_header(fileobj)
-            while self.__read_metadata_block(fileobj):
-                pass
-        finally:
-            fileobj.close()
+
+        fileobj = StrictFileObject(fileobj)
+        self.__check_header(fileobj)
+        while self.__read_metadata_block(fileobj):
+            pass
 
         try:
             self.metadata_blocks[0].length

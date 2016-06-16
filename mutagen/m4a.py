@@ -14,7 +14,7 @@ since 1.31: mutagen.m4a will no longer work; any operation that could fail
 import warnings
 
 from mutagen import FileType, Tags, StreamInfo
-from ._util import DictProxy, MutagenError
+from ._util import DictProxy, MutagenError, loadfile
 
 warnings.warn(
     "mutagen.m4a is deprecated; use mutagen.mp4 instead.",
@@ -83,7 +83,8 @@ class M4A(FileType):
 
     _mimes = ["audio/mp4", "audio/x-m4a", "audio/mpeg4", "audio/aac"]
 
-    def load(self, filename):
+    @loadfile()
+    def load(self, filething):
         raise error("deprecated")
 
     def add_tags(self):

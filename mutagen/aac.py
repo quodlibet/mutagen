@@ -13,7 +13,7 @@
 
 from mutagen import StreamInfo
 from mutagen._file import FileType
-from mutagen._util import BitReader, BitReaderError, MutagenError
+from mutagen._util import BitReader, BitReaderError, MutagenError, loadfile
 from mutagen._compat import endswith, xrange
 
 
@@ -387,10 +387,10 @@ class AAC(FileType):
 
     _mimes = ["audio/x-aac"]
 
-    def load(self, filename):
-        self.filename = filename
-        with open(filename, "rb") as h:
-            self.info = AACInfo(h)
+    @loadfile()
+    def load(self, filething):
+        self.filename = filething.filename
+        self.info = AACInfo(filething.fileobj)
 
     def add_tags(self):
         raise AACError("doesn't support tags")

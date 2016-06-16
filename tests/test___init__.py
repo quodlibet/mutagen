@@ -7,6 +7,7 @@ import shutil
 from tests import TestCase, DATA_DIR
 from mutagen._compat import cBytesIO, text_type
 from mutagen import File, Metadata, FileType, MutagenError, PaddingInfo
+from mutagen._util import loadfile
 from mutagen.oggvorbis import OggVorbis
 from mutagen.oggflac import OggFLAC
 from mutagen.oggspeex import OggSpeex
@@ -80,6 +81,77 @@ class TPaddingInfo(TestCase):
         self.assertEqual(repr(info), "<PaddingInfo size=100 padding=10>")
 
 
+class MyFileType(FileType):
+
+    @loadfile()
+    def load(self, filething, arg=1):
+        self.filename = filething.filename
+        self.fileobj = filething.fileobj
+        self.arg = arg
+
+
+class TFileTypeLoad(TestCase):
+
+    filename = os.path.join(DATA_DIR, "empty.ogg")
+
+    def test_old_argument_handling(self):
+        f = MyFileType()
+        self.assertFalse(hasattr(f, "a"))
+
+        f = MyFileType(self.filename)
+        self.assertEquals(f.arg, 1)
+
+        f = MyFileType(self.filename, 42)
+        self.assertEquals(f.arg, 42)
+        self.assertEquals(f.filename, self.filename)
+
+        f = MyFileType(self.filename, arg=42)
+        self.assertEquals(f.arg, 42)
+
+        f = MyFileType(filename=self.filename, arg=42)
+        self.assertEquals(f.arg, 42)
+
+        with self.assertRaises(TypeError):
+            MyFileType(self.filename, nope=42)
+
+        with self.assertRaises(TypeError):
+            MyFileType(nope=42)
+
+        with self.assertRaises(TypeError):
+            MyFileType(self.filename, 42, 24)
+
+    def test_both_args(self):
+        # fileobj wins, but filename is saved
+        x = cBytesIO()
+        f = MyFileType(filename="foo", fileobj=x)
+        self.assertTrue(f.fileobj is x)
+        self.assertEquals(f.filename, "foo")
+
+    def test_fileobj(self):
+        x = cBytesIO()
+        f = MyFileType(fileobj=x)
+        self.assertTrue(f.fileobj is x)
+        self.assertTrue(f.filename is None)
+
+    def test_magic(self):
+        x = cBytesIO()
+        f = MyFileType(x)
+        self.assertTrue(f.fileobj is x)
+        self.assertTrue(f.filename is None)
+
+    def test_filething(self):
+        # while load() has that arg, we don't allow it as kwarg, either
+        # pass per arg, or be explicit about the type.
+        x = cBytesIO()
+        with self.assertRaises(TypeError):
+            MyFileType(filething=x)
+
+    def test_filename_explicit(self):
+        x = cBytesIO()
+        with self.assertRaises(ValueError):
+            MyFileType(filename=x)
+
+
 class TFileType(TestCase):
 
     def setUp(self):
@@ -124,6 +196,15 @@ class TAbstractFileType(object):
 
     def tearDown(self):
         os.remove(self.filename)
+
+    def test_fileobj(self):
+        with open(self.filename, "rb") as h:
+            self.KIND(h)
+
+    def test_stringio(self):
+        with open(self.filename, "rb") as h:
+            fileobj = cBytesIO(h.read())
+            self.KIND(fileobj)
 
     def test_filename(self):
         self.assertEqual(self.audio.filename, self.filename)
@@ -256,6 +337,12 @@ create_filetype_tests()
 
 class TFile(TestCase):
 
+    FILES = [
+        os.path.join(DATA_DIR, "empty.ogg"),
+        os.path.join(DATA_DIR, "empty.oggflac"),
+        os.path.join(DATA_DIR, "silence-44-s.mp3"),
+    ]
+
     def test_bad(self):
         try:
             self.failUnless(File(devnull) is None)
@@ -275,9 +362,16 @@ class TFile(TestCase):
         self.failUnlessRaises(EnvironmentError, File, "/dev/doesnotexist")
 
     def test_no_options(self):
-        for filename in ["empty.ogg", "empty.oggflac", "silence-44-s.mp3"]:
+        for filename in self.FILES:
             filename = os.path.join(DATA_DIR, filename)
             self.failIf(File(filename, options=[]))
+
+    def test_fileobj(self):
+        for filename in self.FILES:
+            with open(filename, "rb") as h:
+                self.assertTrue(File(h) is not None)
+            with open(filename, "rb") as h:
+                self.assertTrue(File(cBytesIO(h.read())) is not None)
 
     def test_easy_mp3(self):
         self.failUnless(isinstance(

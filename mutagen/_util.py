@@ -15,10 +15,127 @@ intended for internal use in Mutagen only.
 import struct
 import codecs
 
+from collections import namedtuple
+from contextlib import contextmanager
+from functools import wraps
 from fnmatch import fnmatchcase
 
 from ._compat import chr_, PY2, iteritems, iterbytes, integer_types, xrange, \
-    izip
+    izip, text_type
+
+
+def is_fileobj(fileobj):
+    """Returns if an argument passed ot mutagen should be treated as a
+    file object
+    """
+
+    # open() only handles str/bytes, so we can be strict
+    return not isinstance(fileobj, (text_type, bytes))
+
+
+def verify_fileobj(fileobj):
+    """Verifies that the passed fileobj is a file like object which
+    we can use.
+
+    Raises ValueError
+    """
+
+    try:
+        data = fileobj.read(0)
+    except Exception:
+        if not hasattr(fileobj, "read"):
+            raise ValueError("%r not a file object" % fileobj)
+        raise ValueError("Can't read from file object %r" % fileobj)
+    else:
+        if not isinstance(data, bytes):
+            raise ValueError(
+                "file object %r not opened in binary mode" % fileobj)
+
+
+def verify_filename(filename):
+    if is_fileobj(filename):
+        raise ValueError("%r not a filename" % filename)
+
+
+def fileobj_name(fileobj):
+    """Returns a potential filename for a file object.
+    Always a valid path type, but might be empty or non-existent.
+    """
+
+    value = getattr(fileobj, "name", u"")
+    if not isinstance(value, (text_type, bytes)):
+        value = text_type(value)
+    return value
+
+
+def loadfile(method=True):
+
+    def convert_file_args(args, kwargs):
+        filething = args[0] if args else None
+        filename = kwargs.pop("filename", None)
+        fileobj = kwargs.pop("fileobj", None)
+        return filething, filename, fileobj, args[1:], kwargs
+
+    def wrap(func):
+
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            filething, filename, fileobj, args, kwargs = \
+                convert_file_args(args, kwargs)
+            with _loadfile(filething, filename, fileobj, "rb") as h:
+                return func(self, h, *args, **kwargs)
+
+        @wraps(func)
+        def wrapper_func(*args, **kwargs):
+            filething, filename, fileobj, args, kwargs = \
+                convert_file_args(args, kwargs)
+            with _loadfile(filething, filename, fileobj, "rb") as h:
+                return func(h, *args, **kwargs)
+
+        return wrapper if method else wrapper_func
+
+    return wrap
+
+
+FileThing = namedtuple("FileThing", ["fileobj", "filename", "name"])
+"""filename is None if the source is not a filename. name is a filename which
+can be used for file type detection
+"""
+
+
+@contextmanager
+def _loadfile(filething, filename, fileobj, mode):
+    """yields a FileThing
+
+    Args:
+        filething: Either a file name, a file object or None
+        filename: Either a file name or None
+        fileobj: Either a file object or None
+        mode (str): the mode for opening the file if no fileobj is passed
+
+    Raises:
+        EnvironmentError: In case opening the file failed
+        TypeError: in case neither a file name or a file object is passed
+    """
+
+    assert "b" in mode
+
+    if filething is not None:
+        if is_fileobj(filething):
+            fileobj = filething
+        else:
+            filename = filething
+
+    if fileobj is not None:
+        verify_fileobj(fileobj)
+        yield FileThing(fileobj, filename, filename or fileobj_name(fileobj))
+    elif filename is not None:
+        verify_filename(filename)
+        # FIXME: we should re-raise a MutagenError here..
+        with open(filename, mode) as fileobj:
+            yield FileThing(fileobj, filename, filename)
+    else:
+        raise TypeError("Missing filename or fileobj argument")
 
 
 class MutagenError(Exception):

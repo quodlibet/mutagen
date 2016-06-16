@@ -38,7 +38,7 @@ from ._compat import (cBytesIO, PY3, text_type, PY2, reraise, swap_to_string,
                       xrange)
 from mutagen import Metadata, FileType, StreamInfo
 from mutagen._util import (DictMixin, cdata, delete_bytes, total_ordering,
-                           MutagenError)
+                           MutagenError, loadfile)
 
 
 def is_valid_apev2_key(key):
@@ -269,12 +269,12 @@ class APEv2(_CIDictProxy, Metadata):
         items = sorted(self.items())
         return u"\n".join(u"%s=%s" % (k, v.pprint()) for k, v in items)
 
-    def load(self, filename):
+    @loadfile()
+    def load(self, filething):
         """Load tags from a filename."""
 
-        self.filename = filename
-        with open(filename, "rb") as fileobj:
-            data = _APEv2Data(fileobj)
+        self.filename = filething.filename
+        data = _APEv2Data(filething.fileobj)
 
         if data.tag:
             self.clear()
@@ -686,11 +686,15 @@ class APEv2File(FileType):
         def pprint():
             return u"Unknown format with APEv2 tag."
 
-    def load(self, filename):
-        self.filename = filename
-        self.info = self._Info(open(filename, "rb"))
+    @loadfile()
+    def load(self, filething):
+        self.filename = filething.filename
+        fileobj = filething.fileobj
+
+        self.info = self._Info(fileobj)
+        fileobj.seek(0, 0)
         try:
-            self.tags = APEv2(filename)
+            self.tags = APEv2(fileobj)
         except APENoHeaderError:
             self.tags = None
 
