@@ -111,14 +111,9 @@ class TFileTypeLoad(TestCase):
         f = MyFileType(filename=self.filename, arg=42)
         self.assertEquals(f.arg, 42)
 
-        with self.assertRaises(TypeError):
-            MyFileType(self.filename, nope=42)
-
-        with self.assertRaises(TypeError):
-            MyFileType(nope=42)
-
-        with self.assertRaises(TypeError):
-            MyFileType(self.filename, 42, 24)
+        self.assertRaises(TypeError, MyFileType, self.filename, nope=42)
+        self.assertRaises(TypeError, MyFileType, nope=42)
+        self.assertRaises(TypeError, MyFileType, self.filename, 42, 24)
 
     def test_both_args(self):
         # fileobj wins, but filename is saved
@@ -143,13 +138,11 @@ class TFileTypeLoad(TestCase):
         # while load() has that arg, we don't allow it as kwarg, either
         # pass per arg, or be explicit about the type.
         x = cBytesIO()
-        with self.assertRaises(TypeError):
-            MyFileType(filething=x)
+        self.assertRaises(TypeError, MyFileType, filething=x)
 
     def test_filename_explicit(self):
         x = cBytesIO()
-        with self.assertRaises(ValueError):
-            MyFileType(filename=x)
+        self.assertRaises(ValueError, MyFileType, filename=x)
 
 
 class TFileType(TestCase):
