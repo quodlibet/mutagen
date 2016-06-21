@@ -46,15 +46,25 @@ matrix:
       language: generic
       sudo: required
       dist: trusty
-      env: TYPE="windows" PYVER="2.7"
+      env: TYPE="windows" PYVER="2.6.6"
     - os: linux
       language: generic
       sudo: required
       dist: trusty
-      env: TYPE="windows" PYVER="3.4"
+      env: TYPE="windows" PYVER="2.7.11"
+    - os: linux
+      language: generic
+      sudo: required
+      dist: trusty
+      env: TYPE="windows" PYVER="3.3.5"
+    - os: linux
+      language: generic
+      sudo: required
+      dist: trusty
+      env: TYPE="windows" PYVER="3.4.4"
     - os: osx
       language: generic
-      env: TYPE="osx" PYVER="??"
+      env: TYPE="osx" PYVER="system"
 
 install:
   - if [ "$TYPE" == "windows" ]; then sudo dpkg --add-architecture i386; fi

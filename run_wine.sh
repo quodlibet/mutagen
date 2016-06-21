@@ -1,27 +1,22 @@
 #!/bin/bash
-# ./run_wine.sh 2.7 setup.py test
-# ./run_wine.sh 3.4 setup.py test
+# ./run_wine.sh 2.7.11 setup.py test
+# ./run_wine.sh 3.4.4 setup.py test
 
 DIR=$(mktemp -d)
 export WINEPREFIX="$DIR/_wine_env"
 export WINEDLLOVERRIDES="mscoree,mshtml="
+export WINEDEBUG="-all"
 mkdir -p "$WINEPREFIX"
 
-if [ "$1" == "2.7" ]
-then
-    wget -P "$DIR" -c "http://www.python.org/ftp/python/2.7.11/python-2.7.11.msi"
-    wine msiexec /a "$DIR/python-2.7.11.msi" /qb
-    PYDIR="$WINEPREFIX/drive_c/Python27"
-elif [ "$1" == "3.4" ]
-then
-    wget -P "$DIR" -c "http://www.python.org/ftp/python/3.4.4/python-3.4.4.msi"
-    wine msiexec /a "$DIR/python-3.4.4.msi" /qb
-    PYDIR="$WINEPREFIX/drive_c/Python34"
-else
-    exit 1
-fi
+VERSION="$1"
+TEMP=${VERSION//./}
+DIRNAME="Python"${TEMP:0:2}
 
-wine "$PYDIR/python.exe" ${@:2}
+wget -P "$DIR" -c "https://www.python.org/ftp/python/$VERSION/python-$VERSION.msi"
+wine msiexec /a "$DIR/python-$VERSION.msi" /qb
+
+PYTHONEXE="$WINEPREFIX/drive_c/$DIRNAME/python.exe"
+wine "$PYTHONEXE" ${@:2}
 exit_code=$?
 wineserver --wait
 rm -Rf "$DIR"
