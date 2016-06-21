@@ -136,7 +136,7 @@ def _loadfile(filething, filename, fileobj, mode):
                 yield FileThing(fileobj, filename, filename)
         except MutagenError:
             raise
-        except EnvironmentError as e:
+        except IOError as e:
             raise MutagenError(e)
     else:
         raise TypeError("Missing filename or fileobj argument")
