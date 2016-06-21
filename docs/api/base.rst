@@ -8,12 +8,6 @@ Main Module
 Base Classes
 ~~~~~~~~~~~~
 
-.. class:: text()
-
-    This type only exists for documentation purposes. It represents
-    :obj:`unicode` under Python 2 and :obj:`str` under Python 3.
-
-
 .. autoclass:: mutagen.FileType(filename)
     :members: pprint, add_tags, mime
     :show-inheritance:
@@ -55,3 +49,18 @@ Internal Classes
 
 .. autoclass:: mutagen._util.DictProxy
     :show-inheritance:
+
+
+Other Classes
+~~~~~~~~~~~~~
+
+.. class:: text()
+
+    This type only exists for documentation purposes. It represents
+    :obj:`unicode` under Python 2 and :obj:`str` under Python 3.
+
+
+.. class:: bytes()
+
+    This type only exists for documentation purposes. It represents
+    :obj:`python:str` under Python 2 and :obj:`python3:bytes` under Python 3.

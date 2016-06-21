@@ -6,5 +6,5 @@ For historical and practical reasons, Mutagen shares a `mailing list
 (#quodlibet on irc.oftc.net) with Quod Libet.
 
 If you need help using Mutagen or would like to discuss the library, please
-use the mailing list or the `issue tracker
-<https://github.com/quodlibet/mutagen/issues>`_.
+use the IRC channel, our `issue tracker
+<https://github.com/quodlibet/mutagen/issues>`_ or the mailing list.

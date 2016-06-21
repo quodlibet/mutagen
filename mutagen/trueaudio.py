@@ -57,8 +57,8 @@ class TrueAudioInfo(StreamInfo):
 class TrueAudio(ID3FileType):
     """A True Audio file.
 
-    :ivar info: :class:`TrueAudioInfo`
-    :ivar tags: :class:`ID3 <mutagen.id3.ID3>`
+    :ivar TrueAudioInfo info:
+    :ivar ID3 tags:
     """
 
     _Info = TrueAudioInfo
@@ -76,8 +76,8 @@ Open = TrueAudio
 class EasyTrueAudio(TrueAudio):
     """Like MP3, but uses EasyID3 for tags.
 
-    :ivar info: :class:`TrueAudioInfo`
-    :ivar tags: :class:`EasyID3 <mutagen.easyid3.EasyID3>`
+    :ivar TrueAudioInfo info:
+    :ivar EasyID3 tags:
     """
 
     from mutagen.easyid3 import EasyID3 as ID3

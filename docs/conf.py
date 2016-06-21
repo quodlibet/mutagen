@@ -11,11 +11,14 @@ import mutagen
 needs_sphinx = "1.3"
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'ext']
-intersphinx_mapping = {'python': ('http://docs.python.org/2.7', None)}
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/2.7', None),
+    'python3': ('https://docs.python.org/3.5', None),
+}
 source_suffix = '.rst'
 master_doc = 'index'
 project = 'mutagen'
-copyright = u'2014, Joe Wreschnig, Michael Urman, Lukáš Lalinský, ' \
+copyright = u'2016, Joe Wreschnig, Michael Urman, Lukáš Lalinský, ' \
             u'Christoph Reiter, Ben Ockmore & others'
 version = mutagen.version_string
 release = mutagen.version_string

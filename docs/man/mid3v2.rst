@@ -70,7 +70,7 @@ OPTIONS
 
 --delete-frames=FRAMES
     Delete specific ID3v2 frames (or groups of frames) from the files. 
-    `FRAMES` is a "," separated list of frame names e.g. ``"TPE1,TALB"``
+    ``FRAMES`` is a "," separated list of frame names e.g. ``"TPE1,TALB"``
 
 -C, --convert
     Convert ID3v1 tags to ID3v2 tags. This  will also happen automatically
