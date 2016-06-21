@@ -3,6 +3,7 @@
 import os
 import shutil
 from tests import TestCase, DATA_DIR
+from mutagen import MutagenError
 from mutagen.easymp4 import EasyMP4, error as MP4Error
 from tempfile import mkstemp
 
@@ -30,7 +31,7 @@ class TEasyMP4(TestCase):
 
     def test_nonexistent_file(self):
         empty = os.path.join(DATA_DIR, 'does', 'not', 'exist')
-        self.assertRaises(IOError, EasyMP4, filename=empty)
+        self.assertRaises(MutagenError, EasyMP4, filename=empty)
 
     def test_write_single(self):
         for key in EasyMP4.Get:

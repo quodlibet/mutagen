@@ -205,6 +205,9 @@ class TAbstractFileType(object):
     def test_file(self):
         self.assertTrue(isinstance(File(self.PATH), self.KIND))
 
+    def test_not_file(self):
+        self.failUnlessRaises(MutagenError, self.KIND, "/dev/doesnotexist")
+
     def test_pprint(self):
         res = self.audio.pprint()
         self.assertTrue(res)
@@ -352,7 +355,7 @@ class TFile(TestCase):
             os.unlink(filename)
 
     def test_not_file(self):
-        self.failUnlessRaises(EnvironmentError, File, "/dev/doesnotexist")
+        self.failUnlessRaises(MutagenError, File, "/dev/doesnotexist")
 
     def test_no_options(self):
         for filename in self.FILES:

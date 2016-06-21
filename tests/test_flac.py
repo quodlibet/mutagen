@@ -7,6 +7,7 @@ from tempfile import mkstemp
 
 from tests import TestCase, DATA_DIR
 
+from mutagen import MutagenError
 from mutagen.id3 import ID3, TIT2, ID3NoHeaderError
 from mutagen.flac import to_int_be, Padding, VCFLACDict, MetadataBlock, error
 from mutagen.flac import StreamInfo, SeekTable, CueSheet, FLAC, delete, Picture
@@ -556,7 +557,7 @@ class TFLACFile(TestCase):
         """mutagen 1.2 raises UnboundLocalError, then it tries to open
         non-existant FLAC files"""
         filename = os.path.join(DATA_DIR, "doesntexist.flac")
-        self.assertRaises(IOError, FLAC, filename)
+        self.assertRaises(MutagenError, FLAC, filename)
 
 
 class TFLACBadBlockSize(TestCase):

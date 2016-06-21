@@ -10,6 +10,7 @@ from tempfile import mkstemp
 from tests import TestCase, DATA_DIR
 
 import mutagen.apev2
+from mutagen import MutagenError
 from mutagen._compat import PY3, text_type, izip, xrange
 from mutagen.apev2 import APEv2File, APEv2, is_valid_apev2_key, \
     APEBadItemError, error as APEv2Error
@@ -213,10 +214,10 @@ class TAPEv2(TestCase):
         delete(os.path.join(DATA_DIR, "emptyfile.mp3"))
 
     def test_invalid(self):
-        self.failUnlessRaises(IOError, mutagen.apev2.APEv2, "dne")
+        self.failUnlessRaises(MutagenError, mutagen.apev2.APEv2, "dne")
 
     def test_no_tag(self):
-        self.failUnlessRaises(IOError, mutagen.apev2.APEv2,
+        self.failUnlessRaises(MutagenError, mutagen.apev2.APEv2,
                               os.path.join(DATA_DIR, "empty.mp3"))
 
     def test_cases(self):

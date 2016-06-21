@@ -4,6 +4,7 @@ import os
 import shutil
 import pickle
 from tests import TestCase, DATA_DIR
+from mutagen import MutagenError
 from mutagen.id3 import ID3FileType, ID3
 from mutagen.easyid3 import EasyID3, error as ID3Error
 from mutagen._compat import PY3
@@ -58,7 +59,7 @@ class TEasyID3(TestCase):
 
     def test_nonexistent_file(self):
         empty = os.path.join(DATA_DIR, 'does', 'not', 'exist')
-        self.assertRaises(IOError, EasyID3, filename=empty)
+        self.assertRaises(MutagenError, EasyID3, filename=empty)
 
     def test_write_single(self):
         for key in EasyID3.valid_keys:

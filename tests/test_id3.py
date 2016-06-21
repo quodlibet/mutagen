@@ -5,6 +5,7 @@ from os.path import join
 import shutil
 from tests import TestCase, DATA_DIR
 from mutagen import id3
+from mutagen import MutagenError
 from mutagen.apev2 import APEv2
 from mutagen.id3 import ID3, COMR, Frames, Frames_2_2, ID3Warning, \
     ID3JunkFrameError, ID3Header, ID3UnsupportedVersionError, _fullread, TIT2
@@ -97,7 +98,7 @@ class ID3Loading(TestCase):
 
     def test_nonexistent_file(self):
         name = join(DATA_DIR, 'does', 'not', 'exist')
-        self.assertRaises(EnvironmentError, ID3, name)
+        self.assertRaises(MutagenError, ID3, name)
 
     def test_read_padding(self):
         self.assertEqual(ID3(self.silence)._padding, 1142)

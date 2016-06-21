@@ -131,9 +131,13 @@ def _loadfile(filething, filename, fileobj, mode):
         yield FileThing(fileobj, filename, filename or fileobj_name(fileobj))
     elif filename is not None:
         verify_filename(filename)
-        # FIXME: we should re-raise a MutagenError here..
-        with open(filename, mode) as fileobj:
-            yield FileThing(fileobj, filename, filename)
+        try:
+            with open(filename, mode) as fileobj:
+                yield FileThing(fileobj, filename, filename)
+        except MutagenError:
+            raise
+        except EnvironmentError as e:
+            raise MutagenError(e)
     else:
         raise TypeError("Missing filename or fileobj argument")
 
