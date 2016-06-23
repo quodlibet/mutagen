@@ -20,7 +20,7 @@ import sys
 
 import mutagen
 from ._compat import reraise, BytesIO, text_type, xrange, PY3, PY2
-from mutagen._util import DictMixin, cdata
+from mutagen._util import DictMixin, cdata, MutagenError
 
 
 def is_valid_key(key):
@@ -45,7 +45,7 @@ def is_valid_key(key):
 istag = is_valid_key
 
 
-class error(IOError):
+class error(MutagenError):
     pass
 
 

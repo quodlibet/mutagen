@@ -22,15 +22,15 @@ from ._util import XingHeader, XingHeaderError, VBRIHeader, VBRIHeaderError
 __all__ = ["MP3", "Open", "delete", "MP3"]
 
 
-class error(RuntimeError, MutagenError):
+class error(MutagenError):
     pass
 
 
-class HeaderNotFoundError(error, IOError):
+class HeaderNotFoundError(error):
     pass
 
 
-class InvalidMPEGHeader(error, IOError):
+class InvalidMPEGHeader(error):
     pass
 
 

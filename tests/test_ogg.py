@@ -610,15 +610,15 @@ class TOggFileTypeMixin(object):
         self.scan_file()
 
     def test_invalid_open(self):
-        self.failUnlessRaises(IOError, self.Kind,
+        self.failUnlessRaises(OggError, self.Kind,
                               os.path.join(DATA_DIR, 'xing.mp3'))
 
     def test_invalid_delete(self):
-        self.failUnlessRaises(IOError, self.audio.delete,
+        self.failUnlessRaises(OggError, self.audio.delete,
                               os.path.join(DATA_DIR, 'xing.mp3'))
 
     def test_invalid_save(self):
-        self.failUnlessRaises(IOError, self.audio.save,
+        self.failUnlessRaises(OggError, self.audio.save,
                               os.path.join(DATA_DIR, 'xing.mp3'))
 
     def ogg_reference(self, filename):

@@ -282,7 +282,8 @@ class ID3Tags(TestCase):
     def test_badencoding(self):
         self.assertRaises(
             ID3JunkFrameError, Frames["TPE1"]._fromData, _24, 0, b"\x09ab")
-        self.assertRaises(ValueError, Frames["TPE1"], encoding=9, text="ab")
+        self.assertRaises(
+            ValueError, Frames["TPE1"], encoding=9, text="ab")
 
     def test_badsync(self):
         frame = Frames["TPE1"]._fromData(_24, 0x02, b"\x00\xff\xfe")
@@ -296,14 +297,15 @@ class ID3Tags(TestCase):
 
     def test_badcompress(self):
         self.assertRaises(
-            ValueError, Frames["TPE1"]._fromData, _24, 0x08,
+            ID3JunkFrameError, Frames["TPE1"]._fromData, _24, 0x08,
             b"\x00\x00\x00\x00#")
         self.assertRaises(
-            ValueError, Frames["TPE1"]._fromData, _23, 0x80,
+            ID3JunkFrameError, Frames["TPE1"]._fromData, _23, 0x80,
             b"\x00\x00\x00\x00#")
 
     def test_junkframe(self):
-        self.assertRaises(ValueError, Frames["TPE1"]._fromData, _24, 0, b"")
+        self.assertRaises(
+            ID3JunkFrameError, Frames["TPE1"]._fromData, _24, 0, b"")
 
     def test_bad_sylt(self):
         self.assertRaises(

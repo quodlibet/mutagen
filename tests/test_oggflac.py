@@ -6,7 +6,7 @@ import shutil
 from tempfile import mkstemp
 
 from mutagen._compat import cBytesIO
-from mutagen.oggflac import OggFLAC, OggFLACStreamInfo, delete
+from mutagen.oggflac import OggFLAC, OggFLACStreamInfo, delete, error
 from mutagen.ogg import OggPage, error as OggError
 from tests import TestCase, DATA_DIR
 from tests.test_ogg import TOggFileTypeMixin
@@ -35,7 +35,7 @@ class TOggFLAC(TestCase, TOggFileTypeMixin):
     def test_streaminfo_bad_marker(self):
         page = OggPage(open(self.filename, "rb")).write()
         page = page.replace(b"fLaC", b"!fLa", 1)
-        self.failUnlessRaises(IOError, OggFLACStreamInfo, cBytesIO(page))
+        self.failUnlessRaises(error, OggFLACStreamInfo, cBytesIO(page))
 
     def test_streaminfo_too_short(self):
         page = OggPage(open(self.filename, "rb")).write()
@@ -44,7 +44,7 @@ class TOggFLAC(TestCase, TOggFileTypeMixin):
     def test_streaminfo_bad_version(self):
         page = OggPage(open(self.filename, "rb")).write()
         page = page.replace(b"\x01\x00", b"\x02\x00", 1)
-        self.failUnlessRaises(IOError, OggFLACStreamInfo, cBytesIO(page))
+        self.failUnlessRaises(error, OggFLACStreamInfo, cBytesIO(page))
 
     def test_flac_reference_simple_save(self):
         if not have_flac:
@@ -93,9 +93,9 @@ class TOggFLAC(TestCase, TOggFileTypeMixin):
 
     def test_not_my_ogg(self):
         fn = os.path.join(DATA_DIR, 'empty.ogg')
-        self.failUnlessRaises(IOError, type(self.audio), fn)
-        self.failUnlessRaises(IOError, self.audio.save, fn)
-        self.failUnlessRaises(IOError, self.audio.delete, fn)
+        self.failUnlessRaises(error, type(self.audio), fn)
+        self.failUnlessRaises(error, self.audio.save, fn)
+        self.failUnlessRaises(error, self.audio.delete, fn)
 
     def test_mime(self):
         self.failUnless("audio/x-oggflac" in self.audio.mime)

@@ -24,11 +24,11 @@ from mutagen._util import resize_bytes, delete_bytes, MutagenError, loadfile, \
 __all__ = ["AIFF", "Open", "delete"]
 
 
-class error(MutagenError, RuntimeError):
+class error(MutagenError):
     pass
 
 
-class InvalidChunk(error, IOError):
+class InvalidChunk(error):
     pass
 
 

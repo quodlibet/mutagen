@@ -11,7 +11,7 @@ import struct
 from mutagen._util import MutagenError
 
 
-class error(IOError, MutagenError):
+class error(MutagenError):
     """Error raised by :mod:`mutagen.asf`"""
 
 

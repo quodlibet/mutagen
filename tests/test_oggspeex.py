@@ -5,7 +5,7 @@ import shutil
 
 from mutagen._compat import cBytesIO
 from mutagen.ogg import OggPage
-from mutagen.oggspeex import OggSpeex, OggSpeexInfo, delete
+from mutagen.oggspeex import OggSpeex, OggSpeexInfo, delete, error
 from tests import TestCase, DATA_DIR
 from tests.test_ogg import TOggFileTypeMixin
 from tempfile import mkstemp
@@ -41,7 +41,7 @@ class TOggSpeex(TestCase, TOggFileTypeMixin):
     def test_invalid_not_first(self):
         page = OggPage(open(self.filename, "rb"))
         page.first = False
-        self.failUnlessRaises(IOError, OggSpeexInfo, cBytesIO(page.write()))
+        self.failUnlessRaises(error, OggSpeexInfo, cBytesIO(page.write()))
 
     def test_vendor(self):
         self.failUnless(
@@ -50,9 +50,9 @@ class TOggSpeex(TestCase, TOggFileTypeMixin):
 
     def test_not_my_ogg(self):
         fn = os.path.join(DATA_DIR, 'empty.oggflac')
-        self.failUnlessRaises(IOError, type(self.audio), fn)
-        self.failUnlessRaises(IOError, self.audio.save, fn)
-        self.failUnlessRaises(IOError, self.audio.delete, fn)
+        self.failUnlessRaises(error, type(self.audio), fn)
+        self.failUnlessRaises(error, self.audio.save, fn)
+        self.failUnlessRaises(error, self.audio.delete, fn)
 
     def test_multiplexed_in_headers(self):
         shutil.copy(

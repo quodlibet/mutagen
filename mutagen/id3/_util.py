@@ -28,7 +28,7 @@ class ID3EncryptionUnsupportedError(error, NotImplementedError):
     pass
 
 
-class ID3JunkFrameError(error, ValueError):
+class ID3JunkFrameError(error):
     pass
 
 

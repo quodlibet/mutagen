@@ -23,11 +23,11 @@ from mutagen.id3 import ID3FileType, delete
 from mutagen._util import cdata, MutagenError, convert_error
 
 
-class error(RuntimeError, MutagenError):
+class error(MutagenError):
     pass
 
 
-class TrueAudioHeaderError(error, IOError):
+class TrueAudioHeaderError(error):
     pass
 
 

@@ -6,7 +6,7 @@ import shutil
 from tempfile import mkstemp
 
 from mutagen._compat import cBytesIO
-from mutagen.oggtheora import OggTheora, OggTheoraInfo, delete
+from mutagen.oggtheora import OggTheora, OggTheoraInfo, delete, error
 from mutagen.ogg import OggPage
 from tests import TestCase, DATA_DIR
 from tests.test_ogg import TOggFileTypeMixin
@@ -35,13 +35,13 @@ class TOggTheora(TestCase, TOggFileTypeMixin):
         packet = packet[:7] + b"\x03\x00" + packet[9:]
         page.packets = [packet]
         fileobj = cBytesIO(page.write())
-        self.failUnlessRaises(IOError, OggTheoraInfo, fileobj)
+        self.failUnlessRaises(error, OggTheoraInfo, fileobj)
 
     def test_theora_not_first_page(self):
         page = OggPage(open(self.filename, "rb"))
         page.first = False
         fileobj = cBytesIO(page.write())
-        self.failUnlessRaises(IOError, OggTheoraInfo, fileobj)
+        self.failUnlessRaises(error, OggTheoraInfo, fileobj)
 
     def test_vendor(self):
         self.failUnless(
@@ -50,9 +50,9 @@ class TOggTheora(TestCase, TOggFileTypeMixin):
 
     def test_not_my_ogg(self):
         fn = os.path.join(DATA_DIR, 'empty.ogg')
-        self.failUnlessRaises(IOError, type(self.audio), fn)
-        self.failUnlessRaises(IOError, self.audio.save, fn)
-        self.failUnlessRaises(IOError, self.audio.delete, fn)
+        self.failUnlessRaises(error, type(self.audio), fn)
+        self.failUnlessRaises(error, self.audio.save, fn)
+        self.failUnlessRaises(error, self.audio.delete, fn)
 
     def test_length(self):
         self.failUnlessAlmostEqual(5.5, self.audio.info.length, 1)

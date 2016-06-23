@@ -25,7 +25,7 @@ from mutagen._util import cdata, resize_bytes, MutagenError, loadfile, seek_end
 from ._compat import cBytesIO, reraise, chr_, izip, xrange
 
 
-class error(IOError, MutagenError):
+class error(MutagenError):
     """Ogg stream parsing errors."""
 
     pass

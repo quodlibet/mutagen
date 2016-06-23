@@ -37,7 +37,7 @@ from ._util import parse_full_atom
 from ._as_entry import AudioSampleEntry, ASEntryError
 
 
-class error(IOError, MutagenError):
+class error(MutagenError):
     pass
 
 

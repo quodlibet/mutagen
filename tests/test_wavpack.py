@@ -2,7 +2,7 @@
 
 import os
 
-from mutagen.wavpack import WavPack
+from mutagen.wavpack import WavPack, error as WavPackError
 from tests import TestCase, DATA_DIR
 
 
@@ -25,7 +25,7 @@ class TWavPack(TestCase):
 
     def test_not_my_file(self):
         self.failUnlessRaises(
-            IOError, WavPack, os.path.join(DATA_DIR, "empty.ogg"))
+            WavPackError, WavPack, os.path.join(DATA_DIR, "empty.ogg"))
 
     def test_pprint(self):
         self.audio.pprint()

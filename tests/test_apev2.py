@@ -101,7 +101,7 @@ class TAPEWriter(TestCase):
 
     def test_empty(self):
         self.failUnlessRaises(
-            IOError, mutagen.apev2.APEv2,
+            APEv2Error, mutagen.apev2.APEv2,
             os.path.join(DATA_DIR, "emptyfile.mp3"))
 
     def test_tag_at_start(self):
@@ -123,7 +123,7 @@ class TAPEWriter(TestCase):
         filename = SAMPLE + ".tag_at_start"
         tag = mutagen.apev2.APEv2(filename)
         tag.delete()
-        self.failUnlessRaises(IOError, mutagen.apev2.APEv2, filename)
+        self.failUnlessRaises(APEv2Error, mutagen.apev2.APEv2, filename)
         self.failUnlessEqual(
             os.path.getsize(filename), len("tag garbage") * 1000)
 

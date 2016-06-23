@@ -68,19 +68,19 @@ HAS_NO_FOOTER = 1 << 30
 IS_HEADER = 1 << 29
 
 
-class error(IOError, MutagenError):
+class error(MutagenError):
     pass
 
 
-class APENoHeaderError(error, ValueError):
+class APENoHeaderError(error):
     pass
 
 
-class APEUnsupportedVersionError(error, ValueError):
+class APEUnsupportedVersionError(error):
     pass
 
 
-class APEBadItemError(error, ValueError):
+class APEBadItemError(error):
     pass
 
 

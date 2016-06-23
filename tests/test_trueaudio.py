@@ -2,7 +2,7 @@
 
 import os
 import shutil
-from mutagen.trueaudio import TrueAudio, delete
+from mutagen.trueaudio import TrueAudio, delete, error
 from mutagen.id3 import TIT1
 from tests import TestCase, DATA_DIR
 from tempfile import mkstemp
@@ -24,7 +24,7 @@ class TTrueAudio(TestCase):
 
     def test_not_my_file(self):
         filename = os.path.join(DATA_DIR, "empty.ogg")
-        self.failUnlessRaises(IOError, TrueAudio, filename)
+        self.failUnlessRaises(error, TrueAudio, filename)
 
     def test_module_delete(self):
         delete(os.path.join(DATA_DIR, "empty.tta"))

@@ -129,7 +129,7 @@ class TMP4Info(TestCase):
 
     def test_no_soun(self):
         self.failUnlessRaises(
-            IOError, self.test_mdhd_version_1, b"vide")
+            error, self.test_mdhd_version_1, b"vide")
 
     def test_mdhd_version_1(self, soun=b"soun"):
         mdhd = Atom.render(b"mdhd", (b"\x01\x00\x00\x00" + b"\x00" * 16 +

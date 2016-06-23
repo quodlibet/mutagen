@@ -34,7 +34,7 @@ from mutagen.id3 import BitPaddedInt
 from functools import reduce
 
 
-class error(IOError, MutagenError):
+class error(MutagenError):
     pass
 
 

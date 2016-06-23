@@ -439,8 +439,8 @@ class TFLAC(TestCase):
     def test_ooming_vc_header(self):
         # issue 112: Malformed FLAC Vorbis header causes out of memory error
         # https://github.com/quodlibet/mutagen/issues/112
-        self.assertRaises(IOError, FLAC, os.path.join(DATA_DIR,
-                                                      'ooming-header.flac'))
+        self.assertRaises(error, FLAC, os.path.join(DATA_DIR,
+                                                    'ooming-header.flac'))
 
     def test_with_real_flac(self):
         if not have_flac:
@@ -465,20 +465,20 @@ class TFLAC(TestCase):
     def test_two_vorbis_blocks(self):
         self.flac.metadata_blocks.append(self.flac.metadata_blocks[1])
         self.flac.save()
-        self.failUnlessRaises(IOError, FLAC, self.NEW)
+        self.failUnlessRaises(error, FLAC, self.NEW)
 
     def test_missing_streaminfo(self):
         self.flac.metadata_blocks.pop(0)
         self.flac.save()
-        self.failUnlessRaises(IOError, FLAC, self.NEW)
+        self.failUnlessRaises(error, FLAC, self.NEW)
 
     def test_load_invalid_flac(self):
         self.failUnlessRaises(
-            IOError, FLAC, os.path.join(DATA_DIR, "xing.mp3"))
+            error, FLAC, os.path.join(DATA_DIR, "xing.mp3"))
 
     def test_save_invalid_flac(self):
         self.failUnlessRaises(
-            IOError, self.flac.save, os.path.join(DATA_DIR, "xing.mp3"))
+            error, self.flac.save, os.path.join(DATA_DIR, "xing.mp3"))
 
     def test_pprint(self):
         self.failUnless(self.flac.pprint())

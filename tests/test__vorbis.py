@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from tests import TestCase
-from mutagen._vorbis import VComment, VCommentDict, istag
+from mutagen._vorbis import VComment, VCommentDict, istag, error
 from mutagen._compat import text_type, PY3
 
 
@@ -54,11 +54,11 @@ class TVComment(TestCase):
         self.failUnlessEqual(self.c, self.c)
 
     def test_not_header(self):
-        self.failUnlessRaises(IOError, VComment, b"foo")
+        self.failUnlessRaises(error, VComment, b"foo")
 
     def test_unset_framing_bit(self):
         self.failUnlessRaises(
-            IOError, VComment, b"\x00\x00\x00\x00" * 2 + b"\x00")
+            error, VComment, b"\x00\x00\x00\x00" * 2 + b"\x00")
 
     def test_empty_valid(self):
         self.failIf(VComment(b"\x00\x00\x00\x00" * 2 + b"\x01"))
@@ -103,7 +103,7 @@ class TVComment(TestCase):
     def test_invalid_format_strict(self):
         data = (b'\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x03\x00\x00'
                 b'\x00abc\x01')
-        self.failUnlessRaises(IOError, VComment, data, errors='strict')
+        self.failUnlessRaises(error, VComment, data, errors='strict')
 
     def test_invalid_format_replace(self):
         data = (b'\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x03\x00\x00'
@@ -139,7 +139,7 @@ class TVComment(TestCase):
     def test_invalid_tag_strict(self):
         data = (b'\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x04\x00\x00'
                 b'\x00\xc2\xaa=c\x01')
-        self.failUnlessRaises(IOError, VComment, data, errors='strict')
+        self.failUnlessRaises(error, VComment, data, errors='strict')
 
     def test_invalid_tag_replace(self):
         data = (b'\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x04\x00\x00'

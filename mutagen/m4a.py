@@ -21,7 +21,7 @@ warnings.warn(
     DeprecationWarning)
 
 
-class error(IOError, MutagenError):
+class error(MutagenError):
     pass
 
 
@@ -33,7 +33,7 @@ class M4AStreamInfoError(error):
     pass
 
 
-class M4AMetadataValueError(ValueError, M4AMetadataError):
+class M4AMetadataValueError(error):
     pass
 
 

@@ -5,7 +5,7 @@ import shutil
 
 from mutagen._compat import cBytesIO
 from mutagen.ogg import OggPage
-from mutagen.oggvorbis import OggVorbis, OggVorbisInfo, delete
+from mutagen.oggvorbis import OggVorbis, OggVorbisInfo, delete, error
 from tests import TestCase, DATA_DIR
 from tests.test_ogg import TOggFileTypeMixin
 from tempfile import mkstemp
@@ -41,7 +41,7 @@ class TOggVorbis(TestCase, TOggFileTypeMixin):
     def test_invalid_not_first(self):
         page = OggPage(open(self.filename, "rb"))
         page.first = False
-        self.failUnlessRaises(IOError, OggVorbisInfo, cBytesIO(page.write()))
+        self.failUnlessRaises(error, OggVorbisInfo, cBytesIO(page.write()))
 
     def test_avg_bitrate(self):
         page = OggPage(open(self.filename, "rb"))
@@ -132,9 +132,9 @@ class TOggVorbis(TestCase, TOggFileTypeMixin):
 
     def test_not_my_ogg(self):
         fn = os.path.join(DATA_DIR, 'empty.oggflac')
-        self.failUnlessRaises(IOError, type(self.audio), fn)
-        self.failUnlessRaises(IOError, self.audio.save, fn)
-        self.failUnlessRaises(IOError, self.audio.delete, fn)
+        self.failUnlessRaises(error, type(self.audio), fn)
+        self.failUnlessRaises(error, self.audio.save, fn)
+        self.failUnlessRaises(error, self.audio.delete, fn)
 
     def test_save_split_setup_packet(self):
         fn = os.path.join(DATA_DIR, "multipage-setup.ogg")

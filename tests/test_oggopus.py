@@ -5,7 +5,7 @@ import shutil
 from tempfile import mkstemp
 
 from mutagen._compat import BytesIO
-from mutagen.oggopus import OggOpus, OggOpusInfo, delete
+from mutagen.oggopus import OggOpus, OggOpusInfo, delete, error
 from mutagen.ogg import OggPage
 from tests import TestCase, DATA_DIR
 from tests.test_ogg import TOggFileTypeMixin
@@ -43,7 +43,7 @@ class TOggOpus(TestCase, TOggFileTypeMixin):
     def test_invalid_not_first(self):
         page = OggPage(open(self.filename, "rb"))
         page.first = False
-        self.failUnlessRaises(IOError, OggOpusInfo, BytesIO(page.write()))
+        self.failUnlessRaises(error, OggOpusInfo, BytesIO(page.write()))
 
     def test_unsupported_version(self):
         page = OggPage(open(self.filename, "rb"))
@@ -55,7 +55,7 @@ class TOggOpus(TestCase, TOggFileTypeMixin):
 
         data[8] = 0x10
         page.packets[0] = bytes(data)
-        self.failUnlessRaises(IOError, OggOpusInfo, BytesIO(page.write()))
+        self.failUnlessRaises(error, OggOpusInfo, BytesIO(page.write()))
 
     def test_preserve_non_padding(self):
         self.audio["FOO"] = ["BAR"]
