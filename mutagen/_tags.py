@@ -81,15 +81,21 @@ class Tags(object):
 
     def pprint(self):
         """
-        :returns: tag information
-        :rtype: mutagen.text
+        Returns:
+            text: tag information
         """
 
         raise NotImplementedError
 
 
 class Metadata(Tags):
-    """Like :class:`Tags` but for standalone tagging formats that are not
+    """Metadata(filething=None, **kwargs)
+
+    Args:
+        filething (filething): a filename or a file-like object or `None`
+            to create an empty instance (like ``ID3()``)
+
+    Like :class:`Tags` but for standalone tagging formats that are not
     solely managed by a container format.
 
     Provides methods to load, save and delete tags.
@@ -104,10 +110,15 @@ class Metadata(Tags):
     def load(self, filename, **kwargs):
         raise NotImplementedError
 
-    def save(self, filename=None):
+    def save(self, filename=None, **kwargs):
         """Save changes to a file.
 
-        :raises mutagen.MutagenError: if saving wasn't possible
+        Args:
+            filename (fspath): a file to save the tag to or `None` to
+                use the filename that was loaded before.
+
+        Raises:
+            MutagenError: if saving wasn't possible
         """
 
         raise NotImplementedError
@@ -118,7 +129,12 @@ class Metadata(Tags):
         In most cases this means any traces of the tag will be removed
         from the file.
 
-        :raises mutagen.MutagenError: if deleting wasn't possible
+        Args:
+            filename (fspath): a file to remove the tags from or `None`
+                to use the filename that was loaded before.
+
+        Raises:
+            MutagenError: if deleting wasn't possible
         """
 
         raise NotImplementedError

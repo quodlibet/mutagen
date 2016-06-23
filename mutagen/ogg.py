@@ -21,8 +21,7 @@ import sys
 import zlib
 
 from mutagen import FileType
-from mutagen._util import cdata, resize_bytes, MutagenError, loadfile, \
-    get_size, seek_end
+from mutagen._util import cdata, resize_bytes, MutagenError, loadfile, seek_end
 from ._compat import cBytesIO, reraise, chr_, izip, xrange
 
 

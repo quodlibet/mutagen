@@ -12,6 +12,9 @@ ID3 Frames
 
     id3_frames
 
+.. autoclass:: mutagen.id3.ID3v1SaveOptions
+    :members:
+    :member-order: bysource
 
 .. autoclass:: mutagen.id3.PictureType
     :members:
@@ -25,12 +28,12 @@ ID3 Frames
 ID3
 ---
 
-.. autoclass:: mutagen.id3.ID3()
+.. autoclass:: mutagen.id3.ID3
     :show-inheritance:
     :members:
     :exclude-members: loaded_frame
 
-.. autoclass:: mutagen.id3.ID3FileType(filename, ID3=None)
+.. autoclass:: mutagen.id3.ID3FileType
     :members:
     :exclude-members: ID3
 

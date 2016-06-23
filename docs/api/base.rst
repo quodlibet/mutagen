@@ -8,25 +8,18 @@ Main Module
 Base Classes
 ~~~~~~~~~~~~
 
-.. autoclass:: mutagen.FileType(filename)
-    :members: pprint, add_tags, mime
+.. autoclass:: mutagen.FileType
+    :members: pprint, add_tags, mime, save, delete
     :show-inheritance:
-
-    .. automethod:: delete()
-
-    .. automethod:: save()
 
 
 .. autoclass:: mutagen.Tags
-
-    .. automethod:: pprint()
+    :members: pprint
 
 
 .. autoclass:: mutagen.Metadata
-
-    .. automethod:: delete()
-
-    .. automethod:: save()
+    :show-inheritance:
+    :members: save, delete
 
 
 .. autoclass:: mutagen.StreamInfo
@@ -51,8 +44,10 @@ Internal Classes
     :show-inheritance:
 
 
-Other Classes
-~~~~~~~~~~~~~
+Other Classes and Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: mutagen
 
 .. class:: text()
 
@@ -64,3 +59,27 @@ Other Classes
 
     This type only exists for documentation purposes. It represents
     :obj:`python:str` under Python 2 and :obj:`python3:bytes` under Python 3.
+
+
+.. class:: fspath()
+
+    This type only exists for documentation purposes. It represents a file
+    name which can be :obj:`python:str` or :obj:`python:unicode` under Python
+    2 and :obj:`python3:bytes` or :obj:`python3:str` under Python 3.
+
+
+.. class:: filething()
+
+    This type only exists for documentation purposes. Either a `fspath` or
+    a file-like object. See :doc:`/user/filelike` for more information.
+
+
+.. function:: PaddingFunction(info)
+
+    A function you can implement and pass to various :meth:`save` methods for
+    controlling the amount of padding to use. See :doc:`/user/padding` for
+    more information.
+
+    :param PaddingInfo info:
+    :returns: The amount of padding to use
+    :rtype: int

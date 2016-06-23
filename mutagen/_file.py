@@ -12,12 +12,14 @@ from mutagen._compat import izip
 
 
 class FileType(DictMixin):
-    """An abstract object wrapping tags and audio stream information.
+    """FileType(filething, **kwargs)
 
-    Attributes:
+    Args:
+        filething: A filename or a file-like object
 
-    * info -- :class:`StreamInfo` -- (length, bitrate, sample rate)
-    * tags -- :class:`Tags` -- metadata tags, if any
+    Subclasses might take further options via keyword arguments.
+
+    An abstract object wrapping tags and audio stream information.
 
     Each file format has different potential tags and stream
     information.
@@ -25,6 +27,10 @@ class FileType(DictMixin):
     FileTypes implement an interface very similar to Metadata; the
     dict interface, save, load, and delete calls on a FileType call
     the appropriate methods on its tag data.
+
+    Attributes:
+        info (`StreamInfo`): contains length, bitrate, sample rate
+        tags (`Tags`): metadata tags, if any, otherwise `None`
     """
 
     __module__ = "mutagen"
@@ -89,7 +95,9 @@ class FileType(DictMixin):
             return self.tags.keys()
 
     def delete(self, filename=None):
-        """Remove tags from a file.
+        """delete()
+
+        Remove tags from a file.
 
         In cases where the tagging format is independent of the file type
         (for example `mutagen.ID3`) all traces of the tagging format will
@@ -101,7 +109,8 @@ class FileType(DictMixin):
 
         Does nothing if the file has no tags.
 
-        :raises mutagen.MutagenError: if deleting wasn't possible
+        Raises:
+            MutagenError: if deleting wasn't possible
         """
 
         if self.tags is not None:
@@ -114,9 +123,12 @@ class FileType(DictMixin):
             return self.tags.delete(filename)
 
     def save(self, filename=None, **kwargs):
-        """Save metadata tags.
+        """save(**kwargs)
 
-        :raises mutagen.MutagenError: if saving wasn't possible
+        Save metadata tags.
+
+        Raises:
+            MutagenError: if saving wasn't possible
         """
 
         if filename is None:
@@ -130,7 +142,10 @@ class FileType(DictMixin):
             return self.tags.save(filename, **kwargs)
 
     def pprint(self):
-        """Print stream information and comment key=value pairs."""
+        """
+        Returns:
+            text: stream information and comment key=value pairs.
+        """
 
         stream = "%s (%s)" % (self.info.pprint(), self.mime[0])
         try:
@@ -143,15 +158,15 @@ class FileType(DictMixin):
     def add_tags(self):
         """Adds new tags to the file.
 
-        :raises mutagen.MutagenError: if tags already exist or adding is not
-            possible.
+        Raises:
+            MutagenError: if tags already exist or adding is not possible.
         """
 
         raise NotImplementedError
 
     @property
     def mime(self):
-        """A list of mime types"""
+        """A list of mime types (`text`)"""
 
         mimes = []
         for Kind in type(self).__mro__:
@@ -189,7 +204,10 @@ class StreamInfo(object):
     __module__ = "mutagen"
 
     def pprint(self):
-        """Print stream information"""
+        """
+        Returns:
+            text: Print stream information
+        """
 
         raise NotImplementedError
 

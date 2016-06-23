@@ -1,14 +1,20 @@
 FLAC
 ====
 
+.. currentmodule:: mutagen
+
 .. automodule:: mutagen.flac
 
-.. autoclass:: mutagen.flac.FLAC(filename)
+.. autoclass:: mutagen.flac.FLAC
     :show-inheritance:
     :members:
-    :exclude-members: vc, METADATA_BLOCKS
+    :exclude-members: vc, METADATA_BLOCKS, load
 
 .. autoclass:: mutagen.flac.StreamInfo()
+    :members:
+
+.. autoclass:: mutagen.flac.VCFLACDict
+    :show-inheritance:
     :members:
 
 .. autoclass:: mutagen.flac.Picture
