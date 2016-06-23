@@ -10,7 +10,12 @@ import mutagen
 
 needs_sphinx = "1.3"
 
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'ext']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.intersphinx',
+    'ext',
+]
 intersphinx_mapping = {
     'python': ('https://docs.python.org/2.7', None),
     'python3': ('https://docs.python.org/3.5', None),

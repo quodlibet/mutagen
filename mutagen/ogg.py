@@ -21,7 +21,8 @@ import sys
 import zlib
 
 from mutagen import FileType
-from mutagen._util import cdata, resize_bytes, MutagenError, loadfile, get_size
+from mutagen._util import cdata, resize_bytes, MutagenError, loadfile, \
+    get_size, seek_end
 from ._compat import cBytesIO, reraise, chr_, izip, xrange
 
 
@@ -448,12 +449,7 @@ class OggPage(object):
         """
 
         # For non-muxed streams, look at the last page.
-        filesize = fileobj.tell() + get_size(fileobj)
-        if filesize < 256 * 256:
-            # The file is less than 64k in length.
-            fileobj.seek(0)
-        else:
-            fileobj.seek(-256 * 256, 2)
+        seek_end(fileobj, 256 * 256)
 
         data = fileobj.read()
         try:

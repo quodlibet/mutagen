@@ -162,6 +162,19 @@ class FileType(DictMixin):
 
     @staticmethod
     def score(filename, fileobj, header):
+        """Returns a score for how likely the file can be parsed by this type.
+
+        Args:
+            filename (path): a file path
+            fileobj: a file object open in rb mode. Position is undefined
+            header (bytes): data of undefined length, starts with the start of
+                the file.
+
+        Returns:
+            int: negative if definitely not a matching type, otherwise a score,
+                the bigger the more certain that the file can be loaded.
+        """
+
         raise NotImplementedError
 
 
@@ -183,7 +196,9 @@ class StreamInfo(object):
 
 @loadfile(method=False)
 def File(filething, options=None, easy=False):
-    """Guess the type of the file and try to open it.
+    """File(filename, options=None, easy=False)
+
+    Guess the type of the file and try to open it.
 
     The file type is decided by several things, such as the first 128
     bytes (which usually contains a file type identifier), the
@@ -191,12 +206,20 @@ def File(filething, options=None, easy=False):
 
     If no appropriate type could be found, None is returned.
 
-    :param options: Sequence of :class:`FileType` implementations, defaults to
-                    all included ones.
+    Args:
+        filename: A filename or file-like object
+        options: Sequence of :class:`FileType` implementations,
+            defaults to all included ones.
+        easy (bool):  If the easy wrappers should be returnd if available.
+            For example :class:`EasyMP3 <mp3.EasyMP3>` instead of
+            :class:`MP3 <mp3.MP3>`.
 
-    :param easy: If the easy wrappers should be returnd if available.
-                 For example :class:`EasyMP3 <mp3.EasyMP3>` instead
-                 of :class:`MP3 <mp3.MP3>`.
+    Returns:
+        FileType: A FileType instance for the detected type or `None` in case
+            the type couln't be determined.
+
+    Raises:
+        MutagenError: in case the detected type fails to load the file.
     """
 
     if options is None:
@@ -241,7 +264,11 @@ def File(filething, options=None, easy=False):
 
     fileobj = filething.fileobj
 
-    header = fileobj.read(128)
+    try:
+        header = fileobj.read(128)
+    except IOError:
+        header = b""
+
     # Sort by name after score. Otherwise import order affects
     # Kind sort order, which affects treatment of things with
     # equals scores.
@@ -252,7 +279,10 @@ def File(filething, options=None, easy=False):
     results.sort()
     (score, name), Kind = results[-1]
     if score > 0:
-        fileobj.seek(0, 0)
+        try:
+            fileobj.seek(0, 0)
+        except IOError:
+            pass
         return Kind(fileobj)
     else:
         return None

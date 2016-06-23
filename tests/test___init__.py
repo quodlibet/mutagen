@@ -429,11 +429,11 @@ create_filetype_tests()
 
 class TFile(TestCase):
 
-    FILES = [
-        os.path.join(DATA_DIR, "empty.ogg"),
-        os.path.join(DATA_DIR, "empty.oggflac"),
-        os.path.join(DATA_DIR, "silence-44-s.mp3"),
-    ]
+    @property
+    def filenames(self):
+        for kind, paths in _FILETYPES.items():
+            for path in paths:
+                yield path
 
     def test_bad(self):
         try:
@@ -454,16 +454,22 @@ class TFile(TestCase):
         self.failUnlessRaises(MutagenError, File, "/dev/doesnotexist")
 
     def test_no_options(self):
-        for filename in self.FILES:
+        for filename in self.filenames:
             filename = os.path.join(DATA_DIR, filename)
             self.failIf(File(filename, options=[]))
 
     def test_fileobj(self):
-        for filename in self.FILES:
+        for filename in self.filenames:
             with open(filename, "rb") as h:
                 self.assertTrue(File(h) is not None)
             with open(filename, "rb") as h:
-                self.assertTrue(File(cBytesIO(h.read())) is not None)
+                fileobj = cBytesIO(h.read())
+                self.assertTrue(File(fileobj, filename=filename) is not None)
+
+    def test_mock_fileobj(self):
+        for filename in self.filenames:
+            with open(filename, "rb") as h:
+                assertMockFileObject(MutagenError, h, File)
 
     def test_easy_mp3(self):
         self.failUnless(isinstance(

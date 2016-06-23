@@ -433,6 +433,27 @@ def get_size(fileobj):
         fileobj.seek(old_pos, 0)
 
 
+def seek_end(fileobj, offset):
+    """Like fileobj.seek(-offset, 2), but will not try to go beyond the start
+
+    Needed since file objects from BytesIO will not raise IOError and
+    file objects from open() will raise IOError if going to a negative offset.
+    To make things easier for custom implementations, instead of allowing
+    both behaviors, we just don't do it.
+
+    Can raise IOError
+    """
+
+    if offset < 0:
+        raise ValueError
+
+    size = fileobj.tell() + get_size(fileobj)
+    if size < offset:
+        fileobj.seek(0, 0)
+    else:
+        fileobj.seek(-offset, 2)
+
+
 def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
     """Insert size bytes of empty space starting at offset.
 

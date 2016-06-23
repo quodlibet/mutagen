@@ -38,7 +38,7 @@ from ._compat import (cBytesIO, PY3, text_type, PY2, reraise, swap_to_string,
                       xrange)
 from mutagen import Metadata, FileType, StreamInfo
 from mutagen._util import (DictMixin, cdata, delete_bytes, total_ordering,
-                           MutagenError, loadfile, convert_error)
+                           MutagenError, loadfile, convert_error, seek_end)
 
 
 def is_valid_apev2_key(key):
@@ -738,8 +738,8 @@ class APEv2File(FileType):
     @staticmethod
     def score(filename, fileobj, header):
         try:
-            fileobj.seek(-160, 2)
+            seek_end(fileobj, 160)
+            footer = fileobj.read()
         except IOError:
-            fileobj.seek(0)
-        footer = fileobj.read()
+            return -1
         return ((b"APETAGEX" in footer) - header.startswith(b"ID3"))
