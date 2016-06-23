@@ -23,6 +23,7 @@ __all__ = ["OptimFROG", "Open", "delete"]
 import struct
 
 from ._compat import endswith
+from ._util import convert_error
 from mutagen import StreamInfo
 from mutagen.apev2 import APEv2File, error, delete
 
@@ -41,7 +42,10 @@ class OptimFROGInfo(StreamInfo):
     * sample_rate - audio sampling rate in Hz
     """
 
+    @convert_error(IOError, OptimFROGHeaderError)
     def __init__(self, fileobj):
+        """Raises OptimFROGHeaderError"""
+
         header = fileobj.read(76)
         if (len(header) != 76 or not header.startswith(b"OFR ") or
                 struct.unpack("<I", header[4:8])[0] not in [12, 15]):

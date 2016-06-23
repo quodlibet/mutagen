@@ -64,6 +64,8 @@ class OggSpeexInfo(StreamInfo):
 
     def _post_tags(self, fileobj):
         page = OggPage.find_last(fileobj, self.serial)
+        if page is None:
+            raise OggSpeexHeaderError
         self.length = page.position / float(self.sample_rate)
 
     def pprint(self):

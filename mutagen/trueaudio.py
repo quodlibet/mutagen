@@ -20,7 +20,7 @@ __all__ = ["TrueAudio", "Open", "delete", "EasyTrueAudio"]
 from ._compat import endswith
 from mutagen import StreamInfo
 from mutagen.id3 import ID3FileType, delete
-from mutagen._util import cdata, MutagenError
+from mutagen._util import cdata, MutagenError, convert_error
 
 
 class error(RuntimeError, MutagenError):
@@ -40,7 +40,10 @@ class TrueAudioInfo(StreamInfo):
     * sample_rate - audio sample rate, in Hz
     """
 
+    @convert_error(IOError, TrueAudioHeaderError)
     def __init__(self, fileobj, offset):
+        """Raises TrueAudioHeaderError"""
+
         fileobj.seek(offset or 0)
         header = fileobj.read(18)
         if len(header) != 18 or not header.startswith(b"TTA"):

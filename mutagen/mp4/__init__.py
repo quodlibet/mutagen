@@ -28,8 +28,8 @@ import sys
 
 from mutagen import FileType, Tags, StreamInfo, PaddingInfo
 from mutagen._constants import GENRES
-from mutagen._util import (cdata, insert_bytes, DictProxy, MutagenError,
-                           hashable, enum, get_size, resize_bytes, loadfile)
+from mutagen._util import cdata, insert_bytes, DictProxy, MutagenError, \
+    hashable, enum, get_size, resize_bytes, loadfile, convert_error
 from mutagen._compat import (reraise, PY2, string_types, text_type, chr_,
                              iteritems, PY3, cBytesIO, izip, xrange)
 from ._atom import Atoms, Atom, AtomError
@@ -854,6 +854,7 @@ class MP4Info(StreamInfo):
     codec = u""
     codec_name = u""
 
+    @convert_error(IOError, MP4StreamInfoError)
     def __init__(self, atoms, fileobj):
         try:
             moov = atoms[b"moov"]

@@ -12,6 +12,7 @@ You should not rely on the interfaces here being stable. They are
 intended for internal use in Mutagen only.
 """
 
+import sys
 import struct
 import codecs
 
@@ -21,7 +22,7 @@ from functools import wraps
 from fnmatch import fnmatchcase
 
 from ._compat import chr_, PY2, iteritems, iterbytes, integer_types, xrange, \
-    izip, text_type
+    izip, text_type, reraise
 
 
 def is_fileobj(fileobj):
@@ -93,6 +94,27 @@ def loadfile(method=True):
                 return func(h, *args, **kwargs)
 
         return wrapper if method else wrapper_func
+
+    return wrap
+
+
+def convert_error(exc_src, exc_dest):
+    """A decorator for reraising exceptions with a different type.
+    Mostly useful for IOError.
+    """
+
+    def wrap(func):
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except exc_dest:
+                raise
+            except exc_src as err:
+                reraise(exc_dest, err, sys.exc_info()[2])
+
+        return wrapper
 
     return wrap
 
@@ -397,8 +419,8 @@ _fill_cdata(cdata)
 
 
 def get_size(fileobj):
-    """Returns the size of the file object. The position when passed in will
-    be preserved if no error occurs.
+    """Returns the size from the current position to the end of the file.
+    The position when passed in will be preserved if no error occurs.
 
     In case of an error raises IOError.
     """

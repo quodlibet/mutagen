@@ -233,7 +233,7 @@ class TMPEGInfo(TestCase):
 
     def test_empty(self):
         fileobj = cBytesIO(b"")
-        self.failUnlessRaises(IOError, MPEGInfo, fileobj)
+        self.failUnlessRaises(MP3Error, MPEGInfo, fileobj)
 
 
 class TEasyMP3(TestCase):

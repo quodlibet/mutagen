@@ -13,7 +13,8 @@
 
 from mutagen import StreamInfo
 from mutagen._file import FileType
-from mutagen._util import BitReader, BitReaderError, MutagenError, loadfile
+from mutagen._util import BitReader, BitReaderError, MutagenError, loadfile, \
+    convert_error
 from mutagen._compat import endswith, xrange
 
 
@@ -279,7 +280,10 @@ class AACInfo(StreamInfo):
     sample_rate = 0
     bitrate = 0
 
+    @convert_error(IOError, AACError)
     def __init__(self, fileobj):
+        """Raises AACError"""
+
         # skip id3v2 header
         start_offset = 0
         header = fileobj.read(10)

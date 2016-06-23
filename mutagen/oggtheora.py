@@ -65,6 +65,8 @@ class OggTheoraInfo(StreamInfo):
 
     def _post_tags(self, fileobj):
         page = OggPage.find_last(fileobj, self.serial)
+        if page is None:
+            raise OggTheoraHeaderError
         position = page.position
         mask = (1 << self.granule_shift) - 1
         frames = (position >> self.granule_shift) + (position & mask)

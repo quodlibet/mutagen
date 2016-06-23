@@ -21,7 +21,7 @@ import sys
 import zlib
 
 from mutagen import FileType
-from mutagen._util import cdata, resize_bytes, MutagenError, loadfile
+from mutagen._util import cdata, resize_bytes, MutagenError, loadfile, get_size
 from ._compat import cBytesIO, reraise, chr_, izip, xrange
 
 
@@ -67,6 +67,8 @@ class OggPage(object):
     complete = True
 
     def __init__(self, fileobj=None):
+        """Raises error, IOError, EOFError"""
+
         self.packets = []
 
         if fileobj is None:
@@ -439,14 +441,20 @@ class OggPage(object):
 
         This finds the last page in the actual file object, or the last
         page in the stream (with eos set), whichever comes first.
+
+        Returns None in case no page with the serial exists.
+        Raises error in case this isn't a valid ogg stream.
+        Raises IOError.
         """
 
         # For non-muxed streams, look at the last page.
-        try:
-            fileobj.seek(-256 * 256, 2)
-        except IOError:
+        filesize = fileobj.tell() + get_size(fileobj)
+        if filesize < 256 * 256:
             # The file is less than 64k in length.
             fileobj.seek(0)
+        else:
+            fileobj.seek(-256 * 256, 2)
+
         data = fileobj.read()
         try:
             index = data.rindex(b"OggS")
@@ -502,7 +510,7 @@ class OggFileType(FileType):
             self.info = self._Info(fileobj)
             self.tags = self._Tags(fileobj, self.info)
             self.info._post_tags(fileobj)
-        except error as e:
+        except (error, IOError) as e:
             reraise(self._Error, e, sys.exc_info()[2])
         except EOFError:
             raise self._Error("no appropriate stream found")

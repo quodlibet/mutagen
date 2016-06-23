@@ -11,7 +11,7 @@
 __all__ = ["ASF", "Open"]
 
 from mutagen import FileType, Tags, StreamInfo
-from mutagen._util import resize_bytes, DictMixin, loadfile
+from mutagen._util import resize_bytes, DictMixin, loadfile, convert_error
 from mutagen._compat import string_types, long_, PY3, izip
 
 from ._util import error, ASFError, ASFHeaderError
@@ -221,6 +221,7 @@ class ASF(FileType):
     tags = None
     """A `ASFTags` instance"""
 
+    @convert_error(IOError, error)
     @loadfile()
     def load(self, filething):
         self.filename = filething.filename

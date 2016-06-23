@@ -21,7 +21,7 @@ import struct
 from ._compat import endswith
 from mutagen import StreamInfo
 from mutagen.apev2 import APEv2File, error, delete
-from mutagen._util import cdata
+from mutagen._util import cdata, convert_error
 
 
 class MonkeysAudioHeaderError(error):
@@ -40,7 +40,10 @@ class MonkeysAudioInfo(StreamInfo):
     * version -- Monkey's Audio stream version, as a float (eg: 3.99)
     """
 
+    @convert_error(IOError, MonkeysAudioHeaderError)
     def __init__(self, fileobj):
+        """Raises MonkeysAudioHeaderError"""
+
         header = fileobj.read(76)
         if len(header) != 76 or not header.startswith(b"MAC "):
             raise MonkeysAudioHeaderError("not a Monkey's Audio file")

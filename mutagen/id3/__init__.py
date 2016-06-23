@@ -38,7 +38,8 @@ import errno
 from struct import unpack, pack, error as StructError
 
 import mutagen
-from mutagen._util import insert_bytes, delete_bytes, DictProxy, enum, loadfile
+from mutagen._util import insert_bytes, delete_bytes, DictProxy, enum, \
+    loadfile, convert_error
 from mutagen._tags import PaddingInfo
 from .._compat import chr_, PY3
 
@@ -86,6 +87,7 @@ class ID3Header(object):
     f_experimental = property(lambda s: bool(s._flags & 0x20))
     f_footer = property(lambda s: bool(s._flags & 0x10))
 
+    @convert_error(IOError, error)
     def __init__(self, fileobj=None):
         """Raises ID3NoHeaderError, ID3UnsupportedVersionError or error"""
 
@@ -221,6 +223,7 @@ class ID3(DictProxy, mutagen.Metadata):
         # XXX: for aiff to adjust the offset..
         pass
 
+    @convert_error(IOError, error)
     @loadfile()
     def load(self, filething, known_frames=None, translate=True, v2_version=4):
         """Load tags from a filename.

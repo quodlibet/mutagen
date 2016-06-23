@@ -23,7 +23,7 @@ from ._compat import endswith, xrange
 from mutagen import StreamInfo
 from mutagen.apev2 import APEv2File, error, delete
 from mutagen.id3 import BitPaddedInt
-from mutagen._util import cdata
+from mutagen._util import cdata, convert_error
 
 
 class MusepackHeaderError(error):
@@ -88,7 +88,10 @@ class MusepackInfo(StreamInfo):
     VorbisGain, you must multiply the peak by 2.
     """
 
+    @convert_error(IOError, MusepackHeaderError)
     def __init__(self, fileobj):
+        """Raises MusepackHeaderError"""
+
         header = fileobj.read(4)
         if len(header) != 4:
             raise MusepackHeaderError("not a Musepack file")
@@ -161,7 +164,7 @@ class MusepackInfo(StreamInfo):
 
         try:
             self.version = bytearray(fileobj.read(1))[0]
-        except TypeError:
+        except (TypeError, IndexError):
             raise MusepackHeaderError("SH packet ended unexpectedly.")
 
         remaining_size -= 1

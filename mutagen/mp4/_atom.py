@@ -9,6 +9,7 @@
 import struct
 
 from mutagen._compat import PY2
+from mutagen._util import convert_error
 
 # This is not an exhaustive list of container atoms, but just the
 # ones this module needs to peek inside.
@@ -36,6 +37,7 @@ class Atom(object):
 
     children = None
 
+    @convert_error(IOError, AtomError)
     def __init__(self, fileobj, level=0):
         """May raise AtomError"""
 
@@ -142,6 +144,7 @@ class Atoms(object):
     This structure should only be used internally by Mutagen.
     """
 
+    @convert_error(IOError, AtomError)
     def __init__(self, fileobj):
         self.atoms = []
         fileobj.seek(0, 2)

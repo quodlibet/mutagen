@@ -5,9 +5,9 @@ from tempfile import mkstemp
 import shutil
 
 from tests import TestCase, DATA_DIR
-from mutagen._compat import cBytesIO, text_type
+from mutagen._compat import cBytesIO, text_type, xrange
 from mutagen import File, Metadata, FileType, MutagenError, PaddingInfo
-from mutagen._util import loadfile
+from mutagen._util import loadfile, get_size
 from mutagen.oggvorbis import OggVorbis
 from mutagen.oggflac import OggFLAC
 from mutagen.oggspeex import OggSpeex
@@ -176,6 +176,94 @@ class TFileType(TestCase):
         self.assertTrue(self.mp3_notags.tags is None)
 
 
+class TestFileObj(object):
+    """A file-like object which fails in various ways"""
+
+    def __init__(self, fileobj, stop_after=-1, fail_after=-1):
+        """
+        Args:
+            stop_after (int): size of data to return on read in total
+            fail_after (int): after this number of operations every method
+                will raise IOError
+        """
+
+        self._fileobj = fileobj
+        self._stop_after = stop_after
+        self._fail_after = fail_after
+
+        self.dataread = 0
+        self.operations = 0
+
+        fileobj.seek(0, 0)
+
+    def _check_fail(self):
+        self.operations += 1
+        if self._fail_after != -1:
+            if self.operations > self._fail_after:
+                raise IOError("fail")
+
+    def tell(self):
+        self._check_fail()
+        return self._fileobj.tell()
+
+    def read(self, size=-1):
+        try:
+            self._check_fail()
+        except IOError:
+            # we use read(0) to test for the file object type, so don't error
+            # out in that case
+            if size != 0:
+                raise
+
+        data = self._fileobj.read(size)
+        self.dataread += len(data)
+        if self._stop_after != -1 and self.dataread > self._stop_after:
+            data = data[:self._stop_after - self.dataread]
+        return data
+
+    def seek(self, offset, whence=0):
+        self._check_fail()
+
+        # make sure we don't go negative
+        if whence == 0:
+            final_position = offset
+        elif whence == 1:
+            final_position = self._fileobj.tell() + offset
+        elif whence == 2:
+            size = self._fileobj.tell() + get_size(self._fileobj)
+            final_position = size + offset
+        assert final_position >= 0, final_position
+
+        return self._fileobj.seek(offset, whence)
+
+
+def assertMockFileObject(exception, fileobj, callable_, *args, **kwargs):
+    """Passes a fileobj wrapper to callable_ and tests if it can handle
+    all possibilities of IOError being thrown and the stream ending too early.
+    """
+
+    # first figure out how much a successful attempt reads and how many
+    # file object operations it executes.
+    t = TestFileObj(fileobj)
+    callable_(t, *args, **kwargs)
+
+    for i in xrange(t.dataread):
+        try:
+            callable_(TestFileObj(fileobj, stop_after=i), *args, **kwargs)
+        except exception:
+            pass
+        except:
+            raise
+
+    for i in xrange(t.operations):
+        try:
+            callable_(TestFileObj(fileobj, fail_after=i), *args, **kwargs)
+        except exception:
+            pass
+        except:
+            raise
+
+
 class TAbstractFileType(object):
 
     PATH = None
@@ -198,6 +286,14 @@ class TAbstractFileType(object):
         with open(self.filename, "rb") as h:
             fileobj = cBytesIO(h.read())
             self.KIND(fileobj)
+
+    def test_testfileobj(self):
+        with open(self.filename, "rb") as h:
+            self.KIND(TestFileObj(h))
+
+    def test_mock_fileobj(self):
+        with open(self.filename, "rb") as h:
+            assertMockFileObject(MutagenError, h, self.KIND)
 
     def test_filename(self):
         self.assertEqual(self.audio.filename, self.filename)

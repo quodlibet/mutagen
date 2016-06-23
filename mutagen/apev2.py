@@ -38,7 +38,7 @@ from ._compat import (cBytesIO, PY3, text_type, PY2, reraise, swap_to_string,
                       xrange)
 from mutagen import Metadata, FileType, StreamInfo
 from mutagen._util import (DictMixin, cdata, delete_bytes, total_ordering,
-                           MutagenError, loadfile)
+                           MutagenError, loadfile, convert_error)
 
 
 def is_valid_apev2_key(key):
@@ -103,6 +103,8 @@ class _APEv2Data(object):
     is_at_start = False
 
     def __init__(self, fileobj):
+        """Raises IOError and apev2.error"""
+
         self.__find_metadata(fileobj)
 
         if self.header is None:
@@ -173,11 +175,18 @@ class _APEv2Data(object):
             self.header = 0
 
     def __fill_missing(self, fileobj):
+        """Raises IOError and apev2.error"""
+
         fileobj.seek(self.metadata + 8)
-        self.version = fileobj.read(4)
-        self.size = cdata.uint_le(fileobj.read(4))
-        self.items = cdata.uint_le(fileobj.read(4))
-        self.flags = cdata.uint_le(fileobj.read(4))
+
+        data = fileobj.read(16)
+        if len(data) != 16:
+            raise error
+
+        self.version = data[:4]
+        self.size = cdata.uint32_le(data[4:8])
+        self.items = cdata.uint32_le(data[8:12])
+        self.flags = cdata.uint32_le(data[12:])
 
         if self.header is not None:
             self.data = self.header + 32
@@ -269,9 +278,13 @@ class APEv2(_CIDictProxy, Metadata):
         items = sorted(self.items())
         return u"\n".join(u"%s=%s" % (k, v.pprint()) for k, v in items)
 
+    @convert_error(IOError, error)
     @loadfile()
     def load(self, filething):
-        """Load tags from a filename."""
+        """Load tags from a filename.
+
+        Raises apev2.error
+        """
 
         self.filename = filething.filename
         data = _APEv2Data(filething.fileobj)
@@ -283,33 +296,45 @@ class APEv2(_CIDictProxy, Metadata):
             raise APENoHeaderError("No APE tag found")
 
     def __parse_tag(self, tag, count):
+        """Raises IOError and APEBadItemError"""
+
         fileobj = cBytesIO(tag)
 
         for i in xrange(count):
-            size_data = fileobj.read(4)
+            tag_data = fileobj.read(8)
             # someone writes wrong item counts
-            if not size_data:
+            if not tag_data:
                 break
-            size = cdata.uint_le(size_data)
-            flags = cdata.uint_le(fileobj.read(4))
+            if len(tag_data) != 8:
+                raise error
+            size = cdata.uint32_le(tag_data[:4])
+            flags = cdata.uint32_le(tag_data[4:8])
 
             # Bits 1 and 2 bits are flags, 0-3
             # Bit 0 is read/write flag, ignored
             kind = (flags & 6) >> 1
             if kind == 3:
                 raise APEBadItemError("value type must be 0, 1, or 2")
+
             key = value = fileobj.read(1)
+            if not key:
+                raise APEBadItemError
             while key[-1:] != b'\x00' and value:
                 value = fileobj.read(1)
+                if not value:
+                    raise APEBadItemError
                 key += value
             if key[-1:] == b"\x00":
                 key = key[:-1]
+
             if PY3:
                 try:
                     key = key.decode("ascii")
                 except UnicodeError as err:
                     reraise(APEBadItemError, err, sys.exc_info()[2])
             value = fileobj.read(size)
+            if len(value) != size:
+                raise APEBadItemError
 
             value = _get_value_type(kind)._new(value)
 
@@ -688,11 +713,17 @@ class APEv2File(FileType):
 
     @loadfile()
     def load(self, filething):
+        """Raises apev2.error"""
+
         self.filename = filething.filename
         fileobj = filething.fileobj
 
         self.info = self._Info(fileobj)
-        fileobj.seek(0, 0)
+        try:
+            fileobj.seek(0, 0)
+        except IOError as e:
+            raise error(e)
+
         try:
             self.tags = APEv2(fileobj)
         except APENoHeaderError:

@@ -18,7 +18,8 @@ from mutagen import StreamInfo, FileType
 
 from mutagen.id3 import ID3
 from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
-from mutagen._util import resize_bytes, delete_bytes, MutagenError, loadfile
+from mutagen._util import resize_bytes, delete_bytes, MutagenError, loadfile, \
+    convert_error
 
 __all__ = ["AIFF", "Open", "delete"]
 
@@ -234,7 +235,10 @@ class AIFFInfo(StreamInfo):
     channels = 0
     sample_rate = 0
 
+    @convert_error(IOError, error)
     def __init__(self, fileobj):
+        """Raises error"""
+
         iff = IFFFile(fileobj)
         try:
             common_chunk = iff[u'COMM']
@@ -242,6 +246,8 @@ class AIFFInfo(StreamInfo):
             raise error(str(e))
 
         data = common_chunk.read()
+        if len(data) < 18:
+            raise error
 
         info = struct.unpack('>hLh10s', data[:18])
         channels, frame_count, sample_size, sample_rate = info
@@ -339,6 +345,7 @@ class AIFF(FileType):
         else:
             raise error("an ID3 tag already exists")
 
+    @convert_error(IOError, error)
     @loadfile()
     def load(self, filething, **kwargs):
         """Load stream and tag information from a file."""

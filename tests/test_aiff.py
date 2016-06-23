@@ -176,7 +176,7 @@ class TAIFFInfo(TestCase):
 
     def test_empty(self):
         fileobj = cBytesIO(b"")
-        self.failUnlessRaises(IOError, AIFFInfo, fileobj)
+        self.failUnlessRaises(AIFFError, AIFFInfo, fileobj)
 
 
 class TIFFFile(TestCase):

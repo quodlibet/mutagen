@@ -50,6 +50,8 @@ class OggVorbisInfo(StreamInfo):
     """Sample rate in Hz"""
 
     def __init__(self, fileobj):
+        """Raises ogg.error, IOError"""
+
         page = OggPage(fileobj)
         while not page.packets[0].startswith(b"\x01vorbis"):
             page = OggPage(fileobj)
@@ -76,7 +78,11 @@ class OggVorbisInfo(StreamInfo):
             self.bitrate = nominal_bitrate
 
     def _post_tags(self, fileobj):
+        """Raises ogg.error"""
+
         page = OggPage.find_last(fileobj, self.serial)
+        if page is None:
+            raise OggVorbisHeaderError
         self.length = page.position / float(self.sample_rate)
 
     def pprint(self):

@@ -11,7 +11,8 @@
 import struct
 
 from mutagen import StreamInfo
-from mutagen._util import MutagenError, enum, BitReader, BitReaderError
+from mutagen._util import MutagenError, enum, BitReader, BitReaderError, \
+    convert_error
 from mutagen._compat import endswith, xrange
 from mutagen.id3 import ID3FileType, BitPaddedInt, delete
 
@@ -314,6 +315,7 @@ class MPEGInfo(StreamInfo):
     bitrate_mode = BitrateMode.UNKNOWN
     track_gain = track_peak = album_gain = album_peak = None
 
+    @convert_error(IOError, error)
     def __init__(self, fileobj, offset=None):
         """Parse MPEG stream information from a file-like object.
 
@@ -321,6 +323,8 @@ class MPEGInfo(StreamInfo):
         for stream information and Xing headers; otherwise, ID3v2 tags
         will be skipped automatically. A correct offset can make
         loading files significantly faster.
+
+        Raises HeaderNotFoundError, error
         """
 
         if offset is None:

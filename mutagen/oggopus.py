@@ -66,6 +66,8 @@ class OggOpusInfo(StreamInfo):
 
     def _post_tags(self, fileobj):
         page = OggPage.find_last(fileobj, self.serial)
+        if page is None:
+            raise OggOpusHeaderError
         self.length = (page.position - self.__pre_skip) / float(48000)
 
     def pprint(self):
