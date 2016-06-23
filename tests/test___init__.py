@@ -237,31 +237,19 @@ class TestFileObj(object):
         return self._fileobj.seek(offset, whence)
 
 
-def assertMockFileObject(exception, fileobj, callable_, *args, **kwargs):
-    """Passes a fileobj wrapper to callable_ and tests if it can handle
-    all possibilities of IOError being thrown and the stream ending too early.
+def iter_test_file_objects(fileobj):
+    """Given a file object yields the same file object which fails differently
+    each time
     """
 
+    t = TestFileObj(fileobj)
     # first figure out how much a successful attempt reads and how many
     # file object operations it executes.
-    t = TestFileObj(fileobj)
-    callable_(t, *args, **kwargs)
-
+    yield t
     for i in xrange(t.dataread):
-        try:
-            callable_(TestFileObj(fileobj, stop_after=i), *args, **kwargs)
-        except exception:
-            pass
-        except:
-            raise
-
+        yield TestFileObj(fileobj, stop_after=i)
     for i in xrange(t.operations):
-        try:
-            callable_(TestFileObj(fileobj, fail_after=i), *args, **kwargs)
-        except exception:
-            pass
-        except:
-            raise
+        yield TestFileObj(fileobj, fail_after=i)
 
 
 class TAbstractFileType(object):
@@ -296,7 +284,11 @@ class TAbstractFileType(object):
 
     def test_mock_fileobj(self):
         with open(self.filename, "rb") as h:
-            assertMockFileObject(MutagenError, h, self.KIND)
+            for t in iter_test_file_objects(h):
+                try:
+                    self.KIND(t)
+                except MutagenError:
+                    pass
 
     def test_filename(self):
         self.assertEqual(self.audio.filename, self.filename)
@@ -498,7 +490,11 @@ class TFile(TestCase):
     def test_mock_fileobj(self):
         for filename in self.filenames:
             with open(filename, "rb") as h:
-                assertMockFileObject(MutagenError, h, File)
+                for t in iter_test_file_objects(h):
+                    try:
+                        File(t)
+                    except MutagenError:
+                        pass
 
     def test_easy_mp3(self):
         self.failUnless(isinstance(
