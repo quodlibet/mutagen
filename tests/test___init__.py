@@ -276,7 +276,10 @@ class TAbstractFileType(object):
         self.audio = self.KIND(self.filename)
 
     def tearDown(self):
-        os.remove(self.filename)
+        try:
+            os.remove(self.filename)
+        except OSError:
+            pass
 
     def test_fileobj(self):
         with open(self.filename, "rb") as h:
@@ -329,6 +332,32 @@ class TAbstractFileType(object):
     def test_delete(self):
         self.audio.delete(self.filename)
         self.audio.delete()
+
+    def test_delete_nonexisting(self):
+        # if there are none, add them first
+        if not self.audio.tags:
+            try:
+                self.audio.add_tags()
+            except MutagenError:
+                pass
+            else:
+                self.audio.save()
+
+        os.remove(self.filename)
+        try:
+            self.audio.delete()
+        except MutagenError:
+            pass
+
+    def test_save_nonexisting(self):
+        os.remove(self.filename)
+        tags = self.audio.tags
+        # Metadata creates a new file
+        if not isinstance(tags, Metadata):
+            try:
+                self.audio.save()
+            except MutagenError:
+                pass
 
     def test_save(self):
         self.audio.save(self.filename)

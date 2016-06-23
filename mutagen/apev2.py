@@ -478,6 +478,7 @@ class APEv2(_CIDictProxy, Metadata):
         fileobj.write(footer)
         fileobj.close()
 
+    @convert_error(IOError, error)
     def delete(self, filename=None):
         """Remove tags from a file."""
 

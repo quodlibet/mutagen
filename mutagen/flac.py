@@ -803,6 +803,7 @@ class FLAC(mutagen.FileType):
 
         return [b for b in self.metadata_blocks if b.code == Picture.code]
 
+    @convert_error(IOError, error)
     def save(self, filename=None, deleteid3=False, padding=None):
         """Save metadata blocks to a file.
 

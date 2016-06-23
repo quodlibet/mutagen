@@ -522,13 +522,16 @@ class OggFileType(FileType):
         self.tags.clear()
         # TODO: we should delegate the deletion to the subclass and not through
         # _inject.
-        with open(filename, "rb+") as fileobj:
-            try:
-                self.tags._inject(fileobj, lambda x: 0)
-            except error as e:
-                reraise(self._Error, e, sys.exc_info()[2])
-            except EOFError:
-                raise self._Error("no appropriate stream found")
+        try:
+            with open(filename, "rb+") as fileobj:
+                try:
+                    self.tags._inject(fileobj, lambda x: 0)
+                except error as e:
+                    reraise(self._Error, e, sys.exc_info()[2])
+                except EOFError:
+                    raise self._Error("no appropriate stream found")
+        except IOError as e:
+            reraise(self._Error, e, sys.exc_info()[2])
 
     def add_tags(self):
         raise self._Error
@@ -541,13 +544,14 @@ class OggFileType(FileType):
 
         if filename is None:
             filename = self.filename
-        fileobj = open(filename, "rb+")
+
         try:
-            try:
-                self.tags._inject(fileobj, padding)
-            except error as e:
-                reraise(self._Error, e, sys.exc_info()[2])
-            except EOFError:
-                raise self._Error("no appropriate stream found")
-        finally:
-            fileobj.close()
+            with open(filename, "rb+") as fileobj:
+                try:
+                    self.tags._inject(fileobj, padding)
+                except error as e:
+                    reraise(self._Error, e, sys.exc_info()[2])
+                except EOFError:
+                    raise self._Error("no appropriate stream found")
+        except IOError as e:
+            reraise(self._Error, e, sys.exc_info()[2])

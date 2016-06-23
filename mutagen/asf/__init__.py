@@ -240,6 +240,7 @@ class ASF(FileType):
 
         assert not self._tags
 
+    @convert_error(IOError, error)
     def save(self, filename=None, padding=None):
         """Save tag changes back to the loaded file.
 

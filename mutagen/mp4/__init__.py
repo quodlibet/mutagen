@@ -395,13 +395,16 @@ class MP4Tags(DictProxy, Tags):
         data = Atom.render(b"ilst", b"".join(values))
 
         # Find the old atoms.
-        with open(filename, "rb+") as fileobj:
-            try:
-                atoms = Atoms(fileobj)
-            except AtomError as err:
-                reraise(error, err, sys.exc_info()[2])
+        try:
+            with open(filename, "rb+") as fileobj:
+                try:
+                    atoms = Atoms(fileobj)
+                except AtomError as err:
+                    reraise(error, err, sys.exc_info()[2])
 
-            self.__save(fileobj, atoms, data, padding)
+                self.__save(fileobj, atoms, data, padding)
+        except IOError as err:
+            reraise(error, err, sys.exc_info()[2])
 
     def __save(self, fileobj, atoms, data, padding):
         try:

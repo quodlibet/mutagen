@@ -312,6 +312,7 @@ class _IFFID3(ID3):
         self.clear()
 
 
+@convert_error(IOError, error)
 def delete(filename):
     """Completely removes the ID3 chunk from the AIFF file"""
 

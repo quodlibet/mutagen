@@ -823,6 +823,7 @@ class ID3(DictProxy, mutagen.Metadata):
                 del(self[key])
 
 
+@convert_error(IOError, error)
 def delete(filename, delete_v1=True, delete_v2=True):
     """Remove tags from a file.
 
