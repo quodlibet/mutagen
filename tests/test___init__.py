@@ -172,6 +172,7 @@ class TFileType(TestCase):
 
     def test_save_no_tags(self):
         self.assertTrue(self.mp3_notags.tags is None)
+        self.assertTrue(self.mp3_notags.filename)
         self.mp3_notags.save()
         self.assertTrue(self.mp3_notags.tags is None)
 
@@ -205,6 +206,22 @@ class TestFileObj(object):
     def tell(self):
         self._check_fail()
         return self._fileobj.tell()
+
+    def write(self, data):
+        try:
+            self._check_fail()
+        except IOError:
+            # we use write(b"") to check if the fileobj is writable
+            if len(data):
+                raise
+        self._fileobj.write(data)
+
+    def truncate(self, *args, **kwargs):
+        self._check_fail()
+        self._fileobj.truncate(*args, **kwargs)
+
+    def flush(self):
+        self._fileobj.flush()
 
     def read(self, size=-1):
         try:
@@ -269,9 +286,17 @@ class TAbstractFileType(object):
         except OSError:
             pass
 
-    def test_fileobj(self):
+    def test_fileobj_load(self):
         with open(self.filename, "rb") as h:
             self.KIND(h)
+
+    def test_fileobj_save(self):
+        with open(self.filename, "rb+") as h:
+            f = self.KIND(h)
+            h.seek(0)
+            f.save(h)
+            h.seek(0)
+            f.delete(h)
 
     def test_stringio(self):
         with open(self.filename, "rb") as h:
@@ -282,11 +307,29 @@ class TAbstractFileType(object):
         with open(self.filename, "rb") as h:
             self.KIND(TestFileObj(h))
 
-    def test_mock_fileobj(self):
+    def test_test_fileobj_load(self):
         with open(self.filename, "rb") as h:
             for t in iter_test_file_objects(h):
                 try:
                     self.KIND(t)
+                except MutagenError:
+                    pass
+
+    def test_test_fileobj_save(self):
+        with open(self.filename, "rb+") as h:
+            o = self.KIND(TestFileObj(h))
+            for t in iter_test_file_objects(h):
+                try:
+                    o.save(fileobj=t)
+                except MutagenError:
+                    pass
+
+    def test_test_fileobj_delete(self):
+        with open(self.filename, "rb+") as h:
+            o = self.KIND(TestFileObj(h))
+            for t in iter_test_file_objects(h):
+                try:
+                    o.delete(fileobj=t)
                 except MutagenError:
                     pass
 

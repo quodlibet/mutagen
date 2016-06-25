@@ -3,7 +3,7 @@ ASF
 
 .. automodule:: mutagen.asf
 
-.. autoclass:: mutagen.asf.ASF(filename)
+.. autoclass:: mutagen.asf.ASF
     :show-inheritance:
     :members:
 

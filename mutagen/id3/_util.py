@@ -122,6 +122,8 @@ class BitPaddedInt(int, _BitPaddedMixin):
         shift = 0
 
         if isinstance(value, integer_types):
+            if value < 0:
+                raise ValueError
             while value:
                 numeric_value += (value & mask) << shift
                 value >>= 8

@@ -272,55 +272,52 @@ class _IFFID3(ID3):
         except (InvalidChunk, KeyError):
             raise ID3NoHeaderError("No ID3 chunk")
 
-    def save(self, filename=None, v2_version=4, v23_sep='/', padding=None):
+    @convert_error(IOError, error)
+    @loadfile(writable=True)
+    def save(self, filething, v2_version=4, v23_sep='/', padding=None):
         """Save ID3v2 data to the AIFF file"""
 
-        if filename is None:
-            filename = self.filename
+        fileobj = filething.fileobj
 
-        # Unlike the parent ID3.save method, we won't save to a blank file
-        # since we would have to construct a empty AIFF file
-        with open(filename, 'rb+') as fileobj:
-            iff_file = IFFFile(fileobj)
+        iff_file = IFFFile(fileobj)
 
-            if u'ID3' not in iff_file:
-                iff_file.insert_chunk(u'ID3')
+        if u'ID3' not in iff_file:
+            iff_file.insert_chunk(u'ID3')
 
-            chunk = iff_file[u'ID3']
+        chunk = iff_file[u'ID3']
 
-            try:
-                data = self._prepare_data(
-                    fileobj, chunk.data_offset, chunk.data_size, v2_version,
-                    v23_sep, padding)
-            except ID3Error as e:
-                reraise(error, e, sys.exc_info()[2])
+        try:
+            data = self._prepare_data(
+                fileobj, chunk.data_offset, chunk.data_size, v2_version,
+                v23_sep, padding)
+        except ID3Error as e:
+            reraise(error, e, sys.exc_info()[2])
 
-            new_size = len(data)
-            new_size += new_size % 2  # pad byte
-            assert new_size % 2 == 0
-            chunk.resize(new_size)
-            data += (new_size - len(data)) * b'\x00'
-            assert new_size == len(data)
-            chunk.write(data)
+        new_size = len(data)
+        new_size += new_size % 2  # pad byte
+        assert new_size % 2 == 0
+        chunk.resize(new_size)
+        data += (new_size - len(data)) * b'\x00'
+        assert new_size == len(data)
+        chunk.write(data)
 
-    def delete(self, filename=None):
+    @loadfile(writable=True)
+    def delete(self, filething):
         """Completely removes the ID3 chunk from the AIFF file"""
 
-        if filename is None:
-            filename = self.filename
-        delete(filename)
+        delete(filething)
         self.clear()
 
 
 @convert_error(IOError, error)
-def delete(filename):
+@loadfile(method=False, writable=True)
+def delete(filething):
     """Completely removes the ID3 chunk from the AIFF file"""
 
-    with open(filename, "rb+") as file_:
-        try:
-            del IFFFile(file_)[u'ID3']
-        except KeyError:
-            pass
+    try:
+        del IFFFile(filething.fileobj)[u'ID3']
+    except KeyError:
+        pass
 
 
 class AIFF(FileType):
@@ -351,7 +348,6 @@ class AIFF(FileType):
     def load(self, filething, **kwargs):
         """Load stream and tag information from a file."""
 
-        self.filename = filething.filename
         fileobj = filething.fileobj
 
         try:

@@ -286,7 +286,6 @@ class APEv2(_CIDictProxy, Metadata):
         Raises apev2.error
         """
 
-        self.filename = filething.filename
         data = _APEv2Data(filething.fileobj)
 
         if data.tag:
@@ -414,7 +413,9 @@ class APEv2(_CIDictProxy, Metadata):
 
         super(APEv2, self).__setitem__(key, value)
 
-    def save(self, filename=None):
+    @convert_error(IOError, error)
+    @loadfile(writable=True, create=True)
+    def save(self, filething):
         """Save changes to a file.
 
         If no filename is given, the one most recently loaded is used.
@@ -423,11 +424,8 @@ class APEv2(_CIDictProxy, Metadata):
         a header and a footer.
         """
 
-        filename = filename or self.filename
-        try:
-            fileobj = open(filename, "r+b")
-        except IOError:
-            fileobj = open(filename, "w+b")
+        fileobj = filething.fileobj
+
         data = _APEv2Data(fileobj)
 
         if data.is_at_start:
@@ -476,18 +474,16 @@ class APEv2(_CIDictProxy, Metadata):
         footer += b"\0" * 8
 
         fileobj.write(footer)
-        fileobj.close()
 
     @convert_error(IOError, error)
-    def delete(self, filename=None):
+    @loadfile(writable=True)
+    def delete(self, filething):
         """Remove tags from a file."""
 
-        filename = filename or self.filename
-        with open(filename, "r+b") as fileobj:
-            data = _APEv2Data(fileobj)
-            if data.start is not None and data.size is not None:
-                delete_bytes(fileobj, data.end - data.start, data.start)
-
+        fileobj = filething.fileobj
+        data = _APEv2Data(fileobj)
+        if data.start is not None and data.size is not None:
+            delete_bytes(fileobj, data.end - data.start, data.start)
         self.clear()
 
 
@@ -716,7 +712,6 @@ class APEv2File(FileType):
     def load(self, filething):
         """Raises apev2.error"""
 
-        self.filename = filething.filename
         fileobj = filething.fileobj
 
         self.info = self._Info(fileobj)

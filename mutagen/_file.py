@@ -47,7 +47,8 @@ class FileType(DictMixin):
         else:
             self.load(*args, **kwargs)
 
-    def load(self, filename, *args, **kwargs):
+    @loadfile()
+    def load(self, filething, *args, **kwargs):
         raise NotImplementedError
 
     def __getitem__(self, key):
@@ -94,7 +95,8 @@ class FileType(DictMixin):
         else:
             return self.tags.keys()
 
-    def delete(self, filename=None):
+    @loadfile(writable=True)
+    def delete(self, filething):
         """delete()
 
         Remove tags from a file.
@@ -114,16 +116,15 @@ class FileType(DictMixin):
         """
 
         if self.tags is not None:
-            if filename is None:
-                filename = self.filename
-            else:
+            if filething.filename is not None:
                 warnings.warn(
                     "delete(filename=...) is deprecated, reload the file",
                     DeprecationWarning)
-            return self.tags.delete(filename)
+            return self.tags.delete(filething)
 
-    def save(self, filename=None, **kwargs):
-        """save(**kwargs)
+    @loadfile(writable=True)
+    def save(self, filething, **kwargs):
+        """save(filething, **kwargs)
 
         Save metadata tags.
 
@@ -131,15 +132,13 @@ class FileType(DictMixin):
             MutagenError: if saving wasn't possible
         """
 
-        if filename is None:
-            filename = self.filename
-        else:
+        if filething.filename is not None:
             warnings.warn(
                 "save(filename=...) is deprecated, reload the file",
                 DeprecationWarning)
 
         if self.tags is not None:
-            return self.tags.save(filename, **kwargs)
+            return self.tags.save(filething, **kwargs)
 
     def pprint(self):
         """
@@ -301,6 +300,6 @@ def File(filething, options=None, easy=False):
             fileobj.seek(0, 0)
         except IOError:
             pass
-        return Kind(fileobj)
+        return Kind(fileobj, filename=filething.filename)
     else:
         return None

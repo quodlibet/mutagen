@@ -265,7 +265,6 @@ class ID3(DictProxy, mutagen.Metadata):
             mutagen.id3.ID3(filename, known_frames=my_frames)
         """
 
-        self.filename = filething.filename
         fileobj = filething.fileobj
 
         if v2_version not in (3, 4):
@@ -540,8 +539,9 @@ class ID3(DictProxy, mutagen.Metadata):
 
         return data
 
-    def save(self, filename=None, v1=1, v2_version=4, v23_sep='/',
-             padding=None):
+    @convert_error(IOError, error)
+    @loadfile(writable=True, create=True)
+    def save(self, filething, v1=1, v2_version=4, v23_sep='/', padding=None):
         """Save changes to a file.
 
         Args:
@@ -569,41 +569,27 @@ class ID3(DictProxy, mutagen.Metadata):
         The lack of a way to update only an ID3v1 tag is intentional.
         """
 
-        if filename is None:
-            filename = self.filename
+        f = filething.fileobj
 
         try:
-            f = open(filename, 'rb+')
-        except IOError as err:
-            from errno import ENOENT
-            if err.errno != ENOENT:
-                raise
-            f = open(filename, 'ab')  # create, then reopen
-            f = open(filename, 'rb+')
+            header = ID3Header(filething.fileobj)
+        except ID3NoHeaderError:
+            old_size = 0
+        else:
+            old_size = header.size
 
-        try:
-            try:
-                header = ID3Header(f)
-            except ID3NoHeaderError:
-                old_size = 0
-            else:
-                old_size = header.size
+        data = self._prepare_data(
+            f, 0, old_size, v2_version, v23_sep, padding)
+        new_size = len(data)
 
-            data = self._prepare_data(
-                f, 0, old_size, v2_version, v23_sep, padding)
-            new_size = len(data)
+        if (old_size < new_size):
+            insert_bytes(f, new_size - old_size, old_size)
+        elif (old_size > new_size):
+            delete_bytes(f, old_size - new_size, new_size)
+        f.seek(0)
+        f.write(data)
 
-            if (old_size < new_size):
-                insert_bytes(f, new_size - old_size, old_size)
-            elif (old_size > new_size):
-                delete_bytes(f, old_size - new_size, new_size)
-            f.seek(0)
-            f.write(data)
-
-            self.__save_v1(f, v1)
-
-        finally:
-            f.close()
+        self.__save_v1(f, v1)
 
     def __save_v1(self, f, v1):
         tag, offset = _find_id3v1(f)
@@ -616,11 +602,14 @@ class ID3(DictProxy, mutagen.Metadata):
         else:
             f.truncate()
 
-    def delete(self, filename=None, delete_v1=True, delete_v2=True):
-        """Remove tags from a file.
+    @loadfile(writable=True)
+    def delete(self, filething, delete_v1=True, delete_v2=True):
+        """delete(filething=None, delete_v1=True, delete_v2=True)
+
+        Remove tags from a file.
 
         Args:
-            filename (fspath): A filename or `None` to use the one used
+            filething (filething): A filename or `None` to use the one used
                 when loading.
             delete_v1 (bool): delete any ID3v1 tag
             delete_v2 (bool): delete any ID3v2 tag
@@ -628,9 +617,7 @@ class ID3(DictProxy, mutagen.Metadata):
         If no filename is given, the one most recently loaded is used.
         """
 
-        if filename is None:
-            filename = self.filename
-        delete(filename, delete_v1, delete_v2)
+        delete(filething, delete_v1, delete_v2)
         self.clear()
 
     def __save_frame(self, frame, name=None, version=ID3Header._V24,
@@ -824,7 +811,8 @@ class ID3(DictProxy, mutagen.Metadata):
 
 
 @convert_error(IOError, error)
-def delete(filename, delete_v1=True, delete_v2=True):
+@loadfile(method=False, writable=True)
+def delete(filething, delete_v1=True, delete_v2=True):
     """Remove tags from a file.
 
     Args:
@@ -835,23 +823,24 @@ def delete(filename, delete_v1=True, delete_v2=True):
         MutagenError: In case deleting failed
     """
 
-    with open(filename, 'rb+') as f:
+    f = filething.fileobj
 
-        if delete_v1:
-            tag, offset = _find_id3v1(f)
-            if tag is not None:
-                f.seek(offset, 2)
-                f.truncate()
+    if delete_v1:
+        tag, offset = _find_id3v1(f)
+        if tag is not None:
+            f.seek(offset, 2)
+            f.truncate()
 
-        # technically an insize=0 tag is invalid, but we delete it anyway
-        # (primarily because we used to write it)
-        if delete_v2:
-            f.seek(0, 0)
-            idata = f.read(10)
-            try:
-                id3, vmaj, vrev, flags, insize = unpack('>3sBBB4s', idata)
-            except struct.error:
-                id3, insize = b'', -1
+    # technically an insize=0 tag is invalid, but we delete it anyway
+    # (primarily because we used to write it)
+    if delete_v2:
+        f.seek(0, 0)
+        idata = f.read(10)
+        try:
+            id3, vmaj, vrev, flags, insize = unpack('>3sBBB4s', idata)
+        except struct.error:
+            pass
+        else:
             insize = BitPaddedInt(insize)
             if id3 == b'ID3' and insize >= 0:
                 delete_bytes(f, insize + 10, 0)
@@ -1131,7 +1120,6 @@ class ID3FileType(mutagen.FileType):
     def load(self, filething, ID3=None, **kwargs):
         # see __init__ for docs
 
-        self.filename = filething.filename
         fileobj = filething.fileobj
 
         if ID3 is None:

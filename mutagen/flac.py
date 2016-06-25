@@ -58,7 +58,8 @@ class StrictFileObject(object):
 
     def __init__(self, fileobj):
         self._fileobj = fileobj
-        for m in ["close", "tell", "seek", "write", "name"]:
+        for m in ["close", "tell", "seek", "write", "name", "flush",
+                  "truncate"]:
             if hasattr(fileobj, m):
                 setattr(self, m, getattr(fileobj, m))
 
@@ -737,18 +738,19 @@ class FLAC(mutagen.FileType):
 
     add_vorbiscomment = add_tags
 
-    def delete(self, filename=None):
+    @loadfile(writable=True)
+    def delete(self, filething):
         """Remove Vorbis comments from a file.
 
         If no filename is given, the one most recently loaded is used.
         """
-        if filename is None:
-            filename = self.filename
 
         if self.tags is not None:
             self.metadata_blocks.remove(self.tags)
-            self.save(padding=lambda x: 0)
-            self.metadata_blocks.append(self.tags)
+            try:
+                self.save(filething, padding=lambda x: 0)
+            finally:
+                self.metadata_blocks.append(self.tags)
             self.tags.clear()
 
     vc = property(lambda s: s.tags, doc="Alias for tags; don't use this.")
@@ -758,7 +760,6 @@ class FLAC(mutagen.FileType):
     def load(self, filething):
         """Load file information from a filename."""
 
-        self.filename = filething.filename
         fileobj = filething.fileobj
 
         self.metadata_blocks = []
@@ -767,7 +768,7 @@ class FLAC(mutagen.FileType):
         self.seektable = None
 
         fileobj = StrictFileObject(fileobj)
-        self.__check_header(fileobj)
+        self.__check_header(fileobj, filething.name)
         while self.__read_metadata_block(fileobj):
             pass
 
@@ -804,52 +805,50 @@ class FLAC(mutagen.FileType):
         return [b for b in self.metadata_blocks if b.code == Picture.code]
 
     @convert_error(IOError, error)
-    def save(self, filename=None, deleteid3=False, padding=None):
+    @loadfile(writable=True)
+    def save(self, filething, deleteid3=False, padding=None):
         """Save metadata blocks to a file.
 
         Args:
-            filename (fspath)
+            filething (filething)
             deleteid3 (bool): delete id3 tags while at it
             padding (PaddingFunction)
 
         If no filename is given, the one most recently loaded is used.
         """
 
-        if filename is None:
-            filename = self.filename
+        f = StrictFileObject(filething.fileobj)
+        header = self.__check_header(f, filething.name)
+        audio_offset = self.__find_audio_offset(f)
+        # "fLaC" and maybe ID3
+        available = audio_offset - header
 
-        with open(filename, 'rb+') as f:
-            header = self.__check_header(f)
-            audio_offset = self.__find_audio_offset(f)
-            # "fLaC" and maybe ID3
-            available = audio_offset - header
+        # Delete ID3v2
+        if deleteid3 and header > 4:
+            available += header - 4
+            header = 4
 
-            # Delete ID3v2
-            if deleteid3 and header > 4:
-                available += header - 4
-                header = 4
+        content_size = get_size(f) - audio_offset
+        assert content_size >= 0
+        data = MetadataBlock._writeblocks(
+            self.metadata_blocks, available, content_size, padding)
+        data_size = len(data)
 
-            content_size = get_size(f) - audio_offset
-            assert content_size >= 0
-            data = MetadataBlock._writeblocks(
-                self.metadata_blocks, available, content_size, padding)
-            data_size = len(data)
+        resize_bytes(filething.fileobj, available, data_size, header)
+        f.seek(header - 4)
+        f.write(b"fLaC")
+        f.write(data)
 
-            resize_bytes(f, available, data_size, header)
-            f.seek(header - 4)
-            f.write(b"fLaC")
-            f.write(data)
-
-            # Delete ID3v1
-            if deleteid3:
-                try:
+        # Delete ID3v1
+        if deleteid3:
+            try:
+                f.seek(-128, 2)
+            except IOError:
+                pass
+            else:
+                if f.read(3) == b"TAG":
                     f.seek(-128, 2)
-                except IOError:
-                    pass
-                else:
-                    if f.read(3) == b"TAG":
-                        f.seek(-128, 2)
-                        f.truncate()
+                    f.truncate()
 
     def __find_audio_offset(self, fileobj):
         byte = 0x00
@@ -869,7 +868,7 @@ class FLAC(mutagen.FileType):
                 fileobj.read(size)
         return fileobj.tell()
 
-    def __check_header(self, fileobj):
+    def __check_header(self, fileobj, name):
         """Returns the offset of the flac block start
         (skipping id3 tags if found). The passed fileobj will be advanced to
         that offset as well.
@@ -886,7 +885,7 @@ class FLAC(mutagen.FileType):
                     size = None
         if size is None:
             raise FLACNoHeaderError(
-                "%r is not a valid FLAC file" % fileobj.name)
+                "%r is not a valid FLAC file" % name)
         return size
 
 

@@ -206,10 +206,9 @@ GUID = ASFGUIDAttribute.TYPE
 
 
 class ASF(FileType):
-    """An ASF file, probably containing WMA or WMV.
+    """ASF(filething)
 
-    :param filename: a filename to load
-    :raises mutagen.asf.error: In case loading fails
+    An ASF file, probably containing WMA or WMV.
     """
 
     _mimes = ["audio/x-ms-wma", "audio/x-ms-wmv", "video/x-ms-asf",
@@ -224,7 +223,14 @@ class ASF(FileType):
     @convert_error(IOError, error)
     @loadfile()
     def load(self, filething):
-        self.filename = filething.filename
+        """load(filething)
+
+        Args:
+            filething (filething)
+        Raises:
+            MutagenError
+        """
+
         fileobj = filething.fileobj
 
         self.info = ASFInfo()
@@ -241,17 +247,18 @@ class ASF(FileType):
         assert not self._tags
 
     @convert_error(IOError, error)
-    def save(self, filename=None, padding=None):
-        """Save tag changes back to the loaded file.
+    @loadfile(writable=True)
+    def save(self, filething, padding=None):
+        """save(filething=None, padding=None)
 
-        :param padding: A callback which returns the amount of padding to use.
-            See :class:`mutagen.PaddingInfo`
+        Save tag changes back to the loaded file.
 
-        :raises mutagen.asf.error: In case saving fails
+        Args:
+            filething (filething)
+            padding (PaddingFunction)
+        Raises:
+            MutagenError
         """
-
-        if filename is not None and filename != self.filename:
-            raise ValueError("saving to another file not supported atm")
 
         # Move attributes to the right objects
         self.to_content_description = {}
@@ -295,25 +302,31 @@ class ASF(FileType):
         if header_ext.get_child(MetadataLibraryObject.GUID) is None:
             header_ext.objects.append(MetadataLibraryObject())
 
+        fileobj = filething.fileobj
         # Render to file
-        with open(self.filename, "rb+") as fileobj:
-            old_size = header.parse_size(fileobj)[0]
-            data = header.render_full(self, fileobj, old_size, padding)
-            size = len(data)
-            resize_bytes(fileobj, old_size, size, 0)
-            fileobj.seek(0)
-            fileobj.write(data)
+        old_size = header.parse_size(fileobj)[0]
+        data = header.render_full(self, fileobj, old_size, padding)
+        size = len(data)
+        resize_bytes(fileobj, old_size, size, 0)
+        fileobj.seek(0)
+        fileobj.write(data)
 
     def add_tags(self):
         raise ASFError
 
-    def delete(self, filename=None):
+    @loadfile(writable=True)
+    def delete(self, filething):
+        """delete(filething=None)
 
-        if filename is not None and filename != self.filename:
-            raise ValueError("saving to another file not supported atm")
+        Args:
+            filething (filething)
+        Raises:
+            MutagenError
+
+        """
 
         self.tags.clear()
-        self.save(padding=lambda x: 0)
+        self.save(filething, padding=lambda x: 0)
 
     @staticmethod
     def score(filename, fileobj, header):

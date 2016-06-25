@@ -370,7 +370,9 @@ class MP4Tags(DictProxy, Tags):
 
         return render_func(self, key, value)
 
-    def save(self, filename, padding=None):
+    @convert_error(IOError, error)
+    @loadfile(writable=True)
+    def save(self, filething, padding=None):
         """Save the metadata to the given filename."""
 
         values = []
@@ -396,15 +398,11 @@ class MP4Tags(DictProxy, Tags):
 
         # Find the old atoms.
         try:
-            with open(filename, "rb+") as fileobj:
-                try:
-                    atoms = Atoms(fileobj)
-                except AtomError as err:
-                    reraise(error, err, sys.exc_info()[2])
-
-                self.__save(fileobj, atoms, data, padding)
-        except IOError as err:
+            atoms = Atoms(filething.fileobj)
+        except AtomError as err:
             reraise(error, err, sys.exc_info()[2])
+
+        self.__save(filething.fileobj, atoms, data, padding)
 
     def __save(self, fileobj, atoms, data, padding):
         try:
@@ -975,7 +973,6 @@ class MP4(FileType):
 
     @loadfile()
     def load(self, filething):
-        self.filename = filething.filename
         fileobj = filething.fileobj
 
         try:
@@ -1003,11 +1000,11 @@ class MP4(FileType):
             else:
                 self._padding = self.tags._padding
 
-    def save(self, filename=None, padding=None):
-        super(MP4, self).save(filename, padding=padding)
+    def save(self, *args, **kwargs):
+        """save(filething=None, padding=None)
+        """
 
-    def delete(self, filename=None):
-        super(MP4, self).delete(filename)
+        super(MP4, self).save(*args, **kwargs)
 
     def add_tags(self):
         if self.tags is None:

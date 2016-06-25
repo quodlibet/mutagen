@@ -182,7 +182,6 @@ class SMF(FileType):
 
     @loadfile()
     def load(self, filething):
-        self.filename = filething.filename
         try:
             self.info = SMFInfo(filething.fileobj)
         except IOError as e:

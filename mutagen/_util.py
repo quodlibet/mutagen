@@ -15,6 +15,7 @@ intended for internal use in Mutagen only.
 import sys
 import struct
 import codecs
+import errno
 
 from collections import namedtuple
 from contextlib import contextmanager
@@ -34,7 +35,7 @@ def is_fileobj(fileobj):
     return not isinstance(fileobj, (text_type, bytes))
 
 
-def verify_fileobj(fileobj):
+def verify_fileobj(fileobj, writable=False):
     """Verifies that the passed fileobj is a file like object which
     we can use.
 
@@ -45,12 +46,20 @@ def verify_fileobj(fileobj):
         data = fileobj.read(0)
     except Exception:
         if not hasattr(fileobj, "read"):
-            raise ValueError("%r not a file object" % fileobj)
+            raise ValueError("%r not a valid file object" % fileobj)
         raise ValueError("Can't read from file object %r" % fileobj)
-    else:
-        if not isinstance(data, bytes):
-            raise ValueError(
-                "file object %r not opened in binary mode" % fileobj)
+
+    if not isinstance(data, bytes):
+        raise ValueError(
+            "file object %r not opened in binary mode" % fileobj)
+
+    if writable:
+        try:
+            fileobj.write(b"")
+        except Exception:
+            if not hasattr(fileobj, "write"):
+                raise ValueError("%r not a valid file object" % fileobj)
+            raise ValueError("Can't write to file object %r" % fileobj)
 
 
 def verify_filename(filename):
@@ -69,7 +78,7 @@ def fileobj_name(fileobj):
     return value
 
 
-def loadfile(method=True):
+def loadfile(method=True, writable=False, create=False):
 
     def convert_file_args(args, kwargs):
         filething = args[0] if args else None
@@ -83,14 +92,16 @@ def loadfile(method=True):
         def wrapper(self, *args, **kwargs):
             filething, filename, fileobj, args, kwargs = \
                 convert_file_args(args, kwargs)
-            with _loadfile(filething, filename, fileobj, "rb") as h:
+            with _openfile(self, filething, filename, fileobj,
+                           writable, create) as h:
                 return func(self, h, *args, **kwargs)
 
         @wraps(func)
         def wrapper_func(*args, **kwargs):
             filething, filename, fileobj, args, kwargs = \
                 convert_file_args(args, kwargs)
-            with _loadfile(filething, filename, fileobj, "rb") as h:
+            with _openfile(None, filething, filename, fileobj,
+                           writable, create) as h:
                 return func(h, *args, **kwargs)
 
         return wrapper if method else wrapper_func
@@ -126,21 +137,28 @@ can be used for file type detection
 
 
 @contextmanager
-def _loadfile(filething, filename, fileobj, mode):
+def _openfile(instance, filething, filename, fileobj, writable, create):
     """yields a FileThing
 
     Args:
         filething: Either a file name, a file object or None
         filename: Either a file name or None
         fileobj: Either a file object or None
-        mode (str): the mode for opening the file if no fileobj is passed
-
+        writable (bool): if the file should be opened
+        create (bool): if the file should be created if it doesn't exist.
+            implies writable
     Raises:
-        EnvironmentError: In case opening the file failed
+        MutagenError: In case opening the file failed
         TypeError: in case neither a file name or a file object is passed
     """
 
-    assert "b" in mode
+    assert not create or writable
+
+    # to allow stacked context managers, just pass the result through
+    if isinstance(filething, FileThing):
+        filename = filething.filename
+        fileobj = filething.fileobj
+        filething = None
 
     if filething is not None:
         if is_fileobj(filething):
@@ -148,18 +166,32 @@ def _loadfile(filething, filename, fileobj, mode):
         else:
             filename = filething
 
+    if instance is not None:
+        # XXX: take "not writable" as loading the file..
+        if not writable:
+            instance.filename = filename
+        elif filename is None:
+            filename = getattr(instance, "filename", None)
+
     if fileobj is not None:
-        verify_fileobj(fileobj)
+        verify_fileobj(fileobj, writable=writable)
         yield FileThing(fileobj, filename, filename or fileobj_name(fileobj))
     elif filename is not None:
         verify_filename(filename)
         try:
-            with open(filename, mode) as fileobj:
-                yield FileThing(fileobj, filename, filename)
-        except MutagenError:
-            raise
+            fileobj = open(filename, "rb+" if writable else "rb")
         except IOError as e:
-            raise MutagenError(e)
+            if create and e.errno == errno.ENOENT:
+                assert writable
+                try:
+                    fileobj = open(filename, "wb+")
+                except IOError as e2:
+                    raise MutagenError(e2)
+            else:
+                raise MutagenError(e)
+
+        with fileobj as fileobj:
+            yield FileThing(fileobj, filename, filename)
     else:
         raise TypeError("Missing filename or fileobj argument")
 

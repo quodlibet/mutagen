@@ -1,5 +1,5 @@
 ==============================
-Loading from File-like Objects
+Working with File-like Objects
 ==============================
 
 .. currentmodule:: mutagen
@@ -24,14 +24,23 @@ them using a named argument which skips the type guessing.
     MP3(fileobj=myfileobj)
 
 
-For loading, the file-like object has to implement the following interface:
+The file-like object has to implement the following interface (It's a limited
+subset of real file objects and StringIO/BytesIO)
 
 ::
 
     class IOInterface(object):
         """This is the interface mutagen expects from custom file-like
-        objects
+        objects.
+
+        For loading read(), tell() and seek() have to be implemented. "name"
+        is optional.
+
+        For saving/deleting write(), flush() and truncate() have to be
+        implemented in addition. fileno() is optional.
         """
+
+        # For loading
 
         def tell(self):
             """Returns he current offset as int. Always >= 0.
@@ -63,7 +72,63 @@ For loading, the file-like object has to implement the following interface:
             should succeed. tell() should report that position and read()
             should return an empty bytes object.
 
+            Returns Nothing.
             Raise IOError in case the seek operation asn't possible.
+            """
+
+            raise NotImplementedError
+
+        # For loading, but optional
+
+        @property
+        def name(self):
+            """Should return text. For example the file name.
+
+            If not available the attribute can be missing or can return
+            an empty string.
+
+            Will be used for error messages and type detection.
+            """
+
+            raise NotImplementedError
+
+        # For writing
+
+        def write(self, data):
+            """Write data to the file.
+
+            Returns Nothing.
+            Raises IOError
+            """
+
+        def truncate(self, size=None):
+            """Truncate to the current position or size if size is given.
+
+            The current position or given size will never be larger than the
+            file size.
+
+            Returns Nothing.
+            Raises IOError.
+            """
+
+            raise NotImplementedError
+
+        def flush(self):
+            """Flush the write buffer.
+
+            Returns Nothing.
+            Raises IOError.
+            """
+
+            raise NotImplementedError
+
+        # For writing, but optional
+
+        def fileno(self):
+            """Returns the file descriptor (int) or raises IOError
+            if there is none.
+
+            Will be used for mmap if available.
             """
 
             raise NotImplementedError

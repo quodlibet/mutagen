@@ -496,9 +496,16 @@ class OggFileType(FileType):
 
     @loadfile()
     def load(self, filething):
-        """Load file information from a filename."""
+        """load(filething)
 
-        self.filename = filething.filename
+        Load file information from a filename.
+
+        Args:
+            filething (filething)
+        Raises:
+            MutagenError
+        """
+
         fileobj = filething.fileobj
 
         try:
@@ -510,48 +517,56 @@ class OggFileType(FileType):
         except EOFError:
             raise self._Error("no appropriate stream found")
 
-    def delete(self, filename=None):
-        """Remove tags from a file.
+    @loadfile(writable=True)
+    def delete(self, filething):
+        """delete(filething=None)
+
+        Remove tags from a file.
 
         If no filename is given, the one most recently loaded is used.
+
+        Args:
+            filething (filething)
+        Raises:
+            MutagenError
         """
 
-        if filename is None:
-            filename = self.filename
+        fileobj = filething.fileobj
 
         self.tags.clear()
         # TODO: we should delegate the deletion to the subclass and not through
         # _inject.
         try:
-            with open(filename, "rb+") as fileobj:
-                try:
-                    self.tags._inject(fileobj, lambda x: 0)
-                except error as e:
-                    reraise(self._Error, e, sys.exc_info()[2])
-                except EOFError:
-                    raise self._Error("no appropriate stream found")
+            try:
+                self.tags._inject(fileobj, lambda x: 0)
+            except error as e:
+                reraise(self._Error, e, sys.exc_info()[2])
+            except EOFError:
+                raise self._Error("no appropriate stream found")
         except IOError as e:
             reraise(self._Error, e, sys.exc_info()[2])
 
     def add_tags(self):
         raise self._Error
 
-    def save(self, filename=None, padding=None):
-        """Save a tag to a file.
+    @loadfile(writable=True)
+    def save(self, filething, padding=None):
+        """save(filething=None, padding=None)
+
+        Save a tag to a file.
 
         If no filename is given, the one most recently loaded is used.
+
+        Args:
+            filething (filething)
+            padding (PaddingFunction)
+        Raises:
+            MutagenError
         """
 
-        if filename is None:
-            filename = self.filename
-
         try:
-            with open(filename, "rb+") as fileobj:
-                try:
-                    self.tags._inject(fileobj, padding)
-                except error as e:
-                    reraise(self._Error, e, sys.exc_info()[2])
-                except EOFError:
-                    raise self._Error("no appropriate stream found")
-        except IOError as e:
+            self.tags._inject(filething.fileobj, padding)
+        except (IOError, error) as e:
             reraise(self._Error, e, sys.exc_info()[2])
+        except EOFError:
+            raise self._Error("no appropriate stream found")

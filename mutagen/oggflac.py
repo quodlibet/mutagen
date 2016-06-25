@@ -143,9 +143,6 @@ class OggFLAC(OggFileType):
     tags = None
     """A `VCommentDict`"""
 
-    def save(self, filename=None):
-        return super(OggFLAC, self).save(filename)
-
     @staticmethod
     def score(filename, fileobj, header):
         return (header.startswith(b"OggS") * (

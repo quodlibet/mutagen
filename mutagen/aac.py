@@ -393,7 +393,6 @@ class AAC(FileType):
 
     @loadfile()
     def load(self, filething):
-        self.filename = filething.filename
         self.info = AACInfo(filething.fileobj)
 
     def add_tags(self):

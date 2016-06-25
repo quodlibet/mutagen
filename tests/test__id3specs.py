@@ -182,6 +182,9 @@ class BitPaddedIntTest(TestCase):
         else:
             self.assertTrue(BitPaddedInt is BitPaddedLong)
 
+    def test_negative(self):
+        self.assertRaises(ValueError, BitPaddedInt, -1)
+
     def test_zero(self):
         self.assertEquals(BitPaddedInt(b'\x00\x00\x00\x00'), 0)
 
