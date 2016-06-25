@@ -85,7 +85,7 @@ Delete all ID3 tags.
 .TP
 .BI \-\-delete\-frames\fB= FRAMES
 Delete specific ID3v2 frames (or groups of frames) from the files.
-\fIFRAMES\fP is a "," separated list of frame names e.g. \fB"TPE1,TALB"\fP
+\fBFRAMES\fP is a "," separated list of frame names e.g. \fB"TPE1,TALB"\fP
 .TP
 .B \-C\fP,\fB  \-\-convert
 Convert ID3v1 tags to ID3v2 tags. This  will also happen automatically
@@ -104,6 +104,10 @@ Set the title information (TIT2).
 Set a comment (COMM). The language and description may be omitted, in
 which case the language defaults to English, and the description to an
 empty string.
+.TP
+.BI \-p\fP,\fB  \-\-picture\fB= <FILENAME:DESCRIPTION:IMAGE\-TYPE:MIME\-TYPE>
+Set the attached picture (APIC). Everything except the filename can be
+omitted in which case default values will be used.
 .TP
 .BI \-g\fP,\fB  \-\-genre\fB= GENRE
 Set the genre information (TCON).

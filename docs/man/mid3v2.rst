@@ -90,6 +90,10 @@ OPTIONS
     which case the language defaults to English, and the description to an
     empty string.
 
+-p, --picture=<FILENAME:DESCRIPTION:IMAGE-TYPE:MIME-TYPE>
+    Set the attached picture (APIC). Everything except the filename can be
+    omitted in which case default values will be used.
+
 -g, --genre=GENRE
     Set the genre information (TCON).
 

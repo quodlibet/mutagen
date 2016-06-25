@@ -11,11 +11,13 @@ import os
 import sys
 import locale
 import codecs
+import mimetypes
 
 from optparse import SUPPRESS_HELP
 
 import mutagen
 import mutagen.id3
+from mutagen.id3 import Encoding, PictureType
 from mutagen._toolsutil import split_escape, SignalHandler, OptionParser,\
     get_win32_unicode_argv, fsnative, is_fsnative, fsencoding, print_
 from mutagen._compat import PY2, PY3, text_type
@@ -158,6 +160,19 @@ def value_from_fsnative(arg, escape):
                 arg.encode(enc, "surrogateescape"))[0].decode(enc)
 
 
+def error(*args):
+    print_(*args, file=sys.stderr)
+    raise SystemExit(1)
+
+
+def get_frame_encoding(frame_id, value):
+    if frame_id == "APIC":
+        # See https://github.com/beetbox/beets/issues/899#issuecomment-62437773
+        return Encoding.UTF16 if value else Encoding.LATIN1
+    else:
+        return Encoding.UTF8
+
+
 def write_files(edits, filenames, escape):
     # unescape escape sequences and decode values
     encoded_edits = []
@@ -178,8 +193,7 @@ def write_files(edits, filenames, escape):
         try:
             value = value_from_fsnative(value, escape)
         except ValueError as err:
-            print_(u"%s: %s" % (frame, text_type(err)), file=sys.stderr)
-            raise SystemExit(1)
+            error(u"%s: %s" % (frame, text_type(err)))
 
         assert isinstance(value, text_type)
 
@@ -232,7 +246,46 @@ def write_files(edits, filenames, escape):
                         frame = mutagen.id3.POPM(
                             email=email, rating=int(rating), count=int(count))
                         id3.add(frame)
+                elif frame == "APIC":
+                    for value in vlist:
+                        values = string_split(value, ":")
+                        # FIXME: doesn't support filenames with an invalid
+                        # encoding since we have already decoded at that point
+                        fn = values[0]
 
+                        if len(values) >= 2:
+                            desc = values[1]
+                        else:
+                            desc = u"cover"
+
+                        if len(values) >= 3:
+                            try:
+                                picture_type = int(values[2])
+                            except ValueError:
+                                error(u"Invalid picture type: %r" % values[1])
+                        else:
+                            picture_type = PictureType.COVER_FRONT
+
+                        if len(values) >= 4:
+                            mime = values[3]
+                        else:
+                            mime = mimetypes.guess_type(fn)[0] or "image/jpeg"
+
+                        if len(values) >= 5:
+                            error("APIC: Invalid format")
+
+                        encoding = get_frame_encoding(frame, desc)
+
+                        try:
+                            with open(fn, "rb") as h:
+                                data = h.read()
+                        except IOError as e:
+                            error(text_type(e))
+
+                        frame = mutagen.id3.APIC(encoding=encoding, mime=mime,
+                            desc=desc, type=picture_type, data=data)
+
+                        id3.add(frame)
                 elif frame == "COMM":
                     for value in vlist:
                         values = string_split(value, ":")
@@ -354,6 +407,10 @@ def main(argv):
         action="callback", help="Set the comment information", type="string",
         callback=lambda *args: args[3].edits.append((fsnative(u"--COMM"), args[2])))
     parser.add_option(
+        "-p", "--picture", metavar='"FILENAME":"DESCRIPTION":"IMAGE-TYPE":"MIME-TYPE"',
+        action="callback", help="Set the picture", type="string",
+        callback=lambda *args: args[3].edits.append((fsnative(u"--APIC"), args[2])))
+    parser.add_option(
         "-g", "--genre", metavar='"GENRE"', action="callback",
         help="Set the genre or genre number", type="string",
         callback=lambda *args: args[3].edits.append((fsnative(u"--TCON"), args[2])))
@@ -366,12 +423,13 @@ def main(argv):
         help="Set the track number/(optional) total tracks", type="string",
         callback=lambda *args: args[3].edits.append((fsnative(u"--TRCK"), args[2])))
 
-    for frame in mutagen.id3.Frames:
-        if (issubclass(mutagen.id3.Frames[frame], mutagen.id3.TextFrame)
-                or issubclass(mutagen.id3.Frames[frame], mutagen.id3.UrlFrame)
-                or issubclass(mutagen.id3.Frames[frame], mutagen.id3.POPM)):
+    for key, frame in mutagen.id3.Frames.items():
+        if (issubclass(frame, mutagen.id3.TextFrame)
+                or issubclass(frame, mutagen.id3.UrlFrame)
+                or issubclass(frame, mutagen.id3.POPM)
+                or frame is mutagen.id3.APIC):
             parser.add_option(
-                "--" + frame, action="callback", help=SUPPRESS_HELP,
+                "--" + key, action="callback", help=SUPPRESS_HELP,
                 type='string', metavar="value",  # optparse blows up with this
                 callback=lambda *args: args[3].edits.append(args[1:3]))
 

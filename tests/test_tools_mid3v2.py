@@ -162,6 +162,27 @@ class TMid3v2(_TTools):
         self.failUnlessEqual(frame.text, ["B:C:D"])
         self.failUnlessEqual(frame.lang, "ger")
 
+    def test_apic(self):
+        image_path = os.path.join(DATA_DIR, "image.jpg")
+        image_path = os.path.relpath(image_path)
+        res, out, err = self.call2(
+            fsn(u"--APIC"), image_path + fsn(u":fooAPIC:3:image/jpeg"),
+            self.filename)
+        self.failUnlessEqual((res, out, err), (0, "", ""))
+
+        with open(image_path, "rb") as h:
+            data = h.read()
+
+        f = ID3(self.filename)
+        frame = f.getall("APIC:fooAPIC")[0]
+        self.assertEqual(frame.desc, u"fooAPIC")
+        self.assertEqual(frame.mime, "image/jpeg")
+        self.assertEqual(frame.data, data)
+
+        res, out = self.call(fsn(u"--list"), self.filename)
+        self.assertEqual(res, 0)
+        self.assertTrue("fooAPIC" in out)
+
     def test_encoding_with_escape(self):
         is_bytes = PY2 and os.name != "nt"
 
