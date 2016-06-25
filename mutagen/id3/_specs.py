@@ -463,7 +463,7 @@ class ID3TimeStamp(object):
         return repr(self.text)
 
     def __eq__(self, other):
-        return self.text == other.text
+        return isinstance(other, ID3TimeStamp) and self.text == other.text
 
     def __lt__(self, other):
         return self.text < other.text
