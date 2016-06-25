@@ -299,6 +299,15 @@ def write_files(edits, filenames, escape):
                         frame = mutagen.id3.COMM(
                             encoding=3, text=value, lang=lang, desc=desc)
                         id3.add(frame)
+                elif frame == "UFID":
+                    for value in vlist:
+                        values = string_split(value, ":")
+                        if len(values) != 2:
+                            error(u"Invalid value: %r" % values)
+                        owner = values[0]
+                        data = values[1].encode("utf-8")
+                        frame = mutagen.id3.UFID(owner=owner, data=data)
+                        id3.add(frame)
                 elif frame == "TXXX":
                     for value in vlist:
                         values = string_split(value, ":", 1)
@@ -427,7 +436,7 @@ def main(argv):
         if (issubclass(frame, mutagen.id3.TextFrame)
                 or issubclass(frame, mutagen.id3.UrlFrame)
                 or issubclass(frame, mutagen.id3.POPM)
-                or frame is mutagen.id3.APIC):
+                or frame in (mutagen.id3.APIC, mutagen.id3.UFID)):
             parser.add_option(
                 "--" + key, action="callback", help=SUPPRESS_HELP,
                 type='string', metavar="value",  # optparse blows up with this
