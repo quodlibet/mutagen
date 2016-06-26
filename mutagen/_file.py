@@ -7,7 +7,7 @@
 
 import warnings
 
-from mutagen._util import DictMixin, loadfile
+from mutagen._util import DictMixin, loadfile, MutagenError
 from mutagen._compat import izip
 
 
@@ -221,7 +221,8 @@ def File(filething, options=None, easy=False):
     bytes (which usually contains a file type identifier), the
     filename extension, and the presence of existing tags.
 
-    If no appropriate type could be found, None is returned.
+    .. versionchanged:: 1.33
+        No longer returns `None` if type detection fails
 
     Args:
         filename: A filename or file-like object
@@ -232,11 +233,11 @@ def File(filething, options=None, easy=False):
             :class:`MP3 <mp3.MP3>`.
 
     Returns:
-        FileType: A FileType instance for the detected type or `None` in case
-            the type couln't be determined.
+        FileType: A FileType instance for the detected type
 
     Raises:
-        MutagenError: in case the detected type fails to load the file.
+        MutagenError: in case the type detection failed or it failed to
+            load the file.
     """
 
     if options is None:
@@ -277,14 +278,14 @@ def File(filething, options=None, easy=False):
                    SMF]
 
     if not options:
-        return None
+        raise MutagenError("No options available")
 
     fileobj = filething.fileobj
 
     try:
         header = fileobj.read(128)
-    except IOError:
-        header = b""
+    except IOError as e:
+        raise MutagenError(e)
 
     # Sort by name after score. Otherwise import order affects
     # Kind sort order, which affects treatment of things with
@@ -302,4 +303,4 @@ def File(filething, options=None, easy=False):
             pass
         return Kind(fileobj, filename=filething.filename)
     else:
-        return None
+        raise MutagenError("Couldn't detect type")
