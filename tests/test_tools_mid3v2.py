@@ -124,7 +124,8 @@ class TMid3v2(_TTools):
         self.failUnlessEqual(frame.text, ["B:C"])
 
     def test_ufid(self):
-        res, out, err = self.call2(fsn(u"--UFID"), fsn(u"foo:bar"), self.filename)
+        res, out, err = self.call2(
+            fsn(u"--UFID"), fsn(u"foo:bar"), self.filename)
         self.assertEqual((res, out, err), (0, "", ""))
 
         f = ID3(self.filename)
