@@ -500,13 +500,17 @@ class TFile(TestCase):
                 yield path
 
     def test_bad(self):
-        self.assertRaises(MutagenError, File, devnull)
+        try:
+            self.failUnless(File(devnull) is None)
+        except (OSError, IOError):
+            print("WARNING: Unable to open %s." % devnull)
+        self.failUnless(File(__file__) is None)
 
     def test_empty(self):
         filename = os.path.join(DATA_DIR, "empty")
         open(filename, "wb").close()
         try:
-            self.assertRaises(MutagenError, File, filename)
+            self.failUnless(File(filename) is None)
         finally:
             os.unlink(filename)
 
@@ -516,7 +520,7 @@ class TFile(TestCase):
     def test_no_options(self):
         for filename in self.filenames:
             filename = os.path.join(DATA_DIR, filename)
-            self.assertRaises(MutagenError, File, filename, options=[])
+            self.failIf(File(filename, options=[]))
 
     def test_fileobj(self):
         for filename in self.filenames:

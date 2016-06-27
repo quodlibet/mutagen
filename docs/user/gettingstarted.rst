@@ -5,7 +5,7 @@ Getting Started
 .. currentmodule:: mutagen
 
 The `File` functions takes any audio file, guesses its type and returns a
-`FileType` instance.
+`FileType` instance or `None`.
 
 ::
 
