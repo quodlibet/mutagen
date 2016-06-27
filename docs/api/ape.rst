@@ -11,11 +11,11 @@ APEv2
 
 .. autoexception:: mutagen.apev2.APEBadItemError
 
-.. autoclass:: mutagen.apev2.APEv2File(filename)
+.. autoclass:: mutagen.apev2.APEv2File
     :show-inheritance:
     :members:
-    :undoc-members:
 
 .. autoclass:: mutagen.apev2.APEv2
-    :show-inheritance:
     :members:
+
+    :bases: `mutagen.Metadata`

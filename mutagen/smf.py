@@ -164,19 +164,31 @@ def _read_midi_length(fileobj):
 
 
 class SMFInfo(StreamInfo):
+    """SMFInfo()
+
+    Attributes:
+        length (`float`): Length in seconds
+
+    """
 
     def __init__(self, fileobj):
         """Raises SMFError"""
 
         self.length = _read_midi_length(fileobj)
-        """Length in seconds"""
 
     def pprint(self):
         return u"SMF, %.2f seconds" % self.length
 
 
 class SMF(FileType):
-    """Standard MIDI File (SMF)"""
+    """SMF(filething)
+
+    Standard MIDI File (SMF)
+
+    Attributes:
+        info (`SMFInfo`)
+        tags: `None`
+    """
 
     _mimes = ["audio/midi", "audio/x-midi"]
 

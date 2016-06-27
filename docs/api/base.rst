@@ -26,7 +26,7 @@ Base Classes
     :members: pprint
 
 
-.. autoclass:: mutagen.PaddingInfo()
+.. autoclass:: mutagen.PaddingInfo
     :members:
 
 
@@ -67,16 +67,20 @@ Other Classes and Functions
     name which can be :obj:`python:str` or :obj:`python:unicode` under Python
     2 and :obj:`python3:bytes` or :obj:`python3:str` under Python 3.
 
+.. class:: fileobj()
+
+    This type only exists for documentation purposes. A file-like object.
+     See :doc:`/user/filelike` for more information.
 
 .. class:: filething()
 
     This type only exists for documentation purposes. Either a `fspath` or
-    a file-like object. See :doc:`/user/filelike` for more information.
+    a `fileobj`.
 
 
 .. function:: PaddingFunction(info)
 
-    A function you can implement and pass to various :meth:`save` methods for
+    A function you can implement and pass to various ``save()`` methods for
     controlling the amount of padding to use. See :doc:`/user/padding` for
     more information.
 

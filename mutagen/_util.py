@@ -39,7 +39,8 @@ def verify_fileobj(fileobj, writable=False):
     """Verifies that the passed fileobj is a file like object which
     we can use.
 
-    Raises ValueError
+    Raises:
+        ValueError
     """
 
     try:

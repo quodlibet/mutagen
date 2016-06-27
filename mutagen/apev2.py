@@ -265,7 +265,9 @@ class _CIDictProxy(DictMixin):
 
 
 class APEv2(_CIDictProxy, Metadata):
-    """A file with an APEv2 tag.
+    """APEv2(filething=None)
+
+    A file with an APEv2 tag.
 
     ID3v1 tags are silently ignored and overwritten.
     """
@@ -697,6 +699,15 @@ class APEExtValue(_APEUtf8Value):
 
 
 class APEv2File(FileType):
+    """APEv2File(filething)
+
+    Arguments:
+        filething (filething)
+
+    Attributes:
+        tags (`APEv2`)
+    """
+
     class _Info(StreamInfo):
         length = 0
         bitrate = 0
@@ -710,8 +721,6 @@ class APEv2File(FileType):
 
     @loadfile()
     def load(self, filething):
-        """Raises apev2.error"""
-
         fileobj = filething.fileobj
 
         self.info = self._Info(fileobj)

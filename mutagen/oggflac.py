@@ -36,16 +36,19 @@ class OggFLACHeaderError(error):
 
 
 class OggFLACStreamInfo(StreamInfo):
-    """Ogg FLAC stream info."""
+    """OggFLACStreamInfo()
+
+    Ogg FLAC stream info.
+
+    Attributes:
+        length (`float`): File length in seconds, as a float
+        channels (`float`): Number of channels
+        sample_rate (`int`): Sample rate in Hz"
+    """
 
     length = 0
-    """File length in seconds, as a float"""
-
     channels = 0
-    """Number of channels"""
-
     sample_rate = 0
-    """Sample rate in Hz"""
 
     def __init__(self, fileobj):
         page = OggPage(fileobj)
@@ -130,7 +133,17 @@ class OggFLACVComment(VCommentDict):
 
 
 class OggFLAC(OggFileType):
-    """An Ogg FLAC file."""
+    """OggFLAC(filething)
+
+    An Ogg FLAC file.
+
+    Arguments:
+        filething (filething)
+
+    Attributes:
+        info (`OggFLACStreamInfo`)
+        tags (`mutagen._vorbis.VCommentDict`)
+    """
 
     _Info = OggFLACStreamInfo
     _Tags = OggFLACVComment
@@ -138,10 +151,7 @@ class OggFLAC(OggFileType):
     _mimes = ["audio/x-oggflac"]
 
     info = None
-    """A `OggFLACStreamInfo`"""
-
     tags = None
-    """A `VCommentDict`"""
 
     @staticmethod
     def score(filename, fileobj, header):

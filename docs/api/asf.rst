@@ -1,7 +1,10 @@
 ASF
 ===
 
+.. currentmodule:: mutagen
+
 .. automodule:: mutagen.asf
+
 
 .. autoclass:: mutagen.asf.ASF
     :show-inheritance:
@@ -11,19 +14,11 @@ ASF
 .. autoclass:: mutagen.asf.ASFInfo
     :show-inheritance:
     :members:
-    :undoc-members:
 
 
 .. autoclass:: mutagen.asf.ASFTags
     :show-inheritance:
     :members:
-    :undoc-members:
-
-
-.. autoclass:: mutagen.asf.error
-    :show-inheritance:
-    :members:
-    :undoc-members:
 
 
 .. autoclass:: mutagen.asf.ASFBaseAttribute()

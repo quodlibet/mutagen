@@ -3,15 +3,9 @@ Ogg FLAC
 
 .. automodule:: mutagen.oggflac
 
-.. autoexception:: mutagen.oggflac.error
+.. autoclass:: mutagen.oggflac.OggFLAC
     :show-inheritance:
 
-.. autoexception:: mutagen.oggflac.OggFLACHeaderError
-    :show-inheritance:
-
-.. autoclass:: mutagen.oggflac.OggFLAC(filename)
-    :show-inheritance:
-
-.. autoclass:: mutagen.oggflac.OggFLACStreamInfo()
+.. autoclass:: mutagen.oggflac.OggFLACStreamInfo
     :show-inheritance:
     :members:

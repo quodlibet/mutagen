@@ -15,7 +15,7 @@ class FileType(DictMixin):
     """FileType(filething, **kwargs)
 
     Args:
-        filething: A filename or a file-like object
+        filething (filething): A filename or a file-like object
 
     Subclasses might take further options via keyword arguments.
 
@@ -102,7 +102,7 @@ class FileType(DictMixin):
         Remove tags from a file.
 
         In cases where the tagging format is independent of the file type
-        (for example `mutagen.ID3`) all traces of the tagging format will
+        (for example `mutagen.id3.ID3`) all traces of the tagging format will
         be removed.
         In cases where the tag is part of the file type, all tags and
         padding will be removed.
@@ -180,7 +180,8 @@ class FileType(DictMixin):
 
         Args:
             filename (path): a file path
-            fileobj: a file object open in rb mode. Position is undefined
+            fileobj (fileobj): a file object open in rb mode. Position is
+                undefined
             header (bytes): data of undefined length, starts with the start of
                 the file.
 

@@ -263,16 +263,16 @@ class AACError(MutagenError):
 
 
 class AACInfo(StreamInfo):
-    """AAC stream information.
+    """AACInfo()
+
+    AAC stream information.
+    The length of the stream is just a guess and might not be correct.
 
     Attributes:
-
-    * channels -- number of audio channels
-    * length -- file length in seconds, as a float
-    * sample_rate -- audio sampling rate in Hz
-    * bitrate -- audio bitrate, in bits per second
-
-    The length of the stream is just a guess and might not be correct.
+        channels (`int`): number of audio channels
+        length (`float`): file length in seconds, as a float
+        sample_rate (`int`): audio sampling rate in Hz
+        bitrate (`int`): audio bitrate, in bits per second
     """
 
     channels = 0
@@ -383,10 +383,18 @@ class AACInfo(StreamInfo):
 
 
 class AAC(FileType):
-    """Load ADTS or ADIF streams containing AAC.
+    """AAC(filething)
+
+    Arguments:
+        filething (filething)
+
+    Load ADTS or ADIF streams containing AAC.
 
     Tagging is not supported.
     Use the ID3/APEv2 classes directly instead.
+
+    Attributes:
+        info (`AACInfo`)
     """
 
     _mimes = ["audio/x-aac"]

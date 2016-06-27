@@ -34,16 +34,19 @@ class OggTheoraHeaderError(error):
 
 
 class OggTheoraInfo(StreamInfo):
-    """Ogg Theora stream information."""
+    """OggTheoraInfo()
+
+    Ogg Theora stream information.
+
+    Attributes:
+        length (`float`): File length in seconds, as a float
+        fps (`float`): Video frames per second, as a float
+        bitrate (`int`): Bitrate in bps (int)
+    """
 
     length = 0
-    """File length in seconds, as a float"""
-
     fps = 0
-    """Video frames per second, as a float"""
-
     bitrate = 0
-    """Bitrate in bps (int)"""
 
     def __init__(self, fileobj):
         page = OggPage(fileobj)
@@ -122,7 +125,17 @@ class OggTheoraCommentDict(VCommentDict):
 
 
 class OggTheora(OggFileType):
-    """An Ogg Theora file."""
+    """OggTheora(filething)
+
+    An Ogg Theora file.
+
+    Arguments:
+        filething (filething)
+
+    Attributes:
+        info (`OggTheoraInfo`)
+        tags (`mutagen._vorbis.VCommentDict`)
+    """
 
     _Info = OggTheoraInfo
     _Tags = OggTheoraCommentDict
@@ -130,10 +143,7 @@ class OggTheora(OggFileType):
     _mimes = ["video/x-theora"]
 
     info = None
-    """A `OggTheoraInfo`"""
-
     tags = None
-    """A `VCommentDict`"""
 
     @staticmethod
     def score(filename, fileobj, header):

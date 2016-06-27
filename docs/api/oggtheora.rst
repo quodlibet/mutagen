@@ -3,15 +3,10 @@ Ogg Theora
 
 .. automodule:: mutagen.oggtheora
 
-.. autoexception:: mutagen.oggtheora.error
-    :show-inheritance:
-
-.. autoexception:: mutagen.oggtheora.OggTheoraHeaderError
-    :show-inheritance:
-
-.. autoclass:: mutagen.oggtheora.OggTheora(filename)
+.. autoclass:: mutagen.oggtheora.OggTheora
     :show-inheritance:
     :members:
 
 .. autoclass:: mutagen.oggtheora.OggTheoraInfo
+    :show-inheritance:
     :members:

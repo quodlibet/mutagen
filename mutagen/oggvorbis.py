@@ -35,19 +35,22 @@ class OggVorbisHeaderError(error):
 
 
 class OggVorbisInfo(StreamInfo):
-    """Ogg Vorbis stream information."""
+    """OggVorbisInfo()
 
-    length = 0
-    """File length in seconds, as a float"""
+    Ogg Vorbis stream information.
 
+    Attributes:
+        length (`float`): File length in seconds, as a float
+        channels (`int`): Number of channels
+        bitrate (`int`): Nominal ('average') bitrate in bits per second
+        sample_Rate (`int`): Sample rate in Hz
+
+    """
+
+    length = 0.0
     channels = 0
-    """Number of channels"""
-
     bitrate = 0
-    """Nominal ('average') bitrate in bits per second, as an int"""
-
     sample_rate = 0
-    """Sample rate in Hz"""
 
     def __init__(self, fileobj):
         """Raises ogg.error, IOError"""
@@ -138,7 +141,17 @@ class OggVCommentDict(VCommentDict):
 
 
 class OggVorbis(OggFileType):
-    """An Ogg Vorbis file."""
+    """OggVorbis(filething)
+
+    Arguments:
+        filething (filething)
+
+    An Ogg Vorbis file.
+
+    Attributes:
+        info (`OggVorbisInfo`)
+        tags (`mutagen._vorbis.VCommentDict`)
+    """
 
     _Info = OggVorbisInfo
     _Tags = OggVCommentDict
@@ -146,10 +159,7 @@ class OggVorbis(OggFileType):
     _mimes = ["audio/vorbis", "audio/x-vorbis"]
 
     info = None
-    """A `OggVorbisInfo`"""
-
     tags = None
-    """A `VCommentDict`"""
 
     @staticmethod
     def score(filename, fileobj, header):

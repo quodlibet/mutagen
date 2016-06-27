@@ -8,4 +8,5 @@ Musepack
     :members:
 
 .. autoclass:: mutagen.musepack.MusepackInfo
+    :show-inheritance:
     :members:

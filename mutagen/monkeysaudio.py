@@ -29,15 +29,16 @@ class MonkeysAudioHeaderError(error):
 
 
 class MonkeysAudioInfo(StreamInfo):
-    """Monkey's Audio stream information.
+    """MonkeysAudioInfo()
+
+    Monkey's Audio stream information.
 
     Attributes:
-
-    * channels -- number of audio channels
-    * length -- file length in seconds, as a float
-    * sample_rate -- audio sampling rate in Hz
-    * bits_per_sample -- bits per sample
-    * version -- Monkey's Audio stream version, as a float (eg: 3.99)
+        channels (`int`): number of audio channels
+        length (`float`): file length in seconds, as a float
+        sample_rate (`int`): audio sampling rate in Hz
+        bits_per_sample (`int`): bits per sample
+        version (`float`): Monkey's Audio stream version, as a float (eg: 3.99)
     """
 
     @convert_error(IOError, MonkeysAudioHeaderError)
@@ -78,6 +79,15 @@ class MonkeysAudioInfo(StreamInfo):
 
 
 class MonkeysAudio(APEv2File):
+    """MonkeysAudio(filething)
+
+    Arguments:
+        filething (filething)
+
+    Attributes:
+        info (`MonkeysAudioInfo`)
+    """
+
     _Info = MonkeysAudioInfo
     _mimes = ["audio/ape", "audio/x-ape"]
 

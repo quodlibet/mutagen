@@ -14,7 +14,7 @@
     import mutagen.[format]
     metadata = mutagen.[format].Open(filename)
 
-`metadata` acts like a dictionary of tags in the file. Tags are generally a
+``metadata`` acts like a dictionary of tags in the file. Tags are generally a
 list of string-like values, but may have additional methods available
 depending on tag or format. They may also be entirely different objects
 for certain keys, again depending on format.

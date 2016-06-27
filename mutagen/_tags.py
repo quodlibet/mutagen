@@ -7,7 +7,9 @@
 
 
 class PaddingInfo(object):
-    """Abstract padding information object.
+    """PaddingInfo()
+
+    Abstract padding information object.
 
     This will be passed to the callback function that can be used
     for saving tags.
@@ -24,15 +26,13 @@ class PaddingInfo(object):
 
     The default implementation can be accessed using the
     :meth:`get_default_padding` method in the callback.
-    """
 
-    padding = 0
-    """The amount of padding left after saving in bytes (can be negative if
-    more data needs to be added as padding is available)
+    Attributes:
+        padding (`int`): The amount of padding left after saving in bytes
+            (can be negative if more data needs to be added as padding is
+            available)
+        size (`int`): The amount of data following the padding
     """
-
-    size = 0
-    """The amount of data following the padding"""
 
     def __init__(self, padding, size):
         self.padding = padding
@@ -42,8 +42,8 @@ class PaddingInfo(object):
         """The default implementation which tries to select a reasonable
         amount of padding and which might change in future versions.
 
-        :return: Amount of padding after saving
-        :rtype: int
+        Returns:
+            int: Amount of padding after saving
         """
 
         high = 1024 * 10 + self.size // 100  # 10 KiB + 1% of trailing data

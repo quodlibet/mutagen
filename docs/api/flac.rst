@@ -8,19 +8,14 @@ FLAC
 .. autoclass:: mutagen.flac.FLAC
     :show-inheritance:
     :members:
-    :exclude-members: vc, METADATA_BLOCKS, load
+    :exclude-members: vc, METADATA_BLOCKS, load, add_vorbiscomment
 
-.. autoclass:: mutagen.flac.StreamInfo()
+.. autoclass:: mutagen.flac.StreamInfo
     :members:
 
-.. autoclass:: mutagen.flac.VCFLACDict
-    :show-inheritance:
-    :members:
+    :bases: `mutagen.StreamInfo`
 
 .. autoclass:: mutagen.flac.Picture
-    :members:
-
-.. autoclass:: mutagen.flac.SeekTable
     :members:
 
 .. autoclass:: mutagen.flac.CueSheet
@@ -30,4 +25,7 @@ FLAC
     :members:
 
 .. autoclass:: mutagen.flac.CueSheetTrackIndex
+    :members:
+
+.. autoclass:: mutagen.flac.SeekTable
     :members:

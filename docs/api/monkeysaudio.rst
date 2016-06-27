@@ -8,4 +8,5 @@ Monkey's Audio
     :members:
 
 .. autoclass:: mutagen.monkeysaudio.MonkeysAudioInfo
+    :show-inheritance:
     :members:

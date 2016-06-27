@@ -20,7 +20,9 @@ class EasyMP4KeyError(error, KeyError, ValueError):
 
 
 class EasyMP4Tags(DictMixin, Tags):
-    """A file with MPEG-4 iTunes metadata.
+    """EasyMP4Tags()
+
+    A file with MPEG-4 iTunes metadata.
 
     Like Vorbis comments, EasyMP4Tags keys are case-insensitive ASCII
     strings, and values are a list of Unicode strings (and these lists
@@ -268,11 +270,14 @@ for name, key in {
 
 
 class EasyMP4(MP4):
-    """Like :class:`MP4 <mutagen.mp4.MP4>`,
-    but uses :class:`EasyMP4Tags` for tags.
+    """EasyMP4(filelike)
 
-    :ivar info: :class:`MP4Info <mutagen.mp4.MP4Info>`
-    :ivar tags: :class:`EasyMP4Tags`
+    Like :class:`MP4 <mutagen.mp4.MP4>`, but uses :class:`EasyMP4Tags` for
+    tags.
+
+    Attributes:
+        info (`mutagen.mp4.MP4Info`)
+        tags (`EasyMP4Tags`)
     """
 
     MP4Tags = EasyMP4Tags

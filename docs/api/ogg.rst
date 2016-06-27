@@ -3,10 +3,6 @@ OGG
 
 .. automodule:: mutagen.ogg
 
-.. autoexception:: mutagen.ogg.error
-
-.. autoclass:: mutagen.ogg.OggFileType(filename)
+.. autoclass:: mutagen.ogg.OggFileType
     :show-inheritance:
-
-.. autoclass:: mutagen.ogg.OggPage
     :members:

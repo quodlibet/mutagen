@@ -166,7 +166,7 @@ class ID3Header(object):
 
 
 class ID3(DictProxy, mutagen.Metadata):
-    """ID3(*args, **kwargs)
+    """ID3(filething=None)
 
     A file with an ID3v2 tag.
 
@@ -179,6 +179,9 @@ class ID3(DictProxy, mutagen.Metadata):
         # same as
         t = ID3()
         t.load("foo.mp3")
+
+    Arguments:
+        filething (filething): or `None`
 
     Attributes:
         version (Tuple[int]): ID3 tag version as a tuple
@@ -249,8 +252,8 @@ class ID3(DictProxy, mutagen.Metadata):
 
         Args:
             filename (filething): filename or file object to load tag data from
-            known_frames (Dict[text, Frame]): dict mapping frame IDs to Frame
-                objects
+            known_frames (Dict[`mutagen.text`, `Frame`]): dict mapping frame
+                IDs to Frame objects
             translate (bool): Update all tags to ID3v2.3/4 internally. If you
                 intend to save, this must be true or you have to
                 call update_to_v23() / update_to_v24() manually.
@@ -356,7 +359,7 @@ class ID3(DictProxy, mutagen.Metadata):
 
         Args:
             key (text): key for frames to delete
-            values (List[Frame]): frames to add
+            values (List[`Frame`]): frames to add
         """
 
         self.delall(key)
@@ -542,7 +545,9 @@ class ID3(DictProxy, mutagen.Metadata):
     @convert_error(IOError, error)
     @loadfile(writable=True, create=True)
     def save(self, filething, v1=1, v2_version=4, v23_sep='/', padding=None):
-        """Save changes to a file.
+        """save(filething=None, v1=1, v2_version=4, v23_sep='/', padding=None)
+
+        Save changes to a file.
 
         Args:
             filename (fspath):
@@ -561,7 +566,7 @@ class ID3(DictProxy, mutagen.Metadata):
             padding (PaddingFunction)
 
         Raises:
-            MutagenError
+            mutagen.MutagenError
 
         By default Mutagen saves ID3v2.4 tags. If you want to save ID3v2.3
         tags, you must call method update_to_v23 before saving the file.
@@ -820,7 +825,7 @@ def delete(filething, delete_v1=True, delete_v2=True):
         delete_v2 (bool): delete any ID3v2 tag
 
     Raises:
-        MutagenError: In case deleting failed
+        mutagen.MutagenError: In case deleting failed
     """
 
     f = filething.fileobj
@@ -1073,7 +1078,7 @@ class ID3FileType(mutagen.FileType):
         ID3 (ID3): An ID3 subclass to use for tags.
 
     Raises:
-        MutagenError: In case loading the file failed
+        mutagen.MutagenError: In case loading the file failed
 
     Load stream and tag information from a file.
 
@@ -1105,7 +1110,7 @@ class ID3FileType(mutagen.FileType):
                 that used when loading.
 
         A custom tag reader may be used in instead of the default
-        `ID3` object, e.g. an `EasyID3` reader.
+        `ID3` object, e.g. an `mutagen.easyid3.EasyID3` reader.
         """
 
         if ID3 is None:

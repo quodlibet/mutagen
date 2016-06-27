@@ -3,15 +3,10 @@ Ogg Speex
 
 .. automodule:: mutagen.oggspeex
 
-.. autoexception:: mutagen.oggspeex.error
-    :show-inheritance:
-
-.. autoexception:: mutagen.oggspeex.OggSpeexHeaderError
-    :show-inheritance:
-
-.. autoclass:: mutagen.oggspeex.OggSpeex(filename)
+.. autoclass:: mutagen.oggspeex.OggSpeex
     :show-inheritance:
     :members:
 
 .. autoclass:: mutagen.oggspeex.OggSpeexInfo
+    :show-inheritance:
     :members:

@@ -81,7 +81,7 @@ class MetadataBlock(object):
     blocks, and also as a container for data blobs of unknown blocks.
 
     Attributes:
-        data: raw binary data for this block
+        data (`bytes`): raw binary data for this block
     """
 
     _distrust_size = False
@@ -169,7 +169,9 @@ class MetadataBlock(object):
 
 
 class StreamInfo(MetadataBlock, mutagen.StreamInfo):
-    """FLAC stream information.
+    """StreamInfo()
+
+    FLAC stream information.
 
     This contains information about the audio data in the FLAC file.
     Unlike most stream information objects in Mutagen, changes to this
@@ -178,13 +180,13 @@ class StreamInfo(MetadataBlock, mutagen.StreamInfo):
     attributes of this block.
 
     Attributes:
-        min_blocksize: minimum audio block size
-        max_blocksize: maximum audio block size
-        sample_rate: audio sample rate in Hz
-        channels: audio channels (1 for mono, 2 for stereo)
-        bits_per_sample: bits per sample
-        total_samples: total samples in file
-        length: audio length in seconds
+        min_blocksize (`int`): minimum audio block size
+        max_blocksize (`int`): maximum audio block size
+        sample_rate (`int`): audio sample rate in Hz
+        channels (`int`): audio channels (1 for mono, 2 for stereo)
+        bits_per_sample (`int`): bits per sample
+        total_samples (`int`): total samples in file
+        length (`float`): audio length in seconds
     """
 
     code = 0
@@ -259,7 +261,9 @@ class StreamInfo(MetadataBlock, mutagen.StreamInfo):
 
 
 class SeekPoint(tuple):
-    """A single seek point in a FLAC file.
+    """SeekPoint()
+
+    A single seek point in a FLAC file.
 
     Placeholder seek points have first_sample of 0xFFFFFFFFFFFFFFFFL,
     and byte_offset and num_samples undefined. Seek points must be
@@ -269,9 +273,9 @@ class SeekPoint(tuple):
     may be any number of them.
 
     Attributes:
-        first_sample: sample number of first sample in the target frame
-        byte_offset: offset from first frame to target frame
-        num_samples: number of samples in target frame
+        first_sample (`int`): sample number of first sample in the target frame
+        byte_offset (`int`): offset from first frame to target frame
+        num_samples (`int`): number of samples in target frame
     """
 
     def __new__(cls, first_sample, byte_offset, num_samples):
@@ -349,7 +353,9 @@ class VCFLACDict(VCommentDict):
 
 
 class CueSheetTrackIndex(tuple):
-    """Index for a track in a cuesheet.
+    """CueSheetTrackIndex(index_number, index_offset)
+
+    Index for a track in a cuesheet.
 
     For CD-DA, an index_number of 0 corresponds to the track
     pre-gap. The first index in a track must have a number of 0 or 1,
@@ -358,8 +364,8 @@ class CueSheetTrackIndex(tuple):
     divisible by 588 samples.
 
     Attributes:
-        index_number: index point number
-        index_offset: offset in samples from track start
+        index_number (`int`): index point number
+        index_offset (`int`): offset in samples from track start
     """
 
     def __new__(cls, index_number, index_offset):
@@ -371,7 +377,9 @@ class CueSheetTrackIndex(tuple):
 
 
 class CueSheetTrack(object):
-    """A track in a cuesheet.
+    """CueSheetTrack()
+
+    A track in a cuesheet.
 
     For CD-DA, track_numbers must be 1-99, or 170 for the
     lead-out. Track_numbers must be unique within a cue sheet. There
@@ -379,12 +387,13 @@ class CueSheetTrack(object):
     which must have none.
 
     Attributes:
-        track_number: track number
-        start_offset: track offset in samples from start of FLAC stream
-        isrc: ISRC code
-        type: 0 for audio, 1 for digital data
-        pre_emphasis: true if the track is recorded with pre-emphasis
-        indexes: list of CueSheetTrackIndex objects
+        track_number (`int`): track number
+        start_offset (`int`): track offset in samples from start of FLAC stream
+        isrc (`text`): ISRC code, exactly 12 characters
+        type (`int`): 0 for audio, 1 for digital data
+        pre_emphasis (`bool`): true if the track is recorded with pre-emphasis
+        indexes (List[`mutagen.flac.CueSheetTrackIndex`]):
+            list of CueSheetTrackIndex objects
     """
 
     def __init__(self, track_number, start_offset, isrc='', type_=0,
@@ -426,11 +435,15 @@ class CueSheet(MetadataBlock):
     in the cue sheet.
 
     Attributes:
-        media_catalog_number: media catalog number in ASCII
-        lead_in_samples: number of lead-in samples
-        compact_disc: true if the cuesheet corresponds to a compact disc
-        tracks: list of CueSheetTrack objects
-        lead_out: lead-out as CueSheetTrack or None if lead-out was not found
+        media_catalog_number (`text`): media catalog number in ASCII,
+            up to 128 characters
+        lead_in_samples (`int`): number of lead-in samples
+        compact_disc (`bool`): true if the cuesheet corresponds to a
+            compact disc
+        tracks (List[`mutagen.flac.CueSheetTrack`]):
+            list of CueSheetTrack objects
+        lead_out (`mutagen.flac.CueSheetTrack` or `None`):
+            lead-out as CueSheetTrack or None if lead-out was not found
     """
 
     __CUESHEET_FORMAT = '>128sQB258xB'
@@ -618,6 +631,9 @@ class Padding(MetadataBlock):
     To avoid rewriting the entire FLAC file when editing comments,
     metadata is often padded. Padding should occur at the end, and no
     more than one padding block should be in any FLAC file.
+
+    Attributes:
+        length (`int`): length
     """
 
     code = 1
@@ -662,7 +678,7 @@ class FLAC(mutagen.FileType):
         seektable (`SeekTable`): if any or `None`
         pictures (List[`Picture`]): list of embedded pictures
         info (`StreamInfo`)
-        tags (`VCFLACDict`)
+        tags (`mutagen._vorbis.VCommentDict`)
     """
 
     _mimes = ["audio/flac", "audio/x-flac", "application/x-flac"]

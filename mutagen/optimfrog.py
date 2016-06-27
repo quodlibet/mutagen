@@ -33,13 +33,14 @@ class OptimFROGHeaderError(error):
 
 
 class OptimFROGInfo(StreamInfo):
-    """OptimFROG stream information.
+    """OptimFROGInfo()
+
+    OptimFROG stream information.
 
     Attributes:
-
-    * channels - number of audio channels
-    * length - file length in seconds, as a float
-    * sample_rate - audio sampling rate in Hz
+        channels (`int`): number of audio channels
+        length (`float`): file length in seconds, as a float
+        sample_rate (`int`): audio sampling rate in Hz
     """
 
     @convert_error(IOError, OptimFROGHeaderError)
@@ -66,6 +67,13 @@ class OptimFROGInfo(StreamInfo):
 
 
 class OptimFROG(APEv2File):
+    """OptimFROG(filething)
+
+    Attributes:
+        info (`OptimFROGInfo`)
+        tags (`mutagen.apev2.APEv2`)
+    """
+
     _Info = OptimFROGInfo
 
     @staticmethod

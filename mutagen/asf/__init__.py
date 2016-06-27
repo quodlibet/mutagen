@@ -28,35 +28,31 @@ error, ASFError, ASFHeaderError, ASFValue
 
 
 class ASFInfo(StreamInfo):
-    """ASF stream information."""
+    """ASFInfo()
+
+    ASF stream information.
+
+    Attributes:
+        length (`float`): "Length in seconds
+        sample_rate (`int`): Sample rate in Hz
+        bitrate (`int`): Bitrate in bps
+        channels (`int`): Number of channels
+        codec_type (`mutagen.text`): Name of the codec type of the first
+            audio stream or an empty string if unknown. Example:
+            ``Windows Media Audio 9 Standard``
+        codec_name (`mutagen.text`): Name and maybe version of the codec used.
+            Example: ``Windows Media Audio 9.1``
+        codec_description (`mutagen.text`): Further information on the codec
+            used. Example: ``64 kbps, 48 kHz, stereo 2-pass CBR``
+    """
 
     length = 0.0
-    """Length in seconds (`float`)"""
-
     sample_rate = 0
-    """Sample rate in Hz (`int`)"""
-
     bitrate = 0
-    """Bitrate in bps (`int`)"""
-
     channels = 0
-    """Number of channels (`int`)"""
-
     codec_type = u""
-    """Name of the codec type of the first audio stream or
-    an empty string if unknown. Example: ``Windows Media Audio 9 Standard``
-    (:class:`mutagen.text`)
-    """
-
     codec_name = u""
-    """Name and maybe version of the codec used. Example:
-    ``Windows Media Audio 9.1`` (:class:`mutagen.text`)
-    """
-
     codec_description = u""
-    """Further information on the codec used.
-    Example: ``64 kbps, 48 kHz, stereo 2-pass CBR`` (:class:`mutagen.text`)
-    """
 
     def __init__(self):
         self.length = 0.0
@@ -68,9 +64,8 @@ class ASFInfo(StreamInfo):
         self.codec_description = u""
 
     def pprint(self):
-        """Returns a stream information text summary
-
-        :rtype: text
+        """Returns:
+            text: a stream information text summary
         """
 
         s = u"ASF (%s) %d bps, %s Hz, %d channels, %.2f seconds" % (
@@ -80,7 +75,10 @@ class ASFInfo(StreamInfo):
 
 
 class ASFTags(list, DictMixin, Tags):
-    """Dictionary containing ASF attributes."""
+    """ASFTags()
+
+    Dictionary containing ASF attributes.
+    """
 
     def __getitem__(self, key):
         """A list of values for the key.
@@ -209,16 +207,20 @@ class ASF(FileType):
     """ASF(filething)
 
     An ASF file, probably containing WMA or WMV.
+
+    Arguments:
+        filething (filething)
+
+    Attributes:
+        info (`ASFInfo`)
+        tags (`ASFTags`)
     """
 
     _mimes = ["audio/x-ms-wma", "audio/x-ms-wmv", "video/x-ms-asf",
               "audio/x-wma", "video/x-wmv"]
 
     info = None
-    """A `ASFInfo` instance"""
-
     tags = None
-    """A `ASFTags` instance"""
 
     @convert_error(IOError, error)
     @loadfile()
@@ -228,7 +230,7 @@ class ASF(FileType):
         Args:
             filething (filething)
         Raises:
-            MutagenError
+            mutagen.MutagenError
         """
 
         fileobj = filething.fileobj
@@ -257,7 +259,7 @@ class ASF(FileType):
             filething (filething)
             padding (PaddingFunction)
         Raises:
-            MutagenError
+            mutagen.MutagenError
         """
 
         # Move attributes to the right objects
@@ -321,8 +323,7 @@ class ASF(FileType):
         Args:
             filething (filething)
         Raises:
-            MutagenError
-
+            mutagen.MutagenError
         """
 
         self.tags.clear()

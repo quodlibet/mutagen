@@ -276,7 +276,9 @@ def iter_sync(fileobj, max_read):
 
 
 class MPEGInfo(StreamInfo):
-    """MPEG audio stream information
+    """MPEGInfo()
+
+    MPEG audio stream information
 
     Parse information about an MPEG audio file. This also reads the
     Xing VBR header format.
@@ -286,28 +288,29 @@ class MPEGInfo(StreamInfo):
 
     Useful attributes:
 
-    * length -- audio length, in seconds
-    * channels -- number of audio channels
-    * bitrate -- audio bitrate, in bits per second
-    * sketchy -- if true, the file may not be valid MPEG audio
-    * encoder_info -- a string containing encoder name and possibly version.
-                      In case a lame tag is present this will start with
-                      ``"LAME "``, if unknown it is empty, otherwise the
-                      text format is undefined.
-    * bitrate_mode -- a :class:`BitrateMode`
-
-    * track_gain -- replaygain track gain (89db) or None
-    * track_peak -- replaygain track peak or None
-    * album_gain -- replaygain album gain (89db) or None
+    Attributes:
+        length (`float`): audio length, in seconds
+        channels (`int`): number of audio channels
+        bitrate (`int`): audio bitrate, in bits per second
+        sample_rate (`int`) audio sample rate, in Hz
+        encoder_info (`mutagen.text`): a string containing encoder name and
+            possibly version. In case a lame tag is present this will start
+            with ``"LAME "``, if unknown it is empty, otherwise the
+            text format is undefined.
+        bitrate_mode (`BitrateMode`): a :class:`BitrateMode`
+        track_gain (`float` or `None`): replaygain track gain (89db) or None
+        track_peak (`float` or `None`): replaygain track peak or None
+        album_gain (`float` or `None`): replaygain album gain (89db) or None
 
     Useless attributes:
 
-    * version -- MPEG version (1, 2, 2.5)
-    * layer -- 1, 2, or 3
-    * mode -- One of STEREO, JOINTSTEREO, DUALCHANNEL, or MONO (0-3)
-    * protected -- whether or not the file is "protected"
-    * padding -- whether or not audio frames are padded
-    * sample_rate -- audio sample rate, in Hz
+    Attributes:
+        version (`float`): MPEG version (1, 2, 2.5)
+        layer (`int`): 1, 2, or 3
+        mode (`int`): One of STEREO, JOINTSTEREO, DUALCHANNEL, or MONO (0-3)
+        protected (`bool`): whether or not the file is "protected"
+        padding (`bool`) whether or not audio frames are padded
+        sketchy (`bool`): if true, the file may not be valid MPEG audio
     """
 
     sketchy = False
@@ -410,10 +413,16 @@ class MPEGInfo(StreamInfo):
 
 
 class MP3(ID3FileType):
-    """An MPEG audio (usually MPEG-1 Layer 3) file.
+    """MP3(filething)
 
-    :ivar info: :class:`MPEGInfo`
-    :ivar tags: :class:`ID3 <mutagen.id3.ID3>`
+    An MPEG audio (usually MPEG-1 Layer 3) file.
+
+    Arguments:
+        filething (filething)
+
+    Attributes:
+        info (`MPEGInfo`)
+        tags (`mutagen.id3.ID3`)
     """
 
     _Info = MPEGInfo
@@ -439,10 +448,16 @@ Open = MP3
 
 
 class EasyMP3(MP3):
-    """Like MP3, but uses EasyID3 for tags.
+    """EasyMP3(filething)
 
-    :ivar info: :class:`MPEGInfo`
-    :ivar tags: :class:`EasyID3 <mutagen.easyid3.EasyID3>`
+    Like MP3, but uses EasyID3 for tags.
+
+    Arguments:
+        filething (filething)
+
+    Attributes:
+        info (`MPEGInfo`)
+        tags (`mutagen.easyid3.EasyID3`)
     """
 
     from mutagen.easyid3 import EasyID3 as ID3

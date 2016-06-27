@@ -32,12 +32,13 @@ class TrueAudioHeaderError(error):
 
 
 class TrueAudioInfo(StreamInfo):
-    """True Audio stream information.
+    """TrueAudioInfo()
+
+    True Audio stream information.
 
     Attributes:
-
-    * length - audio length, in seconds
-    * sample_rate - audio sample rate, in Hz
+        length (`float`): audio length, in seconds
+        sample_rate (`int`): audio sample rate, in Hz
     """
 
     @convert_error(IOError, TrueAudioHeaderError)
@@ -58,10 +59,17 @@ class TrueAudioInfo(StreamInfo):
 
 
 class TrueAudio(ID3FileType):
-    """A True Audio file.
+    """TrueAudio(filething, ID3=None)
 
-    :ivar TrueAudioInfo info:
-    :ivar ID3 tags:
+    A True Audio file.
+
+    Arguments:
+        filething (filething)
+        ID3 (mutagen.id3.ID3)
+
+    Attributes:
+        info (`TrueAudioInfo`)
+        tags (`mutagen.id3.ID3`)
     """
 
     _Info = TrueAudioInfo
@@ -77,10 +85,17 @@ Open = TrueAudio
 
 
 class EasyTrueAudio(TrueAudio):
-    """Like MP3, but uses EasyID3 for tags.
+    """EasyTrueAudio(filething, ID3=None)
 
-    :ivar TrueAudioInfo info:
-    :ivar EasyID3 tags:
+    Like MP3, but uses EasyID3 for tags.
+
+    Arguments:
+        filething (filething)
+        ID3 (mutagen.id3.ID3)
+
+    Attributes:
+        info (`TrueAudioInfo`)
+        tags (`mutagen.easyid3.EasyID3`)
     """
 
     from mutagen.easyid3 import EasyID3 as ID3

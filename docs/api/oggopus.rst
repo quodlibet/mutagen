@@ -3,15 +3,10 @@ Ogg Opus
 
 .. automodule:: mutagen.oggopus
 
-.. autoexception:: mutagen.oggopus.error
-    :show-inheritance:
-
-.. autoexception:: mutagen.oggopus.OggOpusHeaderError
-    :show-inheritance:
-
-.. autoclass:: mutagen.oggopus.OggOpus(filename)
+.. autoclass:: mutagen.oggopus.OggOpus
     :show-inheritance:
     :members:
 
 .. autoclass:: mutagen.oggopus.OggOpusInfo
+    :show-inheritance:
     :members:

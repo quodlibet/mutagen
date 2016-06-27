@@ -67,20 +67,24 @@ def _calc_sv8_peak(peak):
 
 
 class MusepackInfo(StreamInfo):
-    """Musepack stream information.
+    """MusepackInfo()
+
+    Musepack stream information.
 
     Attributes:
-
-    * channels -- number of audio channels
-    * length -- file length in seconds, as a float
-    * sample_rate -- audio sampling rate in Hz
-    * bitrate -- audio bitrate, in bits per second
-    * version -- Musepack stream version
+        channels (`int`): number of audio channels
+        length (`float`): file length in seconds, as a float
+        sample_rate (`int`): audio sampling rate in Hz
+        bitrate (`int`): audio bitrate, in bits per second
+        version (`int`) Musepack stream version
 
     Optional Attributes:
 
-    * title_gain, title_peak -- Replay Gain and peak data for this song
-    * album_gain, album_peak -- Replay Gain and peak data for this album
+    Attributes:
+        title_gain (`float`): Replay Gain for this song
+        title_peak (`float`): Peak data for this song
+        album_gain (`float`): Replay Gain for this album
+        album_peak (`float`): Peak data for this album
 
     These attributes are only available in stream version 7/8. The
     gains are a float, +/- some dB. The peaks are a percentage [0..1] of
@@ -259,6 +263,15 @@ class MusepackInfo(StreamInfo):
 
 
 class Musepack(APEv2File):
+    """Musepack(filething)
+
+    Arguments:
+        filething (filething)
+
+    Attributes:
+        info (`MusepackInfo`)
+    """
+
     _Info = MusepackInfo
     _mimes = ["audio/x-musepack", "audio/x-mpc"]
 

@@ -35,20 +35,21 @@ class OggSpeexHeaderError(error):
 
 
 class OggSpeexInfo(StreamInfo):
-    """Ogg Speex stream information."""
+    """OggSpeexInfo()
+
+    Ogg Speex stream information.
+
+    Attributes:
+        length (`float`): file length in seconds, as a float
+        channels (`int`): number of channels
+        bitrate (`int`): nominal bitrate in bits per second. The reference
+            encoder does not set the bitrate; in this case, the bitrate will
+            be 0.
+    """
 
     length = 0
-    """file length in seconds, as a float"""
-
     channels = 0
-    """number of channels"""
-
     bitrate = 0
-    """nominal bitrate in bits per second.
-
-    The reference encoder does not set the bitrate; in this case,
-    the bitrate will be 0.
-    """
 
     def __init__(self, fileobj):
         page = OggPage(fileobj)
@@ -129,7 +130,17 @@ class OggSpeexVComment(VCommentDict):
 
 
 class OggSpeex(OggFileType):
-    """An Ogg Speex file."""
+    """OggSpeex(filething)
+
+    An Ogg Speex file.
+
+    Arguments:
+        filething (filething)
+
+    Attributes:
+        info (`OggSpeexInfo`)
+        tags (`mutagen._vorbis.VCommentDict`)
+    """
 
     _Info = OggSpeexInfo
     _Tags = OggSpeexVComment
@@ -137,10 +148,7 @@ class OggSpeex(OggFileType):
     _mimes = ["audio/x-speex"]
 
     info = None
-    """A `OggSpeexInfo`"""
-
     tags = None
-    """A `VCommentDict`"""
 
     @staticmethod
     def score(filename, fileobj, header):

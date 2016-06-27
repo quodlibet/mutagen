@@ -42,14 +42,15 @@ class OggPage(object):
     to the start of the next page.
 
     Attributes:
-
-    * version -- stream structure version (currently always 0)
-    * position -- absolute stream position (default -1)
-    * serial -- logical stream serial number (default 0)
-    * sequence -- page sequence number within logical stream (default 0)
-    * offset -- offset this page was read from (default None)
-    * complete -- if the last packet on this page is complete (default True)
-    * packets -- list of raw packet data (default [])
+        version (`int`): stream structure version (currently always 0)
+        position (`int`): absolute stream position (default -1)
+        serial (`int`): logical stream serial number (default 0)
+        sequence (`int`): page sequence number within logical stream
+            (default 0)
+        offset (`int` or `None`): offset this page was read from (default None)
+        complete (`bool`): if the last packet on this page is complete
+            (default True)
+        packets (List[`bytes`]): list of raw packet data (default [])
 
     Note that if 'complete' is false, the next page's 'continued'
     property must be true (so set both when constructing pages).
@@ -487,7 +488,13 @@ class OggPage(object):
 
 
 class OggFileType(FileType):
-    """An generic Ogg file."""
+    """OggFileType(filething)
+
+    An generic Ogg file.
+
+    Arguments:
+        filething (filething)
+    """
 
     _Info = None
     _Tags = None
@@ -503,7 +510,7 @@ class OggFileType(FileType):
         Args:
             filething (filething)
         Raises:
-            MutagenError
+            mutagen.MutagenError
         """
 
         fileobj = filething.fileobj
@@ -528,7 +535,7 @@ class OggFileType(FileType):
         Args:
             filething (filething)
         Raises:
-            MutagenError
+            mutagen.MutagenError
         """
 
         fileobj = filething.fileobj
@@ -561,7 +568,7 @@ class OggFileType(FileType):
             filething (filething)
             padding (PaddingFunction)
         Raises:
-            MutagenError
+            mutagen.MutagenError
         """
 
         try:

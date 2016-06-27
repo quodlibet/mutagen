@@ -32,7 +32,9 @@ class EasyID3KeyError(KeyError, ValueError, error):
 
 
 class EasyID3(DictMixin, Metadata):
-    """A file with an ID3 tag.
+    """EasyID3(filething=None)
+
+    A file with an ID3 tag.
 
     Like Vorbis comments, EasyID3 keys are case-insensitive ASCII
     strings. Only a subset of ID3 frames are supported by default. Use
@@ -531,5 +533,15 @@ for desc, key in iteritems({
 
 
 class EasyID3FileType(ID3FileType):
-    """Like ID3FileType, but uses EasyID3 for tags."""
+    """EasyID3FileType(filething=None)
+
+    Like ID3FileType, but uses EasyID3 for tags.
+
+    Arguments:
+        filething (filething)
+
+    Attributes:
+        tags (`EasyID3`)
+    """
+
     ID3 = EasyID3

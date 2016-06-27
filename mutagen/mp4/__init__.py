@@ -58,7 +58,7 @@ __all__ = ['MP4', 'Open', 'delete', 'MP4Cover', 'MP4FreeForm', 'AtomDataType']
 
 @enum
 class AtomDataType(object):
-    """Enum for `dataformat` attribute of MP4FreeForm.
+    """Enum for ``dataformat`` attribute of MP4FreeForm.
 
     .. versionadded:: 1.25
     """
@@ -132,8 +132,8 @@ class MP4Cover(bytes):
     """A cover artwork.
 
     Attributes:
-
-    * imageformat -- format of the image (either FORMAT_JPEG or FORMAT_PNG)
+        imageformat (`AtomDataType`): format of the image
+            (either FORMAT_JPEG or FORMAT_PNG)
     """
 
     FORMAT_JPEG = AtomDataType.JPEG
@@ -168,8 +168,7 @@ class MP4FreeForm(bytes):
     """A freeform value.
 
     Attributes:
-
-    * dataformat -- format of the data (see AtomDataType)
+        dataformat (`AtomDataType`): format of the data (see AtomDataType)
     """
 
     FORMAT_DATA = AtomDataType.IMPLICIT  # deprecated
@@ -253,7 +252,9 @@ def _item_sort_key(key, value):
 
 
 class MP4Tags(DictProxy, Tags):
-    r"""Dictionary containing Apple iTunes metadata list key/values.
+    r"""MP4Tags()
+
+    Dictionary containing Apple iTunes metadata list key/values.
 
     Keys are four byte identifiers, except for freeform ('----')
     keys. Values are usually unicode strings, but some atoms have a
@@ -373,7 +374,6 @@ class MP4Tags(DictProxy, Tags):
     @convert_error(IOError, error)
     @loadfile(writable=True)
     def save(self, filething, padding=None):
-        """Save the metadata to the given filename."""
 
         values = []
         items = sorted(self.items(), key=lambda kv: _item_sort_key(*kv))
@@ -827,25 +827,27 @@ class MP4Tags(DictProxy, Tags):
 
 
 class MP4Info(StreamInfo):
-    """MPEG-4 stream information.
+    """MP4Info()
+
+    MPEG-4 stream information.
 
     Attributes:
+        bitrate (`int`): bitrate in bits per second, as an int
+        length (`float`): file length in seconds, as a float
+        channels (`int`): number of audio channels
+        sample_rate (`int`): audio sampling rate in Hz
+        bits_per_sample (`int`): bits per sample
+        codec (`mutagen.text`):
+            * if starting with ``"mp4a"`` uses an mp4a audio codec
+              (see the codec parameter in rfc6381 for details e.g.
+              ``"mp4a.40.2"``)
+            * for everything else see a list of possible values at
+              http://www.mp4ra.org/codecs.html
 
-    * bitrate -- bitrate in bits per second, as an int
-    * length -- file length in seconds, as a float
-    * channels -- number of audio channels
-    * sample_rate -- audio sampling rate in Hz
-    * bits_per_sample -- bits per sample
-    * codec (string):
-        * if starting with ``"mp4a"`` uses an mp4a audio codec
-          (see the codec parameter in rfc6381 for details e.g. ``"mp4a.40.2"``)
-        * for everything else see a list of possible values at
-          http://www.mp4ra.org/codecs.html
-
-        e.g. ``"mp4a"``, ``"alac"``, ``"mp4a.40.2"``, ``"ac-3"`` etc.
-    * codec_description (string):
-        Name of the codec used (ALAC, AAC LC, AC-3...). Values might change in
-        the future, use for display purposes only.
+            e.g. ``"mp4a"``, ``"alac"``, ``"mp4a.40.2"``, ``"ac-3"`` etc.
+        codec_description (`mutagen.text`):
+            Name of the codec used (ALAC, AAC LC, AC-3...). Values might
+            change in the future, use for display purposes only.
     """
 
     bitrate = 0
@@ -958,13 +960,19 @@ class MP4Info(StreamInfo):
 
 
 class MP4(FileType):
-    """An MPEG-4 audio file, probably containing AAC.
+    """MP4(filething)
+
+    An MPEG-4 audio file, probably containing AAC.
 
     If more than one track is present in the file, the first is used.
     Only audio ('soun') tracks will be read.
 
-    :ivar info: :class:`MP4Info`
-    :ivar tags: :class:`MP4Tags`
+    Arguments:
+        filething (filething)
+
+    Attributes:
+        info (`MP4Info`)
+        tags (`MP4Tags`)
     """
 
     MP4Tags = MP4Tags
@@ -1001,8 +1009,7 @@ class MP4(FileType):
                 self._padding = self.tags._padding
 
     def save(self, *args, **kwargs):
-        """save(filething=None, padding=None)
-        """
+        """save(filething=None, padding=None)"""
 
         super(MP4, self).save(*args, **kwargs)
 

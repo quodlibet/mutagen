@@ -217,17 +217,18 @@ class IFFFile(object):
 
 
 class AIFFInfo(StreamInfo):
-    """AIFF audio stream information.
+    """AIFFInfo()
+
+    AIFF audio stream information.
 
     Information is parsed from the COMM chunk of the AIFF file
 
-    Useful attributes:
-
-    * length -- audio length, in seconds
-    * bitrate -- audio bitrate, in bits per second
-    * channels -- The number of audio channels
-    * sample_rate -- audio sample rate, in Hz
-    * sample_size -- The audio sample size
+    Attributes:
+        length (`float`): audio length, in seconds
+        bitrate (`int`): audio bitrate, in bits per second
+        channels (`int`): The number of audio channels
+        sample_rate (`int`): audio sample rate, in Hz
+        sample_size (`int`): The audio sample size
     """
 
     length = 0
@@ -321,10 +322,16 @@ def delete(filething):
 
 
 class AIFF(FileType):
-    """An AIFF audio file.
+    """AIFF(filething)
 
-    :ivar info: :class:`AIFFInfo`
-    :ivar tags: :class:`ID3`
+    An AIFF audio file.
+
+    Arguments:
+        filething (filething)
+
+    Attributes:
+        tags (`mutagen.id3.ID3`)
+        info (`AIFFInfo`)
     """
 
     _mimes = ["audio/aiff", "audio/x-aiff"]
