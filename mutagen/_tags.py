@@ -5,6 +5,8 @@
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
 
+from ._util import loadfile
+
 
 class PaddingInfo(object):
     """PaddingInfo()
@@ -107,32 +109,35 @@ class Metadata(Tags):
         if args or kwargs:
             self.load(*args, **kwargs)
 
-    def load(self, filename, **kwargs):
+    @loadfile()
+    def load(self, filething, **kwargs):
         raise NotImplementedError
 
-    def save(self, filename=None, **kwargs):
-        """Save changes to a file.
+    @loadfile(writable=False)
+    def save(self, filething, **kwargs):
+        """save(filething=None, **kwargs)
+
+        Save changes to a file.
 
         Args:
-            filename (fspath): a file to save the tag to or `None` to
-                use the filename that was loaded before.
-
+            filething (filething): or `None`
         Raises:
             MutagenError: if saving wasn't possible
         """
 
         raise NotImplementedError
 
-    def delete(self, filename=None):
-        """Remove tags from a file.
+    @loadfile(writable=False)
+    def delete(self, filething):
+        """delete(filething=None)
+
+        Remove tags from a file.
 
         In most cases this means any traces of the tag will be removed
         from the file.
 
         Args:
-            filename (fspath): a file to remove the tags from or `None`
-                to use the filename that was loaded before.
-
+            filething (filething): or `None`
         Raises:
             MutagenError: if deleting wasn't possible
         """

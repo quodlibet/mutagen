@@ -38,21 +38,23 @@ class TMetadata(TestCase):
             pass
 
     def test_virtual_constructor(self):
-        self.failUnlessRaises(NotImplementedError, Metadata, "filename")
+        self.failUnlessRaises(NotImplementedError, Metadata, cBytesIO())
 
     def test_load(self):
         m = Metadata()
-        self.failUnlessRaises(NotImplementedError, m.load, "filename")
+        self.failUnlessRaises(NotImplementedError, m.load, cBytesIO())
 
     def test_virtual_save(self):
-        self.failUnlessRaises(NotImplementedError, self.FakeMeta().save)
         self.failUnlessRaises(
-            NotImplementedError, self.FakeMeta().save, "filename")
+            NotImplementedError, self.FakeMeta().save, cBytesIO())
+        self.failUnlessRaises(
+            NotImplementedError, self.FakeMeta().save, cBytesIO())
 
     def test_virtual_delete(self):
-        self.failUnlessRaises(NotImplementedError, self.FakeMeta().delete)
         self.failUnlessRaises(
-            NotImplementedError, self.FakeMeta().delete, "filename")
+            NotImplementedError, self.FakeMeta().delete, cBytesIO())
+        self.failUnlessRaises(
+            NotImplementedError, self.FakeMeta().delete, cBytesIO())
 
 
 class TPaddingInfo(TestCase):

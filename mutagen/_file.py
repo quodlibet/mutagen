@@ -97,7 +97,7 @@ class FileType(DictMixin):
 
     @loadfile(writable=True)
     def delete(self, filething):
-        """delete()
+        """delete(filething=None)
 
         Remove tags from a file.
 
@@ -124,7 +124,7 @@ class FileType(DictMixin):
 
     @loadfile(writable=True)
     def save(self, filething, **kwargs):
-        """save(filething, **kwargs)
+        """save(filething=None, **kwargs)
 
         Save metadata tags.
 
@@ -214,7 +214,7 @@ class StreamInfo(object):
 
 @loadfile(method=False)
 def File(filething, options=None, easy=False):
-    """File(filename, options=None, easy=False)
+    """File(filething, options=None, easy=False)
 
     Guess the type of the file and try to open it.
 
@@ -225,7 +225,7 @@ def File(filething, options=None, easy=False):
     If no appropriate type could be found, None is returned.
 
     Args:
-        filename: A filename or file-like object
+        filething (filething)
         options: Sequence of :class:`FileType` implementations,
             defaults to all included ones.
         easy (bool):  If the easy wrappers should be returnd if available.
