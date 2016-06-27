@@ -1027,7 +1027,19 @@ class MP4(FileType):
 Open = MP4
 
 
-def delete(filename):
-    """Remove tags from a file."""
+@convert_error(IOError, error)
+@loadfile(method=False, writable=True)
+def delete(filething):
+    """ delete(filething)
 
-    MP4(filename).delete()
+    Arguments:
+        filething (filething)
+    Raises:
+        mutagen.MutagenError
+
+    Remove tags from a file.
+    """
+
+    t = MP4(filething)
+    filething.fileobj.seek(0)
+    t.delete(filething)

@@ -492,13 +492,25 @@ class APEv2(_CIDictProxy, Metadata):
 Open = APEv2
 
 
-def delete(filename):
-    """Remove tags from a file."""
+@convert_error(IOError, error)
+@loadfile(method=False, writable=True)
+def delete(filething):
+    """delete(filething)
+
+    Arguments:
+        filething (filething)
+    Raises:
+        mutagen.MutagenError
+
+    Remove tags from a file.
+    """
 
     try:
-        APEv2(filename).delete()
+        t = APEv2(filething)
     except APENoHeaderError:
-        pass
+        return
+    filething.fileobj.seek(0)
+    t.delete(filething)
 
 
 def _get_value_type(kind):

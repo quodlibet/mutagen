@@ -22,7 +22,7 @@ __all__ = ["OggSpeex", "Open", "delete"]
 from mutagen import StreamInfo
 from mutagen._vorbis import VCommentDict
 from mutagen.ogg import OggPage, OggFileType, error as OggError
-from mutagen._util import cdata, get_size
+from mutagen._util import cdata, get_size, loadfile, convert_error
 from mutagen._tags import PaddingInfo
 
 
@@ -158,7 +158,19 @@ class OggSpeex(OggFileType):
 Open = OggSpeex
 
 
-def delete(filename):
-    """Remove tags from a file."""
+@convert_error(IOError, error)
+@loadfile(method=False, writable=True)
+def delete(filething):
+    """ delete(filething)
 
-    OggSpeex(filename).delete()
+    Arguments:
+        filething (filething)
+    Raises:
+        mutagen.MutagenError
+
+    Remove tags from a file.
+    """
+
+    t = OggSpeex(filething)
+    filething.fileobj.seek(0)
+    t.delete(filething)

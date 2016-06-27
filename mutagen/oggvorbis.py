@@ -21,7 +21,7 @@ import struct
 
 from mutagen import StreamInfo
 from mutagen._vorbis import VCommentDict
-from mutagen._util import get_size
+from mutagen._util import get_size, loadfile, convert_error
 from mutagen._tags import PaddingInfo
 from mutagen.ogg import OggPage, OggFileType, error as OggError
 
@@ -169,7 +169,19 @@ class OggVorbis(OggFileType):
 Open = OggVorbis
 
 
-def delete(filename):
-    """Remove tags from a file."""
+@convert_error(IOError, error)
+@loadfile(method=False, writable=True)
+def delete(filething):
+    """ delete(filething)
 
-    OggVorbis(filename).delete()
+    Arguments:
+        filething (filething)
+    Raises:
+        mutagen.MutagenError
+
+    Remove tags from a file.
+    """
+
+    t = OggVorbis(filething)
+    filething.fileobj.seek(0)
+    t.delete(filething)

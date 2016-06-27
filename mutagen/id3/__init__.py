@@ -1096,7 +1096,7 @@ class ID3FileType(mutagen.FileType):
 
         @staticmethod
         def pprint():
-            return "Unknown format with ID3 tag"
+            return u"Unknown format with ID3 tag"
 
     @staticmethod
     def score(filename, fileobj, header_data):

@@ -20,7 +20,7 @@ import struct
 
 from mutagen import StreamInfo
 from mutagen._compat import BytesIO
-from mutagen._util import get_size
+from mutagen._util import get_size, loadfile, convert_error
 from mutagen._tags import PaddingInfo
 from mutagen._vorbis import VCommentDict
 from mutagen.ogg import OggPage, OggFileType, error as OggError
@@ -166,7 +166,19 @@ class OggOpus(OggFileType):
 Open = OggOpus
 
 
-def delete(filename):
-    """Remove tags from a file."""
+@convert_error(IOError, error)
+@loadfile(method=False, writable=True)
+def delete(filething):
+    """ delete(filething)
 
-    OggOpus(filename).delete()
+    Arguments:
+        filething (filething)
+    Raises:
+        mutagen.MutagenError
+
+    Remove tags from a file.
+    """
+
+    t = OggOpus(filething)
+    filething.fileobj.seek(0)
+    t.delete(filething)

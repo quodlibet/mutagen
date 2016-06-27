@@ -908,11 +908,17 @@ class FLAC(mutagen.FileType):
 Open = FLAC
 
 
-def delete(filename):
+@convert_error(IOError, error)
+@loadfile(method=False, writable=True)
+def delete(filething):
     """Remove tags from a file.
 
     Args:
-        filename (fspath)
+        filething (filething)
+    Raises:
+        mutagen.MutagenError
     """
 
-    FLAC(filename).delete()
+    f = FLAC(filething)
+    filething.fileobj.seek(0)
+    f.delete(filething)

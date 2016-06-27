@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
 from tempfile import mkstemp
 import shutil
 
@@ -14,6 +15,7 @@ from mutagen.oggspeex import OggSpeex
 from mutagen.oggtheora import OggTheora
 from mutagen.oggopus import OggOpus
 from mutagen.mp3 import MP3, EasyMP3
+from mutagen.id3 import ID3FileType
 from mutagen.apev2 import APEv2File
 from mutagen.flac import FLAC
 from mutagen.wavpack import WavPack
@@ -298,6 +300,12 @@ class TAbstractFileType(object):
             h.seek(0)
             f.delete(h)
 
+    def test_module_delete_fileobj(self):
+        mod = sys.modules[self.KIND.__module__]
+        if hasattr(mod, "delete"):
+            with open(self.filename, "rb+") as h:
+                mod.delete(fileobj=h)
+
     def test_stringio(self):
         with open(self.filename, "rb") as h:
             fileobj = cBytesIO(h.read())
@@ -477,6 +485,9 @@ _FILETYPES = {
         os.path.join(DATA_DIR, "sample.mid"),
     ],
 }
+
+_FILETYPES[ID3FileType] = _FILETYPES[MP3]
+_FILETYPES[APEv2File] = _FILETYPES[MonkeysAudio]
 
 
 def create_filetype_tests():
