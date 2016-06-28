@@ -5,7 +5,7 @@ import shutil
 import pickle
 from tests import TestCase, DATA_DIR
 from mutagen import MutagenError
-from mutagen.id3 import ID3FileType, ID3
+from mutagen.id3 import ID3FileType, ID3, RVA2
 from mutagen.easyid3 import EasyID3, error as ID3Error
 from mutagen._compat import PY3
 from tempfile import mkstemp
@@ -301,6 +301,35 @@ class TEasyID3(TestCase):
         del(self.id3["replaygain_bar_peak"])
         self.failIf("replaygain_foo_gain" in self.id3.keys())
         self.failIf("replaygain_bar_gain" in self.id3.keys())
+
+    def test_gain_peak_capitalization(self):
+        frame = RVA2(desc=u"Foo", gain=1.0, peak=1.0, channel=0)
+        self.assertFalse(len(self.realid3))
+        self.realid3.add(frame)
+        self.assertTrue("replaygain_Foo_peak" in self.id3)
+        self.assertTrue("replaygain_Foo_peak" in self.id3.keys())
+        self.assertTrue("replaygain_Foo_gain" in self.id3)
+        self.assertTrue("replaygain_Foo_gain" in self.id3.keys())
+
+        self.id3["replaygain_Foo_gain"] = ["0.5"]
+        self.id3["replaygain_Foo_peak"] = ["0.25"]
+
+        frames = self.realid3.getall("RVA2")
+        self.assertEqual(len(frames), 1)
+        self.assertEqual(frames[0].desc, u"Foo")
+        self.assertEqual(frames[0].gain, 0.5)
+        self.assertEqual(frames[0].peak, 0.25)
+
+    def test_case_insensitive(self):
+        self.id3["date"] = [u"2004"]
+        self.assertEqual(self.id3["DATE"], [u"2004"])
+        del self.id3["DaTe"]
+        self.assertEqual(len(self.id3), 0)
+
+        self.id3["asin"] = [u"foo"]
+        self.assertEqual(self.id3["Asin"], [u"foo"])
+        del self.id3["AsIn"]
+        self.assertEqual(len(self.id3), 0)
 
     def test_pickle(self):
         # https://github.com/quodlibet/mutagen/issues/102

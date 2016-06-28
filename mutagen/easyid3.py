@@ -192,30 +192,27 @@ class EasyID3(DictMixin, Metadata):
                     lambda s, fn: setattr(s.__id3, 'size', s))
 
     def __getitem__(self, key):
-        key = key.lower()
-        func = dict_match(self.Get, key, self.GetFallback)
+        func = dict_match(self.Get, key.lower(), self.GetFallback)
         if func is not None:
             return func(self.__id3, key)
         else:
             raise EasyID3KeyError("%r is not a valid key" % key)
 
     def __setitem__(self, key, value):
-        key = key.lower()
         if PY2:
             if isinstance(value, basestring):
                 value = [value]
         else:
             if isinstance(value, text_type):
                 value = [value]
-        func = dict_match(self.Set, key, self.SetFallback)
+        func = dict_match(self.Set, key.lower(), self.SetFallback)
         if func is not None:
             return func(self.__id3, key, value)
         else:
             raise EasyID3KeyError("%r is not a valid key" % key)
 
     def __delitem__(self, key):
-        key = key.lower()
-        func = dict_match(self.Delete, key, self.DeleteFallback)
+        func = dict_match(self.Delete, key.lower(), self.DeleteFallback)
         if func is not None:
             return func(self.__id3, key)
         else:
