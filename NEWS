@@ -1,4 +1,4 @@
-1.33 - 2016.??.??
+1.33 - 2016.06.29
 -----------------
 
 * FileType, Metadata: File-like object support :bug:`1`
