@@ -24,6 +24,8 @@ them using a named argument which skips the type guessing.
     MP3(fileobj=myfileobj)
 
 
+Mutagen expects the file offset to be at 0 for all file objects passed to it.
+
 The file-like object has to implement the following interface (It's a limited
 subset of real file objects and StringIO/BytesIO)
 
