@@ -3,11 +3,14 @@
 
 * FileType, Metadata: File-like object support :bug:`1`
 * mid3v2: Add APIC support. :bug:`47`
+* EasyID3: Fix handling of RVA2 frames with non-lowercase description
+  :bug:`215`
 * mid3v2: Add UFID support. :bug:`234`
 * ID3: Include human-readable representation of the picture type in
   APIC._pprint() :bug:`244`
 * EasyID3: make albumartist use TPE2 and move performer to TXXX. :bug:`252`
-* ID3: id3.ID3TimeStamp comparator: check type :bug:`260`
+* ID3: id3.ID3TimeStamp comparator: check type :pr:`260`
+  (Fabian Peter Hammerle)
 * setup.py: follow PEP440 for the development version
 * FileType/Metadata.load/save/delete no longer raise IOError or IOError
   subclasses. They only raise subclasses of MutagenError.
