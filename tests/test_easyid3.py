@@ -19,6 +19,7 @@ class TEasyID3(TestCase):
         empty = os.path.join(DATA_DIR, 'emptyfile.mp3')
         shutil.copy(empty, self.filename)
         self.id3 = EasyID3()
+        self.realid3 = self.id3._EasyID3__id3
 
     def test_remember_ctr(self):
         empty = os.path.join(DATA_DIR, 'emptyfile.mp3')
@@ -190,7 +191,7 @@ class TEasyID3(TestCase):
         self.failUnless("performer:bar" in self.id3)
         del(self.id3["performer:bar"])
         self.failIf("performer:bar" in self.id3)
-        self.failIf("TMCL" in self.id3._EasyID3__id3)
+        self.failIf("TMCL" in self.realid3)
 
     def test_performer_delete_dne(self):
         self.failUnlessRaises(KeyError, self.id3.__delitem__, "performer:bar")
@@ -206,7 +207,7 @@ class TEasyID3(TestCase):
         self.id3["asin"] = "Hello"
         self.failUnless("asin" in self.id3.keys())
         self.failUnlessEqual(self.id3["asin"], ["Hello"])
-        self.failUnless("TXXX:ASIN" in self.id3._EasyID3__id3)
+        self.failUnless("TXXX:ASIN" in self.realid3)
 
     def test_txxx_del_set_del(self):
         self.failIf("asin" in self.id3.keys())
@@ -231,11 +232,11 @@ class TEasyID3(TestCase):
     def test_bad_trackid(self):
         self.failUnlessRaises(ValueError, self.id3.__setitem__,
                               "musicbrainz_trackid", ["a", "b"])
-        self.failIf(self.id3._EasyID3__id3.getall("RVA2"))
+        self.failIf(self.realid3.getall("RVA2"))
 
     def test_gain_bad_key(self):
         self.failIf("replaygain_foo_gain" in self.id3)
-        self.failIf(self.id3._EasyID3__id3.getall("RVA2"))
+        self.failIf(self.realid3.getall("RVA2"))
 
     def test_gain_bad_value(self):
         self.failUnlessRaises(
@@ -245,11 +246,11 @@ class TEasyID3(TestCase):
         self.failUnlessRaises(
             ValueError,
             self.id3.__setitem__, "replaygain_foo_gain", ["1", "2"])
-        self.failIf(self.id3._EasyID3__id3.getall("RVA2"))
+        self.failIf(self.realid3.getall("RVA2"))
 
     def test_peak_bad_key(self):
         self.failIf("replaygain_foo_peak" in self.id3)
-        self.failIf(self.id3._EasyID3__id3.getall("RVA2"))
+        self.failIf(self.realid3.getall("RVA2"))
 
     def test_peak_bad_value(self):
         self.failUnlessRaises(
@@ -261,7 +262,7 @@ class TEasyID3(TestCase):
             self.id3.__setitem__, "replaygain_foo_peak", ["1", "1"])
         self.failUnlessRaises(
             ValueError, self.id3.__setitem__, "replaygain_foo_peak", ["3"])
-        self.failIf(self.id3._EasyID3__id3.getall("RVA2"))
+        self.failIf(self.realid3.getall("RVA2"))
 
     def test_gain_peak_get(self):
         self.id3["replaygain_foo_gain"] = "+3.5 dB"
