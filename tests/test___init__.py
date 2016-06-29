@@ -4,6 +4,7 @@ import os
 import sys
 from tempfile import mkstemp
 import shutil
+import warnings
 
 from tests import TestCase, DATA_DIR
 from mutagen._compat import cBytesIO, text_type, xrange
@@ -370,7 +371,9 @@ class TAbstractFileType(object):
         self.assertTrue(isinstance(self.audio.mime, list))
 
     def test_load(self):
-        x = self.KIND()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            x = self.KIND()
         x.load(self.filename)
         x.save()
 

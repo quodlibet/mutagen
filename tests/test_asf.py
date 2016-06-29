@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import warnings
 from tempfile import mkstemp
 from tests import TestCase, DATA_DIR
 
@@ -460,7 +461,9 @@ class TASFObjects(TestCase):
     filename = os.path.join(DATA_DIR, "silence-1.wma")
 
     def test_invalid_header(self):
-        asf = ASF()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            asf = ASF()
         fileobj = cBytesIO(
             b"0&\xb2u\x8ef\xcf\x11\xa6\xd9\x00\xaa\x00b\xcel\x19\xbf\x01\x00"
             b"\x00\x00\x00\x00\x07\x00\x00\x00\x01\x02")

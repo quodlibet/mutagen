@@ -116,10 +116,6 @@ class FileType(DictMixin):
         """
 
         if self.tags is not None:
-            if filething.filename is not None:
-                warnings.warn(
-                    "delete(filename=...) is deprecated, reload the file",
-                    DeprecationWarning)
             return self.tags.delete(filething)
 
     @loadfile(writable=True)
@@ -131,11 +127,6 @@ class FileType(DictMixin):
         Raises:
             MutagenError: if saving wasn't possible
         """
-
-        if filething.filename is not None:
-            warnings.warn(
-                "save(filename=...) is deprecated, reload the file",
-                DeprecationWarning)
 
         if self.tags is not None:
             return self.tags.save(filething, **kwargs)
