@@ -3,11 +3,12 @@
 from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes
 from mutagen._util import decode_terminated, dict_match, enum, get_size
 from mutagen._util import BitReader, BitReaderError, resize_bytes, seek_end, \
-    mmap_move
+    mmap_move, verify_fileobj, fileobj_name
 from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2, \
     cBytesIO, xrange
 from tests import TestCase
 import random
+import tempfile
 import mmap
 
 try:
@@ -265,7 +266,6 @@ class Tcdata(TestCase):
 class MmapMove(TestCase):
 
     def file(self, contents):
-        import tempfile
         temp = tempfile.TemporaryFile()
         temp.write(contents)
         temp.flush()
@@ -309,7 +309,6 @@ class MmapMove(TestCase):
 
 class FileHandling(TestCase):
     def file(self, contents):
-        import tempfile
         temp = tempfile.TemporaryFile()
         temp.write(contents)
         temp.flush()
@@ -544,6 +543,35 @@ class Tenum(TestCase):
         self.assertTrue(isinstance(repr(Foo.FOO), str))
 
 
+class Tverify_fileobj(TestCase):
+
+    def test_verify_fileobj_fail(self):
+        self.assertRaises(ValueError, verify_fileobj, object())
+        with tempfile.TemporaryFile(mode="rb") as h:
+            self.assertRaises(ValueError, verify_fileobj, h, writable=True)
+
+    def test_verify_fileobj(self):
+        with tempfile.TemporaryFile(mode="rb") as h:
+            verify_fileobj(h)
+
+        with tempfile.TemporaryFile(mode="rb+") as h:
+            verify_fileobj(h, writable=True)
+
+
+class Tfileobj_name(TestCase):
+
+    def test_fileobj_name_other_type(self):
+
+        class Foo(object):
+            name = 123
+
+        self.assertEqual(fileobj_name(Foo()), "123")
+
+    def test_fileobj_name(self):
+        with tempfile.TemporaryFile(mode="rb") as h:
+            self.assertEqual(fileobj_name(h), text_type(h.name))
+
+
 class Tseek_end(TestCase):
 
     def test_seek_end(self):
@@ -593,6 +621,8 @@ class Tdecode_terminated(TestCase):
             UnicodeDecodeError, decode_terminated, b"\xff\xfe\x00", "utf-16")
         # not null terminated
         self.assertRaises(ValueError, decode_terminated, b"abc", "utf-8")
+        self.assertRaises(
+            ValueError, decode_terminated, b"\xff\xfea\x00", "utf-16")
         # invalid encoding
         self.assertRaises(LookupError, decode_terminated, b"abc", "foobar")
 
@@ -619,6 +649,22 @@ class TBitReader(TestCase):
             r = BitReader(fo)
             v = r.bits(i) << (64 - i) | r.bits(64 - i)
             self.assertEqual(v, ref)
+
+    def test_bits_null(self):
+        r = BitReader(cBytesIO(b""))
+        self.assertEqual(r.bits(0), 0)
+
+    def test_bits_error(self):
+        r = BitReader(cBytesIO(b""))
+        self.assertRaises(ValueError, r.bits, -1)
+
+    def test_bytes_error(self):
+        r = BitReader(cBytesIO(b""))
+        self.assertRaises(ValueError, r.bytes, -1)
+
+    def test_skip_error(self):
+        r = BitReader(cBytesIO(b""))
+        self.assertRaises(ValueError, r.skip, -1)
 
     def test_read_too_much(self):
         r = BitReader(cBytesIO(b""))
