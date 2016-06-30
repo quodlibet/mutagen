@@ -27,8 +27,9 @@ from ._compat import chr_, PY2, iteritems, iterbytes, integer_types, xrange, \
 
 
 def is_fileobj(fileobj):
-    """Returns if an argument passed ot mutagen should be treated as a
-    file object
+    """Returns:
+        bool: if an argument passed ot mutagen should be treated as a
+            file object
     """
 
     # open() only handles str/bytes, so we can be strict
@@ -39,8 +40,12 @@ def verify_fileobj(fileobj, writable=False):
     """Verifies that the passed fileobj is a file like object which
     we can use.
 
+    Args:
+        writable (bool): verify that the file object is writable as well
+
     Raises:
-        ValueError
+        ValueError: In case the object is not a file object that is readable
+            (or writable if required) or is not opened in bytes mode.
     """
 
     try:
@@ -64,13 +69,21 @@ def verify_fileobj(fileobj, writable=False):
 
 
 def verify_filename(filename):
+    """Checks of the passed in filename has the correct type.
+
+    Raises:
+        ValueError: if not a filename
+    """
+
     if is_fileobj(filename):
         raise ValueError("%r not a filename" % filename)
 
 
 def fileobj_name(fileobj):
-    """Returns a potential filename for a file object.
-    Always a valid path type, but might be empty or non-existent.
+    """
+    Returns:
+        text: A potential filename for a file object. Always a valid
+            path type, but might be empty or non-existent.
     """
 
     value = getattr(fileobj, "name", u"")
@@ -80,6 +93,17 @@ def fileobj_name(fileobj):
 
 
 def loadfile(method=True, writable=False, create=False):
+    """A decorator for functions taking a `filething` as a first argument.
+
+    Passes a FileThing instance as the first argument to the wrapped function.
+
+    Args:
+        method (bool): If the wrapped functions is a method
+        writable (bool): If a filename is passed opens the file readwrite, if
+            passed a file object verifies that it is writable.
+        create (bool): If passed a filename that does not exist will create
+            a new empty file.
+    """
 
     def convert_file_args(args, kwargs):
         filething = args[0] if args else None
@@ -113,6 +137,10 @@ def loadfile(method=True, writable=False, create=False):
 def convert_error(exc_src, exc_dest):
     """A decorator for reraising exceptions with a different type.
     Mostly useful for IOError.
+
+    Args:
+        exc_src (type): The source exception type
+        exc_dest (type): The target exception type.
     """
 
     def wrap(func):
@@ -207,6 +235,11 @@ class MutagenError(Exception):
 
 
 def total_ordering(cls):
+    """Adds all possible ordering methods to a class.
+
+    Needs a working __eq__ and __lt__ and will supply the rest.
+    """
+
     assert "__eq__" in cls.__dict__
     assert "__lt__" in cls.__dict__
 
@@ -236,6 +269,25 @@ def hashable(cls):
 
 
 def enum(cls):
+    """A decorator for creating an int enum class.
+
+    Makes the values a subclass of the type and implements repr/str.
+    The new class will be a subclass of int.
+
+    Args:
+        cls (type): The class to convert to an enum
+
+    Returns:
+        type: A new class
+
+    ::
+
+        @enum
+        class Foo(object):
+            FOO = 1
+            BAR = 2
+    """
+
     assert cls.__bases__ == (object,)
 
     d = dict(cls.__dict__)
@@ -455,7 +507,12 @@ def get_size(fileobj):
     """Returns the size from the current position to the end of the file.
     The position when passed in will be preserved if no error occurs.
 
-    In case of an error raises IOError.
+    Args:
+        fileobj (fileobj)
+    Returns:
+        int: The difference between the current position and the file end
+    Raises:
+        IOError
     """
 
     old_pos = fileobj.tell()
@@ -474,7 +531,12 @@ def seek_end(fileobj, offset):
     To make things easier for custom implementations, instead of allowing
     both behaviors, we just don't do it.
 
-    Can raise IOError
+    Args:
+        fileobj (fileobj)
+        offset (int): how many bytes away from the end backwards to seek to
+
+    Raises:
+        IOError
     """
 
     if offset < 0:
@@ -493,6 +555,13 @@ def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
     fobj must be an open file object, open rb+ or
     equivalent. Mutagen tries to use mmap to resize the file, but
     falls back to a significantly slower method if mmap fails.
+
+    Args:
+        fobj (fileobj)
+        size (int): The amount of space to insert
+        offset (int): The offset at which to insert the space
+    Raises:
+        IOError
     """
 
     assert 0 < size
@@ -551,6 +620,13 @@ def delete_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
     fobj must be an open file object, open rb+ or
     equivalent. Mutagen tries to use mmap to resize the file, but
     falls back to a significantly slower method if mmap fails.
+
+    Args:
+        fobj (fileobj)
+        size (int): The amount of space to delete
+        offset (int): The start of the space to delete
+    Raises:
+        IOError
     """
 
     assert 0 < size
@@ -587,6 +663,14 @@ def delete_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
 def resize_bytes(fobj, old_size, new_size, offset):
     """Resize an area in a file adding and deleting at the end of it.
     Does nothing if no resizing is needed.
+
+    Args:
+        fobj (fileobj)
+        old_size (int): The area starting at offset
+        new_size (int): The new size of the area
+        offset (int): The start of the area
+    Raises:
+        IOError
     """
 
     if new_size < old_size:
@@ -602,6 +686,15 @@ def resize_bytes(fobj, old_size, new_size, offset):
 def dict_match(d, key, default=None):
     """Like __getitem__ but works as if the keys() are all filename patterns.
     Returns the value of any dict key that matches the passed key.
+
+    Args:
+        d (dict): A dict with filename patterns as keys
+        key (str): A key potentially matching any of the keys
+        default (object): The object to return if no pattern matched the
+            passed in key
+    Returns:
+        object: The dict value where the dict key matched the passed in key.
+            Or default if there was no match.
     """
 
     if key in d and "[" not in key:
@@ -617,11 +710,21 @@ def decode_terminated(data, encoding, strict=True):
     """Returns the decoded data until the first NULL terminator
     and all data after it.
 
-    In case the data can't be decoded raises UnicodeError.
-    In case the encoding is not found raises LookupError.
-    In case the data isn't null terminated (even if it is encoded correctly)
-    raises ValueError except if strict is False, then the decoded string
-    will be returned anyway.
+    Args:
+        data (bytes): data to decode
+        encoding (str): The codec to use
+        strict (bool): If True will raise ValueError in case no NULL is found
+            but the available data decoded successfully.
+    Returns:
+        Tuple[`text`, `bytes`]: A tuple containing the decoded text and the
+            remaining data after the found NULL termination.
+
+    Raises:
+        UnicodeError: In case the data can't be decoded.
+        LookupError:In case the encoding is not found.
+        ValueError: In case the data isn't null terminated (even if it is
+            encoded correctly) except if strict is False, then the decoded
+            string will be returned anyway.
     """
 
     codec_info = codecs.lookup(encoding)
