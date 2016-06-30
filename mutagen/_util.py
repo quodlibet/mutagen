@@ -550,6 +550,62 @@ def seek_end(fileobj, offset):
         fileobj.seek(-offset, 2)
 
 
+def mmap_move(fileobj, dest, src, count):
+    """Mmaps the file object if possible and moves 'count' data
+    from 'src' to 'dest'. All data has to be inside the file size
+    (enlarging the file through this function isn't possible)
+
+    Will adjust the file offset.
+
+    Args:
+        fileobj (fileobj)
+        dest (int): The destination offset
+        src (int): The source offset
+        count (int) The amount of data to move
+    Raises:
+        mmap.error: In case move failed
+        IOError: In case an operation on the fileobj fails
+        ValueError: In case invalid parameters were given
+    """
+
+    if dest < 0 or src < 0 or count < 0:
+        raise ValueError("Invalid parameters")
+
+    try:
+        fileno = fileobj.fileno()
+    except (AttributeError, IOError):
+        raise mmap.error(
+            "File object does not expose/support a file descriptor")
+
+    fileobj.seek(0, 2)
+    filesize = fileobj.tell()
+    length = max(dest, src) + count
+
+    if length > filesize:
+        raise ValueError("Not in file size boundary")
+
+    offset = ((min(dest, src) // mmap.ALLOCATIONGRANULARITY) *
+        mmap.ALLOCATIONGRANULARITY)
+    assert dest >= offset
+    assert src >= offset
+    assert offset % mmap.ALLOCATIONGRANULARITY == 0
+
+    # Windows doesn't handle empty mappings, add a fast path here instead
+    if count == 0:
+        return
+
+    # fast path
+    if src == dest:
+        return
+
+    fileobj.flush()
+    file_map = mmap.mmap(fileno, length - offset, offset=offset)
+    try:
+        file_map.move(dest - offset, src - offset, count)
+    finally:
+        file_map.close()
+
+
 def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
     """Insert size bytes of empty space starting at offset.
 
@@ -565,12 +621,15 @@ def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
         IOError
     """
 
-    assert 0 < size
-    assert 0 <= offset
+    if size < 0 or offset < 0:
+        raise ValueError
 
     fobj.seek(0, 2)
     filesize = fobj.tell()
     movesize = filesize - offset
+
+    if movesize < 0:
+        raise ValueError
 
     # Don't generate an enormous string if we need to pad
     # the file out several megs.
@@ -582,12 +641,8 @@ def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
     fobj.flush()
 
     try:
-        file_map = mmap.mmap(fobj.fileno(), filesize + size)
-        try:
-            file_map.move(offset + size, offset, movesize)
-        finally:
-            file_map.close()
-    except (ValueError, EnvironmentError, AttributeError):
+        mmap_move(fobj, offset + size, offset, movesize)
+    except EnvironmentError:
         fobj.seek(filesize, 0)
         while movesize:
             # At the start of this loop, fobj is pointing at the end
@@ -605,7 +660,6 @@ def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
             # And seek back to the end of the unmoved data.
             fobj.seek(nextpos)
             movesize -= thismove
-
         fobj.flush()
 
 
@@ -624,24 +678,20 @@ def delete_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
         IOError
     """
 
-    assert 0 < size
-    assert 0 <= offset
+    if size < 0 or offset < 0:
+        raise ValueError
 
     fobj.seek(0, 2)
     filesize = fobj.tell()
     movesize = filesize - offset - size
-    assert 0 <= movesize
 
-    if movesize > 0:
-        fobj.flush()
-        try:
-            file_map = mmap.mmap(fobj.fileno(), filesize)
-            try:
-                file_map.move(offset, offset + size, movesize)
-            finally:
-                file_map.close()
-        except (ValueError, EnvironmentError, AttributeError):
-            # handle broken mmap scenarios, BytesIO()
+    if movesize < 0:
+        raise ValueError
+
+    try:
+        mmap_move(fobj, offset, offset + size, movesize)
+    except EnvironmentError:
+        if size > 0:
             fobj.seek(offset + size)
             buf = fobj.read(BUFFER_SIZE)
             while buf:
@@ -650,8 +700,9 @@ def delete_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
                 offset += len(buf)
                 fobj.seek(offset + size)
                 buf = fobj.read(BUFFER_SIZE)
+            fobj.flush()
+
     fobj.truncate(filesize - size)
-    fobj.flush()
 
 
 def resize_bytes(fobj, old_size, new_size, offset):

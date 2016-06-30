@@ -2,7 +2,8 @@
 
 from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes
 from mutagen._util import decode_terminated, dict_match, enum, get_size
-from mutagen._util import BitReader, BitReaderError, resize_bytes, seek_end
+from mutagen._util import BitReader, BitReaderError, resize_bytes, seek_end, \
+    mmap_move
 from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2, \
     cBytesIO, xrange
 from tests import TestCase
@@ -261,6 +262,51 @@ class Tcdata(TestCase):
         self.failIf(cdata.test_bit(v, 13))
 
 
+class MmapMove(TestCase):
+
+    def file(self, contents):
+        import tempfile
+        temp = tempfile.TemporaryFile()
+        temp.write(contents)
+        temp.flush()
+        temp.seek(0)
+        return temp
+
+    def read(self, fobj):
+        fobj.seek(0, 0)
+        return fobj.read()
+
+    def test_no_fileno(self):
+        self.assertRaises(mmap.error, mmap_move, object(), 0, 0, 0)
+
+    def test_invalid_params(self):
+        with self.file(b"foo") as o:
+            self.assertRaises(ValueError, mmap_move, o, -1, 0, 0)
+            self.assertRaises(ValueError, mmap_move, o, 0, -1, 0)
+            self.assertRaises(ValueError, mmap_move, o, 0, 0, -1)
+
+    def test_outside_file(self):
+        with self.file(b"foo") as o:
+            self.assertRaises(ValueError, mmap_move, o, 0, 0, 4)
+            self.assertRaises(ValueError, mmap_move, o, 0, 1, 3)
+            self.assertRaises(ValueError, mmap_move, o, 1, 0, 3)
+
+    def test_ok(self):
+        with self.file(b"foo") as o:
+            mmap_move(o, 0, 1, 2)
+            mmap_move(o, 1, 0, 2)
+
+    def test_larger_than_page_size(self):
+        off = mmap.ALLOCATIONGRANULARITY
+        with self.file(b"f" * off * 2) as o:
+            mmap_move(o, off, off + 1, off - 1)
+            mmap_move(o, off + 1, off, off - 1)
+
+        with self.file(b"f" * off * 2 + b"x") as o:
+            mmap_move(o, off * 2 - 1, off * 2, 1)
+            self.assertEqual(self.read(o)[-3:], b"fxx")
+
+
 class FileHandling(TestCase):
     def file(self, contents):
         import tempfile
@@ -304,6 +350,10 @@ class FileHandling(TestCase):
             insert_bytes(o, 8, 1)
             self.assertEqual(b'a' + b'\x00' * 8, self.read(o))
 
+    def test_insert_after_file(self):
+        with self.file(b'a') as o:
+            self.assertRaises(ValueError, insert_bytes, o, 1, 2)
+
     def test_smaller_than_file_middle(self):
         with self.file(b'abcdefghij') as o:
             insert_bytes(o, 4, 4)
@@ -331,13 +381,12 @@ class FileHandling(TestCase):
 
     def test_zero(self):
         with self.file(b'abcdefghij') as o:
-            self.assertRaises(
-                (AssertionError, ValueError), insert_bytes, o, 0, 1)
+            insert_bytes(o, 0, 1)
+            self.assertEqual(b'abcdefghij', self.read(o))
 
     def test_negative(self):
         with self.file(b'abcdefghij') as o:
-            self.assertRaises(
-                (AssertionError, ValueError), insert_bytes, o, 8, -1)
+            self.assertRaises(ValueError, insert_bytes, o, 8, -1)
 
     def test_delete_one(self):
         with self.file(b'a') as o:
@@ -356,7 +405,7 @@ class FileHandling(TestCase):
 
     def test_delete_third_of_two(self):
         with self.file(b'ab') as o:
-            self.assertRaises(AssertionError, delete_bytes, o, 1, 2)
+            self.assertRaises(ValueError, delete_bytes, o, 1, 2)
 
     def test_delete_middle(self):
         with self.file(b'abcdefg') as o:
@@ -365,15 +414,16 @@ class FileHandling(TestCase):
 
     def test_delete_across_end(self):
         with self.file(b'abcdefg') as o:
-            self.assertRaises(AssertionError, delete_bytes, o, 4, 8)
+            self.assertRaises(ValueError, delete_bytes, o, 4, 8)
 
     def test_delete_zero(self):
         with self.file(b'abcdefg') as o:
-            self.assertRaises(AssertionError, delete_bytes, o, 0, 3)
+            delete_bytes(o, 0, 3)
+            self.assertEqual(b'abcdefg', self.read(o))
 
     def test_delete_negative(self):
         with self.file(b'abcdefg') as o:
-            self.assertRaises(AssertionError, delete_bytes, o, 4, -8)
+            self.assertRaises(ValueError, delete_bytes, o, 4, -8)
 
     def test_insert_6106_79_51760(self):
         # This appears to be due to ANSI C limitations in read/write on rb+
@@ -443,31 +493,11 @@ class FileHandling(TestCase):
                 self.failUnless(fobj.read() == data)
 
 
-class FileHandlingMockedMMapMove(FileHandling):
-
-    def setUp(self):
-        class MockMMap(object):
-            def __init__(self, *args, **kwargs):
-                pass
-
-            def move(self, dest, src, count):
-                raise ValueError
-
-            def close(self):
-                pass
-
-        self._orig_mmap = mmap.mmap
-        mmap.mmap = MockMMap
-
-    def tearDown(self):
-        mmap.mmap = self._orig_mmap
-
-
 class FileHandlingMockedMMap(FileHandling):
 
     def setUp(self):
         def MockMMap2(*args, **kwargs):
-            raise EnvironmentError
+            raise mmap.error
 
         self._orig_mmap = mmap.mmap
         mmap.mmap = MockMMap2
