@@ -100,10 +100,10 @@ class TMP3(TestCase):
         self.failUnlessEqual(self.mp3_2.tags, ID3(self.silence_nov2))
 
     def test_length(self):
-        self.assertAlmostEquals(self.mp3.info.length, 3.77, 2)
-        self.assertAlmostEquals(self.mp3_2.info.length, 3.77, 2)
-        self.assertAlmostEquals(self.mp3_3.info.length, 3.68475, 4)
-        self.assertAlmostEquals(self.mp3_4.info.length, 3.68475, 4)
+        self.assertAlmostEqual(self.mp3.info.length, 3.77, 2)
+        self.assertAlmostEqual(self.mp3_2.info.length, 3.77, 2)
+        self.assertAlmostEqual(self.mp3_3.info.length, 3.68475, 4)
+        self.assertAlmostEqual(self.mp3_4.info.length, 3.68475, 4)
 
     def test_version(self):
         self.failUnlessEqual(self.mp3.info.version, 1)
@@ -228,7 +228,8 @@ class TMPEGInfo(TestCase):
 
     def test_not_real_file(self):
         filename = os.path.join(DATA_DIR, "silence-44-s-v1.mp3")
-        fileobj = cBytesIO(open(filename, "rb").read(20))
+        with open(filename, "rb") as h:
+            fileobj = cBytesIO(h.read(20))
         self.failUnlessRaises(MP3Error, MPEGInfo, fileobj)
 
     def test_empty(self):
@@ -257,7 +258,8 @@ class TEasyMP3(TestCase):
         # the tags and get the right offset of the first frame
         easy = self.mp3.info
         noneasy = MP3(self.filename).info
-        nonid3 = MPEGInfo(open(self.filename, "rb"))
+        with open(self.filename, "rb") as h:
+            nonid3 = MPEGInfo(h)
 
         self.failUnlessEqual(easy.length, noneasy.length)
         self.failUnlessEqual(noneasy.length, nonid3.length)

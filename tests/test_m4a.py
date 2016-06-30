@@ -21,7 +21,9 @@ class TM4ADeprecation(TestCase):
         self.assertRaises(error, delete, self.SOME_FILE)
 
         M4AInfo  # pyflakes
-        a = M4A()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            a = M4A()
         a.add_tags()
         self.assertEqual(a.tags.items(), [])
 

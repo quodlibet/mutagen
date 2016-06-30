@@ -39,12 +39,14 @@ class TOggVorbis(TestCase, TOggFileTypeMixin):
         self.failUnlessEqual(44100, self.audio.info.sample_rate)
 
     def test_invalid_not_first(self):
-        page = OggPage(open(self.filename, "rb"))
+        with open(self.filename, "rb") as h:
+            page = OggPage(h)
         page.first = False
         self.failUnlessRaises(error, OggVorbisInfo, cBytesIO(page.write()))
 
     def test_avg_bitrate(self):
-        page = OggPage(open(self.filename, "rb"))
+        with open(self.filename, "rb") as h:
+            page = OggPage(h)
         packet = page.packets[0]
         packet = (packet[:16] + b"\x00\x00\x01\x00" + b"\x00\x00\x00\x00" +
                   b"\x00\x00\x00\x00" + packet[28:])
@@ -53,7 +55,8 @@ class TOggVorbis(TestCase, TOggFileTypeMixin):
         self.failUnlessEqual(info.bitrate, 32768)
 
     def test_overestimated_bitrate(self):
-        page = OggPage(open(self.filename, "rb"))
+        with open(self.filename, "rb") as h:
+            page = OggPage(h)
         packet = page.packets[0]
         packet = (packet[:16] + b"\x00\x00\x01\x00" + b"\x00\x00\x00\x01" +
                   b"\x00\x00\x00\x00" + packet[28:])
@@ -62,7 +65,8 @@ class TOggVorbis(TestCase, TOggFileTypeMixin):
         self.failUnlessEqual(info.bitrate, 65536)
 
     def test_underestimated_bitrate(self):
-        page = OggPage(open(self.filename, "rb"))
+        with open(self.filename, "rb") as h:
+            page = OggPage(h)
         packet = page.packets[0]
         packet = (packet[:16] + b"\x00\x00\x01\x00" + b"\x01\x00\x00\x00" +
                   b"\x00\x00\x01\x00" + packet[28:])
@@ -71,7 +75,8 @@ class TOggVorbis(TestCase, TOggFileTypeMixin):
         self.failUnlessEqual(info.bitrate, 65536)
 
     def test_negative_bitrate(self):
-        page = OggPage(open(self.filename, "rb"))
+        with open(self.filename, "rb") as h:
+            page = OggPage(h)
         packet = page.packets[0]
         packet = (packet[:16] + b"\xff\xff\xff\xff" + b"\xff\xff\xff\xff" +
                   b"\xff\xff\xff\xff" + packet[28:])

@@ -346,13 +346,16 @@ class TOggPage(TestCase):
         except (IOError, OSError):
             print("WARNING: Random data round trip test disabled.")
             return
-        for i in xrange(10):
-            num_packets = random.randrange(2, 100)
-            lengths = [random.randrange(10, 10000)
-                       for i in xrange(num_packets)]
-            packets = list(map(random_file.read, lengths))
-            self.failUnlessEqual(
-                packets, OggPage.to_packets(OggPage.from_packets(packets)))
+        try:
+            for i in xrange(10):
+                num_packets = random.randrange(2, 100)
+                lengths = [random.randrange(10, 10000)
+                           for i in xrange(num_packets)]
+                packets = list(map(random_file.read, lengths))
+                self.failUnlessEqual(
+                    packets, OggPage.to_packets(OggPage.from_packets(packets)))
+        finally:
+            random_file.close()
 
     def test_packet_exactly_255(self):
         page = OggPage()

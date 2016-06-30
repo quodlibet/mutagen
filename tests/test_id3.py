@@ -105,12 +105,12 @@ class ID3Loading(TestCase):
         self.assertEqual(ID3(self.unsynch)._padding, 0)
 
     def test_header_empty(self):
-        fileobj = open(self.empty, 'rb')
-        self.assertRaises(ID3Error, ID3Header, fileobj)
+        with open(self.empty, 'rb') as fileobj:
+            self.assertRaises(ID3Error, ID3Header, fileobj)
 
     def test_header_silence(self):
-        fileobj = open(self.silence, 'rb')
-        header = ID3Header(fileobj)
+        with open(self.silence, 'rb') as fileobj:
+            header = ID3Header(fileobj)
         self.assertEquals(header.version, (2, 3, 0))
         self.assertEquals(header.size, 1314)
 
@@ -433,14 +433,14 @@ class TestWriteID3v1(TestCase):
         self.audio = ID3(self.filename)
 
     def failIfV1(self):
-        fileobj = open(self.filename, "rb")
-        fileobj.seek(-128, 2)
-        self.failIf(fileobj.read(3) == b"TAG")
+        with open(self.filename, "rb") as fileobj:
+            fileobj.seek(-128, 2)
+            self.failIf(fileobj.read(3) == b"TAG")
 
     def failUnlessV1(self):
-        fileobj = open(self.filename, "rb")
-        fileobj.seek(-128, 2)
-        self.failUnless(fileobj.read(3) == b"TAG")
+        with open(self.filename, "rb") as fileobj:
+            fileobj.seek(-128, 2)
+            self.failUnless(fileobj.read(3) == b"TAG")
 
     def test_save_delete(self):
         self.audio.save(v1=0)
@@ -1228,12 +1228,12 @@ class OddWrites(TestCase):
 
     def test_1bfile(self):
         os.unlink(self.newsilence)
-        f = open(self.newsilence, "wb")
-        f.write(b"!")
-        f.close()
+        with open(self.newsilence, "wb") as f:
+            f.write(b"!")
         ID3(self.silence).save(self.newsilence)
         self.assert_(os.path.getsize(self.newsilence) > 1)
-        self.assertEquals(open(self.newsilence, "rb").read()[-1], b"!"[0])
+        with open(self.newsilence, "rb") as h:
+            self.assertEquals(h.read()[-1], b"!"[0])
 
     def tearDown(self):
         try:
@@ -1306,30 +1306,35 @@ class WriteRoundtrip(TestCase):
         id3 = ID3(self.newsilence)
         os.unlink(self.newsilence)
         id3.save(self.newsilence)
-        self.assertEquals(b'ID3', open(self.newsilence, 'rb').read(3))
+        with open(self.newsilence, 'rb') as h:
+            self.assertEquals(b'ID3', h.read(3))
         self.test_same()
 
     def test_emptyfile_silencetag(self):
         id3 = ID3(self.newsilence)
-        open(self.newsilence, 'wb').truncate()
+        with open(self.newsilence, 'wb') as h:
+            h.truncate()
         id3.save(self.newsilence)
-        self.assertEquals(b'ID3', open(self.newsilence, 'rb').read(3))
+        with open(self.newsilence, 'rb') as h:
+            self.assertEquals(b'ID3', h.read(3))
         self.test_same()
 
     def test_empty_plustag_minustag_empty(self):
         id3 = ID3(self.newsilence)
-        open(self.newsilence, 'wb').truncate()
+        with open(self.newsilence, 'wb') as h:
+            h.truncate()
         id3.save()
         id3.delete()
         self.failIf(id3)
-        self.assertEquals(open(self.newsilence, 'rb').read(10), b'')
+        with open(self.newsilence, 'rb') as h:
+            self.assertEquals(h.read(10), b'')
 
     def test_delete_invalid_zero(self):
-        f = open(self.newsilence, 'wb')
-        f.write(b'ID3\x04\x00\x00\x00\x00\x00\x00abc')
-        f.close()
+        with open(self.newsilence, 'wb') as f:
+            f.write(b'ID3\x04\x00\x00\x00\x00\x00\x00abc')
         ID3(self.newsilence).delete()
-        self.assertEquals(open(self.newsilence, 'rb').read(10), b'abc')
+        with open(self.newsilence, 'rb') as f:
+            self.assertEquals(f.read(10), b'abc')
 
     def test_frame_order(self):
         from mutagen.id3 import TIT2, APIC, TALB, COMM
@@ -1339,7 +1344,8 @@ class WriteRoundtrip(TestCase):
         f["TALB"] = TALB(encoding=0, text="c")
         f["COMM"] = COMM(encoding=0, desc="x", text="y")
         f.save()
-        data = open(self.newsilence, 'rb').read()
+        with open(self.newsilence, 'rb') as h:
+            data = h.read()
         self.assert_(data.find(b"TIT2") < data.find(b"APIC"))
         self.assert_(data.find(b"TIT2") < data.find(b"COMM"))
         self.assert_(data.find(b"TALB") < data.find(b"APIC"))
@@ -1360,10 +1366,9 @@ class WriteForEyeD3(TestCase):
     def setUp(self):
         shutil.copy(self.silence, self.newsilence)
         # remove ID3v1 tag
-        f = open(self.newsilence, "rb+")
-        f.seek(-128, 2)
-        f.truncate()
-        f.close()
+        with open(self.newsilence, "rb+") as f:
+            f.seek(-128, 2)
+            f.truncate()
 
     def test_same(self):
         ID3(self.newsilence).save()

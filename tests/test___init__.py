@@ -100,7 +100,9 @@ class TFileTypeLoad(TestCase):
     filename = os.path.join(DATA_DIR, "empty.ogg")
 
     def test_old_argument_handling(self):
-        f = MyFileType()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            f = MyFileType()
         self.assertFalse(hasattr(f, "a"))
 
         f = MyFileType(self.filename)
@@ -168,7 +170,9 @@ class TFileType(TestCase):
         self.failUnlessRaises(KeyError, self.vorbis.__delitem__, "foobar")
 
     def test_add_tags(self):
-        self.failUnlessRaises(NotImplementedError, FileType().add_tags)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.failUnlessRaises(NotImplementedError, FileType().add_tags)
 
     def test_delitem(self):
         self.vorbis["foobar"] = "quux"

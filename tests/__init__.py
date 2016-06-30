@@ -7,6 +7,7 @@ import glob
 import os
 import sys
 import unittest
+import warnings
 
 from unittest import TestCase as BaseTestCase
 
@@ -28,6 +29,12 @@ if os.name != "nt":
                            "Try setting LANG=C.UTF-8")
 
 
+# Make sure we see all deprecation warnings so we either have to avoid them
+# or capture them in the test suite
+warnings.simplefilter("always")
+warnings.simplefilter("ignore", PendingDeprecationWarning)
+
+
 class TestCase(BaseTestCase):
 
     def failUnlessRaisesRegexp(self, exc, re_, fun, *args, **kwargs):
@@ -47,6 +54,9 @@ class TestCase(BaseTestCase):
     failUnlessAlmostEqual = BaseTestCase.assertAlmostEqual
     failIfEqual = BaseTestCase.assertNotEqual
     failIfAlmostEqual = BaseTestCase.assertNotAlmostEqual
+    assertEquals = BaseTestCase.assertEqual
+    assertNotEquals = BaseTestCase.assertNotEqual
+    assert_ = BaseTestCase.assertTrue
 
     def assertReallyEqual(self, a, b):
         self.assertEqual(a, b)

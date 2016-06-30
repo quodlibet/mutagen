@@ -96,7 +96,8 @@ class TAtoms(TestCase):
     filename = os.path.join(DATA_DIR, "has-tags.m4a")
 
     def setUp(self):
-        self.atoms = Atoms(open(self.filename, "rb"))
+        with open(self.filename, "rb") as h:
+            self.atoms = Atoms(h)
 
     def test_getitem(self):
         self.failUnless(self.atoms[b"moov"])

@@ -30,7 +30,8 @@ class TOggTheora(TestCase, TOggFileTypeMixin):
         os.unlink(self.filename)
 
     def test_theora_bad_version(self):
-        page = OggPage(open(self.filename, "rb"))
+        with open(self.filename, "rb") as h:
+            page = OggPage(h)
         packet = page.packets[0]
         packet = packet[:7] + b"\x03\x00" + packet[9:]
         page.packets = [packet]
@@ -38,7 +39,8 @@ class TOggTheora(TestCase, TOggFileTypeMixin):
         self.failUnlessRaises(error, OggTheoraInfo, fileobj)
 
     def test_theora_not_first_page(self):
-        page = OggPage(open(self.filename, "rb"))
+        with open(self.filename, "rb") as h:
+            page = OggPage(h)
         page.first = False
         fileobj = cBytesIO(page.write())
         self.failUnlessRaises(error, OggTheoraInfo, fileobj)

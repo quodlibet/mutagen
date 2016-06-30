@@ -33,16 +33,19 @@ class TOggFLAC(TestCase, TOggFileTypeMixin):
         self.failUnlessRaises(KeyError, self.audio.tags.__getitem__, "vendor")
 
     def test_streaminfo_bad_marker(self):
-        page = OggPage(open(self.filename, "rb")).write()
+        with open(self.filename, "rb") as h:
+            page = OggPage(h).write()
         page = page.replace(b"fLaC", b"!fLa", 1)
         self.failUnlessRaises(error, OggFLACStreamInfo, cBytesIO(page))
 
     def test_streaminfo_too_short(self):
-        page = OggPage(open(self.filename, "rb")).write()
+        with open(self.filename, "rb") as h:
+            page = OggPage(h).write()
         self.failUnlessRaises(OggError, OggFLACStreamInfo, cBytesIO(page[:10]))
 
     def test_streaminfo_bad_version(self):
-        page = OggPage(open(self.filename, "rb")).write()
+        with open(self.filename, "rb") as h:
+            page = OggPage(h).write()
         page = page.replace(b"\x01\x00", b"\x02\x00", 1)
         self.failUnlessRaises(error, OggFLACStreamInfo, cBytesIO(page))
 

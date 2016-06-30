@@ -41,12 +41,14 @@ class TOggOpus(TestCase, TOggFileTypeMixin):
         self.failUnless("audio/ogg; codecs=opus" in self.audio.mime)
 
     def test_invalid_not_first(self):
-        page = OggPage(open(self.filename, "rb"))
+        with open(self.filename, "rb") as h:
+            page = OggPage(h)
         page.first = False
         self.failUnlessRaises(error, OggOpusInfo, BytesIO(page.write()))
 
     def test_unsupported_version(self):
-        page = OggPage(open(self.filename, "rb"))
+        with open(self.filename, "rb") as h:
+            page = OggPage(h)
         data = bytearray(page.packets[0])
 
         data[8] = 0x03

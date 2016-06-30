@@ -365,8 +365,9 @@ class TFLAC(TestCase):
     def test_write_nochange(self):
         f = FLAC(self.NEW)
         f.save()
-        self.failUnlessEqual(open(self.SAMPLE, "rb").read(),
-                             open(self.NEW, "rb").read())
+        with open(self.SAMPLE, "rb") as a:
+            with open(self.NEW, "rb") as b:
+                self.failUnlessEqual(a.read(), b.read())
 
     def test_write_changetitle(self):
         f = FLAC(self.NEW)
@@ -599,7 +600,8 @@ class TFLACBadBlockSizeWrite(TestCase):
         flac.save()
         flac2 = FLAC(self.NEW)
         self.failUnlessEqual(flac["title"], flac2["title"])
-        data = open(self.NEW, "rb").read(1024)
+        with open(self.NEW, "rb") as h:
+            data = h.read(1024)
         self.failIf(b"Tunng" in data)
 
 
