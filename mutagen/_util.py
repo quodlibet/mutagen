@@ -571,7 +571,14 @@ def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
     fobj.seek(0, 2)
     filesize = fobj.tell()
     movesize = filesize - offset
-    fobj.write(b'\x00' * size)
+
+    # Don't generate an enormous string if we need to pad
+    # the file out several megs.
+    padsize = size
+    while padsize:
+        addsize = min(BUFFER_SIZE, padsize)
+        fobj.write(b"\x00" * addsize)
+        padsize -= addsize
     fobj.flush()
 
     try:
@@ -581,18 +588,6 @@ def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
         finally:
             file_map.close()
     except (ValueError, EnvironmentError, AttributeError):
-        # handle broken mmap scenarios, BytesIO()
-        fobj.truncate(filesize)
-
-        fobj.seek(0, 2)
-        padsize = size
-        # Don't generate an enormous string if we need to pad
-        # the file out several megs.
-        while padsize:
-            addsize = min(BUFFER_SIZE, padsize)
-            fobj.write(b"\x00" * addsize)
-            padsize -= addsize
-
         fobj.seek(filesize, 0)
         while movesize:
             # At the start of this loop, fobj is pointing at the end
