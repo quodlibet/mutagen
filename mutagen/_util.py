@@ -16,6 +16,7 @@ import sys
 import struct
 import codecs
 import errno
+import mmap
 
 from collections import namedtuple
 from contextlib import contextmanager
@@ -574,13 +575,12 @@ def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
     fobj.flush()
 
     try:
-        import mmap
         file_map = mmap.mmap(fobj.fileno(), filesize + size)
         try:
             file_map.move(offset + size, offset, movesize)
         finally:
             file_map.close()
-    except (ValueError, EnvironmentError, ImportError, AttributeError):
+    except (ValueError, EnvironmentError, AttributeError):
         # handle broken mmap scenarios, BytesIO()
         fobj.truncate(filesize)
 
@@ -640,13 +640,12 @@ def delete_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
     if movesize > 0:
         fobj.flush()
         try:
-            import mmap
             file_map = mmap.mmap(fobj.fileno(), filesize)
             try:
                 file_map.move(offset, offset + size, movesize)
             finally:
                 file_map.close()
-        except (ValueError, EnvironmentError, ImportError, AttributeError):
+        except (ValueError, EnvironmentError, AttributeError):
             # handle broken mmap scenarios, BytesIO()
             fobj.seek(offset + size)
             buf = fobj.read(BUFFER_SIZE)
