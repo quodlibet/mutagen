@@ -744,7 +744,10 @@ def create_read_tag_tests():
         # iTunes podcast frames
         ['TGID', b'\x00i', u'i', '', dict(encoding=0)],
         ['TDES', b'\x00ii', u'ii', '', dict(encoding=0)],
+        ['TKWD', b'\x00ii', u'ii', '', dict(encoding=0)],
+        ['TCAT', b'\x00ii', u'ii', '', dict(encoding=0)],
         ['WFED', b'http://zzz', 'http://zzz', '', {}],
+        ['PCST', b'\x00\x00\x00\x00', 0, 0, dict(value=0)],
 
         # 2.2 tags
         ['UFI', b'own\x00data', b'data', '', dict(data=b'data', owner='own')],

@@ -550,6 +550,14 @@ class TDES(TextFrame):
     "iTunes Podcast Description"
 
 
+class TKWD(TextFrame):
+    "iTunes Podcast Keywords"
+
+
+class TCAT(TextFrame):
+    "iTunes Podcast Category"
+
+
 class TDOR(TimeStampTextFrame):
     "Original Release Time"
 
@@ -1163,6 +1171,23 @@ class PCNT(Frame):
 
     def _pprint(self):
         return text_type(self.count)
+
+
+class PCST(Frame):
+    """iTunes Podcast Flag"""
+
+    _framespec = [IntegerSpec('value')]
+
+    def __eq__(self, other):
+        return self.value == other
+
+    __hash__ = Frame.__hash__
+
+    def __pos__(self):
+        return self.value
+
+    def _pprint(self):
+        return text_type(self.value)
 
 
 class POPM(FrameOpt):
