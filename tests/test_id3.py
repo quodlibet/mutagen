@@ -8,8 +8,10 @@ from mutagen import id3
 from mutagen import MutagenError
 from mutagen.apev2 import APEv2
 from mutagen.id3 import ID3, COMR, Frames, Frames_2_2, ID3Warning, \
-    ID3JunkFrameError, ID3Header, ID3UnsupportedVersionError, _fullread, TIT2
+    ID3JunkFrameError, ID3Header, ID3UnsupportedVersionError, TIT2, \
+    save_frame, CHAP, CTOCFlags, CTOC
 from mutagen.id3._util import BitPaddedInt, error as ID3Error
+from mutagen.id3._tags import read_frames, _determine_bpi
 from mutagen._compat import cBytesIO, PY2, iteritems, integer_types, izip
 import warnings
 from tempfile import mkstemp
@@ -194,11 +196,6 @@ class ID3Loading(TestCase):
         id3 = ID3(self.unsynch)
         self.assertEquals(id3["TPE1"], ["Nina Simone"])
 
-    def test_insane__ID3__fullread(self):
-        fileobj = cBytesIO()
-        self.assertRaises(ValueError, _fullread, fileobj, -3)
-        self.assertRaises(EOFError, _fullread, fileobj, 3)
-
 
 class Issue21(TestCase):
 
@@ -317,9 +314,10 @@ class ID3Tags(TestCase):
 
     def test_extradata(self):
         from mutagen.id3 import RVRB, RBUF
-        self.assertEqual(RVRB()._readData(b'L1R1BBFFFFPP#xyz'), b'#xyz')
+        self.assertEqual(RVRB()._readData(_24, b'L1R1BBFFFFPP#xyz'), b'#xyz')
         self.assertEqual(
-            RBUF()._readData(b'\x00\x01\x00\x01\x00\x00\x00\x00#xyz'), b'#xyz')
+            RBUF()._readData(
+                _24, b'\x00\x01\x00\x01\x00\x00\x00\x00#xyz'), b'#xyz')
 
 
 class ID3v1Tags(TestCase):
@@ -749,6 +747,17 @@ def create_read_tag_tests():
         ['WFED', b'http://zzz', 'http://zzz', '', {}],
         ['PCST', b'\x00\x00\x00\x00', 0, 0, dict(value=0)],
 
+        # Chapter extension
+        ['CHAP', (b'foo\x00\x11\x11\x11\x11\x22\x22\x22\x22'
+                  b'\x33\x33\x33\x33\x44\x44\x44\x44'),
+         CHAP(element_id=u'foo', start_time=286331153, end_time=572662306,
+              start_offset=858993459, end_offset=1145324612), '', dict()],
+        ['CTOC', b'foo\x00\x03\x01bla\x00',
+         CTOC(element_id=u'foo',
+              flags=CTOCFlags.ORDERED | CTOCFlags.TOP_LEVEL,
+              child_element_ids=[u'bla']),
+         '', dict()],
+
         # 2.2 tags
         ['UFI', b'own\x00data', b'data', '', dict(data=b'data', owner='own')],
         [
@@ -960,6 +969,18 @@ create_read_tag_tests()
 
 class UpdateTo24(TestCase):
 
+    def test_chap_subframes(self):
+        from mutagen.id3 import TYER, CHAP
+
+        id3 = ID3()
+        id3.version = (2, 3)
+        id3.add(CHAP(element_id="foo", start_time=0, end_time=0,
+                     start_offset=0, end_offset=0,
+                     sub_frames=[TYER(encoding=0, text="2006")]))
+        id3.update_to_v24()
+        chap = id3.getall("CHAP:foo")[0]
+        self.assertEqual(chap.sub_frames.getall("TDRC")[0], u"2006")
+
     def test_pic(self):
         from mutagen.id3 import PIC
         id3 = ID3()
@@ -1044,39 +1065,25 @@ class Issue97_UpgradeUnknown23(TestCase):
         # load a 2.3 file and pretend we don't support TIT2
         unknown = ID3(self.filename, known_frames={"TPE1": TPE1},
                       translate=False)
-
         # TIT2 ends up in unknown_frames
         self.failUnlessEqual(unknown.unknown_frames[0][:4], b"TIT2")
-
-        # frame should be different now
-        orig_unknown = unknown.unknown_frames[0]
-        unknown.update_to_v24()
-        self.failIfEqual(unknown.unknown_frames[0], orig_unknown)
-
-        # save as 2.4
-        unknown.save()
-
+        # save as 2.3
+        unknown.save(v2_version=3)
         # load again with support for TIT2, all should be there again
         new = ID3(self.filename)
-        self.failUnlessEqual(new.version, (2, 4, 0))
         self.failUnlessEqual(new["TIT2"].text, orig["TIT2"].text)
         self.failUnlessEqual(new["TPE1"].text, orig["TPE1"].text)
 
-    def test_double_update(self):
-        from mutagen.id3 import TPE1
-        unknown = ID3(self.filename, known_frames={"TPE1": TPE1})
-        # Make sure the data doesn't get updated again
-        unknown.update_to_v24()
-        unknown.unknown_frames = [b"foobar"]
-        unknown.update_to_v24()
-        self.failUnless(unknown.unknown_frames)
-
     def test_unknown_invalid(self):
-        f = ID3(self.filename, translate=False)
-        f.unknown_frames = [b"foobar", b"\xff" * 50]
-        # throw away invalid frames
-        f.update_to_v24()
-        self.failIf(f.unknown_frames)
+        from mutagen.id3 import BinaryFrame, ID3SaveConfig
+        frame = BinaryFrame(data=b"\xff" * 50)
+        f = ID3(self.filename)
+        self.assertEqual(f.version, ID3Header._V23)
+        config = ID3SaveConfig(3, None)
+        f.unknown_frames = [save_frame(frame, b"NOPE", config)]
+        f.save()
+        f = ID3(self.filename)
+        self.assertFalse(f.unknown_frames)
 
     def tearDown(self):
         os.unlink(self.filename)
@@ -1107,16 +1114,15 @@ class BrokenDiscarded(TestCase):
         for head in b'RVA2 TXXX APIC'.split():
             data = head + tail
             self.assertEquals(
-                0, len(list(id3._ID3__read_frames(data, Frames))))
+                0, len(read_frames(id3._header, data, Frames)[1]))
 
     def test_drops_nonalphanum_frames(self):
         from mutagen.id3 import Frames
-        id3 = ID3()
         tail = b'\x00\x00\x00\x03\x00\x00' b'\x01\x02\x03'
         for head in [b'\x06\xaf\xfe\x20', b'ABC\x00', b'A   ']:
             data = head + tail
             self.assertEquals(
-                0, len(list(id3._ID3__read_frames(data, Frames))))
+                0, len(read_frames(_24, data, Frames)[0]))
 
     def test_bad_unicodedecode(self):
         from mutagen.id3 import COMM, ID3JunkFrameError
@@ -1129,12 +1135,11 @@ class BrokenButParsed(TestCase):
 
     def test_zerolength_framedata(self):
         from mutagen.id3 import Frames
-        id3 = ID3()
         tail = b'\x00' * 6
         for head in b'WOAR TENC TCOP TOPE WXXX'.split():
             data = head + tail
             self.assertEquals(
-                0, len(list(id3._ID3__read_frames(data, Frames))))
+                0, len(list(read_frames(_24, data, Frames)[1])))
 
     def test_lengthone_utf16(self):
         from mutagen.id3 import TPE1
@@ -1159,9 +1164,8 @@ class BrokenButParsed(TestCase):
 
     def test_zlib_bpi(self):
         from mutagen.id3 import TPE1
-        id3 = ID3()
         tpe1 = TPE1(encoding=0, text="a" * (0xFFFF - 2))
-        data = id3._ID3__save_frame(tpe1)
+        data = save_frame(tpe1)
         datalen_size = data[4 + 4 + 2:4 + 4 + 2 + 4]
         self.failIf(
             max(datalen_size) >= b'\x80'[0], "data is not syncsafe: %r" % data)
@@ -1195,9 +1199,9 @@ class BrokenButParsed(TestCase):
         id3._header = ID3Header()
         id3._header.version = (2, 4, 0)
 
-        tagsgood = list(
-            id3._ID3__read_frames(head + b'a' * 127 + tail, Frames))
-        tagsbad = list(id3._ID3__read_frames(head + b'a' * 255 + tail, Frames))
+        tagsgood = read_frames(
+            id3._header, head + b'a' * 127 + tail, Frames)[0]
+        tagsbad = read_frames(id3._header, head + b'a' * 255 + tail, Frames)[0]
         self.assertEquals(2, len(tagsgood))
         self.assertEquals(2, len(tagsbad))
         self.assertEquals('a' * 127, tagsgood[0])
@@ -1205,8 +1209,8 @@ class BrokenButParsed(TestCase):
         self.assertEquals('Yay!', tagsgood[1])
         self.assertEquals('Yay!', tagsbad[1])
 
-        tagsgood = list(id3._ID3__read_frames(head + b'a' * 127, Frames))
-        tagsbad = list(id3._ID3__read_frames(head + b'a' * 255, Frames))
+        tagsgood = read_frames(id3._header, head + b'a' * 127, Frames)[0]
+        tagsbad = read_frames(id3._header, head + b'a' * 255, Frames)[0]
         self.assertEquals(1, len(tagsgood))
         self.assertEquals(1, len(tagsbad))
         self.assertEquals('a' * 127, tagsgood[0])
@@ -1251,6 +1255,25 @@ class WriteRoundtrip(TestCase):
 
     def setUp(self):
         shutil.copy(self.silence, self.newsilence)
+
+    def test_unknown_chap(self):
+        # add ctoc
+        id3 = ID3(self.newsilence)
+        id3.add(CTOC(element_id="foo", flags=3, child_element_ids=["ch0"],
+                     sub_frames=[TIT2(encoding=3, text=["bla"])]))
+        id3.save()
+
+        # pretend we don't know ctoc and save
+        id3 = ID3(self.newsilence, known_frames={"CTOC": CTOC})
+        ctoc = id3.getall("CTOC")[0]
+        self.assertFalse(ctoc.sub_frames)
+        self.assertTrue(ctoc.sub_frames.unknown_frames)
+        id3.save()
+
+        # make sure we wrote all sub frames back
+        id3 = ID3(self.newsilence)
+        self.assertEqual(
+            id3.getall("CTOC")[0].sub_frames.getall("TIT2")[0].text, ["bla"])
 
     def test_same(self):
         ID3(self.newsilence).save()
@@ -1732,7 +1755,7 @@ class TID3Misc(TestCase):
         self.assertEqual(id3.PictureType.COVER_FRONT, 3)
 
     def test_determine_bpi(self):
-        determine_bpi = id3._determine_bpi
+        determine_bpi = _determine_bpi
         # default to BitPaddedInt
         self.assertTrue(determine_bpi("", {}) is BitPaddedInt)
 

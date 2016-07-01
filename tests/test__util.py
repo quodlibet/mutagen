@@ -3,7 +3,7 @@
 from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes
 from mutagen._util import decode_terminated, dict_match, enum, get_size
 from mutagen._util import BitReader, BitReaderError, resize_bytes, seek_end, \
-    mmap_move, verify_fileobj, fileobj_name
+    mmap_move, verify_fileobj, fileobj_name, read_full, flags
 from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2, \
     cBytesIO, xrange
 from tests import TestCase
@@ -543,6 +543,28 @@ class Tenum(TestCase):
         self.assertTrue(isinstance(repr(Foo.FOO), str))
 
 
+class Tflags(TestCase):
+
+    def test_enum(self):
+        @flags
+        class Foo(object):
+            FOO = 1
+            BAR = 2
+
+        self.assertEqual(Foo.FOO, 1)
+        self.assertTrue(isinstance(Foo.FOO, Foo))
+        self.assertEqual(repr(Foo.FOO), "Foo.FOO")
+        self.assertEqual(repr(Foo(3)), "Foo.FOO | Foo.BAR")
+        self.assertEqual(repr(Foo(42)), "Foo.BAR | 40")
+        self.assertEqual(str(Foo(42)), "Foo.BAR | 40")
+        self.assertEqual(int(Foo(42)), 42)
+        self.assertEqual(str(Foo(1)), "Foo.FOO")
+        self.assertEqual(int(Foo(1)), 1)
+
+        self.assertTrue(isinstance(str(Foo.FOO), str))
+        self.assertTrue(isinstance(repr(Foo.FOO), str))
+
+
 class Tverify_fileobj(TestCase):
 
     def test_verify_fileobj_fail(self):
@@ -585,6 +607,14 @@ class Tseek_end(TestCase):
         seek_end(f, 0)
         self.assertEqual(f.tell(), 3)
         self.assertRaises(ValueError, seek_end, f, -1)
+
+
+class Tread_full(TestCase):
+
+    def test_read_full(self):
+        fileobj = cBytesIO()
+        self.assertRaises(ValueError, read_full, fileobj, -3)
+        self.assertRaises(IOError, read_full, fileobj, 3)
 
 
 class Tget_size(TestCase):

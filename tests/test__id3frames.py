@@ -2,21 +2,19 @@
 
 from tests import TestCase
 
-from mutagen.id3 import Frames, Frames_2_2, ID3, ID3Header
+from mutagen.id3 import Frames, Frames_2_2, ID3, ID3Header, save_frame
+from mutagen.id3._tags import read_frames
 from mutagen._compat import text_type, xrange, PY2
-from mutagen.id3 import APIC
+from mutagen.id3 import APIC, CTOC, CHAP, TPE2, ID3SaveConfig
 
-_22 = ID3()
-_22._header = ID3Header()
-_22._header.version = (2, 2, 0)
+_22 = ID3Header()
+_22.version = (2, 2, 0)
 
-_23 = ID3()
-_23._header = ID3Header()
-_23._header.version = (2, 3, 0)
+_23 = ID3Header()
+_23.version = (2, 3, 0)
 
-_24 = ID3()
-_24._header = ID3Header()
-_24._header.version = (2, 4, 0)
+_24 = ID3Header()
+_24.version = (2, 4, 0)
 
 
 class FrameSanityChecks(TestCase):
@@ -233,27 +231,24 @@ class FrameSanityChecks(TestCase):
 
     def test_22_uses_direct_ints(self):
         data = b'TT1\x00\x00\x83\x00' + (b'123456789abcdef' * 16)
-        tag = list(_22._ID3__read_frames(data, Frames_2_2))[0]
+        tag = read_frames(_22, data, Frames_2_2)[0][0]
         self.assertEquals(data[7:7 + 0x82].decode('latin1'), tag.text[0])
 
     def test_frame_too_small(self):
+        self.assertEquals([], read_frames(_24, b'012345678', Frames)[0])
+        self.assertEquals([], read_frames(_23, b'012345678', Frames)[0])
+        self.assertEquals([], read_frames(_22, b'01234', Frames_2_2)[0])
         self.assertEquals(
-            [], list(_24._ID3__read_frames(b'012345678', Frames)))
-        self.assertEquals(
-            [], list(_23._ID3__read_frames(b'012345678', Frames)))
-        self.assertEquals(
-            [], list(_22._ID3__read_frames(b'01234', Frames_2_2)))
-        self.assertEquals(
-            [], list(_22._ID3__read_frames(b'TT1' + b'\x00' * 3, Frames_2_2)))
+            [], read_frames(_22, b'TT1' + b'\x00' * 3, Frames_2_2)[0])
 
     def test_unknown_22_frame(self):
         data = b'XYZ\x00\x00\x01\x00'
-        self.assertEquals([data], list(_22._ID3__read_frames(data, {})))
+        self.assertEquals([data], read_frames(_22, data, {})[1])
 
     def test_zlib_latin1(self):
         from mutagen.id3 import TPE1
         tag = TPE1._fromData(
-            _24._header, 0x9, b'\x00\x00\x00\x0f'
+            _24, 0x9, b'\x00\x00\x00\x0f'
             b'x\x9cc(\xc9\xc8,V\x00\xa2D\xfd\x92\xd4\xe2\x12\x00&\x7f\x05%'
         )
         self.assertEquals(tag.encoding, 0)
@@ -261,13 +256,13 @@ class FrameSanityChecks(TestCase):
 
     def test_datalen_but_not_compressed(self):
         from mutagen.id3 import TPE1
-        tag = TPE1._fromData(_24._header, 0x01, b'\x00\x00\x00\x06\x00A test')
+        tag = TPE1._fromData(_24, 0x01, b'\x00\x00\x00\x06\x00A test')
         self.assertEquals(tag.encoding, 0)
         self.assertEquals(tag, ['A test'])
 
     def test_utf8(self):
         from mutagen.id3 import TPE1
-        tag = TPE1._fromData(_23._header, 0x00, b'\x03this is a test')
+        tag = TPE1._fromData(_23, 0x00, b'\x03this is a test')
         self.assertEquals(tag.encoding, 3)
         self.assertEquals(tag, 'this is a test')
 
@@ -275,24 +270,24 @@ class FrameSanityChecks(TestCase):
         from mutagen.id3 import TPE1
         data = (b'\x00\x00\x00\x1fx\x9cc\xfc\xff\xaf\x84!\x83!\x93\xa1\x98A'
                 b'\x01J&2\xe83\x940\xa4\x02\xd9%\x0c\x00\x87\xc6\x07#')
-        tag = TPE1._fromData(_23._header, 0x80, data)
+        tag = TPE1._fromData(_23, 0x80, data)
         self.assertEquals(tag.encoding, 1)
         self.assertEquals(tag, ['this is a/test'])
 
-        tag = TPE1._fromData(_24._header, 0x08, data)
+        tag = TPE1._fromData(_24, 0x08, data)
         self.assertEquals(tag.encoding, 1)
         self.assertEquals(tag, ['this is a/test'])
 
     def test_load_write(self):
-        from mutagen.id3 import TPE1, Frames
+        from mutagen.id3 import TPE1, Frames, ID3SaveConfig
         artists = [s.decode('utf8') for s in
                    [b'\xc2\xb5', b'\xe6\x97\xa5\xe6\x9c\xac']]
         artist = TPE1(encoding=3, text=artists)
-        id3 = ID3()
-        id3._header = ID3Header()
-        id3._header.version = (2, 4, 0)
-        tag = list(id3._ID3__read_frames(
-            id3._ID3__save_frame(artist), Frames))[0]
+        header = ID3Header()
+        header.version = (2, 4, 0)
+        config = ID3SaveConfig()
+        tag = read_frames(
+            header, save_frame(artist, config=config), Frames)[0][0]
         self.assertEquals('TPE1', type(tag).__name__)
         self.assertEquals(artist.text, tag.text)
 
@@ -552,6 +547,56 @@ class TRVA2(TestCase):
         self.assertNotEqual(r, 42)
 
 
+class TCTOC(TestCase):
+
+    def test_hash(self):
+        frame = CTOC(element_id=u"foo", flags=3,
+                     child_element_ids=[u"ch0"],
+                     sub_frames=[TPE2(encoding=3, text=[u"foo"])])
+        self.assertEqual(frame.HashKey, "CTOC:foo")
+
+    def test_pprint(self):
+        frame = CTOC(element_id=u"foo", flags=3,
+                     child_element_ids=[u"ch0"],
+                     sub_frames=[TPE2(encoding=3, text=[u"foo"])])
+        self.assertEqual(
+            frame.pprint(),
+            "CTOC=foo flags=3 child_element_ids=ch0\n    TPE2=foo")
+
+    def test_write(self):
+        frame = CTOC(element_id=u"foo", flags=3,
+                     child_element_ids=[u"ch0"],
+                     sub_frames=[TPE2(encoding=3, text=[u"f", u"b"])])
+        config = ID3SaveConfig(3, "/")
+        data = (b"foo\x00\x03\x01ch0\x00TPE2\x00\x00\x00\x0b\x00\x00\x01"
+                b"\xff\xfef\x00/\x00b\x00\x00\x00")
+        self.assertEqual(frame._writeData(config), data)
+
+    def test_eq(self):
+        self.assertEqual(CTOC(), CTOC())
+        self.assertNotEqual(CTOC(), object())
+
+
+class TCHAP(TestCase):
+
+    def test_hash(self):
+        frame = CHAP(element_id=u"foo", start_time=0, end_time=0,
+                     start_offset=0, end_offset=0,
+                     sub_frames=[TPE2(encoding=3, text=[u"foo"])])
+        self.assertEqual(frame.HashKey, "CHAP:foo")
+
+    def test_pprint(self):
+        frame = CHAP(element_id=u"foo", start_time=0, end_time=0,
+                     start_offset=0, end_offset=0,
+                     sub_frames=[TPE2(encoding=3, text=[u"foo"])])
+        self.assertEqual(
+            frame.pprint(), "CHAP=foo time=0..0 offset=0..0\n    TPE2=foo")
+
+    def test_eq(self):
+        self.assertEqual(CHAP(), CHAP())
+        self.assertNotEqual(CHAP(), object())
+
+
 class TAPIC(TestCase):
 
     def test_hash(self):
@@ -580,5 +625,5 @@ class TAPIC(TestCase):
 
         self.assertEqual(repr(frame), expected)
         new_frame = APIC()
-        new_frame._readData(frame._writeData())
+        new_frame._readData(_24, frame._writeData())
         self.assertEqual(repr(new_frame), expected)

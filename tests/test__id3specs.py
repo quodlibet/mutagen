@@ -17,64 +17,67 @@ class SpecSanityChecks(TestCase):
 
         frame = ASPI(b=16, N=2)
         s = ASPIIndexSpec('name')
-        self.assertRaises(SpecError, s.read, frame, b'')
-        self.assertEqual(s.read(frame, b'\x01\x00\x00\x01'), ([256, 1], b""))
+        self.assertRaises(SpecError, s.read, None, frame, b'')
+        self.assertEqual(
+            s.read(None, frame, b'\x01\x00\x00\x01'), ([256, 1], b""))
         frame = ASPI(b=42)
-        self.assertRaises(SpecError, s.read, frame, b'')
+        self.assertRaises(SpecError, s.read, None, frame, b'')
 
     def test_bytespec(self):
         from mutagen.id3 import ByteSpec
         s = ByteSpec('name')
-        self.assertEquals((97, b'bcdefg'), s.read(None, b'abcdefg'))
-        self.assertEquals(b'a', s.write(None, 97))
-        self.assertRaises(TypeError, s.write, None, b'abc')
-        self.assertRaises(TypeError, s.write, None, None)
+        self.assertEquals((97, b'bcdefg'), s.read(None, None, b'abcdefg'))
+        self.assertEquals(b'a', s.write(None, None, 97))
+        self.assertRaises(TypeError, s.write, None, None, b'abc')
+        self.assertRaises(TypeError, s.write, None, None, None)
 
     def test_encodingspec(self):
         from mutagen.id3 import EncodingSpec
         s = EncodingSpec('name')
-        self.assertEquals((3, b'abcdefg'), s.read(None, b'\x03abcdefg'))
-        self.assertRaises(SpecError, s.read, None, b'\x04abcdefg')
-        self.assertEquals(b'\x00', s.write(None, 0))
-        self.assertRaises(TypeError, s.write, None, b'abc')
-        self.assertRaises(TypeError, s.write, None, None)
+        self.assertEquals((3, b'abcdefg'), s.read(None, None, b'\x03abcdefg'))
+        self.assertRaises(SpecError, s.read, None, None, b'\x04abcdefg')
+        self.assertEquals(b'\x00', s.write(None, None, 0))
+        self.assertRaises(TypeError, s.write, None, None, b'abc')
+        self.assertRaises(TypeError, s.write, None, None, None)
 
     def test_stringspec(self):
         from mutagen.id3 import StringSpec
         s = StringSpec('name', 3)
-        self.assertEquals(('abc', b'defg'), s.read(None, b'abcdefg'))
-        self.assertEquals(b'abc', s.write(None, 'abcdefg'))
-        self.assertEquals(b'\x00\x00\x00', s.write(None, None))
-        self.assertEquals(b'\x00\x00\x00', s.write(None, '\x00'))
-        self.assertEquals(b'a\x00\x00', s.write(None, 'a'))
-        self.assertRaises(SpecError, s.read, None, b'\xff')
+        self.assertEquals(('abc', b'defg'), s.read(None, None, b'abcdefg'))
+        self.assertEquals(b'abc', s.write(None, None, 'abcdefg'))
+        self.assertEquals(b'\x00\x00\x00', s.write(None, None, None))
+        self.assertEquals(b'\x00\x00\x00', s.write(None, None, '\x00'))
+        self.assertEquals(b'a\x00\x00', s.write(None, None, 'a'))
+        self.assertRaises(SpecError, s.read, None, None, b'\xff')
 
     def test_binarydataspec(self):
         from mutagen.id3 import BinaryDataSpec
         s = BinaryDataSpec('name')
-        self.assertEquals((b'abcdefg', b''), s.read(None, b'abcdefg'))
-        self.assertEquals(b'', s.write(None, None))
-        self.assertEquals(b'43', s.write(None, 43))
-        self.assertEquals(b'abc', s.write(None, b'abc'))
+        self.assertEquals((b'abcdefg', b''), s.read(None, None, b'abcdefg'))
+        self.assertEquals(b'', s.write(None, None, None))
+        self.assertEquals(b'43', s.write(None, None, 43))
+        self.assertEquals(b'abc', s.write(None, None, b'abc'))
 
     def test_encodedtextspec(self):
         from mutagen.id3 import EncodedTextSpec, Frame
         s = EncodedTextSpec('name')
         f = Frame()
         f.encoding = 0
-        self.assertEquals((u'abcd', b'fg'), s.read(f, b'abcd\x00fg'))
-        self.assertEquals(b'abcdefg\x00', s.write(f, u'abcdefg'))
-        self.assertRaises(AttributeError, s.write, f, None)
+        self.assertEquals((u'abcd', b'fg'), s.read(None, f, b'abcd\x00fg'))
+        self.assertEquals(b'abcdefg\x00', s.write(None, f, u'abcdefg'))
+        self.assertRaises(AttributeError, s.write, None, f, None)
 
     def test_timestampspec(self):
         from mutagen.id3 import TimeStampSpec, Frame, ID3TimeStamp
         s = TimeStampSpec('name')
         f = Frame()
         f.encoding = 0
-        self.assertEquals((ID3TimeStamp('ab'), b'fg'), s.read(f, b'ab\x00fg'))
-        self.assertEquals((ID3TimeStamp('1234'), b''), s.read(f, b'1234\x00'))
-        self.assertEquals(b'1234\x00', s.write(f, ID3TimeStamp('1234')))
-        self.assertRaises(AttributeError, s.write, f, None)
+        self.assertEquals(
+            (ID3TimeStamp('ab'), b'fg'), s.read(None, f, b'ab\x00fg'))
+        self.assertEquals(
+            (ID3TimeStamp('1234'), b''), s.read(None, f, b'1234\x00'))
+        self.assertEquals(b'1234\x00', s.write(None, f, ID3TimeStamp('1234')))
+        self.assertRaises(AttributeError, s.write, None, f, None)
         if PY3:
             self.assertRaises(TypeError, ID3TimeStamp, b"blah")
         self.assertEquals(
@@ -85,12 +88,12 @@ class SpecSanityChecks(TestCase):
     def test_volumeadjustmentspec(self):
         from mutagen.id3 import VolumeAdjustmentSpec
         s = VolumeAdjustmentSpec('gain')
-        self.assertEquals((0.0, b''), s.read(None, b'\x00\x00'))
-        self.assertEquals((2.0, b''), s.read(None, b'\x04\x00'))
-        self.assertEquals((-2.0, b''), s.read(None, b'\xfc\x00'))
-        self.assertEquals(b'\x00\x00', s.write(None, 0.0))
-        self.assertEquals(b'\x04\x00', s.write(None, 2.0))
-        self.assertEquals(b'\xfc\x00', s.write(None, -2.0))
+        self.assertEquals((0.0, b''), s.read(None, None, b'\x00\x00'))
+        self.assertEquals((2.0, b''), s.read(None, None, b'\x04\x00'))
+        self.assertEquals((-2.0, b''), s.read(None, None, b'\xfc\x00'))
+        self.assertEquals(b'\x00\x00', s.write(None, None, 0.0))
+        self.assertEquals(b'\x04\x00', s.write(None, None, 2.0))
+        self.assertEquals(b'\xfc\x00', s.write(None, None, -2.0))
 
     def test_synchronizedtextspec(self):
         from mutagen.id3 import SynchronizedTextSpec, Frame
@@ -101,8 +104,9 @@ class SpecSanityChecks(TestCase):
 
         # utf-16
         f.encoding = 1
-        self.assertEqual(s.read(f, s.write(f, values)), (values, b""))
-        data = s.write(f, [(u"A", 100)])
+        self.assertEqual(
+            s.read(None, f, s.write(None, f, values)), (values, b""))
+        data = s.write(None, f, [(u"A", 100)])
         if sys.byteorder == 'little':
             self.assertEquals(
                 data, b"\xff\xfeA\x00\x00\x00\x00\x00\x00d")
@@ -112,14 +116,17 @@ class SpecSanityChecks(TestCase):
 
         # utf-16be
         f.encoding = 2
-        self.assertEqual(s.read(f, s.write(f, values)), (values, b""))
+        self.assertEqual(
+            s.read(None, f, s.write(None, f, values)), (values, b""))
         self.assertEquals(
-            s.write(f, [(u"A", 100)]), b"\x00A\x00\x00\x00\x00\x00d")
+            s.write(None, f, [(u"A", 100)]), b"\x00A\x00\x00\x00\x00\x00d")
 
         # utf-8
         f.encoding = 3
-        self.assertEqual(s.read(f, s.write(f, values)), (values, b""))
-        self.assertEquals(s.write(f, [(u"A", 100)]), b"A\x00\x00\x00\x00d")
+        self.assertEqual(
+            s.read(None, f, s.write(None, f, values)), (values, b""))
+        self.assertEquals(
+            s.write(None, f, [(u"A", 100)]), b"A\x00\x00\x00\x00d")
 
 
 class SpecValidateChecks(TestCase):
@@ -169,6 +176,137 @@ class NoHashSpec(TestCase):
     def test_spec(self):
         from mutagen.id3 import Spec
         self.failUnlessRaises(TypeError, {}.__setitem__, Spec("foo"), None)
+
+
+class TCTOCFlagsSpec(TestCase):
+
+    def test_read(self):
+        from mutagen.id3 import CTOCFlagsSpec, CTOCFlags
+
+        spec = CTOCFlagsSpec("name")
+        v, r = spec.read(None, None, b"\x03")
+        self.assertEqual(r, b"")
+        self.assertEqual(v, 3)
+        self.assertTrue(isinstance(v, CTOCFlags))
+
+    def test_write(self):
+        from mutagen.id3 import CTOCFlagsSpec, CTOCFlags
+
+        spec = CTOCFlagsSpec("name")
+        self.assertEqual(spec.write(None, None, CTOCFlags.ORDERED), b"\x01")
+
+    def test_validate(self):
+        from mutagen.id3 import CTOCFlagsSpec, CTOCFlags
+
+        spec = CTOCFlagsSpec("name")
+        self.assertEqual(spec.validate(None, 3), 3)
+        self.assertTrue(isinstance(spec.validate(None, 3), CTOCFlags))
+        self.assertEqual(spec.validate(None, None), None)
+
+
+class TID3FramesSpec(TestCase):
+
+    def test_read_empty(self):
+        from mutagen.id3 import ID3FramesSpec, ID3Header, ID3Tags
+        header = ID3Header()
+        header.version = (2, 4, 0)
+        spec = ID3FramesSpec("name")
+
+        value, data = spec.read(header, None, b"")
+        self.assertEqual(data, b"")
+        self.assertTrue(isinstance(value, ID3Tags))
+
+    def test_read_tit3(self):
+        from mutagen.id3 import ID3FramesSpec, ID3Header, ID3Tags
+        header = ID3Header()
+        header.version = (2, 4, 0)
+        spec = ID3FramesSpec("name")
+
+        value, data = spec.read(header, None,
+            b"TIT3" + b"\x00\x00\x00\x03" + b"\x00\x00" + b"\x03" + b"F\x00")
+
+        self.assertTrue(isinstance(value, ID3Tags))
+        self.assertEqual(data, b"")
+        frames = value.getall("TIT3")
+        self.assertEqual(len(frames), 1)
+        self.assertEqual(frames[0].encoding, 3)
+        self.assertEqual(frames[0].text, [u"F"])
+
+    def test_write_empty(self):
+        from mutagen.id3 import ID3FramesSpec, ID3Header, ID3Tags, \
+            ID3SaveConfig
+        header = ID3Header()
+        header.version = (2, 4, 0)
+        spec = ID3FramesSpec("name")
+        config = ID3SaveConfig()
+
+        tags = ID3Tags()
+        self.assertEqual(spec.write(config, None, tags), b"")
+
+    def test_write_tit3(self):
+        from mutagen.id3 import ID3FramesSpec, ID3Tags, TIT3, ID3SaveConfig
+        spec = ID3FramesSpec("name")
+        config = ID3SaveConfig()
+
+        tags = ID3Tags()
+        tags.add(TIT3(encoding=3, text=[u"F", u"B"]))
+        self.assertEqual(spec.write(config, None, tags),
+            b"TIT3" + b"\x00\x00\x00\x05" + b"\x00\x00" +
+            b"\x03" + b"F\x00" + b"B\x00")
+
+    def test_write_tit3_v23(self):
+        from mutagen.id3 import ID3FramesSpec, ID3Tags, TIT3, ID3SaveConfig
+        spec = ID3FramesSpec("name")
+        config = ID3SaveConfig(3, "/")
+
+        tags = ID3Tags()
+        tags.add(TIT3(encoding=3, text=[u"F", u"B"]))
+        self.assertEqual(spec.write(config, None, tags),
+            b"TIT3" + b"\x00\x00\x00\x0B" + b"\x00\x00" +
+            b"\x01" + b"\xff\xfeF\x00/\x00B\x00\x00\x00")
+
+    def test_validate(self):
+        from mutagen.id3 import ID3FramesSpec, ID3Header, ID3Tags, TIT3
+        header = ID3Header()
+        header.version = (2, 4, 0)
+        spec = ID3FramesSpec("name")
+
+        self.assertEqual(spec.validate(None, None), None)
+        self.assertTrue(isinstance(spec.validate(None, []), ID3Tags))
+
+        v = spec.validate(None, [TIT3(encoding=3, text=[u"foo"])])
+        self.assertEqual(v.getall("TIT3")[0].text, [u"foo"])
+
+
+class TLatin1TextListSpec(TestCase):
+
+    def test_read(self):
+        from mutagen.id3 import Latin1TextListSpec
+
+        spec = Latin1TextListSpec("name")
+        self.assertEqual(spec.read(None, None, b"\x00xxx"), ([], b"xxx"))
+        self.assertEqual(
+            spec.read(None, None, b"\x01foo\x00"), ([u"foo"], b""))
+        self.assertEqual(
+            spec.read(None, None, b"\x01\x00"), ([u""], b""))
+        self.assertEqual(
+            spec.read(None, None, b"\x02f\x00o\x00"), ([u"f", u"o"], b""))
+
+    def test_write(self):
+        from mutagen.id3 import Latin1TextListSpec
+
+        spec = Latin1TextListSpec("name")
+        self.assertEqual(spec.write(None, None, []), b"\x00")
+        self.assertEqual(spec.write(None, None, [u""]), b"\x01\x00")
+
+    def test_validate(self):
+        from mutagen.id3 import Latin1TextListSpec
+
+        spec = Latin1TextListSpec("name")
+        self.assertRaises(TypeError, spec.validate, None, object())
+        self.assertEqual(spec.validate(None, [u"foo"]), [u"foo"])
+        self.assertEqual(spec.validate(None, []), [])
+        self.assertEqual(spec.validate(None, None), None)
 
 
 class BitPaddedIntTest(TestCase):

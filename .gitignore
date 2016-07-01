@@ -5,3 +5,4 @@ dist
 coverage/*.cover
 MANIFEST
 coverage
+.cache

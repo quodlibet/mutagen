@@ -9,19 +9,17 @@
 import zlib
 from struct import unpack
 
-from ._util import ID3JunkFrameError, ID3EncryptionUnsupportedError, unsynch
+from ._util import ID3JunkFrameError, ID3EncryptionUnsupportedError, unsynch, \
+    ID3SaveConfig
 from ._specs import (
     BinaryDataSpec, StringSpec, Latin1TextSpec, EncodedTextSpec, ByteSpec,
     EncodingSpec, ASPIIndexSpec, SizedIntegerSpec, IntegerSpec,
     VolumeAdjustmentsSpec, VolumePeakSpec, VolumeAdjustmentSpec,
     ChannelSpec, MultiSpec, SynchronizedTextSpec, KeyEventSpec, TimeStampSpec,
     EncodedNumericPartTextSpec, EncodedNumericTextSpec, SpecError,
-    PictureTypeSpec)
-from .._compat import text_type, string_types, swap_to_string, iteritems, izip
-
-
-def is_valid_frame_id(frame_id):
-    return frame_id.isalnum() and frame_id.isupper()
+    PictureTypeSpec, ID3FramesSpec, Latin1TextListSpec, CTOCFlagsSpec)
+from .._compat import text_type, string_types, swap_to_string, iteritems, \
+    izip, itervalues
 
 
 def _bytes2key(b):
@@ -120,13 +118,13 @@ class Frame(object):
                 kw.append('%s=%r' % (attr.name, getattr(self, attr.name)))
         return '%s(%s)' % (type(self).__name__, ', '.join(kw))
 
-    def _readData(self, data):
+    def _readData(self, id3, data):
         """Raises ID3JunkFrameError; Returns leftover data"""
 
         for reader in self._framespec:
-            if len(data):
+            if len(data) or reader.handle_nodata:
                 try:
-                    value, data = reader.read(self, data)
+                    value, data = reader.read(id3, self, data)
                 except SpecError as e:
                     raise ID3JunkFrameError(e)
             else:
@@ -135,10 +133,19 @@ class Frame(object):
 
         return data
 
-    def _writeData(self):
+    def _writeData(self, config=None):
+        if config is None:
+            config = ID3SaveConfig()
+
+        if config.v2_version == 3:
+            frame = self._get_v23_frame(sep=config.v23_separator)
+        else:
+            frame = self
+
         data = []
         for writer in self._framespec:
-            data.append(writer.write(self, getattr(self, writer.name)))
+            data.append(
+                writer.write(config, frame, getattr(frame, writer.name)))
         return b''.join(data)
 
     def pprint(self):
@@ -149,7 +156,7 @@ class Frame(object):
         return "[unrepresentable data]"
 
     @classmethod
-    def _fromData(cls, id3, tflags, data):
+    def _fromData(cls, header, tflags, data):
         """Construct this ID3 frame from raw string data.
 
         Raises:
@@ -159,7 +166,7 @@ class Frame(object):
         ID3EncryptionUnsupportedError in case the frame is encrypted.
         """
 
-        if id3.version >= id3._V24:
+        if header.version >= header._V24:
             if tflags & (Frame.FLAG24_COMPRESS | Frame.FLAG24_DATALEN):
                 # The data length int is syncsafe in 2.4 (but not 2.3).
                 # However, we don't actually need the data length int,
@@ -167,7 +174,7 @@ class Frame(object):
                 # all we need are the raw bytes.
                 datalen_bytes = data[:4]
                 data = data[4:]
-            if tflags & Frame.FLAG24_UNSYNCH or id3.f_unsynch:
+            if tflags & Frame.FLAG24_UNSYNCH or header.f_unsynch:
                 try:
                     data = unsynch.decode(data)
                 except ValueError:
@@ -191,7 +198,7 @@ class Frame(object):
                         raise ID3JunkFrameError(
                             'zlib: %s: %r' % (err, data))
 
-        elif id3.version >= id3._V23:
+        elif header.version >= header._V23:
             if tflags & Frame.FLAG23_COMPRESS:
                 usize, = unpack('>L', data[:4])
                 data = data[4:]
@@ -204,7 +211,7 @@ class Frame(object):
                     raise ID3JunkFrameError('zlib: %s: %r' % (err, data))
 
         frame = cls()
-        frame._readData(data)
+        frame._readData(header, data)
         return frame
 
     def __hash__(self):
@@ -246,13 +253,13 @@ class FrameOpt(Frame):
             if hasattr(self, checker.name):
                 setattr(other, checker.name, getattr(self, checker.name))
 
-    def _readData(self, data):
+    def _readData(self, id3, data):
         """Raises ID3JunkFrameError; Returns leftover data"""
 
         for reader in self._framespec:
-            if len(data):
+            if len(data) or reader.handle_nodata:
                 try:
-                    value, data = reader.read(self, data)
+                    value, data = reader.read(id3, self, data)
                 except SpecError as e:
                     raise ID3JunkFrameError(e)
             else:
@@ -261,9 +268,9 @@ class FrameOpt(Frame):
 
         if data:
             for reader in self._optionalspec:
-                if len(data):
+                if len(data) or reader.handle_nodata:
                     try:
-                        value, data = reader.read(self, data)
+                        value, data = reader.read(id3, self, data)
                     except SpecError as e:
                         raise ID3JunkFrameError(e)
                 else:
@@ -272,13 +279,23 @@ class FrameOpt(Frame):
 
         return data
 
-    def _writeData(self):
+    def _writeData(self, config=None):
+        if config is None:
+            config = ID3SaveConfig()
+
+        if config.v2_version == 3:
+            frame = self._get_v23_frame(sep=config.v23_separator)
+        else:
+            frame = self
+
         data = []
         for writer in self._framespec:
-            data.append(writer.write(self, getattr(self, writer.name)))
+            data.append(
+                writer.write(config, frame, getattr(frame, writer.name)))
         for writer in self._optionalspec:
             try:
-                data.append(writer.write(self, getattr(self, writer.name)))
+                data.append(
+                    writer.write(config, frame, getattr(frame, writer.name)))
             except AttributeError:
                 break
         return b''.join(data)
@@ -291,6 +308,88 @@ class FrameOpt(Frame):
             if hasattr(self, attr.name):
                 kw.append('%s=%r' % (attr.name, getattr(self, attr.name)))
         return '%s(%s)' % (type(self).__name__, ', '.join(kw))
+
+
+class CHAP(Frame):
+    """Chapter"""
+
+    _framespec = [
+        Latin1TextSpec("element_id"),
+        SizedIntegerSpec("start_time", 4),
+        SizedIntegerSpec("end_time", 4),
+        SizedIntegerSpec("start_offset", 4),
+        SizedIntegerSpec("end_offset", 4),
+        ID3FramesSpec("sub_frames"),
+    ]
+
+    @property
+    def HashKey(self):
+        return '%s:%s' % (self.FrameID, self.element_id)
+
+    def __eq__(self, other):
+        if not isinstance(other, CHAP):
+            return False
+
+        self_frames = self.sub_frames or {}
+        other_frames = other.sub_frames or {}
+        if sorted(self_frames.values()) != sorted(other_frames.values()):
+            return False
+
+        return self.element_id == other.element_id and \
+            self.start_time == other.start_time and \
+            self.end_time == other.end_time and \
+            self.start_offset == other.start_offset and \
+            self.end_offset == other.end_offset
+
+    __hash__ = Frame.__hash__
+
+    def _pprint(self):
+        frame_pprint = u""
+        for frame in itervalues(self.sub_frames):
+            for line in frame.pprint().splitlines():
+                frame_pprint += "\n" + " " * 4 + line
+        return u"%s time=%d..%d offset=%d..%d%s" % (
+            self.element_id, self.start_time, self.end_time,
+            self.start_offset, self.end_offset, frame_pprint)
+
+
+class CTOC(Frame):
+    """Table of contents"""
+
+    _framespec = [
+        Latin1TextSpec("element_id"),
+        CTOCFlagsSpec("flags"),
+        Latin1TextListSpec("child_element_ids"),
+        ID3FramesSpec("sub_frames"),
+    ]
+
+    @property
+    def HashKey(self):
+        return '%s:%s' % (self.FrameID, self.element_id)
+
+    __hash__ = Frame.__hash__
+
+    def __eq__(self, other):
+        if not isinstance(other, CTOC):
+            return False
+
+        self_frames = self.sub_frames or {}
+        other_frames = other.sub_frames or {}
+        if sorted(self_frames.values()) != sorted(other_frames.values()):
+            return False
+
+        return self.element_id == other.element_id and \
+            self.flags == other.flags and \
+            self.child_element_ids == other.child_element_ids
+
+    def _pprint(self):
+        frame_pprint = u""
+        if getattr(self, "sub_frames", None):
+            frame_pprint += "\n" + "\n".join(
+                [" " * 4 + f.pprint() for f in self.sub_frames.values()])
+        return u"%s flags=%d child_element_ids=%s%s" % (
+            self.element_id, self.flags, u",".join(self.child_element_ids),
+            frame_pprint)
 
 
 @swap_to_string
@@ -1134,12 +1233,6 @@ class APIC(Frame):
     @property
     def HashKey(self):
         return '%s:%s' % (self.FrameID, self.desc)
-
-    def _validate_from_22(self, other, checker):
-        if checker.name == "mime":
-            self.mime = other.mime.decode("ascii", "ignore")
-        else:
-            super(APIC, self)._validate_from_22(other, checker)
 
     def _pprint(self):
         type_desc = text_type(self.type)

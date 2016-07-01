@@ -318,6 +318,60 @@ def enum(cls):
     return new_type
 
 
+def flags(cls):
+    """A decorator for creating an int flags class.
+
+    Makes the values a subclass of the type and implements repr/str.
+    The new class will be a subclass of int.
+
+    Args:
+        cls (type): The class to convert to an flags
+
+    Returns:
+        type: A new class
+
+    ::
+
+        @flags
+        class Foo(object):
+            FOO = 1
+            BAR = 2
+    """
+
+    assert cls.__bases__ == (object,)
+
+    d = dict(cls.__dict__)
+    new_type = type(cls.__name__, (int,), d)
+    new_type.__module__ = cls.__module__
+
+    map_ = {}
+    for key, value in iteritems(d):
+        if key.upper() == key and isinstance(value, integer_types):
+            value_instance = new_type(value)
+            setattr(new_type, key, value_instance)
+            map_[value] = key
+
+    def str_(self):
+        value = int(self)
+        matches = []
+        for k, v in map_.items():
+            if value & k:
+                matches.append("%s.%s" % (type(self).__name__, v))
+                value &= ~k
+        if value != 0:
+            matches.append(text_type(value))
+
+        return " | ".join(matches)
+
+    def repr_(self):
+        return str(self)
+
+    setattr(new_type, "__repr__", repr_)
+    setattr(new_type, "__str__", str_)
+
+    return new_type
+
+
 @total_ordering
 class DictMixin(object):
     """Implement the dict API using keys() and __*item__ methods.
@@ -522,6 +576,29 @@ def get_size(fileobj):
         return fileobj.tell()
     finally:
         fileobj.seek(old_pos, 0)
+
+
+def read_full(fileobj, size):
+    """Like fileobj.read but raises IOError if no all requested data is
+    returned.
+
+    If you want to distinguish IOError and the EOS case, better handle
+    the error yourself instead of using this.
+
+    Args:
+        fileobj (fileobj)
+        size (int): amount of bytes to read
+    Raises:
+        IOError: In case read fails or not enough data is read
+    """
+
+    if size < 0:
+        raise ValueError("size must not be negative")
+
+    data = fileobj.read(size)
+    if len(data) != size:
+        raise IOError
+    return data
 
 
 def seek_end(fileobj, offset):
