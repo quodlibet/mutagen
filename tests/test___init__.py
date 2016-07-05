@@ -252,8 +252,7 @@ class TestFileObj(object):
         elif whence == 1:
             final_position = self._fileobj.tell() + offset
         elif whence == 2:
-            size = self._fileobj.tell() + get_size(self._fileobj)
-            final_position = size + offset
+            final_position = get_size(self._fileobj) + offset
         assert final_position >= 0, final_position
 
         return self._fileobj.seek(offset, whence)

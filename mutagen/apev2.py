@@ -37,8 +37,8 @@ from collections import MutableSequence
 from ._compat import (cBytesIO, PY3, text_type, PY2, reraise, swap_to_string,
                       xrange)
 from mutagen import Metadata, FileType, StreamInfo
-from mutagen._util import (DictMixin, cdata, delete_bytes, total_ordering,
-                           MutagenError, loadfile, convert_error, seek_end)
+from mutagen._util import DictMixin, cdata, delete_bytes, total_ordering, \
+    MutagenError, loadfile, convert_error, seek_end, get_size
 
 
 def is_valid_apev2_key(key):
@@ -139,6 +139,8 @@ class _APEv2Data(object):
 
         # Check for an APEv2 tag followed by an ID3v1 tag at the end.
         try:
+            if get_size(fileobj) < 128:
+                raise IOError
             fileobj.seek(-128, 2)
             if fileobj.read(3) == b"TAG":
 
