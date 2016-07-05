@@ -388,8 +388,8 @@ class CTOC(Frame):
             frame_pprint += "\n" + "\n".join(
                 [" " * 4 + f.pprint() for f in self.sub_frames.values()])
         return u"%s flags=%d child_element_ids=%s%s" % (
-            self.element_id, self.flags, u",".join(self.child_element_ids),
-            frame_pprint)
+            self.element_id, int(self.flags),
+            u",".join(self.child_element_ids), frame_pprint)
 
 
 @swap_to_string
