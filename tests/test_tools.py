@@ -3,6 +3,7 @@
 import os
 import sys
 import imp
+import warnings
 
 import mutagen
 from mutagen._compat import StringIO, text_type, PY2
@@ -17,7 +18,9 @@ def get_var(tool_name, entry="main"):
     dont_write_bytecode = sys.dont_write_bytecode
     sys.dont_write_bytecode = True
     try:
-        mod = imp.load_source(tool_name, tool_path)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            mod = imp.load_source(tool_name, tool_path)
     finally:
         sys.dont_write_bytecode = dont_write_bytecode
     return getattr(mod, entry)
