@@ -559,13 +559,13 @@ _fill_cdata(cdata)
 
 
 def get_size(fileobj):
-    """Returns the size from the current position to the end of the file.
+    """Returns the size of the file.
     The position when passed in will be preserved if no error occurs.
 
     Args:
         fileobj (fileobj)
     Returns:
-        int: The difference between the current position and the file end
+        int: The size of the file
     Raises:
         IOError
     """
@@ -620,8 +620,7 @@ def seek_end(fileobj, offset):
     if offset < 0:
         raise ValueError
 
-    size = fileobj.tell() + get_size(fileobj)
-    if size < offset:
+    if get_size(fileobj) < offset:
         fileobj.seek(0, 0)
     else:
         fileobj.seek(-offset, 2)

@@ -596,17 +596,30 @@ class Tfileobj_name(TestCase):
 
 class Tseek_end(TestCase):
 
+    def file(self, contents):
+        temp = tempfile.TemporaryFile()
+        temp.write(contents)
+        temp.flush()
+        temp.seek(0)
+        return temp
+
     def test_seek_end(self):
-        f = cBytesIO(b"foo")
-        seek_end(f, 2)
-        self.assertEqual(f.tell(), 1)
-        seek_end(f, 3)
-        self.assertEqual(f.tell(), 0)
-        seek_end(f, 4)
-        self.assertEqual(f.tell(), 0)
-        seek_end(f, 0)
-        self.assertEqual(f.tell(), 3)
-        self.assertRaises(ValueError, seek_end, f, -1)
+        with self.file(b"foo") as f:
+            seek_end(f, 2)
+            self.assertEqual(f.tell(), 1)
+            seek_end(f, 3)
+            self.assertEqual(f.tell(), 0)
+            seek_end(f, 4)
+            self.assertEqual(f.tell(), 0)
+            seek_end(f, 0)
+            self.assertEqual(f.tell(), 3)
+            self.assertRaises(ValueError, seek_end, f, -1)
+
+    def test_seek_end_pos(self):
+        with self.file(b"foo") as f:
+            f.seek(10)
+            seek_end(f, 10)
+            self.assertEqual(f.tell(), 0)
 
 
 class Tread_full(TestCase):
