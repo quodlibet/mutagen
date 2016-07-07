@@ -5,12 +5,13 @@ from tests import TestCase
 from mutagen._compat import text_type, xrange, PY2, PY3
 from mutagen._constants import GENRES
 from mutagen.id3._tags import read_frames, save_frame, ID3Header
-from mutagen.id3._util import ID3SaveConfig, is_valid_frame_id
+from mutagen.id3._util import ID3SaveConfig, is_valid_frame_id, \
+    ID3JunkFrameError
 from mutagen.id3 import APIC, CTOC, CHAP, TPE2, Frames, Frames_2_2, CRA, \
     AENC, PIC, LNK, LINK, SIGN, PRIV, GRID, ENCR, COMR, USER, UFID, GEOB, \
     POPM, EQU2, RVA2, COMM, SYLT, USLT, WXXX, TXXX, WCOM, TextFrame, \
     UrlFrame, NumericTextFrame, NumericPartTextFrame, TPE1, TIT2, \
-    TimeStampTextFrame, TCON, ID3TimeStamp, TIT1
+    TimeStampTextFrame, TCON, ID3TimeStamp, TIT1, Frame, RVRB, RBUF
 
 _22 = ID3Header()
 _22.version = (2, 2, 0)
@@ -212,6 +213,11 @@ class TCOMM(TestCase):
         self.assertNotEquals(
             COMM(lang="abc").HashKey, COMM(lang="def").HashKey)
 
+    def test_bad_unicodedecode(self):
+        # 7 bytes of "UTF16" data.
+        data = b'\x01\x00\x00\x00\xff\xfe\x00\xff\xfeh\x00'
+        self.assertRaises(ID3JunkFrameError, COMM._fromData, _24, 0x00, data)
+
 
 class TSYLT(TestCase):
 
@@ -220,6 +226,28 @@ class TSYLT(TestCase):
                      desc="d", text=[("t", 0)])
         self.assertEqual(frame.HashKey, "SYLT:d:foo")
         frame._pprint()
+
+    def test_bad_sylt(self):
+        self.assertRaises(
+            ID3JunkFrameError, SYLT._fromData, _24, 0x0,
+            b"\x00eng\x01description\x00foobar")
+        self.assertRaises(
+            ID3JunkFrameError, SYLT._fromData, _24, 0x0,
+            b"\x00eng\x01description\x00foobar\x00\xFF\xFF\xFF")
+
+
+class TRVRB(TestCase):
+
+    def test_extradata(self):
+        self.assertEqual(RVRB()._readData(_24, b'L1R1BBFFFFPP#xyz'), b'#xyz')
+
+
+class TRBUF(TestCase):
+
+    def test_extradata(self):
+        self.assertEqual(
+            RBUF()._readData(
+                _24, b'\x00\x01\x00\x01\x00\x00\x00\x00#xyz'), b'#xyz')
 
 
 class TUSLT(TestCase):
@@ -284,6 +312,47 @@ class TNumericPartTextFrame(TestCase):
 
 class Tread_frames_load_frame(TestCase):
 
+    def test_detect_23_ints_in_24_frames(self):
+        head = b'TIT1\x00\x00\x01\x00\x00\x00\x00'
+        tail = b'TPE1\x00\x00\x00\x05\x00\x00\x00Yay!'
+
+        tagsgood = read_frames(_24, head + b'a' * 127 + tail, Frames)[0]
+        tagsbad = read_frames(_24, head + b'a' * 255 + tail, Frames)[0]
+        self.assertEquals(2, len(tagsgood))
+        self.assertEquals(2, len(tagsbad))
+        self.assertEquals('a' * 127, tagsgood[0])
+        self.assertEquals('a' * 255, tagsbad[0])
+        self.assertEquals('Yay!', tagsgood[1])
+        self.assertEquals('Yay!', tagsbad[1])
+
+        tagsgood = read_frames(_24, head + b'a' * 127, Frames)[0]
+        tagsbad = read_frames(_24, head + b'a' * 255, Frames)[0]
+        self.assertEquals(1, len(tagsgood))
+        self.assertEquals(1, len(tagsbad))
+        self.assertEquals('a' * 127, tagsgood[0])
+        self.assertEquals('a' * 255, tagsbad[0])
+
+    def test_zerolength_framedata(self):
+        tail = b'\x00' * 6
+        for head in b'WOAR TENC TCOP TOPE WXXX'.split():
+            data = head + tail
+            self.assertEquals(
+                0, len(list(read_frames(_24, data, Frames)[1])))
+
+    def test_drops_truncated_frames(self):
+        tail = b'\x00\x00\x00\x03\x00\x00' b'\x01\x02\x03'
+        for head in b'RVA2 TXXX APIC'.split():
+            data = head + tail
+            self.assertEquals(
+                0, len(read_frames(_24, data, Frames)[1]))
+
+    def test_drops_nonalphanum_frames(self):
+        tail = b'\x00\x00\x00\x03\x00\x00' b'\x01\x02\x03'
+        for head in [b'\x06\xaf\xfe\x20', b'ABC\x00', b'A   ']:
+            data = head + tail
+            self.assertEquals(
+                0, len(read_frames(_24, data, Frames)[0]))
+
     def test_frame_too_small(self):
         self.assertEquals([], read_frames(_24, b'012345678', Frames)[0])
         self.assertEquals([], read_frames(_23, b'012345678', Frames)[0])
@@ -304,13 +373,94 @@ class Tread_frames_load_frame(TestCase):
         artists = [s.decode('utf8') for s in
                    [b'\xc2\xb5', b'\xe6\x97\xa5\xe6\x9c\xac']]
         artist = TPE1(encoding=3, text=artists)
-        header = ID3Header()
-        header.version = (2, 4, 0)
         config = ID3SaveConfig()
-        tag = read_frames(
-            header, save_frame(artist, config=config), Frames)[0][0]
+        tag = read_frames(_24, save_frame(artist, config=config), Frames)[0][0]
         self.assertEquals('TPE1', type(tag).__name__)
         self.assertEquals(artist.text, tag.text)
+
+
+class TTPE2(TestCase):
+
+    def test_unsynch(self):
+        header = ID3Header()
+        header.version = (2, 4, 0)
+        header._flags = 0x80
+        badsync = b'\x00\xff\x00ab\x00'
+
+        self.assertEquals(TPE2._fromData(header, 0, badsync), [u"\xffab"])
+
+        header._flags = 0x00
+        self.assertEquals(TPE2._fromData(header, 0x02, badsync), [u"\xffab"])
+
+        tag = TPE2._fromData(header, 0, badsync)
+        self.assertEquals(tag, [u"\xff", u"ab"])
+
+
+class TTPE1(TestCase):
+
+    def test_badencoding(self):
+        self.assertRaises(
+            ID3JunkFrameError, TPE1._fromData, _24, 0, b"\x09ab")
+        self.assertRaises(ValueError, TPE1, encoding=9, text="ab")
+
+    def test_badsync(self):
+        frame = TPE1._fromData(_24, 0x02, b"\x00\xff\xfe")
+        self.assertEqual(frame.text, [u'\xff\xfe'])
+
+    def test_noencrypt(self):
+        self.assertRaises(
+            NotImplementedError, TPE1._fromData, _24, 0x04, b"\x00")
+        self.assertRaises(
+            NotImplementedError, TPE1._fromData, _23, 0x40, b"\x00")
+
+    def test_badcompress(self):
+        self.assertRaises(
+            ID3JunkFrameError, TPE1._fromData, _24, 0x08,
+            b"\x00\x00\x00\x00#")
+        self.assertRaises(
+            ID3JunkFrameError, TPE1._fromData, _23, 0x80,
+            b"\x00\x00\x00\x00#")
+
+    def test_junkframe(self):
+        self.assertRaises(
+            ID3JunkFrameError, TPE1._fromData, _24, 0, b"")
+
+    def test_lengthone_utf16(self):
+        tpe1 = TPE1._fromData(_24, 0, b'\x01\x00')
+        self.assertEquals(u'', tpe1)
+        tpe1 = TPE1._fromData(_24, 0, b'\x01\x00\x00\x00\x00')
+        self.assertEquals([u'', u''], tpe1)
+
+    def test_utf16_wrongnullterm(self):
+        # issue 169
+        tpe1 = TPE1._fromData(
+            _24, 0, b'\x01\xff\xfeH\x00e\x00l\x00l\x00o\x00\x00')
+        self.assertEquals(tpe1, [u'Hello'])
+
+    def test_zlib_bpi(self):
+        tpe1 = TPE1(encoding=0, text="a" * (0xFFFF - 2))
+        data = save_frame(tpe1)
+        datalen_size = data[4 + 4 + 2:4 + 4 + 2 + 4]
+        self.failIf(
+            max(datalen_size) >= b'\x80'[0], "data is not syncsafe: %r" % data)
+
+    def test_ql_0_12_missing_uncompressed_size(self):
+        tag = TPE1._fromData(
+            _24, 0x08,
+            b'x\x9cc\xfc\xff\xaf\x84!\x83!\x93'
+            b'\xa1\x98A\x01J&2\xe83\x940\xa4\x02\xd9%\x0c\x00\x87\xc6\x07#'
+        )
+        self.assertEquals(tag.encoding, 1)
+        self.assertEquals(tag, ['this is a/test'])
+
+    def test_zlib_latin1_missing_datalen(self):
+        tag = TPE1._fromData(
+            _24, 0x8,
+            b'\x00\x00\x00\x0f'
+            b'x\x9cc(\xc9\xc8,V\x00\xa2D\xfd\x92\xd4\xe2\x12\x00&\x7f\x05%'
+        )
+        self.assertEquals(tag.encoding, 0)
+        self.assertEquals(tag, ['this is a/test'])
 
 
 class TTCON(TestCase):
@@ -459,6 +609,22 @@ class TID3TimeStamp(TestCase):
             bytes(ID3TimeStamp(u"2000-01-01")), b"2000-01-01")
 
 
+class TFrames(TestCase):
+
+    def test_has_docs(self):
+        for Kind in (list(Frames.values()) + list(Frames_2_2.values())):
+            self.failUnless(Kind.__doc__, "%s has no docstring" % Kind)
+
+
+class TFrame(TestCase):
+
+    def test_fake_zlib(self):
+        header = ID3Header()
+        header.version = (2, 4, 0)
+        self.assertRaises(ID3JunkFrameError, Frame._fromData, header,
+                          Frame.FLAG24_COMPRESS, b'\x03abcdefg')
+
+
 class NoHashFrame(TestCase):
 
     def test_frame(self):
@@ -543,6 +709,14 @@ class TRVA2(TestCase):
     def test_pprint(self):
         frame = RVA2(method=42, desc="d", channel=1, gain=1, peak=1)
         frame._pprint()
+
+    def test_wacky_truncated(self):
+        data = b'\x01{\xf0\x10\xff\xff\x00'
+        self.assertRaises(ID3JunkFrameError, RVA2._fromData, _24, 0x00, data)
+
+    def test_bad_number_of_bits(self):
+        data = b'\x00\x00\x01\xe6\xfc\x10{\xd7'
+        self.assertRaises(ID3JunkFrameError, RVA2._fromData, _24, 0x00, data)
 
 
 class TCTOC(TestCase):
