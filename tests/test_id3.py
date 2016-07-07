@@ -9,7 +9,7 @@ from mutagen import MutagenError
 from mutagen.apev2 import APEv2
 from mutagen.id3 import ID3, COMR, Frames, Frames_2_2, ID3Warning, \
     ID3JunkFrameError, ID3Header, ID3UnsupportedVersionError, TIT2, \
-    save_frame, CHAP, CTOCFlags, CTOC
+    save_frame, CHAP, CTOCFlags, CTOC, TT1
 from mutagen.id3._util import BitPaddedInt, error as ID3Error
 from mutagen.id3._tags import read_frames, _determine_bpi
 from mutagen._compat import cBytesIO, PY2, iteritems, integer_types, izip
@@ -1547,6 +1547,19 @@ class Issue69_BadV1Year(TestCase):
         self.failUnlessEqual(len(s), 128)
         tag = ParseID3v1(s)
         self.failUnlessEqual(tag["TDRC"], "1234")
+
+
+class Updatefrom22(TestCase):
+
+    def test_update_add(self):
+        id3 = ID3()
+        tt1 = TT1(encoding=0, text=u'whatcha staring at?')
+        id3.loaded_frame(tt1)
+        tit1 = id3['TIT1']
+
+        self.assertEquals(tt1.encoding, tit1.encoding)
+        self.assertEquals(tt1.text, tit1.text)
+        self.assert_('TT1' not in id3)
 
 
 class UpdateTo23(TestCase):

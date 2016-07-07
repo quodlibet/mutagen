@@ -4,7 +4,7 @@ import sys
 
 from tests import TestCase
 
-from mutagen._compat import PY3, text_type
+from mutagen._compat import PY3
 from mutagen.id3._specs import SpecError, Latin1TextListSpec, ID3FramesSpec, \
     ASPIIndexSpec, ByteSpec, EncodingSpec, StringSpec, BinaryDataSpec, \
     EncodedTextSpec, VolumePeakSpec, VolumeAdjustmentSpec, CTOCFlagsSpec, \
@@ -66,17 +66,6 @@ class TTimeStampSpec(TestCase):
         f.encoding = 0
         self.assertEquals(b'1234\x00', s.write(None, f, ID3TimeStamp('1234')))
         self.assertRaises(AttributeError, s.write, None, f, None)
-
-
-class TTimeStamp(TestCase):
-
-    def test_main(self):
-        if PY3:
-            self.assertRaises(TypeError, ID3TimeStamp, b"blah")
-        self.assertEquals(
-            text_type(ID3TimeStamp(u"2000-01-01")), u"2000-01-01")
-        self.assertEquals(
-            bytes(ID3TimeStamp(u"2000-01-01")), b"2000-01-01")
 
 
 class TEncodedTextSpec(TestCase):
