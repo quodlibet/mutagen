@@ -469,6 +469,29 @@ class TVariousFrames(TestCase):
             for spec in kind._framespec:
                 attr = spec.name
                 self.assertEquals(getattr(tag, attr), getattr(tag2, attr))
+            for spec in kind._optionalspec:
+                attr = spec.name
+                other = object()
+                self.assertEquals(
+                    getattr(tag, attr, other), getattr(tag2, attr, other))
+
+    def test_tag_write_v23(self):
+        for frame_id, data, value, intval, info in self.DATA:
+            kind = self._get_frame(frame_id)
+            tag = kind._fromData(_24, 0, data)
+            config = ID3SaveConfig(3, "/")
+            towrite = tag._writeData(config)
+            tag2 = kind._fromData(_23, 0, towrite)
+            tag3 = kind._fromData(_23, 0, tag2._writeData(config))
+            for spec in kind._framespec:
+                attr = spec.name
+                self.assertEquals(getattr(tag2, attr), getattr(tag3, attr))
+            for spec in kind._optionalspec:
+                attr = spec.name
+                other = object()
+                self.assertEquals(
+                    getattr(tag2, attr, other), getattr(tag3, attr, other))
+                self.assertEqual(hasattr(tag, attr), hasattr(tag2, attr))
 
     def test_tag(self):
         for frame_id, data, value, intval, info in self.DATA:

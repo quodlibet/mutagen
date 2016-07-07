@@ -90,7 +90,7 @@ class Frame(object):
         for checker in other._framespec:
             setattr(other, checker.name, getattr(self, checker.name))
 
-       # this impl covers subclasses with the same optionalspec
+        # this impl covers subclasses with the same optionalspec
         if other._optionalspec is not self._optionalspec:
             raise ValueError
 
@@ -109,6 +109,13 @@ class Frame(object):
             name = checker.name
             value = getattr(self, name)
             new_kwargs[name] = checker._validate23(self, value, **kwargs)
+
+        for checker in self._optionalspec:
+            name = checker.name
+            if hasattr(self, name):
+                value = getattr(self, name)
+                new_kwargs[name] = checker._validate23(self, value, **kwargs)
+
         return type(self)(**new_kwargs)
 
     @property
