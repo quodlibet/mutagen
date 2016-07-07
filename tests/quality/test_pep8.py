@@ -38,8 +38,9 @@ class TPEP8(TestCase):
                 self.p = p
 
             def result(self):
-                if self.p.wait() != 0:
-                    return self.p.communicate()
+                result = self.p.communicate()
+                if self.p.returncode != 0:
+                    return result
 
         return Future(p)
 
