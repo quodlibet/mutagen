@@ -12,9 +12,9 @@ from mutagen.apev2 import APEv2
 from mutagen.id3 import ID3, COMR, Frames, Frames_2_2, ID3Warning, \
     ID3Header, ID3UnsupportedVersionError, TIT2, \
     save_frame, CHAP, CTOCFlags, CTOC, TT1, TCON, COMM, TORY, \
-    PIC, MakeID3v1, ParseID3v1, TRCK, TYER, TDRC, TDAT, TIME, LNK, IPLS, \
+    PIC, MakeID3v1, TRCK, TYER, TDRC, TDAT, TIME, LNK, IPLS, \
     TPE1, BinaryFrame, ID3SaveConfig, TIT3, _find_id3v1, POPM, APIC, \
-    TALB, TPE2, TSOT, TDEN, TIPL
+    TALB, TPE2, TSOT, TDEN, TIPL, ParseID3v1
 from mutagen.id3._util import BitPaddedInt, error as ID3Error
 from mutagen.id3._tags import _determine_bpi
 from mutagen._compat import cBytesIO, PY2, iteritems, integer_types, izip
