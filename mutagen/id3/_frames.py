@@ -52,6 +52,7 @@ class Frame(object):
     FLAG24_DATALEN = 0x0001
 
     _framespec = []
+    _optionalspec = []
 
     def __init__(self, *args, **kwargs):
         if len(args) == 1 and len(kwargs) == 0 and \
@@ -64,9 +65,18 @@ class Frame(object):
                 setattr(self, checker.name, val)
             for checker in self._framespec[len(args):]:
                 setattr(self, checker.name, kwargs.get(checker.name))
+            for spec in self._optionalspec:
+                if spec.name in kwargs:
+                    setattr(self, spec.name, kwargs[spec.name])
+                else:
+                    break
 
     def __setattr__(self, name, value):
         for checker in self._framespec:
+            if checker.name == name:
+                self.__dict__[name] = checker.validate(self, value)
+                return
+        for checker in self._optionalspec:
             if checker.name == name:
                 self.__dict__[name] = checker.validate(self, value)
                 return
@@ -79,6 +89,14 @@ class Frame(object):
 
         for checker in other._framespec:
             setattr(other, checker.name, getattr(self, checker.name))
+
+       # this impl covers subclasses with the same optionalspec
+        if other._optionalspec is not self._optionalspec:
+            raise ValueError
+
+        for checker in other._optionalspec:
+            if hasattr(self, checker.name):
+                setattr(other, checker.name, getattr(self, checker.name))
 
     def _get_v23_frame(self, **kwargs):
         """Returns a frame copy which is suitable for writing into a v2.3 tag.
@@ -116,6 +134,9 @@ class Frame(object):
             # so repr works during __init__
             if hasattr(self, attr.name):
                 kw.append('%s=%r' % (attr.name, getattr(self, attr.name)))
+        for attr in self._optionalspec:
+            if hasattr(self, attr.name):
+                kw.append('%s=%r' % (attr.name, getattr(self, attr.name)))
         return '%s(%s)' % (type(self).__name__, ', '.join(kw))
 
     def _readData(self, id3, data):
@@ -129,6 +150,16 @@ class Frame(object):
                     raise ID3JunkFrameError(e)
             else:
                 raise ID3JunkFrameError("no data left")
+            setattr(self, reader.name, value)
+
+        for reader in self._optionalspec:
+            if len(data) or reader.handle_nodata:
+                try:
+                    value, data = reader.read(id3, self, data)
+                except SpecError as e:
+                    raise ID3JunkFrameError(e)
+            else:
+                break
             setattr(self, reader.name, value)
 
         return data
@@ -146,6 +177,14 @@ class Frame(object):
         for writer in self._framespec:
             data.append(
                 writer.write(config, frame, getattr(frame, writer.name)))
+
+        for writer in self._optionalspec:
+            try:
+                data.append(
+                    writer.write(config, frame, getattr(frame, writer.name)))
+            except AttributeError:
+                break
+
         return b''.join(data)
 
     def pprint(self):
@@ -216,98 +255,6 @@ class Frame(object):
 
     def __hash__(self):
         raise TypeError("Frame objects are unhashable")
-
-
-class FrameOpt(Frame):
-    """A frame with optional parts.
-
-    Some ID3 frames have optional data; this class extends Frame to
-    provide support for those parts.
-    """
-
-    _optionalspec = []
-
-    def __init__(self, *args, **kwargs):
-        super(FrameOpt, self).__init__(*args, **kwargs)
-        for spec in self._optionalspec:
-            if spec.name in kwargs:
-                setattr(self, spec.name, kwargs[spec.name])
-            else:
-                break
-
-    def __setattr__(self, name, value):
-        for checker in self._optionalspec:
-            if checker.name == name:
-                self.__dict__[name] = checker.validate(self, value)
-                return
-        super(FrameOpt, self).__setattr__(name, value)
-
-    def _to_other(self, other):
-        super(FrameOpt, self)._to_other(other)
-
-        # this impl covers subclasses with the same optionalspec
-        if other._optionalspec is not self._optionalspec:
-            raise ValueError
-
-        for checker in other._optionalspec:
-            if hasattr(self, checker.name):
-                setattr(other, checker.name, getattr(self, checker.name))
-
-    def _readData(self, id3, data):
-        """Raises ID3JunkFrameError; Returns leftover data"""
-
-        for reader in self._framespec:
-            if len(data) or reader.handle_nodata:
-                try:
-                    value, data = reader.read(id3, self, data)
-                except SpecError as e:
-                    raise ID3JunkFrameError(e)
-            else:
-                raise ID3JunkFrameError("no data left")
-            setattr(self, reader.name, value)
-
-        if data:
-            for reader in self._optionalspec:
-                if len(data) or reader.handle_nodata:
-                    try:
-                        value, data = reader.read(id3, self, data)
-                    except SpecError as e:
-                        raise ID3JunkFrameError(e)
-                else:
-                    break
-                setattr(self, reader.name, value)
-
-        return data
-
-    def _writeData(self, config=None):
-        if config is None:
-            config = ID3SaveConfig()
-
-        if config.v2_version == 3:
-            frame = self._get_v23_frame(sep=config.v23_separator)
-        else:
-            frame = self
-
-        data = []
-        for writer in self._framespec:
-            data.append(
-                writer.write(config, frame, getattr(frame, writer.name)))
-        for writer in self._optionalspec:
-            try:
-                data.append(
-                    writer.write(config, frame, getattr(frame, writer.name)))
-            except AttributeError:
-                break
-        return b''.join(data)
-
-    def __repr__(self):
-        kw = []
-        for attr in self._framespec:
-            kw.append('%s=%r' % (attr.name, getattr(self, attr.name)))
-        for attr in self._optionalspec:
-            if hasattr(self, attr.name):
-                kw.append('%s=%r' % (attr.name, getattr(self, attr.name)))
-        return '%s(%s)' % (type(self).__name__, ', '.join(kw))
 
 
 class CHAP(Frame):
@@ -1283,7 +1230,7 @@ class PCST(Frame):
         return text_type(self.value)
 
 
-class POPM(FrameOpt):
+class POPM(Frame):
     """Popularimeter.
 
     This frame keys a rating (out of 255) and a play count to an email
@@ -1310,7 +1257,7 @@ class POPM(FrameOpt):
     def __eq__(self, other):
         return self.rating == other
 
-    __hash__ = FrameOpt.__hash__
+    __hash__ = Frame.__hash__
 
     def __pos__(self):
         return self.rating
@@ -1352,7 +1299,7 @@ class GEOB(Frame):
     __hash__ = Frame.__hash__
 
 
-class RBUF(FrameOpt):
+class RBUF(Frame):
     """Recommended buffer size.
 
     Attributes:
@@ -1374,14 +1321,14 @@ class RBUF(FrameOpt):
     def __eq__(self, other):
         return self.size == other
 
-    __hash__ = FrameOpt.__hash__
+    __hash__ = Frame.__hash__
 
     def __pos__(self):
         return self.size
 
 
 @swap_to_string
-class AENC(FrameOpt):
+class AENC(Frame):
     """Audio encryption.
 
     Attributes:
@@ -1415,10 +1362,10 @@ class AENC(FrameOpt):
     def __eq__(self, other):
         return self.owner == other
 
-    __hash__ = FrameOpt.__hash__
+    __hash__ = Frame.__hash__
 
 
-class LINK(FrameOpt):
+class LINK(Frame):
     """Linked information.
 
     Attributes:
@@ -1449,7 +1396,7 @@ class LINK(FrameOpt):
         except AttributeError:
             return (self.frameid, self.url) == other
 
-    __hash__ = FrameOpt.__hash__
+    __hash__ = Frame.__hash__
 
 
 class POSS(Frame):
@@ -1564,7 +1511,7 @@ class OWNE(Frame):
     __hash__ = Frame.__hash__
 
 
-class COMR(FrameOpt):
+class COMR(Frame):
     """Commercial frame."""
 
     _framespec = [
@@ -1589,7 +1536,7 @@ class COMR(FrameOpt):
     def __eq__(self, other):
         return self._writeData() == other._writeData()
 
-    __hash__ = FrameOpt.__hash__
+    __hash__ = Frame.__hash__
 
 
 @swap_to_string
@@ -1620,7 +1567,7 @@ class ENCR(Frame):
 
 
 @swap_to_string
-class GRID(FrameOpt):
+class GRID(Frame):
     """Group identification registration."""
 
     _framespec = [
@@ -1646,7 +1593,7 @@ class GRID(FrameOpt):
     def __eq__(self, other):
         return self.owner == other or self.group == other
 
-    __hash__ = FrameOpt.__hash__
+    __hash__ = Frame.__hash__
 
 
 @swap_to_string
