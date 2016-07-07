@@ -21,8 +21,8 @@ It can read Xing headers to accurately calculate the bitrate and length of
 MP3s. ID3 and APEv2 tags can be edited regardless of audio format. It can also
 manipulate Ogg streams on an individual packet/page level.
 
-Mutagen works with Python 2.6, 2.7, 3.3+ (CPython and PyPy) on Linux, Windows
-and macOS, and has no dependencies outside the Python standard library.
+Mutagen works with Python 2.7, 3.3+ (CPython and PyPy) on Linux, Windows and
+macOS, and has no dependencies outside the Python standard library.
 
 There is a :doc:`brief tutorial with several API examples. 
 <user/index>`

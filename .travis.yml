@@ -5,11 +5,6 @@ matrix:
     - os: linux
       dist: trusty
       language: python
-      python: "2.6"
-      env: TYPE="linux" PYVER="2.6" PYARGS="-R"
-    - os: linux
-      dist: trusty
-      language: python
       python: "2.7"
       env: TYPE="linux" PYVER="2.7" PYARGS="-R"
     - os: linux
@@ -42,11 +37,6 @@ matrix:
       language: python
       python: "pypy3"
       env: TYPE="linux" PYVER="pypy3" PYARGS="-R -bb"
-    - os: linux
-      language: generic
-      sudo: required
-      dist: trusty
-      env: TYPE="windows" PYVER="2.6.6" PYARGS=""
     - os: linux
       language: generic
       sudo: required
