@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import os
-from tempfile import mkstemp
-import shutil
 
 from mutagen._compat import text_type
 from mutagen._toolsutil import fsnative as fsn
 
 from tests.test_tools import _TTools
-from tests import DATA_DIR
+from tests import DATA_DIR, get_temp_copy
 
 
 class TMOggSPlit(_TTools):
@@ -17,11 +15,8 @@ class TMOggSPlit(_TTools):
 
     def setUp(self):
         super(TMOggSPlit, self).setUp()
-        original = os.path.join(
-            DATA_DIR, fsn(u'multipagecomment.ogg'))
-        fd, self.filename = mkstemp(suffix=fsn(u'.ogg'))
-        os.close(fd)
-        shutil.copy(original, self.filename)
+        self.filename = get_temp_copy(
+            os.path.join(DATA_DIR, fsn(u'multipagecomment.ogg')))
 
         # append the second file
         first = open(self.filename, "ab")

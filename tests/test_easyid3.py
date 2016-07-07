@@ -1,25 +1,25 @@
 # -*- coding: utf-8 -*-
 
 import os
-import shutil
 import pickle
-from tests import TestCase, DATA_DIR
+
 from mutagen import MutagenError
 from mutagen.id3 import ID3FileType, ID3, RVA2
 from mutagen.easyid3 import EasyID3, error as ID3Error
 from mutagen._compat import PY3
-from tempfile import mkstemp
+
+from tests import TestCase, DATA_DIR, get_temp_copy
 
 
 class TEasyID3(TestCase):
 
     def setUp(self):
-        fd, self.filename = mkstemp('.mp3')
-        os.close(fd)
-        empty = os.path.join(DATA_DIR, 'emptyfile.mp3')
-        shutil.copy(empty, self.filename)
+        self.filename = get_temp_copy(os.path.join(DATA_DIR, 'emptyfile.mp3'))
         self.id3 = EasyID3()
         self.realid3 = self.id3._EasyID3__id3
+
+    def tearDown(self):
+        os.unlink(self.filename)
 
     def test_remember_ctr(self):
         empty = os.path.join(DATA_DIR, 'emptyfile.mp3')
@@ -384,6 +384,3 @@ class TEasyID3(TestCase):
             self.id3.save(self.filename)
             id3 = EasyID3(self.filename)
             self.failUnlessEqual(id3[tag], [u"foo"])
-
-    def tearDown(self):
-        os.unlink(self.filename)

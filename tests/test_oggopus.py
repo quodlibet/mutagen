@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import os
-import shutil
-from tempfile import mkstemp
 
 from mutagen._compat import BytesIO
 from mutagen.oggopus import OggOpus, OggOpusInfo, delete, error
 from mutagen.ogg import OggPage
-from tests import TestCase, DATA_DIR
+from tests import TestCase, DATA_DIR, get_temp_copy
 from tests.test_ogg import TOggFileTypeMixin
 
 
@@ -15,10 +13,7 @@ class TOggOpus(TestCase, TOggFileTypeMixin):
     Kind = OggOpus
 
     def setUp(self):
-        original = os.path.join(DATA_DIR, "example.opus")
-        fd, self.filename = mkstemp(suffix='.opus')
-        os.close(fd)
-        shutil.copy(original, self.filename)
+        self.filename = get_temp_copy(os.path.join(DATA_DIR, "example.opus"))
         self.audio = self.Kind(self.filename)
 
     def tearDown(self):

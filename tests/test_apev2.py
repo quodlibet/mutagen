@@ -5,9 +5,7 @@
 import os
 import shutil
 
-from tempfile import mkstemp
-
-from tests import TestCase, DATA_DIR
+from tests import TestCase, DATA_DIR, get_temp_copy
 
 import mutagen.apev2
 from mutagen import MutagenError
@@ -172,10 +170,11 @@ class TAPEv2ThenID3v1Writer(TAPEWriter):
 class TAPEv2(TestCase):
 
     def setUp(self):
-        fd, self.filename = mkstemp(".apev2")
-        os.close(fd)
-        shutil.copy(OLD, self.filename)
+        self.filename = get_temp_copy(OLD)
         self.audio = APEv2(self.filename)
+
+    def tearDown(self):
+        os.unlink(self.filename)
 
     def test_invalid_key(self):
         self.failUnlessRaises(
@@ -269,9 +268,6 @@ class TAPEv2(TestCase):
 
     def test_pprint(self):
         self.failUnless(self.audio.pprint())
-
-    def tearDown(self):
-        os.unlink(self.filename)
 
 
 class TAPEv2ThenID3v1(TAPEv2):

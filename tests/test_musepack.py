@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import os
-import shutil
-from tempfile import mkstemp
 
 from mutagen.id3 import ID3, TIT2
 from mutagen.musepack import Musepack, MusepackInfo, MusepackHeaderError
 from mutagen._compat import cBytesIO
-from tests import TestCase, DATA_DIR
+from tests import TestCase, DATA_DIR, get_temp_copy
 
 
 class TMusepack(TestCase):
@@ -103,27 +101,21 @@ class TMusepack(TestCase):
 
 
 class TMusepackWithID3(TestCase):
-    SAMPLE = os.path.join(DATA_DIR, "click.mpc")
 
     def setUp(self):
-        fd, self.NEW = mkstemp(suffix='mpc')
-        os.close(fd)
-        shutil.copy(self.SAMPLE, self.NEW)
-        with open(self.SAMPLE, "rb") as h1:
-            with open(self.NEW, "rb") as h2:
-                self.failUnlessEqual(h1.read(), h2.read())
+        self.filename = get_temp_copy(os.path.join(DATA_DIR, "click.mpc"))
 
     def tearDown(self):
-        os.unlink(self.NEW)
+        os.unlink(self.filename)
 
     def test_ignore_id3(self):
         id3 = ID3()
         id3.add(TIT2(encoding=0, text='id3 title'))
-        id3.save(self.NEW)
-        f = Musepack(self.NEW)
+        id3.save(self.filename)
+        f = Musepack(self.filename)
         f['title'] = 'apev2 title'
         f.save()
-        id3 = ID3(self.NEW)
+        id3 = ID3(self.filename)
         self.failUnlessEqual(id3['TIT2'], 'id3 title')
-        f = Musepack(self.NEW)
+        f = Musepack(self.filename)
         self.failUnlessEqual(f['title'], 'apev2 title')

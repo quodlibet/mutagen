@@ -2,15 +2,13 @@
 
 import os
 import random
-import shutil
 import subprocess
 
 from mutagen._compat import BytesIO, xrange
-from tests import TestCase, DATA_DIR
+from tests import TestCase, DATA_DIR, get_temp_copy
 from mutagen.ogg import OggPage, error as OggError
 from mutagen._util import cdata
 from mutagen import _util
-from tempfile import mkstemp
 
 
 class TOggPage(TestCase):
@@ -237,19 +235,14 @@ class TOggPage(TestCase):
 
     def test_renumber_reread(self):
         try:
-            fd, filename = mkstemp(suffix=".ogg")
-            os.close(fd)
-            shutil.copy(os.path.join(DATA_DIR, "multipagecomment.ogg"),
-                        filename)
+            filename = get_temp_copy(
+                os.path.join(DATA_DIR, "multipagecomment.ogg"))
             with open(filename, "rb+") as fileobj:
                 OggPage.renumber(fileobj, 1002429366, 20)
             with open(filename, "rb+") as fileobj:
                 OggPage.renumber(fileobj, 1002429366, 0)
         finally:
-            try:
-                os.unlink(filename)
-            except OSError:
-                pass
+            os.unlink(filename)
 
     def test_renumber_muxed(self):
         pages = [OggPage() for i in xrange(10)]

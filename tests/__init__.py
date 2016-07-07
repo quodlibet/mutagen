@@ -8,6 +8,8 @@ import os
 import sys
 import unittest
 import warnings
+import shutil
+from tempfile import mkstemp
 
 from unittest import TestCase as BaseTestCase
 
@@ -33,6 +35,24 @@ if os.name != "nt":
 # or capture them in the test suite
 warnings.simplefilter("always")
 warnings.simplefilter("ignore", PendingDeprecationWarning)
+
+
+def get_temp_copy(path):
+    """Returns a copy of the file with the same extension"""
+
+    ext = os.path.splitext(path)[-1]
+    fd, filename = mkstemp(suffix=ext)
+    os.close(fd)
+    shutil.copy(path, filename)
+    return filename
+
+
+def get_temp_empty(ext=""):
+    """Returns an empty file with the extension"""
+
+    fd, filename = mkstemp(suffix=ext)
+    os.close(fd)
+    return filename
 
 
 class TestCase(BaseTestCase):

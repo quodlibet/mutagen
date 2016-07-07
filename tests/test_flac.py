@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
 
-import shutil
 import os
 import subprocess
-from tempfile import mkstemp
-
-from tests import TestCase, DATA_DIR
 
 from mutagen import MutagenError
 from mutagen.id3 import ID3, TIT2, ID3NoHeaderError
 from mutagen.flac import to_int_be, Padding, VCFLACDict, MetadataBlock, error
 from mutagen.flac import StreamInfo, SeekTable, CueSheet, FLAC, delete, Picture
 from mutagen._compat import PY3
+
+from tests import TestCase, DATA_DIR, get_temp_copy
 from tests.test__vorbis import TVCommentDict, VComment
 
 
@@ -284,9 +282,7 @@ class TFLAC(TestCase):
     SAMPLE = os.path.join(DATA_DIR, "silence-44-s.flac")
 
     def setUp(self):
-        fd, self.NEW = mkstemp(".flac")
-        os.close(fd)
-        shutil.copy(self.SAMPLE, self.NEW)
+        self.NEW = get_temp_copy(self.SAMPLE)
         self.flac = FLAC(self.NEW)
 
     def tearDown(self):
@@ -587,9 +583,7 @@ class TFLACBadBlockSizeWrite(TestCase):
     TOO_SHORT = os.path.join(DATA_DIR, "52-too-short-block-size.flac")
 
     def setUp(self):
-        fd, self.NEW = mkstemp(".flac")
-        os.close(fd)
-        shutil.copy(self.TOO_SHORT, self.NEW)
+        self.NEW = get_temp_copy(self.TOO_SHORT)
 
     def tearDown(self):
         os.unlink(self.NEW)
@@ -608,9 +602,8 @@ class TFLACBadBlockSizeWrite(TestCase):
 class TFLACBadBlockSizeOverflow(TestCase):
 
     def setUp(self):
-        fd, self.filename = mkstemp(".flac")
-        os.close(fd)
-        shutil.copy(os.path.join(DATA_DIR, "silence-44-s.flac"), self.filename)
+        self.filename = get_temp_copy(
+            os.path.join(DATA_DIR, "silence-44-s.flac"))
 
     def tearDown(self):
         os.unlink(self.filename)

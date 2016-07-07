@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import os
-import shutil
 
-from tests import TestCase, DATA_DIR
 from mutagen._compat import cBytesIO
 from mutagen.aiff import AIFF, AIFFInfo, delete, IFFFile, IFFChunk
 from mutagen.aiff import error as AIFFError
-from tempfile import mkstemp
+
+from tests import TestCase, DATA_DIR, get_temp_copy
 
 
 class TAIFF(TestCase):
@@ -21,13 +20,8 @@ class TAIFF(TestCase):
     no_tags = os.path.join(DATA_DIR, '8k-1ch-1s-silence.aif')
 
     def setUp(self):
-        fd, self.filename_1 = mkstemp(suffix='.aif')
-        os.close(fd)
-        shutil.copy(self.has_tags, self.filename_1)
-
-        fd, self.filename_2 = mkstemp(suffix='.aif')
-        os.close(fd)
-        shutil.copy(self.no_tags, self.filename_2)
+        self.filename_1 = get_temp_copy(self.has_tags)
+        self.filename_2 = get_temp_copy(self.no_tags)
 
         self.aiff_tmp_id3 = AIFF(self.filename_1)
         self.aiff_tmp_no_id3 = AIFF(self.filename_2)
@@ -189,15 +183,11 @@ class TIFFFile(TestCase):
         self.file_2 = open(self.no_tags, 'rb')
         self.iff_2 = IFFFile(self.file_2)
 
-        fd_1, self.tmp_1_name = mkstemp(suffix='.aif')
-        os.close(fd_1)
-        shutil.copy(self.has_tags, self.tmp_1_name)
+        self.tmp_1_name = get_temp_copy(self.has_tags)
         self.file_1_tmp = open(self.tmp_1_name, 'rb+')
         self.iff_1_tmp = IFFFile(self.file_1_tmp)
 
-        fd_2, self.tmp_2_name = mkstemp(suffix='.aif')
-        os.close(fd_2)
-        shutil.copy(self.no_tags, self.tmp_2_name)
+        self.tmp_2_name = get_temp_copy(self.no_tags)
         self.file_2_tmp = open(self.tmp_2_name, 'rb+')
         self.iff_2_tmp = IFFFile(self.file_2_tmp)
 

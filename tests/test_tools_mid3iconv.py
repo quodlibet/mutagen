@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import os
-from tempfile import mkstemp
-import shutil
 
 from mutagen.id3 import ID3
 from mutagen._toolsutil import fsnative as fsn
 from mutagen._compat import text_type
 
 from tests.test_tools import _TTools
-from tests import DATA_DIR
+from tests import DATA_DIR, get_temp_copy
 
 
 AMBIGUOUS = b"\xc3\xae\xc3\xa5\xc3\xb4\xc3\xb2 \xc3\xa0\xc3\xa9\xc3\xa7\xc3" \
@@ -24,10 +22,8 @@ class TMid3Iconv(_TTools):
 
     def setUp(self):
         super(TMid3Iconv, self).setUp()
-        original = os.path.join(DATA_DIR, fsn(u'silence-44-s.mp3'))
-        fd, self.filename = mkstemp(suffix=fsn(u'.mp3'))
-        os.close(fd)
-        shutil.copy(original, self.filename)
+        self.filename = get_temp_copy(
+            os.path.join(DATA_DIR, fsn(u'silence-44-s.mp3')))
 
     def tearDown(self):
         super(TMid3Iconv, self).tearDown()

@@ -3,8 +3,6 @@
 import os
 import warnings
 import operator
-from tempfile import mkstemp
-import shutil
 
 from mutagen import id3
 from mutagen import MutagenError
@@ -19,7 +17,7 @@ from mutagen.id3._util import BitPaddedInt, error as ID3Error
 from mutagen.id3._tags import _determine_bpi
 from mutagen._compat import cBytesIO, PY2, iteritems, integer_types, izip
 
-from tests import TestCase, DATA_DIR
+from tests import TestCase, DATA_DIR, get_temp_copy, get_temp_empty
 
 
 warnings.simplefilter('error', ID3Warning)
@@ -361,12 +359,10 @@ class ID3v1Tags(TestCase):
 
 
 class TestWriteID3v1(TestCase):
-    SILENCE = os.path.join(DATA_DIR, "silence-44-s.mp3")
 
     def setUp(self):
-        fd, self.filename = mkstemp(suffix='.mp3')
-        os.close(fd)
-        shutil.copy(self.SILENCE, self.filename)
+        self.filename = get_temp_copy(
+            os.path.join(DATA_DIR, "silence-44-s.mp3"))
         self.audio = ID3(self.filename)
 
     def failIfV1(self):
@@ -977,12 +973,13 @@ class UpdateTo24(TestCase):
 
 
 class Issue97_UpgradeUnknown23(TestCase):
-    SILENCE = os.path.join(DATA_DIR, "97-unknown-23-update.mp3")
 
     def setUp(self):
-        fd, self.filename = mkstemp(suffix='.mp3')
-        os.close(fd)
-        shutil.copy(self.SILENCE, self.filename)
+        self.filename = get_temp_copy(
+            os.path.join(DATA_DIR, "97-unknown-23-update.mp3"))
+
+    def tearDown(self):
+        os.unlink(self.filename)
 
     def test_unknown(self):
         orig = ID3(self.filename)
@@ -1010,16 +1007,15 @@ class Issue97_UpgradeUnknown23(TestCase):
         f = ID3(self.filename)
         self.assertFalse(f.unknown_frames)
 
-    def tearDown(self):
-        os.unlink(self.filename)
-
 
 class OddWrites(TestCase):
-    silence = os.path.join(DATA_DIR, 'silence-44-s.mp3')
-    newsilence = os.path.join(DATA_DIR, 'silence-written.mp3')
 
     def setUp(self):
-        shutil.copy(self.silence, self.newsilence)
+        self.silence = os.path.join(DATA_DIR, 'silence-44-s.mp3')
+        self.newsilence = get_temp_copy(self.silence)
+
+    def tearDown(self):
+        os.unlink(self.newsilence)
 
     def test_toemptyfile(self):
         os.unlink(self.newsilence)
@@ -1039,19 +1035,15 @@ class OddWrites(TestCase):
         with open(self.newsilence, "rb") as h:
             self.assertEquals(h.read()[-1], b"!"[0])
 
-    def tearDown(self):
-        try:
-            os.unlink(self.newsilence)
-        except OSError:
-            pass
-
 
 class WriteRoundtrip(TestCase):
-    silence = os.path.join(DATA_DIR, 'silence-44-s.mp3')
-    newsilence = os.path.join(DATA_DIR, 'silence-written.mp3')
 
     def setUp(self):
-        shutil.copy(self.silence, self.newsilence)
+        self.silence = os.path.join(DATA_DIR, 'silence-44-s.mp3')
+        self.newsilence = get_temp_copy(self.silence)
+
+    def tearDown(self):
+        os.unlink(self.newsilence)
 
     def test_unknown_chap(self):
         # add ctoc
@@ -1171,23 +1163,20 @@ class WriteRoundtrip(TestCase):
         self.assert_(data.find(b"TALB") < data.find(b"COMM"))
         self.assert_(data.find(b"TIT2") < data.find(b"TALB"))
 
-    def tearDown(self):
-        try:
-            os.unlink(self.newsilence)
-        except EnvironmentError:
-            pass
-
 
 class WriteForEyeD3(TestCase):
-    silence = os.path.join(DATA_DIR, 'silence-44-s.mp3')
-    newsilence = os.path.join(DATA_DIR, 'silence-written.mp3')
 
     def setUp(self):
-        shutil.copy(self.silence, self.newsilence)
+        self.silence = os.path.join(DATA_DIR, 'silence-44-s.mp3')
+        self.newsilence = get_temp_copy(self.silence)
+
         # remove ID3v1 tag
         with open(self.newsilence, "rb+") as f:
             f.seek(-128, 2)
             f.truncate()
+
+    def tearDown(self):
+        os.unlink(self.newsilence)
 
     def test_same(self):
         ID3(self.newsilence).save()
@@ -1219,9 +1208,6 @@ class WriteForEyeD3(TestCase):
         id3.link(self.newsilence)
         self.assertEquals(id3.frames["TIT2"][0].text, "The sound of silence.")
 
-    def tearDown(self):
-        os.unlink(self.newsilence)
-
 
 class BadTYER(TestCase):
 
@@ -1242,17 +1228,12 @@ class BadTYER(TestCase):
 
 class BadPOPM(TestCase):
 
-    filename = os.path.join(DATA_DIR, 'bad-POPM-frame.mp3')
-    newfilename = os.path.join(DATA_DIR, 'bad-POPM-frame-written.mp3')
-
     def setUp(self):
-        shutil.copy(self.filename, self.newfilename)
+        self.filename = os.path.join(DATA_DIR, 'bad-POPM-frame.mp3')
+        self.newfilename = get_temp_copy(self.filename)
 
     def tearDown(self):
-        try:
-            os.unlink(self.newfilename)
-        except EnvironmentError:
-            pass
+        os.unlink(self.newfilename)
 
     def test_read_popm_long_counter(self):
         f = ID3(self.newfilename)
@@ -1397,12 +1378,9 @@ class UpdateTo23(TestCase):
 
 class WriteTo23(TestCase):
 
-    SILENCE = os.path.join(DATA_DIR, "silence-44-s.mp3")
-
     def setUp(self):
-        fd, self.filename = mkstemp(suffix='.mp3')
-        os.close(fd)
-        shutil.copy(self.SILENCE, self.filename)
+        self.filename = get_temp_copy(
+            os.path.join(DATA_DIR, "silence-44-s.mp3"))
         self.audio = ID3(self.filename)
 
     def tearDown(self):
@@ -1473,8 +1451,7 @@ class WriteTo23(TestCase):
 class Read22FrameNamesin23(TestCase):
 
     def test_PIC_in_23(self):
-        fd, filename = mkstemp(suffix='.mp3')
-        os.close(fd)
+        filename = get_temp_empty(".mp3")
 
         try:
             with open(filename, "wb") as h:
@@ -1496,12 +1473,10 @@ class Read22FrameNamesin23(TestCase):
 
 
 class ID3V1_vs_APEv2(TestCase):
-    SILENCE = os.path.join(DATA_DIR, "silence-44-s.mp3")
 
     def setUp(self):
-        fd, self.filename = mkstemp(suffix='.mp3')
-        os.close(fd)
-        shutil.copy(self.SILENCE, self.filename)
+        self.filename = get_temp_copy(
+            os.path.join(DATA_DIR, "silence-44-s.mp3"))
 
     def test_save_id3_over_ape(self):
         id3.delete(self.filename, delete_v2=False)
@@ -1579,10 +1554,8 @@ class TID3Misc(TestCase):
 class TID3Padding(TestCase):
 
     def setUp(self):
-        fd, self.filename = mkstemp(suffix='.mp3')
-        os.close(fd)
-        orig = os.path.join(DATA_DIR, "silence-44-s.mp3")
-        shutil.copy(orig, self.filename)
+        self.filename = get_temp_copy(
+            os.path.join(DATA_DIR, "silence-44-s.mp3"))
 
     def tearDown(self):
         os.remove(self.filename)
@@ -1614,10 +1587,8 @@ class TID3Padding(TestCase):
 class TID3Corrupt(TestCase):
 
     def setUp(self):
-        fd, self.filename = mkstemp(suffix='.mp3')
-        os.close(fd)
-        orig = os.path.join(DATA_DIR, "silence-44-s.mp3")
-        shutil.copy(orig, self.filename)
+        self.filename = get_temp_copy(
+            os.path.join(DATA_DIR, "silence-44-s.mp3"))
 
     def tearDown(self):
         os.remove(self.filename)

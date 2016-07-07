@@ -6,19 +6,15 @@ import shutil
 from mutagen._compat import cBytesIO
 from mutagen.ogg import OggPage
 from mutagen.oggspeex import OggSpeex, OggSpeexInfo, delete, error
-from tests import TestCase, DATA_DIR
+from tests import TestCase, DATA_DIR, get_temp_copy
 from tests.test_ogg import TOggFileTypeMixin
-from tempfile import mkstemp
 
 
 class TOggSpeex(TestCase, TOggFileTypeMixin):
     Kind = OggSpeex
 
     def setUp(self):
-        original = os.path.join(DATA_DIR, "empty.spx")
-        fd, self.filename = mkstemp(suffix='.ogg')
-        os.close(fd)
-        shutil.copy(original, self.filename)
+        self.filename = get_temp_copy(os.path.join(DATA_DIR, "empty.spx"))
         self.audio = self.Kind(self.filename)
 
     def tearDown(self):

@@ -1,22 +1,22 @@
 # -*- coding: utf-8 -*-
 
 import os
-import shutil
-from tests import TestCase, DATA_DIR
+
 from mutagen import MutagenError
 from mutagen.easymp4 import EasyMP4, error as MP4Error
-from tempfile import mkstemp
+
+from tests import TestCase, DATA_DIR, get_temp_copy
 
 
 class TEasyMP4(TestCase):
 
     def setUp(self):
-        fd, self.filename = mkstemp('.mp4')
-        os.close(fd)
-        empty = os.path.join(DATA_DIR, 'has-tags.m4a')
-        shutil.copy(empty, self.filename)
+        self.filename = get_temp_copy(os.path.join(DATA_DIR, 'has-tags.m4a'))
         self.mp4 = EasyMP4(self.filename)
         self.mp4.delete()
+
+    def tearDown(self):
+        os.unlink(self.filename)
 
     def test_pprint(self):
         self.mp4["artist"] = "baz"
@@ -146,6 +146,3 @@ class TEasyMP4(TestCase):
 
             self.failUnlessRaises(
                 ValueError, self.mp4.__setitem__, tag, "hello")
-
-    def tearDown(self):
-        os.unlink(self.filename)

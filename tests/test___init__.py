@@ -6,7 +6,7 @@ from tempfile import mkstemp
 import shutil
 import warnings
 
-from tests import TestCase, DATA_DIR
+from tests import TestCase, DATA_DIR, get_temp_copy
 from mutagen._compat import cBytesIO, text_type, xrange
 from mutagen import File, Metadata, FileType, MutagenError, PaddingInfo
 from mutagen._util import loadfile, get_size
@@ -157,9 +157,7 @@ class TFileType(TestCase):
     def setUp(self):
         self.vorbis = File(os.path.join(DATA_DIR, "empty.ogg"))
 
-        fd, filename = mkstemp(".mp3")
-        os.close(fd)
-        shutil.copy(os.path.join(DATA_DIR, "xing.mp3"), filename)
+        filename = get_temp_copy(os.path.join(DATA_DIR, "xing.mp3"))
         self.mp3_notags = File(filename)
         self.mp3_filename = filename
 
@@ -283,9 +281,7 @@ class TAbstractFileType(object):
     KIND = None
 
     def setUp(self):
-        fd, self.filename = mkstemp("." + self.PATH.rsplit(".", 1)[-1])
-        os.close(fd)
-        shutil.copy(self.PATH, self.filename)
+        self.filename = get_temp_copy(self.PATH)
         self.audio = self.KIND(self.filename)
 
     def tearDown(self):

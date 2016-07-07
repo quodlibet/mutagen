@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
-import shutil
 import warnings
-from tempfile import mkstemp
-from tests import TestCase, DATA_DIR
 
 from mutagen._compat import PY3, text_type, PY2, izip, cBytesIO
 from mutagen.asf import ASF, ASFHeaderError, ASFValue, UNICODE, DWORD, QWORD
@@ -17,6 +14,8 @@ from mutagen.asf._objects import ContentDescriptionObject, \
 from mutagen.asf import ASFUnicodeAttribute, ASFError, ASFByteArrayAttribute, \
     ASFBoolAttribute, ASFDWordAttribute, ASFQWordAttribute, ASFWordAttribute, \
     ASFGUIDAttribute
+
+from tests import TestCase, DATA_DIR, get_temp_copy
 
 
 class TASFFile(TestCase):
@@ -102,9 +101,7 @@ class TASFInfo(TestCase):
 class TASF(TestCase):
 
     def setUp(self):
-        fd, self.filename = mkstemp(suffix='wma')
-        os.close(fd)
-        shutil.copy(self.original, self.filename)
+        self.filename = get_temp_copy(self.original)
         self.audio = ASF(self.filename)
 
     def tearDown(self):
@@ -432,9 +429,7 @@ class TASFIssue29(TestCase):
     original = os.path.join(DATA_DIR, "issue_29.wma")
 
     def setUp(self):
-        fd, self.filename = mkstemp(suffix='wma')
-        os.close(fd)
-        shutil.copy(self.original, self.filename)
+        self.filename = get_temp_copy(self.original)
         self.audio = ASF(self.filename)
 
     def tearDown(self):
@@ -476,9 +471,7 @@ class TASFAttrDest(TestCase):
     original = os.path.join(DATA_DIR, "silence-1.wma")
 
     def setUp(self):
-        fd, self.filename = mkstemp(suffix='wma')
-        os.close(fd)
-        shutil.copy(self.original, self.filename)
+        self.filename = get_temp_copy(self.original)
         audio = ASF(self.filename)
         audio.clear()
         audio.save()
@@ -554,9 +547,7 @@ class TASFLargeValue(TestCase):
     original = os.path.join(DATA_DIR, "silence-1.wma")
 
     def setUp(self):
-        fd, self.filename = mkstemp(suffix='wma')
-        os.close(fd)
-        shutil.copy(self.original, self.filename)
+        self.filename = get_temp_copy(self.original)
 
     def tearDown(self):
         os.unlink(self.filename)
@@ -611,9 +602,7 @@ class TASFSave(TestCase):
     original = os.path.join(DATA_DIR, "silence-1.wma")
 
     def setUp(self):
-        fd, self.filename = mkstemp(suffix='.wma')
-        os.close(fd)
-        shutil.copy(self.original, self.filename)
+        self.filename = get_temp_copy(self.original)
         self.audio = ASF(self.filename)
 
     def tearDown(self):

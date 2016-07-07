@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import os
-import shutil
 import struct
 import subprocess
 
 from mutagen._compat import cBytesIO, PY3, text_type, PY2, izip
-from tempfile import mkstemp
-from tests import TestCase, DATA_DIR
+from tests import TestCase, DATA_DIR, get_temp_copy
 from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
                          MP4MetadataError, MP4FreeForm, error, AtomDataType,
                          AtomError, _item_sort_key)
@@ -321,9 +319,7 @@ class TMP4Tags(TestCase):
 
         # save it into an existing mp4
         original = os.path.join(DATA_DIR, "has-tags.m4a")
-        fd, filename = mkstemp(suffix='.mp4')
-        os.close(fd)
-        shutil.copy(original, filename)
+        filename = get_temp_copy(original)
         try:
             delete(filename)
 
@@ -439,9 +435,7 @@ class TMP4Tags(TestCase):
 class TMP4(TestCase):
 
     def setUp(self):
-        fd, self.filename = mkstemp(suffix='.m4a')
-        os.close(fd)
-        shutil.copy(self.original, self.filename)
+        self.filename = get_temp_copy(self.original)
         self.audio = MP4(self.filename)
 
     def tearDown(self):
@@ -872,9 +866,7 @@ class TMP4UpdateParents64Bit(TestCase):
     original = os.path.join(DATA_DIR, "64bit.mp4")
 
     def setUp(self):
-        fd, self.filename = mkstemp(suffix='.mp4')
-        os.close(fd)
-        shutil.copy(self.original, self.filename)
+        self.filename = get_temp_copy(self.original)
 
     def test_update_parents(self):
         with open(self.filename, "rb") as fileobj:

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import os
-import shutil
+
 from mutagen.trueaudio import TrueAudio, delete, error
 from mutagen.id3 import TIT1
-from tests import TestCase, DATA_DIR
-from tempfile import mkstemp
+
+from tests import TestCase, DATA_DIR, get_temp_copy
 
 
 class TTrueAudio(TestCase):
@@ -37,10 +37,8 @@ class TTrueAudio(TestCase):
         self.failUnless(self.audio.pprint())
 
     def test_save_reload(self):
+        filename = get_temp_copy(self.audio.filename)
         try:
-            fd, filename = mkstemp(suffix='.tta')
-            os.close(fd)
-            shutil.copy(self.audio.filename, filename)
             audio = TrueAudio(filename)
             audio.add_tags()
             audio.tags.add(TIT1(encoding=0, text="A Title"))

@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import os
-import shutil
-
-from tempfile import mkstemp
 
 from mutagen._compat import cBytesIO
 from mutagen.oggtheora import OggTheora, OggTheoraInfo, delete, error
 from mutagen.ogg import OggPage
-from tests import TestCase, DATA_DIR
+
+from tests import TestCase, DATA_DIR, get_temp_copy
 from tests.test_ogg import TOggFileTypeMixin
 
 
@@ -16,10 +14,9 @@ class TOggTheora(TestCase, TOggFileTypeMixin):
     Kind = OggTheora
 
     def setUp(self):
-        original = os.path.join(DATA_DIR, "sample.oggtheora")
-        fd, self.filename = mkstemp(suffix='.ogg')
-        os.close(fd)
-        shutil.copy(original, self.filename)
+        self.filename = get_temp_copy(
+            os.path.join(DATA_DIR, "sample.oggtheora"))
+
         self.audio = OggTheora(self.filename)
         self.audio2 = OggTheora(
             os.path.join(DATA_DIR, "sample_length.oggtheora"))

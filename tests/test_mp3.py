@@ -1,16 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import os
-import shutil
 
-from tests import TestCase, DATA_DIR
+from tests import TestCase, DATA_DIR, get_temp_copy
 from mutagen._compat import cBytesIO, text_type, xrange
 from mutagen.mp3 import MP3, error as MP3Error, delete, MPEGInfo, EasyMP3, \
     BitrateMode, iter_sync
 from mutagen.mp3._util import XingHeader, XingHeaderError, VBRIHeader, \
     VBRIHeaderError, LAMEHeader, LAMEError
 from mutagen.id3 import ID3
-from tempfile import mkstemp
 
 
 class TMP3Util(TestCase):
@@ -46,10 +44,9 @@ class TMP3(TestCase):
     lame_peak = os.path.join(DATA_DIR, 'lame-peak.mp3')
 
     def setUp(self):
-        original = os.path.join(DATA_DIR, "silence-44-s.mp3")
-        fd, self.filename = mkstemp(suffix='.mp3')
-        os.close(fd)
-        shutil.copy(original, self.filename)
+        self.filename = get_temp_copy(
+            os.path.join(DATA_DIR, "silence-44-s.mp3"))
+
         self.mp3 = MP3(self.filename)
         self.mp3_2 = MP3(self.silence_nov2)
         self.mp3_3 = MP3(self.silence_mpeg2)
@@ -240,10 +237,8 @@ class TMPEGInfo(TestCase):
 class TEasyMP3(TestCase):
 
     def setUp(self):
-        original = os.path.join(DATA_DIR, "silence-44-s.mp3")
-        fd, self.filename = mkstemp(suffix='.mp3')
-        os.close(fd)
-        shutil.copy(original, self.filename)
+        self.filename = get_temp_copy(
+            os.path.join(DATA_DIR, "silence-44-s.mp3"))
         self.mp3 = EasyMP3(self.filename)
 
     def test_artist(self):

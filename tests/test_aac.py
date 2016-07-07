@@ -1,21 +1,19 @@
 # -*- coding: utf-8 -*-
 
 import os
-from tempfile import mkstemp
-import shutil
 
 from mutagen.id3 import ID3, TIT1
 from mutagen.aac import AAC, AACError
-from tests import TestCase, DATA_DIR
+
+from tests import TestCase, DATA_DIR, get_temp_copy
 
 
 class TADTS(TestCase):
 
     def setUp(self):
         original = os.path.join(DATA_DIR, "empty.aac")
-        fd, self.filename = mkstemp(suffix='.aac')
-        os.close(fd)
-        shutil.copy(original, self.filename)
+        self.filename = get_temp_copy(original)
+
         tag = ID3()
         tag.add(TIT1(text=[u"a" * 5000], encoding=3))
         tag.save(self.filename)
@@ -60,9 +58,8 @@ class TADIF(TestCase):
 
     def setUp(self):
         original = os.path.join(DATA_DIR, "adif.aac")
-        fd, self.filename = mkstemp(suffix='.aac')
-        os.close(fd)
-        shutil.copy(original, self.filename)
+        self.filename = get_temp_copy(original)
+
         tag = ID3()
         tag.add(TIT1(text=[u"a" * 5000], encoding=3))
         tag.save(self.filename)
