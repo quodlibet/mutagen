@@ -358,7 +358,7 @@ def flags(cls):
             if value & k:
                 matches.append("%s.%s" % (type(self).__name__, v))
                 value &= ~k
-        if value != 0:
+        if value != 0 or not matches:
             matches.append(text_type(value))
 
         return " | ".join(matches)

@@ -560,6 +560,7 @@ class Tflags(TestCase):
         self.assertEqual(int(Foo(42)), 42)
         self.assertEqual(str(Foo(1)), "Foo.FOO")
         self.assertEqual(int(Foo(1)), 1)
+        self.assertEqual(str(Foo(0)), "0")
 
         self.assertTrue(isinstance(str(Foo.FOO), str))
         self.assertTrue(isinstance(repr(Foo.FOO), str))
