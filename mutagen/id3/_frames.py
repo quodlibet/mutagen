@@ -10,7 +10,7 @@ import zlib
 from struct import unpack
 
 from ._util import ID3JunkFrameError, ID3EncryptionUnsupportedError, unsynch, \
-    ID3SaveConfig
+    ID3SaveConfig, error
 from ._specs import BinaryDataSpec, StringSpec, Latin1TextSpec, \
     EncodedTextSpec, ByteSpec, EncodingSpec, ASPIIndexSpec, SizedIntegerSpec, \
     IntegerSpec, Encoding, VolumeAdjustmentsSpec, VolumePeakSpec, \
@@ -173,6 +173,8 @@ class Frame(object):
         return data
 
     def _writeData(self, config=None):
+        """Raises error"""
+
         if config is None:
             config = ID3SaveConfig()
 
@@ -183,8 +185,11 @@ class Frame(object):
 
         data = []
         for writer in self._framespec:
-            data.append(
-                writer.write(config, frame, getattr(frame, writer.name)))
+            try:
+                data.append(
+                    writer.write(config, frame, getattr(frame, writer.name)))
+            except SpecError as e:
+                raise error(e)
 
         for writer in self._optionalspec:
             try:
@@ -192,6 +197,8 @@ class Frame(object):
                     writer.write(config, frame, getattr(frame, writer.name)))
             except AttributeError:
                 break
+            except SpecError as e:
+                raise error(e)
 
         return b''.join(data)
 

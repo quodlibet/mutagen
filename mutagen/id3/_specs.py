@@ -124,15 +124,32 @@ class Spec(object):
         return value
 
     def read(self, header, frame, data):
-        """Returns the (value, left_data) or raises SpecError"""
+        """
+        Returns:
+            (value: object, left_data: bytes)
+        Raises:
+            SpecError
+        """
 
         raise NotImplementedError
 
     def write(self, config, frame, value):
+        """
+        Returns:
+            bytes: The serialized data
+        Raises:
+            SpecError
+        """
         raise NotImplementedError
 
     def validate(self, frame, value):
-        """Returns the validated data or raises ValueError/TypeError"""
+        """
+        Returns:
+            the validated value
+        Raises:
+            ValueError
+            TypeError
+        """
 
         raise NotImplementedError
 
@@ -353,7 +370,10 @@ class EncodedTextSpec(Spec):
 
     def write(self, config, frame, value):
         enc, term = self._encodings[frame.encoding]
-        return value.encode(enc) + term
+        try:
+            return value.encode(enc) + term
+        except UnicodeEncodeError as e:
+            raise SpecError(e)
 
     def validate(self, frame, value):
         return text_type(value)

@@ -11,7 +11,7 @@ from mutagen.id3 import ID3, Frames, ID3Warning, \
     save_frame, CHAP, CTOC, TT1, TCON, COMM, TORY, \
     PIC, MakeID3v1, TRCK, TYER, TDRC, TDAT, TIME, LNK, IPLS, \
     TPE1, BinaryFrame, ID3SaveConfig, TIT3, _find_id3v1, POPM, APIC, \
-    TALB, TPE2, TSOT, TDEN, TIPL, ParseID3v1
+    TALB, TPE2, TSOT, TDEN, TIPL, ParseID3v1, Encoding
 from mutagen.id3._util import BitPaddedInt, error as ID3Error
 from mutagen.id3._tags import _determine_bpi
 from mutagen._compat import cBytesIO
@@ -516,6 +516,11 @@ class OddWrites(TestCase):
 
     def tearDown(self):
         os.unlink(self.newsilence)
+
+    def test_wrong_encoding(self):
+        t = ID3(self.newsilence)
+        t.add(TIT2(encoding=Encoding.LATIN1, text=[u"\u0243"]))
+        self.assertRaises(MutagenError, t.save)
 
     def test_toemptyfile(self):
         os.unlink(self.newsilence)
