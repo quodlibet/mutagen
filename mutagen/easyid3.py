@@ -150,19 +150,14 @@ class EasyID3(DictMixin, Metadata):
             return list(id3[frameid])
 
         def setter(id3, key, value):
-            try:
-                frame = id3[frameid]
-            except KeyError:
-                enc = 0
-                # Store 8859-1 if we can, per MusicBrainz spec.
-                for v in value:
-                    if v and max(v) > u'\x7f':
-                        enc = 3
-                        break
+            enc = 0
+            # Store 8859-1 if we can, per MusicBrainz spec.
+            for v in value:
+                if v and max(v) > u'\x7f':
+                    enc = 3
+                    break
 
-                id3.add(mutagen.id3.TXXX(encoding=enc, text=value, desc=desc))
-            else:
-                frame.text = value
+            id3.add(mutagen.id3.TXXX(encoding=enc, text=value, desc=desc))
 
         def deleter(id3, key):
             del(id3[frameid])

@@ -21,6 +21,13 @@ class TEasyID3(TestCase):
     def tearDown(self):
         os.unlink(self.filename)
 
+    def test_txxx_latin_first_then_non_latin(self):
+        self.id3["performer"] = [u"foo"]
+        self.id3["performer"] = [u"\u0243"]
+        self.id3.save(self.filename)
+        new = EasyID3(self.filename)
+        self.assertEqual(new["performer"], [u"\u0243"])
+
     def test_remember_ctr(self):
         empty = os.path.join(DATA_DIR, 'emptyfile.mp3')
         mp3 = ID3FileType(empty, ID3=EasyID3)
