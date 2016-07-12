@@ -97,6 +97,10 @@ class TEncodingSpec(TestCase):
         self.assertRaises(TypeError, s.write, None, None, b'abc')
         self.assertRaises(TypeError, s.write, None, None, None)
 
+    def test_validate(self):
+        s = EncodingSpec('name')
+        self.assertRaises(TypeError, s.validate, None, None)
+
 
 class TASPIIndexSpec(TestCase):
 
@@ -157,11 +161,11 @@ class TStringSpec(TestCase):
 
     def test_validate(self):
         s = StringSpec('byte', 3)
-        self.assertEqual(s.validate(None, None), None)
         self.assertEqual(s.validate(None, "ABC"), "ABC")
         self.assertEqual(s.validate(None, u"ABC"), u"ABC")
         self.assertRaises(ValueError, s.validate, None, "abc2")
         self.assertRaises(ValueError, s.validate, None, "ab")
+        self.assertRaises(TypeError, s.validate, None, None)
 
         if PY3:
             self.assertRaises(TypeError, s.validate, None, b"ABC")
@@ -175,7 +179,6 @@ class TStringSpec(TestCase):
     def test_write(self):
         s = StringSpec('name', 3)
         self.assertEquals(b'abc', s.write(None, None, 'abcdefg'))
-        self.assertEquals(b'\x00\x00\x00', s.write(None, None, None))
         self.assertEquals(b'\x00\x00\x00', s.write(None, None, '\x00'))
         self.assertEquals(b'a\x00\x00', s.write(None, None, 'a'))
 
@@ -184,7 +187,7 @@ class TBinaryDataSpec(TestCase):
 
     def test_validate(self):
         s = BinaryDataSpec('name')
-        self.assertEqual(s.validate(None, None), None)
+        self.assertRaises(TypeError, s.validate, None, None)
         self.assertEqual(s.validate(None, b"abc"), b"abc")
         if PY3:
             self.assertRaises(TypeError, s.validate, None, "abc")
@@ -198,7 +201,6 @@ class TBinaryDataSpec(TestCase):
 
     def test_write(self):
         s = BinaryDataSpec('name')
-        self.assertEquals(b'', s.write(None, None, None))
         self.assertEquals(b'43', s.write(None, None, 43))
         self.assertEquals(b'abc', s.write(None, None, b'abc'))
 
@@ -290,7 +292,7 @@ class TID3FramesSpec(TestCase):
         header.version = (2, 4, 0)
         spec = ID3FramesSpec("name")
 
-        self.assertEqual(spec.validate(None, None), None)
+        self.assertRaises(TypeError, spec.validate, None, None)
         self.assertTrue(isinstance(spec.validate(None, []), ID3Tags))
 
         v = spec.validate(None, [TIT3(encoding=3, text=[u"foo"])])
@@ -317,6 +319,6 @@ class TLatin1TextListSpec(TestCase):
     def test_validate(self):
         spec = Latin1TextListSpec("name")
         self.assertRaises(TypeError, spec.validate, None, object())
+        self.assertRaises(TypeError, spec.validate, None, None)
         self.assertEqual(spec.validate(None, [u"foo"]), [u"foo"])
         self.assertEqual(spec.validate(None, []), [])
-        self.assertEqual(spec.validate(None, None), None)

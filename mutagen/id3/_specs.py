@@ -241,7 +241,7 @@ class EncodingSpec(ByteSpec):
 
     def validate(self, frame, value):
         if value is None:
-            return None
+            raise TypeError
         if value not in (Encoding.LATIN1, Encoding.UTF16, Encoding.UTF16BE,
                          Encoding.UTF8):
             raise ValueError('Invalid Encoding: %r' % value)
@@ -276,17 +276,13 @@ class StringSpec(Spec):
         return chunk, data[s.len:]
 
     def write(self, config, frame, value):
-        if value is None:
-            return b'\x00' * self.len
-        else:
-            if PY3:
-                value = value.encode("ascii")
-            return (bytes(value) + b'\x00' * self.len)[:self.len]
+        if PY3:
+            value = value.encode("ascii")
+        return (bytes(value) + b'\x00' * self.len)[:self.len]
 
     def validate(self, frame, value):
         if value is None:
-            return None
-
+            raise TypeError
         if PY3:
             if not isinstance(value, str):
                 raise TypeError("%s has to be str" % self.name)
@@ -310,8 +306,6 @@ class BinaryDataSpec(Spec):
         return data, b''
 
     def write(self, config, frame, value):
-        if value is None:
-            return b""
         if isinstance(value, bytes):
             return value
         value = text_type(value).encode("ascii")
@@ -319,8 +313,7 @@ class BinaryDataSpec(Spec):
 
     def validate(self, frame, value):
         if value is None:
-            return None
-
+            raise TypeError
         if isinstance(value, bytes):
             return value
         elif PY3:
@@ -397,8 +390,6 @@ class MultiSpec(Spec):
         return b''.join(data)
 
     def validate(self, frame, value):
-        if value is None:
-            return []
         if self.sep and isinstance(value, string_types):
             value = value.split(self.sep)
         if isinstance(value, list):
@@ -484,7 +475,7 @@ class ID3FramesSpec(Spec):
     def validate(self, frame, value):
         from ._tags import ID3Tags
 
-        if value is None or isinstance(value, ID3Tags):
+        if isinstance(value, ID3Tags):
             return value
 
         tags = ID3Tags()
@@ -516,8 +507,6 @@ class Latin1TextListSpec(Spec):
         return b
 
     def validate(self, frame, value):
-        if value is None:
-            return
         return [self._lspec.validate(frame, v) for v in value]
 
 
