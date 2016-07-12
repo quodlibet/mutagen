@@ -14,7 +14,9 @@ from mutagen.id3 import APIC, CTOC, CHAP, TPE2, Frames, Frames_2_2, CRA, \
     AENC, PIC, LNK, LINK, SIGN, PRIV, GRID, ENCR, COMR, USER, UFID, GEOB, \
     POPM, EQU2, RVA2, COMM, SYLT, USLT, WXXX, TXXX, WCOM, TextFrame, \
     UrlFrame, NumericTextFrame, NumericPartTextFrame, TPE1, TIT2, \
-    TimeStampTextFrame, TCON, ID3TimeStamp, Frame, RVRB, RBUF, CTOCFlags
+    TimeStampTextFrame, TCON, ID3TimeStamp, Frame, RVRB, RBUF, CTOCFlags, \
+    PairedTextFrame, BinaryFrame, ETCO, MLLT, SYTC, PCNT, PCST, POSS, OWNE, \
+    SEEK, ASPI, PictureType, CRM
 
 _22 = ID3Header()
 _22.version = (2, 2, 0)
@@ -519,6 +521,29 @@ class TVariousFrames(TestCase):
                         self.assertRaises(TypeError, operator.pos, t)
 
 
+class TPCST(TestCase):
+
+    def test_default(self):
+        frame = PCST()
+        self.assertEqual(frame.value, 0)
+
+
+class TETCO(TestCase):
+
+    def test_default(self):
+        frame = ETCO()
+        self.assertEqual(frame.format, 1)
+        self.assertEqual(frame.events, [])
+
+
+class TSYTC(TestCase):
+
+    def test_default(self):
+        frame = SYTC()
+        self.assertEqual(frame.format, 1)
+        self.assertEqual(frame.data, b"")
+
+
 class TCRA(TestCase):
 
     def test_upgrade(self):
@@ -535,6 +560,14 @@ class TCRA(TestCase):
 
 
 class TPIC(TestCase):
+
+    def test_default(self):
+        frame = PIC()
+        self.assertEqual(frame.encoding, 1)
+        self.assertEqual(frame.mime, u"JPG")
+        self.assertEqual(frame.type, PictureType.COVER_FRONT)
+        self.assertEqual(frame.desc, u"")
+        self.assertEqual(frame.data, b"")
 
     def test_upgrade(self):
         frame = PIC(encoding=0, mime="PNG", desc="bla", type=3, data=b"\x00")
@@ -553,6 +586,11 @@ class TPIC(TestCase):
 
 class TLNK(TestCase):
 
+    def test_default(self):
+        frame = LNK()
+        self.assertEqual(frame.frameid, u"XXX")
+        self.assertEqual(frame.url, u"")
+
     def test_upgrade(self):
         url = "http://foo.bar"
 
@@ -569,6 +607,11 @@ class TLNK(TestCase):
 
 class TSIGN(TestCase):
 
+    def test_default(self):
+        frame = SIGN()
+        self.assertEqual(frame.group, 0x80)
+        self.assertEqual(frame.sig, b"")
+
     def test_hash(self):
         frame = SIGN(group=1, sig=b"foo")
         self.assertEqual(frame.HashKey, "SIGN:1:foo")
@@ -578,7 +621,21 @@ class TSIGN(TestCase):
         frame._pprint()
 
 
+class TCRM(TestCase):
+
+    def test_default(self):
+        frame = CRM()
+        self.assertEqual(frame.owner, u"")
+        self.assertEqual(frame.desc, u"")
+        self.assertEqual(frame.data, b"")
+
+
 class TPRIV(TestCase):
+
+    def test_default(self):
+        frame = PRIV()
+        self.assertEqual(frame.owner, u"")
+        self.assertEqual(frame.data, b"")
 
     def test_hash(self):
         frame = PRIV(owner="foo", data=b"foo")
@@ -592,6 +649,11 @@ class TPRIV(TestCase):
 
 class TGRID(TestCase):
 
+    def test_default(self):
+        frame = GRID()
+        self.assertEqual(frame.owner, u"")
+        self.assertEqual(frame.group, 0x80)
+
     def test_hash(self):
         frame = GRID(owner="foo", group=42)
         self.assertEqual(frame.HashKey, "GRID:42")
@@ -600,13 +662,39 @@ class TGRID(TestCase):
 
 class TENCR(TestCase):
 
+    def test_default(self):
+        frame = ENCR()
+        self.assertEqual(frame.owner, u"")
+        self.assertEqual(frame.method, 0x80)
+        self.assertEqual(frame.data, b"")
+
     def test_hash(self):
         frame = ENCR(owner="foo", method=42, data=b"\xff")
         self.assertEqual(frame.HashKey, "ENCR:foo")
         frame._pprint()
 
 
+class TOWNE(TestCase):
+
+    def test_default(self):
+        frame = OWNE()
+        self.assertEqual(frame.encoding, 1)
+        self.assertEqual(frame.price, u"")
+        self.assertEqual(frame.date, u"19700101")
+        self.assertEqual(frame.seller, u"")
+
+
 class TCOMR(TestCase):
+
+    def test_default(self):
+        frame = COMR()
+        self.assertEqual(frame.encoding, 1)
+        self.assertEqual(frame.price, u"")
+        self.assertEqual(frame.valid_until, u"19700101")
+        self.assertEqual(frame.contact, u"")
+        self.assertEqual(frame.format, 0)
+        self.assertEqual(frame.seller, u"")
+        self.assertEqual(frame.desc, u"")
 
     def test_hash(self):
         frame = COMR(
@@ -617,7 +705,20 @@ class TCOMR(TestCase):
         frame._pprint()
 
 
+class TBinaryFrame(TestCase):
+
+    def test_default(self):
+        frame = BinaryFrame()
+        self.assertEqual(frame.data, b"")
+
+
 class TUSER(TestCase):
+
+    def test_default(self):
+        frame = USER()
+        self.assertEqual(frame.encoding, 1)
+        self.assertEqual(frame.lang, u"XXX")
+        self.assertEqual(frame.text, u"")
 
     def test_hash(self):
         frame = USER(encoding=0, lang="foo", text="bla")
@@ -629,6 +730,18 @@ class TUSER(TestCase):
             USER(lang="abc").HashKey, USER(lang="def").HashKey)
 
 
+class TMLLT(TestCase):
+
+    def test_default(self):
+        frame = MLLT()
+        self.assertEqual(frame.frames, 0)
+        self.assertEqual(frame.bytes, 0)
+        self.assertEqual(frame.milliseconds, 0)
+        self.assertEqual(frame.bits_for_bytes, 0)
+        self.assertEqual(frame.bits_for_milliseconds, 0)
+        self.assertEqual(frame.data, b"")
+
+
 class TTIT2(TestCase):
 
     def test_hash(self):
@@ -636,6 +749,11 @@ class TTIT2(TestCase):
 
 
 class TUFID(TestCase):
+
+    def test_default(self):
+        frame = UFID()
+        self.assertEqual(frame.owner, u"")
+        self.assertEqual(frame.data, b"")
 
     def test_hash(self):
         frame = UFID(owner="foo", data=b"\x42")
@@ -646,7 +764,20 @@ class TUFID(TestCase):
         self.assertNotEquals(UFID(owner="a").HashKey, UFID(owner="b").HashKey)
 
 
+class TPairedTextFrame(TestCase):
+
+    def test_default(self):
+        frame = PairedTextFrame()
+        self.assertEqual(frame.encoding, 1)
+        self.assertEqual(frame.people, [])
+
+
 class TLINK(TestCase):
+
+    def test_default(self):
+        frame = LINK()
+        self.assertEqual(frame.frameid, u"XXXX")
+        self.assertEqual(frame.url, u"")
 
     def test_hash(self):
         frame = LINK(frameid="TPE1", url="http://foo.bar", data=b"\x42")
@@ -659,6 +790,12 @@ class TLINK(TestCase):
 
 class TAENC(TestCase):
 
+    def test_default(self):
+        frame = AENC()
+        self.assertEqual(frame.owner, u"")
+        self.assertEqual(frame.preview_start, 0)
+        self.assertEqual(frame.preview_length, 0)
+
     def test_hash(self):
         frame = AENC(
             owner="foo", preview_start=1, preview_length=2, data=b"\x42")
@@ -667,6 +804,14 @@ class TAENC(TestCase):
 
 
 class TGEOB(TestCase):
+
+    def test_default(self):
+        frame = GEOB()
+        self.assertEqual(frame.encoding, 1)
+        self.assertEqual(frame.mime, u"")
+        self.assertEqual(frame.filename, u"")
+        self.assertEqual(frame.desc, u"")
+        self.assertEqual(frame.data, b"")
 
     def test_hash(self):
         frame = GEOB(
@@ -680,6 +825,12 @@ class TGEOB(TestCase):
 
 class TPOPM(TestCase):
 
+    def test_default(self):
+        frame = POPM()
+        self.assertEqual(frame.email, u"")
+        self.assertEqual(frame.rating, 0)
+        self.assertFalse(hasattr(frame, "count"))
+
     def test_hash(self):
         frame = POPM(email="e", rating=42)
         self.assertEqual(frame.HashKey, "POPM:e")
@@ -691,13 +842,41 @@ class TPOPM(TestCase):
 
 class TEQU2(TestCase):
 
+    def test_default(self):
+        frame = EQU2()
+        self.assertEqual(frame.method, 0)
+        self.assertEqual(frame.desc, u"")
+        self.assertEqual(frame.adjustments, [])
+
     def test_hash(self):
         frame = EQU2(method=42, desc="d", adjustments=[(0, 0)])
         self.assertEqual(frame.HashKey, "EQU2:d")
         frame._pprint()
 
 
+class TSEEK(TestCase):
+
+    def test_default(self):
+        frame = SEEK()
+        self.assertEqual(frame.offset, 0)
+
+
+class TPOSS(TestCase):
+
+    def test_default(self):
+        frame = POSS()
+        self.assertEqual(frame.format, 1)
+        self.assertEqual(frame.position, 0)
+
+
 class TCOMM(TestCase):
+
+    def test_default(self):
+        frame = COMM()
+        self.assertEqual(frame.encoding, 1)
+        self.assertEqual(frame.lang, u"XXX")
+        self.assertEqual(frame.desc, u"")
+        self.assertEqual(frame.text, [])
 
     def test_hash(self):
         frame = COMM(encoding=0, lang="foo", desc="d")
@@ -717,6 +896,15 @@ class TCOMM(TestCase):
 
 class TSYLT(TestCase):
 
+    def test_default(self):
+        frame = SYLT()
+        self.assertEqual(frame.encoding, 1)
+        self.assertEqual(frame.lang, u"XXX")
+        self.assertEqual(frame.format, 1)
+        self.assertEqual(frame.type, 0)
+        self.assertEqual(frame.desc, u"")
+        self.assertEqual(frame.text, u"")
+
     def test_hash(self):
         frame = SYLT(encoding=0, lang="foo", format=1, type=2,
                      desc="d", text=[("t", 0)])
@@ -734,11 +922,30 @@ class TSYLT(TestCase):
 
 class TRVRB(TestCase):
 
+    def test_default(self):
+        frame = RVRB()
+        self.assertEqual(frame.left, 0)
+        self.assertEqual(frame.right, 0)
+        self.assertEqual(frame.bounce_left, 0)
+        self.assertEqual(frame.bounce_right, 0)
+        self.assertEqual(frame.feedback_ltl, 0)
+        self.assertEqual(frame.feedback_ltr, 0)
+        self.assertEqual(frame.feedback_rtr, 0)
+        self.assertEqual(frame.feedback_rtl, 0)
+        self.assertEqual(frame.premix_ltr, 0)
+        self.assertEqual(frame.premix_rtl, 0)
+
     def test_extradata(self):
         self.assertEqual(RVRB()._readData(_24, b'L1R1BBFFFFPP#xyz'), b'#xyz')
 
 
 class TRBUF(TestCase):
+
+    def test_default(self):
+        frame = RBUF()
+        self.assertEqual(frame.size, 0)
+        self.assertFalse(hasattr(frame, "info"))
+        self.assertFalse(hasattr(frame, "offset"))
 
     def test_extradata(self):
         self.assertEqual(
@@ -748,6 +955,13 @@ class TRBUF(TestCase):
 
 class TUSLT(TestCase):
 
+    def test_default(self):
+        frame = USLT()
+        self.assertEqual(frame.encoding, 1)
+        self.assertEqual(frame.lang, u"XXX")
+        self.assertEqual(frame.desc, u"")
+        self.assertEqual(frame.text, u"")
+
     def test_hash(self):
         frame = USLT(encoding=0, lang="foo", desc="d", text="t")
         self.assertEqual(frame.HashKey, "USLT:d:foo")
@@ -755,6 +969,12 @@ class TUSLT(TestCase):
 
 
 class TWXXX(TestCase):
+
+    def test_default(self):
+        frame = WXXX()
+        self.assertEqual(frame.encoding, 1)
+        self.assertEqual(frame.desc, u"")
+        self.assertEqual(frame.url, u"")
 
     def test_hash(self):
         self.assert_(isinstance(WXXX(url='durl'), WXXX))
@@ -768,6 +988,9 @@ class TWXXX(TestCase):
 
 
 class TTXXX(TestCase):
+
+    def test_default(self):
+        self.assertEqual(TXXX(), TXXX(desc=u"", encoding=1, text=[]))
 
     def test_hash(self):
         frame = TXXX(encoding=0, desc="d", text=[])
@@ -788,11 +1011,18 @@ class TWCOM(TestCase):
 
 class TUrlFrame(TestCase):
 
+    def test_default(self):
+        self.assertEqual(UrlFrame(), UrlFrame(url=u""))
+
     def test_main(self):
         self.assertEqual(UrlFrame("url").url, "url")
 
 
 class TNumericTextFrame(TestCase):
+
+    def test_default(self):
+        self.assertEqual(
+            NumericTextFrame(), NumericTextFrame(encoding=1, text=[]))
 
     def test_main(self):
         self.assertEqual(NumericTextFrame(text='1').text, ["1"])
@@ -800,6 +1030,11 @@ class TNumericTextFrame(TestCase):
 
 
 class TNumericPartTextFrame(TestCase):
+
+    def test_default(self):
+        self.assertEqual(
+            NumericPartTextFrame(),
+            NumericPartTextFrame(encoding=1, text=[]))
 
     def test_main(self):
         self.assertEqual(NumericPartTextFrame(text='1/2').text, ["1/2"])
@@ -1125,6 +1360,10 @@ class TFrameTest(object):
     def test_is_valid_frame_id(self):
         self.assertTrue(is_valid_frame_id(self.FRAME.__name__))
 
+    def test_all_specs_have_default(self):
+        for spec in self.FRAME._framespec:
+            self.assertTrue(spec is not None)
+
     @classmethod
     def create_frame_tests(cls):
         for kind in (list(Frames.values()) + list(Frames_2_2.values())):
@@ -1150,12 +1389,19 @@ class FrameIDValidate(TestCase):
 
 class TTimeStampTextFrame(TestCase):
 
+    def test_default(self):
+        self.assertEqual(
+            TimeStampTextFrame(), TimeStampTextFrame(encoding=1, text=[]))
+
     def test_compare_to_unicode(self):
         frame = TimeStampTextFrame(encoding=0, text=[u'1987', u'1988'])
         self.failUnlessEqual(frame, text_type(frame))
 
 
 class TTextFrame(TestCase):
+
+    def test_defaults(self):
+        self.assertEqual(TextFrame(), TextFrame(encoding=1, text=[]))
 
     def test_main(self):
         self.assertEqual(TextFrame(text='text').text, ["text"])
@@ -1199,6 +1445,13 @@ class TTextFrame(TestCase):
 
 class TRVA2(TestCase):
 
+    def test_default(self):
+        frame = RVA2()
+        self.assertEqual(frame.desc, u"")
+        self.assertEqual(frame.channel, 1)
+        self.assertEqual(frame.gain, 1)
+        self.assertEqual(frame.peak, 1)
+
     def test_basic(self):
         r = RVA2(gain=1, channel=1, peak=1)
         self.assertEqual(r, r)
@@ -1225,6 +1478,10 @@ class TRVA2(TestCase):
 
 
 class TCTOC(TestCase):
+
+    def test_defaults(self):
+        self.assertEqual(CTOC(), CTOC(element_id=u"", flags=0,
+                                      child_element_ids=[], sub_frames=[]))
 
     def test_hash(self):
         frame = CTOC(element_id=u"foo", flags=3,
@@ -1254,6 +1511,17 @@ class TCTOC(TestCase):
         self.assertNotEqual(CTOC(), object())
 
 
+class TASPI(TestCase):
+
+    def test_default(self):
+        frame = ASPI()
+        self.assertEqual(frame.S, 0)
+        self.assertEqual(frame.L, 0)
+        self.assertEqual(frame.N, 0)
+        self.assertEqual(frame.b, 0)
+        self.assertEqual(frame.Fi, [])
+
+
 class TCHAP(TestCase):
 
     def test_hash(self):
@@ -1274,7 +1542,22 @@ class TCHAP(TestCase):
         self.assertNotEqual(CHAP(), object())
 
 
+class TPCNT(TestCase):
+
+    def test_default(self):
+        frame = PCNT()
+        self.assertEqual(frame.count, 0)
+
+
 class TAPIC(TestCase):
+
+    def test_default(self):
+        frame = APIC()
+        self.assertEqual(frame.encoding, 1)
+        self.assertEqual(frame.mime, u"")
+        self.assertEqual(frame.type, 3)
+        self.assertEqual(frame.desc, u"")
+        self.assertEqual(frame.data, b"")
 
     def test_hash(self):
         frame = APIC(encoding=0, mime=u"m", type=3, desc=u"d", data=b"\x42")

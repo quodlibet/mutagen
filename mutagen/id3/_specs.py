@@ -109,8 +109,9 @@ class Spec(object):
     result in no data.
     """
 
-    def __init__(self, name):
+    def __init__(self, name, default):
         self.name = name
+        self.default = default
 
     def __hash__(self):
         raise TypeError("Spec objects are unhashable")
@@ -137,6 +138,10 @@ class Spec(object):
 
 
 class ByteSpec(Spec):
+
+    def __init__(self, name, default=0):
+        super(ByteSpec, self).__init__(name, default)
+
     def read(self, header, frame, data):
         return bytearray(data)[0], data[1:]
 
@@ -150,6 +155,9 @@ class ByteSpec(Spec):
 
 
 class PictureTypeSpec(ByteSpec):
+
+    def __init__(self, name, default=PictureType.COVER_FRONT):
+        super(PictureTypeSpec, self).__init__(name, default)
 
     def read(self, header, frame, data):
         value, data = ByteSpec.read(self, header, frame, data)
@@ -187,8 +195,10 @@ class IntegerSpec(Spec):
 
 
 class SizedIntegerSpec(Spec):
-    def __init__(self, name, size):
+
+    def __init__(self, name, size, default=None):
         self.name, self.__sz = name, size
+        self.default = default
 
     def read(self, header, frame, data):
         return int(BitPaddedInt(data[:self.__sz], bits=8)), data[self.__sz:]
@@ -219,6 +229,9 @@ class Encoding(object):
 
 class EncodingSpec(ByteSpec):
 
+    def __init__(self, name, default=Encoding.UTF16):
+        super(EncodingSpec, self).__init__(name, default)
+
     def read(self, header, frame, data):
         enc, data = super(EncodingSpec, self).read(header, frame, data)
         if enc not in (Encoding.LATIN1, Encoding.UTF16, Encoding.UTF16BE,
@@ -244,8 +257,10 @@ class EncodingSpec(ByteSpec):
 class StringSpec(Spec):
     """A fixed size ASCII only payload."""
 
-    def __init__(self, name, length):
-        super(StringSpec, self).__init__(name)
+    def __init__(self, name, length, default=None):
+        if default is None:
+            default = u" " * length
+        super(StringSpec, self).__init__(name, default)
         self.len = length
 
     def read(s, header, frame, data):
@@ -287,6 +302,10 @@ class StringSpec(Spec):
 
 
 class BinaryDataSpec(Spec):
+
+    def __init__(self, name, default=b""):
+        super(BinaryDataSpec, self).__init__(name, default)
+
     def read(self, header, frame, data):
         return data, b''
 
@@ -320,6 +339,9 @@ class EncodedTextSpec(Spec):
         Encoding.UTF8: ('utf8', b'\x00'),
     }
 
+    def __init__(self, name, default=u""):
+        super(EncodedTextSpec, self).__init__(name, default)
+
     def read(self, header, frame, data):
         enc, term = self._encodings[frame.encoding]
         try:
@@ -346,7 +368,7 @@ class EncodedTextSpec(Spec):
 
 class MultiSpec(Spec):
     def __init__(self, name, *specs, **kw):
-        super(MultiSpec, self).__init__(name)
+        super(MultiSpec, self).__init__(name, default=kw.get('default'))
         self.specs = specs
         self.sep = kw.get('sep')
 
@@ -416,7 +438,11 @@ class EncodedNumericPartTextSpec(EncodedTextSpec):
     pass
 
 
-class Latin1TextSpec(EncodedTextSpec):
+class Latin1TextSpec(Spec):
+
+    def __init__(self, name, default=u""):
+        super(Latin1TextSpec, self).__init__(name, default)
+
     def read(self, header, frame, data):
         if b'\x00' in data:
             data, ret = data.split(b'\x00', 1)
@@ -434,6 +460,9 @@ class Latin1TextSpec(EncodedTextSpec):
 class ID3FramesSpec(Spec):
 
     handle_nodata = True
+
+    def __init__(self, name, default=[]):
+        super(ID3FramesSpec, self).__init__(name, default)
 
     def read(self, header, frame, data):
         from ._tags import ID3Tags
@@ -467,9 +496,9 @@ class ID3FramesSpec(Spec):
 
 class Latin1TextListSpec(Spec):
 
-    def __init__(self, *args, **kwargs):
-        super(Latin1TextListSpec, self).__init__(*args, **kwargs)
-        self._bspec = ByteSpec("entry_count")
+    def __init__(self, name, default=[]):
+        super(Latin1TextListSpec, self).__init__(name, default)
+        self._bspec = ByteSpec("entry_count", default=0)
         self._lspec = Latin1TextSpec("child_element_id")
 
     def read(self, header, frame, data):
@@ -707,6 +736,7 @@ class VolumeAdjustmentsSpec(Spec):
 
 
 class ASPIIndexSpec(Spec):
+
     def read(self, header, frame, data):
         if frame.b == 16:
             format = "H"

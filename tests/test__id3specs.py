@@ -102,7 +102,7 @@ class TASPIIndexSpec(TestCase):
 
     def test_read(self):
         frame = ASPI(b=16, N=2)
-        s = ASPIIndexSpec('name')
+        s = ASPIIndexSpec('name', [])
         self.assertRaises(SpecError, s.read, None, frame, b'')
         self.assertEqual(
             s.read(None, frame, b'\x01\x00\x00\x01'), ([256, 1], b""))
@@ -113,17 +113,17 @@ class TASPIIndexSpec(TestCase):
 class TVolumeAdjustmentSpec(TestCase):
 
     def test_validate(self):
-        s = VolumeAdjustmentSpec('gain')
+        s = VolumeAdjustmentSpec('gain', 0)
         self.assertRaises(ValueError, s.validate, None, 65)
 
     def test_read(self):
-        s = VolumeAdjustmentSpec('gain')
+        s = VolumeAdjustmentSpec('gain', 0)
         self.assertEquals((0.0, b''), s.read(None, None, b'\x00\x00'))
         self.assertEquals((2.0, b''), s.read(None, None, b'\x04\x00'))
         self.assertEquals((-2.0, b''), s.read(None, None, b'\xfc\x00'))
 
     def test_write(self):
-        s = VolumeAdjustmentSpec('gain')
+        s = VolumeAdjustmentSpec('gain', 0)
         self.assertEquals(b'\x00\x00', s.write(None, None, 0.0))
         self.assertEquals(b'\x04\x00', s.write(None, None, 2.0))
         self.assertEquals(b'\xfc\x00', s.write(None, None, -2.0))
@@ -149,7 +149,7 @@ class TByteSpec(TestCase):
 class TVolumePeakSpec(TestCase):
 
     def test_validate(self):
-        s = VolumePeakSpec('peak')
+        s = VolumePeakSpec('peak', 0)
         self.assertRaises(ValueError, s.validate, None, 2)
 
 
@@ -206,7 +206,8 @@ class TBinaryDataSpec(TestCase):
 class TSpec(TestCase):
 
     def test_no_hash(self):
-        self.failUnlessRaises(TypeError, {}.__setitem__, Spec("foo"), None)
+        self.failUnlessRaises(
+            TypeError, {}.__setitem__, Spec("foo", None), None)
 
 
 class TCTOCFlagsSpec(TestCase):

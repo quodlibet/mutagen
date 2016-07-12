@@ -11,13 +11,13 @@ from struct import unpack
 
 from ._util import ID3JunkFrameError, ID3EncryptionUnsupportedError, unsynch, \
     ID3SaveConfig
-from ._specs import (
-    BinaryDataSpec, StringSpec, Latin1TextSpec, EncodedTextSpec, ByteSpec,
-    EncodingSpec, ASPIIndexSpec, SizedIntegerSpec, IntegerSpec,
-    VolumeAdjustmentsSpec, VolumePeakSpec, VolumeAdjustmentSpec,
-    ChannelSpec, MultiSpec, SynchronizedTextSpec, KeyEventSpec, TimeStampSpec,
-    EncodedNumericPartTextSpec, EncodedNumericTextSpec, SpecError,
-    PictureTypeSpec, ID3FramesSpec, Latin1TextListSpec, CTOCFlagsSpec)
+from ._specs import BinaryDataSpec, StringSpec, Latin1TextSpec, \
+    EncodedTextSpec, ByteSpec, EncodingSpec, ASPIIndexSpec, SizedIntegerSpec, \
+    IntegerSpec, Encoding, VolumeAdjustmentsSpec, VolumePeakSpec, \
+    VolumeAdjustmentSpec, ChannelSpec, MultiSpec, SynchronizedTextSpec, \
+    KeyEventSpec, TimeStampSpec, EncodedNumericPartTextSpec, \
+    EncodedNumericTextSpec, SpecError, PictureTypeSpec, ID3FramesSpec, \
+    Latin1TextListSpec, CTOCFlagsSpec
 from .._compat import text_type, string_types, swap_to_string, iteritems, \
     izip, itervalues
 
@@ -64,7 +64,8 @@ class Frame(object):
             for checker, val in izip(self._framespec, args):
                 setattr(self, checker.name, val)
             for checker in self._framespec[len(args):]:
-                setattr(self, checker.name, kwargs.get(checker.name))
+                setattr(self, checker.name,
+                        kwargs.get(checker.name, checker.default))
             for spec in self._optionalspec:
                 if spec.name in kwargs:
                     setattr(self, spec.name, kwargs[spec.name])
@@ -312,7 +313,7 @@ class CTOC(Frame):
 
     _framespec = [
         Latin1TextSpec("element_id"),
-        CTOCFlagsSpec("flags"),
+        CTOCFlagsSpec("flags", default=0),
         Latin1TextListSpec("child_element_ids"),
         ID3FramesSpec("sub_frames"),
     ]
@@ -363,8 +364,8 @@ class TextFrame(Frame):
     """
 
     _framespec = [
-        EncodingSpec('encoding'),
-        MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000'),
+        EncodingSpec('encoding', default=Encoding.UTF16),
+        MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000', default=[]),
     ]
 
     def __bytes__(self):
@@ -412,8 +413,9 @@ class NumericTextFrame(TextFrame):
     """
 
     _framespec = [
-        EncodingSpec('encoding'),
-        MultiSpec('text', EncodedNumericTextSpec('text'), sep=u'\u0000'),
+        EncodingSpec('encoding', default=Encoding.UTF16),
+        MultiSpec('text', EncodedNumericTextSpec('text'), sep=u'\u0000',
+                  default=[]),
     ]
 
     def __pos__(self):
@@ -432,8 +434,9 @@ class NumericPartTextFrame(TextFrame):
     """
 
     _framespec = [
-        EncodingSpec('encoding'),
-        MultiSpec('text', EncodedNumericPartTextSpec('text'), sep=u'\u0000'),
+        EncodingSpec('encoding', default=Encoding.UTF16),
+        MultiSpec('text', EncodedNumericPartTextSpec('text'), sep=u'\u0000',
+                  default=[]),
     ]
 
     def __pos__(self):
@@ -449,8 +452,8 @@ class TimeStampTextFrame(TextFrame):
     """
 
     _framespec = [
-        EncodingSpec('encoding'),
-        MultiSpec('text', TimeStampSpec('stamp'), sep=u','),
+        EncodingSpec('encoding', default=Encoding.UTF16),
+        MultiSpec('text', TimeStampSpec('stamp'), sep=u',', default=[]),
     ]
 
     def __bytes__(self):
@@ -476,7 +479,9 @@ class UrlFrame(Frame):
     ASCII.
     """
 
-    _framespec = [Latin1TextSpec('url')]
+    _framespec = [
+        Latin1TextSpec('url'),
+    ]
 
     def __bytes__(self):
         return self.url.encode('utf-8')
@@ -802,7 +807,7 @@ class TXXX(TextFrame):
     _framespec = [
         EncodingSpec('encoding'),
         EncodedTextSpec('desc'),
-        MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000'),
+        MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000', default=[]),
     ]
 
     @property
@@ -856,7 +861,7 @@ class WXXX(UrlFrame):
     """
 
     _framespec = [
-        EncodingSpec('encoding'),
+        EncodingSpec('encoding', default=Encoding.UTF16),
         EncodedTextSpec('desc'),
         Latin1TextSpec('url'),
     ]
@@ -879,10 +884,10 @@ class PairedTextFrame(Frame):
     """
 
     _framespec = [
-        EncodingSpec('encoding'),
+        EncodingSpec('encoding', default=Encoding.UTF16),
         MultiSpec('people',
                   EncodedTextSpec('involvement'),
-                  EncodedTextSpec('person'))
+                  EncodedTextSpec('person'), default=[])
     ]
 
     def __eq__(self, other):
@@ -909,7 +914,9 @@ class BinaryFrame(Frame):
     The 'data' attribute contains the raw byte string.
     """
 
-    _framespec = [BinaryDataSpec('data')]
+    _framespec = [
+        BinaryDataSpec('data'),
+    ]
 
     def __eq__(self, other):
         return self.data == other
@@ -925,8 +932,8 @@ class ETCO(Frame):
     """Event timing codes."""
 
     _framespec = [
-        ByteSpec("format"),
-        KeyEventSpec("events"),
+        ByteSpec("format", default=1),
+        KeyEventSpec("events", default=[]),
     ]
 
     def __eq__(self, other):
@@ -943,11 +950,11 @@ class MLLT(Frame):
     """
 
     _framespec = [
-        SizedIntegerSpec('frames', 2),
-        SizedIntegerSpec('bytes', 3),
-        SizedIntegerSpec('milliseconds', 3),
-        ByteSpec('bits_for_bytes'),
-        ByteSpec('bits_for_milliseconds'),
+        SizedIntegerSpec('frames', size=2, default=0),
+        SizedIntegerSpec('bytes', size=3, default=0),
+        SizedIntegerSpec('milliseconds', size=3, default=0),
+        ByteSpec('bits_for_bytes', default=0),
+        ByteSpec('bits_for_milliseconds', default=0),
         BinaryDataSpec('data'),
     ]
 
@@ -965,8 +972,8 @@ class SYTC(Frame):
     """
 
     _framespec = [
-        ByteSpec("format"),
-        BinaryDataSpec("data"),
+        ByteSpec("format", default=1),
+        BinaryDataSpec("data", default=b""),
     ]
 
     def __eq__(self, other):
@@ -984,8 +991,8 @@ class USLT(Frame):
     """
 
     _framespec = [
-        EncodingSpec('encoding'),
-        StringSpec('lang', 3),
+        EncodingSpec('encoding', default=Encoding.UTF16),
+        StringSpec('lang', length=3, default=u"XXX"),
         EncodedTextSpec('desc'),
         EncodedTextSpec('text'),
     ]
@@ -1012,9 +1019,9 @@ class SYLT(Frame):
 
     _framespec = [
         EncodingSpec('encoding'),
-        StringSpec('lang', 3),
-        ByteSpec('format'),
-        ByteSpec('type'),
+        StringSpec('lang', length=3, default=u"XXX"),
+        ByteSpec('format', default=1),
+        ByteSpec('type', default=0),
         EncodedTextSpec('desc'),
         SynchronizedTextSpec('text'),
     ]
@@ -1044,9 +1051,9 @@ class COMM(TextFrame):
 
     _framespec = [
         EncodingSpec('encoding'),
-        StringSpec('lang', 3),
+        StringSpec('lang', length=3, default="XXX"),
         EncodedTextSpec('desc'),
-        MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000'),
+        MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000', default=[]),
     ]
 
     @property
@@ -1076,9 +1083,9 @@ class RVA2(Frame):
 
     _framespec = [
         Latin1TextSpec('desc'),
-        ChannelSpec('channel'),
-        VolumeAdjustmentSpec('gain'),
-        VolumePeakSpec('peak'),
+        ChannelSpec('channel', default=1),
+        VolumeAdjustmentSpec('gain', default=1),
+        VolumePeakSpec('peak', default=1),
     ]
 
     _channels = ["Other", "Master volume", "Front right", "Front left",
@@ -1116,9 +1123,9 @@ class EQU2(Frame):
     """
 
     _framespec = [
-        ByteSpec("method"),
+        ByteSpec("method", default=0),
         Latin1TextSpec("desc"),
-        VolumeAdjustmentsSpec("adjustments"),
+        VolumeAdjustmentsSpec("adjustments", default=[]),
     ]
 
     def __eq__(self, other):
@@ -1139,16 +1146,16 @@ class RVRB(Frame):
     """Reverb."""
 
     _framespec = [
-        SizedIntegerSpec('left', 2),
-        SizedIntegerSpec('right', 2),
-        ByteSpec('bounce_left'),
-        ByteSpec('bounce_right'),
-        ByteSpec('feedback_ltl'),
-        ByteSpec('feedback_ltr'),
-        ByteSpec('feedback_rtr'),
-        ByteSpec('feedback_rtl'),
-        ByteSpec('premix_ltr'),
-        ByteSpec('premix_rtl'),
+        SizedIntegerSpec('left', size=2, default=0),
+        SizedIntegerSpec('right', size=2, default=0),
+        ByteSpec('bounce_left', default=0),
+        ByteSpec('bounce_right', default=0),
+        ByteSpec('feedback_ltl', default=0),
+        ByteSpec('feedback_ltr', default=0),
+        ByteSpec('feedback_rtr', default=0),
+        ByteSpec('feedback_rtl', default=0),
+        ByteSpec('premix_ltr', default=0),
+        ByteSpec('premix_rtl', default=0),
     ]
 
     def __eq__(self, other):
@@ -1206,7 +1213,9 @@ class PCNT(Frame):
     This frame is basically obsoleted by POPM.
     """
 
-    _framespec = [IntegerSpec('count')]
+    _framespec = [
+        IntegerSpec('count', default=0),
+    ]
 
     def __eq__(self, other):
         return self.count == other
@@ -1223,7 +1232,9 @@ class PCNT(Frame):
 class PCST(Frame):
     """iTunes Podcast Flag"""
 
-    _framespec = [IntegerSpec('value')]
+    _framespec = [
+        IntegerSpec('value', default=0),
+    ]
 
     def __eq__(self, other):
         return self.value == other
@@ -1252,10 +1263,12 @@ class POPM(Frame):
 
     _framespec = [
         Latin1TextSpec('email'),
-        ByteSpec('rating'),
+        ByteSpec('rating', default=0),
     ]
 
-    _optionalspec = [IntegerSpec('count')]
+    _optionalspec = [
+        IntegerSpec('count', default=0),
+    ]
 
     @property
     def HashKey(self):
@@ -1318,11 +1331,13 @@ class RBUF(Frame):
     Mutagen will not find the next tag itself.
     """
 
-    _framespec = [SizedIntegerSpec('size', 3)]
+    _framespec = [
+        SizedIntegerSpec('size', size=3, default=0),
+    ]
 
     _optionalspec = [
-        ByteSpec('info'),
-        SizedIntegerSpec('offset', 4),
+        ByteSpec('info', default=0),
+        SizedIntegerSpec('offset', size=4, default=0),
     ]
 
     def __eq__(self, other):
@@ -1350,11 +1365,13 @@ class AENC(Frame):
 
     _framespec = [
         Latin1TextSpec('owner'),
-        SizedIntegerSpec('preview_start', 2),
-        SizedIntegerSpec('preview_length', 2),
+        SizedIntegerSpec('preview_start', size=2, default=0),
+        SizedIntegerSpec('preview_length', size=2, default=0),
     ]
 
-    _optionalspec = [BinaryDataSpec('data')]
+    _optionalspec = [
+        BinaryDataSpec('data'),
+    ]
 
     @property
     def HashKey(self):
@@ -1383,7 +1400,7 @@ class LINK(Frame):
     """
 
     _framespec = [
-        StringSpec('frameid', 4),
+        StringSpec('frameid', length=4, default=u"XXXX"),
         Latin1TextSpec('url'),
     ]
 
@@ -1416,8 +1433,8 @@ class POSS(Frame):
     """
 
     _framespec = [
-        ByteSpec('format'),
-        IntegerSpec('position'),
+        ByteSpec('format', default=1),
+        IntegerSpec('position', default=0),
     ]
 
     def __pos__(self):
@@ -1440,7 +1457,7 @@ class UFID(Frame):
 
     _framespec = [
         Latin1TextSpec('owner'),
-        BinaryDataSpec('data'),
+        BinaryDataSpec('data', default=b""),
     ]
 
     @property
@@ -1472,7 +1489,7 @@ class USER(Frame):
 
     _framespec = [
         EncodingSpec('encoding'),
-        StringSpec('lang', 3),
+        StringSpec('lang', length=3, default=u"XXX"),
         EncodedTextSpec('text'),
     ]
 
@@ -1502,7 +1519,7 @@ class OWNE(Frame):
     _framespec = [
         EncodingSpec('encoding'),
         Latin1TextSpec('price'),
-        StringSpec('date', 8),
+        StringSpec('date', length=8, default=u"19700101"),
         EncodedTextSpec('seller'),
     ]
 
@@ -1524,9 +1541,9 @@ class COMR(Frame):
     _framespec = [
         EncodingSpec('encoding'),
         Latin1TextSpec('price'),
-        StringSpec('valid_until', 8),
+        StringSpec('valid_until', length=8, default=u"19700101"),
         Latin1TextSpec('contact'),
-        ByteSpec('format'),
+        ByteSpec('format', default=0),
         EncodedTextSpec('seller'),
         EncodedTextSpec('desc'),
     ]
@@ -1556,8 +1573,8 @@ class ENCR(Frame):
 
     _framespec = [
         Latin1TextSpec('owner'),
-        ByteSpec('method'),
-        BinaryDataSpec('data'),
+        ByteSpec('method', default=0x80),
+        BinaryDataSpec('data', default=b""),
     ]
 
     @property
@@ -1579,7 +1596,7 @@ class GRID(Frame):
 
     _framespec = [
         Latin1TextSpec('owner'),
-        ByteSpec('group'),
+        ByteSpec('group', default=0x80),
     ]
 
     _optionalspec = [BinaryDataSpec('data')]
@@ -1634,7 +1651,7 @@ class SIGN(Frame):
     """Signature frame."""
 
     _framespec = [
-        ByteSpec('group'),
+        ByteSpec('group', default=0x80),
         BinaryDataSpec('sig'),
     ]
 
@@ -1657,7 +1674,9 @@ class SEEK(Frame):
     Mutagen does not find tags at seek offsets.
     """
 
-    _framespec = [IntegerSpec('offset')]
+    _framespec = [
+        IntegerSpec('offset', default=0),
+    ]
 
     def __pos__(self):
         return self.offset
@@ -1674,12 +1693,13 @@ class ASPI(Frame):
     Attributes: S, L, N, b, and Fi. For the meaning of these, see
     the ID3v2.4 specification. Fi is a list of integers.
     """
+
     _framespec = [
-        SizedIntegerSpec("S", 4),
-        SizedIntegerSpec("L", 4),
-        SizedIntegerSpec("N", 2),
-        ByteSpec("b"),
-        ASPIIndexSpec("Fi"),
+        SizedIntegerSpec("S", size=4, default=0),
+        SizedIntegerSpec("L", size=4, default=0),
+        SizedIntegerSpec("N", size=2, default=0),
+        ByteSpec("b", default=0),
+        ASPIIndexSpec("Fi", default=[]),
     ]
 
     def __eq__(self, other):
@@ -1918,10 +1938,10 @@ class PIC(APIC):
 
     _framespec = [
         EncodingSpec('encoding'),
-        StringSpec('mime', 3),
+        StringSpec('mime', length=3, default="JPG"),
         PictureTypeSpec('type'),
         EncodedTextSpec('desc'),
-        BinaryDataSpec('data')
+        BinaryDataSpec('data'),
     ]
 
     def _to_other(self, other):
@@ -1953,8 +1973,12 @@ class BUF(RBUF):
 
 class CRM(Frame):
     """Encrypted meta frame"""
-    _framespec = [Latin1TextSpec('owner'), Latin1TextSpec('desc'),
-                  BinaryDataSpec('data')]
+
+    _framespec = [
+        Latin1TextSpec('owner'),
+        Latin1TextSpec('desc'),
+        BinaryDataSpec('data'),
+    ]
 
     def __eq__(self, other):
         return self.data == other
@@ -1969,11 +1993,13 @@ class LNK(LINK):
     """Linked information"""
 
     _framespec = [
-        StringSpec('frameid', 3),
+        StringSpec('frameid', length=3, default=u"XXX"),
         Latin1TextSpec('url')
     ]
 
-    _optionalspec = [BinaryDataSpec('data')]
+    _optionalspec = [
+        BinaryDataSpec('data'),
+    ]
 
     def _to_other(self, other):
         if not isinstance(other, LINK):
