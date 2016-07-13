@@ -27,12 +27,11 @@ class Error(object):
     UNABLE_DETECT_UNDEF = "unable to detect undefined names"
     UNDEFINED_PY2_NAME = \
         "undefined name '(unicode|long|basestring|xrange|cmp)'"
-    MAYBE_UNDEF = "may be undefined, or defined from star imports"
 
 
 class FakeStream(object):
     # skip these by default
-    BL = [Error.UNABLE_DETECT_UNDEF, Error.MAYBE_UNDEF]
+    BL = []
     if _compat.PY3:
         BL.append(Error.UNDEFINED_PY2_NAME)
 

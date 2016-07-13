@@ -14,7 +14,8 @@ from mutagen import StreamInfo
 from mutagen._util import MutagenError, enum, BitReader, BitReaderError, \
     convert_error
 from mutagen._compat import endswith, xrange
-from mutagen.id3 import ID3FileType, BitPaddedInt, delete
+from mutagen.id3 import ID3FileType, delete
+from mutagen.id3._util import BitPaddedInt
 
 from ._util import XingHeader, XingHeaderError, VBRIHeader, VBRIHeaderError
 

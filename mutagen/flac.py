@@ -30,7 +30,7 @@ from ._compat import cBytesIO, endswith, chr_, xrange
 from mutagen._util import resize_bytes, MutagenError, get_size, loadfile, \
     convert_error
 from mutagen._tags import PaddingInfo
-from mutagen.id3 import BitPaddedInt
+from mutagen.id3._util import BitPaddedInt
 from functools import reduce
 
 

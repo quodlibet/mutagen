@@ -22,7 +22,7 @@ import struct
 from ._compat import endswith, xrange
 from mutagen import StreamInfo
 from mutagen.apev2 import APEv2File, error, delete
-from mutagen.id3 import BitPaddedInt
+from mutagen.id3._util import BitPaddedInt
 from mutagen._util import cdata, convert_error
 
 

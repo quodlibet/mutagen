@@ -10,9 +10,9 @@ from mutagen.id3 import ID3, Frames, ID3UnsupportedVersionError, TIT2, \
     TDAT, TIME, LNK, IPLS, TPE1, BinaryFrame, TIT3, POPM, APIC, \
     TALB, TPE2, TSOT, TDEN, TIPL, ParseID3v1, Encoding, ID3Tags
 from mutagen.id3._util import BitPaddedInt, error as ID3Error
-from mutagen.id3._tags import _determine_bpi as determine_bpi, ID3Header, \
+from mutagen.id3._tags import determine_bpi, ID3Header, \
     save_frame, ID3SaveConfig
-from mutagen.id3._id3v1 import _find_id3v1
+from mutagen.id3._id3v1 import find_id3v1
 from mutagen._compat import cBytesIO
 
 from tests import TestCase, DATA_DIR, get_temp_copy, get_temp_empty
@@ -967,7 +967,7 @@ class Issue69_BadV1Year(TestCase):
         self.failUnlessEqual(tag["TIT2"], "hello world")
         self.failUnlessEqual(tag["TDRC"], "0001")
 
-        frames, offset = _find_id3v1(cBytesIO(data))
+        frames, offset = find_id3v1(cBytesIO(data))
         self.assertEqual(offset, -125)
         self.assertEqual(frames, tag)
 

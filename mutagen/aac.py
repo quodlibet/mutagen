@@ -15,6 +15,7 @@ from mutagen import StreamInfo
 from mutagen._file import FileType
 from mutagen._util import BitReader, BitReaderError, MutagenError, loadfile, \
     convert_error
+from mutagen.id3._util import BitPaddedInt
 from mutagen._compat import endswith, xrange
 
 
@@ -287,7 +288,6 @@ class AACInfo(StreamInfo):
         # skip id3v2 header
         start_offset = 0
         header = fileobj.read(10)
-        from mutagen.id3 import BitPaddedInt
         if header.startswith(b"ID3"):
             size = BitPaddedInt(header[6:])
             start_offset = size + 10

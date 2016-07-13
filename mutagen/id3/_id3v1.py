@@ -16,7 +16,7 @@ from mutagen._util import chr_, text_type
 from ._frames import TCON, TRCK, COMM, TDRC, TALB, TPE1, TIT2
 
 
-def _find_id3v1(fileobj):
+def find_id3v1(fileobj):
     """Returns a tuple of (id3tag, offset_to_end) or (None, 0)
 
     offset mainly because we used to write too short tags in some cases and

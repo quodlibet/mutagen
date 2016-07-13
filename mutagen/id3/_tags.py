@@ -6,12 +6,17 @@
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
 
-from ._util import *
 import struct
+
 from mutagen._tags import Tags
-from struct import unpack, pack
 from mutagen._util import DictProxy, convert_error, read_full
-from ._frames import *
+from mutagen._compat import PY3, text_type
+
+from ._util import BitPaddedInt, unsynch, ID3JunkFrameError, \
+    ID3EncryptionUnsupportedError, is_valid_frame_id, error, \
+    ID3NoHeaderError, ID3UnsupportedVersionError, ID3SaveConfig
+from ._frames import TDRC, APIC, TDOR, TIME, TIPL, TORY, TDAT, Frames_2_2, \
+    TextFrame, TYER, Frame, IPLS, Frames
 
 
 class ID3Header(object):
@@ -51,7 +56,7 @@ class ID3Header(object):
         if len(data) != 10:
             raise ID3NoHeaderError("%s: too small" % fn)
 
-        id3, vmaj, vrev, flags, size = unpack('>3sBBB4s', data)
+        id3, vmaj, vrev, flags, size = struct.unpack('>3sBBB4s', data)
         self._flags = flags
         self.size = BitPaddedInt(size) + 10
         self.version = (2, vmaj, vrev)
@@ -103,12 +108,12 @@ class ID3Header(object):
             else:
                 # "Where the 'Extended header size', currently 6 or 10 bytes,
                 # excludes itself."
-                extsize = unpack('>L', extsize_data)[0]
+                extsize = struct.unpack('>L', extsize_data)[0]
 
             self._extdata = read_full(fileobj, extsize)
 
 
-def _determine_bpi(data, frames, EMPTY=b"\x00" * 10):
+def determine_bpi(data, frames, EMPTY=b"\x00" * 10):
     """Takes id3v2.4 frame data and determines if ints or bitpaddedints
     should be used for parsing. Needed because iTunes used to write
     normal ints for frame sizes.
@@ -122,7 +127,7 @@ def _determine_bpi(data, frames, EMPTY=b"\x00" * 10):
         if part == EMPTY:
             bpioff = -((len(data) - o) % 10)
             break
-        name, size, flags = unpack('>4sLH', part)
+        name, size, flags = struct.unpack('>4sLH', part)
         size = BitPaddedInt(size)
         o += 10 + size
         if PY3:
@@ -143,7 +148,7 @@ def _determine_bpi(data, frames, EMPTY=b"\x00" * 10):
         if part == EMPTY:
             intoff = -((len(data) - o) % 10)
             break
-        name, size, flags = unpack('>4sLH', part)
+        name, size, flags = struct.unpack('>4sLH', part)
         o += 10 + size
         if PY3:
             try:
@@ -455,7 +460,7 @@ def save_frame(frame, name=None, config=None):
         if PY3:
             frame_name = frame_name.encode("ascii")
 
-    header = pack('>4s4sH', frame_name, datasize, flags)
+    header = struct.pack('>4s4sH', frame_name, datasize, flags)
     return header + framedata
 
 
@@ -477,12 +482,12 @@ def read_frames(id3, data, frames):
         if id3.version < ID3Header._V24:
             bpi = int
         else:
-            bpi = _determine_bpi(data, frames)
+            bpi = determine_bpi(data, frames)
 
         while data:
             header = data[:10]
             try:
-                name, size, flags = unpack('>4sLH', header)
+                name, size, flags = struct.unpack('>4sLH', header)
             except struct.error:
                 break  # not enough header
             if name.strip(b'\x00') == b'':
@@ -521,7 +526,7 @@ def read_frames(id3, data, frames):
         while data:
             header = data[0:6]
             try:
-                name, size = unpack('>3s3s', header)
+                name, size = struct.unpack('>3s3s', header)
             except struct.error:
                 break  # not enough header
             size, = struct.unpack('>L', b'\x00' + size)

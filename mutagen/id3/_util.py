@@ -8,8 +8,8 @@
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
 
-from .._compat import long_, integer_types, PY3
-from .._util import MutagenError
+from mutagen._compat import long_, integer_types, PY3
+from mutagen._util import MutagenError
 
 
 def is_valid_frame_id(frame_id):
