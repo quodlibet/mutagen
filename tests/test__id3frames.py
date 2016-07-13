@@ -16,7 +16,7 @@ from mutagen.id3 import APIC, CTOC, CHAP, TPE2, Frames, Frames_2_2, CRA, \
     UrlFrame, NumericTextFrame, NumericPartTextFrame, TPE1, TIT2, \
     TimeStampTextFrame, TCON, ID3TimeStamp, Frame, RVRB, RBUF, CTOCFlags, \
     PairedTextFrame, BinaryFrame, ETCO, MLLT, SYTC, PCNT, PCST, POSS, OWNE, \
-    SEEK, ASPI, PictureType, CRM
+    SEEK, ASPI, PictureType, CRM, RVAD, RVA
 
 _22 = ID3Header()
 _22.version = (2, 2, 0)
@@ -314,7 +314,14 @@ class TVariousFrames(TestCase):
               child_element_ids=[u'bla']),
          '', dict()],
 
+        ['RVAD', b'\x03\x10\x00\x00\x00\x00',
+         RVAD(adjustments=[0, 0]), '', dict()],
+        ['RVAD', b'\x03\x08\x00\x01\x02\x03\x04\x05\x06\x07\x00\x00\x00\x00',
+         RVAD(adjustments=[0, 1, 2, 3, -4, -5, 6, 7, 0, 0, 0, 0]), '', dict()],
+
         # 2.2 tags
+        ['RVA', b'\x03\x10\x00\x00\x00\x00',
+         RVA(adjustments=[0, 0]), '', dict()],
         ['UFI', b'own\x00data', b'data', '', dict(data=b'data', owner='own')],
         [
             'SLT', (b'\x00eng\x02\x01some lyrics\x00foo\x00\x00\x00\x00\x01bar'
@@ -770,6 +777,21 @@ class TPairedTextFrame(TestCase):
         frame = PairedTextFrame()
         self.assertEqual(frame.encoding, 1)
         self.assertEqual(frame.people, [])
+
+
+class TRVAD(TestCase):
+
+    def test_default(self):
+        frame = RVAD()
+        self.assertEqual(frame.adjustments, [0, 0])
+
+    def test_hash(self):
+        frame = RVAD()
+        self.assertEqual(frame.HashKey, "RVAD")
+
+    def test_upgrade(self):
+        rva = RVA(adjustments=[1, 2])
+        self.assertEqual(RVAD(rva).adjustments, [1, 2])
 
 
 class TLINK(TestCase):

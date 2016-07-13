@@ -17,7 +17,7 @@ from ._specs import BinaryDataSpec, StringSpec, Latin1TextSpec, \
     VolumeAdjustmentSpec, ChannelSpec, MultiSpec, SynchronizedTextSpec, \
     KeyEventSpec, TimeStampSpec, EncodedNumericPartTextSpec, \
     EncodedNumericTextSpec, SpecError, PictureTypeSpec, ID3FramesSpec, \
-    Latin1TextListSpec, CTOCFlagsSpec, FrameIDSpec
+    Latin1TextListSpec, CTOCFlagsSpec, FrameIDSpec, RVASpec
 from .._compat import text_type, string_types, swap_to_string, iteritems, \
     izip, itervalues
 
@@ -1145,7 +1145,21 @@ class EQU2(Frame):
         return '%s:%s' % (self.FrameID, self.desc)
 
 
-# class RVAD: unsupported
+class RVAD(Frame):
+    """Relative volume adjustment"""
+
+    _framespec = [
+        RVASpec("adjustments", stereo_only=False),
+    ]
+
+    __hash__ = Frame.__hash__
+
+    def __eq__(self, other):
+        if not isinstance(other, RVAD):
+            return False
+        return self.adjustments == other.adjustments
+
+
 # class EQUA: unsupported
 
 
@@ -1928,7 +1942,19 @@ class COM(COMM):
     "Comment"
 
 
-# class RVA(RVAD)
+class RVA(RVAD):
+    "Relative volume adjustment"
+
+    _framespec = [
+        RVASpec("adjustments", stereo_only=True),
+    ]
+
+    def _to_other(self, other):
+        if not isinstance(other, RVAD):
+            raise TypeError
+
+        other.adjustments = list(self.adjustments)
+
 # class EQU(EQUA)
 
 

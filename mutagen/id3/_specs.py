@@ -11,7 +11,7 @@ from struct import unpack, pack
 
 from .._compat import text_type, chr_, PY3, swap_to_string, string_types, \
     xrange
-from .._util import total_ordering, decode_terminated, enum, izip, flags
+from .._util import total_ordering, decode_terminated, enum, izip, flags, cdata
 from ._util import BitPaddedInt, is_valid_frame_id
 
 
@@ -312,6 +312,89 @@ class StringSpec(Spec):
             return value
 
         raise ValueError('Invalid StringSpec[%d] data: %r' % (self.len, value))
+
+
+class RVASpec(Spec):
+
+    def __init__(self, name, stereo_only, default=[0, 0]):
+        # two_chan: RVA has only 2 channels, while RVAD has 6 channels
+        super(RVASpec, self).__init__(name, default)
+        self._max_values = 4 if stereo_only else 12
+
+    def read(self, header, frame, data):
+        # inc/dec flags
+        spec = ByteSpec("flags", 0)
+        flags, data = spec.read(header, frame, data)
+        if not data:
+            raise SpecError("truncated")
+
+        # how many bytes per value
+        bits, data = spec.read(header, frame, data)
+        if bits == 0:
+            # not allowed according to spec
+            raise SpecError("bits used has to be > 0")
+        bytes_per_value = (bits + 7) // 8
+
+        values = []
+        while len(data) >= bytes_per_value and len(values) < self._max_values:
+            v = BitPaddedInt(data[:bytes_per_value], bits=8)
+            data = data[bytes_per_value:]
+            values.append(v)
+
+        if len(values) < 2:
+            raise SpecError("First two values not optional")
+
+        # if the respective flag bit is zero, take as decrement
+        for bit, index in enumerate([0, 1, 4, 5, 8, 10]):
+            if not cdata.test_bit(flags, bit):
+                try:
+                    values[index] = -values[index]
+                except IndexError:
+                    break
+
+        return values, data
+
+    def write(self, config, frame, values):
+        if len(values) < 2 or len(values) > self._max_values:
+            raise SpecError(
+                "at least two volume change values required, max %d" %
+                self._max_values)
+
+        spec = ByteSpec("flags", 0)
+
+        flags = 0
+        values = list(values)
+        for bit, index in enumerate([0, 1, 4, 5, 8, 10]):
+            try:
+                if values[index] < 0:
+                    values[index] = -values[index]
+                else:
+                    flags |= (1 << bit)
+            except IndexError:
+                break
+
+        buffer_ = bytearray()
+        buffer_.extend(spec.write(config, frame, flags))
+
+        # serialized and make them all the same size (min 2 bytes)
+        byte_values = [
+            BitPaddedInt.to_str(v, bits=8, width=-1, minwidth=2)
+            for v in values]
+        max_bytes = max([len(v) for v in byte_values])
+        byte_values = [v.ljust(max_bytes, b"\x00") for v in byte_values]
+
+        bits = max_bytes * 8
+        buffer_.extend(spec.write(config, frame, bits))
+
+        for v in byte_values:
+            buffer_.extend(v)
+
+        return bytes(buffer_)
+
+    def validate(self, frame, values):
+        if len(values) < 2 or len(values) > self._max_values:
+            raise ValueError("needs list of length 2..%d" % self._max_values)
+        return values
 
 
 class FrameIDSpec(StringSpec):

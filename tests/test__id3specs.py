@@ -8,7 +8,7 @@ from mutagen._compat import PY3
 from mutagen.id3._specs import SpecError, Latin1TextListSpec, ID3FramesSpec, \
     ASPIIndexSpec, ByteSpec, EncodingSpec, StringSpec, BinaryDataSpec, \
     EncodedTextSpec, VolumePeakSpec, VolumeAdjustmentSpec, CTOCFlagsSpec, \
-    Spec, SynchronizedTextSpec, TimeStampSpec, FrameIDSpec
+    Spec, SynchronizedTextSpec, TimeStampSpec, FrameIDSpec, RVASpec
 from mutagen.id3._frames import Frame
 from mutagen.id3._tags import ID3Header, ID3Tags, ID3SaveConfig
 from mutagen.id3 import TIT3, ASPI, CTOCFlags, ID3TimeStamp
@@ -210,6 +210,41 @@ class TSpec(TestCase):
     def test_no_hash(self):
         self.failUnlessRaises(
             TypeError, {}.__setitem__, Spec("foo", None), None)
+
+
+class TRVASpec(TestCase):
+
+    def test_read(self):
+        spec = RVASpec("name", False)
+        val, rest = spec.read(
+            None, None,
+            b"\x03\x10\xc7\xc7\xc7\xc7\x00\x00\x00\x00\x00\x00\x00\x00")
+        self.assertEqual(rest, b"")
+        self.assertEqual(val, [51143, 51143, 0, 0, 0, 0])
+
+    def test_read_stereo_only(self):
+        spec = RVASpec("name", True)
+        val, rest = spec.read(
+            None, None,
+            b"\x03\x10\xc7\xc7\xc7\xc7\x00\x00\x00\x00\x00\x00\x00\x00")
+        self.assertEqual(rest, b"\x00\x00\x00\x00")
+        self.assertEqual(val, [51143, 51143, 0, 0])
+
+    def test_write(self):
+        spec = RVASpec("name", False)
+        data = spec.write(None, None, [0, 1, 2, 3, -4, -5])
+        self.assertEqual(
+            data, b"\x03\x10\x00\x00\x00\x01\x00\x02\x00\x03\x00\x04\x00\x05")
+
+    def test_write_stereo_only(self):
+        spec = RVASpec("name", True)
+        self.assertRaises(
+            SpecError, spec.write, None, None, [0, 0, 0, 0, 0, 0])
+
+    def test_validate(self):
+        spec = RVASpec("name", False)
+        self.assertRaises(ValueError, spec.validate, None, [])
+        self.assertEqual(spec.validate(None, [1, 2]), [1, 2])
 
 
 class TFrameIDSpec(TestCase):
