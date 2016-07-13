@@ -8,7 +8,7 @@ from mutagen._compat import PY3
 from mutagen.id3._specs import SpecError, Latin1TextListSpec, ID3FramesSpec, \
     ASPIIndexSpec, ByteSpec, EncodingSpec, StringSpec, BinaryDataSpec, \
     EncodedTextSpec, VolumePeakSpec, VolumeAdjustmentSpec, CTOCFlagsSpec, \
-    Spec, SynchronizedTextSpec, TimeStampSpec
+    Spec, SynchronizedTextSpec, TimeStampSpec, FrameIDSpec
 from mutagen.id3._frames import Frame
 from mutagen.id3._tags import ID3Header, ID3Tags, ID3SaveConfig
 from mutagen.id3 import TIT3, ASPI, CTOCFlags, ID3TimeStamp
@@ -210,6 +210,22 @@ class TSpec(TestCase):
     def test_no_hash(self):
         self.failUnlessRaises(
             TypeError, {}.__setitem__, Spec("foo", None), None)
+
+
+class TFrameIDSpec(TestCase):
+
+    def test_read(self):
+        spec = FrameIDSpec("name", 3)
+        self.assertEqual(spec.read(None, None, b"FOOX"), (u"FOO", b"X"))
+
+    def test_validate(self):
+        spec = FrameIDSpec("name", 3)
+        self.assertRaises(ValueError, spec.validate, None, u"123")
+        self.assertRaises(ValueError, spec.validate, None, u"TXXX")
+        self.assertEqual(spec.validate(None, u"TXX"), u"TXX")
+
+        spec = FrameIDSpec("name", 4)
+        self.assertEqual(spec.validate(None, u"TXXX"), u"TXXX")
 
 
 class TCTOCFlagsSpec(TestCase):

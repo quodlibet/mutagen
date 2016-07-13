@@ -12,7 +12,7 @@ from struct import unpack, pack
 from .._compat import text_type, chr_, PY3, swap_to_string, string_types, \
     xrange
 from .._util import total_ordering, decode_terminated, enum, izip, flags
-from ._util import BitPaddedInt
+from ._util import BitPaddedInt, is_valid_frame_id
 
 
 @enum
@@ -312,6 +312,18 @@ class StringSpec(Spec):
             return value
 
         raise ValueError('Invalid StringSpec[%d] data: %r' % (self.len, value))
+
+
+class FrameIDSpec(StringSpec):
+
+    def __init__(self, name, length):
+        super(FrameIDSpec, self).__init__(name, length, u"X" * length)
+
+    def validate(self, frame, value):
+        value = super(FrameIDSpec, self).validate(frame, value)
+        if not is_valid_frame_id(value):
+            raise ValueError("Invalid frame ID")
+        return value
 
 
 class BinaryDataSpec(Spec):

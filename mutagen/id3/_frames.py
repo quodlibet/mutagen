@@ -17,7 +17,7 @@ from ._specs import BinaryDataSpec, StringSpec, Latin1TextSpec, \
     VolumeAdjustmentSpec, ChannelSpec, MultiSpec, SynchronizedTextSpec, \
     KeyEventSpec, TimeStampSpec, EncodedNumericPartTextSpec, \
     EncodedNumericTextSpec, SpecError, PictureTypeSpec, ID3FramesSpec, \
-    Latin1TextListSpec, CTOCFlagsSpec
+    Latin1TextListSpec, CTOCFlagsSpec, FrameIDSpec
 from .._compat import text_type, string_types, swap_to_string, iteritems, \
     izip, itervalues
 
@@ -1407,7 +1407,7 @@ class LINK(Frame):
     """
 
     _framespec = [
-        StringSpec('frameid', length=4, default=u"XXXX"),
+        FrameIDSpec('frameid', length=4),
         Latin1TextSpec('url'),
     ]
 
@@ -2000,7 +2000,7 @@ class LNK(LINK):
     """Linked information"""
 
     _framespec = [
-        StringSpec('frameid', length=3, default=u"XXX"),
+        FrameIDSpec('frameid', length=3),
         Latin1TextSpec('url')
     ]
 
@@ -2013,12 +2013,16 @@ class LNK(LINK):
             raise TypeError
 
         if isinstance(other, LNK):
-            other.frameid = self.frameid
+            new_frameid = self.frameid
         else:
             try:
-                other.frameid = Frames_2_2[self.frameid].__bases__[0].__name__
+                new_frameid = Frames_2_2[self.frameid].__bases__[0].__name__
             except KeyError:
-                other.frameid = self.frameid.ljust(4)
+                new_frameid = self.frameid.ljust(4)
+
+        # we could end up with invalid IDs here, so bypass the validation
+        other.__dict__["frameid"] = new_frameid
+
         other.url = self.url
         if hasattr(self, "data"):
             other.data = self.data

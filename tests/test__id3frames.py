@@ -600,9 +600,9 @@ class TLNK(TestCase):
         self.assertEqual(new.url, url)
         self.assertEqual(new.data, b"\x00")
 
-        frame = LNK(frameid="o_O")
+        frame = LNK(frameid="XYZ")
         new = LINK(frame)
-        self.assertEqual(new.frameid, "o_O ")
+        self.assertEqual(new.frameid, "XYZ ")
 
 
 class TSIGN(TestCase):
