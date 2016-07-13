@@ -774,6 +774,13 @@ class TPairedTextFrame(TestCase):
 
 class TLINK(TestCase):
 
+    def test_read(self):
+        frame = LINK()
+        frame._readData(_24, b"XXX\x00Foo\x00")
+        # either we can read invalid frame ids or we fail properly, atm we read
+        # them.
+        self.assertEqual(frame.frameid, "XXX\x00")
+
     def test_default(self):
         frame = LINK()
         self.assertEqual(frame.frameid, u"XXXX")

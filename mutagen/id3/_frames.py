@@ -158,7 +158,7 @@ class Frame(object):
                     raise ID3JunkFrameError(e)
             else:
                 raise ID3JunkFrameError("no data left")
-            setattr(self, reader.name, value)
+            self.__dict__[reader.name] = value
 
         for reader in self._optionalspec:
             if len(data) or reader.handle_nodata:
@@ -168,7 +168,7 @@ class Frame(object):
                     raise ID3JunkFrameError(e)
             else:
                 break
-            setattr(self, reader.name, value)
+            self.__dict__[reader.name] = value
 
         return data
 
