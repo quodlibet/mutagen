@@ -1838,6 +1838,26 @@ class TEN(TENC):
     "Encoder"
 
 
+class TST(TSOT):
+    "Title Sort Order key"
+
+
+class TSA(TSOA):
+    "Album Sort Order key"
+
+
+class TS2(TSO2):
+    "iTunes Album Artist Sort"
+
+
+class TSP(TSOP):
+    "Perfomer Sort Order key"
+
+
+class TSC(TSOC):
+    "iTunes Composer Sort"
+
+
 class TSS(TSSE):
     "Encoder settings"
 

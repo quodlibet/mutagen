@@ -367,6 +367,11 @@ class TVariousFrames(TestCase):
         ['TOL', b'\x00org', 'org', '', dict(encoding=0)],
         ['TOR', b'\x001877', '1877', 1877, dict(encoding=0)],
         ['TXX', b'\x00desc\x00val', 'val', '', dict(encoding=0, desc='desc')],
+        ['TSC', b'\x00ab', 'ab', '', dict(encoding=0)],
+        ['TSA', b'\x00ab', 'ab', '', dict(encoding=0)],
+        ['TS2', b'\x00ab', 'ab', '', dict(encoding=0)],
+        ['TST', b'\x00ab', 'ab', '', dict(encoding=0)],
+        ['TSP', b'\x00ab', 'ab', '', dict(encoding=0)],
 
         ['WAF', b'http://zzz', 'http://zzz', '', {}],
         ['WAR', b'http://zzz', 'http://zzz', '', {}],
