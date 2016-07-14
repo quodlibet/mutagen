@@ -213,7 +213,7 @@ class IntegerSpec(Spec):
 
 class SizedIntegerSpec(Spec):
 
-    def __init__(self, name, size, default=None):
+    def __init__(self, name, size, default):
         self.name, self.__sz = name, size
         self.default = default
 

@@ -277,10 +277,10 @@ class CHAP(Frame):
 
     _framespec = [
         Latin1TextSpec("element_id"),
-        SizedIntegerSpec("start_time", 4),
-        SizedIntegerSpec("end_time", 4),
-        SizedIntegerSpec("start_offset", 4),
-        SizedIntegerSpec("end_offset", 4),
+        SizedIntegerSpec("start_time", 4, default=0),
+        SizedIntegerSpec("end_time", 4, default=0),
+        SizedIntegerSpec("start_offset", 4, default=0xffffffff),
+        SizedIntegerSpec("end_offset", 4, default=0xffffffff),
         ID3FramesSpec("sub_frames"),
     ]
 

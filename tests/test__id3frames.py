@@ -16,7 +16,7 @@ from mutagen.id3 import APIC, CTOC, CHAP, TPE2, Frames, Frames_2_2, CRA, \
     UrlFrame, NumericTextFrame, NumericPartTextFrame, TPE1, TIT2, \
     TimeStampTextFrame, TCON, ID3TimeStamp, Frame, RVRB, RBUF, CTOCFlags, \
     PairedTextFrame, BinaryFrame, ETCO, MLLT, SYTC, PCNT, PCST, POSS, OWNE, \
-    SEEK, ASPI, PictureType, CRM, RVAD, RVA
+    SEEK, ASPI, PictureType, CRM, RVAD, RVA, ID3Tags
 
 _22 = ID3Header()
 _22.version = (2, 2, 0)
@@ -1396,7 +1396,9 @@ class TFrameTest(object):
 
     def test_all_specs_have_default(self):
         for spec in self.FRAME._framespec:
-            self.assertTrue(spec is not None)
+            self.assertTrue(
+                spec.default is not None,
+                msg="%r:%r" % (self.FRAME, spec.name))
 
     @classmethod
     def create_frame_tests(cls):
@@ -1557,6 +1559,15 @@ class TASPI(TestCase):
 
 
 class TCHAP(TestCase):
+
+    def test_default(self):
+        frame = CHAP()
+        self.assertEqual(frame.element_id, u"")
+        self.assertEqual(frame.start_time, 0)
+        self.assertEqual(frame.end_time, 0)
+        self.assertEqual(frame.start_offset, 0xffffffff)
+        self.assertEqual(frame.end_offset, 0xffffffff)
+        self.assertEqual(frame.sub_frames, ID3Tags())
 
     def test_hash(self):
         frame = CHAP(element_id=u"foo", start_time=0, end_time=0,
