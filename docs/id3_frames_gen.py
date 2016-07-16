@@ -52,5 +52,3 @@ if __name__ == "__main__":
     print_frames(BaseFrames, sort_mro=True)
     print_header("ID3v2.3/4 Frames")
     print_frames(Frames)
-    print_header("ID3v2.2 Frames")
-    print_frames(Frames_2_2)

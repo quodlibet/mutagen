@@ -340,6 +340,8 @@ class ID3FileType(mutagen.FileType):
     mutagen.id3.ID3 object, e.g. an EasyID3 reader.
     """
 
+    __module__ = "mutagen.id3"
+
     ID3 = ID3
 
     class _Info(mutagen.StreamInfo):

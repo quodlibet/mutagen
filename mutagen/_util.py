@@ -364,7 +364,7 @@ def flags(cls):
         return " | ".join(matches)
 
     def repr_(self):
-        return str(self)
+        return "<%s: %d>" % (str(self), int(self))
 
     setattr(new_type, "__repr__", repr_)
     setattr(new_type, "__str__", str_)

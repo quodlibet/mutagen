@@ -168,6 +168,8 @@ def determine_bpi(data, frames, EMPTY=b"\x00" * 10):
 
 class ID3Tags(DictProxy, Tags):
 
+    __module__ = "mutagen.id3"
+
     def __init__(self, *args, **kwargs):
         self.unknown_frames = []
         self._unknown_v2_version = 4

@@ -20,18 +20,26 @@ ID3 Frames
     :members:
     :member-order: bysource
 
-
 .. autoclass:: mutagen.id3.Encoding
     :members:
     :member-order: bysource
 
+.. autoclass:: mutagen.id3.CTOCFlags
+    :members:
+    :member-order: bysource
+
+
 ID3
 ---
+
+.. autoclass:: mutagen.id3.ID3Tags
+    :show-inheritance:
+    :members:
+    :exclude-members: loaded_frame
 
 .. autoclass:: mutagen.id3.ID3
     :show-inheritance:
     :members:
-    :exclude-members: loaded_frame
 
 .. autoclass:: mutagen.id3.ID3FileType
     :members:

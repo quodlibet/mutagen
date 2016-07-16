@@ -48,13 +48,14 @@ had.
 For more control the following functions are important:
 
 * :func:`ID3` which loads the tags and if ``translate=True``
-  (default) calls either :meth:`ID3.update_to_v24` or
-  :meth:`ID3.update_to_v23` depending on the ``v2_version``
+  (default) calls either :meth:`ID3Tags.update_to_v24` or
+  :meth:`ID3Tags.update_to_v23` depending on the ``v2_version``
   argument (defaults to ``4``)
 
-* :meth:`ID3.update_to_v24` which upgrades v2.2/3 frames to v2.4
+* :meth:`ID3Tags.update_to_v24` which upgrades v2.2/3 frames to v2.4
 
-* :meth:`ID3.update_to_v23` which downgrades v2.4 and upgrades v2.2 frames to v2.3
+* :meth:`ID3Tags.update_to_v23` which downgrades v2.4 and upgrades v2.2
+  frames to v2.3
 
 * :meth:`ID3.save` which will save as v2.3 if ``v2_version=3`` (defaults to
   ``4``) and also allows specifying a separator for joining multiple text
@@ -82,7 +83,7 @@ Nonstandard ID3v2.3 Tricks
 
 Saving v2.4 frames in v2.3 tags
     While not standard conform, you can exclude certain v2.4 frames from being
-    thrown out by :meth:`ID3.update_to_v23` by removing them temporarily::
+    thrown out by :meth:`ID3Tags.update_to_v23` by removing them temporarily::
 
         audio = ID3("example.mp3", translate=False)
         keep_these = audio.getall("TSOP")
