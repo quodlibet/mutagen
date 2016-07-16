@@ -553,9 +553,9 @@ class Tflags(TestCase):
 
         self.assertEqual(Foo.FOO, 1)
         self.assertTrue(isinstance(Foo.FOO, Foo))
-        self.assertEqual(repr(Foo.FOO), "Foo.FOO")
-        self.assertEqual(repr(Foo(3)), "Foo.FOO | Foo.BAR")
-        self.assertEqual(repr(Foo(42)), "Foo.BAR | 40")
+        self.assertEqual(repr(Foo.FOO), "<Foo.FOO: 1>")
+        self.assertEqual(repr(Foo(3)), "<Foo.FOO | Foo.BAR: 3>")
+        self.assertEqual(repr(Foo(42)), "<Foo.BAR | 40: 42>")
         self.assertEqual(str(Foo(42)), "Foo.BAR | 40")
         self.assertEqual(int(Foo(42)), 42)
         self.assertEqual(str(Foo(1)), "Foo.FOO")
