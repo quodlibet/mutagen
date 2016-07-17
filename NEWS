@@ -1,3 +1,23 @@
+1.34 - 2016.??.??
+-----------------
+
+* ID3:
+
+  * Add `CTOC <id3.CTOC>` and `CHAP <id3.CHAP>` frames. New classes:
+    `ID3Tags <id3.ID3Tags>`, `CTOCFlags <id3.CTOCFlags>`. :bug:`6`
+  * Add `TCAT <id3.TCAT>`, `TKWD <id3.TKWD>`, `PCST <id3.PCST>` frames.
+    :bug:`249`
+  * Validate user provided LNK/LINK frameid. :bug:`242`
+  * Add `RVAD <id3.RVAD>`, RVA frames
+  * Add TST, TSA, TS2, TSP and TSC frames
+  * Fix not writing optional fields when saving to v2.3
+  * Add default field values for all frames
+
+* Drop Python 2.6 support
+* EasyID3: Fix TXXX frame encoding when setting a non-latin1 encodable
+  value after a latin1 one. :bug:`263`
+
+
 1.33.2 - 2016.07.05
 -------------------
 
