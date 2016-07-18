@@ -719,6 +719,49 @@ def resize_file(fobj, diff, BUFFER_SIZE=2 ** 16):
             raise
 
 
+def fallback_move(fobj, dest, src, count, BUFFER_SIZE=2 ** 16):
+    """Moves data around using read()/write().
+
+    Args:
+        fileobj (fileobj)
+        dest (int): The destination offset
+        src (int): The source offset
+        count (int) The amount of data to move
+    Raises:
+        IOError: In case an operation on the fileobj fails
+        ValueError: In case invalid parameters were given
+    """
+
+    if dest < 0 or src < 0 or count < 0:
+        raise ValueError
+
+    fobj.seek(0, 2)
+    filesize = fobj.tell()
+
+    if max(dest, src) + count > filesize:
+        raise ValueError("area outside of file")
+
+    if src > dest:
+        moved = 0
+        while count - moved:
+            this_move = min(BUFFER_SIZE, count - moved)
+            fobj.seek(src + moved)
+            buf = fobj.read(this_move)
+            fobj.seek(dest + moved)
+            fobj.write(buf)
+            moved += this_move
+        fobj.flush()
+    else:
+        while count:
+            this_move = min(BUFFER_SIZE, count)
+            fobj.seek(src + count - this_move)
+            buf = fobj.read(this_move)
+            fobj.seek(count + dest - this_move)
+            fobj.write(buf)
+            count -= this_move
+        fobj.flush()
+
+
 def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
     """Insert size bytes of empty space starting at offset.
 
@@ -748,25 +791,8 @@ def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
 
     try:
         mmap_move(fobj, offset + size, offset, movesize)
-    except EnvironmentError:
-        fobj.seek(filesize, 0)
-        while movesize:
-            # At the start of this loop, fobj is pointing at the end
-            # of the data we need to move, which is of movesize length.
-            thismove = min(BUFFER_SIZE, movesize)
-            # Seek back however much we're going to read this frame.
-            fobj.seek(-thismove, 1)
-            nextpos = fobj.tell()
-            # Read it, so we're back at the end.
-            data = fobj.read(thismove)
-            # Seek back to where we need to write it.
-            fobj.seek(-thismove + size, 1)
-            # Write it.
-            fobj.write(data)
-            # And seek back to the end of the unmoved data.
-            fobj.seek(nextpos)
-            movesize -= thismove
-        fobj.flush()
+    except mmap.error:
+        fallback_move(fobj, offset + size, offset, movesize, BUFFER_SIZE)
 
 
 def delete_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
@@ -796,17 +822,8 @@ def delete_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
 
     try:
         mmap_move(fobj, offset, offset + size, movesize)
-    except EnvironmentError:
-        if size > 0:
-            fobj.seek(offset + size)
-            buf = fobj.read(BUFFER_SIZE)
-            while buf:
-                fobj.seek(offset)
-                fobj.write(buf)
-                offset += len(buf)
-                fobj.seek(offset + size)
-                buf = fobj.read(BUFFER_SIZE)
-            fobj.flush()
+    except mmap.error:
+        fallback_move(fobj, offset, offset + size, movesize, BUFFER_SIZE)
 
     resize_file(fobj, -size, BUFFER_SIZE)
 

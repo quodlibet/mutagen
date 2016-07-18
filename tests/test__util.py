@@ -3,7 +3,7 @@
 from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes, \
     decode_terminated, dict_match, enum, get_size, BitReader, BitReaderError, \
     resize_bytes, seek_end, mmap_move, verify_fileobj, fileobj_name, \
-    read_full, flags, resize_file
+    read_full, flags, resize_file, fallback_move
 from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2, \
     cBytesIO, xrange, BytesIO
 from tests import TestCase, get_temp_empty
@@ -318,7 +318,9 @@ class Tresize_file(TestCase):
         self.assertEqual(h.tell(), 3)
 
 
-class MmapMove(TestCase):
+class TMoveMixin(object):
+
+    MOVE = None
 
     def file(self, contents):
         temp = tempfile.TemporaryFile()
@@ -331,38 +333,57 @@ class MmapMove(TestCase):
         fobj.seek(0, 0)
         return fobj.read()
 
+    def test_basic(self):
+        with self.file(b"abc123") as h:
+            self.MOVE(h, 0, 1, 4)
+            self.assertEqual(self.read(h), b"bc1223")
+
+        with self.file(b"abc123") as h:
+            self.MOVE(h, 1, 0, 4)
+            self.assertEqual(self.read(h), b"aabc13")
+
+    def test_invalid_params(self):
+        with self.file(b"foo") as o:
+            self.assertRaises(ValueError, self.MOVE, o, -1, 0, 0)
+            self.assertRaises(ValueError, self.MOVE, o, 0, -1, 0)
+            self.assertRaises(ValueError, self.MOVE, o, 0, 0, -1)
+
+    def test_outside_file(self):
+        with self.file(b"foo") as o:
+            self.assertRaises(ValueError, self.MOVE, o, 0, 0, 4)
+            self.assertRaises(ValueError, self.MOVE, o, 0, 1, 3)
+            self.assertRaises(ValueError, self.MOVE, o, 1, 0, 3)
+
+    def test_ok(self):
+        with self.file(b"foo") as o:
+            self.MOVE(o, 0, 1, 2)
+            self.MOVE(o, 1, 0, 2)
+
+    def test_larger_than_page_size(self):
+        off = mmap.ALLOCATIONGRANULARITY
+        with self.file(b"f" * off * 2) as o:
+            self.MOVE(o, off, off + 1, off - 1)
+            self.MOVE(o, off + 1, off, off - 1)
+
+        with self.file(b"f" * off * 2 + b"x") as o:
+            self.MOVE(o, off * 2 - 1, off * 2, 1)
+            self.assertEqual(self.read(o)[-3:], b"fxx")
+
+
+class Tfallback_move(TestCase, TMoveMixin):
+
+    MOVE = staticmethod(fallback_move)
+
+
+class MmapMove(TestCase, TMoveMixin):
+
+    MOVE = staticmethod(mmap_move)
+
     def test_stringio(self):
         self.assertRaises(mmap.error, mmap_move, cBytesIO(), 0, 0, 0)
 
     def test_no_fileno(self):
         self.assertRaises(mmap.error, mmap_move, object(), 0, 0, 0)
-
-    def test_invalid_params(self):
-        with self.file(b"foo") as o:
-            self.assertRaises(ValueError, mmap_move, o, -1, 0, 0)
-            self.assertRaises(ValueError, mmap_move, o, 0, -1, 0)
-            self.assertRaises(ValueError, mmap_move, o, 0, 0, -1)
-
-    def test_outside_file(self):
-        with self.file(b"foo") as o:
-            self.assertRaises(ValueError, mmap_move, o, 0, 0, 4)
-            self.assertRaises(ValueError, mmap_move, o, 0, 1, 3)
-            self.assertRaises(ValueError, mmap_move, o, 1, 0, 3)
-
-    def test_ok(self):
-        with self.file(b"foo") as o:
-            mmap_move(o, 0, 1, 2)
-            mmap_move(o, 1, 0, 2)
-
-    def test_larger_than_page_size(self):
-        off = mmap.ALLOCATIONGRANULARITY
-        with self.file(b"f" * off * 2) as o:
-            mmap_move(o, off, off + 1, off - 1)
-            mmap_move(o, off + 1, off, off - 1)
-
-        with self.file(b"f" * off * 2 + b"x") as o:
-            mmap_move(o, off * 2 - 1, off * 2, 1)
-            self.assertEqual(self.read(o)[-3:], b"fxx")
 
 
 class FileHandling(TestCase):
