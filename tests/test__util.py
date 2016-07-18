@@ -5,12 +5,13 @@ from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes, \
     resize_bytes, seek_end, mmap_move, verify_fileobj, fileobj_name, \
     read_full, flags, resize_file
 from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2, \
-    cBytesIO, xrange
+    cBytesIO, xrange, BytesIO
 from tests import TestCase, get_temp_empty
 import os
 import random
 import tempfile
 import mmap
+import errno
 
 try:
     import fcntl
@@ -296,6 +297,25 @@ class Tresize_file(TestCase):
             resize_file(h, 2)
             h.seek(0)
             self.assertEqual(h.read(), b"ab\x00\x00")
+
+    def test_resize_dev_full(self):
+
+        def raise_no_space(*args):
+            raise IOError(errno.ENOSPC, os.strerror(errno.ENOSPC))
+
+        # fail on first write
+        h = BytesIO(b"abc")
+        h.write = raise_no_space
+        self.assertRaises(IOError, resize_file, h, 1)
+        h.seek(0, 2)
+        self.assertEqual(h.tell(), 3)
+
+        # fail on flush
+        h = BytesIO(b"abc")
+        h.flush = raise_no_space
+        self.assertRaises(IOError, resize_file, h, 1)
+        h.seek(0, 2)
+        self.assertEqual(h.tell(), 3)
 
 
 class MmapMove(TestCase):

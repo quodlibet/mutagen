@@ -700,13 +700,23 @@ def resize_file(fobj, diff, BUFFER_SIZE=2 ** 16):
     if diff < 0:
         if filesize + diff < 0:
             raise ValueError
+        # truncate flushes internally
         fobj.truncate(filesize + diff)
     elif diff > 0:
-        while diff:
-            addsize = min(BUFFER_SIZE, diff)
-            fobj.write(b"\x00" * addsize)
-            diff -= addsize
-        fobj.flush()
+        try:
+            while diff:
+                addsize = min(BUFFER_SIZE, diff)
+                fobj.write(b"\x00" * addsize)
+                diff -= addsize
+            fobj.flush()
+        except IOError as e:
+            if e.errno == errno.ENOSPC:
+                # To reduce the chance of corrupt files in case of missing
+                # space try to revert the file expansion back. Of course
+                # in reality every in-file-write can also fail due to COW etc.
+                # Note: IOError gets also raised in flush() due to buffering
+                fobj.truncate(filesize)
+            raise
 
 
 def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
