@@ -682,6 +682,33 @@ def mmap_move(fileobj, dest, src, count):
         file_map.close()
 
 
+def resize_file(fobj, diff, BUFFER_SIZE=2 ** 16):
+    """Resize a file by `diff`.
+
+    New space will be filled with zeros.
+
+    Args:
+        fobj (fileobj)
+        diff (int): amount of size to change
+    Raises:
+        IOError
+    """
+
+    fobj.seek(0, 2)
+    filesize = fobj.tell()
+
+    if diff < 0:
+        if filesize + diff < 0:
+            raise ValueError
+        fobj.truncate(filesize + diff)
+    elif diff > 0:
+        while diff:
+            addsize = min(BUFFER_SIZE, diff)
+            fobj.write(b"\x00" * addsize)
+            diff -= addsize
+        fobj.flush()
+
+
 def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
     """Insert size bytes of empty space starting at offset.
 
@@ -707,14 +734,7 @@ def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
     if movesize < 0:
         raise ValueError
 
-    # Don't generate an enormous string if we need to pad
-    # the file out several megs.
-    padsize = size
-    while padsize:
-        addsize = min(BUFFER_SIZE, padsize)
-        fobj.write(b"\x00" * addsize)
-        padsize -= addsize
-    fobj.flush()
+    resize_file(fobj, size, BUFFER_SIZE)
 
     try:
         mmap_move(fobj, offset + size, offset, movesize)
@@ -778,7 +798,7 @@ def delete_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
                 buf = fobj.read(BUFFER_SIZE)
             fobj.flush()
 
-    fobj.truncate(filesize - size)
+    resize_file(fobj, -size, BUFFER_SIZE)
 
 
 def resize_bytes(fobj, old_size, new_size, offset):

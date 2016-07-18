@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes
-from mutagen._util import decode_terminated, dict_match, enum, get_size
-from mutagen._util import BitReader, BitReaderError, resize_bytes, seek_end, \
-    mmap_move, verify_fileobj, fileobj_name, read_full, flags
+from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes, \
+    decode_terminated, dict_match, enum, get_size, BitReader, BitReaderError, \
+    resize_bytes, seek_end, mmap_move, verify_fileobj, fileobj_name, \
+    read_full, flags, resize_file
 from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2, \
     cBytesIO, xrange
-from tests import TestCase
+from tests import TestCase, get_temp_empty
+import os
 import random
 import tempfile
 import mmap
@@ -263,6 +264,40 @@ class Tcdata(TestCase):
         self.failIf(cdata.test_bit(v, 13))
 
 
+class Tresize_file(TestCase):
+
+    def get_named_file(self, content):
+        filename = get_temp_empty()
+        h = open(filename, "wb+")
+        h.write(content)
+        h.seek(0)
+        return h
+
+    def test_resize(self):
+        with self.get_named_file(b"") as h:
+            resize_file(h, 0)
+            self.assertEqual(os.path.getsize(h.name), 0)
+            self.assertRaises(ValueError, resize_file, h, -1)
+            resize_file(h, 1)
+            self.assertEqual(os.path.getsize(h.name), 1)
+            h.seek(0)
+            self.assertEqual(h.read(), b"\x00")
+            resize_file(h, 2 ** 17)
+            self.assertEqual(os.path.getsize(h.name), 2 ** 17 + 1)
+            h.seek(0)
+            self.assertEqual(h.read(), b"\x00" * (2 ** 17 + 1))
+
+    def test_resize_content(self):
+        with self.get_named_file(b"abc") as h:
+            self.assertRaises(ValueError, resize_file, h, -4)
+            resize_file(h, -1)
+            h.seek(0)
+            self.assertEqual(h.read(), b"ab")
+            resize_file(h, 2)
+            h.seek(0)
+            self.assertEqual(h.read(), b"ab\x00\x00")
+
+
 class MmapMove(TestCase):
 
     def file(self, contents):
@@ -275,6 +310,9 @@ class MmapMove(TestCase):
     def read(self, fobj):
         fobj.seek(0, 0)
         return fobj.read()
+
+    def test_stringio(self):
+        self.assertRaises(mmap.error, mmap_move, cBytesIO(), 0, 0, 0)
 
     def test_no_fileno(self):
         self.assertRaises(mmap.error, mmap_move, object(), 0, 0, 0)
