@@ -8,7 +8,7 @@ from mutagen.apev2 import APEv2
 from mutagen.id3 import ID3, Frames, ID3UnsupportedVersionError, TIT2, \
     CHAP, CTOC, TT1, TCON, COMM, TORY, PIC, MakeID3v1, TRCK, TYER, TDRC, \
     TDAT, TIME, LNK, IPLS, TPE1, BinaryFrame, TIT3, POPM, APIC, \
-    TALB, TPE2, TSOT, TDEN, TIPL, ParseID3v1, Encoding, ID3Tags
+    TALB, TPE2, TSOT, TDEN, TIPL, ParseID3v1, Encoding, ID3Tags, RVAD
 from mutagen.id3._util import BitPaddedInt, error as ID3Error
 from mutagen.id3._tags import determine_bpi, ID3Header, \
     save_frame, ID3SaveConfig
@@ -225,12 +225,19 @@ class TID3Read(TestCase):
         id3.update_to_v24()
         self.failUnlessEqual(id3["TIPL"], [["a", "b"], ["c", "d"]])
 
-    def test_dropped(self):
+    def test_time_dropped(self):
         id3 = ID3()
         id3.version = (2, 3)
         id3.add(TIME(encoding=0, text=["1155"]))
         id3.update_to_v24()
         self.assertFalse(id3.getall("TIME"))
+
+    def test_rvad_dropped(self):
+        id3 = ID3()
+        id3.version = (2, 3)
+        id3.add(RVAD())
+        id3.update_to_v24()
+        self.assertFalse(id3.getall("RVAD"))
 
 
 class TID3Header(TestCase):
