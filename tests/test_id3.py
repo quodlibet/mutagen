@@ -171,7 +171,6 @@ class TID3Read(TestCase):
                      sub_frames=[TYER(encoding=0, text="2006")]))
         id3.update_to_v24()
         chap = id3.getall("CHAP:foo")[0]
-        text = chap.sub_frames.getall("TDRC")[0].text
         self.assertEqual(chap.sub_frames.getall("TDRC")[0], u"2006")
         self.assertFalse(chap.sub_frames.getall("TYER"))
         id3.update_to_v23()
