@@ -141,6 +141,36 @@ use EasyID3 as follows::
     audio.pprint()
 
 
+Chapter Extension
+^^^^^^^^^^^^^^^^^
+
+The following code adds two chapters to a file:
+
+::
+
+    from mutagen.id3 import ID3, CTOC, CHAP, TIT2, CTOCFlags
+
+    audio = ID3("example.mp3")
+    audio.add(
+        CTOC(element_id=u"toc", flags=CTOCFlags.TOP_LEVEL | CTOCFlags.ORDERED,
+             child_element_ids=[u"chp1", "chp2"],
+             sub_frames=[
+                TIT2(text=[u"I'm a TOC"]),
+            ]))
+    audio.add(
+        CHAP(element_id=u"chp1", start_time=0, end_time=42000,
+             sub_frames=[
+                 TIT2(text=[u"I'm the first chapter"]),
+             ]))
+    audio.add(
+        CHAP(element_id=u"chp2", start_time=42000, end_time=84000,
+             sub_frames=[
+                 TIT2(text=[u"I'm the second chapter"]),
+             ]))
+    audio.save()
+
+
+
 Compatibility / Bugs
 ^^^^^^^^^^^^^^^^^^^^
 
