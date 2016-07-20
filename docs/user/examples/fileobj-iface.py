@@ -78,6 +78,8 @@ class IOInterface(object):
         The current position or given size will never be larger than the
         file size.
 
+        This has to flush write buffers in case writing is buffered.
+
         Returns Nothing.
         Raises IOError.
         """
