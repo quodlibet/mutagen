@@ -75,13 +75,16 @@ class Frame(object):
     def __setattr__(self, name, value):
         for checker in self._framespec:
             if checker.name == name:
-                self.__dict__[name] = checker.validate(self, value)
+                self._setattr(name, checker.validate(self, value))
                 return
         for checker in self._optionalspec:
             if checker.name == name:
-                self.__dict__[name] = checker.validate(self, value)
+                self._setattr(name, checker.validate(self, value))
                 return
         super(Frame, self).__setattr__(name, value)
+
+    def _setattr(self, name, value):
+        self.__dict__[name] = value
 
     def _to_other(self, other):
         # this impl covers subclasses with the same framespec
@@ -89,7 +92,7 @@ class Frame(object):
             raise ValueError
 
         for checker in other._framespec:
-            setattr(other, checker.name, getattr(self, checker.name))
+            other._setattr(checker.name, getattr(self, checker.name))
 
         # this impl covers subclasses with the same optionalspec
         if other._optionalspec is not self._optionalspec:
@@ -97,7 +100,7 @@ class Frame(object):
 
         for checker in other._optionalspec:
             if hasattr(self, checker.name):
-                setattr(other, checker.name, getattr(self, checker.name))
+                other._setattr(checker.name, getattr(self, checker.name))
 
     def _get_v23_frame(self, **kwargs):
         """Returns a frame copy which is suitable for writing into a v2.3 tag.
@@ -158,7 +161,7 @@ class Frame(object):
                     raise ID3JunkFrameError(e)
             else:
                 raise ID3JunkFrameError("no data left")
-            self.__dict__[reader.name] = value
+            self._setattr(reader.name, value)
 
         for reader in self._optionalspec:
             if len(data) or reader.handle_nodata:
@@ -168,7 +171,7 @@ class Frame(object):
                     raise ID3JunkFrameError(e)
             else:
                 break
-            self.__dict__[reader.name] = value
+            self._setattr(reader.name, value)
 
         return data
 
@@ -2067,7 +2070,7 @@ class LNK(LINK):
                 new_frameid = self.frameid.ljust(4)
 
         # we could end up with invalid IDs here, so bypass the validation
-        other.__dict__["frameid"] = new_frameid
+        other._setattr("frameid", new_frameid)
 
         other.url = self.url
         if hasattr(self, "data"):
