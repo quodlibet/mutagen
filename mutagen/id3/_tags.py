@@ -354,7 +354,7 @@ class ID3Tags(DictProxy, Tags):
 
         # These can't be trivially translated to any ID3v2.4 tags, or
         # should have been removed already.
-        for key in ["RVAD", "EQUA", "TRDA", "TSIZ", "TDAT", "TIME", "CRM"]:
+        for key in ["RVAD", "EQUA", "TRDA", "TSIZ", "TDAT", "TIME"]:
             if key in self:
                 del(self[key])
 
