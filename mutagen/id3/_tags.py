@@ -361,6 +361,8 @@ class ID3Tags(DictProxy, Tags):
         # Recurse into chapters
         for f in self.getall("CHAP"):
             f.sub_frames.update_to_v24()
+        for f in self.getall("CTOC"):
+            f.sub_frames.update_to_v24()
 
     def update_to_v23(self):
         """Convert older (and newer) tags into an ID3v2.3 tag.
@@ -422,6 +424,8 @@ class ID3Tags(DictProxy, Tags):
 
         # Recurse into chapters
         for f in self.getall("CHAP"):
+            f.sub_frames.update_to_v23()
+        for f in self.getall("CTOC"):
             f.sub_frames.update_to_v23()
 
 

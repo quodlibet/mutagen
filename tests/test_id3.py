@@ -171,7 +171,22 @@ class TID3Read(TestCase):
                      sub_frames=[TYER(encoding=0, text="2006")]))
         id3.update_to_v24()
         chap = id3.getall("CHAP:foo")[0]
+        text = chap.sub_frames.getall("TDRC")[0].text
         self.assertEqual(chap.sub_frames.getall("TDRC")[0], u"2006")
+        self.assertFalse(chap.sub_frames.getall("TYER"))
+        id3.update_to_v23()
+        self.assertEqual(chap.sub_frames.getall("TYER")[0], u"2006")
+
+    def test_ctoc_subframes(self):
+        id3 = ID3()
+        id3.version = (2, 3)
+        id3.add(CTOC(sub_frames=[TYER(encoding=0, text="2006")]))
+        id3.update_to_v24()
+        ctoc = id3.getall("CTOC")[0]
+        self.assertEqual(ctoc.sub_frames.getall("TDRC")[0], u"2006")
+        self.assertFalse(ctoc.sub_frames.getall("TYER"))
+        id3.update_to_v23()
+        self.assertEqual(ctoc.sub_frames.getall("TYER")[0], u"2006")
 
     def test_pic(self):
         id3 = ID3()
