@@ -814,7 +814,7 @@ class KeyEventSpec(Spec):
         return b"".join(struct.pack(">bI", *event) for event in value)
 
     def validate(self, frame, value):
-        return value
+        return list(value)
 
 
 class VolumeAdjustmentsSpec(Spec):
@@ -836,7 +836,7 @@ class VolumeAdjustmentsSpec(Spec):
                         for (freq, adj) in value)
 
     def validate(self, frame, value):
-        return value
+        return list(value)
 
 
 class ASPIIndexSpec(Spec):
@@ -871,4 +871,4 @@ class ASPIIndexSpec(Spec):
             raise SpecError(e)
 
     def validate(self, frame, values):
-        return values
+        return list(values)

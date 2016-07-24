@@ -547,6 +547,11 @@ class TETCO(TestCase):
         self.assertEqual(frame.format, 1)
         self.assertEqual(frame.events, [])
 
+    def test_default_mutable(self):
+        frame = ETCO()
+        frame.events.append(1)
+        self.assertEqual(ETCO().events, [])
+
 
 class TSYTC(TestCase):
 
@@ -881,6 +886,11 @@ class TEQU2(TestCase):
         self.assertEqual(frame.method, 0)
         self.assertEqual(frame.desc, u"")
         self.assertEqual(frame.adjustments, [])
+
+    def test_default_mutable(self):
+        frame = EQU2()
+        frame.adjustments.append(1)
+        self.assertEqual(EQU2(), [])
 
     def test_hash(self):
         frame = EQU2(method=42, desc="d", adjustments=[(0, 0)])
@@ -1439,6 +1449,11 @@ class TTextFrame(TestCase):
     def test_defaults(self):
         self.assertEqual(TextFrame(), TextFrame(encoding=1, text=[]))
 
+    def test_default_default_mutable(self):
+        frame = TextFrame()
+        frame.text.append("foo")
+        self.assertEqual(TextFrame().text, [])
+
     def test_main(self):
         self.assertEqual(TextFrame(text='text').text, ["text"])
         self.assertEqual(TextFrame(text=['a', 'b']).text, ["a", "b"])
@@ -1556,6 +1571,11 @@ class TASPI(TestCase):
         self.assertEqual(frame.N, 0)
         self.assertEqual(frame.b, 0)
         self.assertEqual(frame.Fi, [])
+
+    def test_default_default_mutable(self):
+        frame = ASPI()
+        frame.Fi.append(1)
+        self.assertEqual(ASPI().Fi, [])
 
 
 class TCHAP(TestCase):
