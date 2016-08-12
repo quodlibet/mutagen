@@ -41,7 +41,8 @@ from ._tags import ID3Tags
 
 # deprecated
 from ._util import ID3EncryptionUnsupportedError, ID3JunkFrameError, \
-    ID3BadUnsynchData, ID3BadCompressedData, ID3TagError, ID3Warning
+    ID3BadUnsynchData, ID3BadCompressedData, ID3TagError, ID3Warning, \
+    BitPaddedInt as _BitPaddedIntForPicard
 
 
 for f in Frames:
@@ -60,6 +61,14 @@ PairedTextFrame, ID3NoHeaderError, error, ID3UnsupportedVersionError,
 ParseID3v1, MakeID3v1, ID3Tags, ID3EncryptionUnsupportedError,
 ID3JunkFrameError, ID3BadUnsynchData, ID3BadCompressedData, ID3TagError,
 ID3Warning
+
+
+# Workaround for http://tickets.musicbrainz.org/browse/PICARD-833
+class _DummySpecForPicard(object):
+    write = None
+
+EncodedTextSpec = MultiSpec = _DummySpecForPicard
+BitPaddedInt = _BitPaddedIntForPicard
 
 
 __all__ = ['ID3', 'ID3FileType', 'Frames', 'Open', 'delete']
