@@ -5,8 +5,6 @@ import sys
 
 dir_ = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, dir_)
-sys.path.insert(0, os.path.abspath(os.path.join(dir_, "..")))
-import mutagen
 
 needs_sphinx = "1.3"
 
@@ -25,8 +23,7 @@ master_doc = 'index'
 project = 'mutagen'
 copyright = u'2016, Joe Wreschnig, Michael Urman, Lukáš Lalinský, ' \
             u'Christoph Reiter, Ben Ockmore & others'
-version = mutagen.version_string
-release = mutagen.version_string
+html_title = project
 exclude_patterns = ['_build']
 bug_url_template = "https://github.com/quodlibet/mutagen/issues/%s"
 pr_url_template = "https://github.com/quodlibet/mutagen/pull/%s"
