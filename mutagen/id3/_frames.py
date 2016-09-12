@@ -102,6 +102,22 @@ class Frame(object):
             if hasattr(self, checker.name):
                 other._setattr(checker.name, getattr(self, checker.name))
 
+    def _upgrade_frame(self):
+        """Returns either this instance or a new instance if this is a v2.2
+        frame and an upgrade to a v2.3/4 equivalent is viable.
+
+        If this is a v2.2 instance and there is no upgrade path, returns None.
+        """
+
+        # turn 2.2 into 2.3/2.4 tags
+        if len(type(self).__name__) == 3:
+            base = type(self).__base__
+            if base is Frame:
+                return
+            return base(self)
+        else:
+            return self
+
     def _get_v23_frame(self, **kwargs):
         """Returns a frame copy which is suitable for writing into a v2.3 tag.
 
