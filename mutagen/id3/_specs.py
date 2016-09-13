@@ -411,6 +411,8 @@ class FrameIDSpec(StringSpec):
 
 class BinaryDataSpec(Spec):
 
+    handle_nodata = True
+
     def __init__(self, name, default=b""):
         super(BinaryDataSpec, self).__init__(name, default)
 

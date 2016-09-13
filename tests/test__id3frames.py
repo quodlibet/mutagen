@@ -286,8 +286,9 @@ class TVariousFrames(TestCase):
         ],
         [
             'LINK', b'TIT1http://www.example.org/TIT1.txt\x00',
-            ("TIT1", 'http://www.example.org/TIT1.txt'), '',
-            dict(frameid='TIT1', url='http://www.example.org/TIT1.txt')
+            ("TIT1", 'http://www.example.org/TIT1.txt', b''), '',
+            dict(frameid='TIT1', url='http://www.example.org/TIT1.txt',
+                 data=b'')
         ],
         [
             'LINK', b'COMMhttp://www.example.org/COMM.txt\x00engfoo',
@@ -442,12 +443,17 @@ class TVariousFrames(TestCase):
         ],
         [
             'LNK', b'TT1http://www.example.org/TIT1.txt\x00',
-            ("TT1", 'http://www.example.org/TIT1.txt'), '',
-            dict(frameid='TT1', url='http://www.example.org/TIT1.txt')
+            ("TT1", 'http://www.example.org/TIT1.txt', b''), '',
+            dict(frameid='TT1', url='http://www.example.org/TIT1.txt',
+                 data=b'')
         ],
         [
             'CRM', b'foo@example.org\x00test\x00woo', b'woo', '',
             dict(owner='foo@example.org', desc='test', data=b'woo')
+        ],
+        [
+            'CRM', b'\x00\x00', b'', '',
+            dict(owner='', desc='', data=b'')
         ],
     ]
 
@@ -570,10 +576,6 @@ class TCRA(TestCase):
         self.assertEqual(new.preview_start, 1)
         self.assertEqual(new.preview_length, 2)
         self.assertEqual(new.data, b"foo")
-
-        frame = CRA(owner="a", preview_start=1, preview_length=2)
-        new = AENC(frame)
-        self.assertFalse(hasattr(new, "data"))
 
 
 class TPIC(TestCase):
@@ -824,7 +826,7 @@ class TLINK(TestCase):
         frame._pprint()
 
         frame = LINK(frameid="TPE1", url="http://foo.bar")
-        self.assertEqual(frame.HashKey, "LINK:TPE1:http://foo.bar")
+        self.assertEqual(frame.HashKey, "LINK:TPE1:http://foo.bar:")
 
 
 class TAENC(TestCase):

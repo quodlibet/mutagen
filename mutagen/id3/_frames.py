@@ -999,7 +999,7 @@ class SYTC(Frame):
 
     _framespec = [
         ByteSpec("format", default=1),
-        BinaryDataSpec("data", default=b""),
+        BinaryDataSpec("data"),
     ]
 
     def __eq__(self, other):
@@ -1407,9 +1407,6 @@ class AENC(Frame):
         Latin1TextSpec('owner'),
         SizedIntegerSpec('preview_start', size=2, default=0),
         SizedIntegerSpec('preview_length', size=2, default=0),
-    ]
-
-    _optionalspec = [
         BinaryDataSpec('data'),
     ]
 
@@ -1442,23 +1439,16 @@ class LINK(Frame):
     _framespec = [
         FrameIDSpec('frameid', length=4),
         Latin1TextSpec('url'),
+        BinaryDataSpec('data'),
     ]
-
-    _optionalspec = [BinaryDataSpec('data')]
 
     @property
     def HashKey(self):
-        try:
-            return "%s:%s:%s:%s" % (
-                self.FrameID, self.frameid, self.url, _bytes2key(self.data))
-        except AttributeError:
-            return "%s:%s:%s" % (self.FrameID, self.frameid, self.url)
+        return "%s:%s:%s:%s" % (
+            self.FrameID, self.frameid, self.url, _bytes2key(self.data))
 
     def __eq__(self, other):
-        try:
-            return (self.frameid, self.url, self.data) == other
-        except AttributeError:
-            return (self.frameid, self.url) == other
+        return (self.frameid, self.url, self.data) == other
 
     __hash__ = Frame.__hash__
 
@@ -1497,7 +1487,7 @@ class UFID(Frame):
 
     _framespec = [
         Latin1TextSpec('owner'),
-        BinaryDataSpec('data', default=b""),
+        BinaryDataSpec('data'),
     ]
 
     @property
@@ -1614,7 +1604,7 @@ class ENCR(Frame):
     _framespec = [
         Latin1TextSpec('owner'),
         ByteSpec('method', default=0x80),
-        BinaryDataSpec('data', default=b""),
+        BinaryDataSpec('data'),
     ]
 
     @property
@@ -1637,9 +1627,8 @@ class GRID(Frame):
     _framespec = [
         Latin1TextSpec('owner'),
         ByteSpec('group', default=0x80),
+        BinaryDataSpec('data'),
     ]
-
-    _optionalspec = [BinaryDataSpec('data')]
 
     @property
     def HashKey(self):
@@ -2066,10 +2055,7 @@ class LNK(LINK):
 
     _framespec = [
         FrameIDSpec('frameid', length=3),
-        Latin1TextSpec('url')
-    ]
-
-    _optionalspec = [
+        Latin1TextSpec('url'),
         BinaryDataSpec('data'),
     ]
 
@@ -2089,8 +2075,7 @@ class LNK(LINK):
         other._setattr("frameid", new_frameid)
 
         other.url = self.url
-        if hasattr(self, "data"):
-            other.data = self.data
+        other.data = self.data
 
 
 Frames = {}
