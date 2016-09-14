@@ -102,6 +102,10 @@ class Frame(object):
             if hasattr(self, checker.name):
                 other._setattr(checker.name, getattr(self, checker.name))
 
+    def _merge_frame(self, other):
+        # default impl, use the new tag over the old one
+        return other
+
     def _upgrade_frame(self):
         """Returns either this instance or a new instance if this is a v2.2
         frame and an upgrade to a v2.3/4 equivalent is viable.
@@ -424,6 +428,13 @@ class TextFrame(Frame):
         """Extend the list by appending all strings from the given list."""
 
         return self.text.extend(value)
+
+    def _merge_frame(self, other):
+        # merge in new values
+        for val in other[:]:
+            if val not in self:
+                self.append(val)
+        return self
 
     def _pprint(self):
         return " / ".join(self.text)
@@ -1234,6 +1245,10 @@ class APIC(Frame):
     @property
     def HashKey(self):
         return '%s:%s' % (self.FrameID, self.desc)
+
+    def _merge_frame(self, other):
+        other.desc += u" "
+        return other
 
     def _pprint(self):
         type_desc = text_type(self.type)

@@ -273,23 +273,47 @@ class ID3Tags(DictProxy, Tags):
         frames = sorted(Frame.pprint(s) for s in self.values())
         return "\n".join(frames)
 
-    def _add(self, tag, strict):
+    def _add(self, frame, strict):
         """Add a frame.
 
         Args:
-            tag (Frame): the frame to add
+            frame (Frame): the frame to add
             strict (bool): if this should raise in case it can't be added
+                and frames shouldn't be merged.
         """
 
-        if not isinstance(tag, Frame):
-            raise TypeError("%r not a Frame instance" % tag)
+        if not isinstance(frame, Frame):
+            raise TypeError("%r not a Frame instance" % frame)
 
-        new_tag = tag._upgrade_frame()
-        if new_tag is None:
+        orig_frame = frame
+        frame = frame._upgrade_frame()
+        if frame is None:
             if not strict:
                 return
-            raise TypeError("Can't upgrade %r frame" % type(tag).__name__)
-        self[new_tag.HashKey] = new_tag
+            raise TypeError(
+                "Can't upgrade %r frame" % type(orig_frame).__name__)
+
+        hash_key = frame.HashKey
+        if strict or hash_key not in self:
+            self[hash_key] = frame
+            return
+
+        # Try to merge frames, or change the new one. Since changing
+        # the new one can lead to new conflicts, try until everything is
+        # either merged or added.
+        while True:
+            old_frame = self[hash_key]
+            new_frame = old_frame._merge_frame(frame)
+            new_hash = new_frame.HashKey
+            if new_hash == hash_key:
+                self[hash_key] = new_frame
+                break
+            else:
+                assert new_frame is frame
+                if new_hash not in self:
+                    self[new_hash] = new_frame
+                    break
+                hash_key = new_hash
 
     def loaded_frame(self, tag):
         """Deprecated; use the add method."""

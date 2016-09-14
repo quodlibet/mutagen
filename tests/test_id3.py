@@ -13,7 +13,7 @@ from mutagen.id3._util import BitPaddedInt, error as ID3Error
 from mutagen.id3._tags import determine_bpi, ID3Header, \
     save_frame, ID3SaveConfig
 from mutagen.id3._id3v1 import find_id3v1
-from mutagen._compat import cBytesIO
+from mutagen._compat import cBytesIO, xrange
 
 from tests import TestCase, DATA_DIR, get_temp_copy, get_temp_empty
 
@@ -142,6 +142,8 @@ class TID3Read(TestCase):
 
     def test_23_multiframe_hack(self):
 
+        # loaded_frame is no longer used in mutagen, but this makes
+        # sure that old code keeps working (used in quod libet <=3.6)
         class ID3hack(ID3):
             "Override 'correct' behavior with desired behavior"
             def loaded_frame(self, tag):
@@ -158,7 +160,7 @@ class TID3Read(TestCase):
         self.assertEquals('Silence', str(id3['TIT1']))
         self.assertEquals('Silence', str(id3['TIT2']))
         self.assertEquals(3000, +id3['TLEN'])
-        # self.assertEquals(['piman', 'jzig'], id3['TPE1'])
+        self.assertEquals(['piman', 'jzig'], id3['TPE1'])
         self.assertEquals('02/10', id3['TRCK'])
         self.assertEquals(2, +id3['TRCK'])
         self.assertEquals('2004', id3['TDRC'])
@@ -339,7 +341,7 @@ class TID3Header(TestCase):
         self.assertEquals('Silence', str(id3['TIT1']))
         self.assertEquals('Silence', str(id3['TIT2']))
         self.assertEquals(3000, +id3['TLEN'])
-        self.assertNotEquals(['piman', 'jzig'], id3['TPE1'])
+        self.assertEquals(['piman', 'jzig'], id3['TPE1'])
         self.assertEquals('02/10', id3['TRCK'])
         self.assertEquals(2, +id3['TRCK'])
         self.assertEquals('2004', id3['TDRC'])
@@ -358,6 +360,16 @@ class TID3Tags(TestCase):
         self.i["QUUX"] = self.frames[1]
         self.i["FOOB:ar"] = self.frames[2]
         self.i["FOOB:az"] = self.frames[3]
+
+    def test_apic_duplicate_hash(self):
+        id3 = ID3Tags()
+        for i in xrange(10):
+            apic = APIC(encoding=0, mime=u"b", type=3, desc=u"", data=b"a")
+            id3._add(apic, False)
+
+        self.assertEqual(len(id3), 10)
+        for key, value in id3.items():
+            self.assertEqual(key, value.HashKey)
 
     def test_add_CRM(self):
         id3 = ID3Tags()
@@ -805,7 +817,7 @@ class TID3Write(TestCase):
         self.assertEquals(id3["TALB"], "Quod Libet Test Data")
         self.assertEquals(id3["TCON"], "Silence")
         self.assertEquals(id3["TIT2"], "Silence")
-        self.assertEquals(id3["TPE1"], ["jzig"])
+        self.assertEquals(id3["TPE1"], ["piman", "jzig"])
 
     def test_same_v23(self):
         id3 = ID3(self.filename, v2_version=3)
@@ -815,7 +827,7 @@ class TID3Write(TestCase):
         self.assertEquals(id3["TALB"], "Quod Libet Test Data")
         self.assertEquals(id3["TCON"], "Silence")
         self.assertEquals(id3["TIT2"], "Silence")
-        self.assertEquals(id3["TPE1"], "jzig")
+        self.assertEquals(id3["TPE1"], "piman/jzig")
 
     def test_addframe(self):
         f = ID3(self.filename)
@@ -835,7 +847,7 @@ class TID3Write(TestCase):
 
     def test_replaceframe(self):
         f = ID3(self.filename)
-        self.assertEquals(f["TPE1"], "jzig")
+        self.assertEquals(f["TPE1"], [u'piman', u'jzig'])
         f["TPE1"] = TPE1(encoding=0, text=u"jzig\x00piman")
         f.save()
         id3 = ID3(self.filename)
@@ -921,9 +933,8 @@ class WriteForEyeD3(TestCase):
         self.assertEquals(id3.frames["TALB"][0].text, "Quod Libet Test Data")
         self.assertEquals(id3.frames["TCON"][0].text, "Silence")
         self.assertEquals(id3.frames["TIT2"][0].text, "Silence")
-        # "piman" should have been cleared
         self.assertEquals(len(id3.frames["TPE1"]), 1)
-        self.assertEquals(id3.frames["TPE1"][0].text, "jzig")
+        self.assertEquals(id3.frames["TPE1"][0].text, "piman/jzig")
 
     def test_addframe(self):
         f = ID3(self.newsilence)

@@ -55,6 +55,12 @@ class TMid3cp(_TTools):
 
         original_id3 = ID3(self.filename)
         copied_id3 = ID3(self.blank_file)
+        self.assertEqual(copied_id3.version, (2, 3, 0))
+
+        # XXX: the v2.3 frame contains duplicate TPE1 frames which get merged
+        # when saving to v2.3 again
+        frame = copied_id3["TPE1"]
+        frame.text = frame.text[0].split("/")
 
         self.failUnlessEqual(original_id3, copied_id3)
 
