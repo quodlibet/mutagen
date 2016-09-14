@@ -9,16 +9,17 @@ import os
 import re
 import sys
 
-from tests import TestCase
-
-from mutagen import _compat
-
-
-os.environ["PYFLAKES_NODOCTEST"] = "1"
+import pytest
 try:
     from pyflakes.scripts import pyflakes
 except ImportError:
     pyflakes = None
+from mutagen import _compat
+
+from tests import TestCase
+
+
+os.environ["PYFLAKES_NODOCTEST"] = "1"
 
 
 class Error(object):
@@ -55,6 +56,7 @@ class FakeStream(object):
             raise Exception("\n" + "\n".join(self.lines))
 
 
+@pytest.mark.quality
 class TPyFlakes(TestCase):
 
     def _run(self, path, **kwargs):
@@ -81,7 +83,3 @@ class TPyFlakes(TestCase):
     def test_tests(self):
         import tests
         self._run_package(tests)
-
-
-if not pyflakes:
-    del TPyFlakes

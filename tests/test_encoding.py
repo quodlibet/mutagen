@@ -35,7 +35,7 @@ class TSourceEncoding(TestCase):
     def test_main(self):
         root = os.path.dirname(mutagen.__path__[0])
 
-        skip = [os.path.join(root, "docs")]
+        skip = [os.path.join(root, "docs"), os.path.join(root, "venv")]
         for dirpath, dirnames, filenames in os.walk(root):
             if any((dirpath.startswith(s + os.sep) or s == dirpath)
                    for s in skip):

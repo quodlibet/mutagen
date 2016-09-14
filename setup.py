@@ -147,10 +147,9 @@ class test_cmd(Command):
     def run(self):
         import tests
 
-        count, failures = tests.unit(self.to_run, self.exitfirst)
-        if failures:
-            print("%d out of %d failed" % (failures, count))
-            raise SystemExit("Test failures are listed above.")
+        status = tests.unit(self.to_run, self.exitfirst)
+        if status != 0:
+            raise SystemExit(status)
 
 
 class quality_cmd(Command):
@@ -166,10 +165,9 @@ class quality_cmd(Command):
     def run(self):
         import tests
 
-        count, failures = tests.check()
-        if failures:
-            print("%d out of %d failed" % (failures, count))
-            raise SystemExit("Test failures are listed above.")
+        status = tests.check()
+        if status != 0:
+            raise SystemExit(status)
 
 
 class coverage_cmd(Command):

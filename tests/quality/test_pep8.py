@@ -9,17 +9,12 @@ import os
 import glob
 import subprocess
 
+import pytest
+
 from tests import TestCase
 
-PEP8_NAME = "pep8"
 
-has_pep8 = True
-try:
-    subprocess.check_output([PEP8_NAME, "--version"], stderr=subprocess.STDOUT)
-except OSError:
-    has_pep8 = False
-
-
+@pytest.mark.quality
 class TPEP8(TestCase):
     IGNORE = ["E12", "W601", "E402", "E731", "E211"]
 
@@ -29,7 +24,7 @@ class TPEP8(TestCase):
         ignore += self.IGNORE
 
         p = subprocess.Popen(
-            [PEP8_NAME, "--ignore=" + ",".join(ignore), path],
+            ["pep8", "--ignore=" + ",".join(ignore), path],
             stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
         class Future(object):
@@ -72,7 +67,3 @@ class TPEP8(TestCase):
     def test_tests(self):
         import tests
         self._run_package(tests)
-
-
-if not has_pep8:
-    del TPEP8

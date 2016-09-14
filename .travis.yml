@@ -54,14 +54,26 @@ matrix:
       env: TYPE="windows" PYVER="3.4.4" PYARGS="-R -bb"
     - os: osx
       language: generic
-      env: TYPE="osx" PYVER="system" PYARGS="-R"
+      env: TYPE="osx" PYVER="3" PYARGS="-R -bb"
+    - os: osx
+      language: generic
+      env: TYPE="osx" PYVER="2" PYARGS="-R"
 
 install:
   - if [ "$TYPE" == "windows" ]; then sudo dpkg --add-architecture i386; fi
+  - if [ "$TYPE" == "windows" ]; then sudo add-apt-repository -y ppa:ubuntu-wine/ppa; fi
   - if [ "$TYPE" == "windows" ]; then travis_retry sudo apt-get update -q; fi
-  - if [ "$TYPE" == "windows" ]; then travis_retry sudo apt-get install --no-install-recommends -y wine xvfb; fi
+  - if [ "$TYPE" == "windows" ]; then travis_retry sudo apt-get install --no-install-recommends -y wine1.8 xvfb; fi
+  - if [ "$TYPE" == "linux" ]; then travis_retry sudo apt-get install --no-install-recommends -y python3-pytest python-pytest; fi
+  - if [ "$TYPE" == "osx" ]; then brew update; fi
+  - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "3" ]; then brew install python3; fi
+  - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "3" ]; then virtualenv venv -p python3; fi
+  - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "2" ]; then brew install python; fi
+  - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "2" ]; then virtualenv venv -p python; fi
+  - if [ "$TYPE" == "osx" ]; then source venv/bin/activate; fi
+  - if [ "$TYPE" == "osx" ]; then python -m pip install pytest; fi
 
 script:
-  - if [ "$TYPE" == "linux" ]; then eval python $PYARGS ./setup.py test; fi
-  - if [ "$TYPE" == "osx" ]; then eval python $PYARGS ./setup.py test; fi
-  - if [ "$TYPE" == "windows" ]; then eval xvfb-run -a ./run_wine.sh "$PYVER" $PYARGS ./setup.py test; fi
+  - if [ "$TYPE" == "linux" ]; then eval python $PYARGS setup.py test; fi
+  - if [ "$TYPE" == "windows" ]; then eval xvfb-run -a ./run_wine.sh "$PYVER" python $PYARGS setup.py test; fi
+  - if [ "$TYPE" == "osx" ]; then eval python $PYARGS setup.py test; fi

@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import division, print_function
-
 import re
-import glob
 import os
-import sys
-import unittest
 import warnings
 import shutil
 from tempfile import mkstemp
-
 from unittest import TestCase as BaseTestCase
+
+try:
+    import pytest
+except ImportError:
+    raise SystemExit("pytest missing: sudo apt-get install python-pytest")
 
 from mutagen._compat import PY3
 from mutagen._toolsutil import fsencoding, is_fsnative
@@ -101,100 +100,22 @@ class TestCase(BaseTestCase):
             self.assertNotEqual(0, cmp(b, a))
 
 
-def import_tests():
-    tests = []
-
-    for name in glob.glob(
-            os.path.join(os.path.dirname(__file__), "test_*.py")):
-        module_name = "tests." + os.path.basename(name)
-        mod = __import__(module_name[:-3], {}, {}, [])
-        mod = getattr(mod, os.path.basename(name)[:-3])
-
-        tests.extend(get_tests_from_mod(mod))
-
-    return list(set(tests))
-
-
-def get_tests_from_mod(mod):
-    tests = []
-    for name in dir(mod):
-        obj = getattr(mod, name)
-        if isinstance(obj, type) and issubclass(obj, BaseTestCase) and \
-                obj is not TestCase:
-            tests.append(obj)
-    return tests
-
-
-class Result(unittest.TestResult):
-
-    separator1 = '=' * 70
-    separator2 = '-' * 70
-
-    def addSuccess(self, test):
-        unittest.TestResult.addSuccess(self, test)
-        sys.stdout.write('.')
-
-    def addError(self, test, err):
-        unittest.TestResult.addError(self, test, err)
-        sys.stdout.write('E')
-
-    def addFailure(self, test, err):
-        unittest.TestResult.addFailure(self, test, err)
-        sys.stdout.write('F')
-
-    def printErrors(self):
-        succ = self.testsRun - (len(self.errors) + len(self.failures))
-        v = "%3d" % succ
-        count = 50 - self.testsRun
-        sys.stdout.write((" " * count) + v + "\n")
-        self.printErrorList('ERROR', self.errors)
-        self.printErrorList('FAIL', self.failures)
-
-    def printErrorList(self, flavour, errors):
-        for test, err in errors:
-            sys.stdout.write(self.separator1 + "\n")
-            sys.stdout.write("%s: %s\n" % (flavour, str(test)))
-            sys.stdout.write(self.separator2 + "\n")
-            sys.stdout.write("%s\n" % err)
-
-
-class Runner(object):
-    def run(self, test):
-        suite = unittest.makeSuite(test)
-        pref = '%s (%d): ' % (test.__name__, len(suite._tests))
-        print (pref + " " * (25 - len(pref)), end="")
-        result = Result()
-        suite(result)
-        result.printErrors()
-        return bool(result.failures + result.errors)
-
-
 def check():
-    from tests.quality import test_pep8
-    from tests.quality import test_pyflakes
-
-    tests = get_tests_from_mod(test_pep8)
-    tests += get_tests_from_mod(test_pyflakes)
-
-    runner = Runner()
-    failures = 0
-    for test in sorted(tests, key=lambda c: c.__name__):
-        failures += runner.run(test)
-
-    return len(tests), failures
+    return pytest.main(args=[os.path.join("tests", "quality")])
 
 
 def unit(run=[], exitfirst=False):
-    tests = import_tests()
+    args = []
 
-    runner = Runner()
-    failures = 0
-    filtered = [t for t in tests if not run or t.__name__ in run]
+    if run:
+        args.append("-k")
+        args.append(" or ".join(run))
 
-    for test in sorted(filtered, key=lambda c: c.__name__):
-        if failures and exitfirst:
-            break
+    if exitfirst:
+        args.append("-x")
 
-        failures += runner.run(test)
+    args.extend(["-m", "not quality"])
 
-    return len(filtered), failures
+    args.append("tests")
+
+    return pytest.main(args=args)
