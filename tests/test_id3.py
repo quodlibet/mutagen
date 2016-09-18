@@ -1073,7 +1073,7 @@ class TID3Misc(TestCase):
 
         # in this case it helps that we know the frame name
         d = get_frame_data(b"TPE2", 1000) + get_frame_data(b"TPE2", 10) + \
-                b"\x01" * 875
+            b"\x01" * 875
         self.assertTrue(determine_bpi(d, Frames) is BitPaddedInt)
 
 

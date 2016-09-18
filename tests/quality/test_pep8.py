@@ -6,17 +6,18 @@
 # published by the Free Software Foundation
 
 import os
-import glob
 import subprocess
 
 import pytest
 
+import mutagen
+import tests
 from tests import TestCase
 
 
 @pytest.mark.quality
 class TPEP8(TestCase):
-    IGNORE = ["E12", "W601", "E402", "E731", "E211"]
+    IGNORE = ["E128", "W601", "E402", "E731"]
 
     def _run(self, path, ignore=None):
         if ignore is None:
@@ -39,13 +40,15 @@ class TPEP8(TestCase):
 
         return Future(p)
 
-    def _run_package(self, mod, ignore=None):
-        path = mod.__path__[0]
-        files = glob.glob(os.path.join(path, "*.py"))
-        assert files
+    def test_all(self):
+        paths = [mutagen.__path__[0], tests.__path__[0]]
+        paths.append(
+            os.path.join(os.path.dirname(mutagen.__path__[0]), "tools"))
+
         futures = []
-        for file_ in files:
-            futures.append(self._run(file_, ignore))
+        for path in paths:
+            assert os.path.exists(path)
+            futures.append(self._run(path))
 
         errors = []
         for future in futures:
@@ -55,15 +58,3 @@ class TPEP8(TestCase):
 
         if errors:
             raise Exception("\n".join(errors))
-
-    def test_main_package(self):
-        import mutagen
-        self._run_package(mutagen)
-
-    def test_id3_package(self):
-        import mutagen.id3
-        self._run_package(mutagen.id3)
-
-    def test_tests(self):
-        import tests
-        self._run_package(tests)

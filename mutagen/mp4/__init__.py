@@ -200,7 +200,6 @@ class MP4FreeForm(bytes):
             AtomDataType(self.dataformat))
 
 
-
 def _name2key(name):
     if PY2:
         return name

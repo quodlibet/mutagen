@@ -122,7 +122,7 @@ class MPEGFrame(object):
             bitrate = r.bits(4)
             sample_rate = r.bits(2)
             padding = r.bits(1)
-            r.skip(1) # private
+            r.skip(1)  # private
             self.mode = r.bits(2)
             r.skip(6)
         except BitReaderError:
@@ -157,8 +157,8 @@ class MPEGFrame(object):
             slot = 1
 
         frame_length = (
-            ((frame_size // 8 * self.bitrate) // self.sample_rate)
-             + padding) * slot
+            ((frame_size // 8 * self.bitrate) // self.sample_rate) +
+            padding) * slot
 
         self.sketchy = True
 
@@ -363,7 +363,7 @@ class MPEGInfo(StreamInfo):
                 if not frame.sketchy:
                     break
 
-           # if we have min frames, save it in case this is all we get
+            # if we have min frames, save it in case this is all we get
             if len(frames) >= min_frames and first_frame is None:
                 first_frame = frames[0]
 

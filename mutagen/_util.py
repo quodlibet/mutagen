@@ -661,7 +661,7 @@ def mmap_move(fileobj, dest, src, count):
         raise ValueError("Not in file size boundary")
 
     offset = ((min(dest, src) // mmap.ALLOCATIONGRANULARITY) *
-        mmap.ALLOCATIONGRANULARITY)
+              mmap.ALLOCATIONGRANULARITY)
     assert dest >= offset
     assert src >= offset
     assert offset % mmap.ALLOCATIONGRANULARITY == 0

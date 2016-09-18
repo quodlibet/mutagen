@@ -644,7 +644,7 @@ class TMP4Mixin(object):
 
     def test_podcast_url(self):
         self.set_key('purl', ['http://pdl.warnerbros.com/wbie/'
-                               'justiceleagueheroes/audio/JLH_EA.xml'])
+                              'justiceleagueheroes/audio/JLH_EA.xml'])
 
     def test_episode_guid(self):
         self.set_key('catg', ['falling-star-episode-1'])

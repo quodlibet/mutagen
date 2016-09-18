@@ -34,7 +34,7 @@ def guid2bytes(s):
         p("<IHH", int(s[:8], 16), int(s[9:13], 16), int(s[14:18], 16)),
         p(">H", int(s[19:23], 16)),
         p(">Q", int(s[24:], 16))[2:],
-        ])
+    ])
 
 
 def bytes2guid(s):

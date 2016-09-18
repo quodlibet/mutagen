@@ -237,11 +237,11 @@ class TASFMixin(object):
         self.audio["QL/OneHasStream"] = [
             ASFValue("Whee", UNICODE, stream=2),
             ASFValue("Whee", UNICODE),
-            ]
+        ]
         self.audio["QL/AllHaveStream"] = [
             ASFValue("Whee", UNICODE, stream=1),
             ASFValue("Whee", UNICODE, stream=2),
-            ]
+        ]
         self.audio["QL/NoStream"] = ASFValue("Whee", UNICODE)
         self.audio.save()
         self.audio = ASF(self.audio.filename)
@@ -257,11 +257,11 @@ class TASFMixin(object):
         self.audio["QL/OneHasLang"] = [
             ASFValue("Whee", UNICODE, language=2),
             ASFValue("Whee", UNICODE),
-            ]
+        ]
         self.audio["QL/AllHaveLang"] = [
             ASFValue("Whee", UNICODE, language=1),
             ASFValue("Whee", UNICODE, language=2),
-            ]
+        ]
         self.audio["QL/NoLang"] = ASFValue("Whee", UNICODE)
         self.audio.save()
         self.audio = ASF(self.audio.filename)
@@ -277,7 +277,7 @@ class TASFMixin(object):
             ASFValue("Whee", UNICODE, language=2),
             ASFValue("Whee", UNICODE, stream=3, language=4),
             ASFValue("Whee", UNICODE),
-            ]
+        ]
         self.audio.save()
         self.audio = ASF(self.audio.filename)
         # order not preserved here because they end up in different objects.

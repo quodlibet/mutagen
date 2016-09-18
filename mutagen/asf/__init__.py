@@ -242,8 +242,9 @@ class ASF(FileType):
         self._header = HeaderObject.parse_full(self, fileobj)
 
         for guid in [ContentDescriptionObject.GUID,
-                ExtendedContentDescriptionObject.GUID, MetadataObject.GUID,
-                MetadataLibraryObject.GUID]:
+                     ExtendedContentDescriptionObject.GUID,
+                     MetadataObject.GUID,
+                     MetadataLibraryObject.GUID]:
             self.tags.extend(self._tags.pop(guid, []))
 
         assert not self._tags
