@@ -184,7 +184,7 @@ class TFileType(TestCase):
         self.assertTrue(self.mp3_notags.tags is None)
 
 
-class TestFileObj(object):
+class _TestFileObj(object):
     """A file-like object which fails in various ways"""
 
     def __init__(self, fileobj, stop_after=-1, fail_after=-1):
@@ -265,14 +265,14 @@ def iter_test_file_objects(fileobj):
     each time
     """
 
-    t = TestFileObj(fileobj)
+    t = _TestFileObj(fileobj)
     # first figure out how much a successful attempt reads and how many
     # file object operations it executes.
     yield t
     for i in xrange(t.dataread):
-        yield TestFileObj(fileobj, stop_after=i)
+        yield _TestFileObj(fileobj, stop_after=i)
     for i in xrange(t.operations):
-        yield TestFileObj(fileobj, fail_after=i)
+        yield _TestFileObj(fileobj, fail_after=i)
 
 
 class TAbstractFileType(object):
@@ -315,7 +315,7 @@ class TAbstractFileType(object):
 
     def test_testfileobj(self):
         with open(self.filename, "rb") as h:
-            self.KIND(TestFileObj(h))
+            self.KIND(_TestFileObj(h))
 
     def test_test_fileobj_load(self):
         with open(self.filename, "rb") as h:
@@ -327,7 +327,7 @@ class TAbstractFileType(object):
 
     def test_test_fileobj_save(self):
         with open(self.filename, "rb+") as h:
-            o = self.KIND(TestFileObj(h))
+            o = self.KIND(_TestFileObj(h))
             for t in iter_test_file_objects(h):
                 try:
                     o.save(fileobj=t)
@@ -336,7 +336,7 @@ class TAbstractFileType(object):
 
     def test_test_fileobj_delete(self):
         with open(self.filename, "rb+") as h:
-            o = self.KIND(TestFileObj(h))
+            o = self.KIND(_TestFileObj(h))
             for t in iter_test_file_objects(h):
                 try:
                     o.delete(fileobj=t)
