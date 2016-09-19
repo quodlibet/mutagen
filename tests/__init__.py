@@ -4,7 +4,6 @@ import re
 import os
 import warnings
 import shutil
-from tempfile import mkstemp
 from unittest import TestCase as BaseTestCase
 
 try:
@@ -13,21 +12,17 @@ except ImportError:
     raise SystemExit("pytest missing: sudo apt-get install python-pytest")
 
 from mutagen._compat import PY3
-from mutagen._toolsutil import fsencoding, is_fsnative
+from mutagen._senf import text2fsn, fsn2text, path2fsn, mkstemp, fsnative
 
 
-DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
-if os.name == "nt" and not PY3:
-    DATA_DIR = DATA_DIR.decode("ascii")
-assert is_fsnative(DATA_DIR)
+DATA_DIR = os.path.join(
+    os.path.dirname(os.path.realpath(path2fsn(__file__))), "data")
+assert isinstance(DATA_DIR, fsnative)
 
 
-if os.name != "nt":
-    try:
-        u"öäü".encode(fsencoding())
-    except ValueError:
-        raise RuntimeError("This test suite needs a unicode locale encoding. "
-                           "Try setting LANG=C.UTF-8")
+if fsn2text(text2fsn(u"öäü")) != u"öäü":
+    raise RuntimeError("This test suite needs a unicode locale encoding. "
+                       "Try setting LANG=C.UTF-8")
 
 
 # Make sure we see all deprecation warnings so we either have to avoid them

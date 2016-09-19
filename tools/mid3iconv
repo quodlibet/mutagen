@@ -11,9 +11,10 @@ import locale
 
 import mutagen
 import mutagen.id3
+
+from mutagen._senf import argv, print_, fsnative
 from mutagen._compat import PY3, text_type
-from mutagen._toolsutil import SignalHandler, get_win32_unicode_argv, print_, \
-    fsnative as fsn, OptionParser
+from mutagen._toolsutil import SignalHandler, OptionParser
 
 
 VERSION = (0, 3)
@@ -149,9 +150,9 @@ def main(argv):
 
     for i, arg in enumerate(argv):
         if arg == "-v1":
-            argv[i] = fsn(u"--force-v1")
+            argv[i] = fsnative(u"--force-v1")
         elif arg == "-removev1":
-            argv[i] = fsn(u"--remove-v1")
+            argv[i] = fsnative(u"--remove-v1")
 
     (options, args) = parser.parse_args(argv[1:])
 
@@ -161,6 +162,5 @@ def main(argv):
         parser.print_help()
 
 if __name__ == "__main__":
-    argv = get_win32_unicode_argv()
     _sig.init()
     main(argv)

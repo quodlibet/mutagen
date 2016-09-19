@@ -18,8 +18,9 @@ from optparse import SUPPRESS_HELP
 import mutagen
 import mutagen.id3
 from mutagen.id3 import Encoding, PictureType
-from mutagen._toolsutil import split_escape, SignalHandler, OptionParser,\
-    get_win32_unicode_argv, fsnative, is_fsnative, fsencoding, print_
+from mutagen._senf import fsnative, print_, argv, fsn2text, text2fsn, \
+    fsn2bytes, bytes2fsn
+from mutagen._toolsutil import split_escape, SignalHandler, OptionParser
 from mutagen._compat import PY2, PY3, text_type
 
 
@@ -114,21 +115,15 @@ def frame_from_fsnative(arg):
     or raises ValueError.
     """
 
-    assert is_fsnative(arg)
+    assert isinstance(arg, fsnative)
 
-    if os.name == "nt":
-        # unicode
-        if PY2:
-            return arg.encode("ascii")
-        else:
-            return arg.encode("ascii").decode("ascii")
+    text = fsn2text(arg)
+    if arg != text2fsn(text):
+        raise ValueError("%r can't be decoded" % arg)
+    if PY2:
+        return text.encode("ascii")
     else:
-        if PY2:
-            # bytes
-            return arg.decode(fsencoding()).encode("ascii")
-        else:
-            # unicode + surrogate
-            return arg.encode("ascii", "surrogateescape").decode("ascii")
+        return text.encode("ascii").decode("ascii")
 
 
 def value_from_fsnative(arg, escape):
@@ -136,28 +131,21 @@ def value_from_fsnative(arg, escape):
     surrogate escapes or raises ValueError.
     """
 
-    assert is_fsnative(arg)
+    assert isinstance(arg, fsnative)
 
-    if os.name == "nt":
-        if not escape:
-            return arg
+    if escape:
+        bytes_ = fsn2bytes(arg, "utf-8")
         if PY2:
-            return arg.encode("utf-8").decode("string_escape").decode("utf-8")
+            bytes_ = bytes_.decode("string_escape")
         else:
-            return codecs.escape_decode(arg.encode("utf-8"))[0].decode("utf-8")
-    else:
-        enc = fsencoding()
-        if PY2:
-            if escape:
-                arg = arg.decode("string_escape")
-            return arg.decode(enc)
-        else:
-            if not escape:
-                # make sure no surrogateescapes
-                arg.encode("utf-8")
-                return arg
-            return codecs.escape_decode(
-                arg.encode(enc, "surrogateescape"))[0].decode(enc)
+            bytes_ = codecs.escape_decode(bytes_)[0]
+        arg = bytes2fsn(bytes_, "utf-8")
+
+    text = fsn2text(arg)
+    # only allow values which can be converted back
+    if arg != text2fsn(text):
+        raise ValueError("%r can't be decoded" % arg)
+    return text
 
 
 def error(*args):
@@ -467,6 +455,5 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    argv = get_win32_unicode_argv()
     _sig.init()
     main(argv)

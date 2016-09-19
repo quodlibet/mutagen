@@ -259,6 +259,7 @@ if __name__ == "__main__":
             "mutagen.mp4",
             "mutagen.asf",
             "mutagen.mp3",
+            "mutagen._senf",
           ],
           data_files=data_files,
           scripts=[os.path.join("tools", name) for name in [

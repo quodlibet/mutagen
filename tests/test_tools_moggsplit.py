@@ -3,7 +3,7 @@
 import os
 
 from mutagen._compat import text_type
-from mutagen._toolsutil import fsnative as fsn
+from mutagen._senf import fsnative as fsn
 
 from tests.test_tools import _TTools
 from tests import DATA_DIR, get_temp_copy

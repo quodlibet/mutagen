@@ -7,7 +7,7 @@ import warnings
 
 import mutagen
 from mutagen._compat import StringIO, text_type, PY2
-from mutagen._toolsutil import fsnative, is_fsnative
+from mutagen._senf import fsnative
 
 from tests import TestCase
 
@@ -38,7 +38,7 @@ class _TTools(TestCase):
 
     def call2(self, *args):
         for arg in args:
-            self.assertTrue(is_fsnative(arg))
+            self.assertTrue(isinstance(arg, fsnative))
         old_stdout = sys.stdout
         old_stderr = sys.stderr
         try:
@@ -54,7 +54,7 @@ class _TTools(TestCase):
             out_val = out.getvalue()
             err_val = err.getvalue()
             if os.name == "nt" and PY2:
-                encoding = getattr(sys.stdout, "encoding", None) or "utf-8"
+                encoding = getattr(sys.stdout, "encoding", None) or "mbcs"
                 out_val = text_type(out_val, encoding)
                 err_val = text_type(err_val, encoding)
             return (ret, out_val, err_val)

@@ -15,8 +15,9 @@ import sys
 import os.path
 import mutagen
 import mutagen.id3
-from mutagen._toolsutil import SignalHandler, get_win32_unicode_argv, print_, \
-    OptionParser
+
+from mutagen._senf import print_, argv
+from mutagen._toolsutil import SignalHandler, OptionParser
 from mutagen._compat import text_type
 
 
@@ -118,6 +119,5 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    get_win32_unicode_argv()
     _sig.init()
-    sys.exit(main(sys.argv))
+    sys.exit(main(argv))

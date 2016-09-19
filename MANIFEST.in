@@ -6,5 +6,6 @@ include tests/data/*
 include tests/quality/*
 include tests/*.py
 include man/*.1
+recursive-include mutagen README.rst
 recursive-include docs *.py Makefile *.rst *.png *.svg *.ico
 prune docs/_build

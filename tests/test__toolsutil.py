@@ -1,19 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import os
-
-from mutagen._toolsutil import get_win32_unicode_argv, split_escape
+from mutagen._toolsutil import split_escape
 from mutagen._compat import text_type
 
 from tests import TestCase
-
-
-class Tget_win32_unicode_argv(TestCase):
-
-    def test_main(self):
-        argv = get_win32_unicode_argv()
-        if os.name == "nt" and argv:
-            self.assertTrue(isinstance(argv[0], text_type))
 
 
 class Tsplit_escape(TestCase):

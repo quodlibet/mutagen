@@ -8,7 +8,7 @@ import locale
 import mutagen
 from mutagen.id3 import ID3
 from mutagen._compat import PY2, PY3
-from mutagen._toolsutil import fsnative as fsn, is_fsnative as isfsn
+from mutagen._senf import fsnative as fsn
 
 from tests.test_tools import _TTools
 from tests import DATA_DIR
@@ -22,7 +22,7 @@ class TMid3v2(_TTools):
         super(TMid3v2, self).setUp()
         original = os.path.join(DATA_DIR, fsn(u'silence-44-s.mp3'))
         fd, self.filename = mkstemp(suffix=fsn(u'öäü.mp3'))
-        assert isfsn(self.filename)
+        assert isinstance(self.filename, fsn)
         os.close(fd)
         shutil.copy(original, self.filename)
 

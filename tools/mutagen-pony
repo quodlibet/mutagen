@@ -9,7 +9,8 @@ import os
 import sys
 import traceback
 
-from mutagen._toolsutil import SignalHandler, get_win32_unicode_argv, print_
+from mutagen._senf import print_, argv
+from mutagen._toolsutil import SignalHandler
 
 
 class Report(object):
@@ -109,6 +110,5 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    argv = get_win32_unicode_argv()
     SignalHandler().init()
     main(argv)

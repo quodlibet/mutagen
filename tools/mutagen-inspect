@@ -9,8 +9,8 @@
 import sys
 import locale
 
-from mutagen._toolsutil import SignalHandler, get_win32_unicode_argv, print_, \
-    OptionParser
+from mutagen._senf import print_, argv
+from mutagen._toolsutil import SignalHandler, OptionParser
 from mutagen._compat import text_type
 
 
@@ -38,6 +38,5 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    argv = get_win32_unicode_argv()
     SignalHandler().init()
     main(argv)

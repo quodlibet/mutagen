@@ -3,7 +3,7 @@
 import os
 
 from mutagen.id3 import ID3
-from mutagen._toolsutil import fsnative as fsn
+from mutagen._senf import fsnative as fsn
 from mutagen._compat import text_type
 
 from tests.test_tools import _TTools

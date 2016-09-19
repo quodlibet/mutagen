@@ -15,7 +15,7 @@ import os
 from tempfile import mkstemp
 import shutil
 from mutagen.id3 import ID3, ParseID3v1
-from mutagen._toolsutil import fsnative as fsn
+from mutagen._senf import fsnative as fsn
 
 from tests.test_tools import _TTools
 from tests import DATA_DIR
