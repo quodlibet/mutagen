@@ -1201,6 +1201,8 @@ class TTPE1(TestCase):
     def test_junkframe(self):
         self.assertRaises(
             ID3JunkFrameError, TPE1._fromData, _24, 0, b"")
+        self.assertRaises(
+            ID3JunkFrameError, TPE1._fromData, _24, 0, b'\x03A\xff\xfe')
 
     def test_lengthone_utf16(self):
         tpe1 = TPE1._fromData(_24, 0, b'\x01\x00')
@@ -1213,6 +1215,24 @@ class TTPE1(TestCase):
         tpe1 = TPE1._fromData(
             _24, 0, b'\x01\xff\xfeH\x00e\x00l\x00l\x00o\x00\x00')
         self.assertEquals(tpe1, [u'Hello'])
+
+        tpe1 = TPE1._fromData(
+            _24, 0, b'\x02\x00H\x00e\x00l\x00l\x00o\x00')
+        self.assertEquals(tpe1, [u'Hello'])
+
+    def test_utf_16_missing_bom(self):
+        tpe1 = TPE1._fromData(
+            _24, 0, b'\x01H\x00e\x00l\x00l\x00o\x00\x00\x00')
+        self.assertEquals(tpe1, [u'Hello'])
+
+    def test_utf_16_missing_bom_wrong_nullterm(self):
+        tpe1 = TPE1._fromData(
+            _24, 0, b'\x01H\x00e\x00l\x00l\x00o\x00\x00')
+        self.assertEquals(tpe1, [u'Hello'])
+
+        tpe1 = TPE1._fromData(
+            _24, 0, b'\x01f\x00o\x00o\x00\x00\x00b\x00a\x00r\x00\x00')
+        self.assertEquals(tpe1, [u"foo", u"bar"])
 
     def test_zlib_bpi(self):
         tpe1 = TPE1(encoding=0, text="a" * (0xFFFF - 2))

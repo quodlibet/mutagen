@@ -7,6 +7,7 @@
 # published by the Free Software Foundation.
 
 import struct
+import codecs
 from struct import unpack, pack
 
 from .._compat import text_type, chr_, PY3, swap_to_string, string_types, \
@@ -437,6 +438,22 @@ class BinaryDataSpec(Spec):
         return value
 
 
+def iter_text_fixups(data, encoding):
+    """Yields a series of repaired text values for decoding"""
+
+    yield data
+    if encoding == Encoding.UTF16BE:
+        # wrong termination
+        yield data + b"\x00"
+    elif encoding == Encoding.UTF16:
+        # wrong termination
+        yield data + b"\x00"
+        # utf-16 is missing BOM, content is usually utf-16-le
+        yield codecs.BOM_UTF16_LE + data
+        # both cases combined
+        yield codecs.BOM_UTF16_LE + data + b"\x00"
+
+
 class EncodedTextSpec(Spec):
 
     _encodings = {
@@ -451,19 +468,13 @@ class EncodedTextSpec(Spec):
 
     def read(self, header, frame, data):
         enc, term = self._encodings[frame.encoding]
-        try:
-            # allow missing termination
-            return decode_terminated(data, enc, strict=False)
-        except ValueError:
-            # utf-16 termination with missing BOM, or single NULL
-            if not data[:len(term)].strip(b"\x00"):
-                return u"", data[len(term):]
-
-            # utf-16 data with single NULL, see issue 169
+        err = None
+        for data in iter_text_fixups(data, frame.encoding):
             try:
-                return decode_terminated(data + b"\x00", enc)
-            except ValueError:
-                raise SpecError("Decoding error")
+                return decode_terminated(data, enc, strict=False)
+            except ValueError as e:
+                err = e
+        raise SpecError(err)
 
     def write(self, config, frame, value):
         enc, term = self._encodings[frame.encoding]
