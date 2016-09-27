@@ -341,7 +341,7 @@ class MPEGInfo(StreamInfo):
 
         # find a sync in the first 1024K, give up after some invalid syncs
         max_read = 1024 * 1024
-        max_syncs = 128
+        max_syncs = 1000
         enough_frames = 4
         min_frames = 2
 
