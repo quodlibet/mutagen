@@ -53,9 +53,11 @@ matrix:
       dist: trusty
       env: TYPE="windows" PYVER="3.4.4" PYARGS="-R -bb"
     - os: osx
+      osx_image: xcode6.4
       language: generic
       env: TYPE="osx" PYVER="3" PYARGS="-R -bb"
     - os: osx
+      osx_image: xcode6.4
       language: generic
       env: TYPE="osx" PYVER="2" PYARGS="-R"
 
@@ -67,8 +69,10 @@ install:
   - if [ "$TYPE" == "linux" ]; then travis_retry sudo apt-get install --no-install-recommends -y python3-pytest python-pytest; fi
   - if [ "$TYPE" == "osx" ]; then brew update; fi
   - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "3" ]; then brew install python3; fi
+  - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "3" ]; then python3 -m pip install virtualenv; fi
   - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "3" ]; then virtualenv venv -p python3; fi
   - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "2" ]; then brew install python; fi
+  - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "2" ]; then python -m pip install virtualenv; fi
   - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "2" ]; then virtualenv venv -p python; fi
   - if [ "$TYPE" == "osx" ]; then source venv/bin/activate; fi
   - if [ "$TYPE" == "osx" ]; then python -m pip install pytest; fi
