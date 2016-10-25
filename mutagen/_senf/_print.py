@@ -54,16 +54,13 @@ def print_(*objects, **kwargs):
     file = file if file is not None else sys.stdout
     flush = bool(kwargs.get("flush", False))
 
-    if end == "\n":
-        end = os.linesep
-
     if is_win:
         _print_windows(objects, sep, end, file, flush)
     else:
-        _print_default(objects, sep, end, file, flush)
+        _print_unix(objects, sep, end, file, flush)
 
 
-def _print_default(objects, sep, end, file, flush):
+def _print_unix(objects, sep, end, file, flush):
     """A print_() implementation which writes bytes"""
 
     encoding = _encoding
@@ -77,6 +74,11 @@ def _print_default(objects, sep, end, file, flush):
         end = end.encode(encoding, "replace")
     if not isinstance(end, bytes):
         raise TypeError
+
+    if end == b"\n":
+        end = os.linesep
+        if PY3:
+            end = end.encode("ascii")
 
     parts = []
     for obj in objects:
@@ -101,7 +103,7 @@ def _print_default(objects, sep, end, file, flush):
     try:
         file.write(data)
     except TypeError:
-        if is_unix and PY3:
+        if PY3:
             # For StringIO, first try with surrogates
             surr_data = data.decode(encoding, "surrogateescape")
             try:
@@ -134,15 +136,6 @@ def _print_windows(objects, sep, end, file, flush):
         elif fileno == 2:
             h = winapi.GetStdHandle(winapi.STD_ERROR_HANDLE)
 
-    if h == winapi.INVALID_HANDLE_VALUE:
-        return _print_default(objects, sep, end, file, flush)
-
-    # get the default value
-    info = winapi.CONSOLE_SCREEN_BUFFER_INFO()
-    if not winapi.GetConsoleScreenBufferInfo(h, ctypes.byref(info)):
-        # not a console, fallback (e.g. redirect to file)
-        return _print_default(objects, sep, end, file, flush)
-
     encoding = _encoding
 
     parts = []
@@ -163,30 +156,51 @@ def _print_windows(objects, sep, end, file, flush):
     if not isinstance(end, text_type):
         raise TypeError
 
+    if end == u"\n":
+        end = os.linesep
+
     text = sep.join(parts) + end
     assert isinstance(text, text_type)
 
-    # make sure we flush before we apply any console attributes
-    file.flush()
+    is_console = True
+    if h == winapi.INVALID_HANDLE_VALUE:
+        is_console = False
+    else:
+        # get the default value
+        info = winapi.CONSOLE_SCREEN_BUFFER_INFO()
+        if not winapi.GetConsoleScreenBufferInfo(h, ctypes.byref(info)):
+            is_console = False
 
-    # try to force a utf-8 code page, use the output CP if that fails
-    cp = winapi.GetConsoleOutputCP()
-    encoding = "utf-8"
-    if winapi.SetConsoleOutputCP(65001) == 0:
-        encoding = None
+    if is_console:
+        # make sure we flush before we apply any console attributes
+        file.flush()
 
-    for is_ansi, part in ansi_split(text):
-        if is_ansi:
-            ansi_state.apply(h, part)
-        else:
-            if encoding is not None:
-                data = part.encode(encoding, 'replace')
-            else:
-                data = _encode_codepage(cp, part)
-            os.write(fileno, data)
+        # try to force a utf-8 code page, use the output CP if that fails
+        cp = winapi.GetConsoleOutputCP()
+        try:
+            encoding = "utf-8"
+            if winapi.SetConsoleOutputCP(65001) == 0:
+                encoding = None
 
-    # reset the code page to what we had before
-    winapi.SetConsoleOutputCP(cp)
+            for is_ansi, part in ansi_split(text):
+                if is_ansi:
+                    ansi_state.apply(h, part)
+                else:
+                    if encoding is not None:
+                        data = part.encode(encoding, _surrogatepass)
+                    else:
+                        data = _encode_codepage(cp, part)
+                    os.write(fileno, data)
+        finally:
+            # reset the code page to what we had before
+            winapi.SetConsoleOutputCP(cp)
+    else:
+        # try writing bytes first, so in case of Python 2 StringIO we get
+        # the same type on all platforms
+        try:
+            file.write(text.encode("utf-8", _surrogatepass))
+        except (TypeError, ValueError):
+            file.write(text)
 
 
 def _readline_windows():

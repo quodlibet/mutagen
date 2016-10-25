@@ -27,6 +27,8 @@ if PY2:
 
     from StringIO import StringIO
     BytesIO = StringIO
+    from io import StringIO as TextIO
+    TextIO
 
     string_types = (str, unicode)
     text_type = unicode
@@ -40,6 +42,7 @@ elif PY3:
 
     from io import StringIO
     StringIO = StringIO
+    TextIO = StringIO
     from io import BytesIO
     BytesIO = BytesIO
 
