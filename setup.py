@@ -13,11 +13,10 @@ import sys
 import subprocess
 import tarfile
 
-from distutils.core import setup, Command
-from distutils import dir_util
-
 from distutils.command.clean import clean as distutils_clean
 from distutils.command.sdist import sdist
+from distutils import dir_util
+from setuptools import setup, Command
 
 
 class clean(distutils_clean):
@@ -93,7 +92,7 @@ class distcheck(sdist):
         tfile.close()
 
         name = self.distribution.get_fullname()
-        extract_dir =  os.path.join(distcheck_dir, name)
+        extract_dir = os.path.join(distcheck_dir, name)
 
         old_pwd = os.getcwd()
         os.chdir(extract_dir)

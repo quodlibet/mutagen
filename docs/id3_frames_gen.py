@@ -26,9 +26,9 @@ BaseFrames = dict([(k, v) for (k, v) in vars(mutagen.id3).items()
 
 
 def print_header(header, type_="-"):
-    print header
-    print type_ * len(header)
-    print
+    print(header)
+    print(type_ * len(header))
+    print("")
 
 
 def print_frames(frames, sort_mro=False):
@@ -39,11 +39,11 @@ def print_frames(frames, sort_mro=False):
         sort_func = lambda x: x
 
     for name, cls in sorted(frames.items(), key=sort_func):
-        print """
+        print("""
 .. autoclass:: mutagen.id3.%s
     :show-inheritance:
     :members:
-""" % repr(cls())
+""" % repr(cls()))
 
 
 if __name__ == "__main__":

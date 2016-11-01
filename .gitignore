@@ -2,7 +2,9 @@
 docs/_build
 docs/_rtd_theme
 dist
+build
 coverage/*.cover
 MANIFEST
 coverage
 .cache
+*.egg-info
