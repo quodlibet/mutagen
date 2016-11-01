@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Copyright 2005 Joe Wreschnig, Michael Urman
 #
 # This program is free software; you can redistribute it and/or modify
@@ -10,7 +10,8 @@ import sys
 import traceback
 
 from mutagen._senf import print_, argv
-from mutagen._toolsutil import SignalHandler
+
+from ._util import SignalHandler
 
 
 class Report(object):
@@ -48,7 +49,7 @@ class Report(object):
 
         good = self.files - len(self.errors)
         strings.append("Loaded %d/%d files (%d%%)" % (
-            good, self.files, (float(good)/self.files) * 100))
+            good, self.files, (float(good) / self.files) * 100))
         strings.append("%d files with unsynchronized frames." % self.unsync)
         strings.append("%d files without tags." % self.missings)
 
@@ -109,6 +110,6 @@ def main(argv):
             check_dir(path)
 
 
-if __name__ == "__main__":
+def entry_point():
     SignalHandler().init()
-    main(argv)
+    return main(argv)

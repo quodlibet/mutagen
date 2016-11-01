@@ -17,7 +17,7 @@ from tests import TestCase
 
 @pytest.mark.quality
 class TPEP8(TestCase):
-    IGNORE = ["E128", "W601", "E402", "E731"]
+    IGNORE = ["E128", "W601", "E402", "E731", "W503"]
 
     def _run(self, path, ignore=None):
         if ignore is None:
@@ -42,8 +42,6 @@ class TPEP8(TestCase):
 
     def test_all(self):
         paths = [mutagen.__path__[0], tests.__path__[0]]
-        paths.append(
-            os.path.join(os.path.dirname(mutagen.__path__[0]), "tools"))
 
         futures = []
         for path in paths:

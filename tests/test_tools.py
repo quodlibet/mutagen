@@ -2,10 +2,8 @@
 
 import os
 import sys
-import imp
-import warnings
+import importlib
 
-import mutagen
 from mutagen._compat import StringIO, text_type, PY2
 from mutagen._senf import fsnative
 
@@ -13,16 +11,8 @@ from tests import TestCase
 
 
 def get_var(tool_name, entry="main"):
-    tool_path = os.path.join(
-        mutagen.__path__[0], "..", "tools", fsnative(tool_name))
-    dont_write_bytecode = sys.dont_write_bytecode
-    sys.dont_write_bytecode = True
-    try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            mod = imp.load_source(tool_name, tool_path)
-    finally:
-        sys.dont_write_bytecode = dont_write_bytecode
+    mod = importlib.import_module(
+        "mutagen._tools.%s" % tool_name.replace("-", "_"))
     return getattr(mod, entry)
 
 

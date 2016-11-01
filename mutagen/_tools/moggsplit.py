@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Split a multiplex/chained Ogg file into its component parts.
 # Copyright 2006 Joe Wreschnig
 #
@@ -7,11 +7,11 @@
 # published by the Free Software Foundation.
 
 import os
-import sys
 
 import mutagen.ogg
 from mutagen._senf import argv
-from mutagen._toolsutil import SignalHandler, OptionParser
+
+from ._util import SignalHandler, OptionParser
 
 
 _sig = SignalHandler()
@@ -23,7 +23,7 @@ def main(argv):
         usage="%prog [options] filename.ogg ...",
         description="Split Ogg logical streams using Mutagen.",
         version="Mutagen %s" % ".".join(map(str, mutagen.version))
-        )
+    )
 
     parser.add_option(
         "--extension", dest="extension", default="ogg", metavar='ext',
@@ -67,6 +67,7 @@ def main(argv):
             for f in fileobjs.values():
                 f.close()
 
-if __name__ == "__main__":
+
+def entry_point():
     _sig.init()
-    main(argv)
+    return main(argv)

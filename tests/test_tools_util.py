@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from mutagen._toolsutil import split_escape
+from mutagen._tools._util import split_escape
 from mutagen._compat import text_type
 
 from tests import TestCase

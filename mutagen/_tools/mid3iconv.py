@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # ID3iconv is a Java based ID3 encoding convertor, here's the Python version.
 # Copyright 2006 Emfox Zhou <EmfoxZhou@gmail.com>
 #
@@ -11,10 +11,10 @@ import locale
 
 import mutagen
 import mutagen.id3
-
 from mutagen._senf import argv, print_, fsnative
-from mutagen._compat import PY3, text_type
-from mutagen._toolsutil import SignalHandler, OptionParser
+from mutagen._compat import text_type
+
+from ._util import SignalHandler, OptionParser
 
 
 VERSION = (0, 3)
@@ -161,6 +161,7 @@ def main(argv):
     else:
         parser.print_help()
 
-if __name__ == "__main__":
+
+def entry_point():
     _sig.init()
-    main(argv)
+    return main(argv)

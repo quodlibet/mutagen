@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 # Copyright 2015 Christoph Reiter
 #
 # This program is free software; you can redistribute it and/or modify
@@ -11,8 +10,8 @@ import signal
 import contextlib
 import optparse
 
-from ._senf import print_
-from ._compat import text_type, iterbytes
+from mutagen._senf import print_
+from mutagen._compat import text_type, iterbytes
 
 
 def split_escape(string, sep, maxsplit=None, escape_char="\\"):

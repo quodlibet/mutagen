@@ -1,6 +1,4 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 # Copyright 2014 Marcus Sundman
 
 # This program is free software; you can redistribute it and/or modify
@@ -13,12 +11,13 @@ tag loading and saving.
 
 import sys
 import os.path
+
 import mutagen
 import mutagen.id3
-
 from mutagen._senf import print_, argv
-from mutagen._toolsutil import SignalHandler, OptionParser
 from mutagen._compat import text_type
+
+from ._util import SignalHandler, OptionParser
 
 
 VERSION = (0, 1)
@@ -54,7 +53,7 @@ def copy(src, dst, write_v1=True, excluded_tags=None, verbose=False):
     except mutagen.id3.ID3NoHeaderError:
         print_(u"No ID3 header found in ", src, file=sys.stderr)
         return 1
-    except StandardError as err:
+    except Exception as err:
         print_(str(err), file=sys.stderr)
         return 1
     else:
@@ -75,7 +74,7 @@ def copy(src, dst, write_v1=True, excluded_tags=None, verbose=False):
 
         try:
             id3.save(dst, v1=(2 if write_v1 else 0), v2_version=v2_version)
-        except StandardError as err:
+        except Exception as err:
             print_(u"Error saving", dst, u":\n%s" % text_type(err),
                    file=sys.stderr)
             return 1
@@ -118,6 +117,6 @@ def main(argv):
         return copy(src, dst, options.write_v1, excluded_tags, options.verbose)
 
 
-if __name__ == "__main__":
+def entry_point():
     _sig.init()
-    sys.exit(main(argv))
+    return main(argv)

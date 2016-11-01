@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Pretend to be /usr/bin/id3v2 from id3lib, sort of.
 # Copyright 2005 Joe Wreschnig
@@ -7,9 +6,7 @@
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
 
-import os
 import sys
-import locale
 import codecs
 import mimetypes
 
@@ -20,8 +17,9 @@ import mutagen.id3
 from mutagen.id3 import Encoding, PictureType
 from mutagen._senf import fsnative, print_, argv, fsn2text, text2fsn, \
     fsn2bytes, bytes2fsn
-from mutagen._toolsutil import split_escape, SignalHandler, OptionParser
-from mutagen._compat import PY2, PY3, text_type
+from mutagen._compat import PY2, text_type
+
+from ._util import split_escape, SignalHandler, OptionParser
 
 
 VERSION = (1, 3)
@@ -95,7 +93,8 @@ def delete_frames(deletes, filenames):
     for filename in filenames:
         with _sig.block():
             if verbose:
-                print_(u"deleting %s from" % deletes, filename, file=sys.stderr)
+                print_(u"deleting %s from" % deletes, filename,
+                       file=sys.stderr)
             try:
                 id3 = mutagen.id3.ID3(filename)
             except mutagen.id3.ID3NoHeaderError:
@@ -306,7 +305,8 @@ def write_files(edits, filenames, escape):
                         frame = mutagen.id3.TXXX(
                             encoding=3, text=value, desc=desc)
                         id3.add(frame)
-                elif issubclass(mutagen.id3.Frames[frame], mutagen.id3.UrlFrame):
+                elif issubclass(mutagen.id3.Frames[frame],
+                                mutagen.id3.UrlFrame):
                     frame = mutagen.id3.Frames[frame](encoding=3, url=vlist)
                     id3.add(frame)
                 else:
@@ -390,35 +390,44 @@ def main(argv):
     parser.add_option(
         "-a", "--artist", metavar='"ARTIST"', action="callback",
         help="Set the artist information", type="string",
-        callback=lambda *args: args[3].edits.append((fsnative(u"--TPE1"), args[2])))
+        callback=lambda *args: args[3].edits.append((fsnative(u"--TPE1"),
+                                                     args[2])))
     parser.add_option(
         "-A", "--album", metavar='"ALBUM"', action="callback",
         help="Set the album title information", type="string",
-        callback=lambda *args: args[3].edits.append((fsnative(u"--TALB"), args[2])))
+        callback=lambda *args: args[3].edits.append((fsnative(u"--TALB"),
+                                                     args[2])))
     parser.add_option(
         "-t", "--song", metavar='"SONG"', action="callback",
         help="Set the song title information", type="string",
-        callback=lambda *args: args[3].edits.append((fsnative(u"--TIT2"), args[2])))
+        callback=lambda *args: args[3].edits.append((fsnative(u"--TIT2"),
+                                                     args[2])))
     parser.add_option(
         "-c", "--comment", metavar='"DESCRIPTION":"COMMENT":"LANGUAGE"',
         action="callback", help="Set the comment information", type="string",
-        callback=lambda *args: args[3].edits.append((fsnative(u"--COMM"), args[2])))
+        callback=lambda *args: args[3].edits.append((fsnative(u"--COMM"),
+                                                     args[2])))
     parser.add_option(
-        "-p", "--picture", metavar='"FILENAME":"DESCRIPTION":"IMAGE-TYPE":"MIME-TYPE"',
+        "-p", "--picture",
+        metavar='"FILENAME":"DESCRIPTION":"IMAGE-TYPE":"MIME-TYPE"',
         action="callback", help="Set the picture", type="string",
-        callback=lambda *args: args[3].edits.append((fsnative(u"--APIC"), args[2])))
+        callback=lambda *args: args[3].edits.append((fsnative(u"--APIC"),
+                                                     args[2])))
     parser.add_option(
         "-g", "--genre", metavar='"GENRE"', action="callback",
         help="Set the genre or genre number", type="string",
-        callback=lambda *args: args[3].edits.append((fsnative(u"--TCON"), args[2])))
+        callback=lambda *args: args[3].edits.append((fsnative(u"--TCON"),
+                                                     args[2])))
     parser.add_option(
         "-y", "--year", "--date", metavar='YYYY[-MM-DD]', action="callback",
         help="Set the year/date", type="string",
-        callback=lambda *args: args[3].edits.append((fsnative(u"--TDRC"), args[2])))
+        callback=lambda *args: args[3].edits.append((fsnative(u"--TDRC"),
+                                                     args[2])))
     parser.add_option(
         "-T", "--track", metavar='"num/num"', action="callback",
         help="Set the track number/(optional) total tracks", type="string",
-        callback=lambda *args: args[3].edits.append((fsnative(u"--TRCK"), args[2])))
+        callback=lambda *args: args[3].edits.append((fsnative(u"--TRCK"),
+                                                     args[2])))
 
     for key, frame in mutagen.id3.Frames.items():
         if (issubclass(frame, mutagen.id3.TextFrame)
@@ -454,6 +463,6 @@ def main(argv):
         parser.print_help()
 
 
-if __name__ == "__main__":
+def entry_point():
     _sig.init()
-    main(argv)
+    return main(argv)

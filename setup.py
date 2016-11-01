@@ -259,16 +259,19 @@ if __name__ == "__main__":
             "mutagen.asf",
             "mutagen.mp3",
             "mutagen._senf",
+            "mutagen._tools",
           ],
           data_files=data_files,
-          scripts=[os.path.join("tools", name) for name in [
-            "mid3cp",
-            "mid3iconv",
-            "mid3v2",
-            "moggsplit",
-            "mutagen-inspect",
-            "mutagen-pony",
-          ]],
+          entry_points={
+            "console_scripts": [
+                "mid3cp=mutagen._tools.mid3cp:entry_point",
+                "mid3iconv=mutagen._tools.mid3iconv:entry_point",
+                "mid3v2=mutagen._tools.mid3v2:entry_point",
+                "moggsplit=mutagen._tools.moggsplit:entry_point",
+                "mutagen-inspect=mutagen._tools.mutagen_inspect:entry_point",
+                "mutagen-pony=mutagen._tools.mutagen_pony:entry_point",
+            ]
+          },
           long_description="""\
 Mutagen is a Python module to handle audio metadata. It supports ASF,
 FLAC, M4A, Monkey's Audio, MP3, Musepack, Ogg FLAC, Ogg Speex, Ogg

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Full tag list for any given file.
 # Copyright 2005 Joe Wreschnig
 #
@@ -6,12 +6,13 @@
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
 
-import sys
-import locale
-
 from mutagen._senf import print_, argv
-from mutagen._toolsutil import SignalHandler, OptionParser
 from mutagen._compat import text_type
+
+from ._util import SignalHandler, OptionParser
+
+
+_sig = SignalHandler()
 
 
 def main(argv):
@@ -37,6 +38,6 @@ def main(argv):
         print_(u"")
 
 
-if __name__ == "__main__":
-    SignalHandler().init()
-    main(argv)
+def entry_point():
+    _sig.init()
+    return main(argv)
