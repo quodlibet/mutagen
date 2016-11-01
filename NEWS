@@ -1,3 +1,17 @@
+1.35 - 2016.??.??
+-----------------
+
+* Tests: Require pytest
+* ID3:
+
+  * Fix loading files with CRM frames :bug:`239`
+  * Fix loading AENC, LINK, GRID frames with no payload
+  * Merge duplicate text frames with same key on load :bug:`172`
+  * Allow parsing of duplicate APIC frames :bug:`172`
+  * Parse utf-16 text fields with missing BOM :bug:`267`
+  * Increase max resyncs for the mpeg frame search :bug:`268`
+
+
 1.34.1 - 2016.08.13
 -------------------
 
