@@ -2,6 +2,8 @@
 -----------------
 
 * Tests: Require pytest
+* Tools: Install .exe launchers on Windows
+* setup.py: Require setuptools
 * ID3:
 
   * Fix loading files with CRM frames :bug:`239`

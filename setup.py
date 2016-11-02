@@ -211,19 +211,22 @@ class coverage_cmd(Command):
         print("Coverage summary: file://%s/index.html" % dest)
 
 
-if os.name == "posix":
-    data_files = [('share/man/man1', glob.glob("man/*.1"))]
-else:
-    data_files = []
-
 if __name__ == "__main__":
     from mutagen import version
+
+    with open('README.rst') as h:
+        long_description = h.read()
 
     # convert to a setuptools compatible version string
     if version[-1] == -1:
         version_string = ".".join(map(str, version[:-1])) + ".dev0"
     else:
         version_string = ".".join(map(str, version))
+
+    if os.name == "posix":
+        data_files = [('share/man/man1', glob.glob("man/*.1"))]
+    else:
+        data_files = []
 
     cmd_classes = {
         "clean": clean,
@@ -235,7 +238,8 @@ if __name__ == "__main__":
     }
 
     setup(cmdclass=cmd_classes,
-          name="mutagen", version=version_string,
+          name="mutagen",
+          version=version_string,
           url="https://github.com/quodlibet/mutagen",
           description="read and write audio tags for many formats",
           author="Michael Urman",
@@ -273,14 +277,5 @@ if __name__ == "__main__":
                 "mutagen-pony=mutagen._tools.mutagen_pony:entry_point",
             ]
           },
-          long_description="""\
-Mutagen is a Python module to handle audio metadata. It supports ASF,
-FLAC, M4A, Monkey's Audio, MP3, Musepack, Ogg FLAC, Ogg Speex, Ogg
-Theora, Ogg Vorbis, True Audio, WavPack and OptimFROG audio files. All
-versions of ID3v2 are supported, and all standard ID3v2.4 frames are
-parsed. It can read Xing headers to accurately calculate the bitrate
-and length of MP3s. ID3 and APEv2 tags can be edited regardless of
-audio format. It can also manipulate Ogg streams on an individual
-packet/page level.
-"""
-          )
+          long_description=long_description,
+    )
