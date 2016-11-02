@@ -205,7 +205,8 @@ class coverage_cmd(Command):
         cov.html_report(
             directory=dest,
             ignore_errors=True,
-            include=["mutagen/*", "tools/*"])
+            include=["mutagen/*"],
+            omit=["mutagen/_senf/*"])
 
         print("Coverage summary: file://%s/index.html" % dest)
 
