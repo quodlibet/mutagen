@@ -17,7 +17,7 @@ from tests import TestCase
 
 @pytest.mark.quality
 class TPEP8(TestCase):
-    IGNORE = ["E128", "W601", "E402", "E731", "W503"]
+    IGNORE = ["E128", "W601", "E402", "E731", "W503", "E741", "E305"]
 
     def _run(self, path, ignore=None):
         if ignore is None:
