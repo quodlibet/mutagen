@@ -13,10 +13,10 @@ import sys
 import subprocess
 import tarfile
 
+from distutils.core import setup, Command
 from distutils.command.clean import clean as distutils_clean
 from distutils.command.sdist import sdist
 from distutils import dir_util
-from setuptools import setup, Command
 
 
 class clean(distutils_clean):
@@ -267,15 +267,13 @@ if __name__ == "__main__":
             "mutagen._tools",
           ],
           data_files=data_files,
-          entry_points={
-            "console_scripts": [
-                "mid3cp=mutagen._tools.mid3cp:entry_point",
-                "mid3iconv=mutagen._tools.mid3iconv:entry_point",
-                "mid3v2=mutagen._tools.mid3v2:entry_point",
-                "moggsplit=mutagen._tools.moggsplit:entry_point",
-                "mutagen-inspect=mutagen._tools.mutagen_inspect:entry_point",
-                "mutagen-pony=mutagen._tools.mutagen_pony:entry_point",
-            ]
-          },
+          scripts=[os.path.join("tools", name) for name in [
+            "mid3cp",
+            "mid3iconv",
+            "mid3v2",
+            "moggsplit",
+            "mutagen-inspect",
+            "mutagen-pony",
+          ]],
           long_description=long_description,
     )
