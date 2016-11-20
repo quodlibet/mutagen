@@ -55,10 +55,12 @@ class TTimeStampSpec(TestCase):
         s = TimeStampSpec('name')
         f = Frame()
         f.encoding = 0
+        header = ID3Header()
+        header.version = (2, 4, 0)
         self.assertEquals(
-            (ID3TimeStamp('ab'), b'fg'), s.read(None, f, b'ab\x00fg'))
+            (ID3TimeStamp('ab'), b'fg'), s.read(header, f, b'ab\x00fg'))
         self.assertEquals(
-            (ID3TimeStamp('1234'), b''), s.read(None, f, b'1234\x00'))
+            (ID3TimeStamp('1234'), b''), s.read(header, f, b'1234\x00'))
 
     def test_write(self):
         s = TimeStampSpec('name')
@@ -74,7 +76,9 @@ class TEncodedTextSpec(TestCase):
         s = EncodedTextSpec('name')
         f = Frame()
         f.encoding = 0
-        self.assertEquals((u'abcd', b'fg'), s.read(None, f, b'abcd\x00fg'))
+        header = ID3Header()
+        header.version = (2, 4, 0)
+        self.assertEquals((u'abcd', b'fg'), s.read(header, f, b'abcd\x00fg'))
 
     def test_write(self):
         s = EncodedTextSpec('name')

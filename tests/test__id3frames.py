@@ -1480,6 +1480,19 @@ class TTextFrame(TestCase):
         self.assertEqual(TextFrame(text='text').text, ["text"])
         self.assertEqual(TextFrame(text=['a', 'b']).text, ["a", "b"])
 
+    def test_multi_value(self):
+        frame = TextFrame(
+            text=[u"foo", u"", u"", u"bar", u"", u""], encoding=0)
+        config = ID3SaveConfig(3, None)
+        data = frame._writeData(config)
+
+        frame = frame._fromData(_24, 0x0, data)
+        self.assertEqual(frame.text, [u"foo", u"", u"", u"bar", u"", u""])
+        frame = frame._fromData(_23, 0x0, data)
+        self.assertEqual(frame.text, [u"foo", u"", u"", u"bar"])
+        frame = frame._fromData(_22, 0x0, data)
+        self.assertEqual(frame.text, [u"foo", u"", u"", u"bar"])
+
     def test_list_iface(self):
         frame = TextFrame()
         frame.append("a")

@@ -471,9 +471,17 @@ class EncodedTextSpec(Spec):
         err = None
         for data in iter_text_fixups(data, frame.encoding):
             try:
-                return decode_terminated(data, enc, strict=False)
+                value, data = decode_terminated(data, enc, strict=False)
             except ValueError as e:
                 err = e
+            else:
+                # Older id3 did not support multiple values, but we still
+                # read them. To not missinterpret zero padded values with
+                # a list of empty strings, stop if everything left is zero.
+                # https://github.com/quodlibet/mutagen/issues/276
+                if header.version < header._V24 and not data.strip(b"\x00"):
+                    data = b""
+                return value, data
         raise SpecError(err)
 
     def write(self, config, frame, value):
