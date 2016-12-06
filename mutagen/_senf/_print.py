@@ -202,6 +202,9 @@ def _print_windows(objects, sep, end, file, flush):
         except (TypeError, ValueError):
             file.write(text)
 
+        if flush:
+            file.flush()
+
 
 def _readline_windows():
     """Raises OSError"""

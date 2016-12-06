@@ -17,7 +17,7 @@ import ctypes
 import collections
 
 from ._compat import text_type, PY2
-from ._fsnative import path2fsn, is_win
+from ._fsnative import path2fsn, is_win, _fsn2legacy, fsnative
 from . import _winapi as winapi
 
 
@@ -105,6 +105,7 @@ def read_windows_environ():
             key, value = entry.split(u"=", 1)
         except ValueError:
             continue
+        key = _norm_key(key)
         dict_[key] = value
 
     status = winapi.FreeEnvironmentStringsW(res)
@@ -114,9 +115,18 @@ def read_windows_environ():
     return dict_
 
 
+def _norm_key(key):
+    assert isinstance(key, fsnative)
+    if is_win:
+        key = key.upper()
+    return key
+
+
 class Environ(collections.MutableMapping):
     """Dict[`fsnative`, `fsnative`]: Like `os.environ` but contains unicode
-    keys and values under Windows + Python 2
+    keys and values under Windows + Python 2.
+
+    Any changes made will be forwarded to `os.environ`.
     """
 
     def __init__(self):
@@ -130,14 +140,20 @@ class Environ(collections.MutableMapping):
         self._env = env
 
     def __getitem__(self, key):
-        key = path2fsn(key)
+        key = _norm_key(path2fsn(key))
         return self._env[key]
 
     def __setitem__(self, key, value):
-        key = path2fsn(key)
+        key = _norm_key(path2fsn(key))
         value = path2fsn(value)
 
         if is_win and PY2:
+            # this calls putenv, so do it first and replace later
+            try:
+                os.environ[_fsn2legacy(key)] = _fsn2legacy(value)
+            except OSError:
+                raise ValueError
+
             try:
                 set_windows_env_var(key, value)
             except WindowsError:
@@ -149,12 +165,17 @@ class Environ(collections.MutableMapping):
             raise ValueError
 
     def __delitem__(self, key):
-        key = path2fsn(key)
+        key = _norm_key(path2fsn(key))
 
         if is_win and PY2:
             try:
                 del_windows_env_var(key)
             except WindowsError:
+                pass
+
+            try:
+                del os.environ[_fsn2legacy(key)]
+            except KeyError:
                 pass
 
         del self._env[key]

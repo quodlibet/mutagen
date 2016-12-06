@@ -15,8 +15,8 @@ from optparse import SUPPRESS_HELP
 import mutagen
 import mutagen.id3
 from mutagen.id3 import Encoding, PictureType
-from mutagen._senf import fsnative, print_, argv, fsn2text, text2fsn, \
-    fsn2bytes, bytes2fsn
+from mutagen._senf import fsnative, print_, argv, fsn2text, fsn2bytes, \
+    bytes2fsn
 from mutagen._compat import PY2, text_type
 
 from ._util import split_escape, SignalHandler, OptionParser
@@ -116,9 +116,7 @@ def frame_from_fsnative(arg):
 
     assert isinstance(arg, fsnative)
 
-    text = fsn2text(arg)
-    if arg != text2fsn(text):
-        raise ValueError("%r can't be decoded" % arg)
+    text = fsn2text(arg, strict=True)
     if PY2:
         return text.encode("ascii")
     else:
@@ -140,10 +138,7 @@ def value_from_fsnative(arg, escape):
             bytes_ = codecs.escape_decode(bytes_)[0]
         arg = bytes2fsn(bytes_, "utf-8")
 
-    text = fsn2text(arg)
-    # only allow values which can be converted back
-    if arg != text2fsn(text):
-        raise ValueError("%r can't be decoded" % arg)
+    text = fsn2text(arg, strict=True)
     return text
 
 

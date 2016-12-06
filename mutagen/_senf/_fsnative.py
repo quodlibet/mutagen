@@ -29,8 +29,64 @@ is_darwin = sys.platform == "darwin"
 _surrogatepass = "strict" if PY2 else "surrogatepass"
 
 
-def _decode_surrogatepass(data, codec):
-    """Like data.decode(codec, 'surrogatepass') but makes utf-16-le work
+def _normalize_codec(codec, _cache={}):
+    """Raises LookupError"""
+
+    try:
+        return _cache[codec]
+    except KeyError:
+        _cache[codec] = codecs.lookup(codec).name
+        return _cache[codec]
+
+
+def _swap_bytes(data):
+    """swaps bytes for 16 bit, leaves remaining trailing bytes alone"""
+
+    a, b = data[1::2], data[::2]
+    data = bytearray().join(bytearray(x) for x in zip(a, b))
+    if len(b) > len(a):
+        data += b[-1:]
+    return bytes(data)
+
+
+def _codec_fails_on_encode_surrogates(codec, _cache={}):
+    """Returns if a codec fails correctly when passing in surrogates with
+    a surrogatepass/surrogateescape error handler. Some codecs were broken
+    in Python <3.4
+    """
+
+    try:
+        return _cache[codec]
+    except KeyError:
+        try:
+            u"\uD800\uDC01".encode(codec)
+        except UnicodeEncodeError:
+            _cache[codec] = True
+        else:
+            _cache[codec] = False
+        return _cache[codec]
+
+
+def _codec_can_decode_with_surrogatepass(codec, _cache={}):
+    """Returns if a codec supports the surrogatepass error handler when
+    decoding. Some codecs were broken in Python <3.4
+    """
+
+    try:
+        return _cache[codec]
+    except KeyError:
+        try:
+            u"\ud83d".encode(
+                codec, _surrogatepass).decode(codec, _surrogatepass)
+        except UnicodeDecodeError:
+            _cache[codec] = False
+        else:
+            _cache[codec] = True
+        return _cache[codec]
+
+
+def _bytes2winpath(data, codec):
+    """Like data.decode(codec, 'surrogatepass') but makes utf-16-le/be work
     on Python < 3.4 + Windows
 
     https://bugs.python.org/issue27971
@@ -41,15 +97,62 @@ def _decode_surrogatepass(data, codec):
     try:
         return data.decode(codec, _surrogatepass)
     except UnicodeDecodeError:
-        if os.name == "nt" and sys.version_info[:2] < (3, 4) and \
-                codecs.lookup(codec).name == "utf-16-le":
-            buffer_ = ctypes.create_string_buffer(data + b"\x00\x00")
-            value = ctypes.wstring_at(buffer_, len(data) // 2)
-            if value.encode("utf-16-le", _surrogatepass) != data:
+        if not _codec_can_decode_with_surrogatepass(codec):
+            if _normalize_codec(codec) == "utf-16-be":
+                data = _swap_bytes(data)
+                codec = "utf-16-le"
+            if _normalize_codec(codec) == "utf-16-le":
+                buffer_ = ctypes.create_string_buffer(data + b"\x00\x00")
+                value = ctypes.wstring_at(buffer_, len(data) // 2)
+                if value.encode("utf-16-le", _surrogatepass) != data:
+                    raise
+                return value
+            else:
                 raise
-            return value
         else:
             raise
+
+
+def _winpath2bytes_py3(text, codec):
+    """Fallback implementation for text including surrogates"""
+
+    # merge surrogate codepoints
+    if _normalize_codec(codec).startswith("utf-16"):
+        # fast path, utf-16 merges anyway
+        return text.encode(codec, _surrogatepass)
+    return _bytes2winpath(
+        text.encode("utf-16-le", _surrogatepass),
+        "utf-16-le").encode(codec, _surrogatepass)
+
+
+if PY2:
+    def _winpath2bytes(text, codec):
+        return text.encode(codec)
+else:
+    def _winpath2bytes(text, codec):
+        if _codec_fails_on_encode_surrogates(codec):
+            try:
+                return text.encode(codec)
+            except UnicodeEncodeError:
+                return _winpath2bytes_py3(text, codec)
+        else:
+            return _winpath2bytes_py3(text, codec)
+
+
+def _fsn2legacy(path):
+    """Takes a fsnative path and returns a path that can be put into os.environ
+    or sys.argv. Might result in a mangled path on Python2 + Windows.
+    Can't fail.
+
+    Args:
+        path (fsnative)
+    Returns:
+        str
+    """
+
+    if PY2 and is_win:
+        return path.encode(_encoding, "replace")
+    return path
 
 
 def _fsnative(text):
@@ -182,6 +285,7 @@ def _get_encoding():
             return "ascii"
     return encoding
 
+
 _encoding = _get_encoding()
 
 
@@ -201,10 +305,10 @@ def path2fsn(path):
     # allow mbcs str on py2+win and bytes on py3
     if PY2:
         if is_win:
-            if isinstance(path, str):
+            if isinstance(path, bytes):
                 path = path.decode(_encoding)
         else:
-            if isinstance(path, unicode):
+            if isinstance(path, text_type):
                 path = path.encode(_encoding)
     else:
         path = getattr(os, "fspath", lambda x: x)(path)
@@ -221,29 +325,37 @@ def path2fsn(path):
     return path
 
 
-def fsn2text(path):
+def fsn2text(path, strict=False):
     """
     Args:
         path (fsnative): The path to convert
+        strict (bool): Fail in case the conversion is not reversible
     Returns:
         `text`
     Raises:
         TypeError: In case no `fsnative` has been passed
+        ValueError: In case ``strict`` was True and the conversion failed
 
     Converts a `fsnative` path to `text`.
 
-    This process is not reversible and should only be used for display
-    purposes.
+    Can be used to pass a path to some unicode API, like for example a GUI
+    toolkit.
+
+    If ``strict`` is True the conversion will fail in case it is not
+    reversible. This can be useful for converting program arguments that are
+    supposed to be text and erroring out in case they are not.
+
     Encoding with a Unicode encoding will always succeed with the result.
     """
 
     path = _validate_fsnative(path)
+    errors = "strict" if strict else "replace"
 
     if is_win:
         return path.encode("utf-16-le", _surrogatepass).decode("utf-16-le",
-                                                               "replace")
+                                                               errors)
     else:
-        return path.decode(_encoding, "replace")
+        return path.decode(_encoding, errors)
 
 
 def text2fsn(text):
@@ -274,11 +386,16 @@ def fsn2bytes(path, encoding):
         TypeError: If no `fsnative` path is passed
         ValueError: If encoding fails or no encoding is given
 
-    Turns a `fsnative` path to `bytes`.
+    Converts a `fsnative` path to `bytes`.
 
     The passed *encoding* is only used on platforms where paths are not
     associated with an encoding (Windows for example). If you don't care about
     Windows you can pass `None`.
+
+    For Windows paths, lone surrogates will be encoded like normal code points
+    and surrogate pairs will be merged before encoding. In case of ``utf-8``
+    or ``utf-16-le`` this is equal to the `WTF-8 and WTF-16 encoding
+    <https://simonsapin.github.io/wtf-8/>`__.
     """
 
     path = _validate_fsnative(path)
@@ -288,7 +405,7 @@ def fsn2bytes(path, encoding):
             raise ValueError("invalid encoding %r" % encoding)
 
         try:
-            return path.encode(encoding, _surrogatepass)
+            return _winpath2bytes(path, encoding)
         except LookupError:
             raise ValueError("invalid encoding %r" % encoding)
     else:
@@ -320,7 +437,7 @@ def bytes2fsn(data, encoding):
         if encoding is None:
             raise ValueError("invalid encoding %r" % encoding)
         try:
-            return _decode_surrogatepass(data, encoding)
+            return _bytes2winpath(data, encoding)
         except LookupError:
             raise ValueError("invalid encoding %r" % encoding)
     elif PY2:
@@ -343,7 +460,7 @@ def uri2fsn(uri):
     """
 
     if PY2:
-        if isinstance(uri, unicode):
+        if isinstance(uri, text_type):
             uri = uri.encode("utf-8")
         if not isinstance(uri, bytes):
             raise TypeError("uri needs to be ascii str or unicode")
@@ -378,7 +495,7 @@ def fsn2uri(path):
     Args:
         path (fsnative): The path to convert to an URI
     Returns:
-        `str`: An ASCII only URI
+        `text`: An ASCII only URI
     Raises:
         TypeError: If no `fsnative` was passed
         ValueError: If the path can't be converted
@@ -393,7 +510,10 @@ def fsn2uri(path):
 
     def _quote_path(path):
         # RFC 2396
-        return quote(path, "/:@&=+$,")
+        path = quote(path, "/:@&=+$,")
+        if PY2:
+            path = path.decode("ascii")
+        return path
 
     if is_win:
         buf = ctypes.create_unicode_buffer(winapi.INTERNET_MAX_URL_LENGTH)
@@ -417,4 +537,4 @@ def fsn2uri(path):
         return _quote_path(uri.encode("utf-8", _surrogatepass))
 
     else:
-        return "file://" + _quote_path(path)
+        return u"file://" + _quote_path(path)
