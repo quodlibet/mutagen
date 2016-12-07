@@ -910,6 +910,16 @@ class TID3Write(TestCase):
         self.assert_(data.find(b"TALB") < data.find(b"COMM"))
         self.assert_(data.find(b"TIT2") < data.find(b"TALB"))
 
+    def test_apic_last(self):
+        # https://github.com/quodlibet/mutagen/issues/278
+        f = ID3(self.filename)
+        f.add(TYER(text=[u"2016"]))
+        f.add(APIC(data=b"x" * 500))
+        f.save()
+        with open(self.filename, 'rb') as h:
+            data = h.read()
+        assert data.find(b"TYER") < data.find(b"APIC")
+
 
 class WriteForEyeD3(TestCase):
 
