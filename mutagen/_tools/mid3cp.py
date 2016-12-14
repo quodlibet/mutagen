@@ -42,7 +42,7 @@ class ID3OptionParser(OptionParser):
                          "replacement for id3lib's id3cp."))
 
 
-def copy(src, dst, write_v1=True, excluded_tags=None, verbose=False):
+def copy(src, dst, merge, write_v1=True, excluded_tags=None, verbose=False):
     """Returns 0 on success"""
 
     if excluded_tags is None:
@@ -56,32 +56,47 @@ def copy(src, dst, write_v1=True, excluded_tags=None, verbose=False):
     except Exception as err:
         print_(str(err), file=sys.stderr)
         return 1
-    else:
-        if verbose:
-            print_(u"File", src, u"contains:", file=sys.stderr)
-            print_(id3.pprint(), file=sys.stderr)
 
-        for tag in excluded_tags:
-            id3.delall(tag)
+    if verbose:
+        print_(u"File", src, u"contains:", file=sys.stderr)
+        print_(id3.pprint(), file=sys.stderr)
 
-        # if the source is 2.3 save it as 2.3
-        if id3.version < (2, 4, 0):
-            id3.update_to_v23()
-            v2_version = 3
-        else:
-            id3.update_to_v24()
-            v2_version = 4
+    for tag in excluded_tags:
+        id3.delall(tag)
 
+    if merge:
         try:
-            id3.save(dst, v1=(2 if write_v1 else 0), v2_version=v2_version)
+            target = mutagen.id3.ID3(dst, translate=False)
+        except mutagen.id3.ID3NoHeaderError:
+            # no need to merge
+            pass
         except Exception as err:
-            print_(u"Error saving", dst, u":\n%s" % text_type(err),
-                   file=sys.stderr)
+            print_(str(err), file=sys.stderr)
             return 1
         else:
-            if verbose:
-                print_(u"Successfully saved", dst, file=sys.stderr)
-            return 0
+            for frame in id3.values():
+                target.add(frame)
+
+            id3 = target
+
+    # if the source is 2.3 save it as 2.3
+    if id3.version < (2, 4, 0):
+        id3.update_to_v23()
+        v2_version = 3
+    else:
+        id3.update_to_v24()
+        v2_version = 4
+
+    try:
+        id3.save(dst, v1=(2 if write_v1 else 0), v2_version=v2_version)
+    except Exception as err:
+        print_(u"Error saving", dst, u":\n%s" % text_type(err),
+               file=sys.stderr)
+        return 1
+    else:
+        if verbose:
+            print_(u"Successfully saved", dst, file=sys.stderr)
+        return 0
 
 
 def main(argv):
@@ -92,6 +107,9 @@ def main(argv):
                       default=False, help="write id3v1 tags")
     parser.add_option("-x", "--exclude-tag", metavar="TAG", action="append",
                       dest="x", help="exclude the specified tag", default=[])
+    parser.add_option("--merge", action="store_true",
+                      help="Copy over frames instead of the whole ID3 tag",
+                      default=False)
     (options, args) = parser.parse_args(argv[1:])
 
     if len(args) != 2:
@@ -114,7 +132,8 @@ def main(argv):
     excluded_tags = [x.strip() for x in options.x]
 
     with _sig.block():
-        return copy(src, dst, options.write_v1, excluded_tags, options.verbose)
+        return copy(src, dst, options.merge, options.write_v1, excluded_tags,
+                    options.verbose)
 
 
 def entry_point():
