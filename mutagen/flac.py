@@ -187,9 +187,11 @@ class StreamInfo(MetadataBlock, mutagen.StreamInfo):
         bits_per_sample (`int`): bits per sample
         total_samples (`int`): total samples in file
         length (`float`): audio length in seconds
+        bitrate (`int`): bitrate in bits per second, as an int
     """
 
     code = 0
+    bitrate = 0
 
     def __eq__(self, other):
         try:
@@ -792,6 +794,11 @@ class FLAC(mutagen.FileType):
             self.metadata_blocks[0].length
         except (AttributeError, IndexError):
             raise FLACNoHeaderError("Stream info block not found")
+
+        start = fileobj.tell()
+        fileobj.seek(0, 2)
+        self.info.bitrate = int(
+            float(fileobj.tell() - start) * 8 / self.info.length)
 
     @property
     def info(self):

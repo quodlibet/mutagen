@@ -98,6 +98,9 @@ class TStreamInfo(TestCase):
     def setUp(self):
         self.i = StreamInfo(self.data)
 
+    def test_bitrate(self):
+        assert self.i.bitrate == 0
+
     def test_invalid(self):
         # https://github.com/quodlibet/mutagen/issues/117
         self.failUnlessRaises(error, StreamInfo, self.data_invalid)
@@ -287,6 +290,14 @@ class TFLAC(TestCase):
 
     def tearDown(self):
         os.unlink(self.NEW)
+
+    def test_bitrate(self):
+        assert self.flac.info.bitrate == 101430
+        old_file_size = os.path.getsize(self.flac.filename)
+        self.flac.save(padding=lambda x: 9999)
+        new_flac = FLAC(self.flac.filename)
+        assert os.path.getsize(new_flac.filename) > old_file_size
+        assert new_flac.info.bitrate == 101430
 
     def test_padding(self):
         for pad in [0, 42, 2**24 - 1, 2 ** 24]:
