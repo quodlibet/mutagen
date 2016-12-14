@@ -37,6 +37,10 @@ OPTIONS
 --exclude-tag, -x
     Exclude a specific tag from being copied. Can be specified multiple times.
 
+--merge
+    Copy over frames instead of replacing the whole ID3 tag. The tag version
+    of *dest* will be used. In case *dest* has no ID3 tag this option has no
+    effect.
 
 
 AUTHOR

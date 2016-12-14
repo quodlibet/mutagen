@@ -14,6 +14,8 @@ usage.
 import os
 from tempfile import mkstemp
 import shutil
+
+import mutagen.id3
 from mutagen.id3 import ID3, ParseID3v1
 from mutagen._senf import fsnative as fsn
 
@@ -39,6 +41,39 @@ class TMid3cp(_TTools):
         super(TMid3cp, self).tearDown()
         os.unlink(self.filename)
         os.unlink(self.blank_file)
+
+    def test_merge(self):
+        id3 = ID3(self.filename)
+        id3.delete()
+        id3.add(mutagen.id3.TALB(text=[u"foo"]))
+        id3.save(v2_version=3)
+
+        target = ID3()
+        target.add(mutagen.id3.TPE1(text=[u"bar", u"quux"]))
+        target.save(self.blank_file, v2_version=4)
+
+        res, out, err = self.call2(
+            self.filename, self.blank_file, fsn(u"--merge"))
+        assert not any([res, out, err])
+
+        result = ID3(self.blank_file)
+        assert result.version == (2, 4, 0)
+        assert result.getall("TALB")[0].text == [u"foo"]
+        assert result.getall("TPE1")[0].text == [u"bar", u"quux"]
+
+    def test_merge_dst_no_tag(self):
+        id3 = ID3(self.filename)
+        id3.delete()
+        id3.save(v2_version=3)
+
+        with open(self.blank_file, "wb") as h:
+            h.write(b"SOMEDATA")
+        res, out, err = self.call2(
+            self.filename, self.blank_file, fsn(u"--merge"))
+        assert not any([res, out, err])
+
+        result = ID3(self.blank_file)
+        assert result.version == (2, 3, 0)
 
     def test_noop(self):
         res, out, err = self.call2()
