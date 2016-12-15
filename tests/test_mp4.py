@@ -8,7 +8,7 @@ from mutagen._compat import cBytesIO, PY3, text_type, PY2, izip
 from tests import TestCase, DATA_DIR, get_temp_copy
 from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
                          MP4MetadataError, MP4FreeForm, error, AtomDataType,
-                         AtomError, _item_sort_key)
+                         AtomError, _item_sort_key, MP4StreamInfoError)
 from mutagen.mp4._util import parse_full_atom
 from mutagen.mp4._as_entry import AudioSampleEntry, ASEntryError
 from mutagen._util import cdata
@@ -158,6 +158,13 @@ class TMP4Info(TestCase):
         atoms = Atoms(fileobj)
         info = MP4Info(atoms, fileobj)
         self.failUnlessEqual(info.length, 8)
+
+    def test_no_tracks(self):
+        moov = Atom.render(b"moov", b"")
+        fileobj = cBytesIO(moov)
+        atoms = Atoms(fileobj)
+        with self.assertRaises(MP4StreamInfoError):
+            MP4Info(atoms, fileobj)
 
 
 class TMP4Tags(TestCase):
@@ -913,6 +920,21 @@ class TMP4ALAC(TestCase):
 
 
 class TMP4Misc(TestCase):
+
+    def test_no_audio_tracks(self):
+        data = Atom.render(b"moov", Atom.render(b"udta", b""))
+        fileobj = cBytesIO(data)
+        audio = MP4(fileobj)
+        assert audio.info
+        assert audio.pprint()
+        info = audio.info
+        assert isinstance(info.bitrate, int)
+        assert isinstance(info.length, float)
+        assert isinstance(info.channels, int)
+        assert isinstance(info.sample_rate, int)
+        assert isinstance(info.bits_per_sample, int)
+        assert isinstance(info.codec, text_type)
+        assert isinstance(info.codec_description, text_type)
 
     def test_parse_full_atom(self):
         p = parse_full_atom(b"\x01\x02\x03\x04\xff")

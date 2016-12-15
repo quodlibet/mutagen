@@ -49,6 +49,10 @@ class MP4StreamInfoError(error):
     pass
 
 
+class MP4NoTrackError(MP4StreamInfoError):
+    pass
+
+
 class MP4MetadataValueError(ValueError, MP4MetadataError):
     pass
 
@@ -850,14 +854,19 @@ class MP4Info(StreamInfo):
     """
 
     bitrate = 0
+    length = 0.0
     channels = 0
     sample_rate = 0
     bits_per_sample = 0
     codec = u""
-    codec_name = u""
+    codec_description = u""
+
+    def __init__(self, *args, **kwargs):
+        if args or kwargs:
+            self.load(*args, **kwargs)
 
     @convert_error(IOError, MP4StreamInfoError)
-    def __init__(self, atoms, fileobj):
+    def load(self, atoms, fileobj):
         try:
             moov = atoms[b"moov"]
         except KeyError:
@@ -871,7 +880,7 @@ class MP4Info(StreamInfo):
             if data[8:12] == b"soun":
                 break
         else:
-            raise MP4StreamInfoError("track has no audio data")
+            raise MP4NoTrackError("track has no audio data")
 
         mdhd = trak[b"mdia", b"mdhd"]
         ok, data = mdhd.read(fileobj)
@@ -987,8 +996,11 @@ class MP4(FileType):
         except AtomError as err:
             reraise(error, err, sys.exc_info()[2])
 
+        self.info = MP4Info()
         try:
-            self.info = MP4Info(atoms, fileobj)
+            self.info.load(atoms, fileobj)
+        except MP4NoTrackError:
+            pass
         except error:
             raise
         except Exception as err:
