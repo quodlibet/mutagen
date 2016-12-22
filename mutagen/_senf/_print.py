@@ -33,8 +33,7 @@ def print_(*objects, **kwargs):
         file (object): A file-like object, defaults to `sys.stdout`
         flush (bool): If the file stream should be flushed
     Raises:
-        OSError
-        IOError
+        EnvironmentError
 
     Like print(), but:
 
@@ -128,7 +127,7 @@ def _print_windows(objects, sep, end, file, flush):
 
     try:
         fileno = file.fileno()
-    except (IOError, AttributeError):
+    except (EnvironmentError, AttributeError):
         pass
     else:
         if fileno == 1:
@@ -211,7 +210,7 @@ def _readline_windows():
 
     try:
         fileno = sys.stdin.fileno()
-    except (IOError, AttributeError):
+    except (EnvironmentError, AttributeError):
         fileno = -1
 
     # In case stdin is replaced, read from that
@@ -340,8 +339,7 @@ def input_(prompt=None):
     Returns:
         `fsnative`
     Raises:
-        OSError
-        IOError
+        EnvironmentError
 
     Like :func:`python3:input` but returns a `fsnative` and allows printing
     filenames as prompt to stdout.

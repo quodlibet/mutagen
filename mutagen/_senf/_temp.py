@@ -54,8 +54,7 @@ def mkstemp(suffix=None, prefix=None, dir=None, text=False):
         Tuple[`int`, `fsnative`]:
             A tuple containing the file descriptor and the file path
     Raises:
-        OSError
-        IOError
+        EnvironmentError
 
     Like :func:`python3:tempfile.mkstemp` but always returns a `fsnative`
     path.
@@ -77,8 +76,7 @@ def mkdtemp(suffix=None, prefix=None, dir=None):
     Returns:
         `fsnative`: A path to a directory
     Raises:
-        OSError
-        IOError
+        EnvironmentError
 
     Like :func:`python3:tempfile.mkstemp` but always returns a `fsnative` path.
     """

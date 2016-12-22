@@ -20,8 +20,8 @@ PY3 = not PY2
 
 
 if PY2:
-    from urlparse import urlparse
-    urlparse
+    from urlparse import urlparse, urlunparse
+    urlparse, urlunparse
     from urllib import pathname2url, url2pathname, quote, unquote
     pathname2url, url2pathname, quote, unquote
 
@@ -35,8 +35,8 @@ if PY2:
 
     iteritems = lambda d: d.iteritems()
 elif PY3:
-    from urllib.parse import urlparse, quote, unquote
-    urlparse, quote, unquote
+    from urllib.parse import urlparse, quote, unquote, urlunparse
+    urlparse, quote, unquote, urlunparse
     from urllib.request import pathname2url, url2pathname
     pathname2url, url2pathname
 
