@@ -4,7 +4,7 @@ import os
 import pickle
 
 from mutagen import MutagenError
-from mutagen.id3 import ID3FileType, ID3, RVA2
+from mutagen.id3 import ID3FileType, ID3, RVA2, CHAP, TDRC, CTOC
 from mutagen.easyid3 import EasyID3, error as ID3Error
 from mutagen._compat import PY3
 
@@ -20,6 +20,15 @@ class TEasyID3(TestCase):
 
     def tearDown(self):
         os.unlink(self.filename)
+
+    def test_load_filename(self):
+        self.id3.save(self.filename)
+        self.id3.load(self.filename)
+        assert self.id3.filename == self.filename
+
+        path = os.path.join(DATA_DIR, 'silence-44-s.mp3')
+        new = EasyID3(path)
+        assert new.filename == path
 
     def test_txxx_latin_first_then_non_latin(self):
         self.id3["performer"] = [u"foo"]
@@ -37,10 +46,41 @@ class TEasyID3(TestCase):
         mp3.pprint()
         self.failUnless(isinstance(mp3.tags, EasyID3))
 
-    def test_ignore_23(self):
-        self.id3["date"] = "2004"
+    def test_save_23(self):
         self.id3.save(self.filename, v2_version=3)
+        self.assertEqual(ID3(self.filename).version, (2, 3, 0))
+        self.id3.save(self.filename, v2_version=4)
         self.assertEqual(ID3(self.filename).version, (2, 4, 0))
+
+    def test_save_date_v23(self):
+        self.id3["date"] = "2004"
+        assert self.realid3.getall("TDRC")[0] == u"2004"
+        self.id3.save(self.filename, v2_version=3)
+        assert self.realid3.getall("TDRC")[0] == u"2004"
+        assert not self.realid3.getall("TYER")
+        new = ID3(self.filename, translate=False)
+        assert new.version == (2, 3, 0)
+        assert new.getall("TYER")[0] == u"2004"
+
+    def test_save_v23_error_restore(self):
+        self.id3["date"] = "2004"
+        with self.assertRaises(MutagenError):
+            self.id3.save("", v2_version=3)
+        assert self.id3["date"] == ["2004"]
+
+    def test_save_v23_recurse_restore(self):
+        self.realid3.add(CHAP(sub_frames=[TDRC(text="2006")]))
+        self.realid3.add(CTOC(sub_frames=[TDRC(text="2006")]))
+        self.id3.save(self.filename, v2_version=3)
+
+        for frame_id in ["CHAP", "CTOC"]:
+            chap = self.realid3.getall(frame_id)[0]
+            assert chap.sub_frames.getall("TDRC")[0] == "2006"
+            new = ID3(self.filename, translate=False)
+            assert new.version == (2, 3, 0)
+            chap = new.getall(frame_id)[0]
+            assert not chap.sub_frames.getall("TDRC")
+            assert chap.sub_frames.getall("TYER")[0] == "2006"
 
     def test_delete(self):
         self.id3["artist"] = "foobar"

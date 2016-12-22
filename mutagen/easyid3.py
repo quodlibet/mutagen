@@ -16,7 +16,7 @@ import mutagen.id3
 
 from ._compat import iteritems, text_type, PY2
 from mutagen import Metadata
-from mutagen._util import DictMixin, dict_match
+from mutagen._util import DictMixin, dict_match, loadfile
 from mutagen.id3 import ID3, error, delete, ID3FileType
 
 
@@ -172,10 +172,30 @@ class EasyID3(DictMixin, Metadata):
     load = property(lambda s: s.__id3.load,
                     lambda s, v: setattr(s.__id3, 'load', v))
 
-    def save(self, *args, **kwargs):
-        # ignore v2_version until we support 2.3 here
-        kwargs.pop("v2_version", None)
-        self.__id3.save(*args, **kwargs)
+    @loadfile(writable=True, create=True)
+    def save(self, filething, v1=1, v2_version=4, v23_sep='/', padding=None):
+        """save(filething=None, v1=1, v2_version=4, v23_sep='/', padding=None)
+
+        Save changes to a file.
+        See :meth:`mutagen.id3.ID3.save` for more info.
+        """
+
+        if v2_version == 3:
+            # EasyID3 only works with v2.4 frames, so update_to_v23() would
+            # break things. We have to save a shallow copy of all tags
+            # and restore it after saving. Due to CHAP/CTOC copying has
+            # to be done recursively implemented in ID3Tags.
+            backup = self.__id3._copy()
+            try:
+                self.__id3.update_to_v23()
+                self.__id3.save(
+                    filething, v1=v1, v2_version=v2_version, v23_sep=v23_sep,
+                    padding=padding)
+            finally:
+                self.__id3._restore(backup)
+        else:
+            self.__id3.save(filething, v1=v1, v2_version=v2_version,
+                            v23_sep=v23_sep, padding=padding)
 
     delete = property(lambda s: s.__id3.delete,
                       lambda s, v: setattr(s.__id3, 'delete', v))

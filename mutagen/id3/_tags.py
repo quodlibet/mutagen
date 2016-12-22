@@ -478,6 +478,25 @@ class ID3Tags(DictProxy, Tags):
         for f in self.getall("CTOC"):
             f.sub_frames.update_to_v23()
 
+    def _copy(self):
+        """Creates a shallow copy of all tags"""
+
+        items = self.items()
+        subs = {}
+        for f in (self.getall("CHAP") + self.getall("CTOC")):
+            subs[f.HashKey] = f.sub_frames._copy()
+        return (items, subs)
+
+    def _restore(self, value):
+        """Restores the state copied with _copy()"""
+
+        items, subs = value
+        self.clear()
+        for key, value in items:
+            self[key] = value
+            if key in subs:
+                value.sub_frames._restore(subs[key])
+
 
 def save_frame(frame, name=None, config=None):
     if config is None:
