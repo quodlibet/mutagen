@@ -1,3 +1,14 @@
+1.36 - 2016.12.22
+-----------------
+
+* ID3: Ignore trailing empty values for v2.3 text frames :bug:`276`
+* ID3: Write large APIC frames last :bug:`278`
+* EasyID3: support saving as v2.3 :bug:`188`
+* FLAC: Add StreamInfo.bitrate :bug:`279`
+* mid3cp: Add ``--merge`` option :bug:`277`
+* MP4: Allow loading files without audio tracks :bug:`272`
+
+
 1.35.1 - 2016.11.09
 -------------------
 
