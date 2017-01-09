@@ -228,27 +228,27 @@ class DSFInfo(StreamInfo):
     Attributes:
         length (`float`): audio length, in seconds.
         channels (`int`): The number of audio channels.
-        sampling_frequency (`int`): Sampling frequency, in Hz. (2822400, 5644800, 11289600, or  22579200)
-        sample_size (`int`): The audio sample size.
+        sample_rate (`int`): Sampling frequency, in Hz. (2822400, 5644800, 11289600, or  22579200)
+        bits_per_sample (`int`): The audio sample size.
     """
 
     channels = 1
-    sampling_frequency = 2822400
+    sample_rate = 2822400
     sample_size = 1
     sample_count = 0
     length = 0.0
 
     def __init__(self, fmt_chunk):
         self.channels = fmt_chunk.channel_num
-        self.sample_size = fmt_chunk.bits_per_sample
+        self.bits_per_sample = fmt_chunk.bits_per_sample
         self.sample_count = fmt_chunk.sample_count
-        self.sampling_frequency = fmt_chunk.sampling_frequency
+        self.sample_rate = fmt_chunk.sampling_frequency
 
-        self.length = float(self.sample_count) / self.sampling_frequency
+        self.length = float(self.sample_count) / self.sample_rate
 
     def pprint(self):
         return u"%d channel DSF @ %d bits, %s Hz, %.2f seconds" % (
-            self.channels, self.sample_size, self.sampling_frequency, self.length)
+            self.channels, self.bits_per_sample, self.sample_rate, self.length)
 
 
 class DSFFile(object):

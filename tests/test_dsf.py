@@ -34,8 +34,8 @@ class TDSF(TestCase):
         self.failUnlessEqual(self.dsf_2.info.length, 0.01)
 
     def test_sampling_frequency(self):
-        self.failUnlessEqual(self.dsf_1.info.sampling_frequency, 2822400)
-        self.failUnlessEqual(self.dsf_2.info.sampling_frequency, 5644800)
+        self.failUnlessEqual(self.dsf_1.info.sample_rate, 2822400)
+        self.failUnlessEqual(self.dsf_2.info.sample_rate, 5644800)
 
     def test_bits_per_sample(self):
         self.failUnlessEqual(self.dsf_1.info.sample_size, 1)
