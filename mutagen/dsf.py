@@ -59,12 +59,14 @@ class DSDChunk(DSFChunk):
         super(DSDChunk, self).__init__(fileobj, create)
 
         if create:
-            self.chunk_header = "DSD "
+            self.chunk_header = b"DSD "
             self.chunk_size = DSDChunk.CHUNK_SIZE
 
     def load(self):
         data = self.fileobj.read(DSDChunk.CHUNK_SIZE)
-        if not data.startswith(b"DSD "):
+
+        self.chunk_header = data[0:4]
+        if self.chunk_header != b"DSD ":
             raise error("DSF dsd header not found")
 
         self.chunk_size = cdata.ulonglong_le(data[4:12])
@@ -77,7 +79,7 @@ class DSDChunk(DSFChunk):
 
     def write(self):
         f = cBytesIO()
-        f.write(b"DSD ")
+        f.write(self.chunk_header)
         f.write(struct.pack("<Q", DSDChunk.CHUNK_SIZE))
         f.write(struct.pack("<Q", self.total_size))
         f.write(struct.pack("<Q", self.offset_metdata_chunk))
@@ -112,12 +114,14 @@ class FormatChunk(DSFChunk):
         super(FormatChunk, self).__init__(fileobj, create)
 
         if create:
-            self.chunk_header = "fmt "
+            self.chunk_header = b"fmt "
             self.chunk_size = FormatChunk.CHUNK_SIZE
 
     def load(self):
         data = self.fileobj.read(FormatChunk.CHUNK_SIZE)
-        if not data.startswith(b"fmt "):
+
+        self.chunk_header = data[0:4]
+        if self.chunk_header != b"fmt ":
             raise error("DSF fmt header not found")
 
         self.chunk_size = cdata.ulonglong_le(data[4:12])
@@ -149,23 +153,23 @@ class DataChunk(DSFChunk):
 
     data = ""
 
-
     def __init__(self, fileobj, create=False):
         super(DataChunk, self).__init__(fileobj, create)
 
         if create:
-            self.chunk_header = "data"
+            self.chunk_header = b"data"
             self.chunk_size = DataChunk.CHUNK_SIZE
 
     def load(self):
         data = self.fileobj.read(DataChunk.CHUNK_SIZE)
-        if not data.startswith(b"data"):
+
+        self.chunk_header = data[0:4]
+        if self.chunk_header != b"data":
             raise error("DSF data header not found")
 
         self.chunk_size = cdata.ulonglong_le(data[4:12])
         if self.chunk_size < DataChunk.CHUNK_SIZE:
             raise error("DSF data header size mismatch")
-
 
     def pprint(self):
         return u"data Chunk (Chunk Offset = %d, Chunk Size = %d)" % (
@@ -177,7 +181,6 @@ class _DSFID3(ID3):
 
     @convert_error(IOError, error)
     def _pre_load_header(self, fileobj):
-        # DSF stores the ID3 at the end of the filename
         fileobj.seek(0)
         id3_location = DSDChunk(fileobj).offset_metdata_chunk
         if id3_location == 0:
@@ -185,22 +188,19 @@ class _DSFID3(ID3):
 
         fileobj.seek(id3_location)
 
-
     @convert_error(IOError, error)
     @loadfile(writable=True)
     def save(self, filething, v2_version=4, v23_sep='/', padding=None):
         """Save ID3v2 data to the DSF file"""
 
         fileobj = filething.fileobj
-
         fileobj.seek(0)
-        dsd_header = DSDChunk(fileobj)
-        if dsd_header.offset_metdata_chunk == 0: # we can make a new entry at the end of the file
-            fileobj.seek(0, 2) # go to the end of the file
-            dsd_header.offset_metdata_chunk = fileobj.tell() # this is where we are going to put the id3
-            dsd_header.write()
 
-        fileobj.seek(dsd_header.offset_metdata_chunk)
+        dsd_header = DSDChunk(fileobj)
+        if dsd_header.offset_metdata_chunk == 0: # create a new ID3 chunk at the end of the file
+            fileobj.seek(0, 2)
+            dsd_header.offset_metdata_chunk = fileobj.tell() # store reference to ID3 location
+            dsd_header.write()
 
         try:
             data = self._prepare_data(
@@ -230,21 +230,31 @@ class DSFInfo(StreamInfo):
         channels (`int`): The number of audio channels.
         sample_rate (`int`): Sampling frequency, in Hz. (2822400, 5644800, 11289600, or  22579200)
         bits_per_sample (`int`): The audio sample size.
+        bitrate ('int'): The audio bitrate.
     """
 
-    channels = 1
-    sample_rate = 2822400
-    sample_size = 1
-    sample_count = 0
-    length = 0.0
-
     def __init__(self, fmt_chunk):
-        self.channels = fmt_chunk.channel_num
-        self.bits_per_sample = fmt_chunk.bits_per_sample
-        self.sample_count = fmt_chunk.sample_count
-        self.sample_rate = fmt_chunk.sampling_frequency
+        self.fmt_chunk = fmt_chunk
 
-        self.length = float(self.sample_count) / self.sample_rate
+    @property
+    def length(self):
+        return float(self.fmt_chunk.sample_count) / self.sample_rate
+
+    @property
+    def channels(self):
+        return self.fmt_chunk.channel_num
+
+    @property
+    def sample_rate(self):
+        return self.fmt_chunk.sampling_frequency
+
+    @property
+    def bits_per_sample(self):
+        return self.fmt_chunk.bits_per_sample
+
+    @property
+    def bitrate(self):
+        return self.sample_rate * self.bits_per_sample * self.channels
 
     def pprint(self):
         return u"%d channel DSF @ %d bits, %s Hz, %.2f seconds" % (
@@ -278,7 +288,6 @@ class DSF(FileType):
     def score(filename, fileobj, header):
         return (header.startswith(b"DSD ") * 2 + endswith(filename.lower(), ".dsf"))
 
-
     def add_tags(self):
         """Add a DSF tag block to the file."""
 
@@ -304,7 +313,6 @@ class DSF(FileType):
             self.tags.filename = self.filename
 
         self.info = DSFInfo(dsf_file.fmt_chunk)
-
 
     @loadfile(writable=True)
     def delete(self, filething):

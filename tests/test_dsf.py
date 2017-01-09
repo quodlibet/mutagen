@@ -38,7 +38,7 @@ class TDSF(TestCase):
         self.failUnlessEqual(self.dsf_2.info.sample_rate, 5644800)
 
     def test_bits_per_sample(self):
-        self.failUnlessEqual(self.dsf_1.info.sample_size, 1)
+        self.failUnlessEqual(self.dsf_1.info.bits_per_sample, 1)
 
     def test_notdsf(self):
         self.failUnlessRaises(
