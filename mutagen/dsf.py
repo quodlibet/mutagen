@@ -8,6 +8,7 @@
 
 """Read and write DSF audio stream information and tags."""
 
+
 import sys
 import struct
 
@@ -76,7 +77,6 @@ class DSDChunk(DSFChunk):
         self.total_size = cdata.ulonglong_le(data[12:20])
         self.offset_metdata_chunk = cdata.ulonglong_le(data[20:28])
 
-
     def write(self):
         f = cBytesIO()
         f.write(self.chunk_header)
@@ -88,8 +88,9 @@ class DSDChunk(DSFChunk):
         self.fileobj.write(f.getvalue())
 
     def pprint(self):
-        return u"DSD Chunk (Total file size = %d, Pointer to Metadata chunk = %d)" % (
-            self.total_size, self.offset_metdata_chunk)
+        return u"DSD Chunk (Total file size = %d, " \
+               u"Pointer to Metadata chunk = %d)" % \
+                (self.total_size, self.offset_metdata_chunk)
 
 
 class FormatChunk(DSFChunk):
@@ -143,8 +144,10 @@ class FormatChunk(DSFChunk):
         self.sample_count = cdata.ulonglong_le(data[36:44])
 
     def pprint(self):
-        return u"fmt Chunk (Channel Type = %d, Channel Num = %d, Sampling Frequency = %d, %.2f seconds)" % (
-            self.channel_type, self.channel_num, self.sampling_frequency, self.length)
+        return u"fmt Chunk (Channel Type = %d, Channel Num = %d, " \
+               u"Sampling Frequency = %d, %.2f seconds)" % \
+               (self.channel_type, self.channel_num, self.sampling_frequency,
+                self.length)
 
 
 class DataChunk(DSFChunk):
@@ -197,15 +200,18 @@ class _DSFID3(ID3):
         fileobj.seek(0)
 
         dsd_header = DSDChunk(fileobj)
-        if dsd_header.offset_metdata_chunk == 0: # create a new ID3 chunk at the end of the file
+        if dsd_header.offset_metdata_chunk == 0:
+            # create a new ID3 chunk at the end of the file
             fileobj.seek(0, 2)
-            dsd_header.offset_metdata_chunk = fileobj.tell() # store reference to ID3 location
+
+            # store reference to ID3 location
+            dsd_header.offset_metdata_chunk = fileobj.tell()
             dsd_header.write()
 
         try:
             data = self._prepare_data(
-                fileobj, dsd_header.offset_metdata_chunk, self.size, v2_version,
-                v23_sep, padding)
+                fileobj, dsd_header.offset_metdata_chunk, self.size,
+                v2_version, v23_sep, padding)
         except ID3Error as e:
             reraise(error, e, sys.exc_info()[2])
 
@@ -228,7 +234,9 @@ class DSFInfo(StreamInfo):
     Attributes:
         length (`float`): audio length, in seconds.
         channels (`int`): The number of audio channels.
-        sample_rate (`int`): Sampling frequency, in Hz. (2822400, 5644800, 11289600, or  22579200)
+        sample_rate (`int`):
+            Sampling frequency, in Hz.
+            (2822400, 5644800, 11289600, or 22579200)
         bits_per_sample (`int`): The audio sample size.
         bitrate ('int'): The audio bitrate.
     """
@@ -286,7 +294,8 @@ class DSF(FileType):
 
     @staticmethod
     def score(filename, fileobj, header):
-        return (header.startswith(b"DSD ") * 2 + endswith(filename.lower(), ".dsf"))
+        return header.startswith(b"DSD ") * 2 + \
+               endswith(filename.lower(), ".dsf")
 
     def add_tags(self):
         """Add a DSF tag block to the file."""
