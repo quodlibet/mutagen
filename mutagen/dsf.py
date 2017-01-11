@@ -88,9 +88,9 @@ class DSDChunk(DSFChunk):
         self.fileobj.write(f.getvalue())
 
     def pprint(self):
-        return u"DSD Chunk (Total file size = %d, " \
-               u"Pointer to Metadata chunk = %d)" % \
-                (self.total_size, self.offset_metdata_chunk)
+        return (u"DSD Chunk (Total file size = %d, "
+                u"Pointer to Metadata chunk = %d)" % (
+                    self.total_size, self.offset_metdata_chunk))
 
 
 class FormatChunk(DSFChunk):
@@ -295,7 +295,7 @@ class DSF(FileType):
     @staticmethod
     def score(filename, fileobj, header):
         return header.startswith(b"DSD ") * 2 + \
-               endswith(filename.lower(), ".dsf")
+            endswith(filename.lower(), ".dsf")
 
     def add_tags(self):
         """Add a DSF tag block to the file."""
