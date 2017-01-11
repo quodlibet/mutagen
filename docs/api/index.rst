@@ -8,6 +8,7 @@ API Reference
     aiff
     ape
     asf
+    dsf
     flac
     id3
     monkeysaudio

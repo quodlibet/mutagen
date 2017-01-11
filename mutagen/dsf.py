@@ -225,9 +225,7 @@ class _DSFID3(ID3):
 
 
 class DSFInfo(StreamInfo):
-    """DSFInfo()
-
-    DSF audio stream information.
+    """DSF audio stream information.
 
     Information is parsed from the fmt chunk of the DSF file.
 
@@ -238,7 +236,7 @@ class DSFInfo(StreamInfo):
             Sampling frequency, in Hz.
             (2822400, 5644800, 11289600, or 22579200)
         bits_per_sample (`int`): The audio sample size.
-        bitrate ('int'): The audio bitrate.
+        bitrate (`int`): The audio bitrate.
     """
 
     def __init__(self, fmt_chunk):
@@ -282,12 +280,14 @@ class DSFFile(object):
 
 
 class DSF(FileType):
-    """DSF(filething)
-
-    An DSF audio file.
+    """An DSF audio file.
 
     Arguments:
         filething (filething)
+
+    Attributes:
+        info (`DSFInfo`)
+        tags (`mutagen.id3.ID3Tags` or `None`)
     """
 
     _mimes = ["audio/dsf"]
@@ -308,8 +308,6 @@ class DSF(FileType):
     @convert_error(IOError, error)
     @loadfile()
     def load(self, filething, **kwargs):
-        """Load stream and tag information from a file."""
-
         dsf_file = DSFFile(filething.fileobj)
 
         try:
