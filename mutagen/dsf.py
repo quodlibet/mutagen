@@ -65,6 +65,8 @@ class DSDChunk(DSFChunk):
 
     def load(self):
         data = self.fileobj.read(DSDChunk.CHUNK_SIZE)
+        if len(data) != DSDChunk.CHUNK_SIZE:
+            raise error("DSF chunk truncated")
 
         self.chunk_header = data[0:4]
         if self.chunk_header != b"DSD ":
@@ -120,6 +122,8 @@ class FormatChunk(DSFChunk):
 
     def load(self):
         data = self.fileobj.read(FormatChunk.CHUNK_SIZE)
+        if len(data) != FormatChunk.CHUNK_SIZE:
+            raise error("DSF chunk truncated")
 
         self.chunk_header = data[0:4]
         if self.chunk_header != b"fmt ":
@@ -165,6 +169,8 @@ class DataChunk(DSFChunk):
 
     def load(self):
         data = self.fileobj.read(DataChunk.CHUNK_SIZE)
+        if len(data) != DataChunk.CHUNK_SIZE:
+            raise error("DSF chunk truncated")
 
         self.chunk_header = data[0:4]
         if self.chunk_header != b"data":

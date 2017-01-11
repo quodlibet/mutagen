@@ -29,6 +29,7 @@ from mutagen.asf import ASF
 from mutagen.aiff import AIFF
 from mutagen.aac import AAC
 from mutagen.smf import SMF
+from mutagen.dsf import DSF
 from os import devnull
 
 
@@ -312,6 +313,8 @@ class TAbstractFileType(object):
         with open(self.filename, "rb") as h:
             fileobj = cBytesIO(h.read())
             self.KIND(fileobj)
+            # make sure it's not closed
+            fileobj.read(0)
 
     def test_testfileobj(self):
         with open(self.filename, "rb") as h:
@@ -488,6 +491,12 @@ _FILETYPES = {
     SMF: [
         os.path.join(DATA_DIR, "sample.mid"),
     ],
+    DSF: [
+        os.path.join(DATA_DIR, '2822400-1ch-0s-silence.dsf'),
+        os.path.join(DATA_DIR, '5644800-2ch-s01-silence.dsf'),
+        os.path.join(DATA_DIR, 'with-id3.dsf'),
+        os.path.join(DATA_DIR, 'without-id3.dsf'),
+    ]
 }
 
 _FILETYPES[ID3FileType] = _FILETYPES[MP3]
