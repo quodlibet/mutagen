@@ -16,7 +16,11 @@ import sys
 import struct
 import codecs
 import errno
-import mmap
+
+try:
+    import mmap
+except:
+    pass
 
 from collections import namedtuple
 from contextlib import contextmanager
