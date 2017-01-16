@@ -584,6 +584,28 @@ class FileHandlingMockedMMap(FileHandling):
         mmap.mmap = self._orig_mmap
 
 
+class FileHandlingNoMMap(FileHandling):
+    """Disables mmap and makes sure it raises if it still gets used somehow"""
+
+    def setUp(self):
+        from mutagen import _util
+
+        def MockMMap2(*args, **kwargs):
+            assert False
+
+        self._orig_mmap = mmap.mmap
+        mmap.mmap = MockMMap2
+
+        _util.mmap = None
+
+    def tearDown(self):
+        from mutagen import _util
+        import mmap
+
+        _util.mmap = mmap
+        mmap.mmap = self._orig_mmap
+
+
 class Tdict_match(TestCase):
 
     def test_match(self):

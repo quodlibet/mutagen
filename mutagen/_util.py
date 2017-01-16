@@ -16,7 +16,13 @@ import sys
 import struct
 import codecs
 import errno
-import mmap
+
+try:
+    import mmap
+except ImportError:
+    # Google App Engine has no mmap:
+    #   https://github.com/quodlibet/mutagen/issues/286
+    mmap = None
 
 from collections import namedtuple
 from contextlib import contextmanager
@@ -644,6 +650,8 @@ def mmap_move(fileobj, dest, src, count):
         ValueError: In case invalid parameters were given
     """
 
+    assert mmap is not None, "no mmap support"
+
     if dest < 0 or src < 0 or count < 0:
         raise ValueError("Invalid parameters")
 
@@ -789,9 +797,12 @@ def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
 
     resize_file(fobj, size, BUFFER_SIZE)
 
-    try:
-        mmap_move(fobj, offset + size, offset, movesize)
-    except mmap.error:
+    if mmap is not None:
+        try:
+            mmap_move(fobj, offset + size, offset, movesize)
+        except mmap.error:
+            fallback_move(fobj, offset + size, offset, movesize, BUFFER_SIZE)
+    else:
         fallback_move(fobj, offset + size, offset, movesize, BUFFER_SIZE)
 
 
@@ -820,9 +831,12 @@ def delete_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
     if movesize < 0:
         raise ValueError
 
-    try:
-        mmap_move(fobj, offset, offset + size, movesize)
-    except mmap.error:
+    if mmap is not None:
+        try:
+            mmap_move(fobj, offset, offset + size, movesize)
+        except mmap.error:
+            fallback_move(fobj, offset, offset + size, movesize, BUFFER_SIZE)
+    else:
         fallback_move(fobj, offset, offset + size, movesize, BUFFER_SIZE)
 
     resize_file(fobj, -size, BUFFER_SIZE)
