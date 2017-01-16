@@ -291,6 +291,15 @@ class TFLAC(TestCase):
     def tearDown(self):
         os.unlink(self.NEW)
 
+    def test_zero_samples(self):
+        # write back zero sample count and load again
+        self.flac.info.total_samples = 0
+        self.flac.save()
+        new = FLAC(self.flac.filename)
+        assert new.info.total_samples == 0
+        assert new.info.bitrate == 0
+        assert new.info.length == 0.0
+
     def test_bitrate(self):
         assert self.flac.info.bitrate == 101430
         old_file_size = os.path.getsize(self.flac.filename)
