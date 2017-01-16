@@ -795,10 +795,13 @@ class FLAC(mutagen.FileType):
         except (AttributeError, IndexError):
             raise FLACNoHeaderError("Stream info block not found")
 
-        start = fileobj.tell()
-        fileobj.seek(0, 2)
-        self.info.bitrate = int(
-            float(fileobj.tell() - start) * 8 / self.info.length)
+        if self.info.length:
+            start = fileobj.tell()
+            fileobj.seek(0, 2)
+            self.info.bitrate = int(
+                float(fileobj.tell() - start) * 8 / self.info.length)
+        else:
+            self.info.bitrate = 0
 
     @property
     def info(self):
