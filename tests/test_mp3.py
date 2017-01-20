@@ -330,7 +330,7 @@ class TLAMEHeader(TestCase):
 
         def parse(data):
             data = cBytesIO(data + b"\x00" * (20 - len(data)))
-            return LAMEHeader.parse_version(data)
+            return tuple(LAMEHeader.parse_version(data)[1:])
 
         self.assertEqual(parse(b"LAME3.80"), (u"3.80", False))
         self.assertEqual(parse(b"LAME3.80 "), (u"3.80", False))
@@ -345,6 +345,7 @@ class TLAMEHeader(TestCase):
         self.assertEqual(parse(b"L3.99r"), (u"3.99.1+", True))
         self.assertEqual(parse(b"LAME3100r"), (u"3.100.1+", True))
         self.assertEqual(parse(b"LAME3.90.\x03\xbe\x00"), (u"3.90.0+", True))
+        self.assertEqual(parse(b"LAME3.100"), (u"3.100.0+", True))
 
     def test_invalid(self):
 
@@ -354,15 +355,77 @@ class TLAMEHeader(TestCase):
 
         self.assertRaises(LAMEError, parse, b"")
         self.assertRaises(LAMEError, parse, b"LAME")
-        self.assertRaises(LAMEError, parse, b"LAME3.999")
+        self.assertRaises(LAMEError, parse, b"LAME3.9999")
 
     def test_real(self):
         with open(os.path.join(DATA_DIR, "lame.mp3"), "rb") as h:
             h.seek(36, 0)
             xing = XingHeader(h)
-            self.assertEqual(xing.lame_version, u"3.99.1+")
+            self.assertEqual(xing.lame_version_desc, u"3.99.1+")
             self.assertTrue(xing.lame_header)
             self.assertEqual(xing.lame_header.track_gain_adjustment, 6.0)
+            assert xing.get_encoder_settings() == u"-V 2"
+
+    def test_settings(self):
+        with open(os.path.join(DATA_DIR, "lame.mp3"), "rb") as h:
+            h.seek(36, 0)
+            xing = XingHeader(h)
+        header = xing.lame_header
+
+        def s(major, minor, **kwargs):
+            old = vars(header)
+            for key, value in kwargs.items():
+                assert hasattr(header, key)
+                setattr(header, key, value)
+            r = header.guess_settings(major, minor)
+            header.__dict__.update(old)
+            return r
+
+        assert s(3, 99) == "-V 2"
+        assert s(3, 98) == "-V 2"
+        assert s(3, 97) == "-V 2 --vbr-new"
+        assert s(3, 96) == "-V 2 --vbr-new"
+        assert s(3, 95) == "-V 2 --vbr-new"
+        assert s(3, 94) == "-V 2 --vbr-new"
+        assert s(3, 93) == "-V 2 --vbr-new"
+        assert s(3, 92) == "-V 2 --vbr-new"
+        assert s(3, 91) == "-V 2 --vbr-new"
+        assert s(3, 90) == "-V 2 --vbr-new"
+        assert s(3, 89) == ""
+
+        assert s(3, 91, vbr_method=2) == "--alt-preset 32"
+        assert s(3, 91, vbr_method=2, bitrate=255) == "--alt-preset 255+"
+        assert s(3, 99, vbr_method=2, preset_used=128) == "--preset 128"
+        assert s(3, 99, vbr_method=2, preset_used=0, bitrate=48) == "--abr 48"
+        assert \
+            s(3, 94, vbr_method=2, preset_used=0, bitrate=255) == "--abr 255+"
+        assert s(3, 99, vbr_method=3) == "-V 2 --vbr-old"
+        assert s(3, 94, vbr_method=3) == "-V 2"
+        assert s(3, 99, vbr_method=1, preset_used=1003) == "--preset insane"
+        assert s(3, 93, vbr_method=3, preset_used=1001) == "--preset standard"
+        assert s(3, 93, vbr_method=3, preset_used=1002) == "--preset extreme"
+        assert s(3, 93, vbr_method=3, preset_used=1004) == \
+            "--preset fast standard"
+        assert s(3, 93, vbr_method=3, preset_used=1005) == \
+            "--preset fast extreme"
+        assert s(3, 93, vbr_method=3, preset_used=1006) == "--preset medium"
+        assert s(3, 93, vbr_method=3, preset_used=1007) == \
+            "--preset fast medium"
+        assert s(3, 92, vbr_method=3) == "-V 2"
+        assert s(3, 92, vbr_method=1, preset_used=0, bitrate=255) == "-b 256"
+        assert s(3, 92, vbr_method=1, preset_used=0, bitrate=255,
+                 unwise_setting_used=1) == "-b 320"
+        assert s(3, 92, vbr_method=1, preset_used=0, bitrate=255,
+                 lowpass_filter=21000) == "-b 320"
+
+        def skey(major, minor, args):
+            keys = ["vbr_quality", "quality", "vbr_method", "lowpass_filter",
+                    "ath_type"]
+            return s(major, minor, **dict(zip(keys, args)))
+
+        assert skey(3, 91, (1, 2, 4, 19500, 3)) == "--preset r3mix"
+        assert skey(3, 91, (2, 2, 3, 19000, 4)) == "--alt-preset standard"
+        assert skey(3, 91, (2, 2, 3, 19500, 2)) == "--alt-preset extreme"
 
     def test_length(self):
         mp3 = MP3(os.path.join(DATA_DIR, "lame.mp3"))
