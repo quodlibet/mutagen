@@ -189,6 +189,10 @@ class MPEGFrame(object):
                 if lame is not None:
                     samples -= lame.encoder_delay_start
                     samples -= lame.encoder_padding_end
+                if samples < 0:
+                    # older lame versions wrote bogus delay/padding for short
+                    # files with low bitrate
+                    samples = 0
                 self.length = float(samples) / self.sample_rate
             if xing.bytes != -1 and self.length:
                 self.bitrate = int((xing.bytes * 8) / self.length)
