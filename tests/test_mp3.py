@@ -42,6 +42,7 @@ class TMP3(TestCase):
     silence_mpeg25 = os.path.join(DATA_DIR, 'silence-44-s-mpeg25.mp3')
     lame = os.path.join(DATA_DIR, 'lame.mp3')
     lame_peak = os.path.join(DATA_DIR, 'lame-peak.mp3')
+    lame_broken_short = os.path.join(DATA_DIR, 'lame397v9short.mp3')
 
     def setUp(self):
         self.filename = get_temp_copy(
@@ -53,6 +54,15 @@ class TMP3(TestCase):
         self.mp3_4 = MP3(self.silence_mpeg25)
         self.mp3_lame = MP3(self.lame)
         self.mp3_lame_peak = MP3(self.lame_peak)
+
+    def test_lame_broken_short(self):
+        # lame <=3.97 wrote broken files
+        f = MP3(self.lame_broken_short)
+        assert f.info.encoder_info == "LAME 3.97.0"
+        assert f.info.length == 0.0
+        assert f.info.bitrate == 64000
+        assert f.info.bitrate_mode == 2
+        assert f.info.sample_rate == 24000
 
     def test_mode(self):
         from mutagen.mp3 import JOINTSTEREO
