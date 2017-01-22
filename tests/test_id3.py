@@ -8,7 +8,8 @@ from mutagen.apev2 import APEv2
 from mutagen.id3 import ID3, Frames, ID3UnsupportedVersionError, TIT2, \
     CHAP, CTOC, TT1, TCON, COMM, TORY, PIC, MakeID3v1, TRCK, TYER, TDRC, \
     TDAT, TIME, LNK, IPLS, TPE1, BinaryFrame, TIT3, POPM, APIC, CRM, \
-    TALB, TPE2, TSOT, TDEN, TIPL, ParseID3v1, Encoding, ID3Tags, RVAD
+    TALB, TPE2, TSOT, TDEN, TIPL, ParseID3v1, Encoding, ID3Tags, RVAD, \
+    ID3NoHeaderError
 from mutagen.id3._util import BitPaddedInt, error as ID3Error
 from mutagen.id3._tags import determine_bpi, ID3Header, \
     save_frame, ID3SaveConfig
@@ -1050,6 +1051,22 @@ class Issue69_BadV1Year(TestCase):
         self.failUnlessEqual(len(s), 128)
         tag = ParseID3v1(s)
         self.failUnlessEqual(tag["TDRC"], "1234")
+
+
+class TID3Trailing(TestCase):
+
+    def test_audacious_trailing_id3(self):
+        # https://github.com/quodlibet/mutagen/issues/78
+        # tagged with audacious 3.2.4, both are id3v2 at the end despite the
+        # spec saying it should be before other tags.
+        # Audacious changed it to write in the beginning with 3.4 or 3.5
+        # Now with Audacious 3.7, re-saving the files results in the id3v3
+        # tag moved to the front and the id3v1/apev2 tags left as is at the
+        # end.
+        path = os.path.join(DATA_DIR, 'audacious-trailing-id32-id31.mp3')
+        self.assertRaises(ID3NoHeaderError, ID3, path)
+        path = os.path.join(DATA_DIR, 'audacious-trailing-id32-apev2.mp3')
+        self.assertRaises(ID3NoHeaderError, ID3, path)
 
 
 class TID3Misc(TestCase):
