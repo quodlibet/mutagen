@@ -207,12 +207,7 @@ class LAMEHeader(object):
                 if self.bitrate < 255:
                     return u"-b %d" % self.bitrate
                 else:
-                    if version <= (3, 92) and self.lowpass_filter > 20400:
-                        return u"-b 320"
-                    if self.unwise_setting_used:
-                        return u"-b 320"
-                    else:
-                        return u"-b 256"
+                    return u"-b 255+"
             elif self.preset_used == 1003:
                 return u"--preset insane"
             return u"-b %d" % self.preset_used
@@ -259,6 +254,7 @@ class LAMEHeader(object):
             elif self.vbr_method in (4, 5):
                 p = self.vbr_quality
                 adjust_key = (p, self.bitrate, self.lowpass_filter)
+                # https://sourceforge.net/p/lame/bugs/455/
                 p = {
                     (5, 32, 0): 7,
                     (5, 8, 0): 8,

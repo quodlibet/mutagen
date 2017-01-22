@@ -423,11 +423,8 @@ class TLAMEHeader(TestCase):
         assert s(3, 93, vbr_method=3, preset_used=1007) == \
             "--preset fast medium"
         assert s(3, 92, vbr_method=3) == "-V 2"
-        assert s(3, 92, vbr_method=1, preset_used=0, bitrate=255) == "-b 256"
-        assert s(3, 92, vbr_method=1, preset_used=0, bitrate=255,
-                 unwise_setting_used=1) == "-b 320"
-        assert s(3, 92, vbr_method=1, preset_used=0, bitrate=255,
-                 lowpass_filter=21000) == "-b 320"
+        assert s(3, 92, vbr_method=1, preset_used=0, bitrate=254) == "-b 254"
+        assert s(3, 92, vbr_method=1, preset_used=0, bitrate=255) == "-b 255+"
 
         def skey(major, minor, args):
             keys = ["vbr_quality", "quality", "vbr_method", "lowpass_filter",
