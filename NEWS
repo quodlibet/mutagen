@@ -1,3 +1,11 @@
+1.36.1 - 2017.01.22
+-------------------
+
+* Support GAE runtime :bug:`286`
+* FLAC: Fix crash when loading files with zero samples :bug:`287`
+* MP3: Handle broken lame tags written by older lame versions
+
+
 1.36 - 2016.12.22
 -----------------
 
