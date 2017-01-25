@@ -3,7 +3,7 @@
 from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes, \
     decode_terminated, dict_match, enum, get_size, BitReader, BitReaderError, \
     resize_bytes, seek_end, mmap_move, verify_fileobj, fileobj_name, \
-    read_full, flags, resize_file, fallback_move
+    read_full, flags, resize_file, fallback_move, encode_endian
 from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2, \
     cBytesIO, xrange, BytesIO
 from tests import TestCase, get_temp_empty
@@ -740,6 +740,33 @@ class Tget_size(TestCase):
         self.assertEqual(f.tell(), 1)
         self.assertEqual(get_size(f), 3)
         self.assertEqual(f.tell(), 1)
+
+
+class Tencode_endian(TestCase):
+
+    def test_other(self):
+        assert encode_endian(u"\xe4", "latin-1") == b"\xe4"
+        assert encode_endian(u"\xe4", "utf-8") == b"\xc3\xa4"
+        with self.assertRaises(LookupError):
+            encode_endian(u"", "nopenope")
+        with self.assertRaises(UnicodeEncodeError):
+            assert encode_endian(u"\u2714", "latin-1")
+        assert encode_endian(u"\u2714", "latin-1", "replace") == b"?"
+
+    def test_utf_16(self):
+        assert encode_endian(u"\xe4", "utf-16", le=True) == b"\xff\xfe\xe4\x00"
+        assert encode_endian(u"\xe4", "utf-16-le") == b"\xe4\x00"
+        assert encode_endian(
+            u"\xe4", "utf-16", le=False) == b"\xfe\xff\x00\xe4"
+        assert encode_endian(u"\xe4", "utf-16-be") == b"\x00\xe4"
+
+    def test_utf_32(self):
+        assert encode_endian(u"\xe4", "utf-32", le=True) == \
+            b"\xff\xfe\x00\x00\xe4\x00\x00\x00"
+        assert encode_endian(u"\xe4", "utf-32-le") == b"\xe4\x00\x00\x00"
+        assert encode_endian(
+            u"\xe4", "utf-32", le=False) == b"\x00\x00\xfe\xff\x00\x00\x00\xe4"
+        assert encode_endian(u"\xe4", "utf-32-be") == b"\x00\x00\x00\xe4"
 
 
 class Tdecode_terminated(TestCase):

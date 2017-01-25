@@ -12,7 +12,8 @@ from struct import unpack, pack
 
 from .._compat import text_type, chr_, PY3, swap_to_string, string_types, \
     xrange
-from .._util import total_ordering, decode_terminated, enum, izip, flags, cdata
+from .._util import total_ordering, decode_terminated, enum, izip, flags, \
+    cdata, encode_endian
 from ._util import BitPaddedInt, is_valid_frame_id
 
 
@@ -487,7 +488,7 @@ class EncodedTextSpec(Spec):
     def write(self, config, frame, value):
         enc, term = self._encodings[frame.encoding]
         try:
-            return value.encode(enc) + term
+            return encode_endian(value, enc, le=True) + term
         except UnicodeEncodeError as e:
             raise SpecError(e)
 
@@ -815,7 +816,10 @@ class SynchronizedTextSpec(EncodedTextSpec):
         data = []
         encoding, term = self._encodings[frame.encoding]
         for text, time in value:
-            text = text.encode(encoding) + term
+            try:
+                text = encode_endian(text, encoding, le=True) + term
+            except UnicodeEncodeError as e:
+                raise SpecError(e)
             data.append(text + struct.pack(">I", time))
         return b"".join(data)
 
