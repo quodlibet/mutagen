@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import operator
+import sys
 
 from tests import TestCase
 
@@ -1588,8 +1589,12 @@ class TCTOC(TestCase):
                      child_element_ids=[u"ch0"],
                      sub_frames=[TPE2(encoding=3, text=[u"f", u"b"])])
         config = ID3SaveConfig(3, "/")
-        data = (b"foo\x00\x03\x01ch0\x00TPE2\x00\x00\x00\x0b\x00\x00\x01"
-                b"\xff\xfef\x00/\x00b\x00\x00\x00")
+        if sys.byteorder == 'little':
+            data = (b"foo\x00\x03\x01ch0\x00TPE2\x00\x00\x00\x0b\x00\x00\x01"
+                    b"\xff\xfef\x00/\x00b\x00\x00\x00")
+        else:
+            data = (b"foo\x00\x03\x01ch0\x00TPE2\x00\x00\x00\x0b\x00\x00\x01"
+                    b"\xfe\xff\x00f\x00/\x00b\x00\x00")
         self.assertEqual(frame._writeData(config), data)
 
     def test_eq(self):
