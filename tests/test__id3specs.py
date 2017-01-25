@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import sys
-
 from tests import TestCase
 
 from mutagen._compat import PY3
@@ -27,12 +25,7 @@ class TSynchronizedTextSpec(TestCase):
         self.assertEqual(
             s.read(None, f, s.write(None, f, values)), (values, b""))
         data = s.write(None, f, [(u"A", 100)])
-        if sys.byteorder == 'little':
-            self.assertEquals(
-                data, b"\xff\xfeA\x00\x00\x00\x00\x00\x00d")
-        else:
-            self.assertEquals(
-                data, b"\xfe\xff\x00A\x00\x00\x00\x00\x00d")
+        self.assertEquals(data, b"\xff\xfeA\x00\x00\x00\x00\x00\x00d")
 
         # utf-16be
         f.encoding = 2

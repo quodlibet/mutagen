@@ -888,6 +888,38 @@ def dict_match(d, key, default=None):
     return default
 
 
+def encode_endian(text, encoding, errors="strict", le=True):
+    """Like text.encode(encoding) but always returns little endian/big endian
+    BOMs instead of the system one.
+
+    Args:
+        text (text)
+        encoding (str)
+        errors (str)
+        le (boolean): if little endian
+    Returns:
+        bytes
+    Raises:
+        UnicodeEncodeError
+        LookupError
+    """
+
+    encoding = codecs.lookup(encoding).name
+
+    if encoding == "utf-16":
+        if le:
+            return codecs.BOM_UTF16_LE + text.encode("utf-16-le", errors)
+        else:
+            return codecs.BOM_UTF16_BE + text.encode("utf-16-be", errors)
+    elif encoding == "utf-32":
+        if le:
+            return codecs.BOM_UTF32_LE + text.encode("utf-32-le", errors)
+        else:
+            return codecs.BOM_UTF32_BE + text.encode("utf-32-be", errors)
+    else:
+        return text.encode(encoding, errors)
+
+
 def decode_terminated(data, encoding, strict=True):
     """Returns the decoded data until the first NULL terminator
     and all data after it.
