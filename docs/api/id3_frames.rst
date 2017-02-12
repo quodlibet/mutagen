@@ -50,7 +50,7 @@ ID3v2.3/4 Frames
 ----------------
 
 
-.. autoclass:: mutagen.id3.AENC(owner=u'', preview_start=0, preview_length=0)
+.. autoclass:: mutagen.id3.AENC(owner=u'', preview_start=0, preview_length=0, data='')
     :show-inheritance:
     :members:
 
@@ -105,7 +105,7 @@ ID3v2.3/4 Frames
     :members:
 
 
-.. autoclass:: mutagen.id3.GRID(owner=u'', group=128)
+.. autoclass:: mutagen.id3.GRID(owner=u'', group=128, data='')
     :show-inheritance:
     :members:
 
@@ -115,7 +115,7 @@ ID3v2.3/4 Frames
     :members:
 
 
-.. autoclass:: mutagen.id3.LINK(frameid='XXXX', url=u'')
+.. autoclass:: mutagen.id3.LINK(frameid='XXXX', url=u'', data='')
     :show-inheritance:
     :members:
 
