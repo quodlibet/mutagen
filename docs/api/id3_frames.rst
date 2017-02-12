@@ -130,6 +130,16 @@ ID3v2.3/4 Frames
     :members:
 
 
+.. autoclass:: mutagen.id3.MVIN(encoding=<Encoding.UTF16: 1>, text=[])
+    :show-inheritance:
+    :members:
+
+
+.. autoclass:: mutagen.id3.MVNM(encoding=<Encoding.UTF16: 1>, text=[])
+    :show-inheritance:
+    :members:
+
+
 .. autoclass:: mutagen.id3.OWNE(encoding=<Encoding.UTF16: 1>, price=u'', date='19700101', seller=u'')
     :show-inheritance:
     :members:

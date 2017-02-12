@@ -653,6 +653,22 @@ class TCAT(TextFrame):
     "iTunes Podcast Category"
 
 
+class MVNM(TextFrame):
+    "iTunes Movement Name"
+
+
+class MVN(MVNM):
+    "iTunes Movement Name"
+
+
+class MVIN(NumericPartTextFrame):
+    "iTunes Movement Number/Count"
+
+
+class MVI(MVIN):
+    "iTunes Movement Number/Count"
+
+
 class TDOR(TimeStampTextFrame):
     "Original Release Time"
 
