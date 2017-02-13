@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 # Copyright 2014 Marcus Sundman
-
+#
 # This program is free software; you can redistribute it and/or modify
-# it under the terms of version 2 of the GNU General Public License as
-# published by the Free Software Foundation.
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
 
 """A program replicating the functionality of id3lib's id3cp, using mutagen for
 tag loading and saving.

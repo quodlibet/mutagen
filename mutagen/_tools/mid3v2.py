@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-# Pretend to be /usr/bin/id3v2 from id3lib, sort of.
 # Copyright 2005 Joe Wreschnig
 #
 # This program is free software; you can redistribute it and/or modify
-# it under the terms of version 2 of the GNU General Public License as
-# published by the Free Software Foundation.
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+"""Pretend to be /usr/bin/id3v2 from id3lib, sort of."""
 
 import sys
 import codecs

@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-# Split a multiplex/chained Ogg file into its component parts.
 # Copyright 2006 Joe Wreschnig
 #
 # This program is free software; you can redistribute it and/or modify
-# it under the terms of version 2 of the GNU General Public License as
-# published by the Free Software Foundation.
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+"""Split a multiplex/chained Ogg file into its component parts."""
 
 import os
 
