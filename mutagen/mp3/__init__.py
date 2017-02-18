@@ -193,8 +193,8 @@ class MPEGFrame(object):
                     # files with low bitrate
                     samples = 0
                 self.length = float(samples) / self.sample_rate
-            if xing.bytes != -1 and self.length:
-                self.bitrate = int((xing.bytes * 8) / self.length)
+                if xing.bytes != -1 and self.length:
+                    self.bitrate = int((xing.bytes * 8) / self.length)
             if xing.lame_version:
                 self.encoder_info = u"LAME %s" % xing.lame_version
             if lame is not None:

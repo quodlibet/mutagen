@@ -243,6 +243,18 @@ class TMPEGInfo(TestCase):
         fileobj = cBytesIO(b"")
         self.failUnlessRaises(MP3Error, MPEGInfo, fileobj)
 
+    def test_xing_unknown_framecount(self):
+        frame = (
+            b'\xff\xfb\xe4\x0c\x00\x0f\xf0\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            b'\x00\x00\x00\x00Info\x00\x00\x00\x02\x00\xb4V@\x00\xb4R\x80\x00'
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+        )
+        fileobj = cBytesIO(frame)
+        info = MPEGInfo(fileobj)
+        assert info.bitrate == 320000
+        assert info.length > 0
+
 
 class TEasyMP3(TestCase):
 
