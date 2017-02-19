@@ -143,6 +143,10 @@ class Tcdata(TestCase):
         self.assertTrue(cdata.char is cdata.int8)
         self.assertTrue(cdata.to_char is cdata.to_int8)
         self.assertTrue(cdata.char_from is cdata.int8_from)
+        assert cdata.int8_max == 2 ** 7 - 1
+        assert cdata.int8_min == - 2 ** 7
+        assert cdata.int8_max == cdata.char_max
+        assert cdata.int8_min == cdata.char_min
 
     def test_char_from_to(self):
         self.assertEqual(cdata.to_char(-2), b"\xfe")
@@ -158,6 +162,10 @@ class Tcdata(TestCase):
         self.assertTrue(cdata.uchar is cdata.uint8)
         self.assertTrue(cdata.to_uchar is cdata.to_uint8)
         self.assertTrue(cdata.uchar_from is cdata.uint8_from)
+        assert cdata.uint8_max == 2 ** 8 - 1
+        assert cdata.uint8_min == 0
+        assert cdata.uint8_max == cdata.uchar_max
+        assert cdata.uint8_min == cdata.uchar_min
 
     def test_short(self):
         self.failUnlessEqual(cdata.short_le(self.ZERO(2)), 0)

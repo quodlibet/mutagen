@@ -533,6 +533,19 @@ def _fill_cdata(cls):
                 if s.size == 1:
                     esuffix = ""
                 bits = str(s.size * 8)
+
+                if unsigned:
+                    max_ = 2 ** (s.size * 8) - 1
+                    min_ = 0
+                else:
+                    max_ = 2 ** (s.size * 8 - 1) - 1
+                    min_ = - 2 ** (s.size * 8 - 1)
+
+                funcs["%s%s_min" % (prefix, name)] = min_
+                funcs["%s%s_max" % (prefix, name)] = max_
+                funcs["%sint%s_min" % (prefix, bits)] = min_
+                funcs["%sint%s_max" % (prefix, bits)] = max_
+
                 funcs["%s%s%s" % (prefix, name, esuffix)] = unpack
                 funcs["%sint%s%s" % (prefix, bits, esuffix)] = unpack
                 funcs["%s%s%s_from" % (prefix, name, esuffix)] = unpack_from
