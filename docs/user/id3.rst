@@ -1,3 +1,5 @@
+.. currentmodule:: mutagen.id3
+
 ===
 ID3
 ===
@@ -16,6 +18,58 @@ the title of an ID3 tag, you need to do the following::
 If you use the ID3 module, you should familiarize yourself with how
 ID3v2 tags are stored, by reading the the details of the ID3v2
 standard at http://id3.org/id3v2.4.0-structure.
+
+ID3 Dict Interface
+^^^^^^^^^^^^^^^^^^
+
+.. code:: pycon
+
+    >>> mutagen.File("01. On The Road Again.mp3").keys()
+    [u'TXXX:replaygain_album_peak', u'RVA2:track', u'APIC:picture',
+     u'UFID:http://musicbrainz.org', 'TDRC', u'TXXX:replaygain_track_peak',
+     'TIT2', u'RVA2:album', u'TXXX:replaygain_track_gain',
+     u'TXXX:MusicBrainz Album Id', 'TRCK', 'TPE1', 'TALB',
+     u'TXXX:MusicBrainz Album Artist Id', u'TXXX:replaygain_album_gain']
+    >>>
+
+
+On the first look the key format in the ID3 dict seem a bit confusing, this is
+because they are the frame hashes of the corresponding dict values
+(:obj:`Frame.HashKey`). For example the ID3 specification states that there
+can't be two APIC frames with the same description, so the frame hash contains
+the description and adding a new frame with the same description will replace
+the old one. Only the first four letters always represent the frame type name.
+
+In many cases you don't care about the hash and just want to look up all
+frames of one type. For this use the :meth:`ID3Tags.getall` method:
+
+.. code:: pycon
+
+    >>> for frame in mutagen.File("01. On The Road Again.mp3").tags.getall("TXXX"):
+    ...     frame
+    ...
+    TXXX(encoding=<Encoding.LATIN1: 0>, desc=u'replaygain_album_peak', text=[u'1.00000000047'])
+    TXXX(encoding=<Encoding.LATIN1: 0>, desc=u'replaygain_track_peak', text=[u'1.00000000047'])
+    TXXX(encoding=<Encoding.LATIN1: 0>, desc=u'replaygain_track_gain', text=[u'-7.429688 dB'])
+    TXXX(encoding=<Encoding.LATIN1: 0>, desc=u'MusicBrainz Album Id', text=[u'be6fb9b0-5073-4633-aefa-c559554f28e5'])
+    TXXX(encoding=<Encoding.LATIN1: 0>, desc=u'MusicBrainz Album Artist Id', text=[u'815a0279-558c-4522-ac3b-6a1e259e95b5'])
+    TXXX(encoding=<Encoding.LATIN1: 0>, desc=u'replaygain_album_gain', text=[u'-7.429688 dB'])
+
+For adding new frames you can use the :meth:`ID3Tags.add` method, which will
+use the frame hash as key. For example the ID3 spec only allows one TALB
+frame, so passing a TALB frame to add() will replace the old frame:
+
+.. code:: pycon
+
+    >>> tags.getall("TALB")
+    [TALB(encoding=<Encoding.UTF8: 3>, text=[u'The Very Best of Canned Heat'])]
+    >>> tags.add(TALB(text=[u"new value"]))
+    >>> tags.getall("TALB")
+    [TALB(encoding=<Encoding.UTF16: 1>, text=[u'new value'])]
+    >>>
+
+There is also a corresponding :meth:`ID3Tags.delall` method for deleting all
+frames of one type.
 
 
 ID3 Versions
