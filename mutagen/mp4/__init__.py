@@ -664,30 +664,53 @@ class MP4Tags(DictProxy, Tags):
         key = _name2key(b"\xa9gen")
         self.__add(key, values)
 
-    def __parse_tempo(self, atom, data):
+    def __parse_integer(self, atom, data):
         values = []
         for version, flags, data in self.__parse_data(atom, data):
-            # version = 0, flags = 0 or 21
-            if len(data) != 2:
-                raise MP4MetadataValueError("invalid tempo")
-            values.append(cdata.ushort_be(data))
+            if version != 0:
+                raise MP4MetadataValueError("unsupported version")
+            if flags not in (AtomDataType.IMPLICIT, AtomDataType.INTEGER):
+                raise MP4MetadataValueError("unsupported type")
+
+            if len(data) == 1:
+                value = cdata.int8(data)
+            elif len(data) == 2:
+                value = cdata.int16_be(data)
+            elif len(data) == 3:
+                value = cdata.int32_be(data + b"\x00") >> 8
+            elif len(data) == 4:
+                value = cdata.int32_be(data)
+            elif len(data) == 8:
+                value = cdata.int64_be(data)
+            else:
+                raise MP4MetadataValueError(
+                    "invalid value size %d" % len(data))
+            values.append(value)
+
         key = _name2key(atom.name)
         self.__add(key, values)
 
-    def __render_tempo(self, key, value):
+    def __render_integer(self, key, value):
+        data_list = []
         try:
-            if len(value) == 0:
-                return self.__render_data(key, 0, AtomDataType.INTEGER, b"")
+            for v in value:
+                # We default to int16 like iTunes and only use 16/32/64
+                # since I've only seen 16/32 in files
+                if cdata.int16_min <= v <= cdata.int16_max:
+                    data = cdata.to_int16_be(v)
+                elif cdata.int32_min <= v <= cdata.int32_max:
+                    data = cdata.to_int32_be(v)
+                elif cdata.int64_min <= v <= cdata.int64_max:
+                    data = cdata.to_int64_be(v)
+                else:
+                    raise MP4MetadataValueError(
+                        "value out of range: %r" % value)
+                data_list.append(data)
 
-            if (min(value) < 0) or (max(value) >= 2 ** 16):
-                raise MP4MetadataValueError(
-                    "invalid 16 bit integers: %r" % value)
-        except TypeError:
-            raise MP4MetadataValueError(
-                "tmpo must be a list of 16 bit integers")
+        except (TypeError, ValueError, cdata.error) as e:
+            raise MP4MetadataValueError(e)
 
-        values = [cdata.to_ushort_be(v) for v in value]
-        return self.__render_data(key, 0, AtomDataType.INTEGER, values)
+        return self.__render_data(key, 0, AtomDataType.INTEGER, data_list)
 
     def __parse_bool(self, atom, data):
         for version, flags, data in self.__parse_data(atom, data):
@@ -789,7 +812,7 @@ class MP4Tags(DictProxy, Tags):
         b"trkn": (__parse_pair, __render_pair),
         b"disk": (__parse_pair, __render_pair_no_trailing),
         b"gnre": (__parse_genre, None),
-        b"tmpo": (__parse_tempo, __render_tempo),
+        b"tmpo": (__parse_integer, __render_integer),
         b"cpil": (__parse_bool, __render_bool),
         b"pgap": (__parse_bool, __render_bool),
         b"pcst": (__parse_bool, __render_bool),

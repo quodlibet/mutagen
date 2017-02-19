@@ -317,6 +317,16 @@ class TMP4Tags(TestCase):
         tags = self.wrap_ilst(data)
         self.assertFalse(tags)
 
+    def test_parse_tmpo(self):
+        for d, v in [(b"\x01", 1), (b"\x01\x02", 258),
+                     (b"\x01\x02\x03", 66051), (b"\x01\x02\x03\x04", 16909060),
+                     (b"\x01\x02\x03\x04\x05\x06\x07\x08", 72623859790382856)]:
+            data = Atom.render(
+                b"data", b"\x00\x00\x00\x15" + b"\x00\x00\x00\x00" + d)
+            tmpo = Atom.render(b"tmpo", data)
+            tags = self.wrap_ilst(tmpo)
+            assert tags["tmpo"][0] == v
+
     def test_write_back_bad_atoms(self):
         # write a broken atom and try to load it
         data = Atom.render(b"datA", b"\x00\x00\x00\x01\x00\x00\x00\x00wheeee")
@@ -614,12 +624,20 @@ class TMP4Mixin(object):
     def test_tempo(self):
         self.set_key('tmpo', [150])
         self.set_key('tmpo', [])
+        self.set_key('tmpo', [0])
+        self.set_key('tmpo', [cdata.int16_min])
+        self.set_key('tmpo', [cdata.int32_min])
+        self.set_key('tmpo', [cdata.int64_min])
+        self.set_key('tmpo', [cdata.int16_max])
+        self.set_key('tmpo', [cdata.int32_max])
+        self.set_key('tmpo', [cdata.int64_max])
 
     def test_tempos(self):
         self.set_key('tmpo', [160, 200], faad=False)
 
     def test_tempo_invalid(self):
-        for badvalue in [[10000000], [-1], 10, "foo"]:
+        for badvalue in [
+                [cdata.int64_max + 1], [cdata.int64_min - 1], 10, "foo"]:
             self.failUnlessRaises(ValueError, self.set_key, 'tmpo', badvalue)
 
     def test_compilation(self):
