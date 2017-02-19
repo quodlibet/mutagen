@@ -296,15 +296,21 @@ class MP4Tags(DictProxy, Tags):
     * 'cpil' -- part of a compilation
     * 'pgap' -- part of a gapless album
     * 'pcst' -- podcast (iTunes reads this only on import)
+    * 'shwm' -- work/movement
 
     Tuples of ints (multiple values per key are supported):
 
     * 'trkn' -- track number, total tracks
     * 'disk' -- disc number, total discs
 
+    Integer values:
+
+    * 'tmpo' -- tempo/BPM
+    * '\\xa9mvc' -- Movement Count
+    * '\\xa9mvi' -- Movement Index
+
     Others:
 
-    * 'tmpo' -- tempo/BPM, 16 bit int
     * 'covr' -- cover artwork, list of MP4Cover objects (which are
       tagged strs)
     * 'gnre' -- ID3v1 genre. Not supported, use '\\xa9gen' instead.
@@ -813,9 +819,12 @@ class MP4Tags(DictProxy, Tags):
         b"disk": (__parse_pair, __render_pair_no_trailing),
         b"gnre": (__parse_genre, None),
         b"tmpo": (__parse_integer, __render_integer),
+        b"\xa9mvi": (__parse_integer, __render_integer),
+        b"\xa9mvc": (__parse_integer, __render_integer),
         b"cpil": (__parse_bool, __render_bool),
         b"pgap": (__parse_bool, __render_bool),
         b"pcst": (__parse_bool, __render_bool),
+        b"shwm": (__parse_bool, __render_bool),
         b"covr": (__parse_cover, __render_cover),
         b"purl": (__parse_text, __render_text),
         b"egid": (__parse_text, __render_text),
