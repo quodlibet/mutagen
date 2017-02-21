@@ -633,7 +633,7 @@ class TMP4Mixin(object):
         self.set_key('tmpo', [cdata.int64_max])
 
     def test_movements(self):
-        self.set_key('shwm', True)
+        self.set_key('shwm', [1])
         self.set_key('\xa9mvc', [42])
         self.set_key('\xa9mvi', [24])
         self.set_key('\xa9mvn', [u"movement"])

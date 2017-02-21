@@ -296,7 +296,6 @@ class MP4Tags(DictProxy, Tags):
     * 'cpil' -- part of a compilation
     * 'pgap' -- part of a gapless album
     * 'pcst' -- podcast (iTunes reads this only on import)
-    * 'shwm' -- work/movement
 
     Tuples of ints (multiple values per key are supported):
 
@@ -308,6 +307,7 @@ class MP4Tags(DictProxy, Tags):
     * 'tmpo' -- tempo/BPM
     * '\\xa9mvc' -- Movement Count
     * '\\xa9mvi' -- Movement Index
+    * 'shwm' -- work/movement
 
     Others:
 
@@ -375,10 +375,12 @@ class MP4Tags(DictProxy, Tags):
         atom_name = _key2name(key)[:4]
         if atom_name in self.__atoms:
             render_func = self.__atoms[atom_name][1]
+            render_args = self.__atoms[atom_name][2:]
         else:
             render_func = type(self).__render_text
+            render_args = []
 
-        return render_func(self, key, value)
+        return render_func(self, key, value, *render_args)
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
@@ -696,17 +698,23 @@ class MP4Tags(DictProxy, Tags):
         key = _name2key(atom.name)
         self.__add(key, values)
 
-    def __render_integer(self, key, value):
+    def __render_integer(self, key, value, min_bytes):
+        assert min_bytes in (1, 2, 4, 8)
+
         data_list = []
         try:
             for v in value:
-                # We default to int16 like iTunes and only use 16/32/64
-                # since I've only seen 16/32 in files
-                if cdata.int16_min <= v <= cdata.int16_max:
+                # We default to the int size of the usual values written
+                # by itunes for compatibility.
+                if cdata.int8_min <= v <= cdata.int8_max and min_bytes <= 1:
+                    data = cdata.to_int8(v)
+                if cdata.int16_min <= v <= cdata.int16_max and min_bytes <= 2:
                     data = cdata.to_int16_be(v)
-                elif cdata.int32_min <= v <= cdata.int32_max:
+                elif cdata.int32_min <= v <= cdata.int32_max and \
+                        min_bytes <= 4:
                     data = cdata.to_int32_be(v)
-                elif cdata.int64_min <= v <= cdata.int64_max:
+                elif cdata.int64_min <= v <= cdata.int64_max and \
+                        min_bytes <= 8:
                     data = cdata.to_int64_be(v)
                 else:
                     raise MP4MetadataValueError(
@@ -818,13 +826,13 @@ class MP4Tags(DictProxy, Tags):
         b"trkn": (__parse_pair, __render_pair),
         b"disk": (__parse_pair, __render_pair_no_trailing),
         b"gnre": (__parse_genre, None),
-        b"tmpo": (__parse_integer, __render_integer),
-        b"\xa9mvi": (__parse_integer, __render_integer),
-        b"\xa9mvc": (__parse_integer, __render_integer),
+        b"tmpo": (__parse_integer, __render_integer, 2),
+        b"\xa9mvi": (__parse_integer, __render_integer, 2),
+        b"\xa9mvc": (__parse_integer, __render_integer, 2),
         b"cpil": (__parse_bool, __render_bool),
         b"pgap": (__parse_bool, __render_bool),
         b"pcst": (__parse_bool, __render_bool),
-        b"shwm": (__parse_bool, __render_bool),
+        b"shwm": (__parse_integer, __render_integer, 1),
         b"covr": (__parse_cover, __render_cover),
         b"purl": (__parse_text, __render_text),
         b"egid": (__parse_text, __render_text),
