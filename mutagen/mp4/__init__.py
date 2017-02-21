@@ -308,6 +308,12 @@ class MP4Tags(DictProxy, Tags):
     * '\\xa9mvc' -- Movement Count
     * '\\xa9mvi' -- Movement Index
     * 'shwm' -- work/movement
+    * 'stik' -- Media Kind
+    * 'rtng' -- Content Rating
+    * 'tves' -- TV Episode
+    * 'tvsn' -- TV Season
+    * 'plID', 'cnID', 'geID', 'atID', 'sfID', 'cmID', 'akID' -- Various iTunes
+      Internal IDs
 
     Others:
 
@@ -826,6 +832,15 @@ class MP4Tags(DictProxy, Tags):
         b"trkn": (__parse_pair, __render_pair),
         b"disk": (__parse_pair, __render_pair_no_trailing),
         b"gnre": (__parse_genre, None),
+        b"plID": (__parse_integer, __render_integer, 8),
+        b"cnID": (__parse_integer, __render_integer, 4),
+        b"geID": (__parse_integer, __render_integer, 4),
+        b"atID": (__parse_integer, __render_integer, 4),
+        b"sfID": (__parse_integer, __render_integer, 4),
+        b"cmID": (__parse_integer, __render_integer, 4),
+        b"akID": (__parse_integer, __render_integer, 1),
+        b"tvsn": (__parse_integer, __render_integer, 4),
+        b"tves": (__parse_integer, __render_integer, 4),
         b"tmpo": (__parse_integer, __render_integer, 2),
         b"\xa9mvi": (__parse_integer, __render_integer, 2),
         b"\xa9mvc": (__parse_integer, __render_integer, 2),
@@ -833,6 +848,8 @@ class MP4Tags(DictProxy, Tags):
         b"pgap": (__parse_bool, __render_bool),
         b"pcst": (__parse_bool, __render_bool),
         b"shwm": (__parse_integer, __render_integer, 1),
+        b"stik": (__parse_integer, __render_integer, 1),
+        b"rtng": (__parse_integer, __render_integer, 1),
         b"covr": (__parse_cover, __render_cover),
         b"purl": (__parse_text, __render_text),
         b"egid": (__parse_text, __render_text),

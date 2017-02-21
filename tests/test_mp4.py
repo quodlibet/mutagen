@@ -632,6 +632,18 @@ class TMP4Mixin(object):
         self.set_key('tmpo', [cdata.int32_max])
         self.set_key('tmpo', [cdata.int64_max])
 
+    def test_various_int(self):
+        keys = [
+            "stik", "rtng", "plID", "cnID", "geID", "atID", "sfID",
+            "cmID", "akID", "tvsn", "tves",
+        ]
+
+        for key in keys:
+            self.set_key(key, [])
+            self.set_key(key, [0])
+            self.set_key(key, [1])
+            self.set_key(key, [cdata.int64_max])
+
     def test_movements(self):
         self.set_key('shwm', [1])
         self.set_key('\xa9mvc', [42])
