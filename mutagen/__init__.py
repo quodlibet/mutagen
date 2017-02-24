@@ -24,7 +24,7 @@ from mutagen._util import MutagenError
 from mutagen._file import FileType, StreamInfo, File
 from mutagen._tags import Tags, Metadata, PaddingInfo
 
-version = (1, 36, 3)
+version = (1, 36, 3, -1)
 """Version tuple."""
 
 version_string = ".".join(map(str, version))
