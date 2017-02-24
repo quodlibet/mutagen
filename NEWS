@@ -1,3 +1,9 @@
+1.36.3 - 2017.02.24
+-------------------
+
+* MP3: fix error with xing frames without a frame count :bug:`292`
+
+
 1.36.2 - 2017.01.25
 -------------------
 
