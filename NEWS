@@ -1,3 +1,17 @@
+1.37 - 2017.02.24
+-----------------
+
+* Relicense "GPLv2" → "GPLv2 or later" :bug:`291`
+* DSF: add `mutagen.dsf` module for DSF (DSD Stream File) support
+  :pr:`283` (Boris Pruessmann)
+* MP3: Add `mp3.MPEGInfo.encoder_settings` containing a guess of the encoder
+  settings used, for example ``"-V2"`` for LAME :bug:`66`
+* ID3: add iTunes movement related frames `id3.MVIN` and `id3.MVNM`
+* MP4: support ``©mvi``, ``©mvc``, ``shwm``, ``stik``, ``rtng``, ``tves``,
+  ``tvsn``, ``plID``, ``cnID``, ``geID``, ``atID``, ``sfID``, ``cmID``,
+  ``akID`` :bug:`130`
+
+
 1.36.3 - 2017.02.24
 -------------------
 
