@@ -13,7 +13,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinx.ext.intersphinx',
-    'ext',
+    'sphinx.ext.extlinks',
 ]
 intersphinx_mapping = {
     'python': ('https://docs.python.org/2.7', None),
@@ -26,9 +26,12 @@ copyright = u'2016, Joe Wreschnig, Michael Urman, Lukáš Lalinský, ' \
             u'Christoph Reiter, Ben Ockmore & others'
 html_title = project
 exclude_patterns = ['_build']
-bug_url_template = "https://github.com/quodlibet/mutagen/issues/%s"
-pr_url_template = "https://github.com/quodlibet/mutagen/pull/%s"
-bbpr_url_template = "https://bitbucket.org/lazka/mutagen/pull-requests/%s"
+
+extlinks = {
+    'bug': ('https://github.com/quodlibet/quodlibet/issues/%s', '#'),
+    'pr': ('https://github.com/quodlibet/quodlibet/pull/%s', '#pr'),
+    'bb-pr': ('https://bitbucket.org/lazka/mutagen/pull-requests/%s', '#ppbr'),
+}
 
 autodoc_member_order = "bysource"
 default_role = "obj"
