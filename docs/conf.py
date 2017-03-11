@@ -28,8 +28,8 @@ html_title = project
 exclude_patterns = ['_build']
 
 extlinks = {
-    'bug': ('https://github.com/quodlibet/quodlibet/issues/%s', '#'),
-    'pr': ('https://github.com/quodlibet/quodlibet/pull/%s', '#pr'),
+    'bug': ('https://github.com/quodlibet/mutagen/issues/%s', '#'),
+    'pr': ('https://github.com/quodlibet/mutagen/pull/%s', '#pr'),
     'bb-pr': ('https://bitbucket.org/lazka/mutagen/pull-requests/%s', '#ppbr'),
 }
 
