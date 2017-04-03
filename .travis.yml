@@ -23,6 +23,11 @@ matrix:
     - os: linux
       dist: trusty
       language: python
+      python: "3.6"
+      env: TYPE="linux" PYVER="3.6" PYARGS="-R -bb"
+    - os: linux
+      dist: trusty
+      language: python
       python: "nightly"
       env: TYPE="linux" PYVER="nightly" PYARGS="-R -bb"
     - os: linux
@@ -30,6 +35,11 @@ matrix:
       language: python
       python: "pypy"
       env: TYPE="linux" PYVER="pypy" PYARGS="-R"
+    - os: linux
+      dist: trusty
+      language: python
+      python: "pypy3.3-5.2-alpha1"
+      env: TYPE="linux" PYVER="pypy3" PYARGS="-R -bb"
     - os: linux
       language: generic
       sudo: required
@@ -72,6 +82,6 @@ install:
 
 script:
   - if [ "$TYPE" == "linux" ]; then eval python $PYARGS setup.py test; fi
-  - if [ "$TYPE" == "linux" ] && [ "$PYVER" == "2" ]; then eval python $PYARGS setup.py quality; fi
+  - if [ "$TYPE" == "linux" ] && [ "$PYVER" == "2.7" ]; then eval python $PYARGS setup.py quality; fi
   - if [ "$TYPE" == "windows" ]; then eval xvfb-run -a ./run_wine.sh "$PYVER" python $PYARGS setup.py test; fi
   - if [ "$TYPE" == "osx" ]; then eval python $PYARGS setup.py test; fi
