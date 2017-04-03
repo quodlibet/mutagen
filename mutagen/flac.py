@@ -201,7 +201,7 @@ class StreamInfo(MetadataBlock, mutagen.StreamInfo):
                     self.channels == other.channels and
                     self.bits_per_sample == other.bits_per_sample and
                     self.total_samples == other.total_samples)
-        except:
+        except Exception:
             return False
 
     __hash__ = MetadataBlock.__hash__

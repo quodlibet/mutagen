@@ -2,8 +2,10 @@
 
 import re
 import os
+import sys
 import warnings
 import shutil
+import contextlib
 from unittest import TestCase as BaseTestCase
 
 try:
@@ -11,7 +13,7 @@ try:
 except ImportError:
     raise SystemExit("pytest missing: sudo apt-get install python-pytest")
 
-from mutagen._compat import PY3
+from mutagen._compat import PY3, StringIO
 from mutagen._senf import text2fsn, fsn2text, path2fsn, mkstemp, fsnative
 
 
@@ -47,6 +49,28 @@ def get_temp_empty(ext=""):
     fd, filename = mkstemp(suffix=ext)
     os.close(fd)
     return filename
+
+
+@contextlib.contextmanager
+def capture_output():
+    """
+    with capture_output() as (stdout, stderr):
+        some_action()
+    print stdout.getvalue(), stderr.getvalue()
+    """
+
+    err = StringIO()
+    out = StringIO()
+    old_err = sys.stderr
+    old_out = sys.stdout
+    sys.stderr = err
+    sys.stdout = out
+
+    try:
+        yield (out, err)
+    finally:
+        sys.stderr = old_err
+        sys.stdout = old_out
 
 
 class TestCase(BaseTestCase):
