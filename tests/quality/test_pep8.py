@@ -6,54 +6,34 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
-import os
-import subprocess
-
 import pytest
 
 import mutagen
 import tests
-from tests import TestCase
+from tests import TestCase, capture_output
+
+try:
+    import pep8 as pycodestyle
+except ImportError:
+    try:
+        import pycodestyle
+    except ImportError:
+        pycodestyle = None
 
 
 @pytest.mark.quality
 class TPEP8(TestCase):
     IGNORE = ["E128", "W601", "E402", "E731", "W503", "E741", "E305"]
 
-    def _run(self, path, ignore=None):
-        if ignore is None:
-            ignore = []
-        ignore += self.IGNORE
-
-        p = subprocess.Popen(
-            ["pep8", "--ignore=" + ",".join(ignore), path],
-            stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-
-        class Future(object):
-
-            def __init__(self, p):
-                self.p = p
-
-            def result(self):
-                result = self.p.communicate()
-                if self.p.returncode != 0:
-                    return result
-
-        return Future(p)
-
     def test_all(self):
         paths = [mutagen.__path__[0], tests.__path__[0]]
 
-        futures = []
-        for path in paths:
-            assert os.path.exists(path)
-            futures.append(self._run(path))
-
         errors = []
-        for future in futures:
-            status = future.result()
-            if status is not None:
-                errors.append(status[0].decode("utf-8"))
+        for path in paths:
+            style = pycodestyle.StyleGuide(ignore=self.IGNORE)
+            with capture_output() as (o, e):
+                style.input_dir(path)
+            errors.extend(o.getvalue().splitlines())
 
         if errors:
             raise Exception("\n".join(errors))

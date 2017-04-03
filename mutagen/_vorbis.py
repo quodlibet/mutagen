@@ -167,7 +167,7 @@ class VComment(mutagen.Tags, list):
 
                 try:
                     value.decode("utf-8")
-                except:
+                except Exception:
                     raise ValueError("%r is not a valid value" % value)
 
         return True
