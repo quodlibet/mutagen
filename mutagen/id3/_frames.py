@@ -669,6 +669,14 @@ class MVI(MVIN):
     "iTunes Movement Number/Count"
 
 
+class GRP1(TextFrame):
+    "iTunes Grouping"
+
+
+class GP1(GRP1):
+    "iTunes Grouping"
+
+
 class TDOR(TimeStampTextFrame):
     "Original Release Time"
 

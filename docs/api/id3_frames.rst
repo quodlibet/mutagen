@@ -110,6 +110,11 @@ ID3v2.3/4 Frames
     :members:
 
 
+.. autoclass:: mutagen.id3.GRP1(encoding=<Encoding.UTF16: 1>, text=[])
+    :show-inheritance:
+    :members:
+
+
 .. autoclass:: mutagen.id3.IPLS(encoding=<Encoding.UTF16: 1>, people=[])
     :show-inheritance:
     :members:

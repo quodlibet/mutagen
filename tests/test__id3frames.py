@@ -108,6 +108,7 @@ class TVariousFrames(TestCase):
         ['TYER', b'\x002004', '2004', 2004, dict(encoding=0)],
         ['MVNM', b'\x00ab\x00', 'ab', '', dict(encoding=0)],
         ['MVIN', b'\x001/3\x00', '1/3', 1, dict(encoding=0)],
+        ['GRP1', b'\x00ab\x00', 'ab', '', dict(encoding=0)],
         [
             'TXXX', b'\x00usr\x00a/b\x00c', ['a/b', 'c'], '',
             dict(encoding=0, desc='usr')
@@ -377,6 +378,7 @@ class TVariousFrames(TestCase):
         ['TSP', b'\x00ab', 'ab', '', dict(encoding=0)],
         ['MVN', b'\x00ab\x00', 'ab', '', dict(encoding=0)],
         ['MVI', b'\x001/3\x00', '1/3', 1, dict(encoding=0)],
+        ['GP1', b'\x00ab\x00', 'ab', '', dict(encoding=0)],
 
         ['WAF', b'http://zzz', 'http://zzz', '', {}],
         ['WAR', b'http://zzz', 'http://zzz', '', {}],
