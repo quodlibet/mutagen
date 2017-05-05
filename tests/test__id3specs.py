@@ -331,9 +331,15 @@ class TID3FramesSpec(TestCase):
 
         tags = ID3Tags()
         tags.add(TIT3(encoding=3, text=[u"F", u"B"]))
-        self.assertEqual(spec.write(config, None, tags),
-            b"TIT3" + b"\x00\x00\x00\x0B" + b"\x00\x00" +
-            b"\x01" + b"\xff\xfeF\x00/\x00B\x00\x00\x00")
+        data = spec.write(config, None, tags)
+        if sys.byteorder == 'little':
+            self.assertEqual( data,
+                b"TIT3" + b"\x00\x00\x00\x0B" + b"\x00\x00" +
+                b"\x01" + b"\xff\xfeF\x00/\x00B\x00\x00\x00")
+        else:
+            self.assertEqual( data,
+                b"TIT3" + b"\x00\x00\x00\x0B" + b"\x00\x00" +
+                b"\x01" + b"\xfe\xff\x00F\x00/\x00B\x00\x00")
 
     def test_validate(self):
         header = ID3Header()
