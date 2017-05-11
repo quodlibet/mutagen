@@ -2,6 +2,8 @@
    :align: center
    :width: 400px
 
+|
+
 .. toctree::
     :hidden:
     :titlesonly:
@@ -16,6 +18,7 @@
 .. title:: Overview
 
 .. include:: ../README.rst
+    :start-after: |
 
 ----
 
