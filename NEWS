@@ -132,8 +132,8 @@
 * FLAC: add ``audio/flac`` mime type. :bug:`235`
 * ASF: Fixed crash when object size is longer than the header and file length
   (Ben Ockmore)
-* ID3: Validate attributes set after frame creation :bb-pr:`8`
-  (Daniel Plachotich)
+* ID3: Validate attributes set after frame creation :commit:`69368c31e00`
+  (:user:`Daniel Plachotich <danpla>`)
 * MP4: validate values in ``__setitem__`` so things don't fail in save()
   :bug:`236`
 * tests: Fix SynchronizedTextSpec test on big-endian machines :bug:`247`
@@ -242,7 +242,8 @@
 * MP4:
 
   * New ``MP4Info.codec`` for identifying the contained audio codec
-    e.g. ``"mp4a"``, ``"alac"``, ``"mp4a.40.2"``, ``"ac-3"`` etc. :bb-pr:`6`
+    e.g. ``"mp4a"``, ``"alac"``, ``"mp4a.40.2"``, ``"ac-3"`` etc.
+    :commit:`b2f22b81c77`
   * New ``MP4Info.codec_description``: name of the audio codec
     e.g. ``"ALAC"``, ``"AAC LC"``, ``"AC-3"``
 
@@ -263,7 +264,7 @@
 * MP4:
 
   * Parse channels/sample_rate/bits_per_sample/bitrate for ALAC files
-    :bug:`199` :bb-pr:`5` (Adrian Sampson, Christoph Reiter)
+    :bug:`199` :commit:`192cfcaf14` (Adrian Sampson, Christoph Reiter)
 
 * ASF:
 
@@ -278,7 +279,7 @@
 
 * docs:
 
-  * New logo :bb-pr:`4` (Samuel Messner)
+  * New logo :commit:`b728fa75` (:user:`Samuel Messner <obskyr>`)
   * Add examples for handling cover art in vorbiscomment :bug:`200`
   * Add examples for id3v2.3
 

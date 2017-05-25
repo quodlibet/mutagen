@@ -30,8 +30,10 @@ exclude_patterns = ['_build']
 extlinks = {
     'bug': ('https://github.com/quodlibet/mutagen/issues/%s', '#'),
     'pr': ('https://github.com/quodlibet/mutagen/pull/%s', '#pr'),
-    'bb-pr': ('https://bitbucket.org/lazka/mutagen/pull-requests/%s', '#ppbr'),
+    'commit': ('https://github.com/quodlibet/mutagen/commit/%s', '#'),
+    'user': ('https://github.com/%s', ''),
 }
+
 
 autodoc_member_order = "bysource"
 default_role = "obj"
