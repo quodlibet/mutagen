@@ -43,9 +43,10 @@ or
 Where do I get it?
 ------------------
 
-Mutagen is hosted on `GitHub <https://github.com/quodlibet/mutagen>`_. The 
-`download page <https://bitbucket.org/lazka/mutagen/downloads>`_ will have the 
-latest version or check out the git repository::
+Mutagen is hosted on `GitHub <https://github.com/quodlibet/mutagen>`_. The
+`download page <https://github.com/quodlibet/mutagen/releases>`_ or `PyPI
+<https://pypi.org/project/mutagen>`_ will have the latest version or check out
+the git repository::
 
     $ git clone https://github.com/quodlibet/mutagen.git
 
