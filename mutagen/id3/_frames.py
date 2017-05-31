@@ -434,6 +434,7 @@ class TextFrame(Frame):
         for val in other[:]:
             if val not in self:
                 self.append(val)
+                self.encoding = max(self.encoding, other.encoding)
         return self
 
     def _pprint(self):

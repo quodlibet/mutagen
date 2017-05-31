@@ -372,6 +372,22 @@ class TID3Tags(TestCase):
         for key, value in id3.items():
             self.assertEqual(key, value.HashKey)
 
+    def test_text_duplicate_frame_different_encoding(self):
+        id3 = ID3Tags()
+        frame = TPE2(encoding=Encoding.LATIN1, text=[u"foo"])
+        id3._add(frame, False)
+        assert id3.getall("TPE2")[0].encoding == Encoding.LATIN1
+        frame = TPE2(encoding=Encoding.LATIN1, text=[u"bar"])
+        id3._add(frame, False)
+        assert id3.getall("TPE2")[0].encoding == Encoding.LATIN1
+        frame = TPE2(encoding=Encoding.UTF8, text=[u"baz\u0400"])
+        id3._add(frame, False)
+        assert id3.getall("TPE2")[0].encoding == Encoding.UTF8
+
+        frames = id3.getall("TPE2")
+        assert len(frames) == 1
+        assert len(frames[0].text) == 3
+
     def test_add_CRM(self):
         id3 = ID3Tags()
         self.assertRaises(TypeError, id3.add, CRM())
