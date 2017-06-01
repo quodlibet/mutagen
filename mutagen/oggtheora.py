@@ -67,7 +67,7 @@ class OggTheoraInfo(StreamInfo):
         self.serial = page.serial
 
     def _post_tags(self, fileobj):
-        page = OggPage.find_last(fileobj, self.serial)
+        page = OggPage.find_last(fileobj, self.serial, finishing=True)
         if page is None:
             raise OggTheoraHeaderError
         position = page.position

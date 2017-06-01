@@ -79,7 +79,9 @@ class OggFLACStreamInfo(StreamInfo):
     def _post_tags(self, fileobj):
         if self.length:
             return
-        page = OggPage.find_last(fileobj, self.serial)
+        page = OggPage.find_last(fileobj, self.serial, finishing=True)
+        if page is None:
+            raise OggFLACHeaderError
         self.length = page.position / float(self.sample_rate)
 
     def pprint(self):
