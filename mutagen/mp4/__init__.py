@@ -290,6 +290,8 @@ class MP4Tags(DictProxy, Tags):
     * 'soco' -- composer sort order
     * 'sosn' -- show sort order
     * 'tvsh' -- show name
+    * '\\xa9wrk' -- work
+    * '\\xa9mvn' -- movement
 
     Boolean values:
 
