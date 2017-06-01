@@ -69,7 +69,7 @@ class OggOpusInfo(StreamInfo):
             raise OggOpusHeaderError("version %r unsupported" % major)
 
     def _post_tags(self, fileobj):
-        page = OggPage.find_last(fileobj, self.serial)
+        page = OggPage.find_last(fileobj, self.serial, finishing=True)
         if page is None:
             raise OggOpusHeaderError
         self.length = (page.position - self.__pre_skip) / float(48000)

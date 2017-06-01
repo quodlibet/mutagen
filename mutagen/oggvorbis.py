@@ -83,7 +83,7 @@ class OggVorbisInfo(StreamInfo):
     def _post_tags(self, fileobj):
         """Raises ogg.error"""
 
-        page = OggPage.find_last(fileobj, self.serial)
+        page = OggPage.find_last(fileobj, self.serial, finishing=True)
         if page is None:
             raise OggVorbisHeaderError
         self.length = page.position / float(self.sample_rate)
