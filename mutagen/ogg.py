@@ -434,7 +434,7 @@ class OggPage(object):
             cls.renumber(fileobj, serial, sequence)
 
     @staticmethod
-    def find_last(fileobj, serial):
+    def find_last(fileobj, serial, finishing=False):
         """Find the last page of the stream 'serial'.
 
         If the file is not multiplexed this function is fast. If it is,
@@ -442,6 +442,10 @@ class OggPage(object):
 
         This finds the last page in the actual file object, or the last
         page in the stream (with eos set), whichever comes first.
+
+        If finishing is True it returns the last page which contains a packet
+        finishing on it. If there exist pages but none with finishing packets
+        returns None.
 
         Returns None in case no page with the serial exists.
         Raises error in case this isn't a valid ogg stream.
@@ -457,13 +461,17 @@ class OggPage(object):
         except ValueError:
             raise error("unable to find final Ogg header")
         bytesobj = cBytesIO(data[index:])
+
+        def is_valid(page):
+            return not finishing or page.position != -1
+
         best_page = None
         try:
             page = OggPage(bytesobj)
         except error:
             pass
         else:
-            if page.serial == serial:
+            if page.serial == serial and is_valid(page):
                 if page.last:
                     return page
                 else:
@@ -477,7 +485,8 @@ class OggPage(object):
             page = OggPage(fileobj)
             while True:
                 if page.serial == serial:
-                    best_page = page
+                    if is_valid(page):
+                        best_page = page
                     if page.last:
                         break
                 page = OggPage(fileobj)

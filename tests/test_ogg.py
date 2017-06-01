@@ -430,6 +430,40 @@ class TOggPage(TestCase):
         self.failUnlessEqual(
             OggPage.find_last(data, pages[0].serial), pages[-1])
 
+    def test_find_last_none_finishing(self):
+        page = OggPage()
+        page.position = -1
+        data = BytesIO(page.write())
+        assert OggPage.find_last(data, page.serial, finishing=True) is None
+
+    def test_find_last_none_finishing_mux(self):
+        page1 = OggPage()
+        page1.last = True
+        page1.position = -1
+        page2 = OggPage()
+        page2.serial = page1.serial + 1
+        pages = [page1, page2]
+        data = BytesIO(b"".join([page.write() for page in pages]))
+
+        assert OggPage.find_last(data, page1.serial, finishing=True) is None
+        assert OggPage.find_last(data, page2.serial, finishing=True) == page2
+
+    def test_find_last_last_empty(self):
+        # https://github.com/quodlibet/mutagen/issues/308
+        pages = [OggPage() for i in xrange(10)]
+        for i, page in enumerate(pages):
+            page.sequence = i
+            page.position = i
+        pages[-1].last = True
+        pages[-1].position = -1
+        data = BytesIO(b"".join([page.write() for page in pages]))
+        page = OggPage.find_last(data, pages[-1].serial, finishing=True)
+        assert page is not None
+        assert page.position == 8
+        page = OggPage.find_last(data, pages[-1].serial, finishing=False)
+        assert page is not None
+        assert page.position == -1
+
     def test_find_last_single_muxed(self):
         page1 = OggPage()
         page1.last = True
