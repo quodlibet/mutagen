@@ -475,12 +475,13 @@ class OggPage(object):
         fileobj.seek(0)
         try:
             page = OggPage(fileobj)
-            while not page.last:
+            while True:
+                if page.serial == serial:
+                    best_page = page
+                    if page.last:
+                        break
                 page = OggPage(fileobj)
-                while page.serial != serial:
-                    page = OggPage(fileobj)
-                best_page = page
-            return page
+            return best_page
         except error:
             return best_page
         except EOFError:

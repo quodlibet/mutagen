@@ -430,6 +430,15 @@ class TOggPage(TestCase):
         self.failUnlessEqual(
             OggPage.find_last(data, pages[0].serial), pages[-1])
 
+    def test_find_last_single_muxed(self):
+        page1 = OggPage()
+        page1.last = True
+        page2 = OggPage()
+        page2.serial = page1.serial + 1
+        pages = [page1, page2]
+        data = BytesIO(b"".join([page.write() for page in pages]))
+        assert OggPage.find_last(data, page2.serial).serial == page2.serial
+
     def test_find_last_really_last(self):
         pages = [OggPage() for i in xrange(10)]
         pages[-1].last = True
