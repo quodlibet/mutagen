@@ -753,7 +753,7 @@ class Tloadfile(TestCase):
         finally:
             os.unlink(filename)
 
-        # now we mock open to return raise ENOTSUP in case of mixed mode.
+        # now we mock open to return raise EOPNOTSUPP in case of mixed mode.
         # things should still work since we edit the file in memory
         raised = []
         old_open = open
@@ -761,7 +761,7 @@ class Tloadfile(TestCase):
         def mock_open(name, mode, *args):
             if "+" in mode:
                 raised.append(True)
-                raise IOError(errno.ENOTSUP, "nope")
+                raise IOError(errno.EOPNOTSUPP, "nope")
             return old_open(name, mode, *args)
 
         builtins.open = mock_open

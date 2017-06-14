@@ -220,7 +220,7 @@ def _openfile(instance, filething, filename, fileobj, writable, create):
         try:
             fileobj = open(filename, "rb+" if writable else "rb")
         except IOError as e:
-            if writable and e.errno == errno.ENOTSUP:
+            if writable and e.errno == errno.EOPNOTSUPP:
                 # Some file systems (gvfs over fuse) don't support opening
                 # files read/write. To make things still work read the whole
                 # file into an in-memory file like object and write it back
