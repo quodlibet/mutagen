@@ -740,6 +740,7 @@ class Tloadfile(TestCase):
         def file_func(filething):
             fileobj = filething.fileobj
             assert fileobj.read(3) == b"foo"
+            fileobj.seek(0, 2)
             fileobj.write(b"bar")
 
         # first a normal test
