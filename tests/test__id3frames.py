@@ -1017,7 +1017,7 @@ class TUSLT(TestCase):
     def test_hash(self):
         frame = USLT(encoding=0, lang="foo", desc="d", text="t")
         self.assertEqual(frame.HashKey, "USLT:d:foo")
-        frame._pprint()
+        assert frame._pprint() == "d=foo=t"
 
 
 class TWXXX(TestCase):

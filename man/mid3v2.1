@@ -128,6 +128,10 @@ may be set in the file as long as they have different keys. To set this
 key, just separate the text with a colon, e.g. \fB\-\-TXXX
 "ALBUMARTISTSORT:Examples, The"\fP\&.
 .sp
+The USLT frame has the format <DESCRIPTION:TEXT:LANGUAGE>. The language and
+description may be omitted, in which case the language defaults to English,
+and the description to an empty string.
+.sp
 The special POPM frame can be set in a similar way: \fB\-\-POPM
 "bob@example.com:128:2"\fP to set Bob\(aqs rating to 128/255 with 2 plays.
 .SH BUGS

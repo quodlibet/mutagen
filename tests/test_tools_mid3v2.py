@@ -172,6 +172,34 @@ class TMid3v2(_TTools):
         self.failUnlessEqual(frame.text, ["B:C:D"])
         self.failUnlessEqual(frame.lang, "ger")
 
+    def test_USLT(self):
+        res, out = self.call(fsn(u"--USLT"), fsn(u"Y:foo"), self.filename)
+        assert (res, out) == (0, "")
+
+        f = ID3(self.filename)
+        frame = f.getall("USLT:Y")[0]
+        assert frame.desc == "Y"
+        assert frame.text == "foo"
+        assert frame.lang == "eng"
+
+        res, out = self.call(fsn(u"--USLT"), fsn(u"Z:bar:ger"), self.filename)
+        assert (res, out) == (0, "")
+
+        f = ID3(self.filename)
+        frame = f.getall("USLT:Z")[0]
+        assert frame.desc == "Z"
+        assert frame.text == "bar"
+        assert frame.lang == "ger"
+
+        res, out = self.call(fsn(u"--USLT"), fsn(u"X"), self.filename)
+        assert (res, out) == (0, "")
+
+        f = ID3(self.filename)
+        frame = f.getall("USLT:")[0]
+        assert frame.desc == ""
+        assert frame.text == "X"
+        assert frame.lang == "eng"
+
     def test_apic(self):
         image_path = os.path.join(DATA_DIR, "image.jpg")
         image_path = os.path.relpath(image_path)

@@ -1074,6 +1074,9 @@ class USLT(Frame):
 
     __hash__ = Frame.__hash__
 
+    def _pprint(self):
+        return "%s=%s=%s" % (self.desc, self.lang, self.text)
+
 
 @swap_to_string
 class SYLT(Frame):

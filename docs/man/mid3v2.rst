@@ -112,6 +112,10 @@ may be set in the file as long as they have different keys. To set this
 key, just separate the text with a colon, e.g. ``--TXXX
 "ALBUMARTISTSORT:Examples, The"``.
 
+The USLT frame has the format <DESCRIPTION:TEXT:LANGUAGE>. The language and
+description may be omitted, in which case the language defaults to English,
+and the description to an empty string.
+
 The special POPM frame can be set in a similar way: ``--POPM
 "bob@example.com:128:2"`` to set Bob's rating to 128/255 with 2 plays.
 
