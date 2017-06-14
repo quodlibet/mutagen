@@ -47,6 +47,9 @@ if PY2:
 
         return cls
 
+    import __builtin__ as builtins
+    builtins
+
 elif PY3:
     from io import StringIO
     StringIO = StringIO
@@ -84,3 +87,6 @@ elif PY3:
 
     def swap_to_string(cls):
         return cls
+
+    import builtins
+    builtins

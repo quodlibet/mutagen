@@ -3,9 +3,9 @@
 from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes, \
     decode_terminated, dict_match, enum, get_size, BitReader, BitReaderError, \
     resize_bytes, seek_end, mmap_move, verify_fileobj, fileobj_name, \
-    read_full, flags, resize_file, fallback_move, encode_endian
+    read_full, flags, resize_file, fallback_move, encode_endian, loadfile
 from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2, \
-    cBytesIO, xrange, BytesIO
+    cBytesIO, xrange, BytesIO, builtins
 from tests import TestCase, get_temp_empty
 import os
 import random
@@ -730,6 +730,55 @@ class Tseek_end(TestCase):
             f.seek(10)
             seek_end(f, 10)
             self.assertEqual(f.tell(), 0)
+
+
+class Tloadfile(TestCase):
+
+    def test_handle_readwrite_notsup(self):
+
+        @loadfile(method=False, writable=True)
+        def file_func(filething):
+            fileobj = filething.fileobj
+            assert fileobj.read(3) == b"foo"
+            fileobj.write(b"bar")
+
+        # first a normal test
+        filename = get_temp_empty()
+        try:
+            with open(filename, "wb") as h:
+                h.write(b"foo")
+            file_func(filename)
+            with open(filename, "rb") as h:
+                assert h.read() == b"foobar"
+        finally:
+            os.unlink(filename)
+
+        # now we mock open to return raise ENOTSUP in case of mixed mode.
+        # things should still work since we edit the file in memory
+        raised = []
+        old_open = open
+
+        def mock_open(name, mode, *args):
+            if "+" in mode:
+                raised.append(True)
+                raise IOError(errno.ENOTSUP, "nope")
+            return old_open(name, mode, *args)
+
+        builtins.open = mock_open
+        try:
+            filename = get_temp_empty()
+            try:
+                with open(filename, "wb") as h:
+                    h.write(b"foo")
+                file_func(filename)
+                with open(filename, "rb") as h:
+                    assert h.read() == b"foobar"
+            finally:
+                os.unlink(filename)
+        finally:
+            builtins.open = old_open
+
+        assert raised
 
 
 class Tread_full(TestCase):

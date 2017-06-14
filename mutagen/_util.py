@@ -16,6 +16,7 @@ import sys
 import struct
 import codecs
 import errno
+from io import BytesIO
 
 try:
     import mmap
@@ -214,10 +215,24 @@ def _openfile(instance, filething, filename, fileobj, writable, create):
         yield FileThing(fileobj, filename, filename or fileobj_name(fileobj))
     elif filename is not None:
         verify_filename(filename)
+
+        inmemory_fileobj = False
         try:
             fileobj = open(filename, "rb+" if writable else "rb")
         except IOError as e:
-            if create and e.errno == errno.ENOENT:
+            if writable and e.errno == errno.ENOTSUP:
+                # Some file systems (gvfs over fuse) don't support opening
+                # files read/write. To make things still work read the whole
+                # file into an in-memory file like object and write it back
+                # later.
+                # https://github.com/quodlibet/mutagen/issues/300
+                try:
+                    with open(filename, "rb") as fileobj:
+                        fileobj = BytesIO(fileobj.read())
+                except IOError as e2:
+                    raise MutagenError(e2)
+                inmemory_fileobj = True
+            elif create and e.errno == errno.ENOENT:
                 assert writable
                 try:
                     fileobj = open(filename, "wb+")
@@ -228,6 +243,15 @@ def _openfile(instance, filething, filename, fileobj, writable, create):
 
         with fileobj as fileobj:
             yield FileThing(fileobj, filename, filename)
+
+            if inmemory_fileobj:
+                assert writable
+                data = fileobj.getvalue()
+                try:
+                    with open(filename, "wb") as fileobj:
+                        fileobj.write(data)
+                except IOError as e:
+                    raise MutagenError(e)
     else:
         raise TypeError("Missing filename or fileobj argument")
 
