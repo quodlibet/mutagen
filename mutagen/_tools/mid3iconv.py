@@ -122,7 +122,7 @@ def update(options, filenames):
 
 def has_id3v1(filename):
     try:
-        with open(filename, 'rb+') as f:
+        with open(filename, 'rb') as f:
             f.seek(-128, 2)
             return f.read(3) == b"TAG"
     except IOError:
