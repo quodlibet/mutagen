@@ -33,7 +33,7 @@ matrix:
     - os: linux
       dist: trusty
       language: python
-      python: "pypy"
+      python: "pypy-5.4.1"
       env: TYPE="linux" PYVER="pypy" PYARGS="-R"
     - os: linux
       dist: trusty
