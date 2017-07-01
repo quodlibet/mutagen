@@ -21,6 +21,9 @@ class TEasyID3(TestCase):
     def tearDown(self):
         os.unlink(self.filename)
 
+    def test_size_attr(self):
+        assert self.id3.size == self.realid3.size
+
     def test_load_filename(self):
         self.id3.save(self.filename)
         self.id3.load(self.filename)

@@ -203,8 +203,9 @@ class EasyID3(DictMixin, Metadata):
     filename = property(lambda s: s.__id3.filename,
                         lambda s, fn: setattr(s.__id3, 'filename', fn))
 
-    size = property(lambda s: s.__id3.size,
-                    lambda s, fn: setattr(s.__id3, 'size', s))
+    @property
+    def size(self):
+        return self.__id3.size
 
     def __getitem__(self, key):
         func = dict_match(self.Get, key.lower(), self.GetFallback)
