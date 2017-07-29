@@ -9,16 +9,25 @@
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
 #
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+# CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import ctypes
-from ctypes import WinDLL, wintypes
+from ctypes import WinDLL, CDLL, wintypes
 
 
 shell32 = WinDLL("shell32")
 kernel32 = WinDLL("kernel32")
 shlwapi = WinDLL("shlwapi")
+msvcrt = CDLL("msvcrt")
 
 GetCommandLineW = kernel32.GetCommandLineW
 GetCommandLineW.argtypes = []
@@ -181,3 +190,27 @@ WideCharToMultiByte.restpye = ctypes.c_int
 MoveFileW = kernel32.MoveFileW
 MoveFileW.argtypes = [LPCTSTR, LPCTSTR]
 MoveFileW.restype = BOOL
+
+GetFileInformationByHandleEx = kernel32.GetFileInformationByHandleEx
+GetFileInformationByHandleEx.argtypes = [
+    HANDLE, ctypes.c_int, ctypes.c_void_p, DWORD]
+GetFileInformationByHandleEx.restype = BOOL
+
+MAX_PATH = 260
+FileNameInfo = 2
+
+class FILE_NAME_INFO(ctypes.Structure):
+    _fields_ = [
+        ("FileNameLength", DWORD),
+        ("FileName", WCHAR),
+    ]
+
+_get_osfhandle = msvcrt._get_osfhandle
+_get_osfhandle.argtypes = [ctypes.c_int]
+_get_osfhandle.restype = HANDLE
+
+GetFileType = kernel32.GetFileType
+GetFileType.argtypes = [HANDLE]
+GetFileType.restype = DWORD
+
+FILE_TYPE_PIPE = 0x0003
