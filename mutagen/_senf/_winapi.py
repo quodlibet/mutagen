@@ -199,11 +199,13 @@ GetFileInformationByHandleEx.restype = BOOL
 MAX_PATH = 260
 FileNameInfo = 2
 
+
 class FILE_NAME_INFO(ctypes.Structure):
     _fields_ = [
         ("FileNameLength", DWORD),
         ("FileName", WCHAR),
     ]
+
 
 _get_osfhandle = msvcrt._get_osfhandle
 _get_osfhandle.argtypes = [ctypes.c_int]
