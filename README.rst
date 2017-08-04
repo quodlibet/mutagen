@@ -22,4 +22,4 @@ For more information visit https://mutagen.readthedocs.org
     :target: https://travis-ci.org/quodlibet/mutagen
 
 .. image:: https://ci.appveyor.com/api/projects/status/d22bslvjvt3r1hv1/branch/master?svg=true
-    :target: https://ci.appveyor.com/project/quodlibet/mutagen/branch/master
+    :target: https://ci.appveyor.com/project/lazka/mutagen/branch/master
