@@ -6,8 +6,11 @@ from tempfile import mkstemp
 import shutil
 import warnings
 
+from hypothesis.strategies import composite, integers, one_of
+from hypothesis import given
+
 from tests import TestCase, DATA_DIR, get_temp_copy
-from mutagen._compat import cBytesIO, text_type, xrange
+from mutagen._compat import cBytesIO, text_type
 from mutagen import File, Metadata, FileType, MutagenError, PaddingInfo
 from mutagen._util import loadfile, get_size
 from mutagen.oggvorbis import OggVorbis
@@ -261,7 +264,7 @@ class _TestFileObj(object):
         return self._fileobj.seek(offset, whence)
 
 
-def iter_test_file_objects(fileobj):
+def generate_test_file_objects(fileobj, func):
     """Given a file object yields the same file object which fails differently
     each time
     """
@@ -269,11 +272,23 @@ def iter_test_file_objects(fileobj):
     t = _TestFileObj(fileobj)
     # first figure out how much a successful attempt reads and how many
     # file object operations it executes.
-    yield t
-    for i in xrange(t.dataread):
-        yield _TestFileObj(fileobj, stop_after=i)
-    for i in xrange(t.operations):
-        yield _TestFileObj(fileobj, fail_after=i)
+    func(t)
+
+    @composite
+    def strategy(draw):
+
+        stop_strat = integers(
+            min_value=0, max_value=t.dataread).map(
+                lambda i: _TestFileObj(fileobj, stop_after=i))
+
+        fail_strat = integers(
+            min_value=0, max_value=t.operations).map(
+                lambda i: _TestFileObj(fileobj, fail_after=i))
+
+        x = draw(one_of(stop_strat, fail_strat))
+        return x
+
+    return strategy()
 
 
 class TAbstractFileType(object):
@@ -322,29 +337,42 @@ class TAbstractFileType(object):
 
     def test_test_fileobj_load(self):
         with open(self.filename, "rb") as h:
-            for t in iter_test_file_objects(h):
+
+            @given(generate_test_file_objects(h, self.KIND))
+            def run(t):
                 try:
                     self.KIND(t)
                 except MutagenError:
                     pass
 
+            run()
+
     def test_test_fileobj_save(self):
         with open(self.filename, "rb+") as h:
             o = self.KIND(_TestFileObj(h))
-            for t in iter_test_file_objects(h):
+
+            @given(generate_test_file_objects(h, lambda t: o.save(fileobj=t)))
+            def run(t):
                 try:
                     o.save(fileobj=t)
                 except MutagenError:
                     pass
 
+            run()
+
     def test_test_fileobj_delete(self):
         with open(self.filename, "rb+") as h:
             o = self.KIND(_TestFileObj(h))
-            for t in iter_test_file_objects(h):
+
+            @given(generate_test_file_objects(
+                h, lambda t: o.delete(fileobj=t)))
+            def run(t):
                 try:
                     o.delete(fileobj=t)
                 except MutagenError:
                     pass
+
+            run()
 
     def test_filename(self):
         self.assertEqual(self.audio.filename, self.filename)
@@ -557,11 +585,15 @@ class TFile(TestCase):
     def test_mock_fileobj(self):
         for filename in self.filenames:
             with open(filename, "rb") as h:
-                for t in iter_test_file_objects(h):
+
+                @given(generate_test_file_objects(h, File))
+                def run(t):
                     try:
                         File(t)
                     except MutagenError:
                         pass
+
+                run()
 
     def test_easy_mp3(self):
         self.failUnless(isinstance(
