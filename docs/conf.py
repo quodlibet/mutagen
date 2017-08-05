@@ -53,3 +53,5 @@ html_context = {
 html_static_path = [
     "extra.css",
 ]
+
+suppress_warnings = ["image.nonlocal_uri"]
