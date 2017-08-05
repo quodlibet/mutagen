@@ -22,8 +22,7 @@ PIPEXE="$WINEPREFIX/drive_c/$DIRNAME/Scripts/pip.exe"
 wget "https://bootstrap.pypa.io/get-pip.py"
 wine "$PYTHONEXE" get-pip.py
 rm get-pip.py
-wine "$PIPEXE" install pytest
-wine "$PIPEXE" install coverage
+wine "$PIPEXE" install pytest coverage hypothesis
 
 if [ "$2" == "cmd" ]; then
     wineconsole --backend=curses
