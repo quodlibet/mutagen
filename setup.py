@@ -133,21 +133,24 @@ class test_cmd(Command):
     user_options = [
         ("to-run=", None, "list of tests to run (default all)"),
         ("exitfirst", "x", "stop after first failing test"),
+        ("no-quality", None, "skip code quality tests"),
     ]
 
     def initialize_options(self):
         self.to_run = []
         self.exitfirst = False
+        self.no_quality = False
 
     def finalize_options(self):
         if self.to_run:
             self.to_run = self.to_run.split(",")
         self.exitfirst = bool(self.exitfirst)
+        self.no_quality = bool(self.no_quality)
 
     def run(self):
         import tests
 
-        status = tests.unit(self.to_run, self.exitfirst)
+        status = tests.unit(self.to_run, self.exitfirst, self.no_quality)
         if status != 0:
             raise SystemExit(status)
 

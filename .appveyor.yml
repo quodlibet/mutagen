@@ -12,7 +12,7 @@ environment:
     - PYTHON: "C:\\Python36-x64"
 
 install:
-  - "%PYTHON%\\python.exe -m pip install pytest hypothesis coverage codecov"
+  - "%PYTHON%\\python.exe -m pip install pytest hypothesis coverage codecov pycodestyle pyflakes"
 
 test_script:
   - "%PYTHON%\\python.exe -m coverage run setup.py test"
