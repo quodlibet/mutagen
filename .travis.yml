@@ -70,6 +70,6 @@ install:
   - if [ "$TYPE" == "linux" ] || [ "$TYPE" == "osx" ]; then python -m pip install --upgrade pycodestyle pyflakes pytest hypothesis coverage codecov; fi
 
 script:
-  - if [ "$TYPE" == "linux" ] || [ "$TYPE" == "osx" ]; then eval python $PYARGS -m coverage run setup.py test; fi
+  - if [ "$TYPE" == "linux" ] || [ "$TYPE" == "osx" ]; then eval python $PYARGS -m coverage run --branch setup.py test; fi
   - if [ "$TYPE" == "linux" ] || [ "$TYPE" == "osx" ]; then python -m codecov; fi
   - if [ "$TYPE" == "windows" ]; then eval xvfb-run -a ./run_wine.sh "$PYVER" python $PYARGS setup.py test; fi
