@@ -8,11 +8,6 @@ matrix:
     - os: linux
       dist: trusty
       language: python
-      python: "3.3"
-      env: TYPE="linux" PYVER="3.3" PYARGS="-R -bb"
-    - os: linux
-      dist: trusty
-      language: python
       python: "3.4"
       env: TYPE="linux" PYVER="3.4" PYARGS="-R -bb"
     - os: linux
@@ -45,11 +40,6 @@ matrix:
       sudo: required
       dist: trusty
       env: TYPE="windows" PYVER="2.7.11" PYARGS="-R"
-    - os: linux
-      language: generic
-      sudo: required
-      dist: trusty
-      env: TYPE="windows" PYVER="3.3.5" PYARGS="-R -bb"
     - os: linux
       language: generic
       sudo: required
