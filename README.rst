@@ -23,3 +23,6 @@ For more information visit https://mutagen.readthedocs.org
 
 .. image:: https://ci.appveyor.com/api/projects/status/d22bslvjvt3r1hv1/branch/master?svg=true
     :target: https://ci.appveyor.com/project/lazka/mutagen/branch/master
+
+.. image:: https://codecov.io/gh/quodlibet/mutagen/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/quodlibet/mutagen
