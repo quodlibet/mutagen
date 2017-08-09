@@ -7,62 +7,29 @@
 # (at your option) any later version.
 
 import os
-import re
 import sys
 
 import pytest
+from mutagen._compat import StringIO
+
+from .. import TestCase
+from .util import setup_cfg
+
+os.environ["PYFLAKES_NODOCTEST"] = "1"
+os.environ["PYFLAKES_BUILTINS"] = ",".join(setup_cfg.builtins)
+
 try:
     from pyflakes.scripts import pyflakes
 except ImportError:
     pyflakes = None
-from mutagen import _compat
-
-from tests import TestCase
-
-
-os.environ["PYFLAKES_NODOCTEST"] = "1"
-
-
-class Error(object):
-    IMPORT_UNUSED = "imported but unused"
-    REDEF_FUNCTION = "redefinition of function"
-    UNABLE_DETECT_UNDEF = "unable to detect undefined names"
-    UNDEFINED_PY2_NAME = \
-        "undefined name '(unicode|long|basestring|xrange|cmp)'"
-
-
-class FakeStream(object):
-    # skip these by default
-    BL = []
-    if _compat.PY3:
-        BL.append(Error.UNDEFINED_PY2_NAME)
-
-    def __init__(self, blacklist=None):
-        self.lines = []
-        if blacklist is None:
-            blacklist = []
-        self.bl = self.BL[:] + blacklist
-
-    def write(self, text):
-        for p in self.bl:
-            if re.search(p, text):
-                return
-        text = text.strip()
-        if not text:
-            return
-        self.lines.append(text)
-
-    def check(self):
-        if self.lines:
-            raise Exception("\n" + "\n".join(self.lines))
 
 
 @pytest.mark.quality
 class TPyFlakes(TestCase):
 
-    def _run(self, path, **kwargs):
+    def _run(self, path):
         old_stdout = sys.stdout
-        stream = FakeStream(**kwargs)
+        stream = StringIO()
         try:
             sys.stdout = stream
             for dirpath, dirnames, filenames in os.walk(path):
@@ -71,11 +38,13 @@ class TPyFlakes(TestCase):
                         pyflakes.checkPath(os.path.join(dirpath, filename))
         finally:
             sys.stdout = old_stdout
-        stream.check()
+        lines = stream.getvalue()
+        if lines:
+            raise Exception(lines)
 
-    def _run_package(self, mod, *args, **kwargs):
+    def _run_package(self, mod):
         path = mod.__path__[0]
-        self._run(path, *args, **kwargs)
+        self._run(path)
 
     def test_main(self):
         import mutagen

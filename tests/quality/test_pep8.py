@@ -6,11 +6,13 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
-import pytest
+import os
 
+import pytest
 import mutagen
-import tests
-from tests import TestCase, capture_output
+
+from .. import TestCase, capture_output
+from .util import setup_cfg
 
 try:
     import pep8 as pycodestyle
@@ -23,14 +25,13 @@ except ImportError:
 
 @pytest.mark.quality
 class TPEP8(TestCase):
-    IGNORE = ["E128", "W601", "E402", "E731", "W503", "E741", "E305"]
 
     def test_all(self):
-        paths = [mutagen.__path__[0], tests.__path__[0]]
+        paths = [os.path.dirname(os.path.abspath(mutagen.__path__[0]))]
 
         errors = []
         for path in paths:
-            style = pycodestyle.StyleGuide(ignore=self.IGNORE)
+            style = pycodestyle.StyleGuide(ignore=setup_cfg.ignore)
             with capture_output() as (o, e):
                 style.input_dir(path)
             errors.extend(o.getvalue().splitlines())
