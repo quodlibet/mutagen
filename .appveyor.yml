@@ -12,9 +12,10 @@ environment:
     - PYTHON: "C:\\Python36-x64"
 
 install:
-  - "%PYTHON%\\python.exe -m pip install pytest hypothesis"
+  - "%PYTHON%\\python.exe -m pip install pytest hypothesis coverage codecov"
 
 test_script:
-  - "%PYTHON%\\python.exe setup.py test"
+  - "%PYTHON%\\python.exe -m coverage run setup.py test"
+  - "%PYTHON%\\python.exe -m codecov"
 
 build: off
