@@ -14,6 +14,7 @@ install:
 
 test_script:
   - "%PYTHON%\\python.exe -m coverage run --branch setup.py test"
-  - "%PYTHON%\\python.exe -m codecov"
+  - "%PYTHON%\\python.exe -m coverage xml -i"
+  - "%PYTHON%\\python.exe -m codecov --file coverage.xml"
 
 build: off
