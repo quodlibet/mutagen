@@ -6,11 +6,10 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
-import os
-
 import pytest
 import mutagen
 
+import tests
 from .. import TestCase, capture_output
 from .util import setup_cfg
 
@@ -27,7 +26,7 @@ except ImportError:
 class TPEP8(TestCase):
 
     def test_all(self):
-        paths = [os.path.dirname(os.path.abspath(mutagen.__path__[0]))]
+        paths = [mutagen.__path__[0], tests.__path__[0]]
 
         errors = []
         for path in paths:
