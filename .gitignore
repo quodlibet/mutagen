@@ -9,6 +9,7 @@ coverage
 .cache
 *.egg-info
 .coverage
+*.iml
 .idea
 .hypothesis
 .pytest_cache
