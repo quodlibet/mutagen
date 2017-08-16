@@ -42,7 +42,7 @@ def is_valid_chunk_id(id_):
 
 def check_id(id_):
     if not is_valid_chunk_id(id_):
-           raise KeyError("RIFF/WAVE-chunk-Id must be four ASCII characters.")
+        raise KeyError("RIFF/WAVE-chunk-Id must be four ASCII characters.")
 
 
 class WaveChunk(object):
