@@ -258,6 +258,7 @@ class _WaveID3(ID3):
             fileobj.seek(waveFile['ID3 '].data_offset)
         else:
             raise ID3NoHeaderError("No ID3 chunk")
+
     @convert_error(IOError, error)
     @loadfile(writable=True)
     def save(self, filething, v2_version=4, v23_sep='/', padding=None):
