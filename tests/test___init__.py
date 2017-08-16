@@ -35,6 +35,7 @@ from mutagen.ac3 import AC3
 from mutagen.smf import SMF
 from mutagen.tak import TAK
 from mutagen.dsf import DSF
+from mutagen.wave import WAVE
 from os import devnull
 
 
@@ -534,6 +535,11 @@ _FILETYPES = {
         os.path.join(DATA_DIR, '5644800-2ch-s01-silence.dsf'),
         os.path.join(DATA_DIR, 'with-id3.dsf'),
         os.path.join(DATA_DIR, 'without-id3.dsf'),
+    ],
+    WAVE: [
+        os.path.join(DATA_DIR, 'silence-2s-PCM-16000-08-ID3v23.wav'),
+        os.path.join(DATA_DIR, 'silence-2s-PCM-16000-08-ID3v23.wav'),
+        os.path.join(DATA_DIR, 'silence-2s-PCM-16000-08-notags.wav'),
     ]
 }
 
