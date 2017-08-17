@@ -146,6 +146,9 @@ class WaveFile(RiffFile):
                 chunk = WaveChunk(fileobj, self[u'RIFF'])
             except InvalidChunk:
                 break
+            # Normalize ID3v2-tag-chunk to lowercase
+            if chunk.id == u'ID3 ':
+                chunk.id = u'id3 '
             self.__wavChunks[chunk.id] = chunk
 
             # Calculate the location of the next chunk,
@@ -170,7 +173,7 @@ class WaveFile(RiffFile):
             return self.__wavChunks[id_]
         except KeyError:
             raise KeyError(
-                "%r has no %r chunk" % (self.__fileobj, id_))
+                "%r has no %r chunk" % (self._RiffFile__fileobj, id_))
 
     def __delitem__(self, id_):
         """Remove a chunk from the RIFF/WAVE file"""
@@ -199,7 +202,7 @@ class WaveStreamInfo(StreamInfo):
 
     Microsoft WAVE soundfile information.
 
-    Information is parsed from the 'data' & 'id3 ' / 'ID3 ' chunk of the RIFF/WAVE file
+    Information is parsed from the 'fmt ' & 'data'chunk of the RIFF/WAVE file
 
     Attributes:
         length (`float`): audio length, in seconds
@@ -251,12 +254,9 @@ class _WaveID3(ID3):
     """A Wave file with ID3v2 tags"""
 
     def _pre_load_header(self, fileobj):
-        waveFile = WaveFile(fileobj)
-        if 'id3 ' in waveFile:
-            fileobj.seek(waveFile['id3 '].data_offset)
-        elif 'ID3 ' in waveFile:
-            fileobj.seek(waveFile['ID3 '].data_offset)
-        else:
+        try:
+            fileobj.seek(WaveFile(fileobj)[u'id3 '].data_offset)
+        except (InvalidChunk, KeyError):
             raise ID3NoHeaderError("No ID3 chunk")
 
     @convert_error(IOError, error)
