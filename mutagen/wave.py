@@ -173,7 +173,7 @@ class WaveFile(RiffFile):
             return self.__wavChunks[id_]
         except KeyError:
             raise KeyError(
-                "%r has no %r chunk" % (self._RiffFile__fileobj, id_))
+                "%r has no %r chunk" % (self._fileobj, id_))
 
     def __delitem__(self, id_):
         """Remove a chunk from the RIFF/WAVE file"""
@@ -187,11 +187,10 @@ class WaveFile(RiffFile):
 
         check_id(id_)
 
-        self._RiffFile__fileobj.seek(self.__next_offset)
-        self._RiffFile__fileobj.write(pack('<4si',
-                                           id_.ljust(4).encode('ascii'), 0))
-        self._RiffFile__fileobj.seek(self.__next_offset)
-        chunk = RiffChunkHeader(self._RiffFile__fileobj)
+        self._fileobj.seek(self.__next_offset)
+        self._fileobj.write(pack('<4si', id_.ljust(4).encode('ascii'), 0))
+        self._fileobj.seek(self.__next_offset)
+        chunk = RiffChunkHeader(self._fileobj)
         self[u'RIFF']._update_size(self[u'RIFF'].data_size + chunk.size)
 
         self.__wavChunks[id_] = chunk
@@ -199,9 +198,9 @@ class WaveFile(RiffFile):
 
 
 class WaveStreamInfo(StreamInfo):
-    """RiffWave()
+    """WaveStreamInfo()
 
-    Microsoft WAVE soundfile information.
+    Microsoft WAVE file information.
 
     Information is parsed from the 'fmt ' & 'data'chunk of the RIFF/WAVE file
 

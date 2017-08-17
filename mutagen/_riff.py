@@ -101,7 +101,7 @@ class RiffFile(object):
       """
 
     def __init__(self, fileobj):
-        self.__fileobj = fileobj
+        self._fileobj = fileobj
         self.__riffChunks = {}
 
         # Reset read pointer to beginning of RIFF file
@@ -152,7 +152,7 @@ class RiffFile(object):
             return self.__riffChunks[id_]
         except KeyError:
             raise KeyError(
-                "%r has no %r chunk" % (self.__fileobj, id_))
+                "%r has no %r chunk" % (self.fileobj, id_))
 
     def __delitem__(self, id_):
         """Remove a chunk from the IFF file"""
@@ -172,10 +172,10 @@ class RiffFile(object):
         if not is_valid_chunk_id(id_):
             raise KeyError("RIFF key must be four ASCII characters.")
 
-        self.__fileobj.seek(self.__next_offset)
-        self.__fileobj.write(pack('>4si', id_.ljust(4).encode('ascii'), 0))
-        self.__fileobj.seek(self.__next_offset)
-        chunk = RiffChunkHeader(self.__fileobj, self[u'RIFF'])
+        self.fileobj.seek(self.__next_offset)
+        self.fileobj.write(pack('>4si', id_.ljust(4).encode('ascii'), 0))
+        self.fileobj.seek(self.__next_offset)
+        chunk = RiffChunkHeader(self.fileobj, self[u'RIFF'])
         self[u'RIFF']._update_size(self[u'RIFF'].data_size + chunk.size)
 
         self.__riffChunks[id_] = chunk
