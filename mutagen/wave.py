@@ -160,6 +160,7 @@ class WaveFile(RiffFile):
     def __contains__(self, id_):
         """Check if the RIFF/WAVE file contains a specific chunk"""
 
+        assert isinstance(id_, text_type)
         check_id(id_)
 
         return id_ in self.__wavChunks
@@ -167,6 +168,7 @@ class WaveFile(RiffFile):
     def __getitem__(self, id_):
         """Get a chunk from the RIFF/WAVE file"""
 
+        assert isinstance(id_, text_type)
         check_id(id_)
 
         try:
@@ -178,6 +180,7 @@ class WaveFile(RiffFile):
     def __delitem__(self, id_):
         """Remove a chunk from the RIFF/WAVE file"""
 
+        assert isinstance(id_, text_type)
         check_id(id_)
 
         self.__wavChunks.pop(id_).delete()
@@ -185,6 +188,7 @@ class WaveFile(RiffFile):
     def insert_chunk(self, id_):
         """Insert a new chunk at the end of the RIFF/WAVE file"""
 
+        assert isinstance(id_, text_type)
         check_id(id_)
 
         self._fileobj.seek(self.__next_offset)
