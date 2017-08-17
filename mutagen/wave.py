@@ -33,15 +33,16 @@ class InvalidChunk(error):
     pass
 
 
-def is_valid_chunk_id(id_):
-    assert isinstance(id_, text_type)
+def is_valid_chunk_id(id):
+    # looks like this is failing if python is not started with -bb in TravisCI:
+    # assert isinstance(id, text_type)
 
-    return ((len(id_) <= 4) and (min(id_) >= u' ') and
-            (max(id_) <= u'~'))
+    return ((len(id) <= 4) and (min(id) >= u' ') and
+            (max(id) <= u'~'))
 
 
-def check_id(id_):
-    if not is_valid_chunk_id(id_):
+def assert_valid_chunk_id(id):
+    if not is_valid_chunk_id(id):
         raise KeyError("RIFF/WAVE-chunk-Id must be four ASCII characters.")
 
 
@@ -160,16 +161,14 @@ class WaveFile(RiffFile):
     def __contains__(self, id_):
         """Check if the RIFF/WAVE file contains a specific chunk"""
 
-        assert isinstance(id_, text_type)
-        check_id(id_)
+        assert_valid_chunk_id(id_)
 
         return id_ in self.__wavChunks
 
     def __getitem__(self, id_):
         """Get a chunk from the RIFF/WAVE file"""
 
-        assert isinstance(id_, text_type)
-        check_id(id_)
+        assert_valid_chunk_id(id_)
 
         try:
             return self.__wavChunks[id_]
@@ -180,16 +179,14 @@ class WaveFile(RiffFile):
     def __delitem__(self, id_):
         """Remove a chunk from the RIFF/WAVE file"""
 
-        assert isinstance(id_, text_type)
-        check_id(id_)
+        assert_valid_chunk_id(id_)
 
         self.__wavChunks.pop(id_).delete()
 
     def insert_chunk(self, id_):
         """Insert a new chunk at the end of the RIFF/WAVE file"""
 
-        assert isinstance(id_, text_type)
-        check_id(id_)
+        assert_valid_chunk_id(id_)
 
         self._fileobj.seek(self.__next_offset)
         self._fileobj.write(pack('<4si', id_.ljust(4).encode('ascii'), 0))
