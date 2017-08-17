@@ -188,7 +188,8 @@ class WaveFile(RiffFile):
         check_id(id_)
 
         self._RiffFile__fileobj.seek(self.__next_offset)
-        self._RiffFile__fileobj.write(pack('<4si', id_.ljust(4).encode('ascii'), 0))
+        self._RiffFile__fileobj.write(pack('<4si',
+                                           id_.ljust(4).encode('ascii'), 0))
         self._RiffFile__fileobj.seek(self.__next_offset)
         chunk = RiffChunkHeader(self._RiffFile__fileobj)
         self[u'RIFF']._update_size(self[u'RIFF'].data_size + chunk.size)

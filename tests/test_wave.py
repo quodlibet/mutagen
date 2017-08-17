@@ -43,10 +43,10 @@ class TWave(TestCase):
                              44100)
 
     def test_number_of_samples(self):
-        self.failUnlessEqual(self.wav_pcm_2s_16000_08_ID3v23.info.number_of_samples,
-                             32000)
-        self.failUnlessEqual(self.wav_pcm_2s_44100_16_ID3v23.info.number_of_samples,
-                             88200)
+        self.failUnlessEqual(self.wav_pcm_2s_16000_08_ID3v23.
+                             info.number_of_samples, 32000)
+        self.failUnlessEqual(self.wav_pcm_2s_44100_16_ID3v23.
+                             info.number_of_samples, 88200)
 
     def test_length(self):
         self.failUnlessAlmostEqual(self.wav_pcm_2s_16000_08_ID3v23.info.length,
