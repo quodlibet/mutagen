@@ -12,7 +12,7 @@ import sys
 import struct
 from struct import pack
 
-from ._compat import endswith, text_type, reraise
+from ._compat import endswith, reraise
 
 from mutagen import StreamInfo, FileType
 
