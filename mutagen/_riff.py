@@ -39,10 +39,17 @@ def is_valid_chunk_id(id):
     # looks like this is failing if python is not started with -bb as an argument:
     assert isinstance(id, text_type)
 
-    return ((len(id) <= 4) and (min(id) >= u' ') and
-            (max(id) <= u'~'))
 
+    if len(id) != 4:
+       return False
 
+    for i in range(0, 3):
+        if id[i] < u' ' or id[i] > u'~':
+            return False
+
+    return True
+
+#  Assert FOURCC formatted valid
 def assert_valid_chunk_id(id):
     if not is_valid_chunk_id(id):
         raise ValueError("RIFF-chunk-ID must be four ASCII characters.")
