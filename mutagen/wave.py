@@ -10,111 +10,18 @@
 
 import sys
 import struct
-from struct import pack
 
 from ._compat import endswith, reraise
 
 from mutagen import StreamInfo, FileType
 
 from mutagen.id3 import ID3
-from mutagen._riff import RiffFile, RiffChunkHeader
+from mutagen._riff import RiffFile, InvalidChunk, error
 from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
-from mutagen._util import resize_bytes, delete_bytes, MutagenError, loadfile, \
+from mutagen._util import loadfile, \
     convert_error
 
 __all__ = ["WAVE", "Open", "delete"]
-
-
-class error(MutagenError):
-    pass
-
-
-class InvalidChunk(error):
-    pass
-
-
-def is_valid_chunk_id(id):
-    # looks like this is failing if python is not started with -bb in TravisCI:
-    # assert isinstance(id, text_type)
-
-    return ((len(id) <= 4) and (min(id) >= u' ') and
-            (max(id) <= u'~'))
-
-
-def assert_valid_chunk_id(id):
-    if not is_valid_chunk_id(id):
-        raise KeyError("RIFF/WAVE-chunk-Id must be four ASCII characters.")
-
-
-class WaveChunk(object):
-    """Representation of a common WaveChunk"""
-
-    #  Chunk headers are 8 bytes long (4 for ID and 4 for the size)
-    HEADER_SIZE = 8
-
-    def __init__(self, fileobj, parent_chunk=None):
-        self.__fileobj = fileobj
-        self.parent_chunk = parent_chunk
-        self.offset = fileobj.tell()
-
-        header = fileobj.read(self.HEADER_SIZE)
-        if len(header) < self.HEADER_SIZE:
-            raise InvalidChunk()
-
-        self.id, self.data_size = struct.unpack('<4sI', header)
-
-        try:
-            self.id = self.id.decode('ascii')
-        except UnicodeDecodeError:
-            raise InvalidChunk()
-
-        if not is_valid_chunk_id(self.id):
-            raise InvalidChunk()
-
-        self.size = self.HEADER_SIZE + self.data_size
-        self.data_offset = fileobj.tell()
-
-    def read(self):
-        """Read the chunks data"""
-
-        self.__fileobj.seek(self.data_offset)
-        return self.__fileobj.read(self.data_size)
-
-    def write(self, data):
-        """Write the chunk data"""
-
-        if len(data) > self.data_size:
-            raise ValueError
-
-        self.__fileobj.seek(self.data_offset)
-        self.__fileobj.write(data)
-
-    def delete(self):
-        """Removes the chunk from the file"""
-
-        delete_bytes(self.__fileobj, self.size, self.offset)
-        if self.parent_chunk is not None:
-            self.parent_chunk._update_size(
-                self.parent_chunk.data_size - self.size)
-
-    def _update_size(self, data_size):
-        """Update the size of the chunk"""
-
-        self.__fileobj.seek(self.offset + 4)
-        self.__fileobj.write(pack('>I', data_size))
-        if self.parent_chunk is not None:
-            size_diff = self.data_size - data_size
-            self.parent_chunk._update_size(
-                self.parent_chunk.data_size - size_diff)
-        self.data_size = data_size
-        self.size = data_size + self.HEADER_SIZE
-
-    def resize(self, new_data_size):
-        """Resize the file and update the chunk sizes"""
-
-        resize_bytes(
-            self.__fileobj, self.data_size, new_data_size, self.data_offset)
-        self._update_size(new_data_size)
 
 
 class WaveFile(RiffFile):
@@ -125,77 +32,6 @@ class WaveFile(RiffFile):
 
         if self.fileType != u'WAVE':
             raise KeyError("Expected RIFF/WAVE.")
-
-        self.__wavChunks = {}
-
-        # RIFF Files always start with the RIFF chunk which contains a 4 byte
-        # ID before the start of other chunks
-        fileobj.seek(0)
-        self.__wavChunks[u'RIFF'] = RiffChunkHeader(fileobj)
-
-        # Skip past the 4 byte chunk id ('RIFF')
-        fileobj.seek(RiffChunkHeader.HEADER_SIZE + 4)
-
-        # Where the next chunk can be located. We need to keep track of this
-        # since the size indicated in the RIFF header may not match up with the
-        # offset determined from the size of the last chunk in the file
-        self.__next_offset = fileobj.tell()
-
-        # Load all of the chunks
-        while True:
-            try:
-                chunk = WaveChunk(fileobj, self[u'RIFF'])
-            except InvalidChunk:
-                break
-            # Normalize ID3v2-tag-chunk to lowercase
-            if chunk.id == u'ID3 ':
-                chunk.id = u'id3 '
-            self.__wavChunks[chunk.id] = chunk
-
-            # Calculate the location of the next chunk,
-            # considering the pad byte
-            self.__next_offset = chunk.offset + chunk.size
-            self.__next_offset += self.__next_offset % 2
-            fileobj.seek(self.__next_offset)
-
-    def __contains__(self, id_):
-        """Check if the RIFF/WAVE file contains a specific chunk"""
-
-        assert_valid_chunk_id(id_)
-
-        return id_ in self.__wavChunks
-
-    def __getitem__(self, id_):
-        """Get a chunk from the RIFF/WAVE file"""
-
-        assert_valid_chunk_id(id_)
-
-        try:
-            return self.__wavChunks[id_]
-        except KeyError:
-            raise KeyError(
-                "%r has no %r chunk" % (self._fileobj, id_))
-
-    def __delitem__(self, id_):
-        """Remove a chunk from the RIFF/WAVE file"""
-
-        assert_valid_chunk_id(id_)
-
-        self.__wavChunks.pop(id_).delete()
-
-    def insert_chunk(self, id_):
-        """Insert a new chunk at the end of the RIFF/WAVE file"""
-
-        assert_valid_chunk_id(id_)
-
-        self._fileobj.seek(self.__next_offset)
-        self._fileobj.write(pack('<4si', id_.ljust(4).encode('ascii'), 0))
-        self._fileobj.seek(self.__next_offset)
-        chunk = RiffChunkHeader(self._fileobj)
-        self[u'RIFF']._update_size(self[u'RIFF'].data_size + chunk.size)
-
-        self.__wavChunks[id_] = chunk
-        self.__next_offset = chunk.offset + chunk.size
 
 
 class WaveStreamInfo(StreamInfo):
@@ -218,6 +54,8 @@ class WaveStreamInfo(StreamInfo):
     channels = 0
     sample_rate = 0
 
+    SIZE=16
+
     @convert_error(IOError, error)
     def __init__(self, fileobj):
         """Raises error"""
@@ -230,21 +68,27 @@ class WaveStreamInfo(StreamInfo):
 
         data = waveFormatChunk.read()
 
+        header = fileobj.read(self.SIZE)
+        if len(header) < self.SIZE:
+            raise InvalidChunk()
+
         #  RIFF: http://soundfile.sapp.org/doc/WaveFormat/
         #  Python struct.unpack:
         #    https://docs.python.org/2/library/struct.html#byte-order-size-and-alignment
-        info = struct.unpack('<hhLLhh', data[:16])
+        info = struct.unpack('<hhLLhh', data[:self.SIZE])
         self.audioFormat, self.channels, self.sample_rate, byte_rate, \
             block_align, self.sample_size = info
         self.bitrate = self.channels * block_align * self.sample_rate
 
+        # Calculate duration
         try:
-            waveDataChunk = waveFile[u'data']
-        except KeyError as e:
-            raise error(str(e))
+            waveDataChunk = waveFile['data']
+            self.number_of_samples = waveDataChunk.data_size / block_align
+        except KeyError:
+            self.number_of_samples = 0
 
-        self.number_of_samples = waveDataChunk.data_size / block_align
-        self.length = self.number_of_samples / self.sample_rate
+        if self.sample_rate > 0:
+            self.length = self.number_of_samples / self.sample_rate
 
     def pprint(self):
         return u"%d channel AIFF @ %d bps, %s Hz, %.2f seconds" % (
@@ -299,8 +143,6 @@ class _WaveID3(ID3):
 
         if 'id3 ' in waveFile:
             waveFile['id3 '].delete()
-        if 'ID3 ' in waveFile:
-            waveFile['ID3 '].delete()
 
         self.clear()
 
@@ -308,10 +150,10 @@ class _WaveID3(ID3):
 @convert_error(IOError, error)
 @loadfile(method=False, writable=True)
 def delete(filething):
-    """Completely removes the ID3 chunk from the AIFF file"""
+    """Completely removes the ID3 chunk from the RIFF file"""
 
     try:
-        del RiffFile(filething.fileobj)[u'ID3']
+        del RiffFile(filething.fileobj)[u'id3']
     except KeyError:
         pass
 
@@ -353,6 +195,9 @@ class WAVE(FileType):
 
         fileobj = filething.fileobj
 
+        self.info = WaveStreamInfo(fileobj)
+        fileobj.seek(0, 0)
+
         try:
             self.tags = _WaveID3(fileobj, **kwargs)
         except ID3NoHeaderError:
@@ -361,9 +206,5 @@ class WAVE(FileType):
             raise error(e)
         else:
             self.tags.filename = self.filename
-
-        fileobj.seek(0, 0)
-        self.info = WaveStreamInfo(fileobj)
-
 
 Open = WAVE

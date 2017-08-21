@@ -9,6 +9,7 @@
 """Resource Interchange File Format (RIFF)."""
 
 import struct
+from abc import abstractmethod, ABCMeta
 from struct import pack
 
 from ._compat import text_type
@@ -25,38 +26,60 @@ class InvalidChunk(error):
 
 
 def is_valid_chunk_id(id):
+    """ is_valid_chunk_id(FOURCC)
+
+    Arguments:
+        id (FOURCC)
+    Returns:
+        true if valid; otherwise false
+
+    Check if argument id is valid FOURCC type.
+    """
+
+    # looks like this is failing if python is not started with -bb as an argument:
     assert isinstance(id, text_type)
 
     return ((len(id) <= 4) and (min(id) >= u' ') and
             (max(id) <= u'~'))
 
 
-class RiffChunkHeader(object):
-    """Representation of a common RIFF chunk header"""
+def assert_valid_chunk_id(id):
+    if not is_valid_chunk_id(id):
+        raise ValueError("RIFF-chunk-ID must be four ASCII characters.")
+
+class _ChunkHeader(metaclass=ABCMeta):
+    """ Abstract common RIFF chunk header"""
 
     # Chunk headers are 8 bytes long (4 for ID and 4 for the size)
     HEADER_SIZE = 8
 
-    def __init__(self, fileobj):
+    @property
+    @abstractmethod
+    def _struct(self):
+        """ must be implemented in order to instantiate """
+        return u'xxxx'
+
+    def __init__(self, fileobj, parent_chunk):
         self.__fileobj = fileobj
+        self.parent_chunk = parent_chunk
         self.offset = fileobj.tell()
 
         header = fileobj.read(self.HEADER_SIZE)
         if len(header) < self.HEADER_SIZE:
             raise InvalidChunk()
 
-        self.id, self.data_size = struct.unpack('>4sI', header)
+        self.id, self.data_size = struct.unpack(self._struct, header)
 
         try:
             self.id = self.id.decode('ascii')
         except UnicodeDecodeError:
             raise InvalidChunk()
 
-        if not is_valid_chunk_id(self.id):
-            raise InvalidChunk()
+        assert_valid_chunk_id(self.id)
 
         self.size = self.HEADER_SIZE + self.data_size
         self.data_offset = fileobj.tell()
+
 
     def read(self):
         """Read the chunks data"""
@@ -77,12 +100,19 @@ class RiffChunkHeader(object):
         """Removes the chunk from the file"""
 
         delete_bytes(self.__fileobj, self.size, self.offset)
+        if self.parent_chunk is not None:
+            self.parent_chunk._update_size(
+                self.parent_chunk.data_size - self.size)
 
     def _update_size(self, data_size):
         """Update the size of the chunk"""
 
         self.__fileobj.seek(self.offset + 4)
         self.__fileobj.write(pack('>I', data_size))
+        if self.parent_chunk is not None:
+            size_diff = self.data_size - data_size
+            self.parent_chunk._update_size(
+                self.parent_chunk.data_size - size_diff)
         self.data_size = data_size
         self.size = data_size + self.HEADER_SIZE
 
@@ -94,6 +124,28 @@ class RiffChunkHeader(object):
         self._update_size(new_data_size)
 
 
+class RiffChunkHeader(_ChunkHeader):
+    """Representation of the RIFF chunk header"""
+
+    @property
+    def _struct(self):
+        return '>4sI'  # Size in Big-Endian
+
+    def __init__(self, fileobj, parent_chunk=None):
+        _ChunkHeader.__init__(self, fileobj, parent_chunk)
+
+
+class RiffSubchunk(_ChunkHeader):
+    """Representation of a RIFF Subchunk"""
+
+    @property
+    def _struct(self):
+        return '<4sI'  # Size in Little-Endian
+
+    def __init__(self, fileobj, parent_chunk=None):
+        _ChunkHeader.__init__(self, fileobj, parent_chunk)
+
+
 class RiffFile(object):
     """Representation of a RIFF file
 
@@ -102,67 +154,61 @@ class RiffFile(object):
 
     def __init__(self, fileobj):
         self._fileobj = fileobj
-        self.__riffChunks = {}
+        self.__subchunks = {}
 
         # Reset read pointer to beginning of RIFF file
         fileobj.seek(0)
 
         # RIFF Files always start with the RIFF chunk
-        chunk = RiffChunkHeader(fileobj)
+        self._riffChunk = RiffChunkHeader(fileobj)
 
-        if (chunk.id != u'RIFF'):
-            raise KeyError("First chunk should be a RIFF chunk.")
+        if (self._riffChunk.id != u'RIFF'):
+            raise KeyError("Root chunk should be a RIFF chunk.")
 
         # Read the RIFF file Type
         self.fileType = fileobj.read(4).decode('ascii')
 
-        # Load all of the remaining RIFF-chunks
+        # Load all RIFF subchunks
         while True:
             try:
-                self.__riffChunks[chunk.id] = chunk
-                self.__next_offset = chunk.offset + chunk.size
-                fileobj.seek(self.__next_offset)
-                chunk = RiffChunkHeader(fileobj)
+                chunk = RiffSubchunk(fileobj, self._riffChunk)
             except InvalidChunk:
                 break
+            # Normalize ID3v2-tag-chunk to lowercase
+            if chunk.id == u'ID3 ':
+                chunk.id = u'id3 '
+            self.__subchunks[chunk.id] = chunk
 
             # Calculate the location of the next chunk,
             # considering the pad byte
-            # self.__next_offset += self.__next_offset % 2
+            self.__next_offset = chunk.offset + chunk.size
+            self.__next_offset += self.__next_offset % 2
+            fileobj.seek(self.__next_offset)
 
     def __contains__(self, id_):
         """Check if the IFF file contains a specific chunk"""
 
-        assert isinstance(id_, text_type)
+        assert_valid_chunk_id(id_)
 
-        if not is_valid_chunk_id(id_):
-            raise KeyError("RIFF key must be four ASCII characters.")
-
-        return id_ in self.__riffChunks
+        return id_ in self.__subchunks
 
     def __getitem__(self, id_):
         """Get a chunk from the IFF file"""
 
-        assert isinstance(id_, text_type)
-
-        if not is_valid_chunk_id(id_):
-            raise KeyError("RIFF key must be four ASCII characters.")
+        assert_valid_chunk_id(id_)
 
         try:
-            return self.__riffChunks[id_]
+            return self.__subchunks[id_]
         except KeyError:
             raise KeyError(
-                "%r has no %r chunk" % (self.fileobj, id_))
+                "%r has no %r chunk" % (self._fileobj, id_))
 
     def __delitem__(self, id_):
         """Remove a chunk from the IFF file"""
 
-        assert isinstance(id_, text_type)
+        assert_valid_chunk_id(id_)
 
-        if not is_valid_chunk_id(id_):
-            raise KeyError("RIFF key must be four ASCII characters.")
-
-        self.__riffChunks.pop(id_).delete()
+        self.__subchunks.pop(id_).delete()
 
     def insert_chunk(self, id_):
         """Insert a new chunk at the end of the IFF file"""
@@ -178,5 +224,5 @@ class RiffFile(object):
         chunk = RiffChunkHeader(self.fileobj, self[u'RIFF'])
         self[u'RIFF']._update_size(self[u'RIFF'].data_size + chunk.size)
 
-        self.__riffChunks[id_] = chunk
+        self.__subchunks[id_] = chunk
         self.__next_offset = chunk.offset + chunk.size
