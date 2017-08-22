@@ -54,7 +54,7 @@ def assert_valid_chunk_id(id):
     if not is_valid_chunk_id(id):
         raise ValueError("RIFF-chunk-ID must be four ASCII characters.")
 
-class _ChunkHeader(metaclass=ABCMeta):
+class _ChunkHeader():
     """ Abstract common RIFF chunk header"""
 
     # Chunk headers are 8 bytes long (4 for ID and 4 for the size)
