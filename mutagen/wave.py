@@ -30,8 +30,8 @@ class WaveFile(RiffFile):
     def __init__(self, fileobj):
         RiffFile.__init__(self, fileobj)
 
-        if self.fileType != u'WAVE':
-            raise KeyError("Expected RIFF/WAVE.")
+        if self.fileType != 'WAVE':
+            raise ValueError("Expected RIFF/WAVE.")
 
 
 class WaveStreamInfo(StreamInfo):
@@ -62,7 +62,7 @@ class WaveStreamInfo(StreamInfo):
 
         waveFile = WaveFile(fileobj)
         try:
-            waveFormatChunk = waveFile[u'fmt ']
+            waveFormatChunk = waveFile['fmt ']
         except KeyError as e:
             raise error(str(e))
 
@@ -100,7 +100,7 @@ class _WaveID3(ID3):
 
     def _pre_load_header(self, fileobj):
         try:
-            fileobj.seek(WaveFile(fileobj)[u'id3 '].data_offset)
+            fileobj.seek(WaveFile(fileobj)['id3 '].data_offset)
         except (InvalidChunk, KeyError):
             raise ID3NoHeaderError("No ID3 chunk")
 
@@ -113,10 +113,10 @@ class _WaveID3(ID3):
 
         wave_file = WaveFile(fileobj)
 
-        if u'id3 ' not in wave_file:
-            wave_file.insert_chunk(u'id3 ')
+        if 'id3 ' not in wave_file:
+            wave_file.insert_chunk('id3 ')
 
-        chunk = wave_file[u'id3 ']
+        chunk = wave_file['id3 ']
 
         try:
             data = self._prepare_data(
