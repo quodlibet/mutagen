@@ -153,7 +153,7 @@ def delete(filething):
     """Completely removes the ID3 chunk from the RIFF file"""
 
     try:
-        del RiffFile(filething.fileobj)[u'id3']
+        del RiffFile(filething.fileobj)[u'id3 ']
     except KeyError:
         pass
 
