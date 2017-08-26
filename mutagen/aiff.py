@@ -44,9 +44,6 @@ def is_valid_chunk_id(id):
 
 
 def assert_valid_chunk_id(id):
-
-    assert isinstance(id, text_type)
-
     if not is_valid_chunk_id(id):
         raise ValueError("AIFF key must be four ASCII characters.")
 

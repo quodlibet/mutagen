@@ -36,7 +36,6 @@ def is_valid_chunk_id(id):
     Check if argument id is valid FOURCC type.
     """
 
-    # Fails if python is not started with -bb as an argument:
     assert isinstance(id, text_type)
 
     if len(id) != 4:
@@ -83,7 +82,8 @@ class _ChunkHeader():
         except UnicodeDecodeError:
             raise InvalidChunk()
 
-        assert_valid_chunk_id(self.id)
+        if not is_valid_chunk_id(self.id):
+            raise InvalidChunk()
 
         self.size = self.HEADER_SIZE + self.data_size
         self.data_offset = fileobj.tell()
@@ -228,8 +228,8 @@ class RiffFile(object):
         self.fileobj.seek(self.__next_offset)
         self.fileobj.write(pack('>4si', id_.ljust(4).encode('ascii'), 0))
         self.fileobj.seek(self.__next_offset)
-        chunk = RiffChunkHeader(self.fileobj, self['RIFF'])
-        self['RIFF']._update_size(self['RIFF'].data_size + chunk.size)
+        chunk = RiffChunkHeader(self.fileobj, self[u'RIFF'])
+        self[u'RIFF']._update_size(self[u'RIFF'].data_size + chunk.size)
 
         self.__subchunks[id_] = chunk
         self.__next_offset = chunk.offset + chunk.size
