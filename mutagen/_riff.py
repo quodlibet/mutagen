@@ -36,12 +36,11 @@ def is_valid_chunk_id(id):
     Check if argument id is valid FOURCC type.
     """
 
-    # looks like this is failing if python is not started with -bb as an argument:
+    # Fails if python is not started with -bb as an argument:
     assert isinstance(id, text_type)
 
-
     if len(id) != 4:
-       return False
+        return False
 
     for i in range(0, 3):
         if id[i] < u' ' or id[i] > u'~':
@@ -49,10 +48,12 @@ def is_valid_chunk_id(id):
 
     return True
 
+
 #  Assert FOURCC formatted valid
 def assert_valid_chunk_id(id):
     if not is_valid_chunk_id(id):
         raise ValueError("RIFF-chunk-ID must be four ASCII characters.")
+
 
 class _ChunkHeader():
     """ Abstract common RIFF chunk header"""
@@ -64,7 +65,7 @@ class _ChunkHeader():
     @abstractmethod
     def _struct(self):
         """ must be implemented in order to instantiate """
-        return u'xxxx'
+        return 'xxxx'
 
     def __init__(self, fileobj, parent_chunk):
         self.__fileobj = fileobj
@@ -86,7 +87,6 @@ class _ChunkHeader():
 
         self.size = self.HEADER_SIZE + self.data_size
         self.data_offset = fileobj.tell()
-
 
     def read(self):
         """Read the chunks data"""
@@ -169,7 +169,7 @@ class RiffFile(object):
         # RIFF Files always start with the RIFF chunk
         self._riffChunk = RiffChunkHeader(fileobj)
 
-        if (self._riffChunk.id != u'RIFF'):
+        if (self._riffChunk.id != 'RIFF'):
             raise KeyError("Root chunk should be a RIFF chunk.")
 
         # Read the RIFF file Type
@@ -182,8 +182,8 @@ class RiffFile(object):
             except InvalidChunk:
                 break
             # Normalize ID3v2-tag-chunk to lowercase
-            if chunk.id == u'ID3 ':
-                chunk.id = u'id3 '
+            if chunk.id == 'ID3 ':
+                chunk.id = 'id3 '
             self.__subchunks[chunk.id] = chunk
 
             # Calculate the location of the next chunk,
@@ -228,8 +228,8 @@ class RiffFile(object):
         self.fileobj.seek(self.__next_offset)
         self.fileobj.write(pack('>4si', id_.ljust(4).encode('ascii'), 0))
         self.fileobj.seek(self.__next_offset)
-        chunk = RiffChunkHeader(self.fileobj, self[u'RIFF'])
-        self[u'RIFF']._update_size(self[u'RIFF'].data_size + chunk.size)
+        chunk = RiffChunkHeader(self.fileobj, self['RIFF'])
+        self['RIFF']._update_size(self['RIFF'].data_size + chunk.size)
 
         self.__subchunks[id_] = chunk
         self.__next_offset = chunk.offset + chunk.size

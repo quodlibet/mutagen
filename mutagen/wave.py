@@ -54,7 +54,7 @@ class WaveStreamInfo(StreamInfo):
     channels = 0
     sample_rate = 0
 
-    SIZE=16
+    SIZE = 16
 
     @convert_error(IOError, error)
     def __init__(self, fileobj):
