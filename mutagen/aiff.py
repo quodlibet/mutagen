@@ -49,6 +49,14 @@ def is_valid_chunk_id(id):
     return True
 
 
+def assert_valid_chunk_id(id):
+
+    assert isinstance(id, text_type)
+
+    if not is_valid_chunk_id(id):
+        raise ValueError("AIFF key must be four ASCII characters.")
+
+
 def read_float(data):  # 10 bytes
     expon, himant, lomant = struct.unpack('>hLL', data)
     sign = 1
@@ -173,20 +181,14 @@ class IFFFile(object):
     def __contains__(self, id_):
         """Check if the IFF file contains a specific chunk"""
 
-        assert isinstance(id_, text_type)
-
-        if not is_valid_chunk_id(id_):
-            raise ValueError("AIFF key must be four ASCII characters.")
+        assert_valid_chunk_id(id_)
 
         return id_ in self.__chunks
 
     def __getitem__(self, id_):
         """Get a chunk from the IFF file"""
 
-        assert isinstance(id_, text_type)
-
-        if not is_valid_chunk_id(id_):
-            raise KeyError("AIFF key must be four ASCII characters.")
+        assert_valid_chunk_id(id_)
 
         try:
             return self.__chunks[id_]
@@ -197,20 +199,14 @@ class IFFFile(object):
     def __delitem__(self, id_):
         """Remove a chunk from the IFF file"""
 
-        assert isinstance(id_, text_type)
-
-        if not is_valid_chunk_id(id_):
-            raise KeyError("AIFF key must be four ASCII characters.")
+        assert_valid_chunk_id(id_)
 
         self.__chunks.pop(id_).delete()
 
     def insert_chunk(self, id_):
         """Insert a new chunk at the end of the IFF file"""
 
-        assert isinstance(id_, text_type)
-
-        if not is_valid_chunk_id(id_):
-            raise KeyError("AIFF key must be four ASCII characters.")
+        assert_valid_chunk_id(id_)
 
         self.__fileobj.seek(self.__next_offset)
         self.__fileobj.write(pack('>4si', id_.ljust(4).encode('ascii'), 0))
