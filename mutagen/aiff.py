@@ -39,8 +39,14 @@ _HUGE_VAL = 1.79769313486231e+308
 def is_valid_chunk_id(id):
     assert isinstance(id, text_type)
 
-    return ((len(id) <= 4) and (min(id) >= u' ') and
-            (max(id) <= u'~'))
+    if len(id) < 1 or len(id) > 4:
+        return False
+
+    for i in range(0, len(id)):
+        if id[i] < u' ' or id[i] > u'~':
+            return False
+
+    return True
 
 
 def read_float(data):  # 10 bytes
@@ -170,7 +176,7 @@ class IFFFile(object):
         assert isinstance(id_, text_type)
 
         if not is_valid_chunk_id(id_):
-            raise KeyError("AIFF key must be four ASCII characters.")
+            raise ValueError("AIFF key must be four ASCII characters.")
 
         return id_ in self.__chunks
 
