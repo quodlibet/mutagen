@@ -39,14 +39,8 @@ _HUGE_VAL = 1.79769313486231e+308
 def is_valid_chunk_id(id):
     assert isinstance(id, text_type)
 
-    if len(id) < 1 or len(id) > 4:
-        return False
-
-    for i in range(0, len(id)):
-        if id[i] < u' ' or id[i] > u'~':
-            return False
-
-    return True
+    return ((len(id) <= 4) and (min(id) >= u' ') and
+            (max(id) <= u'~'))
 
 
 def assert_valid_chunk_id(id):
