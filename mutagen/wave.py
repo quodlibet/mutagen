@@ -19,9 +19,13 @@ from mutagen.id3 import ID3
 from mutagen._riff import RiffFile, InvalidChunk, error
 from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
 from mutagen._util import loadfile, \
-    convert_error
+    convert_error, MutagenError
 
 __all__ = ["WAVE", "Open", "delete"]
+
+
+class error(MutagenError):
+    """WAVE stream parsing errors."""
 
 
 class WaveFile(RiffFile):
@@ -72,12 +76,12 @@ class WaveStreamInfo(StreamInfo):
         if len(header) < self.SIZE:
             raise InvalidChunk()
 
-        #  RIFF: http://soundfile.sapp.org/doc/WaveFormat/
+        # RIFF: http://soundfile.sapp.org/doc/WaveFormat/
         #  Python struct.unpack:
         #    https://docs.python.org/2/library/struct.html#byte-order-size-and-alignment
         info = struct.unpack('<hhLLhh', data[:self.SIZE])
         self.audioFormat, self.channels, self.sample_rate, byte_rate, \
-            block_align, self.sample_size = info
+        block_align, self.sample_size = info
         self.bitrate = self.channels * block_align * self.sample_rate
 
         # Calculate duration
@@ -98,6 +102,8 @@ class WaveStreamInfo(StreamInfo):
 class _WaveID3(ID3):
     """A Wave file with ID3v2 tags"""
 
+    print("RIFF/WAVE_WaveID3(ID3)")
+
     def _pre_load_header(self, fileobj):
         try:
             fileobj.seek(WaveFile(fileobj)[u'id3 '].data_offset)
@@ -106,7 +112,7 @@ class _WaveID3(ID3):
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
-    def save(self, filething, v2_version=4, v23_sep='/', padding=None):
+    def save(self, filething, v1=1, v2_version=4, v23_sep='/', padding=None):
         """Save ID3v2 data to the Wave/RIFF file"""
 
         fileobj = filething.fileobj
@@ -125,12 +131,7 @@ class _WaveID3(ID3):
         except ID3Error as e:
             reraise(error, e, sys.exc_info()[2])
 
-        new_size = len(data)
-        new_size += new_size % 2  # pad byte
-        assert new_size % 2 == 0
-        chunk.resize(new_size)
-        data += (new_size - len(data)) * b'\x00'
-        assert new_size == len(data)
+        chunk.resize(len(data))
         chunk.write(data)
 
     @loadfile(writable=True)
@@ -142,7 +143,10 @@ class _WaveID3(ID3):
         waveFile = WaveFile(fileobj)
 
         if 'id3 ' in waveFile:
-            waveFile['id3 '].delete()
+            try:
+                waveFile['id3 '].delete()
+            except ValueError:
+                pass
 
         self.clear()
 
@@ -195,7 +199,11 @@ class WAVE(FileType):
 
         fileobj = filething.fileobj
 
-        self.info = WaveStreamInfo(fileobj)
+        try:
+            self.info = WaveStreamInfo(fileobj)
+        except ValueError as e:
+            raise error(e)
+
         fileobj.seek(0, 0)
 
         try:
@@ -206,5 +214,6 @@ class WAVE(FileType):
             raise error(e)
         else:
             self.tags.filename = self.filename
+
 
 Open = WAVE

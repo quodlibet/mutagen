@@ -467,75 +467,12 @@ class TAbstractFileType(object):
 
 
 _FILETYPES = {
-    OggVorbis: [os.path.join(DATA_DIR, "empty.ogg")],
-    OggFLAC: [os.path.join(DATA_DIR, "empty.oggflac")],
-    OggSpeex: [os.path.join(DATA_DIR, "empty.spx")],
-    OggTheora: [os.path.join(DATA_DIR, "sample.oggtheora")],
-    OggOpus: [os.path.join(DATA_DIR, "example.opus")],
-    FLAC: [os.path.join(DATA_DIR, "silence-44-s.flac")],
-    TrueAudio: [os.path.join(DATA_DIR, "empty.tta")],
-    WavPack: [os.path.join(DATA_DIR, "silence-44-s.wv")],
-    MP3: [
-        os.path.join(DATA_DIR, "bad-xing.mp3"),
-        os.path.join(DATA_DIR, "xing.mp3"),
-        os.path.join(DATA_DIR, "silence-44-s.mp3"),
-    ],
-    Musepack: [
-        os.path.join(DATA_DIR, "click.mpc"),
-        os.path.join(DATA_DIR, "sv4_header.mpc"),
-        os.path.join(DATA_DIR, "sv5_header.mpc"),
-        os.path.join(DATA_DIR, "sv8_header.mpc"),
-    ],
-    OptimFROG: [
-        os.path.join(DATA_DIR, "empty.ofr"),
-        os.path.join(DATA_DIR, "empty.ofs"),
-    ],
-    AAC: [
-        os.path.join(DATA_DIR, "empty.aac"),
-        os.path.join(DATA_DIR, "adif.aac"),
-    ],
-    ASF: [
-        os.path.join(DATA_DIR, "silence-1.wma"),
-        os.path.join(DATA_DIR, "silence-2.wma"),
-        os.path.join(DATA_DIR, "silence-3.wma"),
-    ],
-    AIFF: [
-        os.path.join(DATA_DIR, "with-id3.aif"),
-        os.path.join(DATA_DIR, "11k-1ch-2s-silence.aif"),
-        os.path.join(DATA_DIR, "48k-2ch-s16-silence.aif"),
-        os.path.join(DATA_DIR, "8k-1ch-1s-silence.aif"),
-        os.path.join(DATA_DIR, "8k-1ch-3.5s-silence.aif"),
-        os.path.join(DATA_DIR, "8k-4ch-1s-silence.aif")
-    ],
-    MonkeysAudio: [
-        os.path.join(DATA_DIR, "mac-399.ape"),
-        os.path.join(DATA_DIR, "mac-396.ape"),
-    ],
-    MP4: [
-        os.path.join(DATA_DIR, "has-tags.m4a"),
-        os.path.join(DATA_DIR, "no-tags.m4a"),
-        os.path.join(DATA_DIR, "no-tags.3g2"),
-        os.path.join(DATA_DIR, "truncated-64bit.mp4"),
-    ],
-    SMF: [
-        os.path.join(DATA_DIR, "sample.mid"),
-    ],
-    DSF: [
-        os.path.join(DATA_DIR, '2822400-1ch-0s-silence.dsf'),
-        os.path.join(DATA_DIR, '5644800-2ch-s01-silence.dsf'),
-        os.path.join(DATA_DIR, 'with-id3.dsf'),
-        os.path.join(DATA_DIR, 'without-id3.dsf'),
-    ],
     WAVE: [
         os.path.join(DATA_DIR, 'silence-2s-PCM-16000-08-ID3v23.wav'),
         os.path.join(DATA_DIR, 'silence-2s-PCM-16000-08-ID3v23.wav'),
         os.path.join(DATA_DIR, 'silence-2s-PCM-16000-08-notags.wav'),
     ]
 }
-
-_FILETYPES[ID3FileType] = _FILETYPES[MP3]
-_FILETYPES[APEv2File] = _FILETYPES[MonkeysAudio]
-
 
 def create_filetype_tests():
     for kind, paths in _FILETYPES.items():
