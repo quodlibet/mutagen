@@ -308,6 +308,8 @@ class TASFAttributes(TestCase):
         self.assertRaises(ASFError, ASFUnicodeAttribute, data=b"\x00")
         self.assertEqual(ASFUnicodeAttribute(u"foo").value, u"foo")
 
+        assert ASFUnicodeAttribute(data=b"") == u""
+
     def test_ASFUnicodeAttribute_dunder(self):
         attr = ASFUnicodeAttribute(u"foo")
 

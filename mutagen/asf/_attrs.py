@@ -36,7 +36,7 @@ class ASFBaseAttribute(object):
                  stream=None, **kwargs):
         self.language = language
         self.stream = stream
-        if data:
+        if data is not None:
             self.value = self.parse(data, **kwargs)
         else:
             if value is None:
