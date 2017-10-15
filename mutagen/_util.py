@@ -622,7 +622,7 @@ def get_size(fileobj):
 
 
 def read_full(fileobj, size):
-    """Like fileobj.read but raises IOError if no all requested data is
+    """Like fileobj.read but raises IOError if not all requested data is
     returned.
 
     If you want to distinguish IOError and the EOS case, better handle
