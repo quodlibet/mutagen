@@ -186,6 +186,9 @@ class MPEGFrame(object):
             self.encoder_settings = xing.get_encoder_settings()
             if xing.frames != -1:
                 samples = frame_size * xing.frames
+                if xing.bytes != -1 and samples > 0:
+                    self.bitrate = (
+                        xing.bytes * 8 * self.sample_rate) / samples
                 if lame is not None:
                     samples -= lame.encoder_delay_start
                     samples -= lame.encoder_padding_end
@@ -194,8 +197,6 @@ class MPEGFrame(object):
                     # files with low bitrate
                     samples = 0
                 self.length = float(samples) / self.sample_rate
-                if xing.bytes != -1 and self.length:
-                    self.bitrate = int((xing.bytes * 8) / self.length)
             if xing.lame_version_desc:
                 self.encoder_info = u"LAME %s" % xing.lame_version_desc
             if lame is not None:
