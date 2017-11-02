@@ -61,7 +61,7 @@ class TMP3(TestCase):
         assert f.info.encoder_info == "LAME 3.97.0"
         assert f.info.encoder_settings == "-V 9"
         assert f.info.length == 0.0
-        assert f.info.bitrate == 61333
+        assert f.info.bitrate == 40000
         assert f.info.bitrate_mode == 2
         assert f.info.sample_rate == 24000
 
@@ -128,8 +128,8 @@ class TMP3(TestCase):
     def test_bitrate(self):
         self.failUnlessEqual(self.mp3.info.bitrate, 32000)
         self.failUnlessEqual(self.mp3_2.info.bitrate, 32000)
-        self.failUnlessEqual(self.mp3_3.info.bitrate, 18191)
-        self.failUnlessEqual(self.mp3_4.info.bitrate, 9300)
+        self.failUnlessEqual(self.mp3_3.info.bitrate, 17783)
+        self.failUnlessEqual(self.mp3_4.info.bitrate, 8900)
 
     def test_notmp3(self):
         self.failUnlessRaises(

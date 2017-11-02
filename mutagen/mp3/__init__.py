@@ -165,11 +165,13 @@ class MPEGFrame(object):
         # Try to find/parse the Xing header, which trumps the above length
         # and bitrate calculation.
         if self.layer == 3:
-            self._parse_vbr_header(fileobj, self.frame_offset, frame_size)
+            self._parse_vbr_header(fileobj, self.frame_offset, frame_size,
+                                   frame_length)
 
         fileobj.seek(self.frame_offset + frame_length, 0)
 
-    def _parse_vbr_header(self, fileobj, frame_offset, frame_size):
+    def _parse_vbr_header(self, fileobj, frame_offset, frame_size,
+                          frame_length):
         """Does not raise"""
 
         # Xing
@@ -187,8 +189,11 @@ class MPEGFrame(object):
             if xing.frames != -1:
                 samples = frame_size * xing.frames
                 if xing.bytes != -1 and samples > 0:
-                    self.bitrate = int((
-                        xing.bytes * 8 * self.sample_rate) / samples)
+                    # the first frame is only included in xing.bytes but
+                    # not in xing.frames, skip it.
+                    audio_bytes = max(0, xing.bytes - frame_length)
+                    self.bitrate = int(round((
+                        audio_bytes * 8 * self.sample_rate) / float(samples)))
                 if lame is not None:
                     samples -= lame.encoder_delay_start
                     samples -= lame.encoder_padding_end
