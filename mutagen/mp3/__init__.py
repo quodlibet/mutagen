@@ -187,8 +187,8 @@ class MPEGFrame(object):
             if xing.frames != -1:
                 samples = frame_size * xing.frames
                 if xing.bytes != -1 and samples > 0:
-                    self.bitrate = (
-                        xing.bytes * 8 * self.sample_rate) / samples
+                    self.bitrate = int((
+                        xing.bytes * 8 * self.sample_rate) / samples)
                 if lame is not None:
                     samples -= lame.encoder_delay_start
                     samples -= lame.encoder_padding_end
