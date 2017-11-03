@@ -324,7 +324,6 @@ class MPEGInfo(StreamInfo):
         layer (`int`): 1, 2, or 3
         mode (`int`): One of STEREO, JOINTSTEREO, DUALCHANNEL, or MONO (0-3)
         protected (`bool`): whether or not the file is "protected"
-        padding (`bool`) whether or not audio frames are padded
         sketchy (`bool`): if true, the file may not be valid MPEG audio
     """
 
