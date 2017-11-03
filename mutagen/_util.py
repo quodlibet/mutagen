@@ -16,6 +16,7 @@ import sys
 import struct
 import codecs
 import errno
+import decimal
 from io import BytesIO
 
 try:
@@ -32,6 +33,15 @@ from fnmatch import fnmatchcase
 
 from ._compat import chr_, PY2, iteritems, iterbytes, integer_types, xrange, \
     izip, text_type, reraise
+
+
+def intround(value):
+    """Given a float returns a rounded int. Should give the same result on
+    both Py2/3
+    """
+
+    return int(decimal.Decimal.from_float(
+        value).to_integral_value(decimal.ROUND_HALF_EVEN))
 
 
 def is_fileobj(fileobj):

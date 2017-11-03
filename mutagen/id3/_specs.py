@@ -13,7 +13,7 @@ from struct import unpack, pack
 from .._compat import text_type, chr_, PY3, swap_to_string, string_types, \
     xrange
 from .._util import total_ordering, decode_terminated, enum, izip, flags, \
-    cdata, encode_endian
+    cdata, encode_endian, intround
 from ._util import BitPaddedInt, is_valid_frame_id
 
 
@@ -745,7 +745,7 @@ class VolumeAdjustmentSpec(Spec):
         return value / 512.0, data[2:]
 
     def write(self, config, frame, value):
-        number = int(round(value * 512))
+        number = intround(value * 512)
         # pack only fails in 2.7, do it manually in 2.6
         if not -32768 <= number <= 32767:
             raise SpecError("not in range")
@@ -778,7 +778,7 @@ class VolumePeakSpec(Spec):
         return (float(peak) / (2 ** 31 - 1)), data[1 + vol_bytes:]
 
     def write(self, config, frame, value):
-        number = int(round(value * 32768))
+        number = intround(value * 32768)
         # pack only fails in 2.7, do it manually in 2.6
         if not 0 <= number <= 65535:
             raise SpecError("not in range")

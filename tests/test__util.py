@@ -3,7 +3,8 @@
 from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes, \
     decode_terminated, dict_match, enum, get_size, BitReader, BitReaderError, \
     resize_bytes, seek_end, mmap_move, verify_fileobj, fileobj_name, \
-    read_full, flags, resize_file, fallback_move, encode_endian, loadfile
+    read_full, flags, resize_file, fallback_move, encode_endian, loadfile, \
+    intround
 from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2, \
     cBytesIO, xrange, BytesIO, builtins
 from tests import TestCase, get_temp_empty
@@ -17,6 +18,12 @@ try:
     import fcntl
 except ImportError:
     fcntl = None
+
+
+def test_intround():
+    assert intround(2.5) == 2
+    assert intround(2.6) == 3
+    assert intround(2.4) == 2
 
 
 class FDict(DictMixin):

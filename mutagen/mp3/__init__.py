@@ -12,7 +12,7 @@ import struct
 
 from mutagen import StreamInfo
 from mutagen._util import MutagenError, enum, BitReader, BitReaderError, \
-    convert_error
+    convert_error, intround
 from mutagen._compat import endswith, xrange
 from mutagen.id3 import ID3FileType, delete
 from mutagen.id3._util import BitPaddedInt
@@ -192,8 +192,8 @@ class MPEGFrame(object):
                     # the first frame is only included in xing.bytes but
                     # not in xing.frames, skip it.
                     audio_bytes = max(0, xing.bytes - frame_length)
-                    self.bitrate = int(round((
-                        audio_bytes * 8 * self.sample_rate) / float(samples)))
+                    self.bitrate = intround((
+                        audio_bytes * 8 * self.sample_rate) / float(samples))
                 if lame is not None:
                     samples -= lame.encoder_delay_start
                     samples -= lame.encoder_padding_end
