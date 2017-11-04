@@ -202,7 +202,10 @@ class TID3Read(TestCase):
         id3.version = (2, 4)
         pic = PIC(encoding=0, mime="PNG", desc="cover", type=3, data=b"")
         id3.add(pic)
-        self.assertRaises(TypeError, id3.add(pic))
+        id3.add(pic)
+        # pic replaced (NOT added) due to duplicate 'hash' (uses 'type:desc')
+        self.assertEqual(len(id3.getall("APIC")), 1)
+        # disable 'strict' to merge duplicate frame with existing
         id3.add(pic, strict=False)
         self.assertEqual(len(id3.getall("APIC")), 2)
 
