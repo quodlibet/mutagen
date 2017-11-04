@@ -303,7 +303,9 @@ class MPEGInfo(StreamInfo):
     Attributes:
         length (`float`): audio length, in seconds
         channels (`int`): number of audio channels
-        bitrate (`int`): audio bitrate, in bits per second
+        bitrate (`int`): audio bitrate, in bits per second.
+            In case :attr:`bitrate_mode` is :attr:`BitrateMode.UNKNOWN` the
+            bitrate is guessed based on the first frame.
         sample_rate (`int`) audio sample rate, in Hz
         encoder_info (`mutagen.text`): a string containing encoder name and
             possibly version. In case a lame tag is present this will start
