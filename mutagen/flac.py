@@ -391,7 +391,7 @@ class CueSheetTrack(object):
     Attributes:
         track_number (`int`): track number
         start_offset (`int`): track offset in samples from start of FLAC stream
-        isrc (`text`): ISRC code, exactly 12 characters
+        isrc (`mutagen.text`): ISRC code, exactly 12 characters
         type (`int`): 0 for audio, 1 for digital data
         pre_emphasis (`bool`): true if the track is recorded with pre-emphasis
         indexes (List[`mutagen.flac.CueSheetTrackIndex`]):
@@ -437,7 +437,7 @@ class CueSheet(MetadataBlock):
     in the cue sheet.
 
     Attributes:
-        media_catalog_number (`text`): media catalog number in ASCII,
+        media_catalog_number (`mutagen.text`): media catalog number in ASCII,
             up to 128 characters
         lead_in_samples (`int`): number of lead-in samples
         compact_disc (`bool`): true if the cuesheet corresponds to a
