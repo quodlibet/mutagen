@@ -2,6 +2,14 @@
 -----------------
 
 * Tests: Require `hypothesis <https://hypothesis.readthedocs.io>`__
+* Python 3.3 is no longer supported
+* MP3: Improved bitrate accuracy for files with XING header :bug:`328`
+  (thanks :user:`Michaël Defferrard <mdeff>`)
+* ASF: Fix case where some tags resulted in broken ASFUnicodeAttribute
+  instances :bug:`324`
+* Add support for filesystems which don't support opening files read/write
+  (gvfs over fuse for example) :bug:`300`
+* mid3v2: Add support for USLT :bug:`306`
 
 
 1.38 - 2017-06-01
