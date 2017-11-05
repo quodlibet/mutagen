@@ -19,13 +19,11 @@ class TMOggSPlit(_TTools):
             os.path.join(DATA_DIR, fsn(u'multipagecomment.ogg')))
 
         # append the second file
-        first = open(self.filename, "ab")
-        to_append = os.path.join(
-            DATA_DIR, fsn(u'multipage-setup.ogg'))
-        second = open(to_append, "rb")
-        first.write(second.read())
-        second.close()
-        first.close()
+        with open(self.filename, "ab") as first:
+            to_append = os.path.join(
+                DATA_DIR, fsn(u'multipage-setup.ogg'))
+            with open(to_append, "rb") as second:
+                first.write(second.read())
 
     def tearDown(self):
         super(TMOggSPlit, self).tearDown()

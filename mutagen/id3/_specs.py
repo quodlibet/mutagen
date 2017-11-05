@@ -685,7 +685,7 @@ class ID3TimeStamp(object):
             pieces.append(self.__formats[i] % part + self.__seps[i])
         return u''.join(pieces)[:-1]
 
-    def set_text(self, text, splitre=re.compile('[-T:/.]|\s+')):
+    def set_text(self, text, splitre=re.compile('[-T:/.]|\\s+')):
         year, month, day, hour, minute, second = \
             splitre.split(text + ':::::')[:6]
         for a in 'year month day hour minute second'.split():

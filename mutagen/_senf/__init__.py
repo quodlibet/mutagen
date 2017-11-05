@@ -42,7 +42,7 @@ fsnative, print_, getcwd, getenv, unsetenv, putenv, environ, expandvars, \
     supports_ansi_escape_codes, fsn2norm
 
 
-version = (1, 3, 2)
+version = (1, 3, 3)
 """Tuple[`int`, `int`, `int`]: The version tuple (major, minor, micro)"""
 
 
