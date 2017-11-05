@@ -1,7 +1,12 @@
-1.39 - 2017-??-??
+1.39 - 2017-11-05
 -----------------
 
-* Tests: Require `hypothesis <https://hypothesis.readthedocs.io>`__
+* Tests:
+
+  * Require `hypothesis <https://hypothesis.readthedocs.io>`__
+  * Run pycodestyle/pyflakes tests by default. Skip with ``--no-quality`` or
+    ``-m no quality`` when using pytest directly.
+
 * Python 3.3 is no longer supported
 * MP3: Improved bitrate accuracy for files with XING header :bug:`328`
   (thanks :user:`Michaël Defferrard <mdeff>`)
@@ -10,6 +15,8 @@
 * Add support for filesystems which don't support opening files read/write
   (gvfs over fuse for example) :bug:`300`
 * mid3v2: Add support for USLT :bug:`306`
+* Minor improvements by :user:`Borewit` and
+  :user:`Evan Purkhiser <EvanPurkhiser>`
 
 
 1.38 - 2017-06-01
