@@ -141,6 +141,15 @@ class TAPEWriter(TestCase):
         tag[u"cba"] = "abc"
         tag.save()
 
+    def test_save_sort_is_deterministic(self):
+        tag = mutagen.apev2.APEv2(SAMPLE + ".new")
+        tag["cba"] = "my cba value"
+        tag["abc"] = "my abc value"
+        tag.save()
+        with open(SAMPLE + ".new", 'rb') as fobj:
+            content = fobj.read()
+            self.assertTrue(content.index(b"abc") < content.index(b"cba"))
+
     def tearDown(self):
         os.unlink(SAMPLE + ".new")
         os.unlink(BROKEN + ".new")
