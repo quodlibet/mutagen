@@ -23,7 +23,7 @@ from ._compat import endswith, xrange
 from mutagen import StreamInfo
 from mutagen.apev2 import APEv2File, error, delete
 from mutagen.id3._util import BitPaddedInt
-from mutagen._util import cdata, convert_error
+from mutagen._util import cdata, convert_error, intround
 
 
 class MusepackHeaderError(error):
@@ -118,7 +118,7 @@ class MusepackInfo(StreamInfo):
 
         if not self.bitrate and self.length != 0:
             fileobj.seek(0, 2)
-            self.bitrate = int(round(fileobj.tell() * 8 / self.length))
+            self.bitrate = intround(fileobj.tell() * 8 / self.length)
 
     def __parse_sv8(self, fileobj):
         # SV8 http://trac.musepack.net/trac/wiki/SV8Specification

@@ -698,7 +698,7 @@ class TMP4Mixin(object):
         self.assertTrue(isinstance(self.audio.pprint(), text_type))
 
     def test_pprint_binary(self):
-        self.audio["covr"] = [b"\x00\xa9\garbage"]
+        self.audio["covr"] = [b"\x00\xa9garbage"]
         self.failUnless(self.audio.pprint())
 
     def test_pprint_pair(self):

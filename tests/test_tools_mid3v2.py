@@ -104,7 +104,7 @@ class TMid3v2(_TTools):
     def test_txxx_escape(self):
         res, out = self.call(
             fsn(u"-e"), fsn(u"--TXXX"),
-            fsn(u"EscapeTest\\:\\:albumartist:Ex\\:ample"),
+            fsn(u"EscapeTest\\\\:\\\\:albumartist:Ex\\\\:ample"),
             self.filename)
         self.failUnlessEqual(res, 0)
         self.failIf(out)
@@ -153,7 +153,7 @@ class TMid3v2(_TTools):
 
     def test_comm2_escape(self):
         res, out = self.call(
-            fsn(u"-e"), fsn(u"--COMM"), fsn(u"Y\\:B\\nG"), self.filename)
+            fsn(u"-e"), fsn(u"--COMM"), fsn(u"Y\\\\:B\\nG"), self.filename)
         self.failUnlessEqual((res, out), (0, ""))
 
         f = ID3(self.filename)

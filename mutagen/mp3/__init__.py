@@ -12,7 +12,7 @@ import struct
 
 from mutagen import StreamInfo
 from mutagen._util import MutagenError, enum, BitReader, BitReaderError, \
-    convert_error
+    convert_error, intround
 from mutagen._compat import endswith, xrange
 from mutagen.id3 import ID3FileType, delete
 from mutagen.id3._util import BitPaddedInt
@@ -165,11 +165,13 @@ class MPEGFrame(object):
         # Try to find/parse the Xing header, which trumps the above length
         # and bitrate calculation.
         if self.layer == 3:
-            self._parse_vbr_header(fileobj, self.frame_offset, frame_size)
+            self._parse_vbr_header(fileobj, self.frame_offset, frame_size,
+                                   frame_length)
 
         fileobj.seek(self.frame_offset + frame_length, 0)
 
-    def _parse_vbr_header(self, fileobj, frame_offset, frame_size):
+    def _parse_vbr_header(self, fileobj, frame_offset, frame_size,
+                          frame_length):
         """Does not raise"""
 
         # Xing
@@ -186,6 +188,12 @@ class MPEGFrame(object):
             self.encoder_settings = xing.get_encoder_settings()
             if xing.frames != -1:
                 samples = frame_size * xing.frames
+                if xing.bytes != -1 and samples > 0:
+                    # the first frame is only included in xing.bytes but
+                    # not in xing.frames, skip it.
+                    audio_bytes = max(0, xing.bytes - frame_length)
+                    self.bitrate = intround((
+                        audio_bytes * 8 * self.sample_rate) / float(samples))
                 if lame is not None:
                     samples -= lame.encoder_delay_start
                     samples -= lame.encoder_padding_end
@@ -194,8 +202,6 @@ class MPEGFrame(object):
                     # files with low bitrate
                     samples = 0
                 self.length = float(samples) / self.sample_rate
-                if xing.bytes != -1 and self.length:
-                    self.bitrate = int((xing.bytes * 8) / self.length)
             if xing.lame_version_desc:
                 self.encoder_info = u"LAME %s" % xing.lame_version_desc
             if lame is not None:
@@ -297,7 +303,9 @@ class MPEGInfo(StreamInfo):
     Attributes:
         length (`float`): audio length, in seconds
         channels (`int`): number of audio channels
-        bitrate (`int`): audio bitrate, in bits per second
+        bitrate (`int`): audio bitrate, in bits per second.
+            In case :attr:`bitrate_mode` is :attr:`BitrateMode.UNKNOWN` the
+            bitrate is guessed based on the first frame.
         sample_rate (`int`) audio sample rate, in Hz
         encoder_info (`mutagen.text`): a string containing encoder name and
             possibly version. In case a lame tag is present this will start
@@ -318,7 +326,6 @@ class MPEGInfo(StreamInfo):
         layer (`int`): 1, 2, or 3
         mode (`int`): One of STEREO, JOINTSTEREO, DUALCHANNEL, or MONO (0-3)
         protected (`bool`): whether or not the file is "protected"
-        padding (`bool`) whether or not audio frames are padded
         sketchy (`bool`): if true, the file may not be valid MPEG audio
     """
 
