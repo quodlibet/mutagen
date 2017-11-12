@@ -459,7 +459,7 @@ class APEv2(_CIDictProxy, Metadata):
         # "APE tags items should be sorted ascending by size... This is
         # not a MUST, but STRONGLY recommended. Actually the items should
         # be sorted by importance/byte, but this is not feasible."
-        tags.sort(key=lambda tag: (len(tag), tag[8:256 + 8]))
+        tags.sort(key=lambda tag: (len(tag), tag))
         num_tags = len(tags)
         tags = b"".join(tags)
 
