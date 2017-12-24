@@ -28,12 +28,12 @@ matrix:
     - os: linux
       dist: trusty
       language: python
-      python: "pypy-5.4.1"
+      python: "pypy"
       env: TYPE="linux" PYVER="pypy" PYARGS="-R"
     - os: linux
       dist: trusty
       language: python
-      python: "pypy3.3-5.5-alpha"
+      python: "pypy3"
       env: TYPE="linux" PYVER="pypy3" PYARGS="-R -bb"
     - os: linux
       language: generic
