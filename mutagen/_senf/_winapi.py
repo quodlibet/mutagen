@@ -191,10 +191,14 @@ MoveFileW = kernel32.MoveFileW
 MoveFileW.argtypes = [LPCTSTR, LPCTSTR]
 MoveFileW.restype = BOOL
 
-GetFileInformationByHandleEx = kernel32.GetFileInformationByHandleEx
-GetFileInformationByHandleEx.argtypes = [
-    HANDLE, ctypes.c_int, ctypes.c_void_p, DWORD]
-GetFileInformationByHandleEx.restype = BOOL
+if hasattr(kernel32, "GetFileInformationByHandleEx"):
+    GetFileInformationByHandleEx = kernel32.GetFileInformationByHandleEx
+    GetFileInformationByHandleEx.argtypes = [
+        HANDLE, ctypes.c_int, ctypes.c_void_p, DWORD]
+    GetFileInformationByHandleEx.restype = BOOL
+else:
+    # Windows XP
+    GetFileInformationByHandleEx = None
 
 MAX_PATH = 260
 FileNameInfo = 2

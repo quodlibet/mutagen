@@ -378,6 +378,10 @@ def _get_file_name_for_handle(handle):
         winapi.MAX_PATH * ctypes.sizeof(winapi.WCHAR)
     buf = ctypes.create_string_buffer(size)
 
+    if winapi.GetFileInformationByHandleEx is None:
+        # Windows XP
+        return None
+
     status = winapi.GetFileInformationByHandleEx(
         handle, winapi.FileNameInfo, buf, size)
     if status == 0:
