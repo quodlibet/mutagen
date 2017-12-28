@@ -68,8 +68,10 @@ install:
   - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "2" ]; then virtualenv venv -p python2; fi
   - if [ "$TYPE" == "osx" ]; then source venv/bin/activate; fi
   - if [ "$TYPE" == "linux" ] || [ "$TYPE" == "osx" ]; then python -m pip install --upgrade pycodestyle pyflakes pytest hypothesis coverage codecov; fi
+  - if [ "$TYPE" == "linux" ] || [ "$PYVER" == "3.6" ]; then python -m pip install --upgrade sphinx sphinx_rtd_theme; fi
 
 script:
   - if [ "$TYPE" == "linux" ] || [ "$TYPE" == "osx" ]; then eval python $PYARGS -m coverage run --branch setup.py test; fi
   - if [ "$TYPE" == "linux" ] || [ "$TYPE" == "osx" ]; then python -m codecov; fi
+  - if [ "$TYPE" == "linux" ] || [ "$PYVER" == "3.6" ]; then python -m sphinx -W -a -E -b html -n docs docs/_build; fi
   - if [ "$TYPE" == "windows" ]; then eval xvfb-run -a ./run_wine.sh "$PYVER" python $PYARGS setup.py test; fi
