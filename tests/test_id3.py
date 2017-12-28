@@ -147,7 +147,7 @@ class TID3Read(TestCase):
         # sure that old code keeps working (used in quod libet <=3.6)
         class ID3hack(ID3):
             "Override 'correct' behavior with desired behavior"
-            def loaded_frame(self, tag):
+            def loaded_frame(self, tag, strict=True):
                 if tag.HashKey in self:
                     self[tag.HashKey].extend(tag[:])
                 else:
@@ -196,6 +196,18 @@ class TID3Read(TestCase):
         id3.add(PIC(encoding=0, mime="PNG", desc="cover", type=3, data=b""))
         id3.update_to_v24()
         self.failUnlessEqual(id3["APIC:cover"].mime, "image/png")
+
+    def test_multi_pic(self):
+        id3 = ID3()
+        id3.version = (2, 4)
+        pic = PIC(encoding=0, mime="PNG", desc="cover", type=3, data=b"")
+        id3.add(pic)
+        id3.add(pic)
+        # pic replaced (NOT added) due to duplicate 'hash' (uses 'type:desc')
+        self.assertEqual(len(id3.getall("APIC")), 1)
+        # disable 'strict' to merge duplicate frame with existing
+        id3.add(pic, strict=False)
+        self.assertEqual(len(id3.getall("APIC")), 2)
 
     def test_lnk(self):
         id3 = ID3()

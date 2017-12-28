@@ -325,18 +325,18 @@ class ID3Tags(DictProxy, Tags):
                     break
                 hash_key = new_hash
 
-    def loaded_frame(self, tag):
+    def loaded_frame(self, tag, strict=True):
         """Deprecated; use the add method."""
 
-        self._add(tag, True)
+        self._add(tag, strict)
 
-    def add(self, frame):
+    def add(self, frame, strict=True):
         """Add a frame to the tag."""
 
         # add = loaded_frame (and vice versa) break applications that
         # expect to be able to override loaded_frame (e.g. Quod Libet),
         # as does making loaded_frame call add.
-        self.loaded_frame(frame)
+        self.loaded_frame(frame, strict)
 
     def __setitem__(self, key, tag):
         if not isinstance(tag, Frame):
