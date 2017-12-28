@@ -10,7 +10,7 @@
 
 True Audio is a lossless format designed for real-time encoding and
 decoding. This module is based on the documentation at
-http://www.true-audio.com/TTA_Lossless_Audio_Codec_-_Format_Description
+http://www.true-audio.com/TTA_Lossless_Audio_Codec\_-_Format_Description
 
 True Audio files use ID3 tags.
 """
