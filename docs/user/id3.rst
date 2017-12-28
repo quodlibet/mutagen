@@ -224,6 +224,31 @@ The following code adds two chapters to a file:
     audio.save()
 
 
+Dealing with Frame Uniqueness of ID3 Frames
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ID3 spec defines for each frame type which combination of the contained
+data needs to be unique in the whole tag and acts as an identifier for that
+frame. This manifests itself in mutagen in that adding a frame using
+:meth:`ID3Tags.add`, which has the same key as an existing frame, will replace
+the old one.
+
+One frame type where this commonly leads to confusing results is the APIC
+frame, which requires that only the description field needs to be unique in
+the whole tag and not the description and picture type.
+
+If you want to add a new frame without replacing an existing one, check the
+HashKey property and adjust your new frame until it no longer matches any
+existing frame.
+
+.. code:: python
+
+    tag = ID3()
+    new = APIC()
+    while new.HashKey in tag:
+        new.desc += u"x"
+    tag.add(new)
+
 
 Compatibility / Bugs
 ^^^^^^^^^^^^^^^^^^^^
