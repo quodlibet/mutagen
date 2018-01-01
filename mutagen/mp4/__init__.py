@@ -1067,7 +1067,6 @@ class MP4(FileType):
 
         if not MP4Tags._can_load(atoms):
             self.tags = None
-            self._padding = 0
         else:
             try:
                 self.tags = self.MP4Tags(atoms, fileobj)
@@ -1075,8 +1074,13 @@ class MP4(FileType):
                 raise
             except Exception as err:
                 reraise(MP4MetadataError, err, sys.exc_info()[2])
-            else:
-                self._padding = self.tags._padding
+
+    @property
+    def _padding(self):
+        if self.tags is None:
+            return 0
+        else:
+            return self.tags._padding
 
     def save(self, *args, **kwargs):
         """save(filething=None, padding=None)"""

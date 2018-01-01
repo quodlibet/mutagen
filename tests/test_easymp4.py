@@ -18,6 +18,17 @@ class TEasyMP4(TestCase):
     def tearDown(self):
         os.unlink(self.filename)
 
+    def test_no_tags(self):
+        audio = EasyMP4(os.path.join(DATA_DIR, 'no-tags.m4a'))
+        assert audio.tags is None
+        audio.add_tags()
+        assert audio.tags is not None
+
+    def test_padding(self):
+        assert self.mp4._padding == 1634
+        self.mp4.save(padding=lambda x: 42)
+        assert EasyMP4(self.mp4.filename)._padding == 42
+
     def test_pprint(self):
         self.mp4["artist"] = "baz"
         self.mp4.pprint()

@@ -42,10 +42,13 @@ class EasyMP4Tags(DictMixin, Tags):
         self.load = self.__mp4.load
         self.save = self.__mp4.save
         self.delete = self.__mp4.delete
-        self._padding = self.__mp4._padding
 
     filename = property(lambda s: s.__mp4.filename,
                         lambda s, fn: setattr(s.__mp4, 'filename', fn))
+
+    @property
+    def _padding(self):
+        return self.__mp4._padding
 
     @classmethod
     def RegisterKey(cls, key,
