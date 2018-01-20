@@ -9,3 +9,5 @@ coverage
 .cache
 *.egg-info
 .coverage
+.idea
+.hypothesis
