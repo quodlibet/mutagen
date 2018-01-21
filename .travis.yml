@@ -35,16 +35,6 @@ matrix:
       language: python
       python: "pypy3"
       env: TYPE="linux" PYVER="pypy3" PYARGS="-R -bb"
-    - os: linux
-      language: generic
-      sudo: required
-      dist: trusty
-      env: TYPE="windows" PYVER="2.7.11" PYARGS="-R"
-    - os: linux
-      language: generic
-      sudo: required
-      dist: trusty
-      env: TYPE="windows" PYVER="3.4.4" PYARGS="-R -bb"
     - os: osx
       osx_image: xcode6.4
       language: generic
@@ -55,10 +45,6 @@ matrix:
       env: TYPE="osx" PYVER="2" PYARGS="-R"
 
 install:
-  - if [ "$TYPE" == "windows" ]; then sudo dpkg --add-architecture i386; fi
-  - if [ "$TYPE" == "windows" ]; then sudo add-apt-repository -y ppa:ubuntu-wine/ppa; fi
-  - if [ "$TYPE" == "windows" ]; then travis_retry sudo apt-get update -q; fi
-  - if [ "$TYPE" == "windows" ]; then travis_retry sudo apt-get install --no-install-recommends -y wine1.8 xvfb; fi
   - if [ "$TYPE" == "osx" ]; then brew update; fi
   - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "3" ]; then brew install python3; fi
   - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "3" ]; then python3 -m pip install virtualenv; fi
@@ -74,4 +60,3 @@ script:
   - if [ "$TYPE" == "linux" ] || [ "$TYPE" == "osx" ]; then eval python $PYARGS -m coverage run --branch setup.py test; fi
   - if [ "$TYPE" == "linux" ] || [ "$TYPE" == "osx" ]; then python -m codecov; fi
   - if [ "$TYPE" == "linux" ] || [ "$PYVER" == "3.6" ]; then python -m sphinx -W -a -E -b html -n docs docs/_build; fi
-  - if [ "$TYPE" == "windows" ]; then eval xvfb-run -a ./run_wine.sh "$PYVER" python $PYARGS setup.py test; fi

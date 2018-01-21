@@ -71,7 +71,7 @@ class distcheck(sdist):
             assert process.returncode == 0
 
             tracked_files = out.splitlines()
-            for ignore in [".travis.yml", "run_wine.sh", ".gitignore"]:
+            for ignore in [".travis.yml", ".gitignore"]:
                 tracked_files.remove(ignore)
 
             diff = set(tracked_files) - set(included_files)
