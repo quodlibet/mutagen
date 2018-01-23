@@ -3,7 +3,6 @@
 import re
 import os
 import sys
-import warnings
 import shutil
 import contextlib
 from unittest import TestCase as BaseTestCase
@@ -25,12 +24,6 @@ assert isinstance(DATA_DIR, fsnative)
 if fsn2text(text2fsn(u"öäü")) != u"öäü":
     raise RuntimeError("This test suite needs a unicode locale encoding. "
                        "Try setting LANG=C.UTF-8")
-
-
-# Make sure we see all deprecation warnings so we either have to avoid them
-# or capture them in the test suite
-warnings.simplefilter("always")
-warnings.simplefilter("ignore", PendingDeprecationWarning)
 
 
 def get_temp_copy(path):
