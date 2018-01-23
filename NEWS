@@ -1,5 +1,14 @@
-1.40 - 2017-??-??
+1.40 - 2018-??-??
 -----------------
+
+* APEv2: Ensures tags are saved in a deterministic way :pr:`329`
+  (:user:`cushy007`)
+* Restore WinXP support for the CLI tools :bug:`332`
+* easymp4: Fix EasyMP4.add_tags() when no tags exist :bug:`334`
+* id3: Fix PyCharm not being able to resolve id3 frame class references
+  :bug:`336`
+* Support pathlib.Path objects for paths (PEP 519) :bug:`337` :pr:`338`
+  (:user:`Andrew Rabert <nvllsvm>`)
 
 
 1.39 - 2017-11-05
