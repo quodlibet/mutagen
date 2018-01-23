@@ -473,22 +473,21 @@ def text2fsn(text):
     return fsnative(text)
 
 
-def fsn2bytes(path, encoding):
+def fsn2bytes(path, encoding="utf-8"):
     """
     Args:
         path (fsnative): The path to convert
-        encoding (`str` or `None`): `None` if you don't care about Windows
+        encoding (`str`): encoding used for Windows
     Returns:
         `bytes`
     Raises:
         TypeError: If no `fsnative` path is passed
-        ValueError: If encoding fails or no encoding is given
+        ValueError: If encoding fails or the encoding is invalid
 
     Converts a `fsnative` path to `bytes`.
 
     The passed *encoding* is only used on platforms where paths are not
-    associated with an encoding (Windows for example). If you don't care about
-    Windows you can pass `None`.
+    associated with an encoding (Windows for example).
 
     For Windows paths, lone surrogates will be encoded like normal code points
     and surrogate pairs will be merged before encoding. In case of ``utf-8``
@@ -510,22 +509,24 @@ def fsn2bytes(path, encoding):
         return path
 
 
-def bytes2fsn(data, encoding):
+def bytes2fsn(data, encoding="utf-8"):
     """
     Args:
         data (bytes): The data to convert
-        encoding (`str` or `None`): `None` if you don't care about Windows
+        encoding (`str`): encoding used for Windows
     Returns:
         `fsnative`
     Raises:
         TypeError: If no `bytes` path is passed
-        ValueError: If decoding fails or no encoding is given
+        ValueError: If decoding fails or the encoding is invalid
 
     Turns `bytes` to a `fsnative` path.
 
     The passed *encoding* is only used on platforms where paths are not
-    associated with an encoding (Windows for example). If you don't care about
-    Windows you can pass `None`.
+    associated with an encoding (Windows for example).
+
+    For Windows paths ``WTF-8`` is accepted if ``utf-8`` is used and
+    ``WTF-16`` accepted if ``utf-16-le`` is used.
     """
 
     if not isinstance(data, bytes):

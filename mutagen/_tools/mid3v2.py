@@ -133,12 +133,12 @@ def value_from_fsnative(arg, escape):
     assert isinstance(arg, fsnative)
 
     if escape:
-        bytes_ = fsn2bytes(arg, "utf-8")
+        bytes_ = fsn2bytes(arg)
         if PY2:
             bytes_ = bytes_.decode("string_escape")
         else:
             bytes_ = codecs.escape_decode(bytes_)[0]
-        arg = bytes2fsn(bytes_, "utf-8")
+        arg = bytes2fsn(bytes_)
 
     text = fsn2text(arg, strict=True)
     return text
