@@ -212,6 +212,8 @@ def _openfile(instance, filething, filename, fileobj, writable, create):
             fileobj = filething
         elif hasattr(filething, "__fspath__"):
             filename = filething.__fspath__()
+            if not isinstance(filename, (bytes, text_type)):
+                raise TypeError("expected __fspath__() to return a filename")
         else:
             filename = filething
 

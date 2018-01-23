@@ -19,6 +19,8 @@ try:
 except ImportError:
     fcntl = None
 
+import pytest
+
 
 def test_intround():
     assert intround(2.5) == 2
@@ -813,6 +815,9 @@ class Tloadfile(TestCase):
                 assert h.read() == b"foobar"
         finally:
             os.unlink(filename)
+
+        with pytest.raises(TypeError, match=r'.*__fspath__.*'):
+            file_func(FilePath(42))
 
 
 class Tread_full(TestCase):
