@@ -1,5 +1,5 @@
-1.40 - 2018-??-??
------------------
+1.40.0 - 2018-01-25
+-------------------
 
 * APEv2: Ensures tags are saved in a deterministic way :pr:`329`
   (:user:`cushy007`)
@@ -9,6 +9,7 @@
   :bug:`336`
 * Support pathlib.Path objects for paths (PEP 519) :bug:`337` :pr:`338`
   (:user:`Andrew Rabert <nvllsvm>`)
+* Use semver for versioning
 
 
 1.39 - 2017-11-05
