@@ -14,10 +14,16 @@ import sys
 import subprocess
 import tarfile
 
-from distutils.core import setup, Command
-from distutils.command.clean import clean as distutils_clean
-from distutils.command.sdist import sdist
+from distutils.core import setup, Command, Distribution
 from distutils import dir_util
+
+
+def get_command_class(name):
+    # Returns the right class for either distutils or setuptools
+    return Distribution({}).get_command_class(name)
+
+
+distutils_clean = get_command_class("clean")
 
 
 class clean(distutils_clean):
@@ -51,7 +57,10 @@ class clean(distutils_clean):
                 shutil.rmtree(path)
 
 
-class distcheck(sdist):
+distutils_sdist = get_command_class("sdist")
+
+
+class distcheck(distutils_sdist):
 
     def _check_manifest(self):
         assert self.get_archive_files()
@@ -105,7 +114,7 @@ class distcheck(sdist):
         os.chdir(old_pwd)
 
     def run(self):
-        sdist.run(self)
+        distutils_sdist.run(self)
         self._check_manifest()
         self._check_dist()
 
