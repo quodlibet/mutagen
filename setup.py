@@ -80,7 +80,8 @@ class distcheck(distutils_sdist):
             assert process.returncode == 0
 
             tracked_files = out.splitlines()
-            for ignore in [".travis.yml", ".gitignore"]:
+            for ignore in [".travis.yml", ".gitignore", ".codecov.yml",
+                           ".appveyor.yml"]:
                 tracked_files.remove(ignore)
 
             diff = set(tracked_files) - set(included_files)
