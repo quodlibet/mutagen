@@ -35,7 +35,7 @@ class WaveFile(RiffFile):
         RiffFile.__init__(self, fileobj)
 
         if self.fileType != u'WAVE':
-            raise ValueError("Expected RIFF/WAVE.")
+            raise MutagenError("Expected RIFF/WAVE.")
 
 
 class WaveStreamInfo(StreamInfo):
