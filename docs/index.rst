@@ -66,7 +66,7 @@ own.
   considered from the start and are fully supported.
 * All ID3v2 versions and all ID3v2.4 frames are covered, including rare ones
   like POPM or RVA2.
-* We take automated testing very seriously. All bug fixes are commited with a
+* We take automated testing very seriously. All bug fixes are committed with a
   test that prevents them from recurring, and new features are committed with
   a full test suite. 
 
