@@ -634,7 +634,7 @@
 * Bug Fixes:
 
   * FLAC: Raise IOError, instead of UnboundLocalError, when trying
-    to open a non-existant file. (Lukáš Lalinský, Debian #448734)
+    to open a non-existent file. (Lukáš Lalinský, Debian #448734)
   * Throw out invalid frames when upgrading from 2.3 to 2.4.
   * Fixed reading of Unicode strings from ASF files on big-endian
     platforms.
