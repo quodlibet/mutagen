@@ -223,7 +223,7 @@ class ID3(ID3Tags, mutagen.Metadata):
                 the separator used to join multiple text values
                 if v2_version == 3. Defaults to '/' but if it's None
                 will be the ID3v2v2.4 null separator.
-            padding (PaddingFunction)
+            padding (:obj:`mutagen.PaddingFunction`)
 
         Raises:
             mutagen.MutagenError

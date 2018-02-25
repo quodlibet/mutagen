@@ -576,7 +576,7 @@ class OggFileType(FileType):
 
         Args:
             filething (filething)
-            padding (PaddingFunction)
+            padding (:obj:`mutagen.PaddingFunction`)
         Raises:
             mutagen.MutagenError
         """

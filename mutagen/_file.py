@@ -113,7 +113,7 @@ class FileType(DictMixin):
         Does nothing if the file has no tags.
 
         Raises:
-            MutagenError: if deleting wasn't possible
+            mutagen.MutagenError: if deleting wasn't possible
         """
 
         if self.tags is not None:
@@ -150,7 +150,8 @@ class FileType(DictMixin):
         """Adds new tags to the file.
 
         Raises:
-            MutagenError: if tags already exist or adding is not possible.
+            mutagen.MutagenError:
+                if tags already exist or adding is not possible.
         """
 
         raise NotImplementedError

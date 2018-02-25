@@ -1,5 +1,5 @@
 all:
-	sphinx-build -b html -n . _build
+	python -m sphinx -b html -n . _build
 
 clean:
 	rm -rf _build

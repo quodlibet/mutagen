@@ -838,7 +838,7 @@ class FLAC(mutagen.FileType):
         Args:
             filething (filething)
             deleteid3 (bool): delete id3 tags while at it
-            padding (PaddingFunction)
+            padding (:obj:`mutagen.PaddingFunction`)
 
         If no filename is given, the one most recently loaded is used.
         """
