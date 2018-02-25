@@ -158,7 +158,7 @@ class FileType(DictMixin):
 
     @property
     def mime(self):
-        """A list of mime types (`text`)"""
+        """A list of mime types (:class:`mutagen.text`)"""
 
         mimes = []
         for Kind in type(self).__mro__:
@@ -172,7 +172,7 @@ class FileType(DictMixin):
         """Returns a score for how likely the file can be parsed by this type.
 
         Args:
-            filename (path): a file path
+            filename (fspath): a file path
             fileobj (fileobj): a file object open in rb mode. Position is
                 undefined
             header (bytes): data of undefined length, starts with the start of
