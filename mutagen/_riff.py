@@ -225,11 +225,11 @@ class RiffFile(object):
         if not is_valid_chunk_id(id_):
             raise KeyError("RIFF key must be four ASCII characters.")
 
-        self.fileobj.seek(self.__next_offset)
-        self.fileobj.write(pack('>4si', id_.ljust(4).encode('ascii'), 0))
-        self.fileobj.seek(self.__next_offset)
-        chunk = RiffChunkHeader(self.fileobj, self[u'RIFF'])
-        self[u'RIFF']._update_size(self[u'RIFF'].data_size + chunk.size)
+        self._fileobj.seek(self.__next_offset)
+        self._fileobj.write(pack('>4si', id_.ljust(4).encode('ascii'), 0))
+        self._fileobj.seek(self.__next_offset)
+        chunk = RiffChunkHeader(self._fileobj, self._riffChunk)
+        self._riffChunk._update_size(self._riffChunk.data_size + chunk.size)
 
         self.__subchunks[id_] = chunk
         self.__next_offset = chunk.offset + chunk.size
