@@ -54,19 +54,14 @@ def assert_valid_chunk_id(id):
         raise ValueError("Invalid RIFF-chunk-ID.")
 
 
-class _ChunkHeader():
-    """ Abstract common RIFF chunk header"""
+class RiffChunkHeader():
+    """ RIFF chunk header"""
 
     # Chunk headers are 8 bytes long (4 for ID and 4 for the size)
     HEADER_SIZE = 8
 
-    @property
-    @abstractmethod
-    def _struct(self):
-        """ must be implemented in order to instantiate """
-        return 'xxxx'
-
     def __init__(self, fileobj, parent_chunk):
+        self.__struct = '<4sI'
         self.__fileobj = fileobj
         self.parent_chunk = parent_chunk
         self.offset = fileobj.tell()
@@ -75,7 +70,7 @@ class _ChunkHeader():
         if len(header) < self.HEADER_SIZE:
             raise InvalidChunk()
 
-        self.id, self.data_size = struct.unpack(self._struct, header)
+        self.id, self.data_size = struct.unpack(self.__struct, header)
 
         try:
             self.id = self.id.decode('ascii').rstrip()
@@ -131,17 +126,6 @@ class _ChunkHeader():
         self._update_size(new_data_size)
 
 
-class RiffChunkHeader(_ChunkHeader):
-    """Representation of the RIFF chunk header"""
-
-    @property
-    def _struct(self):
-        return '<4sI'  # Size in Little-Endian
-
-    def __init__(self, fileobj, parent_chunk=None):
-        _ChunkHeader.__init__(self, fileobj, parent_chunk)
-
-
 class RiffFile(object):
     """Representation of a RIFF file
 
@@ -156,7 +140,7 @@ class RiffFile(object):
         fileobj.seek(0)
 
         # RIFF Files always start with the RIFF chunk
-        self._riffChunk = RiffChunkHeader(fileobj)
+        self._riffChunk = RiffChunkHeader(fileobj, parent_chunk=None)
 
         if (self._riffChunk.id != 'RIFF'):
             raise KeyError("Root chunk should be a RIFF chunk.")
@@ -213,7 +197,7 @@ class RiffFile(object):
         assert isinstance(id_, text_type)
 
         if not is_valid_chunk_id(id_):
-            raise KeyError("RIFF key must be four ASCII characters.")
+            raise KeyError("Invalid RIFF key.")
 
         self._fileobj.seek(self.__next_offset)
         self._fileobj.write(pack('<4si', id_.ljust(4).encode('ascii'), 0))
