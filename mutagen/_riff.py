@@ -38,11 +38,11 @@ def is_valid_chunk_id(id):
 
     assert isinstance(id, text_type)
 
-    if len(id) != 4:
+    if len(id) < 3 or len(id) > 4:
         return False
 
-    for i in range(0, 3):
-        if id[i] < u' ' or id[i] > u'~':
+    for c in id:
+        if c < u'!' or c > u'~':
             return False
 
     return True
@@ -51,7 +51,7 @@ def is_valid_chunk_id(id):
 #  Assert FOURCC formatted valid
 def assert_valid_chunk_id(id):
     if not is_valid_chunk_id(id):
-        raise ValueError("RIFF-chunk-ID must be four ASCII characters.")
+        raise ValueError("Invalid RIFF-chunk-ID.")
 
 
 class _ChunkHeader():
@@ -78,7 +78,7 @@ class _ChunkHeader():
         self.id, self.data_size = struct.unpack(self._struct, header)
 
         try:
-            self.id = self.id.decode('ascii')
+            self.id = self.id.decode('ascii').rstrip()
         except UnicodeDecodeError:
             raise InvalidChunk()
 
@@ -115,7 +115,7 @@ class _ChunkHeader():
         """Update the size of the chunk"""
 
         self.__fileobj.seek(self.offset + 4)
-        self.__fileobj.write(pack('>I', data_size))
+        self.__fileobj.write(pack('<I', data_size))
         if self.parent_chunk is not None:
             size_diff = self.data_size - data_size
             self.parent_chunk._update_size(
@@ -133,17 +133,6 @@ class _ChunkHeader():
 
 class RiffChunkHeader(_ChunkHeader):
     """Representation of the RIFF chunk header"""
-
-    @property
-    def _struct(self):
-        return '>4sI'  # Size in Big-Endian
-
-    def __init__(self, fileobj, parent_chunk=None):
-        _ChunkHeader.__init__(self, fileobj, parent_chunk)
-
-
-class RiffSubchunk(_ChunkHeader):
-    """Representation of a RIFF Subchunk"""
 
     @property
     def _struct(self):
@@ -178,13 +167,14 @@ class RiffFile(object):
         # Load all RIFF subchunks
         while True:
             try:
-                chunk = RiffSubchunk(fileobj, self._riffChunk)
+                chunk = RiffChunkHeader(fileobj, self._riffChunk)
             except InvalidChunk:
                 break
             # Normalize ID3v2-tag-chunk to lowercase
-            if chunk.id == 'ID3 ':
-                chunk.id = 'id3 '
-            self.__subchunks[chunk.id] = chunk
+            if chunk.id == 'ID3':
+                chunk.id = 'id3'
+            self.__subchunks[chunk.id] = \
+                chunk
 
             # Calculate the location of the next chunk,
             # considering the pad byte
@@ -226,7 +216,7 @@ class RiffFile(object):
             raise KeyError("RIFF key must be four ASCII characters.")
 
         self._fileobj.seek(self.__next_offset)
-        self._fileobj.write(pack('>4si', id_.ljust(4).encode('ascii'), 0))
+        self._fileobj.write(pack('<4si', id_.ljust(4).encode('ascii'), 0))
         self._fileobj.seek(self.__next_offset)
         chunk = RiffChunkHeader(self._fileobj, self._riffChunk)
         self._riffChunk._update_size(self._riffChunk.data_size + chunk.size)
