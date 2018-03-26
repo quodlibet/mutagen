@@ -46,10 +46,10 @@ matrix:
 
 install:
   - if [ "$TYPE" == "osx" ]; then brew update; fi
-  - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "3" ]; then brew install python3; fi
+  - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "3" ]; then brew install python || brew upgrade python; fi
   - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "3" ]; then python3 -m pip install virtualenv; fi
   - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "3" ]; then virtualenv venv -p python3; fi
-  - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "2" ]; then brew install python; fi
+  - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "2" ]; then brew install python@2 || brew upgrade python@2; fi
   - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "2" ]; then python2 -m pip install virtualenv; fi
   - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "2" ]; then virtualenv venv -p python2; fi
   - if [ "$TYPE" == "osx" ]; then source venv/bin/activate; fi
