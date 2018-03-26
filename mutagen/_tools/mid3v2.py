@@ -315,9 +315,20 @@ def write_files(edits, filenames, escape):
                         frame = mutagen.id3.TXXX(
                             encoding=3, text=value, desc=desc)
                         id3.add(frame)
+                elif frame == "WXXX":
+                    for value in vlist:
+                        values = string_split(value, ":", 1)
+                        if len(values) == 1:
+                            desc, value = "", values[0]
+                        else:
+                            desc, value = values[0], values[1]
+                        frame = mutagen.id3.WXXX(
+                            encoding=3, url=value, desc=desc)
+                        id3.add(frame)
                 elif issubclass(mutagen.id3.Frames[frame],
                                 mutagen.id3.UrlFrame):
-                    frame = mutagen.id3.Frames[frame](encoding=3, url=vlist)
+                    frame = mutagen.id3.Frames[frame](
+                        encoding=3, url=vlist[-1])
                     id3.add(frame)
                 else:
                     frame = mutagen.id3.Frames[frame](encoding=3, text=vlist)

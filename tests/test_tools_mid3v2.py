@@ -123,6 +123,65 @@ class TMid3v2(_TTools):
         self.failUnlessEqual(frame.desc, "A\\")
         self.failUnlessEqual(frame.text, ["B:C"])
 
+    def test_txxx_multiple(self):
+        res, out = self.call(
+            fsn(u"--TXXX"), fsn(u"A:B"),
+            fsn(u"--TXXX"), fsn(u"C:D"),
+            self.filename)
+        self.failUnlessEqual((res, out), (0, ""))
+        f = ID3(self.filename)
+        assert len(f.getall("TXXX")) == 2
+
+    def test_wcom(self):
+        res, out = self.call(fsn(u"--WCOM"), fsn(u"foo"), self.filename)
+        self.failUnlessEqual((res, out), (0, ""))
+        f = ID3(self.filename)
+        frames = f.getall("WCOM")
+        assert len(frames) == 1
+        assert frames[0].url == "foo"
+
+    def test_wcom_multiple(self):
+        res, out = self.call(
+            fsn(u"--WCOM"), fsn(u"foo"),
+            fsn(u"--WCOM"), fsn(u"bar"),
+            self.filename)
+        self.failUnlessEqual((res, out), (0, ""))
+        f = ID3(self.filename)
+        frames = f.getall("WCOM")
+        assert len(frames) == 1
+        assert frames[0].url == "bar"
+
+    def test_wxxx(self):
+        res, out = self.call(fsn(u"--WXXX"), fsn(u"foobar"), self.filename)
+        self.failUnlessEqual((res, out), (0, ""))
+        f = ID3(self.filename)
+        frames = f.getall("WXXX")
+        assert len(frames) == 1
+        assert frames[0].url == "foobar"
+
+    def test_wxxx_escape(self):
+        res, out = self.call(
+            fsn(u"-e"), fsn(u"--WXXX"), fsn(u"http\\://example.com/"),
+            self.filename)
+        self.failUnlessEqual((res, out), (0, ""))
+        f = ID3(self.filename)
+        frames = f.getall("WXXX")
+        assert frames[0].url == "http://example.com/"
+
+    def test_wxxx_multiple(self):
+        res, out = self.call(
+            fsn(u"--WXXX"), fsn(u"A:B"),
+            fsn(u"--WXXX"), fsn(u"C:D"),
+            self.filename)
+        self.failUnlessEqual((res, out), (0, ""))
+        f = ID3(self.filename)
+        frames = f.getall("WXXX")
+        assert len(frames) == 2
+        assert frames[0].url == "B"
+        assert frames[0].desc == "A"
+        assert frames[1].url == "D"
+        assert frames[1].desc == "C"
+
     def test_ufid(self):
         res, out, err = self.call2(
             fsn(u"--UFID"), fsn(u"foo:bar"), self.filename)

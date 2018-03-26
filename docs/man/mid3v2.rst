@@ -39,7 +39,7 @@ OPTIONS
 
 -e, --escape
     Enable interpretation of backslash escapes for tag values.
-    Makes it possible to escape the colon-separator in TXXX, COMM
+    Makes it possible to escape the colon-separator in TXXX, WXXX, COMM
     values like '\\:' and insert escape sequences like '\\n', '\\t' etc.
 
 -f, --list-frames
@@ -107,10 +107,15 @@ Any text or URL frame (those beginning with T or W) can be modified or
 added by prefixing the name of the frame with "--". For example, ``--TIT3
 "Monkey!"`` will set the TIT3 (subtitle) frame to ``Monkey!``.
 
-The TXXX frame requires a colon-separated description key; many TXXX frames
-may be set in the file as long as they have different keys. To set this
-key, just separate the text with a colon, e.g. ``--TXXX
-"ALBUMARTISTSORT:Examples, The"``.
+The TXXX frame has the format <DESCRIPTION:TEXT>; many TXXX frames may be
+set in the file as long as they have different keys. To set this key, just
+separate the text with a colon, e.g. ``--TXXX "ALBUMARTISTSORT:Examples,
+The"``. The description can be omitted in which case it defaults to an empty
+string.
+
+The WXXX frame has the same format as TXXX but since URLs usually contain a
+":" you have provide a description or enable escaping (-e):
+``--WXXX "desc:http://foo.bar"`` or ``-e --WXXX "http\\://foo.bar"``
 
 The USLT frame has the format <DESCRIPTION:TEXT:LANGUAGE>. The language and
 description may be omitted, in which case the language defaults to English,

@@ -54,7 +54,7 @@ Be verbose: state all operations performed. This is the opposite of
 .TP
 .B \-e\fP,\fB  \-\-escape
 Enable interpretation of backslash escapes for tag values.
-Makes it possible to escape the colon\-separator in TXXX, COMM
+Makes it possible to escape the colon\-separator in TXXX, WXXX, COMM
 values like \(aq\e:\(aq and insert escape sequences like \(aq\en\(aq, \(aq\et\(aq etc.
 .TP
 .B \-f\fP,\fB  \-\-list\-frames
@@ -123,10 +123,15 @@ Any text or URL frame (those beginning with T or W) can be modified or
 added by prefixing the name of the frame with "\-\-". For example, \fB\-\-TIT3
 "Monkey!"\fP will set the TIT3 (subtitle) frame to \fBMonkey!\fP\&.
 .sp
-The TXXX frame requires a colon\-separated description key; many TXXX frames
-may be set in the file as long as they have different keys. To set this
-key, just separate the text with a colon, e.g. \fB\-\-TXXX
-"ALBUMARTISTSORT:Examples, The"\fP\&.
+The TXXX frame has the format <DESCRIPTION:TEXT>; many TXXX frames may be
+set in the file as long as they have different keys. To set this key, just
+separate the text with a colon, e.g. \fB\-\-TXXX "ALBUMARTISTSORT:Examples,
+The"\fP\&. The description can be omitted in which case it defaults to an empty
+string.
+.sp
+The WXXX frame has the same format as TXXX but since URLs usually contain a
+":" you have provide a description or enable escaping (\-e):
+\fB\-\-WXXX "desc:http://foo.bar"\fP or \fB\-e \-\-WXXX "http\e\e://foo.bar"\fP
 .sp
 The USLT frame has the format <DESCRIPTION:TEXT:LANGUAGE>. The language and
 description may be omitted, in which case the language defaults to English,
