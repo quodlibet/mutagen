@@ -175,7 +175,7 @@ class TMid3v2(_TTools):
             self.filename)
         self.failUnlessEqual((res, out), (0, ""))
         f = ID3(self.filename)
-        frames = f.getall("WXXX")
+        frames = sorted(f.getall("WXXX"), key=lambda f: f.HashKey)
         assert len(frames) == 2
         assert frames[0].url == "B"
         assert frames[0].desc == "A"
