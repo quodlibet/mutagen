@@ -38,7 +38,9 @@ class LAMEHeader(object):
     """VBR quality: 0..9"""
 
     track_peak = None
-    """Peak signal amplitude as float. None if unknown."""
+    """Peak signal amplitude as float. 1.0 is maximal signal amplitude
+    in decoded format. None if unknown.
+    """
 
     track_gain_origin = 0
     """see the docs"""
