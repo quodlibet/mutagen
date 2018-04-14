@@ -11,6 +11,7 @@ http://www.codeproject.com/Articles/8295/MPEG-Audio-Frame-Header
 http://wiki.hydrogenaud.io/index.php?title=MP3
 """
 
+from __future__ import division
 from functools import partial
 
 from mutagen._util import cdata, BitReader
@@ -123,8 +124,7 @@ class LAMEHeader(object):
             self.track_peak = None
         else:
             # see PutLameVBR() in LAME's VbrTag.c
-            self.track_peak = (
-                cdata.uint32_be(track_peak_data) - 0.5) / 2 ** 23
+            self.track_peak = cdata.uint32_be(track_peak_data) / 2 ** 23
         track_gain_type = r.bits(3)
         self.track_gain_origin = r.bits(3)
         sign = r.bits(1)
