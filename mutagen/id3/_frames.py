@@ -265,7 +265,7 @@ class Frame(object):
             if tflags & Frame.FLAG24_COMPRESS:
                 try:
                     data = zlib.decompress(data)
-                except zlib.error as err:
+                except zlib.error:
                     # the initial mutagen that went out with QL 0.12 did not
                     # write the 4 bytes of uncompressed size. Compensate.
                     data = datalen_bytes + data
