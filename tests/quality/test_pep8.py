@@ -14,10 +14,10 @@ from .. import TestCase, capture_output
 from .util import setup_cfg
 
 try:
-    import pep8 as pycodestyle
+    import pycodestyle
 except ImportError:
     try:
-        import pycodestyle
+        import pep8 as pycodestyle
     except ImportError:
         pycodestyle = None
 
