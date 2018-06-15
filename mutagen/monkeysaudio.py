@@ -66,6 +66,9 @@ class MonkeysAudioInfo(StreamInfo):
                 blocks_per_frame = 73728
             else:
                 blocks_per_frame = 9216
+            self.bits_per_sample = 0
+            if header[48:].startswith(b"WAVEfmt"):
+                self.bits_per_sample = struct.unpack("<H", header[74:76])[0]
         self.version /= 1000.0
         self.length = 0.0
         if (self.sample_rate != 0) and (total_frames > 0):

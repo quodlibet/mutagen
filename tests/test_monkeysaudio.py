@@ -28,6 +28,11 @@ class TMonkeysAudio(TestCase):
         self.failUnlessAlmostEqual(self.mac396.info.length, 3.68, 2)
         self.failUnlessAlmostEqual(self.mac390.info.length, 15.63, 2)
 
+    def test_bits_per_sample(self):
+        assert self.mac399.info.bits_per_sample == 16
+        assert self.mac396.info.bits_per_sample == 16
+        assert self.mac390.info.bits_per_sample == 16
+
     def test_version(self):
         self.failUnlessEqual(self.mac399.info.version, 3.99)
         self.failUnlessEqual(self.mac396.info.version, 3.96)
