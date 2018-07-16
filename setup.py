@@ -267,6 +267,7 @@ if __name__ == "__main__":
             'Programming Language :: Python :: 3.4',
             'Programming Language :: Python :: 3.5',
             'Programming Language :: Python :: 3.6',
+            'Programming Language :: Python :: 3.7',
             'Programming Language :: Python :: Implementation :: CPython',
             'Programming Language :: Python :: Implementation :: PyPy',
             'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
