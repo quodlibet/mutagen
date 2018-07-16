@@ -1,5 +1,11 @@
-1.41.0 - 2018-??-??
+1.41.0 - 2018-07-15
 -------------------
+
+* Documentation fixes :pr:`342` (:user:`Jakub Wilk <jwilk>`)
+* mid3v2: Add support for WXXX frames :bug:`344` :bug:`348`
+* Fix decoding of track_peak from MP3 Info Tag :pr:`345`
+  (:user:`Anton Yuzhaninov <citrin>`)
+* MonkeysAudio: set bits_per_sample for older files :bug:`347`
 
 
 1.40.0 - 2018-01-25
