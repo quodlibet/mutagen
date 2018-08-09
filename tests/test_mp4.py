@@ -272,6 +272,17 @@ class TMP4Tags(TestCase):
             b"\x00\x00\x00\x15\x00\x00\x00\x00\x00"
         )
 
+    def test_render_integer_min_size(self):
+        render_int = MP4Tags()._MP4Tags__render_integer
+
+        data = render_int('stik', [42], 1)
+        tags = self.wrap_ilst(data)
+        assert tags['stik'] == [42]
+
+        assert len(render_int('stik', [42], 2)) == len(data) + 1
+        assert len(render_int('stik', [42], 4)) == len(data) + 3
+        assert len(render_int('stik', [42], 8)) == len(data) + 7
+
     def test_render_text(self):
         self.failUnlessEqual(
             MP4Tags()._MP4Tags__render_text(
