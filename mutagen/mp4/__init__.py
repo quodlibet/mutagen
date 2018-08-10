@@ -716,7 +716,8 @@ class MP4Tags(DictProxy, Tags):
                 # by itunes for compatibility.
                 if cdata.int8_min <= v <= cdata.int8_max and min_bytes <= 1:
                     data = cdata.to_int8(v)
-                if cdata.int16_min <= v <= cdata.int16_max and min_bytes <= 2:
+                elif cdata.int16_min <= v <= cdata.int16_max and \
+                        min_bytes <= 2:
                     data = cdata.to_int16_be(v)
                 elif cdata.int32_min <= v <= cdata.int32_max and \
                         min_bytes <= 4:
