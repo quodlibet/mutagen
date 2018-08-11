@@ -1,6 +1,10 @@
 1.42.0 - ????
 -------------
 
+1.41.1 - 2018-08-11
+-------------------
+
+* MP4: fix rtng, stik, shwm getting saved as 16bit ints instead of 8bit :bug:`349`
 
 
 1.41.0 - 2018-07-15
