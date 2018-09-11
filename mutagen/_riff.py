@@ -9,7 +9,6 @@
 """Resource Interchange File Format (RIFF)."""
 
 import struct
-from abc import abstractmethod
 from struct import pack
 
 from ._compat import text_type

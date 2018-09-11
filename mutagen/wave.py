@@ -16,7 +16,7 @@ from ._compat import endswith, reraise
 from mutagen import StreamInfo, FileType
 
 from mutagen.id3 import ID3
-from mutagen._riff import RiffFile, InvalidChunk, error
+from mutagen._riff import RiffFile, InvalidChunk
 from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
 from mutagen._util import loadfile, \
     convert_error, MutagenError
@@ -81,7 +81,7 @@ class WaveStreamInfo(StreamInfo):
         #    https://docs.python.org/2/library/struct.html#byte-order-size-and-alignment
         info = struct.unpack('<hhLLhh', data[:self.SIZE])
         self.audioFormat, self.channels, self.sample_rate, byte_rate, \
-        block_align, self.sample_size = info
+            block_align, self.sample_size = info
         self.bitrate = self.channels * block_align * self.sample_rate
 
         # Calculate duration
