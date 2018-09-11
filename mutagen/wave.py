@@ -16,7 +16,7 @@ from ._compat import endswith, reraise
 from mutagen import StreamInfo, FileType
 
 from mutagen.id3 import ID3
-from mutagen._riff import RiffFile, InvalidChunk, error
+from mutagen._riff import RiffFile, InvalidChunk
 from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
 from mutagen._util import loadfile, \
     convert_error, MutagenError
@@ -57,6 +57,7 @@ class WaveStreamInfo(StreamInfo):
     bitrate = 0
     channels = 0
     sample_rate = 0
+    sample_size = 0
 
     SIZE = 16
 
@@ -81,7 +82,7 @@ class WaveStreamInfo(StreamInfo):
         #    https://docs.python.org/2/library/struct.html#byte-order-size-and-alignment
         info = struct.unpack('<hhLLhh', data[:self.SIZE])
         self.audioFormat, self.channels, self.sample_rate, byte_rate, \
-        block_align, self.sample_size = info
+            block_align, self.sample_size = info
         self.bitrate = self.channels * block_align * self.sample_rate
 
         # Calculate duration
@@ -95,14 +96,12 @@ class WaveStreamInfo(StreamInfo):
             self.length = self.number_of_samples / self.sample_rate
 
     def pprint(self):
-        return u"%d channel AIFF @ %d bps, %s Hz, %.2f seconds" % (
+        return u"%d channel RIFF @ %d bps, %s Hz, %.2f seconds" % (
             self.channels, self.bitrate, self.sample_rate, self.length)
 
 
 class _WaveID3(ID3):
     """A Wave file with ID3v2 tags"""
-
-    print("RIFF/WAVE_WaveID3(ID3)")
 
     def _pre_load_header(self, fileobj):
         try:
@@ -134,30 +133,20 @@ class _WaveID3(ID3):
         chunk.resize(len(data))
         chunk.write(data)
 
-    @loadfile(writable=True)
     def delete(self, filething):
         """Completely removes the ID3 chunk from the RIFF/WAVE file"""
 
-        fileobj = filething.fileobj
-
-        waveFile = WaveFile(fileobj)
-
-        if 'id3' in waveFile:
-            try:
-                waveFile['id3'].delete()
-            except ValueError:
-                pass
-
+        delete(filething)
         self.clear()
 
 
 @convert_error(IOError, error)
 @loadfile(method=False, writable=True)
 def delete(filething):
-    """Completely removes the ID3 chunk from the RIFF file"""
+    """Completely removes the ID3 chunk from the RIFF/WAVE file"""
 
     try:
-        del RiffFile(filething.fileobj)['id3']
+        WaveFile(filething.fileobj).delete_chunk(u'id3')
     except KeyError:
         pass
 

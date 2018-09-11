@@ -538,8 +538,8 @@ _FILETYPES = {
     ],
     WAVE: [
         os.path.join(DATA_DIR, 'silence-2s-PCM-16000-08-ID3v23.wav'),
-        os.path.join(DATA_DIR, 'silence-2s-PCM-16000-08-ID3v23.wav'),
         os.path.join(DATA_DIR, 'silence-2s-PCM-16000-08-notags.wav'),
+        os.path.join(DATA_DIR, 'silence-2s-PCM-44100-16-ID3v23.wav'),
     ]
 }
 
