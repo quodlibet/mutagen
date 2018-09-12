@@ -35,7 +35,8 @@ def is_valid_chunk_id(id):
     Check if argument id is valid FOURCC type.
     """
 
-    assert isinstance(id, text_type)
+    assert isinstance(id, text_type), \
+        'id is of type %s, must be text_type: %r' % (type(id), id)
 
     if len(id) < 3 or len(id) > 4:
         return False
