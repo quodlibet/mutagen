@@ -394,7 +394,7 @@ class CueSheetTrack(object):
         isrc (`mutagen.text`): ISRC code, exactly 12 characters
         type (`int`): 0 for audio, 1 for digital data
         pre_emphasis (`bool`): true if the track is recorded with pre-emphasis
-        indexes (List[`mutagen.flac.CueSheetTrackIndex`]):
+        indexes (list[CueSheetTrackIndex]):
             list of CueSheetTrackIndex objects
     """
 
@@ -442,9 +442,9 @@ class CueSheet(MetadataBlock):
         lead_in_samples (`int`): number of lead-in samples
         compact_disc (`bool`): true if the cuesheet corresponds to a
             compact disc
-        tracks (List[`mutagen.flac.CueSheetTrack`]):
+        tracks (list[CueSheetTrack]):
             list of CueSheetTrack objects
-        lead_out (`mutagen.flac.CueSheetTrack` or `None`):
+        lead_out (`CueSheetTrack` or `None`):
             lead-out as CueSheetTrack or None if lead-out was not found
     """
 
@@ -678,7 +678,7 @@ class FLAC(mutagen.FileType):
     Attributes:
         cuesheet (`CueSheet`): if any or `None`
         seektable (`SeekTable`): if any or `None`
-        pictures (List[`Picture`]): list of embedded pictures
+        pictures (list[Picture]): list of embedded pictures
         info (`StreamInfo`)
         tags (`mutagen._vorbis.VCommentDict`)
     """
@@ -823,10 +823,7 @@ class FLAC(mutagen.FileType):
 
     @property
     def pictures(self):
-        """
-        Returns:
-            List[`Picture`]: List of embedded pictures
-        """
+        """list[Picture]: List of embedded pictures"""
 
         return [b for b in self.metadata_blocks if b.code == Picture.code]
 

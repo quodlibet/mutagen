@@ -50,7 +50,7 @@ class OggPage(object):
         offset (`int` or `None`): offset this page was read from (default None)
         complete (`bool`): if the last packet on this page is complete
             (default True)
-        packets (List[`bytes`]): list of raw packet data (default [])
+        packets (list[bytes]): list of raw packet data (default [])
 
     Note that if 'complete' is false, the next page's 'continued'
     property must be true (so set both when constructing pages).

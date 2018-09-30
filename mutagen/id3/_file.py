@@ -53,8 +53,8 @@ class ID3(ID3Tags, mutagen.Metadata):
         filething (filething): or `None`
 
     Attributes:
-        version (Tuple[int]): ID3 tag version as a tuple
-        unknown_frames (List[bytes]): raw frame data of any unknown frames
+        version (tuple[int]): ID3 tag version as a tuple
+        unknown_frames (list[bytes]): raw frame data of any unknown frames
             found
         size (int): the total size of the ID3 tag, including the header
     """

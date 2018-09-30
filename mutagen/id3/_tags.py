@@ -243,7 +243,7 @@ class ID3Tags(DictProxy, Tags):
 
         Args:
             key (text): key for frames to delete
-            values (List[`Frame`]): frames to add
+            values (list[Frame]): frames to add
         """
 
         self.delall(key)
