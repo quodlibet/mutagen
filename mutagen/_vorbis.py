@@ -157,18 +157,20 @@ class VComment(mutagen.Tags, list):
         for key, value in self:
             try:
                 if not is_valid_key(key):
-                    raise ValueError
+                    raise ValueError("%r is not a valid key" % key)
             except TypeError:
                 raise ValueError("%r is not a valid key" % key)
 
             if not isinstance(value, text_type):
                 if PY3:
-                    raise ValueError("%r needs to be str" % key)
+                    err = "%r needs to be str for key %r" % (value, key)
+                    raise ValueError(err)
 
                 try:
                     value.decode("utf-8")
                 except Exception:
-                    raise ValueError("%r is not a valid value" % value)
+                    err = "%r is not a valid value for key %r" % (value, key)
+                    raise ValueError(err)
 
         return True
 
