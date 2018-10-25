@@ -27,6 +27,7 @@ def find_id3v1(fileobj):
 
     extra_read = b"APETAGEX".index(b"TAG")
 
+    old_pos = fileobj.tell()
     try:
         fileobj.seek(-128 - extra_read, 2)
     except IOError as e:
@@ -38,6 +39,7 @@ def find_id3v1(fileobj):
             raise
 
     data = fileobj.read(128 + extra_read)
+    fileobj.seek(old_pos, 0)
     try:
         idx = data.index(b"TAG")
     except ValueError:

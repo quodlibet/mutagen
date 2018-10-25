@@ -33,6 +33,7 @@ class TID3Read(TestCase):
     unsynch = os.path.join(DATA_DIR, 'id3v23_unsynch.id3')
     v22 = os.path.join(DATA_DIR, "id3v22-test.mp3")
     bad_tyer = os.path.join(DATA_DIR, 'bad-TYER-frame.mp3')
+    v1v2_combined = os.path.join(DATA_DIR, "id3v1v2-combined.mp3")
 
     def test_PIC_in_23(self):
         filename = get_temp_empty(".mp3")
@@ -111,6 +112,24 @@ class TID3Read(TestCase):
         tags = ID3(self.v22)
         self.failUnless(tags["TRCK"].text == ["3/11"])
         self.failUnless(tags["TPE1"].text == ["Anais Mitchell"])
+
+    def test_combine_v1_v2(self):
+        tags = ID3(self.v1v2_combined, combine_v1v2=True)
+        # From ID3v2
+        self.assertEquals(tags["TPE1"].text, ["Anais Mitchell"])
+        # From ID3v1
+        self.assertEquals(tags["TALB"].text, ["Hymns for the Exiled"])
+        self.assertEquals(str(tags["TDRC"].text[0]), "2004")
+
+        tags = ID3(self.v1v2_combined, combine_v1v2=False)
+        self.assertEquals(tags["TPE1"].text, ["Anais Mitchell"])
+        with self.assertRaises(KeyError):
+            tags["TALB"]
+            tags["TDRC"]
+
+    def test_combine_v1_v2_precedence(self):
+        tags = ID3(self.v1v2_combined, combine_v1v2=True)
+        self.assertEquals(tags["TRCK"].text, ["3/11"])  # i.e. not 123
 
     def test_empty_file(self):
         self.assertRaises(ID3Error, ID3, filename=self.empty)
