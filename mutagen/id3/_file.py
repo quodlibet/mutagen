@@ -113,7 +113,7 @@ class ID3(ID3Tags, mutagen.Metadata):
     @convert_error(IOError, error)
     @loadfile()
     def load(self, filething, known_frames=None, translate=True, v2_version=4,
-             combine_v1v2=False):
+             load_v1=True):
         """load(filething, known_frames=None, translate=True, v2_version=4)
 
         Load tags from a filename.
@@ -127,8 +127,9 @@ class ID3(ID3Tags, mutagen.Metadata):
                 call update_to_v23() / update_to_v24() manually.
             v2_version (int): if update_to_v23 or update_to_v24 get called
                 (3 or 4)
-            combine_v1v2 (bool): Combine ID3v1 and ID3v2 tags if both headers
-                are present. ID3v2 tags have precedence.
+            load_v1 (bool): Load tags from ID3v1 header if present. If both
+                ID3v1 and ID3v2 headers are present, combine the tags from
+                the two, with ID3v2 having precedence.
 
         Example of loading a custom frame::
 
@@ -152,6 +153,9 @@ class ID3(ID3Tags, mutagen.Metadata):
         try:
             self._header = ID3Header(fileobj)
         except (ID3NoHeaderError, ID3UnsupportedVersionError):
+            if not load_v1:
+                raise
+
             frames, offset = find_id3v1(fileobj, v2_version)
             if frames is None:
                 raise
@@ -174,7 +178,7 @@ class ID3(ID3Tags, mutagen.Metadata):
             else:
                 self.update_to_v24()
 
-        if self._header and combine_v1v2:
+        if self._header and load_v1:
             frames, offset = find_id3v1(fileobj, v2_version)
             if frames:
                 for k, v in frames.items():
