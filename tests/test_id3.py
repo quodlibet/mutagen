@@ -134,7 +134,7 @@ class TID3Read(TestCase):
             tags["TALB"]
 
     def test_load_v1_v2_precedence(self):
-        tags = ID3(self.v1v2_combined, load_v1=True)
+        tags = ID3(self.v1v2_combined)
         self.assertEquals(tags["TRCK"].text, ["3/11"])  # i.e. not 123
 
         # ID3v2 has TYER=2004, ID3v1 has TDRC=1337:
@@ -144,7 +144,7 @@ class TID3Read(TestCase):
         with self.assertRaises(KeyError):
             tags["TYER"]
 
-        tags = ID3(self.v1v2_combined, load_v1=True, v2_version=3)
+        tags = ID3(self.v1v2_combined, v2_version=3)
 
         # With v2_version=3, the ID3v2 tag should still have precedence
         self.assertEquals(str(tags["TYER"].text[0]), "2004")
