@@ -161,8 +161,10 @@ class ID3(ID3Tags, mutagen.Metadata):
                 raise
 
             self.version = ID3Header._V11
-            for v in frames.values():
-                self.add(v)
+            for k, v in frames.items():
+                if (known_frames is None or
+                        (known_frames is not None and k in known_frames)):
+                    self.add(v)
         else:
             # XXX: attach to the header object so we have it in spec parsing..
             if known_frames is not None:
@@ -182,7 +184,9 @@ class ID3(ID3Tags, mutagen.Metadata):
             frames, offset = find_id3v1(fileobj, v2_version)
             if frames:
                 for k, v in frames.items():
-                    if len(self.getall(k)) == 0:
+                    if (len(self.getall(k)) == 0 and
+                            (known_frames is None or
+                            (known_frames is not None and k in known_frames))):
                         self.add(v)
 
     def _prepare_data(self, fileobj, start, available, v2_version, v23_sep,
