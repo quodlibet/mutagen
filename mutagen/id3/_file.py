@@ -152,7 +152,7 @@ class ID3(ID3Tags, mutagen.Metadata):
         try:
             self._header = ID3Header(fileobj)
         except (ID3NoHeaderError, ID3UnsupportedVersionError):
-            frames, offset = find_id3v1(fileobj)
+            frames, offset = find_id3v1(fileobj, v2_version)
             if frames is None:
                 raise
 
@@ -175,7 +175,7 @@ class ID3(ID3Tags, mutagen.Metadata):
                 self.update_to_v24()
 
         if self._header and combine_v1v2:
-            frames, offset = find_id3v1(fileobj)
+            frames, offset = find_id3v1(fileobj, v2_version)
             if frames:
                 for k, v in frames.items():
                     if len(self.getall(k)) == 0:

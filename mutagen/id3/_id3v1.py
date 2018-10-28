@@ -13,15 +13,21 @@ from struct import error as StructError, unpack
 
 from mutagen._util import chr_, text_type
 
-from ._frames import TCON, TRCK, COMM, TDRC, TALB, TPE1, TIT2
+from ._frames import TCON, TRCK, COMM, TDRC, TYER, TALB, TPE1, TIT2
 
 
-def find_id3v1(fileobj):
+def find_id3v1(fileobj, v2_version=4):
     """Returns a tuple of (id3tag, offset_to_end) or (None, 0)
 
     offset mainly because we used to write too short tags in some cases and
     we need the offset to delete them.
+
+    v2_version: Decides whether ID3v2.3 or ID3v2.4 tags
+                should be returned. Must be 3 or 4.
     """
+
+    if v2_version not in (3, 4):
+        raise ValueError("Only 3 and 4 possible for v2_version")
 
     # id3v1 is always at the end (after apev2)
 
@@ -55,7 +61,7 @@ def find_id3v1(fileobj):
             if idx == ape_idx + extra_read:
                 return (None, 0)
 
-        tag = ParseID3v1(data[idx:])
+        tag = ParseID3v1(data[idx:], v2_version)
         if tag is None:
             return (None, 0)
 
@@ -64,11 +70,17 @@ def find_id3v1(fileobj):
 
 
 # ID3v1.1 support.
-def ParseID3v1(data):
-    """Parse an ID3v1 tag, returning a list of ID3v2.4 frames.
+def ParseID3v1(data, v2_version=4):
+    """Parse an ID3v1 tag, returning a list of ID3v2 frames
 
     Returns a {frame_name: frame} dict or None.
+
+    v2_version: Decides whether ID3v2.3 or ID3v2.4 tags
+                should be returned. Must be 3 or 4.
     """
+
+    if v2_version not in (3, 4):
+        raise ValueError("Only 3 and 4 possible for v2_version")
 
     try:
         data = data[data.index(b"TAG"):]
@@ -107,7 +119,10 @@ def ParseID3v1(data):
     if album:
         frames["TALB"] = TALB(encoding=0, text=album)
     if year:
-        frames["TDRC"] = TDRC(encoding=0, text=year)
+        if v2_version == 3:
+            frames["TYER"] = TYER(encoding=0, text=year)
+        else:
+            frames["TDRC"] = TDRC(encoding=0, text=year)
     if comment:
         frames["COMM"] = COMM(
             encoding=0, lang="eng", desc="ID3v1 Comment", text=comment)
