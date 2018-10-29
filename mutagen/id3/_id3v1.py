@@ -16,7 +16,7 @@ from mutagen._util import chr_, text_type
 from ._frames import TCON, TRCK, COMM, TDRC, TYER, TALB, TPE1, TIT2
 
 
-def find_id3v1(fileobj, v2_version=4):
+def find_id3v1(fileobj, v2_version=4, known_frames=None):
     """Returns a tuple of (id3tag, offset_to_end) or (None, 0)
 
     offset mainly because we used to write too short tags in some cases and
@@ -24,6 +24,9 @@ def find_id3v1(fileobj, v2_version=4):
 
     v2_version: Decides whether ID3v2.3 or ID3v2.4 tags
                 should be returned. Must be 3 or 4.
+
+    known_frames (Dict[`mutagen.text`, `Frame`]): dict mapping frame
+        IDs to Frame objects
     """
 
     if v2_version not in (3, 4):
@@ -61,7 +64,7 @@ def find_id3v1(fileobj, v2_version=4):
             if idx == ape_idx + extra_read:
                 return (None, 0)
 
-        tag = ParseID3v1(data[idx:], v2_version)
+        tag = ParseID3v1(data[idx:], v2_version, known_frames)
         if tag is None:
             return (None, 0)
 
@@ -70,13 +73,16 @@ def find_id3v1(fileobj, v2_version=4):
 
 
 # ID3v1.1 support.
-def ParseID3v1(data, v2_version=4):
+def ParseID3v1(data, v2_version=4, known_frames=None):
     """Parse an ID3v1 tag, returning a list of ID3v2 frames
 
     Returns a {frame_name: frame} dict or None.
 
     v2_version: Decides whether ID3v2.3 or ID3v2.4 tags
                 should be returned. Must be 3 or 4.
+
+    known_frames (Dict[`mutagen.text`, `Frame`]): dict mapping frame
+        IDs to Frame objects
     """
 
     if v2_version not in (3, 4):
@@ -111,26 +117,45 @@ def ParseID3v1(data, v2_version=4):
     title, artist, album, year, comment = map(
         fix, [title, artist, album, year, comment])
 
+    frame_class = {
+        "TIT2": TIT2,
+        "TPE1": TPE1,
+        "TALB": TALB,
+        "TYER": TYER,
+        "TDRC": TDRC,
+        "COMM": COMM,
+        "TRCK": TRCK,
+        "TCON": TCON,
+    }
+    for key in frame_class:
+        if known_frames is not None:
+            if key in known_frames:
+                frame_class[key] = known_frames[key]
+            else:
+                frame_class[key] = None
+
     frames = {}
-    if title:
-        frames["TIT2"] = TIT2(encoding=0, text=title)
-    if artist:
-        frames["TPE1"] = TPE1(encoding=0, text=[artist])
-    if album:
-        frames["TALB"] = TALB(encoding=0, text=album)
+    if title and frame_class["TIT2"]:
+        frames["TIT2"] = frame_class["TIT2"](encoding=0, text=title)
+    if artist and frame_class["TPE1"]:
+        frames["TPE1"] = frame_class["TPE1"](encoding=0, text=[artist])
+    if album and frame_class["TALB"]:
+        frames["TALB"] = frame_class["TALB"](encoding=0, text=album)
     if year:
-        if v2_version == 3:
-            frames["TYER"] = TYER(encoding=0, text=year)
-        else:
-            frames["TDRC"] = TDRC(encoding=0, text=year)
-    if comment:
-        frames["COMM"] = COMM(
-            encoding=0, lang="eng", desc="ID3v1 Comment", text=comment)
+        if v2_version == 3 and frame_class["TYER"]:
+            frames["TYER"] = frame_class["TYER"](encoding=0, text=year)
+        elif frame_class["TDRC"]:
+            frames["TDRC"] = frame_class["TDRC"](encoding=0, text=year)
+    if comment and frame_class["COMM"]:
+            frames["COMM"] = frame_class["COMM"](
+                encoding=0, lang="eng", desc="ID3v1 Comment", text=comment)
+
     # Don't read a track number if it looks like the comment was
     # padded with spaces instead of nulls (thanks, WinAmp).
-    if track and ((track != 32) or (data[-3] == b'\x00'[0])):
+    if (track and frame_class["TRCK"] and
+            ((track != 32) or (data[-3] == b'\x00'[0]))):
         frames["TRCK"] = TRCK(encoding=0, text=str(track))
-    if genre != 255:
+    if genre != 255 and frame_class["TCON"]:
         frames["TCON"] = TCON(encoding=0, text=str(genre))
     return frames
 

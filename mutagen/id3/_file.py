@@ -156,14 +156,13 @@ class ID3(ID3Tags, mutagen.Metadata):
             if not load_v1:
                 raise
 
-            frames, offset = find_id3v1(fileobj, v2_version)
+            frames, offset = find_id3v1(fileobj, v2_version, known_frames)
             if frames is None:
                 raise
 
             self.version = ID3Header._V11
-            for k, v in frames.items():
-                if (known_frames is None or
-                        (known_frames is not None and k in known_frames)):
+            for v in frames.values():
+                if len(self.getall(v.HashKey)) == 0:
                     self.add(v)
         else:
             # XXX: attach to the header object so we have it in spec parsing..
@@ -181,12 +180,10 @@ class ID3(ID3Tags, mutagen.Metadata):
                 self.update_to_v24()
 
         if self._header and load_v1:
-            frames, offset = find_id3v1(fileobj, v2_version)
+            frames, offset = find_id3v1(fileobj, v2_version, known_frames)
             if frames:
-                for k, v in frames.items():
-                    if (len(self.getall(k)) == 0 and
-                            (known_frames is None or
-                            (known_frames is not None and k in known_frames))):
+                for v in frames.values():
+                    if len(self.getall(v.HashKey)) == 0:
                         self.add(v)
 
     def _prepare_data(self, fileobj, start, available, v2_version, v23_sep,

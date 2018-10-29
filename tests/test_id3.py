@@ -151,6 +151,33 @@ class TID3Read(TestCase):
         with self.assertRaises(KeyError):
             tags["TDRC"]
 
+    def test_load_v1_comment(self):
+        # Tags with different HashKeys but equal FrameIDs (like COMM)
+        # should be kept separate
+        tags = ID3(self.v1v2_combined)
+        comments = tags.getall("COMM")
+        # From ID3v2
+        self.failUnless("Waterbug Records, www.anaismitchell.com" in comments)
+        # From ID3v1
+        self.failUnless("v1 comment" in comments)
+
+    def test_load_v1_known_frames_override(self):
+        class MyCOMM(COMM):
+            @property
+            def FrameID(self):
+                # We want to replace the existing COMM, so override
+                # the FrameID
+                return COMM.__name__
+
+        frames = dict(id3.Frames)
+        frames["COMM"] = MyCOMM
+        tags = ID3(self.v1v2_combined, known_frames=frames)
+
+        comments = tags.getall("COMM")
+        self.failUnless(len(comments) > 0)
+        for comm in comments:
+            self.assertIsInstance(comm, MyCOMM)
+
     def test_empty_file(self):
         self.assertRaises(ID3Error, ID3, filename=self.empty)
 
