@@ -1095,13 +1095,18 @@ class SYLT(Frame):
     def HashKey(self):
         return '%s:%s:%s' % (self.FrameID, self.desc, self.lang)
 
+    def _pprint(self):
+        return str(self)
+
     def __eq__(self, other):
         return str(self) == other
 
     __hash__ = Frame.__hash__
 
     def __str__(self):
-        return u"".join(text for (text, time) in self.text)
+        unit = 'fr' if self.format == 1 else 'ms'
+        return u"\n".join("[{0}{1}]: {2}".format(time, unit, text)
+                          for (text, time) in self.text)
 
     def __bytes__(self):
         return text_type(self).encode("utf-8")
