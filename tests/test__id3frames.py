@@ -181,7 +181,8 @@ class TVariousFrames(TestCase):
         ],
         [
             'SYLT', (b'\x00eng\x02\x01some lyrics\x00foo\x00\x00\x00\x00\x01'
-                     b'bar\x00\x00\x00\x00\x10'), "foobar", '',
+                     b'bar\x00\x00\x00\x00\x10'),
+            "[1ms]: foo\n[16ms]: bar", '',
             dict(encoding=0, lang='eng', type=1, format=2, desc='some lyrics')
         ],
         ['POSS', b'\x01\x0f', 15, 15, dict(format=1, position=15)],
@@ -330,7 +331,7 @@ class TVariousFrames(TestCase):
         [
             'SLT', (b'\x00eng\x02\x01some lyrics\x00foo\x00\x00\x00\x00\x01bar'
                     b'\x00\x00\x00\x00\x10'),
-            "foobar", '',
+            "[1ms]: foo\n[16ms]: bar", '',
             dict(encoding=0, lang='eng', type=1, format=2, desc='some lyrics')
         ],
         ['TT1', b'\x00ab\x00', 'ab', '', dict(encoding=0)],
