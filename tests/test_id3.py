@@ -141,14 +141,31 @@ class TID3Read(TestCase):
         assert tags.version == (2, 4, 0)
         assert str(tags["TDRC"].text[0]) == "1337"
 
+    def test_load_v1_v2_tcon_translate(self):
+        tags = ID3()
+        tags.add(TCON(text=["12"]))
+        v1_data = MakeID3v1(tags)
+
+        filename = get_temp_copy(self.empty)
+        try:
+            tags = ID3()
+            tags.save(filename=filename, v1=0)
+            with open(filename, "ab") as h:
+                h.write(v1_data)
+            tags = ID3(filename, load_v1=True)
+            assert tags["TCON"][0] == "Other"
+            tags = ID3(filename, load_v1=False)
+            assert "TCON" not in tags
+        finally:
+            os.unlink(filename)
+
     def test_load_v1_v2_precedence(self):
         tags = ID3(self.v1v2_combined)
         self.assertEquals(tags["TRCK"].text, ["3/11"])  # i.e. not 123
 
-        # ID3v2 has TYER=2004, ID3v1 has TDRC=1337:
-        # TDRC should be 2004 (when translation is enabled),
-        # even though TYER is from an older ID3v2 format
-        self.assertEquals(str(tags["TDRC"].text[0]), "2004")
+        # ID3v2 has TYER=2004 (which isn't a valid v2.4 frame),
+        # ID3v1 has TDRC=1337.
+        self.assertEquals(str(tags["TDRC"].text[0]), "1337")
         with self.assertRaises(KeyError):
             tags["TYER"]
 

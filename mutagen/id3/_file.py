@@ -173,22 +173,19 @@ class ID3(ID3Tags, mutagen.Metadata):
             remaining_data = self._read(self._header, data)
             self._padding = len(remaining_data)
 
+            if load_v1:
+                v1v2_ver = 4 if self.version[1] == 4 else 3
+                frames, offset = find_id3v1(fileobj, v1v2_ver, known_frames)
+                if frames:
+                    for v in frames.values():
+                        if len(self.getall(v.HashKey)) == 0:
+                            self.add(v)
+
         if translate:
             if v2_version == 3:
                 self.update_to_v23()
             else:
                 self.update_to_v24()
-
-        if self._header and load_v1:
-            if translate:
-                v1v2_ver = v2_version
-            else:
-                v1v2_ver = 4 if self.version[1] == 4 else 3
-            frames, offset = find_id3v1(fileobj, v1v2_ver, known_frames)
-            if frames:
-                for v in frames.values():
-                    if len(self.getall(v.HashKey)) == 0:
-                        self.add(v)
 
     def _prepare_data(self, fileobj, start, available, v2_version, v23_sep,
                       pad_func):
