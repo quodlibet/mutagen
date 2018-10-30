@@ -30,9 +30,11 @@ class TID3Read(TestCase):
 
     empty = os.path.join(DATA_DIR, 'emptyfile.mp3')
     silence = os.path.join(DATA_DIR, 'silence-44-s.mp3')
+    silence_v1 = os.path.join(DATA_DIR, 'silence-44-s-v1.mp3')
     unsynch = os.path.join(DATA_DIR, 'id3v23_unsynch.id3')
     v22 = os.path.join(DATA_DIR, "id3v22-test.mp3")
     bad_tyer = os.path.join(DATA_DIR, 'bad-TYER-frame.mp3')
+    v1v2_combined = os.path.join(DATA_DIR, "id3v1v2-combined.mp3")
 
     def test_PIC_in_23(self):
         filename = get_temp_empty(".mp3")
@@ -111,6 +113,70 @@ class TID3Read(TestCase):
         tags = ID3(self.v22)
         self.failUnless(tags["TRCK"].text == ["3/11"])
         self.failUnless(tags["TPE1"].text == ["Anais Mitchell"])
+
+    def test_load_v1(self):
+        tags = ID3(self.silence_v1)
+        self.assertEquals(tags["TALB"], "Quod Libet Test Data")
+
+        with self.assertRaises(ID3NoHeaderError):
+            tags = ID3(self.silence_v1, load_v1=False)
+
+    def test_load_v1_v2(self):
+        tags = ID3(self.v1v2_combined)
+        # From ID3v2
+        self.assertEquals(tags["TPE1"].text, ["Anais Mitchell"])
+        # From ID3v1
+        self.assertEquals(tags["TALB"].text, ["Hymns for the Exiled"])
+
+        tags = ID3(self.v1v2_combined, load_v1=False)
+        self.assertEquals(tags["TPE1"].text, ["Anais Mitchell"])
+        with self.assertRaises(KeyError):
+            tags["TALB"]
+
+    def test_load_v1_v2_precedence(self):
+        tags = ID3(self.v1v2_combined)
+        self.assertEquals(tags["TRCK"].text, ["3/11"])  # i.e. not 123
+
+        # ID3v2 has TYER=2004, ID3v1 has TDRC=1337:
+        # TDRC should be 2004 (when translation is enabled),
+        # even though TYER is from an older ID3v2 format
+        self.assertEquals(str(tags["TDRC"].text[0]), "2004")
+        with self.assertRaises(KeyError):
+            tags["TYER"]
+
+        tags = ID3(self.v1v2_combined, v2_version=3)
+
+        # With v2_version=3, the ID3v2 tag should still have precedence
+        self.assertEquals(str(tags["TYER"].text[0]), "2004")
+        with self.assertRaises(KeyError):
+            tags["TDRC"]
+
+    def test_load_v1_comment(self):
+        # Tags with different HashKeys but equal FrameIDs (like COMM)
+        # should be kept separate
+        tags = ID3(self.v1v2_combined)
+        comments = tags.getall("COMM")
+        # From ID3v2
+        self.failUnless("Waterbug Records, www.anaismitchell.com" in comments)
+        # From ID3v1
+        self.failUnless("v1 comment" in comments)
+
+    def test_load_v1_known_frames_override(self):
+        class MyCOMM(COMM):
+            @property
+            def FrameID(self):
+                # We want to replace the existing COMM, so override
+                # the FrameID
+                return COMM.__name__
+
+        frames = dict(id3.Frames)
+        frames["COMM"] = MyCOMM
+        tags = ID3(self.v1v2_combined, known_frames=frames)
+
+        comments = tags.getall("COMM")
+        self.failUnless(len(comments) > 0)
+        for comm in comments:
+            self.assertIsInstance(comm, MyCOMM)
 
     def test_empty_file(self):
         self.assertRaises(ID3Error, ID3, filename=self.empty)

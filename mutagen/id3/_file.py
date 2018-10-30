@@ -112,7 +112,8 @@ class ID3(ID3Tags, mutagen.Metadata):
 
     @convert_error(IOError, error)
     @loadfile()
-    def load(self, filething, known_frames=None, translate=True, v2_version=4):
+    def load(self, filething, known_frames=None, translate=True, v2_version=4,
+             load_v1=True):
         """load(filething, known_frames=None, translate=True, v2_version=4)
 
         Load tags from a filename.
@@ -126,6 +127,9 @@ class ID3(ID3Tags, mutagen.Metadata):
                 call update_to_v23() / update_to_v24() manually.
             v2_version (int): if update_to_v23 or update_to_v24 get called
                 (3 or 4)
+            load_v1 (bool): Load tags from ID3v1 header if present. If both
+                ID3v1 and ID3v2 headers are present, combine the tags from
+                the two, with ID3v2 having precedence.
 
         Example of loading a custom frame::
 
@@ -149,13 +153,17 @@ class ID3(ID3Tags, mutagen.Metadata):
         try:
             self._header = ID3Header(fileobj)
         except (ID3NoHeaderError, ID3UnsupportedVersionError):
-            frames, offset = find_id3v1(fileobj)
+            if not load_v1:
+                raise
+
+            frames, offset = find_id3v1(fileobj, v2_version, known_frames)
             if frames is None:
                 raise
 
             self.version = ID3Header._V11
             for v in frames.values():
-                self.add(v)
+                if len(self.getall(v.HashKey)) == 0:
+                    self.add(v)
         else:
             # XXX: attach to the header object so we have it in spec parsing..
             if known_frames is not None:
@@ -170,6 +178,13 @@ class ID3(ID3Tags, mutagen.Metadata):
                 self.update_to_v23()
             else:
                 self.update_to_v24()
+
+        if self._header and load_v1:
+            frames, offset = find_id3v1(fileobj, v2_version, known_frames)
+            if frames:
+                for v in frames.values():
+                    if len(self.getall(v.HashKey)) == 0:
+                        self.add(v)
 
     def _prepare_data(self, fileobj, start, available, v2_version, v23_sep,
                       pad_func):
