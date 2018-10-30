@@ -114,9 +114,7 @@ class ID3(ID3Tags, mutagen.Metadata):
     @loadfile()
     def load(self, filething, known_frames=None, translate=True, v2_version=4,
              load_v1=True):
-        """load(filething, known_frames=None, translate=True, v2_version=4)
-
-        Load tags from a filename.
+        """Load tags from a filename.
 
         Args:
             filename (filething): filename or file object to load tag data from
