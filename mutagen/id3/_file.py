@@ -180,7 +180,11 @@ class ID3(ID3Tags, mutagen.Metadata):
                 self.update_to_v24()
 
         if self._header and load_v1:
-            frames, offset = find_id3v1(fileobj, v2_version, known_frames)
+            if translate:
+                v1v2_ver = v2_version
+            else:
+                v1v2_ver = 4 if self.version[1] == 4 else 3
+            frames, offset = find_id3v1(fileobj, v1v2_ver, known_frames)
             if frames:
                 for v in frames.values():
                     if len(self.getall(v.HashKey)) == 0:

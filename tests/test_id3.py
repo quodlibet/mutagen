@@ -133,6 +133,14 @@ class TID3Read(TestCase):
         with self.assertRaises(KeyError):
             tags["TALB"]
 
+    def test_load_v1_v2_no_translate(self):
+        tags = ID3(self.v1v2_combined, v2_version=4, translate=False)
+        assert tags.version == (2, 4, 0)
+        assert str(tags["TDRC"].text[0]) == "1337"
+        tags = ID3(self.v1v2_combined, v2_version=3, translate=False)
+        assert tags.version == (2, 4, 0)
+        assert str(tags["TDRC"].text[0]) == "1337"
+
     def test_load_v1_v2_precedence(self):
         tags = ID3(self.v1v2_combined)
         self.assertEquals(tags["TRCK"].text, ["3/11"])  # i.e. not 123
