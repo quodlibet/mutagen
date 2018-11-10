@@ -271,7 +271,7 @@ class _IFFID3(ID3):
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
-    def save(self, filething, v2_version=4, v23_sep='/', padding=None):
+    def save(self, filething=None, v2_version=4, v23_sep='/', padding=None):
         """Save ID3v2 data to the AIFF file"""
 
         fileobj = filething.fileobj
@@ -299,7 +299,7 @@ class _IFFID3(ID3):
         chunk.write(data)
 
     @loadfile(writable=True)
-    def delete(self, filething):
+    def delete(self, filething=None):
         """Completely removes the ID3 chunk from the AIFF file"""
 
         delete(filething)

@@ -218,13 +218,14 @@ class ID3(ID3Tags, mutagen.Metadata):
 
     @convert_error(IOError, error)
     @loadfile(writable=True, create=True)
-    def save(self, filething, v1=1, v2_version=4, v23_sep='/', padding=None):
+    def save(self, filething=None, v1=1, v2_version=4, v23_sep='/',
+             padding=None):
         """save(filething=None, v1=1, v2_version=4, v23_sep='/', padding=None)
 
         Save changes to a file.
 
         Args:
-            filename (fspath):
+            filething (filething):
                 Filename to save the tag to. If no filename is given,
                 the one most recently loaded is used.
             v1 (ID3v1SaveOptions):
@@ -282,7 +283,7 @@ class ID3(ID3Tags, mutagen.Metadata):
             f.truncate()
 
     @loadfile(writable=True)
-    def delete(self, filething, delete_v1=True, delete_v2=True):
+    def delete(self, filething=None, delete_v1=True, delete_v2=True):
         """delete(filething=None, delete_v1=True, delete_v2=True)
 
         Remove tags from a file.

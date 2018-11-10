@@ -252,7 +252,7 @@ class ASF(FileType):
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
-    def save(self, filething, padding=None):
+    def save(self, filething=None, padding=None):
         """save(filething=None, padding=None)
 
         Save tag changes back to the loaded file.
@@ -319,7 +319,7 @@ class ASF(FileType):
         raise ASFError
 
     @loadfile(writable=True)
-    def delete(self, filething):
+    def delete(self, filething=None):
         """delete(filething=None)
 
         Args:

@@ -757,7 +757,7 @@ class FLAC(mutagen.FileType):
     add_vorbiscomment = add_tags
 
     @loadfile(writable=True)
-    def delete(self, filething):
+    def delete(self, filething=None):
         """Remove Vorbis comments from a file.
 
         If no filename is given, the one most recently loaded is used.
@@ -829,7 +829,7 @@ class FLAC(mutagen.FileType):
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
-    def save(self, filething, deleteid3=False, padding=None):
+    def save(self, filething=None, deleteid3=False, padding=None):
         """Save metadata blocks to a file.
 
         Args:
