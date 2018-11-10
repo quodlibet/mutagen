@@ -173,7 +173,8 @@ class EasyID3(DictMixin, Metadata):
                     lambda s, v: setattr(s.__id3, 'load', v))
 
     @loadfile(writable=True, create=True)
-    def save(self, filething, v1=1, v2_version=4, v23_sep='/', padding=None):
+    def save(self, filething=None, v1=1, v2_version=4, v23_sep='/',
+             padding=None):
         """save(filething=None, v1=1, v2_version=4, v23_sep='/', padding=None)
 
         Save changes to a file.

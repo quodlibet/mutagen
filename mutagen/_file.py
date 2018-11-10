@@ -97,7 +97,7 @@ class FileType(DictMixin):
             return self.tags.keys()
 
     @loadfile(writable=True)
-    def delete(self, filething):
+    def delete(self, filething=None):
         """delete(filething=None)
 
         Remove tags from a file.
@@ -120,7 +120,7 @@ class FileType(DictMixin):
             return self.tags.delete(filething)
 
     @loadfile(writable=True)
-    def save(self, filething, **kwargs):
+    def save(self, filething=None, **kwargs):
         """save(filething=None, **kwargs)
 
         Save metadata tags.

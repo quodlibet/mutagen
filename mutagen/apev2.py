@@ -419,7 +419,7 @@ class APEv2(_CIDictProxy, Metadata):
 
     @convert_error(IOError, error)
     @loadfile(writable=True, create=True)
-    def save(self, filething):
+    def save(self, filething=None):
         """Save changes to a file.
 
         If no filename is given, the one most recently loaded is used.
@@ -481,7 +481,7 @@ class APEv2(_CIDictProxy, Metadata):
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
-    def delete(self, filething):
+    def delete(self, filething=None):
         """Remove tags from a file."""
 
         fileobj = filething.fileobj

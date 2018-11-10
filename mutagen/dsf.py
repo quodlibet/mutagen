@@ -199,7 +199,7 @@ class _DSFID3(ID3):
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
-    def save(self, filething, v2_version=4, v23_sep='/', padding=None):
+    def save(self, filething=None, v2_version=4, v23_sep='/', padding=None):
         """Save ID3v2 data to the DSF file"""
 
         fileobj = filething.fileobj
@@ -328,7 +328,7 @@ class DSF(FileType):
         self.info = DSFInfo(dsf_file.fmt_chunk)
 
     @loadfile(writable=True)
-    def delete(self, filething):
+    def delete(self, filething=None):
         self.tags = None
         delete(filething)
 

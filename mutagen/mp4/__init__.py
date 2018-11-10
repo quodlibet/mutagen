@@ -392,7 +392,7 @@ class MP4Tags(DictProxy, Tags):
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
-    def save(self, filething, padding=None):
+    def save(self, filething=None, padding=None):
 
         values = []
         items = sorted(self.items(), key=lambda kv: _item_sort_key(*kv))

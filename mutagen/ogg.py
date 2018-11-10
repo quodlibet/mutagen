@@ -535,7 +535,7 @@ class OggFileType(FileType):
             raise self._Error("no appropriate stream found")
 
     @loadfile(writable=True)
-    def delete(self, filething):
+    def delete(self, filething=None):
         """delete(filething=None)
 
         Remove tags from a file.
@@ -567,7 +567,7 @@ class OggFileType(FileType):
         raise self._Error
 
     @loadfile(writable=True)
-    def save(self, filething, padding=None):
+    def save(self, filething=None, padding=None):
         """save(filething=None, padding=None)
 
         Save a tag to a file.
