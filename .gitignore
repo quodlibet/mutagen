@@ -11,3 +11,4 @@ coverage
 .coverage
 .idea
 .hypothesis
+.pytest_cache
