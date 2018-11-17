@@ -81,7 +81,7 @@ class distcheck(distutils_sdist):
 
             tracked_files = out.splitlines()
             for ignore in [".travis.yml", ".gitignore", ".codecov.yml",
-                           ".appveyor.yml"]:
+                           "azure-pipelines.yml"]:
                 tracked_files.remove(ignore)
 
             diff = set(tracked_files) - set(included_files)
