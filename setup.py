@@ -258,7 +258,7 @@ if __name__ == "__main__":
           description="read and write audio tags for many formats",
           author="Michael Urman",
           author_email="quod-libet-development@groups.google.com",
-          license="GNU GPL v2",
+          license="GPL-2.0-or-later",
           classifiers=[
             'Operating System :: OS Independent',
             'Programming Language :: Python :: 2',
@@ -270,7 +270,8 @@ if __name__ == "__main__":
             'Programming Language :: Python :: 3.7',
             'Programming Language :: Python :: Implementation :: CPython',
             'Programming Language :: Python :: Implementation :: PyPy',
-            'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
+            ('License :: OSI Approved :: '
+             'GNU General Public License v2 or later (GPLv2+)'),
             'Topic :: Multimedia :: Sound/Audio',
           ],
           packages=[
