@@ -11,6 +11,7 @@
 import sys
 import codecs
 import mimetypes
+import warnings
 
 from optparse import SUPPRESS_HELP
 
@@ -137,7 +138,11 @@ def value_from_fsnative(arg, escape):
         if PY2:
             bytes_ = bytes_.decode("string_escape")
         else:
-            bytes_ = codecs.escape_decode(bytes_)[0]
+            # With py3.7 this has started to warn for invalid escapes, but we
+            # don't control the input so ignore it.
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                bytes_ = codecs.escape_decode(bytes_)[0]
         arg = bytes2fsn(bytes_)
 
     text = fsn2text(arg, strict=True)
