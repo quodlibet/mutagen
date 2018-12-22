@@ -975,6 +975,40 @@ class MP4Info(StreamInfo):
         else:
             self._parse_stsd(atom, fileobj)
 
+        from mutagen._util import BitReader, BitReaderError, cdata
+
+        tkhd = atoms.path(b"moov", b"trak", b"tkhd")[-1]
+        ok, data = tkhd.read(fileobj)
+        version, flags, data = parse_full_atom(data)
+        xx = cBytesIO(data)
+        r = BitReader(xx)
+        r.skip(64)
+        print("#", r.bits(32))
+
+        size = 0
+        for atom in atoms.atoms:
+            if atom.name == b"moof":
+                tfhd = list(atom.findall(b"tfhd", recursive=True))[0]
+                ok, data = tfhd.read(fileobj)
+                version, flags, data = parse_full_atom(data)
+                print("#", hex(flags & 0x000020))
+                xx = cBytesIO(data)
+                r = BitReader(xx)
+                track_id = r.bits(32)
+
+                trun = list(atom.findall(b"trun", recursive=True))[0]
+                ok, data = trun.read(fileobj)
+                version, flags, data = parse_full_atom(data)
+                xx = cBytesIO(data)
+                r = BitReader(xx)
+                sample_count = r.bits(32)
+                r.skip(32)
+                for i in range(sample_count):
+                    size += r.bits(32)
+
+        print((size * 8) / self.length)
+
+
     def _parse_stsd(self, atom, fileobj):
         """Sets channels, bits_per_sample, sample_rate and optionally bitrate.
 
