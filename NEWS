@@ -1,8 +1,12 @@
+.. _release-1.43.0:
+
 1.43.0 - ???
 ------------
 
 * Python 3.4 is no longer supported
 
+
+.. _release-1.42.0:
 
 1.42.0 - 2018-12-26
 -------------------
@@ -18,11 +22,15 @@
 * Fix pylint warnings when using the various ``save()`` methods :pr:`364`
 
 
+.. _release-1.41.1:
+
 1.41.1 - 2018-08-11
 -------------------
 
 * MP4: fix rtng, stik, shwm getting saved as 16bit ints instead of 8bit :bug:`349`
 
+
+.. _release-1.41.0:
 
 1.41.0 - 2018-07-15
 -------------------
@@ -33,6 +41,8 @@
   (:user:`Anton Yuzhaninov <citrin>`)
 * MonkeysAudio: set bits_per_sample for older files :bug:`347`
 
+
+.. _release-1.40.0:
 
 1.40.0 - 2018-01-25
 -------------------
