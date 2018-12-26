@@ -1,5 +1,16 @@
-1.42.0 - ????
--------------
+1.42.0 - 2018-12-26
+-------------------
+
+* ID3: Always read id3v1 tags and include them when no id3v2 equivalent
+  exists. Can be disabled with the new ``load_v1`` option,
+  see :meth:`id3.ID3.load`
+  :pr:`357` (:user:`Fredrik Strupe <frestr>`)
+* ID3: Add a pretty print implementation for SYLT
+  :pr:`359` (:user:`Hamid Alaei Varnosfaderani <halaei>`)
+* vorbis: Improved error messages when validating keys/values
+  :pr:`356` (:user:`Michael Booth <MJuddBooth>`)
+* Fix pylint warnings when using the various ``save()`` methods :pr:`364`
+
 
 1.41.1 - 2018-08-11
 -------------------
