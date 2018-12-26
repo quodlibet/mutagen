@@ -30,3 +30,7 @@ footer hr {
 .rst-footer-buttons {
     display: none;
 }
+
+.versionmodified {
+    color: #008000;
+}

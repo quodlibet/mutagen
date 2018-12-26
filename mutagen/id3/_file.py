@@ -129,6 +129,8 @@ class ID3(ID3Tags, mutagen.Metadata):
                 ID3v1 and ID3v2 headers are present, combine the tags from
                 the two, with ID3v2 having precedence.
 
+                .. versionadded:: 1.42
+
         Example of loading a custom frame::
 
             my_frames = dict(mutagen.id3.Frames)
