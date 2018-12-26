@@ -7,9 +7,6 @@ jobs:
         Python27-x64:
           python.version: '2.7'
           python.arch: 'x64'
-        Python34-x64:
-          python.version: '3.4'
-          python.arch: 'x64'
         Python35-x64:
           python.version: '3.5'
           python.arch: 'x64'

@@ -8,11 +8,6 @@ matrix:
     - os: linux
       dist: trusty
       language: python
-      python: "3.4"
-      env: TYPE="linux" PYVER="3.4" PYARGS="-R -bb"
-    - os: linux
-      dist: trusty
-      language: python
       python: "3.5"
       env: TYPE="linux" PYVER="3.5" PYARGS="-R -bb"
     - os: linux
