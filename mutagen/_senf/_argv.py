@@ -22,7 +22,12 @@
 
 import sys
 import ctypes
-import collections
+try:
+    # Python 3
+    from collections.abc import MutableSequence
+except ImportError:
+    # Python 2.7
+    from collections import MutableSequence
 from functools import total_ordering
 
 from ._compat import PY2, string_types
@@ -57,7 +62,7 @@ def _get_win_argv():
 
 
 @total_ordering
-class Argv(collections.MutableSequence):
+class Argv(MutableSequence):
     """List[`fsnative`]: Like `sys.argv` but contains unicode
     keys and values under Windows + Python 2.
 
