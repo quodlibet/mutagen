@@ -22,7 +22,12 @@
 
 import os
 import ctypes
-import collections
+try:
+    # Python 3
+    from collections.abc import MutableMapping
+except ImportError:
+    # Python 2.7
+    from collections import MutableMapping
 
 from ._compat import text_type, PY2
 from ._fsnative import path2fsn, is_win, _fsn2legacy, fsnative
@@ -130,7 +135,7 @@ def _norm_key(key):
     return key
 
 
-class Environ(collections.MutableMapping):
+class Environ(MutableMapping):
     """Dict[`fsnative`, `fsnative`]: Like `os.environ` but contains unicode
     keys and values under Windows + Python 2.
 
