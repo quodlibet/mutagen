@@ -147,8 +147,8 @@ def ParseID3v1(data, v2_version=4, known_frames=None):
         elif frame_class["TDRC"]:
             frames["TDRC"] = frame_class["TDRC"](encoding=0, text=year)
     if comment and frame_class["COMM"]:
-            frames["COMM"] = frame_class["COMM"](
-                encoding=0, lang="eng", desc="ID3v1 Comment", text=comment)
+        frames["COMM"] = frame_class["COMM"](
+            encoding=0, lang="eng", desc="ID3v1 Comment", text=comment)
 
     # Don't read a track number if it looks like the comment was
     # padded with spaces instead of nulls (thanks, WinAmp).
