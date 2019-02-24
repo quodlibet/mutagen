@@ -32,7 +32,7 @@ then saves the file.
     audio.save()
 
 
-The following example gets the length and bitrate of an MP3 file
+The following example gets the length and bitrate of an MP3 file.
 
 ::
 
@@ -43,7 +43,7 @@ The following example gets the length and bitrate of an MP3 file
     print(audio.info.bitrate)
 
 
-The following deletes an ID3 tag from an MP3 file
+The following deletes an ID3 tag from an MP3 file.
 
 ::
 
@@ -78,13 +78,13 @@ Unicode
 Mutagen has full Unicode support for all formats. When you assign text
 strings, we strongly recommend using Python unicode objects rather
 than str objects. If you use str objects, Mutagen will assume they are
-in UTF-8 (This does not apply to filenames)
+in UTF-8. (This does not apply to filenames.)
 
 
 Multiple Values
 ^^^^^^^^^^^^^^^
 
 Most tag formats support multiple values for each key, so when you
-access then (e.g. ``audio["title"]``) you will get a list of strings
+access them (e.g. ``audio["title"]``) you will get a list of strings
 rather than a single one (``[u"An example"]`` rather than ``u"An example"``).
 Similarly, you can assign a list of strings rather than a single one.
