@@ -3,6 +3,8 @@
 import os
 import subprocess
 
+import pytest
+
 from mutagen import MutagenError
 from mutagen.id3 import ID3, TIT2, ID3NoHeaderError
 from mutagen.flac import to_int_be, Padding, VCFLACDict, MetadataBlock, error
@@ -355,6 +357,19 @@ class TFLAC(TestCase):
         flac = FLAC(self.NEW)
         self.assertTrue(flac.tags is None)
 
+    def test_delete_change_reload(self):
+        self.flac.delete()
+        self.flac.tags["FOO"] = ["BAR"]
+        self.flac.save()
+        assert FLAC(self.flac.filename)["FOO"] == ["BAR"]
+
+        # same with delete failing due to IO etc.
+        with pytest.raises(MutagenError):
+            self.flac.delete(os.devnull)
+        self.flac.tags["FOO"] = ["QUUX"]
+        self.flac.save()
+        assert FLAC(self.flac.filename)["FOO"] == ["QUUX"]
+
     def test_module_delete(self):
         delete(self.NEW)
         flac = FLAC(self.NEW)
@@ -617,6 +632,56 @@ class TFLACBadBlockSizeWrite(TestCase):
         with open(self.NEW, "rb") as h:
             data = h.read(1024)
         self.failIf(b"Tunng" in data)
+
+
+class TFLACBadDuplicateVorbisComment(TestCase):
+
+    def setUp(self):
+        self.filename = get_temp_copy(
+            os.path.join(DATA_DIR, "silence-44-s.flac"))
+
+        # add a second vorbis comment block to the file right after the first
+        some_tags = VCFLACDict()
+        some_tags["DUPLICATE"] = ["SECOND"]
+        f = FLAC(self.filename)
+        f.tags["DUPLICATE"] = ["FIRST"]
+        assert f.tags is f.metadata_blocks[2]
+        f.metadata_blocks.insert(3, some_tags)
+        f.save()
+
+    def tearDown(self):
+        os.unlink(self.filename)
+
+    def test_load_multiple(self):
+        # on load always use the first one, like metaflac
+        f = FLAC(self.filename)
+        assert f["DUPLICATE"] == ["FIRST"]
+        assert f.metadata_blocks[2] is f.tags
+        assert f.metadata_blocks[3]["DUPLICATE"] == ["SECOND"]
+
+        # save in the same order
+        f.save()
+        f = FLAC(self.filename)
+        assert f["DUPLICATE"] == ["FIRST"]
+
+    def test_delete_multiple(self):
+        # on delete we delete both
+        f = FLAC(self.filename)
+        f.delete()
+        assert len(f.tags) == 0
+        f = FLAC(self.filename)
+        assert f.tags is None
+
+    def test_delete_multiple_fail(self):
+        f = FLAC(self.filename)
+        with pytest.raises(MutagenError):
+            f.delete(os.devnull)
+        f.save()
+
+        # if delete failed we shouldn't see a difference
+        f = FLAC(self.filename)
+        assert f.metadata_blocks[2] is f.tags
+        assert f.metadata_blocks[3].code == f.tags.code
 
 
 class TFLACBadBlockSizeOverflow(TestCase):
