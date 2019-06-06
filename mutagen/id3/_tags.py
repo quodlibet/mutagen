@@ -7,11 +7,12 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
+import re
 import struct
 
 from mutagen._tags import Tags
 from mutagen._util import DictProxy, convert_error, read_full
-from mutagen._compat import PY3, text_type, itervalues
+from mutagen._compat import PY3, itervalues, izip_longest
 
 from ._util import BitPaddedInt, unsynch, ID3JunkFrameError, \
     ID3EncryptionUnsupportedError, is_valid_frame_id, error, \
@@ -369,24 +370,23 @@ class ID3Tags(DictProxy, Tags):
         self.__update_common()
 
         # TDAT, TYER, and TIME have been turned into TDRC.
-        try:
-            date = text_type(self.get("TYER", ""))
-            if date.strip(u"\x00"):
-                self.pop("TYER")
-                dat = text_type(self.get("TDAT", ""))
-                if dat.strip("\x00"):
-                    self.pop("TDAT")
-                    date = "%s-%s-%s" % (date, dat[2:], dat[:2])
-                    time = text_type(self.get("TIME", ""))
-                    if time.strip("\x00"):
-                        self.pop("TIME")
-                        date += "T%s:%s:00" % (time[:2], time[2:])
-                if "TDRC" not in self:
-                    self.add(TDRC(encoding=0, text=date))
-        except UnicodeDecodeError:
-            # Old ID3 tags have *lots* of Unicode problems, so if TYER
-            # is bad, just chuck the frames.
-            pass
+        timestamps = []
+        old_frames = [self.pop(n, []) for n in ["TYER", "TDAT", "TIME"]]
+        for y, d, t in izip_longest(*old_frames, fillvalue=u""):
+            ym = re.match(r"([0-9]+)\Z", y)
+            dm = re.match(r"([0-9]{2})([0-9]{2})\Z", d)
+            tm = re.match(r"([0-9]{2})([0-9]{2})\Z", t)
+            timestamp = ""
+            if ym:
+                timestamp += u"%s" % ym.groups()
+                if dm:
+                    timestamp += u"-%s-%s" % dm.groups()[::-1]
+                    if tm:
+                        timestamp += u"T%s:%s:00" % tm.groups()
+            if timestamp:
+                timestamps.append(timestamp)
+        if timestamps and "TDRC" not in self:
+            self.add(TDRC(encoding=0, text=timestamps))
 
         # TORY can be the first part of a TDOR.
         if "TORY" in self:

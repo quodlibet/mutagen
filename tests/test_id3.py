@@ -326,6 +326,16 @@ class TID3Read(TestCase):
         id3.update_to_v24()
         self.failUnlessEqual(id3["TDRC"], "2006-03-06 11:27:00")
 
+    def test_multiple_tyer_tdat_time(self):
+        id3 = ID3()
+        id3.version = (2, 3)
+        id3.add(TYER(text=['2000', '2001', '2002', '19xx', 'foo']))
+        id3.add(TDAT(text=['0102', '0304', '1111bar']))
+        id3.add(TIME(text=['1220', '1111quux', '1111']))
+        id3.update_to_v24()
+        assert [str(t) for t in id3['TDRC']] == \
+            ['2000-02-01 12:20:00', '2001-04-03', '2002']
+
     def test_tory(self):
         id3 = ID3()
         id3.version = (2, 3)
