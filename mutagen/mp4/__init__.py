@@ -311,6 +311,7 @@ class MP4Tags(DictProxy, Tags):
     * '\\xa9mvi' -- Movement Index
     * 'shwm' -- work/movement
     * 'stik' -- Media Kind
+    * 'hdvd' -- HD Video
     * 'rtng' -- Content Rating
     * 'tves' -- TV Episode
     * 'tvsn' -- TV Season
@@ -852,6 +853,7 @@ class MP4Tags(DictProxy, Tags):
         b"pcst": (__parse_bool, __render_bool),
         b"shwm": (__parse_integer, __render_integer, 1),
         b"stik": (__parse_integer, __render_integer, 1),
+        b"hdvd": (__parse_integer, __render_integer, 1),
         b"rtng": (__parse_integer, __render_integer, 1),
         b"covr": (__parse_cover, __render_cover),
         b"purl": (__parse_text, __render_text),
