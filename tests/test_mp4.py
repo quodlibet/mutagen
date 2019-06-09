@@ -645,8 +645,8 @@ class TMP4Mixin(object):
 
     def test_various_int(self):
         keys = [
-            "stik", "rtng", "plID", "cnID", "geID", "atID", "sfID",
-            "cmID", "akID", "tvsn", "tves",
+            "stik", "hdvd", "rtng", "plID", "cnID", "geID", "atID",
+            "sfID", "cmID", "akID", "tvsn", "tves",
         ]
 
         for key in keys:
