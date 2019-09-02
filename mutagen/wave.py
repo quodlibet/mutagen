@@ -35,7 +35,7 @@ class WaveFile(RiffFile):
         RiffFile.__init__(self, fileobj)
 
         if self.fileType != u'WAVE':
-            raise MutagenError("Expected RIFF/WAVE.")
+            raise error("Expected RIFF/WAVE.")
 
 
 class WaveStreamInfo(StreamInfo):
@@ -135,7 +135,7 @@ class _WaveID3(ID3):
         chunk.write(data)
 
     @loadfile(writable=True)
-    def delete(self, filething):
+    def delete_chunk(self, filething):
         """Completely removes the ID3 chunk from the RIFF/WAVE file"""
 
         fileobj = filething.fileobj
@@ -144,7 +144,7 @@ class _WaveID3(ID3):
 
         if 'id3' in waveFile:
             try:
-                waveFile['id3'].delete()
+                waveFile['id3'].delete_chunk()
             except ValueError:
                 pass
 
