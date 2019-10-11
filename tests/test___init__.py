@@ -31,6 +31,7 @@ from mutagen.optimfrog import OptimFROG
 from mutagen.asf import ASF
 from mutagen.aiff import AIFF
 from mutagen.aac import AAC
+from mutagen.ac3 import AC3
 from mutagen.smf import SMF
 from mutagen.tak import TAK
 from mutagen.dsf import DSF
@@ -493,6 +494,10 @@ _FILETYPES = {
     AAC: [
         os.path.join(DATA_DIR, "empty.aac"),
         os.path.join(DATA_DIR, "adif.aac"),
+    ],
+    AC3: [
+        os.path.join(DATA_DIR, "silence-44-s.ac3"),
+        os.path.join(DATA_DIR, "silence-44-s.eac3"),
     ],
     ASF: [
         os.path.join(DATA_DIR, "silence-1.wma"),
