@@ -12,6 +12,7 @@
 
 __all__ = ["AC3", "Open"]
 
+from mutagen import StreamInfo
 from mutagen._file import FileType
 from mutagen._util import (
     BitReader,
@@ -63,7 +64,7 @@ class AC3Error(MutagenError):
     pass
 
 
-class AC3Info(object):
+class AC3Info(StreamInfo):
 
     """AC3 stream information.
     The length of the stream is just a guess and might not be correct.
@@ -132,6 +133,7 @@ class AC3Info(object):
         self.sample_rate = AC3_SAMPLE_RATES[sr_code] >> sr_shift
         self.bitrate = (AC3_BITRATES[frame_size_code >> 1] * 1000) >> sr_shift
         self.channels = self._get_channels(channel_mode, lfe_on)
+        self._skip_unused_header_bits_normal(r, channel_mode)
 
     def _read_header_enhanced(self, bitreader):
         r = bitreader
@@ -164,6 +166,94 @@ class AC3Info(object):
             EAC3_BLOCKS[numblocks_code] * 256)
         r.skip(5)  # bitstream ID, already read
         self.channels = self._get_channels(channel_mode, lfe_on)
+        self._skip_unused_header_bits_enhanced(
+            r, frame_type, channel_mode, sr_code, numblocks_code)
+
+    @staticmethod
+    def _skip_unused_header_bits_normal(bitreader, channel_mode):
+        r = bitreader
+        r.skip(5)  # Dialogue Normalization
+        if r.bits(1):  # Compression Gain Word Exists
+            r.skip(8)  # Compression Gain Word
+        if r.bits(1):  # Language Code Exists
+            r.skip(8)  # Language Code
+        if r.bits(1):  # Audio Production Information Exists
+            # Mixing Level, 5 Bits
+            # Room Type, 2 Bits
+            r.skip(7)
+        if channel_mode == AC3_CHMODE_DUALMONO:
+            r.skip(5)  # Dialogue Normalization, ch2
+            if r.bits(1):  # Compression Gain Word Exists, ch2
+                r.skip(8)  # Compression Gain Word, ch2
+            if r.bits(1):  # Language Code Exists, ch2
+                r.skip(8)  # Language Code, ch2
+            if r.bits(1):  # Audio Production Information Exists, ch2
+                # Mixing Level, ch2, 5 Bits
+                # Room Type, ch2, 2 Bits
+                r.skip(7)
+        # Copyright Bit, 1 Bit
+        # Original Bit Stream, 1 Bit
+        r.skip(2)
+        timecod1e = r.bits(1)  # Time Code First Halve Exists
+        timecod2e = r.bits(1)  # Time Code Second Halve Exists
+        if timecod1e:
+            r.skip(14)  # Time Code First Half
+        if timecod2e:
+            r.skip(14)  # Time Code Second Half
+        if r.bits(1):  # Additional Bit Stream Information Exists
+            addbsil = r.bit(6)  # Additional Bit Stream Information Length
+            r.skip((addbsil + 1) * 8)
+
+    @staticmethod
+    def _skip_unused_header_bits_enhanced(bitreader, frame_type, channel_mode,
+                                          sr_code, numblocks_code):
+        r = bitreader
+        r.skip(5)  # Dialogue Normalization
+        if r.bits(1):  # Compression Gain Word Exists
+            r.skip(8)  # Compression Gain Word
+        if channel_mode == AC3_CHMODE_DUALMONO:
+            r.skip(5)  # Dialogue Normalization, ch2
+            if r.bits(1):  # Compression Gain Word Exists, ch2
+                r.skip(8)  # Compression Gain Word, ch2
+        if frame_type == EAC3_FRAME_TYPE_DEPENDENT:
+            if r.bits(1):  # chanmap exists
+                r.skip(16)  # chanmap
+        if r.bits(1):  # mixmdate, 1 Bit
+            # FIXME: Handle channel dependent fields
+            return
+        if r.bits(1):  # Informational Metadata Exists
+            # bsmod, 3 Bits
+            # Copyright Bit, 1 Bit
+            # Original Bit Stream, 1 Bit
+            r.skip(5)
+            if channel_mode == AC3_CHMODE_STEREO:
+                # dsurmod. 2 Bits
+                # dheadphonmod, 2 Bits
+                r.skip(4)
+            elif channel_mode >= AC3_CHMODE_2F2R:
+                r.skip(2)  # dsurexmod
+            if r.bits(1):  # Audio Production Information Exists
+                # Mixing Level, 5 Bits
+                # Room Type, 2 Bits
+                # adconvtyp, 1 Bit
+                r.skip(8)
+            if channel_mode == AC3_CHMODE_DUALMONO:
+                if r.bits(1):  # Audio Production Information Exists, ch2
+                    # Mixing Level, ch2, 5 Bits
+                    # Room Type, ch2, 2 Bits
+                    # adconvtyp, ch2, 1 Bit
+                    r.skip(8)
+            if sr_code < 3:  # if not half sample rate
+                r.skip(1)  # sourcefscod
+        if frame_type == EAC3_FRAME_TYPE_INDEPENDENT and numblocks_code == 3:
+            r.skip(1)  # convsync
+        if frame_type == EAC3_FRAME_TYPE_AC3_CONVERT:
+            if numblocks_code != 3:
+                if r.bits(1):  # blkid
+                    r.skip(6)  # frmsizecod
+        if r.bits(1):  # Additional Bit Stream Information Exists
+            addbsil = r.bit(6)  # Additional Bit Stream Information Length
+            r.skip((addbsil + 1) * 8)
 
     @staticmethod
     def _get_channels(channel_mode, lfe_on):
