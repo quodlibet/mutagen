@@ -87,7 +87,7 @@ class AC3Info(StreamInfo):
     @convert_error(IndexError, AC3Error)
     def __init__(self, fileobj):
         """Raises AC3Error"""
-        header = fileobj.read(6)
+        header = bytearray(fileobj.read(6))
         if not header.startswith(b"\x0b\x77"):
             raise AC3Error("not a AC3 file")
 
@@ -266,10 +266,10 @@ class AC3Info(StreamInfo):
         start = fileobj.tell()
         fileobj.seek(0, 2)
         length = fileobj.tell() - start
-        return 8 * length / self.bitrate
+        return 8.0 * length / self.bitrate
 
     def pprint(self):
-        return "%s, %d Hz, %.2f seconds, %d channel(s), %d bps" % (
+        return u"%s, %d Hz, %.2f seconds, %d channel(s), %d bps" % (
             self.type_, self.sample_rate, self.length, self.channels,
             self.bitrate)
 
