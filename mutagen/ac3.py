@@ -13,6 +13,7 @@
 __all__ = ["AC3", "Open"]
 
 from mutagen import StreamInfo
+from mutagen._compat import endswith
 from mutagen._file import FileType
 from mutagen._util import (
     BitReader,
@@ -301,7 +302,7 @@ class AC3(FileType):
     @staticmethod
     def score(filename, fileobj, header):
         return header.startswith(b"\x0b\x77") * 2 \
-            + filename.lower().endswith(".ac3")
+            + (endswith(filename, ".ac3") or endswith(filename, ".eac3"))
 
 
 Open = AC3
