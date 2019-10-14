@@ -53,7 +53,7 @@ install:
   - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "2" ]; then python2 -m pip install virtualenv; fi
   - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "2" ]; then virtualenv venv -p python2; fi
   - if [ "$TYPE" == "osx" ]; then source venv/bin/activate; fi
-  - if [ "$TYPE" == "linux" ] || [ "$TYPE" == "osx" ]; then python -m pip install --upgrade pycodestyle pyflakes pytest hypothesis coverage codecov; fi
+  - if [ "$TYPE" == "linux" ] || [ "$TYPE" == "osx" ]; then python -m pip install --upgrade pycodestyle pyflakes pytest hypothesis coverage codecov attrs; fi
   - if [ "$TYPE" == "linux" ] || [ "$PYVER" == "3.6" ]; then python -m pip install --upgrade sphinx sphinx_rtd_theme; fi
 
 script:
