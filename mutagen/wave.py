@@ -18,8 +18,7 @@ from mutagen import StreamInfo, FileType
 from mutagen.id3 import ID3
 from mutagen._riff import RiffFile, InvalidChunk
 from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
-from mutagen._util import loadfile, \
-    convert_error, MutagenError
+from mutagen._util import loadfile, convert_error, MutagenError
 
 __all__ = ["WAVE", "Open", "delete"]
 
@@ -28,13 +27,13 @@ class error(MutagenError):
     """WAVE stream parsing errors."""
 
 
-class WaveFile(RiffFile):
+class _WaveFile(RiffFile):
     """Representation of a RIFF/WAVE file"""
 
     def __init__(self, fileobj):
         RiffFile.__init__(self, fileobj)
 
-        if self.fileType != u'WAVE':
+        if self.file_type != u'WAVE':
             raise error("Expected RIFF/WAVE.")
 
 
@@ -50,14 +49,14 @@ class WaveStreamInfo(StreamInfo):
         bitrate (`int`): audio bitrate, in bits per second
         channels (`int`): The number of audio channels
         sample_rate (`int`): audio sample rate, in Hz
-        sample_size (`int`): The audio sample size
+        bits_per_sample (`int`): The audio sample size
     """
 
-    length = 0
+    length = 0.0
     bitrate = 0
     channels = 0
     sample_rate = 0
-    sample_size = 0
+    bits_per_sample = 0
 
     SIZE = 16
 
@@ -65,32 +64,31 @@ class WaveStreamInfo(StreamInfo):
     def __init__(self, fileobj):
         """Raises error"""
 
-        waveFile = WaveFile(fileobj)
+        wave_file = _WaveFile(fileobj)
         try:
-            waveFormatChunk = waveFile[u'fmt']
+            format_chunk = wave_file[u'fmt']
         except KeyError as e:
             raise error(str(e))
 
-        data = waveFormatChunk.read()
-
-        header = fileobj.read(self.SIZE)
-        if len(header) < self.SIZE:
+        data = format_chunk.read()
+        if len(data) < 16:
             raise InvalidChunk()
 
         # RIFF: http://soundfile.sapp.org/doc/WaveFormat/
         #  Python struct.unpack:
         #    https://docs.python.org/2/library/struct.html#byte-order-size-and-alignment
         info = struct.unpack('<hhLLhh', data[:self.SIZE])
-        self.audioFormat, self.channels, self.sample_rate, byte_rate, \
-            block_align, self.sample_size = info
+        self.audio_format, self.channels, self.sample_rate, byte_rate, \
+            block_align, self.bits_per_sample = info
         self.bitrate = self.channels * block_align * self.sample_rate
 
         # Calculate duration
-        try:
-            waveDataChunk = waveFile[u'data']
-            self.number_of_samples = waveDataChunk.data_size / block_align
-        except KeyError:
-            self.number_of_samples = 0
+        if block_align > 0:
+            try:
+                data_chunk = wave_file[u'data']
+                self.number_of_samples = data_chunk.data_size / block_align
+            except KeyError:
+                self.number_of_samples = 0
 
         if self.sample_rate > 0:
             self.length = self.number_of_samples / self.sample_rate
@@ -105,7 +103,7 @@ class _WaveID3(ID3):
 
     def _pre_load_header(self, fileobj):
         try:
-            fileobj.seek(WaveFile(fileobj)[u'id3'].data_offset)
+            fileobj.seek(_WaveFile(fileobj)[u'id3'].data_offset)
         except (InvalidChunk, KeyError):
             raise ID3NoHeaderError("No ID3 chunk")
 
@@ -115,8 +113,7 @@ class _WaveID3(ID3):
         """Save ID3v2 data to the Wave/RIFF file"""
 
         fileobj = filething.fileobj
-
-        wave_file = WaveFile(fileobj)
+        wave_file = _WaveFile(fileobj)
 
         if u'id3' not in wave_file:
             wave_file.insert_chunk(u'id3')
@@ -146,7 +143,7 @@ def delete(filething):
     """Completely removes the ID3 chunk from the RIFF/WAVE file"""
 
     try:
-        WaveFile(filething.fileobj).delete_chunk(u'id3')
+        _WaveFile(filething.fileobj).delete_chunk(u'id3')
     except KeyError:
         pass
 
@@ -187,12 +184,7 @@ class WAVE(FileType):
         """Load stream and tag information from a file."""
 
         fileobj = filething.fileobj
-
-        try:
-            self.info = WaveStreamInfo(fileobj)
-        except ValueError as e:
-            raise error(e)
-
+        self.info = WaveStreamInfo(fileobj)
         fileobj.seek(0, 0)
 
         try:
