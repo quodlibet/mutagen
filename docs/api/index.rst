@@ -25,4 +25,5 @@ API Reference
     smf
     trueaudio
     vcomment
+    wave
     wavpack
