@@ -224,7 +224,7 @@ class AIFFInfo(StreamInfo):
         bitrate (`int`): audio bitrate, in bits per second
         channels (`int`): The number of audio channels
         sample_rate (`int`): audio sample rate, in Hz
-        sample_size (`int`): The audio sample size
+        bits_per_sample (`int`): The audio sample size
     """
 
     length = 0
@@ -250,7 +250,8 @@ class AIFFInfo(StreamInfo):
         channels, frame_count, sample_size, sample_rate = info
 
         self.sample_rate = int(read_float(sample_rate))
-        self.sample_size = sample_size
+        self.bits_per_sample = sample_size
+        self.sample_size = sample_size  # For backward compatibility
         self.channels = channels
         self.bitrate = channels * sample_size * self.sample_rate
         self.length = frame_count / float(self.sample_rate)
