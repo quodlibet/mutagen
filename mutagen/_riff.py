@@ -54,14 +54,13 @@ def assert_valid_chunk_id(id):
         raise ValueError("Invalid RIFF-chunk-ID.")
 
 
-class RiffChunkHeader():
+class RiffChunkHeader(object):
     """ RIFF chunk header"""
 
     # Chunk headers are 8 bytes long (4 for ID and 4 for the size)
     HEADER_SIZE = 8
 
     def __init__(self, fileobj, parent_chunk):
-        self.__struct = '<4sI'
         self.__fileobj = fileobj
         self.parent_chunk = parent_chunk
         self.offset = fileobj.tell()
@@ -70,7 +69,7 @@ class RiffChunkHeader():
         if len(header) < self.HEADER_SIZE:
             raise InvalidChunk('Header size < %i' % self.HEADER_SIZE)
 
-        self.id, self.data_size = struct.unpack(self.__struct, header)
+        self.id, self.data_size = struct.unpack('<4sI', header)
 
         try:
             self.id = self.id.decode('ascii').rstrip()
@@ -140,27 +139,28 @@ class RiffFile(object):
         fileobj.seek(0)
 
         # RIFF Files always start with the RIFF chunk
-        self._riffChunk = RiffChunkHeader(fileobj, parent_chunk=None)
+        self._riff_chunk = RiffChunkHeader(fileobj, parent_chunk=None)
 
-        if (self._riffChunk.id != 'RIFF'):
+        if (self._riff_chunk.id != 'RIFF'):
             raise KeyError("Root chunk should be a RIFF chunk.")
 
         # Read the RIFF file Type
-        self.fileType = fileobj.read(4).decode('ascii')
-
+        try:
+            self.file_type = fileobj.read(4).decode('ascii')
+        except UnicodeDecodeError as e:
+            raise error(e)
         self.__next_offset = fileobj.tell()
 
         # Load all RIFF subchunks
         while True:
             try:
-                chunk = RiffChunkHeader(fileobj, self._riffChunk)
+                chunk = RiffChunkHeader(fileobj, self._riff_chunk)
             except InvalidChunk:
                 break
             # Normalize ID3v2-tag-chunk to lowercase
             if chunk.id == 'ID3':
                 chunk.id = 'id3'
-            self.__subchunks[chunk.id] = \
-                chunk
+            self.__subchunks[chunk.id] = chunk
 
             # Calculate the location of the next chunk,
             # considering the pad byte
@@ -172,7 +172,6 @@ class RiffFile(object):
         """Check if the IFF file contains a specific chunk"""
 
         assert_valid_chunk_id(id_)
-
         return id_ in self.__subchunks
 
     def __getitem__(self, id_):
@@ -183,8 +182,7 @@ class RiffFile(object):
         try:
             return self.__subchunks[id_]
         except KeyError:
-            raise KeyError(
-                "%r has no %r chunk" % (self._fileobj, id_))
+            raise KeyError("%r has no %r chunk" % (self._fileobj, id_))
 
     def delete_chunk(self, id_):
         """Remove a chunk from the IFF file"""
@@ -203,8 +201,8 @@ class RiffFile(object):
         self._fileobj.seek(self.__next_offset)
         self._fileobj.write(pack('<4si', id_.ljust(4).encode('ascii'), 0))
         self._fileobj.seek(self.__next_offset)
-        chunk = RiffChunkHeader(self._fileobj, self._riffChunk)
-        self._riffChunk._update_size(self._riffChunk.data_size + chunk.size)
+        chunk = RiffChunkHeader(self._fileobj, self._riff_chunk)
+        self._riff_chunk._update_size(self._riff_chunk.data_size + chunk.size)
 
         self.__subchunks[id_] = chunk
         self.__next_offset = chunk.offset + chunk.size
