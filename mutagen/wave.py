@@ -50,14 +50,14 @@ class WaveStreamInfo(StreamInfo):
         bitrate (`int`): audio bitrate, in bits per second
         channels (`int`): The number of audio channels
         sample_rate (`int`): audio sample rate, in Hz
-        sample_size (`int`): The audio sample size
+        bits_per_sample (`int`): The audio sample size
     """
 
     length = 0.0
     bitrate = 0
     channels = 0
     sample_rate = 0
-    sample_size = 0
+    bits_per_sample = 0
 
     SIZE = 16
 
@@ -84,7 +84,7 @@ class WaveStreamInfo(StreamInfo):
         #    https://docs.python.org/2/library/struct.html#byte-order-size-and-alignment
         info = struct.unpack('<hhLLhh', data[:self.SIZE])
         self.audio_format, self.channels, self.sample_rate, byte_rate, \
-            block_align, self.sample_size = info
+            block_align, self.bits_per_sample = info
         self.bitrate = self.channels * block_align * self.sample_rate
 
         # Calculate duration

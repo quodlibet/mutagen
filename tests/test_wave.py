@@ -48,6 +48,18 @@ class TWave(TestCase):
         self.failUnlessEqual(self.wav_pcm_2s_44100_16_ID3v23.
                              info.number_of_samples, 88200)
 
+    def test_bits_per_sample(self):
+        self.failUnlessEqual(self.wav_pcm_2s_16000_08_ID3v23.
+                             info.bits_per_sample, 8)
+        self.failUnlessEqual(self.wav_pcm_2s_44100_16_ID3v23.
+                             info.bits_per_sample, 16)
+
+    def test_bitrate(self):
+        self.failUnlessEqual(self.wav_pcm_2s_16000_08_ID3v23.
+                             info.bitrate, 64000)
+        self.failUnlessEqual(self.wav_pcm_2s_44100_16_ID3v23.
+                             info.bitrate, 352800)
+
     def test_length(self):
         self.failUnlessAlmostEqual(self.wav_pcm_2s_16000_08_ID3v23.info.length,
                                    2.0, 2)
