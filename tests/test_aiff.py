@@ -60,12 +60,18 @@ class TAIFF(TestCase):
         self.failUnlessEqual(self.aiff_4.info.sample_rate, 8000)
         self.failUnlessEqual(self.aiff_5.info.sample_rate, 8000)
 
+    def test_bits_per_sample(self):
+        self.failUnlessEqual(self.aiff_1.info.bits_per_sample, 16)
+        self.failUnlessEqual(self.aiff_2.info.bits_per_sample, 16)
+        self.failUnlessEqual(self.aiff_3.info.bits_per_sample, 16)
+        self.failUnlessEqual(self.aiff_4.info.bits_per_sample, 16)
+        self.failUnlessEqual(self.aiff_5.info.bits_per_sample, 16)
+
     def test_sample_size(self):
-        self.failUnlessEqual(self.aiff_1.info.sample_size, 16)
-        self.failUnlessEqual(self.aiff_2.info.sample_size, 16)
-        self.failUnlessEqual(self.aiff_3.info.sample_size, 16)
-        self.failUnlessEqual(self.aiff_4.info.sample_size, 16)
-        self.failUnlessEqual(self.aiff_5.info.sample_size, 16)
+        for test in [self.aiff_1, self.aiff_2, self.aiff_3, self.aiff_4,
+                     self.aiff_5]:
+            info = test.info
+            self.failUnlessEqual(info.sample_size, info.bits_per_sample)
 
     def test_notaiff(self):
         self.failUnlessRaises(
