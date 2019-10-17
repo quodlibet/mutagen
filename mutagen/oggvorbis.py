@@ -43,7 +43,7 @@ class OggVorbisInfo(StreamInfo):
         length (`float`): File length in seconds, as a float
         channels (`int`): Number of channels
         bitrate (`int`): Nominal ('average') bitrate in bits per second
-        sample_Rate (`int`): Sample rate in Hz
+        sample_rate (`int`): Sample rate in Hz
 
     """
 
