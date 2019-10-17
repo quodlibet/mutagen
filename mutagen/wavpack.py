@@ -76,7 +76,7 @@ class WavPackInfo(StreamInfo):
 
     Attributes:
         channels (int): number of audio channels (1 or 2)
-        length (float: file length in seconds, as a float
+        length (float): file length in seconds, as a float
         sample_rate (int): audio sampling rate in Hz
         version (int) WavPack stream version
     """
@@ -114,6 +114,15 @@ class WavPackInfo(StreamInfo):
 
 
 class WavPack(APEv2File):
+    """WavPack(filething)
+
+    Arguments:
+        filething (filething)
+
+    Attributes:
+        info (`WavPackInfo`)
+    """
+
     _Info = WavPackInfo
     _mimes = ["audio/x-wavpack"]
 
