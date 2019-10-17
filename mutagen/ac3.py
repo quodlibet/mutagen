@@ -75,14 +75,14 @@ class AC3Info(StreamInfo):
         length (`float`): file length in seconds, as a float
         sample_rate (`int`): audio sampling rate in Hz
         bitrate (`int`): audio bitrate, in bits per second
-        type_ (`str`): AC3 or EAC3
+        codec (`str`): ac-3 or ec-3 (Enhanced AC-3)
     """
 
     channels = 0
     length = 0
     sample_rate = 0
     bitrate = 0
-    type_ = 'AC3'
+    codec = 'ac-3'
 
     @convert_error(IOError, AC3Error)
     @convert_error(IndexError, AC3Error)
@@ -138,7 +138,7 @@ class AC3Info(StreamInfo):
 
     def _read_header_enhanced(self, bitreader):
         r = bitreader
-        self.type_ = "EAC3"
+        self.codec = "ec-3"
         frame_type = r.bits(2)
         if frame_type == EAC3_FRAME_TYPE_RESERVED:
             raise AC3Error("invalid frame type %i" % frame_type)
@@ -271,7 +271,7 @@ class AC3Info(StreamInfo):
 
     def pprint(self):
         return u"%s, %d Hz, %.2f seconds, %d channel(s), %d bps" % (
-            self.type_, self.sample_rate, self.length, self.channels,
+            self.codec, self.sample_rate, self.length, self.channels,
             self.bitrate)
 
 
