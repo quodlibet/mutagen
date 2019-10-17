@@ -20,31 +20,35 @@ from mutagen._util import (
     BitReaderError,
     MutagenError,
     convert_error,
+    enum,
     loadfile,
 )
 
 
-AC3_HEADER_SIZE = 7
+@enum
+class ChannelMode(object):
+    DUALMONO = 0
+    MONO = 1
+    STEREO = 2
+    C3F = 3
+    C2F1R = 4
+    C3F1R = 5
+    C2F2R = 6
+    C3F2R = 7
 
-AC3_CHMODE_DUALMONO = 0
-AC3_CHMODE_MONO = 1
-AC3_CHMODE_STEREO = 2
-AC3_CHMODE_3F = 3
-AC3_CHMODE_2F1R = 4
-AC3_CHMODE_3F1R = 5
-AC3_CHMODE_2F2R = 6
-AC3_CHMODE_3F2R = 7
 
 AC3_CHANNELS = {
-    AC3_CHMODE_DUALMONO: 2,
-    AC3_CHMODE_MONO: 1,
-    AC3_CHMODE_STEREO: 2,
-    AC3_CHMODE_3F: 3,
-    AC3_CHMODE_2F1R: 3,
-    AC3_CHMODE_3F1R: 4,
-    AC3_CHMODE_2F2R: 4,
-    AC3_CHMODE_3F2R: 5
+    ChannelMode.DUALMONO: 2,
+    ChannelMode.MONO: 1,
+    ChannelMode.STEREO: 2,
+    ChannelMode.C3F: 3,
+    ChannelMode.C2F1R: 3,
+    ChannelMode.C3F1R: 4,
+    ChannelMode.C2F2R: 4,
+    ChannelMode.C3F2R: 5
 }
+
+AC3_HEADER_SIZE = 7
 
 AC3_SAMPLE_RATES = [48000, 44100, 32000]
 
@@ -53,10 +57,14 @@ AC3_BITRATES = [
     160, 192, 224, 256, 320, 384, 448, 512, 576, 640
 ]
 
-EAC3_FRAME_TYPE_INDEPENDENT = 0
-EAC3_FRAME_TYPE_DEPENDENT = 1
-EAC3_FRAME_TYPE_AC3_CONVERT = 2
-EAC3_FRAME_TYPE_RESERVED = 3
+
+@enum
+class EAC3FrameType(object):
+    INDEPENDENT = 0
+    DEPENDENT = 1
+    AC3_CONVERT = 2
+    RESERVED = 3
+
 
 EAC3_BLOCKS = [1, 2, 3, 6]
 
@@ -129,7 +137,7 @@ class AC3Info(StreamInfo):
 
         r.skip(5)  # bitstream ID, already read
         r.skip(3)  # bitstream mode, not needed
-        channel_mode = r.bits(3)
+        channel_mode = ChannelMode(r.bits(3))
         r.skip(2)  # dolby surround mode or surround mix level
         lfe_on = r.bits(1)
 
@@ -147,7 +155,7 @@ class AC3Info(StreamInfo):
         r = bitreader
         self.codec = "ec-3"
         frame_type = r.bits(2)
-        if frame_type == EAC3_FRAME_TYPE_RESERVED:
+        if frame_type == EAC3FrameType.RESERVED:
             raise AC3Error("invalid frame type %i" % frame_type)
 
         r.skip(3)  # substream ID, not needed
@@ -169,7 +177,7 @@ class AC3Info(StreamInfo):
                 numblocks_code = r.bits(2)
                 self.sample_rate = AC3_SAMPLE_RATES[sr_code]
 
-            channel_mode = r.bits(3)
+            channel_mode = ChannelMode(r.bits(3))
             lfe_on = r.bits(1)
             self.bitrate = 8 * frame_size * self.sample_rate // (
                 EAC3_BLOCKS[numblocks_code] * 256)
@@ -192,7 +200,7 @@ class AC3Info(StreamInfo):
             # Mixing Level, 5 Bits
             # Room Type, 2 Bits
             r.skip(7)
-        if channel_mode == AC3_CHMODE_DUALMONO:
+        if channel_mode == ChannelMode.DUALMONO:
             r.skip(5)  # Dialogue Normalization, ch2
             if r.bits(1):  # Compression Gain Word Exists, ch2
                 r.skip(8)  # Compression Gain Word, ch2
@@ -222,11 +230,11 @@ class AC3Info(StreamInfo):
         r.skip(5)  # Dialogue Normalization
         if r.bits(1):  # Compression Gain Word Exists
             r.skip(8)  # Compression Gain Word
-        if channel_mode == AC3_CHMODE_DUALMONO:
+        if channel_mode == ChannelMode.DUALMONO:
             r.skip(5)  # Dialogue Normalization, ch2
             if r.bits(1):  # Compression Gain Word Exists, ch2
                 r.skip(8)  # Compression Gain Word, ch2
-        if frame_type == EAC3_FRAME_TYPE_DEPENDENT:
+        if frame_type == EAC3FrameType.DEPENDENT:
             if r.bits(1):  # chanmap exists
                 r.skip(16)  # chanmap
         if r.bits(1):  # mixmdate, 1 Bit
@@ -237,18 +245,18 @@ class AC3Info(StreamInfo):
             # Copyright Bit, 1 Bit
             # Original Bit Stream, 1 Bit
             r.skip(5)
-            if channel_mode == AC3_CHMODE_STEREO:
+            if channel_mode == ChannelMode.STEREO:
                 # dsurmod. 2 Bits
                 # dheadphonmod, 2 Bits
                 r.skip(4)
-            elif channel_mode >= AC3_CHMODE_2F2R:
+            elif channel_mode >= ChannelMode.C2F2R:
                 r.skip(2)  # dsurexmod
             if r.bits(1):  # Audio Production Information Exists
                 # Mixing Level, 5 Bits
                 # Room Type, 2 Bits
                 # adconvtyp, 1 Bit
                 r.skip(8)
-            if channel_mode == AC3_CHMODE_DUALMONO:
+            if channel_mode == ChannelMode.DUALMONO:
                 if r.bits(1):  # Audio Production Information Exists, ch2
                     # Mixing Level, ch2, 5 Bits
                     # Room Type, ch2, 2 Bits
@@ -256,9 +264,9 @@ class AC3Info(StreamInfo):
                     r.skip(8)
             if sr_code < 3:  # if not half sample rate
                 r.skip(1)  # sourcefscod
-        if frame_type == EAC3_FRAME_TYPE_INDEPENDENT and numblocks_code == 3:
+        if frame_type == EAC3FrameType.INDEPENDENT and numblocks_code == 3:
             r.skip(1)  # convsync
-        if frame_type == EAC3_FRAME_TYPE_AC3_CONVERT:
+        if frame_type == EAC3FrameType.AC3_CONVERT:
             if numblocks_code != 3:
                 if r.bits(1):  # blkid
                     r.skip(6)  # frmsizecod
