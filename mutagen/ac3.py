@@ -85,10 +85,13 @@ class AC3Info(StreamInfo):
     codec = 'ac-3'
 
     @convert_error(IOError, AC3Error)
-    @convert_error(IndexError, AC3Error)
     def __init__(self, fileobj):
         """Raises AC3Error"""
         header = bytearray(fileobj.read(6))
+
+        if len(header) < 6:
+            raise AC3Error("not enough data")
+
         if not header.startswith(b"\x0b\x77"):
             raise AC3Error("not a AC3 file")
 
@@ -108,7 +111,7 @@ class AC3Info(StreamInfo):
                 self._read_header_normal(bitreader, bitstream_id)
             else:  # Enhanced AC-3
                 self._read_header_enhanced(bitreader)
-        except (BitReaderError, KeyError) as e:
+        except BitReaderError as e:
             raise AC3Error(e)
 
         self.length = self._guess_length(fileobj)
@@ -131,8 +134,12 @@ class AC3Info(StreamInfo):
         lfe_on = r.bits(1)
 
         sr_shift = max(bitstream_id, 8) - 8
-        self.sample_rate = AC3_SAMPLE_RATES[sr_code] >> sr_shift
-        self.bitrate = (AC3_BITRATES[frame_size_code >> 1] * 1000) >> sr_shift
+        try:
+            self.sample_rate = AC3_SAMPLE_RATES[sr_code] >> sr_shift
+            self.bitrate = (AC3_BITRATES[frame_size_code >> 1] * 1000
+                            ) >> sr_shift
+        except KeyError as e:
+            raise AC3Error(e)
         self.channels = self._get_channels(channel_mode, lfe_on)
         self._skip_unused_header_bits_normal(r, channel_mode)
 
@@ -150,21 +157,24 @@ class AC3Info(StreamInfo):
             raise AC3Error("invalid frame size %i" % frame_size)
 
         sr_code = r.bits(2)
-        if sr_code == 3:
-            sr_code2 = r.bits(2)
-            if sr_code2 == 3:
-                raise AC3Error("invalid sample rate code %i" % sr_code2)
+        try:
+            if sr_code == 3:
+                sr_code2 = r.bits(2)
+                if sr_code2 == 3:
+                    raise AC3Error("invalid sample rate code %i" % sr_code2)
 
-            numblocks_code = 3
-            self.sample_rate = AC3_SAMPLE_RATES[sr_code2] / 2
-        else:
-            numblocks_code = r.bits(2)
-            self.sample_rate = AC3_SAMPLE_RATES[sr_code]
+                numblocks_code = 3
+                self.sample_rate = AC3_SAMPLE_RATES[sr_code2] // 2
+            else:
+                numblocks_code = r.bits(2)
+                self.sample_rate = AC3_SAMPLE_RATES[sr_code]
 
-        channel_mode = r.bits(3)
-        lfe_on = r.bits(1)
-        self.bitrate = 8 * frame_size * self.sample_rate / (
-            EAC3_BLOCKS[numblocks_code] * 256)
+            channel_mode = r.bits(3)
+            lfe_on = r.bits(1)
+            self.bitrate = 8 * frame_size * self.sample_rate // (
+                EAC3_BLOCKS[numblocks_code] * 256)
+        except KeyError as e:
+            raise AC3Error(e)
         r.skip(5)  # bitstream ID, already read
         self.channels = self._get_channels(channel_mode, lfe_on)
         self._skip_unused_header_bits_enhanced(
@@ -258,7 +268,10 @@ class AC3Info(StreamInfo):
 
     @staticmethod
     def _get_channels(channel_mode, lfe_on):
-        return AC3_CHANNELS[channel_mode] + lfe_on
+        try:
+            return AC3_CHANNELS[channel_mode] + lfe_on
+        except KeyError as e:
+            raise AC3Error(e)
 
     def _guess_length(self, fileobj):
         # use bitrate + data size to guess length
