@@ -169,13 +169,13 @@ class RiffFile(object):
             fileobj.seek(self.__next_offset)
 
     def __contains__(self, id_):
-        """Check if the IFF file contains a specific chunk"""
+        """Check if the RIFF file contains a specific chunk"""
 
         assert_valid_chunk_id(id_)
         return id_ in self.__subchunks
 
     def __getitem__(self, id_):
-        """Get a chunk from the IFF file"""
+        """Get a chunk from the RIFF file"""
 
         assert_valid_chunk_id(id_)
 
@@ -185,13 +185,13 @@ class RiffFile(object):
             raise KeyError("%r has no %r chunk" % (self._fileobj, id_))
 
     def delete_chunk(self, id_):
-        """Remove a chunk from the IFF file"""
+        """Remove a chunk from the RIFF file"""
 
         assert_valid_chunk_id(id_)
         self.__subchunks.pop(id_).delete()
 
     def insert_chunk(self, id_):
-        """Insert a new chunk at the end of the IFF file"""
+        """Insert a new chunk at the end of the RIFF file"""
 
         assert isinstance(id_, text_type)
 
