@@ -265,11 +265,12 @@ def File(filething, options=None, easy=False):
         from mutagen.aiff import AIFF
         from mutagen.aac import AAC
         from mutagen.smf import SMF
+        from mutagen.tak import TAK
         from mutagen.dsf import DSF
         options = [MP3, TrueAudio, OggTheora, OggSpeex, OggVorbis, OggFLAC,
                    FLAC, AIFF, APEv2File, MP4, ID3FileType, WavPack,
                    Musepack, MonkeysAudio, OptimFROG, ASF, OggOpus, AAC,
-                   SMF, DSF]
+                   SMF, TAK, DSF]
 
     if not options:
         return None

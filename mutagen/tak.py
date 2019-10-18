@@ -21,6 +21,7 @@ __all__ = ["TAK", "Open", "delete"]
 from mutagen import StreamInfo
 from mutagen.apev2 import (
     APEv2File,
+    convert_error,
     delete,
     error,
 )
@@ -38,6 +39,7 @@ class TAKInfo(StreamInfo):
       (none at the moment)
     """
 
+    @convert_error(IOError, TAKHeaderError)
     def __init__(self, fileobj):
         header = fileobj.read(4)
         if len(header) != 4 or not header.startswith(b"tBaK"):

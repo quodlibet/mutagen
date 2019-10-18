@@ -23,6 +23,7 @@ API Reference
     oggvorbis
     optimfrog
     smf
+    tak
     trueaudio
     vcomment
     wavpack
