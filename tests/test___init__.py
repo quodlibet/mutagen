@@ -521,8 +521,8 @@ _FILETYPES = {
         os.path.join(DATA_DIR, "sample.mid"),
     ],
     TAK: [
-        os.path.join(DATA_DIR, "test.tak"),
-        os.path.join(DATA_DIR, "test-tags.tak"),
+        os.path.join(DATA_DIR, "silence-44-s.tak"),
+        os.path.join(DATA_DIR, "has-tags.tak"),
     ],
     DSF: [
         os.path.join(DATA_DIR, '2822400-1ch-0s-silence.dsf'),

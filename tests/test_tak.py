@@ -9,8 +9,31 @@ from tests import TestCase, DATA_DIR
 class TTAK(TestCase):
 
     def setUp(self):
-        self.tak_no_tags = TAK(os.path.join(DATA_DIR, "test.tak"))
-        self.tak_tags = TAK(os.path.join(DATA_DIR, "test-tags.tak"))
+        self.tak_no_tags = TAK(os.path.join(DATA_DIR, "silence-44-s.tak"))
+        self.tak_tags = TAK(os.path.join(DATA_DIR, "has-tags.tak"))
+
+    def test_channels(self):
+        self.failUnlessEqual(self.tak_no_tags.info.channels, 2)
+        self.failUnlessEqual(self.tak_tags.info.channels, 2)
+
+    def test_length(self):
+        self.failUnlessAlmostEqual(self.tak_no_tags.info.length, 3.68,
+                                   delta=0.009)
+        self.failUnlessAlmostEqual(self.tak_tags.info.length, 0.08,
+                                   delta=0.009)
+
+    def test_sample_rate(self):
+        self.failUnlessEqual(self.tak_no_tags.info.sample_rate, 44100)
+        self.failUnlessEqual(self.tak_tags.info.sample_rate, 44100)
+
+    def test_bits_per_sample(self):
+        self.failUnlessEqual(self.tak_no_tags.info.bits_per_sample, 16)
+        self.failUnlessAlmostEqual(self.tak_tags.info.bits_per_sample, 16)
+
+    def test_encoder_version(self):
+        self.failUnlessEqual(self.tak_no_tags.info.encoder_version, (2, 3, 0))
+        self.failUnlessAlmostEqual(
+            self.tak_tags.info.encoder_version, (2, 3, 0))
 
     def test_not_my_file(self):
         self.failUnlessRaises(
