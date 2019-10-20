@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2014  Evan Purkhiser
 #               2014  Ben Ockmore
+#               2019  Philipp Wolfer
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -83,6 +84,7 @@ class IFFChunk(object):
             raise InvalidChunk()
 
         self.id, self.data_size = struct.unpack('>4si', header)
+        self.data_offset = fileobj.tell()
 
         try:
             self.id = self.id.decode('ascii')
@@ -92,8 +94,7 @@ class IFFChunk(object):
         if not is_valid_chunk_id(self.id):
             raise InvalidChunk()
 
-        self.size = self.HEADER_SIZE + self.data_size
-        self.data_offset = fileobj.tell()
+        self._calculate_size()
 
     def read(self):
         """Read the chunks data"""
@@ -109,6 +110,11 @@ class IFFChunk(object):
 
         self.__fileobj.seek(self.data_offset)
         self.__fileobj.write(data)
+        # Write the padding bytes
+        padding = self.padding()
+        if padding:
+            self.__fileobj.seek(self.data_offset + self.data_size + 1)
+            self.__fileobj.write(b'\x00' * padding)
 
     def delete(self):
         """Removes the chunk from the file"""
@@ -124,18 +130,32 @@ class IFFChunk(object):
         self.__fileobj.seek(self.offset + 4)
         self.__fileobj.write(pack('>I', data_size))
         if self.parent_chunk is not None:
-            size_diff = self.data_size - data_size
+            new_padding = data_size % 2
+            size_diff = (self.data_size + self.padding()) \
+                - (data_size + new_padding)
             self.parent_chunk._update_size(
                 self.parent_chunk.data_size - size_diff)
         self.data_size = data_size
-        self.size = data_size + self.HEADER_SIZE
+        self._calculate_size()
+
+    def _calculate_size(self):
+        self.size = self.HEADER_SIZE + self.data_size + self.padding()
+        assert self.size % 2 == 0
 
     def resize(self, new_data_size):
         """Resize the file and update the chunk sizes"""
 
-        resize_bytes(
-            self.__fileobj, self.data_size, new_data_size, self.data_offset)
+        padding = new_data_size % 2
+        resize_bytes(self.__fileobj, self.data_size + self.padding(),
+                     new_data_size + padding, self.data_offset)
         self._update_size(new_data_size)
+
+    def padding(self):
+        """Returns the number of padding bytes (0 or 1).
+        IFF chunks are required to be a even number in total length. If
+        data_size is odd a padding byte will be added at the end.
+        """
+        return self.data_size % 2
 
 
 class IFFFile(object):
@@ -169,7 +189,6 @@ class IFFFile(object):
             # Calculate the location of the next chunk,
             # considering the pad byte
             self.__next_offset = chunk.offset + chunk.size
-            self.__next_offset += self.__next_offset % 2
             fileobj.seek(self.__next_offset)
 
     def __contains__(self, id_):
@@ -291,12 +310,7 @@ class _IFFID3(ID3):
         except ID3Error as e:
             reraise(error, e, sys.exc_info()[2])
 
-        new_size = len(data)
-        new_size += new_size % 2  # pad byte
-        assert new_size % 2 == 0
-        chunk.resize(new_size)
-        data += (new_size - len(data)) * b'\x00'
-        assert new_size == len(data)
+        chunk.resize(len(data))
         chunk.write(data)
 
     @loadfile(writable=True)
