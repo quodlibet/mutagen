@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2017  Borewit
+# Copyright (C) 2019  Philipp Wolfer
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -70,6 +71,7 @@ class RiffChunkHeader(object):
             raise InvalidChunk('Header size < %i' % self.HEADER_SIZE)
 
         self.id, self.data_size = struct.unpack('<4sI', header)
+        self.data_offset = fileobj.tell()
 
         try:
             self.id = self.id.decode('ascii').rstrip()
@@ -79,8 +81,7 @@ class RiffChunkHeader(object):
         if not is_valid_chunk_id(self.id):
             raise InvalidChunk('Invalid chunk ID %s' % self.id)
 
-        self.size = self.HEADER_SIZE + self.data_size
-        self.data_offset = fileobj.tell()
+        self._calculate_size()
 
     def read(self):
         """Read the chunks data"""
@@ -96,6 +97,11 @@ class RiffChunkHeader(object):
 
         self.__fileobj.seek(self.data_offset)
         self.__fileobj.write(data)
+        # Write the padding bytes
+        padding = self.padding()
+        if padding:
+            self.__fileobj.seek(self.data_offset + self.data_size + 1)
+            self.__fileobj.write(b'\x00' * padding)
 
     def delete(self):
         """Removes the chunk from the file"""
@@ -111,18 +117,32 @@ class RiffChunkHeader(object):
         self.__fileobj.seek(self.offset + 4)
         self.__fileobj.write(pack('<I', data_size))
         if self.parent_chunk is not None:
-            size_diff = self.data_size - data_size
+            new_padding = data_size % 2
+            size_diff = (self.data_size + self.padding()) \
+                - (data_size + new_padding)
             self.parent_chunk._update_size(
                 self.parent_chunk.data_size - size_diff)
         self.data_size = data_size
-        self.size = data_size + self.HEADER_SIZE
+        self._calculate_size()
+
+    def _calculate_size(self):
+        self.size = self.HEADER_SIZE + self.data_size + self.padding()
+        assert self.size % 2 == 0
 
     def resize(self, new_data_size):
         """Resize the file and update the chunk sizes"""
 
-        resize_bytes(
-            self.__fileobj, self.data_size, new_data_size, self.data_offset)
+        padding = new_data_size % 2
+        resize_bytes(self.__fileobj, self.data_size + self.padding(),
+                     new_data_size + padding, self.data_offset)
         self._update_size(new_data_size)
+
+    def padding(self):
+        """Returns the number of padding bytes (0 or 1).
+        IFF chunks are required to be a even number in total length. If
+        data_size is odd a padding byte will be added at the end.
+        """
+        return self.data_size % 2
 
 
 class RiffFile(object):
@@ -165,7 +185,6 @@ class RiffFile(object):
             # Calculate the location of the next chunk,
             # considering the pad byte
             self.__next_offset = chunk.offset + chunk.size
-            self.__next_offset += self.__next_offset % 2
             fileobj.seek(self.__next_offset)
 
     def __contains__(self, id_):
