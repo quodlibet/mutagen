@@ -168,8 +168,8 @@ class WAVE(FileType):
     def score(filename, fileobj, header):
         filename = filename.lower()
 
-        return (header.startswith(b"RIFF") * 2 + endswith(filename, b".wav") +
-                endswith(filename, b".wave"))
+        return (header.startswith(b"RIFF") + (header[8:12] == b'WAVE')
+                + endswith(filename, b".wav") + endswith(filename, b".wave"))
 
     def add_tags(self):
         """Add an empty ID3 tag to the file."""
