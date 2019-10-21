@@ -306,7 +306,7 @@ class MPEGInfo(StreamInfo):
         bitrate (`int`): audio bitrate, in bits per second.
             In case :attr:`bitrate_mode` is :attr:`BitrateMode.UNKNOWN` the
             bitrate is guessed based on the first frame.
-        sample_rate (`int`) audio sample rate, in Hz
+        sample_rate (`int`): audio sample rate, in Hz
         encoder_info (`mutagen.text`): a string containing encoder name and
             possibly version. In case a lame tag is present this will start
             with ``"LAME "``, if unknown it is empty, otherwise the
