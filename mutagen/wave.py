@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2017  Borewit
+# Copyright (C) 2019  Philipp Wolfer
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,6 +36,10 @@ class _WaveFile(RiffFile):
 
         if self.file_type != u'WAVE':
             raise error("Expected RIFF/WAVE.")
+
+        # Normalize ID3v2-tag-chunk to lowercase
+        if u'ID3' in self:
+            self[u'ID3'].id = u'id3'
 
 
 class WaveStreamInfo(StreamInfo):

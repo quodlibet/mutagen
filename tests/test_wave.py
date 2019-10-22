@@ -2,7 +2,7 @@
 
 import os
 
-from mutagen.wave import WAVE
+from mutagen.wave import WAVE, InvalidChunk
 from tests import TestCase, DATA_DIR, get_temp_copy
 
 
@@ -68,7 +68,7 @@ class TWave(TestCase):
 
     def test_not_my_file(self):
         self.failUnlessRaises(
-            KeyError, WAVE, os.path.join(DATA_DIR, "empty.ogg"))
+            InvalidChunk, WAVE, os.path.join(DATA_DIR, "empty.ogg"))
 
     def test_pprint(self):
         self.wav_pcm_2s_44100_16_ID3v23.pprint()
@@ -82,7 +82,14 @@ class TWave(TestCase):
         self.assertEquals(id3["TALB"], "Quod Libet Test Data")
         self.assertEquals(id3["TCON"], "Silence")
         self.assertEquals(id3["TIT2"], "Silence")
-        self.assertEquals(id3["TPE1"], ["piman / jzig"])  # ToDo: split on '/'?
+        self.assertEquals(id3["TPE1"], ["piman / jzig"])
+
+    def test_id3_tags_uppercase_chunk(self):
+        id3 = self.wav_pcm_2s_16000_08_ID3v23
+        self.assertEquals(id3["TALB"], "Quod Libet Test Data")
+        self.assertEquals(id3["TCON"], "Silence")
+        self.assertEquals(id3["TIT2"], "Silence")
+        self.assertEquals(id3["TPE1"], ["piman / jzig"])
 
     def test_delete(self):
         self.tmp_wav_pcm_2s_16000_08_ID3v23.delete()

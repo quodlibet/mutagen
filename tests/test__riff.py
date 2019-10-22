@@ -2,7 +2,7 @@
 
 import os
 
-from mutagen._riff import RiffFile, RiffChunkHeader
+from mutagen._riff import RiffFile, RiffChunk
 
 from tests import TestCase, DATA_DIR, get_temp_copy
 
@@ -42,9 +42,9 @@ class TRiffFile(TestCase):
         self.failUnless(u'data' in self.riff_2)
 
     def test_is_chunks(self):
-        self.failUnless(isinstance(self.riff_1[u'fmt'], RiffChunkHeader))
-        self.failUnless(isinstance(self.riff_1[u'data'], RiffChunkHeader))
-        self.failUnless(isinstance(self.riff_1[u'id3'], RiffChunkHeader))
+        self.failUnless(isinstance(self.riff_1[u'fmt'], RiffChunk))
+        self.failUnless(isinstance(self.riff_1[u'data'], RiffChunk))
+        self.failUnless(isinstance(self.riff_1[u'id3'], RiffChunk))
 
     def test_chunk_size(self):
         self.failUnlessEqual(self.riff_1[u'data'].size, 352808)
@@ -68,7 +68,7 @@ class TRiffFile(TestCase):
 
         new_riff = RiffFile(self.file_2_tmp)
         self.failUnless(u'id3' in new_riff)
-        self.failUnless(isinstance(new_riff[u'id3'], RiffChunkHeader))
+        self.failUnless(isinstance(new_riff[u'id3'], RiffChunk))
         self.failUnlessEqual(new_riff[u'id3'].size, 8)
         self.failUnlessEqual(new_riff[u'id3'].data_size, 0)
 
@@ -81,23 +81,49 @@ class TRiffFile(TestCase):
         self.failUnlessEqual(0, self.riff_2_tmp[u'TST2'].padding())
 
     def test_delete_padded_chunks(self):
-        self.riff_2_tmp.insert_chunk(u'TST1')
+        riff_file = self.riff_2_tmp
+        self.failUnlessEqual(riff_file.root.size, 64044)
+        riff_file.insert_chunk(u'TST')
         # Resize to odd length, should insert 1 padding byte
-        self.riff_2_tmp[u'TST1'].resize(3)
+        riff_file[u'TST'].resize(3)
         # Insert another chunk after the first one
-        new_riff = RiffFile(self.file_2_tmp)
-        new_riff.insert_chunk(u'TST2')
-        new_riff[u'TST2'].resize(2)
-        new_riff = RiffFile(self.file_2_tmp)
-        self.failUnlessEqual(new_riff[u'TST1'].size, 12)
-        self.failUnlessEqual(new_riff[u'TST1'].data_size, 3)
-        self.failUnlessEqual(new_riff[u'TST1'].data_offset, 64052)
-        self.failUnlessEqual(new_riff[u'TST2'].size, 10)
-        self.failUnlessEqual(new_riff[u'TST2'].data_size, 2)
-        self.failUnlessEqual(new_riff[u'TST2'].data_offset, 64064)
+        self.failUnlessEqual(riff_file.root.size, 64056)
+        riff_file.insert_chunk(u'TST2')
+        riff_file[u'TST2'].resize(2)
+        self.failUnlessEqual(riff_file.root.size, 64066)
+        self.failUnlessEqual(riff_file[u'TST'].size, 12)
+        self.failUnlessEqual(riff_file[u'TST'].data_size, 3)
+        self.failUnlessEqual(riff_file[u'TST'].data_offset, 64052)
+        self.failUnlessEqual(riff_file[u'TST2'].size, 10)
+        self.failUnlessEqual(riff_file[u'TST2'].data_size, 2)
+        self.failUnlessEqual(riff_file[u'TST2'].data_offset, 64064)
         # Delete the odd chunk
-        new_riff.delete_chunk(u'TST1')
-        new_riff = RiffFile(self.file_2_tmp)
-        self.failUnlessEqual(new_riff[u'TST2'].size, 10)
-        self.failUnlessEqual(new_riff[u'TST2'].data_size, 2)
-        self.failUnlessEqual(new_riff[u'TST2'].data_offset, 64052)
+        riff_file.delete_chunk(u'TST')
+        self.failUnlessEqual(riff_file.root.size, 64054)
+        self.failUnlessEqual(riff_file[u'TST2'].size, 10)
+        self.failUnlessEqual(riff_file[u'TST2'].data_size, 2)
+        self.failUnlessEqual(riff_file[u'TST2'].data_offset, 64052)
+        # Reloading the file should give the same results
+        new_riff_file = RiffFile(self.file_2_tmp)
+        self.failUnlessEqual(new_riff_file.root.size,
+                             riff_file.root.size)
+        self.failUnlessEqual(new_riff_file[u'TST2'].size,
+            riff_file[u'TST2'].size)
+        self.failUnlessEqual(new_riff_file[u'TST2'].data_size,
+            riff_file[u'TST2'].data_size)
+        self.failUnlessEqual(new_riff_file[u'TST2'].data_offset,
+            riff_file[u'TST2'].data_offset)
+
+    def test_read_list_info(self):
+        riff = self.riff_1_tmp
+        info = riff[u'LIST']
+        self.failUnlessEqual(info.name, 'INFO')
+        info_tags = {}
+        for chunk in info.subchunks():
+            info_tags[chunk.id] = chunk.read().decode().strip('\0')
+        self.failUnlessEqual(info_tags['IPRD'], 'Quod Libet Test Data')
+        self.failUnlessEqual(info_tags['IART'], 'piman, jzig')
+        self.failUnlessEqual(info_tags['IGNR'], 'Silence')
+        self.failUnlessEqual(info_tags['INAM'], 'Silence')
+        self.failUnlessEqual(info_tags['ITRK'], '02/10')
+        self.failUnlessEqual(info_tags['ICRD'], '2004')
