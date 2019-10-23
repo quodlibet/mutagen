@@ -130,7 +130,7 @@ class IFFChunk(object):
         # Write the padding bytes
         padding = self.padding()
         if padding:
-            self._fileobj.seek(self.data_offset + self.data_size + 1)
+            self._fileobj.seek(self.data_offset + self.data_size)
             self._fileobj.write(b'\x00' * padding)
 
     def delete(self):
