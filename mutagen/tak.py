@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-# Tom's lossless Audio Kompressor (TAK) reader/tagger
-#
-# Copyright 2019 Philipp Wolfer <ph.wolfer@gmail.com>
-# Copyright 2008 Lukáš Lalinský <lalinsky@gmail.com>
+# Copyright (C) 2008  Lukáš Lalinský
+# Copyright (C) 2019  Philipp Wolfer
 #
 # This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 2 as
-# published by the Free Software Foundation.
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
 """Tom's lossless Audio Kompressor (TAK) streams with APEv2 tags.
 
 TAK is a lossless audio compressor developed by Thomas Becker.
