@@ -21,6 +21,7 @@ __all__ = ["TAK", "Open", "delete"]
 
 import struct
 
+from ._compat import endswith
 from mutagen import StreamInfo
 from mutagen.apev2 import (
     APEv2File,
@@ -231,7 +232,7 @@ class TAK(APEv2File):
 
     @staticmethod
     def score(filename, fileobj, header):
-        return header.startswith(b"tBaK") + filename.lower().endswith(".tak")
+        return header.startswith(b"tBaK") + endswith(filename.lower(), ".tak")
 
 
 Open = TAK
