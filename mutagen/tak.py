@@ -146,14 +146,14 @@ class TAKInfo(StreamInfo):
       length (`float`): file length in seconds, as a float
       sample_rate (`int`): audio sampling rate in Hz
       bits_per_sample (`int`): audio sample size
-      encoder_version (tuple[int]): TAK encoder version as a tuple
+      encoder_info (`mutagen.text`): encoder version
     """
 
     channels = 0
     length = 0
     sample_rate = 0
     bitrate = 0
-    encoder_version = None
+    encoder_info = ""
 
     @convert_error(IOError, TAKHeaderError)
     @convert_error(BitReaderError, TAKHeaderError)
@@ -209,11 +209,11 @@ class TAKInfo(StreamInfo):
         patch = bitreader.bits(8)
         minor = bitreader.bits(8)
         major = bitreader.bits(8)
-        self.encoder_version = (major, minor, patch)
+        self.encoder_info = "TAK %d.%d.%d" % (major, minor, patch)
 
     def pprint(self):
-        return u"TAK %r, %d Hz, %d bits, %.2f seconds, %d channel(s)" % (
-            self.encoder_version, self.sample_rate, self.bits_per_sample,
+        return u"%s, %d Hz, %d bits, %.2f seconds, %d channel(s)" % (
+            self.encoder_info or "TAK", self.sample_rate, self.bits_per_sample,
             self.length, self.channels)
 
 

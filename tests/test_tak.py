@@ -30,10 +30,9 @@ class TTAK(TestCase):
         self.failUnlessEqual(self.tak_no_tags.info.bits_per_sample, 16)
         self.failUnlessAlmostEqual(self.tak_tags.info.bits_per_sample, 16)
 
-    def test_encoder_version(self):
-        self.failUnlessEqual(self.tak_no_tags.info.encoder_version, (2, 3, 0))
-        self.failUnlessAlmostEqual(
-            self.tak_tags.info.encoder_version, (2, 3, 0))
+    def test_encoder_info(self):
+        self.failUnlessEqual(self.tak_no_tags.info.encoder_info, "TAK 2.3.0")
+        self.failUnlessEqual(self.tak_tags.info.encoder_info, "TAK 2.3.0")
 
     def test_not_my_file(self):
         self.failUnlessRaises(
