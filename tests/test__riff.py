@@ -73,12 +73,28 @@ class TRiffFile(TestCase):
         self.failUnlessEqual(new_riff[u'id3'].data_size, 0)
 
     def test_insert_padded_chunks(self):
-        self.riff_2_tmp.insert_chunk(u'TST1')
-        self.riff_2_tmp[u'TST1'].resize(3)
-        self.failUnlessEqual(1, self.riff_2_tmp[u'TST1'].padding())
-        self.riff_2_tmp.insert_chunk(u'TST2')
-        self.riff_2_tmp[u'TST2'].resize(4)
-        self.failUnlessEqual(0, self.riff_2_tmp[u'TST2'].padding())
+        padded = self.riff_2_tmp.insert_chunk(u'TST1')
+        unpadded = self.riff_2_tmp.insert_chunk(u'TST2')
+        # The second chunk needs no padding
+        unpadded.resize(4)
+        self.failUnlessEqual(4, unpadded.data_size)
+        self.failUnlessEqual(0, unpadded.padding())
+        self.failUnlessEqual(12, unpadded.size)
+        # Resize the first chunk so it needs padding
+        padded.resize(3)
+        self.failUnlessEqual(3, padded.data_size)
+        self.failUnlessEqual(1, padded.padding())
+        self.failUnlessEqual(12, padded.size)
+        self.failUnlessEqual(padded.offset + padded.size, unpadded.offset)
+        # Verify the padding byte gets written correctly
+        self.file_2_tmp.seek(padded.data_offset)
+        self.file_2_tmp.write(b'ABCD')
+        padded.write(b'ABC')
+        self.file_2_tmp.seek(padded.data_offset)
+        self.failUnlessEqual(b'ABC\x00', self.file_2_tmp.read(4))
+        # Verify the second chunk got not overwritten
+        self.file_2_tmp.seek(unpadded.offset)
+        self.failUnlessEqual(b'TST2', self.file_2_tmp.read(4))
 
     def test_delete_padded_chunks(self):
         riff_file = self.riff_2_tmp
