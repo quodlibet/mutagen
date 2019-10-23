@@ -233,8 +233,8 @@ class TIFFFile(TestCase):
         self.iff_1_tmp[u'FORM'].resize(17000)
         self.failUnlessEqual(
             IFFFile(self.file_1_tmp)[u'FORM'].data_size, 17000)
-        self.iff_2_tmp[u'FORM'].resize(0)
-        self.failUnlessEqual(IFFFile(self.file_2_tmp)[u'FORM'].data_size, 0)
+        self.iff_2_tmp[u'FORM'].resize(4)
+        self.failUnlessEqual(IFFFile(self.file_2_tmp)[u'FORM'].data_size, 4)
 
     def test_child_chunk_resize(self):
         self.iff_1_tmp[u'ID3'].resize(128)
@@ -277,27 +277,35 @@ class TIFFFile(TestCase):
         self.failUnlessEqual(0, self.iff_2_tmp[u'TST2'].padding())
 
     def test_delete_padded_chunks(self):
-        self.iff_2_tmp.insert_chunk(u'TST1')
+        iff_file = self.iff_2_tmp
+        iff_file.insert_chunk(u'TST')
         # Resize to odd length, should insert 1 padding byte
-        self.iff_2_tmp[u'TST1'].resize(3)
+        iff_file[u'TST'].resize(3)
         # Insert another chunk after the first one
-        new_iff = IFFFile(self.file_2_tmp)
-        new_iff.insert_chunk(u'TST2')
-        new_iff[u'TST2'].resize(2)
-        new_iff = IFFFile(self.file_2_tmp)
-        self.failUnlessEqual(new_iff[u'FORM'].size, 16076)
-        self.failUnlessEqual(new_iff[u'FORM'].data_size, 16068)
-        self.failUnlessEqual(new_iff[u'TST1'].size, 12)
-        self.failUnlessEqual(new_iff[u'TST1'].data_size, 3)
-        self.failUnlessEqual(new_iff[u'TST1'].data_offset, 16062)
-        self.failUnlessEqual(new_iff[u'TST2'].size, 10)
-        self.failUnlessEqual(new_iff[u'TST2'].data_size, 2)
-        self.failUnlessEqual(new_iff[u'TST2'].data_offset, 16074)
+        iff_file.insert_chunk(u'TST2')
+        iff_file[u'TST2'].resize(2)
+        self.failUnlessEqual(iff_file[u'FORM'].size, 16076)
+        self.failUnlessEqual(iff_file[u'FORM'].data_size, 16068)
+        self.failUnlessEqual(iff_file[u'TST'].size, 12)
+        self.failUnlessEqual(iff_file[u'TST'].data_size, 3)
+        self.failUnlessEqual(iff_file[u'TST'].data_offset, 16062)
+        self.failUnlessEqual(iff_file[u'TST2'].size, 10)
+        self.failUnlessEqual(iff_file[u'TST2'].data_size, 2)
+        self.failUnlessEqual(iff_file[u'TST2'].data_offset, 16074)
         # Delete the odd chunk
-        del new_iff[u'TST1']
-        new_iff = IFFFile(self.file_2_tmp)
-        self.failUnlessEqual(new_iff[u'FORM'].size, 16064)
-        self.failUnlessEqual(new_iff[u'FORM'].data_size, 16056)
-        self.failUnlessEqual(new_iff[u'TST2'].size, 10)
-        self.failUnlessEqual(new_iff[u'TST2'].data_size, 2)
-        self.failUnlessEqual(new_iff[u'TST2'].data_offset, 16062)
+        iff_file.delete_chunk(u'TST')
+        self.failUnlessEqual(iff_file[u'FORM'].size, 16064)
+        self.failUnlessEqual(iff_file[u'FORM'].data_size, 16056)
+        self.failUnlessEqual(iff_file[u'TST2'].size, 10)
+        self.failUnlessEqual(iff_file[u'TST2'].data_size, 2)
+        self.failUnlessEqual(iff_file[u'TST2'].data_offset, 16062)
+        # Reloading the file should give the same results
+        new_iff_file = IFFFile(self.file_2_tmp)
+        self.failUnlessEqual(new_iff_file[u'FORM'].size,
+                             iff_file[u'FORM'].size)
+        self.failUnlessEqual(new_iff_file[u'TST2'].size,
+            iff_file[u'TST2'].size)
+        self.failUnlessEqual(new_iff_file[u'TST2'].data_size,
+            iff_file[u'TST2'].data_size)
+        self.failUnlessEqual(new_iff_file[u'TST2'].data_offset,
+            iff_file[u'TST2'].data_offset)
