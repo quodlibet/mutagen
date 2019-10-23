@@ -139,6 +139,7 @@ class IFFChunk(object):
         delete_bytes(self._fileobj, self.size, self.offset)
         if self.parent_chunk is not None:
             self.parent_chunk._remove_subchunk(self)
+        self._fileobj.flush()
 
     def _update_size(self, size_diff, changed_subchunk=None):
         """Update the size of the chunk"""
@@ -166,6 +167,7 @@ class IFFChunk(object):
                      new_data_size + padding, self.data_offset)
         size_diff = new_data_size - self.data_size
         self._update_size(size_diff)
+        self._fileobj.flush()
 
     def padding(self):
         """Returns the number of padding bytes (0 or 1).
@@ -244,6 +246,7 @@ class FormIFFChunk(IFFChunk):
         if data:
             chunk.write(data)
         self.subchunks().append(chunk)
+        self._fileobj.flush()
         return chunk
 
     def _remove_subchunk(self, chunk):
