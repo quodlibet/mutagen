@@ -54,7 +54,7 @@ class OptimFROGInfo(StreamInfo):
         length (`float`): file length in seconds, as a float
         sample_rate (`int`): audio sampling rate in Hz
         bits_per_sample (`int`): the audio sample size
-        version (int): encoder version
+        encoder_info (`mutagen.text`): encoder version, e.g. "5.100"
     """
 
     @convert_error(IOError, OptimFROGHeaderError)
@@ -79,7 +79,10 @@ class OptimFROGInfo(StreamInfo):
             self.length = 0.0
         if data_size >= 15:
             encoder_id = struct.unpack("<H", header[20:22])[0]
-            self.version = (encoder_id >> 4) + 4500
+            version = str((encoder_id >> 4) + 4500)
+            self.encoder_info = "%s.%s" % (version[0], version[1:])
+        else:
+            self.encoder_info = ""
 
     def pprint(self):
         return u"OptimFROG, %.2f seconds, %d Hz" % (self.length,

@@ -40,11 +40,11 @@ class TOptimFROG(TestCase):
         self.failUnlessAlmostEqual(self.ofr_5100.info.length, 2.0, 2)
         self.failUnlessAlmostEqual(self.ofs_5100.info.length, 2.0, 2)
 
-    def test_version(self):
-        self.failUnlessEqual(self.ofr.info.version, 4520)
-        self.failUnlessEqual(self.ofs.info.version, 4520)
-        self.failUnlessEqual(self.ofr_5100.info.version, 5100)
-        self.failUnlessEqual(self.ofs_5100.info.version, 5100)
+    def test_encoder_info(self):
+        self.failUnlessEqual(self.ofr.info.encoder_info, "4.520")
+        self.failUnlessEqual(self.ofs.info.encoder_info, "4.520")
+        self.failUnlessEqual(self.ofr_5100.info.encoder_info, "5.100")
+        self.failUnlessEqual(self.ofs_5100.info.encoder_info, "5.100")
 
     def test_not_my_file(self):
         self.failUnlessRaises(
