@@ -32,6 +32,7 @@ from mutagen.asf import ASF
 from mutagen.aiff import AIFF
 from mutagen.aac import AAC
 from mutagen.smf import SMF
+from mutagen.tak import TAK
 from mutagen.dsf import DSF
 from os import devnull
 
@@ -518,6 +519,10 @@ _FILETYPES = {
     ],
     SMF: [
         os.path.join(DATA_DIR, "sample.mid"),
+    ],
+    TAK: [
+        os.path.join(DATA_DIR, "silence-44-s.tak"),
+        os.path.join(DATA_DIR, "has-tags.tak"),
     ],
     DSF: [
         os.path.join(DATA_DIR, '2822400-1ch-0s-silence.dsf'),
