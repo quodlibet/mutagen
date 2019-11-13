@@ -216,7 +216,7 @@ class OggPage(object):
         so also the CRC.
 
         If an error occurs (e.g. non-Ogg data is found), fileobj will
-        be left pointing to the place in the stream the error occured,
+        be left pointing to the place in the stream the error occurred,
         but the invalid data will be left intact (since this function
         does not change the total file size).
         """
