@@ -5,6 +5,7 @@ API Reference
 
     base
     aac
+    ac3
     aiff
     ape
     asf
