@@ -14,7 +14,7 @@ import sys
 import subprocess
 import tarfile
 
-from distutils.core import setup, Command, Distribution
+from setuptools import setup, Command, Distribution
 from distutils import dir_util
 
 
