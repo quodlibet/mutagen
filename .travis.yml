@@ -25,7 +25,7 @@ matrix:
       dist: xenial
       sudo: required
       language: python
-      python: "3.8-dev"
+      python: "3.8"
       env: TYPE="linux" PYVER="3.8" PYARGS="-R -bb"
     - os: linux
       dist: trusty
