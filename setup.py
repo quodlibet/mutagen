@@ -281,13 +281,15 @@ if __name__ == "__main__":
           data_files=[
             ('share/man/man1', glob.glob("man/*.1")),
           ],
-          scripts=[os.path.join("tools", name) for name in [
-            "mid3cp",
-            "mid3iconv",
-            "mid3v2",
-            "moggsplit",
-            "mutagen-inspect",
-            "mutagen-pony",
-          ]],
+          entry_points={
+            'console_scripts': [
+              'mid3cp=mutagen._tools.mid3cp:entry_point',
+              'mid3iconv=mutagen._tools.mid3iconv:entry_point',
+              'mid3v2=mutagen._tools.mid3v2:entry_point',
+              'moggsplit=mutagen._tools.moggsplit:entry_point',
+              'mutagen-inspect=mutagen._tools.mutagen_inspect:entry_point',
+              'mutagen-pony=mutagen._tools.mutagen_pony:entry_point',
+            ],
+          },
           long_description=long_description,
     )
