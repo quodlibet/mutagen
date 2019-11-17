@@ -252,8 +252,8 @@ if __name__ == "__main__":
           version=version_string,
           url="https://github.com/quodlibet/mutagen",
           description="read and write audio tags for many formats",
-          author="Michael Urman",
-          author_email="quod-libet-development@groups.google.com",
+          author="Christoph Reiter",
+          author_email="reiter.christoph@gmail.com",
           license="GPL-2.0-or-later",
           classifiers=[
             'Operating System :: OS Independent',
