@@ -135,7 +135,8 @@ class build_sphinx(Command):
     def run(self):
         docs = "docs"
         target = os.path.join(self.build_dir, "sphinx")
-        self.spawn(["sphinx-build", "-b", "html", "-n", docs, target])
+        self.spawn([
+            sys.executable, "-m", "sphinx", "-b", "html", "-n", docs, target])
 
 
 class test_cmd(Command):
