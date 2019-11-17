@@ -281,6 +281,8 @@ if __name__ == "__main__":
           data_files=[
             ('share/man/man1', glob.glob("man/*.1")),
           ],
+          python_requires=(
+            '>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4'),
           entry_points={
             'console_scripts': [
               'mid3cp=mutagen._tools.mid3cp:entry_point',
