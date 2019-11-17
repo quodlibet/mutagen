@@ -238,11 +238,6 @@ if __name__ == "__main__":
     else:
         version_string = ".".join(map(str, version))
 
-    if os.name == "posix":
-        data_files = [('share/man/man1', glob.glob("man/*.1"))]
-    else:
-        data_files = []
-
     cmd_classes = {
         "clean": clean,
         "test": test_cmd,
@@ -283,7 +278,9 @@ if __name__ == "__main__":
             "mutagen._senf",
             "mutagen._tools",
           ],
-          data_files=data_files,
+          data_files=[
+            ('share/man/man1', glob.glob("man/*.1")),
+          ],
           scripts=[os.path.join("tools", name) for name in [
             "mid3cp",
             "mid3iconv",
