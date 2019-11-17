@@ -1,9 +1,28 @@
 .. _release-1.43.0:
 
-1.43.0 - ???
-------------
+1.43.0 - 2019-11-17
+-------------------
 
+* **Note: 1.43.x might be the last version supporting Python 2**
 * Python 3.4 is no longer supported
+* Building requires 'setuptools' now, CLI tools depend on 'pkg_resources'
+* CLI tools are setuptools entry points now
+
+..
+
+* Fix collections ABCs deprecation warning :pr:`371` (:user:`Ken Sato <ksato9700>`)
+* Minor typo fixes :pr:`375` (:user:`Nicholas Chammas <nchammas>`)
+* MP3: increase max initial wrong syncs from 1000 to 1500 :pr:`376` (:user:`Hamid Alaei Varnosfaderani <halaei>`)
+* FLAC: support files with multiple VORBIS_COMMENT blocks like libflac :pr:`378`
+* ID3: Improved TYER/TDAT/TIME upgrade to TDRC :pr:`385`
+* MP4: Add support for iTunes HD Video tag (hdvd) :pr:`386` (:user:`Jay Sandhu <JaySandhu>`)
+* Add AC3 file type :pr:`400` (:user:`Philipp Wolfer <phw>`)
+* AIFF: renamed sample_size to bits_per_sample (sample_size still works) :pr:`403` (:user:`Philipp Wolfer <phw>`)
+* API doc fixes :pr:`404` :pr:`407` (:user:`Philipp Wolfer <phw>`)
+* Add support for Tom's lossless Audio Kompressor (TAK) :pr:`405` (:user:`Philipp Wolfer <phw>`)
+* OptimFROG: support encoder version >= 5.100 :pr:`406` (:user:`Philipp Wolfer <phw>`)
+* AIFF: Fix handling of padding bytes, safe chunk manipulation :pr:`409` (:user:`Philipp Wolfer <phw>`)
+* Fix typos :pr:`412` (:user:`Tim Gates <timgates42>`)
 
 
 .. _release-1.42.0:
