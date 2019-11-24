@@ -133,11 +133,11 @@ class EasyMP4Tags(DictMixin, Tags):
             clamp = lambda x: int(min(max(min_value, x), max_value))
             data = []
             for v in value:
-                try:
+                if "/" in v:
                     tracks, total = v.split("/")
                     tracks = clamp(int(tracks))
                     total = clamp(int(total))
-                except (ValueError, TypeError):
+                else:
                     tracks = clamp(int(v))
                     total = min_value
                 data.append((tracks, total))
