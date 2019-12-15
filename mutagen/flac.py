@@ -284,6 +284,9 @@ class SeekPoint(tuple):
         return super(cls, SeekPoint).__new__(
             cls, (first_sample, byte_offset, num_samples))
 
+    def __getnewargs__(self):
+        return self.first_sample, self.byte_offset, self.num_samples
+
     first_sample = property(lambda self: self[0])
     byte_offset = property(lambda self: self[1])
     num_samples = property(lambda self: self[2])
