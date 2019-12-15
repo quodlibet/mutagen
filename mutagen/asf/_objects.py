@@ -108,7 +108,7 @@ class HeaderObject(BaseObject):
 
             try:
                 data = fileobj.read(payload_size)
-            except OverflowError:
+            except (OverflowError, MemoryError):
                 # read doesn't take 64bit values
                 raise ASFHeaderError("invalid header size")
             if len(data) != payload_size:
