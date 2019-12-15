@@ -359,6 +359,8 @@ class AIFFInfo(StreamInfo):
         channels, frame_count, sample_size, sample_rate = info
 
         self.sample_rate = int(read_float(sample_rate))
+        if not self.sample_rate:
+            raise error("The sample rate is zero")
         self.bits_per_sample = sample_size
         self.sample_size = sample_size  # For backward compatibility
         self.channels = channels
