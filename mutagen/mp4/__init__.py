@@ -565,7 +565,7 @@ class MP4Tags(DictProxy, Tags):
             length, name = struct.unpack(">I4s", head[:8])
             if length < 1:
                 raise MP4MetadataError(
-                        "atom %r has a length of zero" % atom.name)
+                    "atom %r has a length of zero" % atom.name)
             version = ord(head[8:9])
             flags = struct.unpack(">I", b"\x00" + head[9:12])[0]
             if name != b"data":
@@ -607,7 +607,7 @@ class MP4Tags(DictProxy, Tags):
                     "unexpected atom %r inside %r" % (atom_name, atom.name))
             if length < 1:
                 raise MP4MetadataError(
-                        "atom %r has a length of zero" % atom.name)
+                    "atom %r has a length of zero" % atom.name)
             version = ord(data[pos + 8:pos + 8 + 1])
             flags = struct.unpack(">I", b"\x00" + data[pos + 9:pos + 12])[0]
             value.append(MP4FreeForm(data[pos + 16:pos + length],
@@ -768,7 +768,7 @@ class MP4Tags(DictProxy, Tags):
                     "unexpected atom %r inside 'covr'" % name)
             if length < 1:
                 raise MP4MetadataError(
-                        "atom %r has a length of zero" % atom.name)
+                    "atom %r has a length of zero" % atom.name)
             if imageformat not in (MP4Cover.FORMAT_JPEG, MP4Cover.FORMAT_PNG):
                 # Sometimes AtomDataType.IMPLICIT or simply wrong.
                 # In all cases it was jpeg, so default to it
