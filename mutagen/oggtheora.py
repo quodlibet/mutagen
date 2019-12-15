@@ -61,6 +61,8 @@ class OggTheoraInfo(StreamInfo):
             raise OggTheoraHeaderError(
                 "found Theora version %d.%d != 3.2" % (vmaj, vmin))
         fps_num, fps_den = struct.unpack(">2I", data[22:30])
+        if not fps_den:
+            raise OggTheoraHeaderError("fps_den is equal to zero")
         self.fps = fps_num / float(fps_den)
         self.bitrate = cdata.uint_be(b"\x00" + data[37:40])
         self.granule_shift = (cdata.ushort_be(data[40:42]) >> 5) & 0x1F
