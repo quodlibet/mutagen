@@ -381,6 +381,8 @@ class HeaderExtensionObject(BaseObject):
             obj.parse(asf, data[22 + datapos + 24:22 + datapos + size])
             self.objects.append(obj)
             datapos += size
+            if size < 1:
+                break
 
     def render(self, asf):
         data = bytearray()
