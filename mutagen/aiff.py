@@ -365,7 +365,6 @@ class AIFFInfo(StreamInfo):
         self.sample_size = sample_size  # For backward compatibility
         self.channels = channels
         self.bitrate = channels * sample_size * self.sample_rate
-        self.length = frame_count / float(self.sample_rate)
 
     def pprint(self):
         return u"%d channel AIFF @ %d bps, %s Hz, %.2f seconds" % (
