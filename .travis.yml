@@ -46,6 +46,7 @@ matrix:
 
 install:
   - if [ "$TYPE" == "osx" ]; then brew update; fi
+  - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "3" ]; then brew unlink python@2 || true; fi
   - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "3" ]; then brew install python || brew upgrade python; fi
   - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "3" ]; then python3 -m pip install virtualenv; fi
   - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "3" ]; then virtualenv venv -p python3; fi
