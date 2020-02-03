@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
-# FIXME: This test suite is a mess, a lot of it dates from PyMusepack so
-# it doesn't match the other Mutagen test conventions/quality.
 
 import os
-import shutil
 
-from tests import TestCase, DATA_DIR, get_temp_copy
+from tests import TestCase, DATA_DIR, get_temp_copy, get_temp_empty
 
 import mutagen.apev2
 from mutagen import MutagenError
@@ -17,8 +14,6 @@ from mutagen.apev2 import APEv2File, APEv2, is_valid_apev2_key, \
 SAMPLE = os.path.join(DATA_DIR, "click.mpc")
 OLD = os.path.join(DATA_DIR, "oldtag.apev2")
 BROKEN = os.path.join(DATA_DIR, "brokentag.apev2")
-LYRICS2 = os.path.join(DATA_DIR, "apev2-lyricsv2.mp3")
-INVAL_ITEM_COUNT = os.path.join(DATA_DIR, "145-invalid-item-count.apev2")
 
 
 class Tis_valid_apev2_key(TestCase):
@@ -40,7 +35,8 @@ class TAPEInvalidItemCount(TestCase):
     # https://github.com/quodlibet/mutagen/issues/145
 
     def test_load(self):
-        x = mutagen.apev2.APEv2(INVAL_ITEM_COUNT)
+        x = mutagen.apev2.APEv2(
+            os.path.join(DATA_DIR, "145-invalid-item-count.apev2"))
         self.failUnlessEqual(len(x.keys()), 17)
 
 
@@ -48,36 +44,45 @@ class TAPEWriter(TestCase):
     offset = 0
 
     def setUp(self):
-        shutil.copy(SAMPLE, SAMPLE + ".new")
-        shutil.copy(BROKEN, BROKEN + ".new")
+        self.sample_new = get_temp_copy(SAMPLE)
+        self.broken_new = get_temp_copy(BROKEN)
+
         tag = mutagen.apev2.APEv2()
         self.values = {"artist": "Joe Wreschnig\0unittest",
                        "album": "Mutagen tests",
                        "title": "Not really a song"}
         for k, v in self.values.items():
             tag[k] = v
-        tag.save(SAMPLE + ".new")
-        tag.save(SAMPLE + ".justtag")
-        tag.save(SAMPLE + ".tag_at_start")
-        fileobj = open(SAMPLE + ".tag_at_start", "ab")
-        fileobj.write(b"tag garbage" * 1000)
-        fileobj.close()
-        self.tag = mutagen.apev2.APEv2(SAMPLE + ".new")
+        tag.save(self.sample_new)
+        self.just_tag = get_temp_empty()
+        tag.save(self.just_tag)
+        self.tag_at_start = get_temp_empty()
+        tag.save(self.tag_at_start)
+        with open(self.tag_at_start, "ab") as fileobj:
+            fileobj.write(b"tag garbage" * 1000)
+
+        self.tag = mutagen.apev2.APEv2(self.sample_new)
+
+    def tearDown(self):
+        os.unlink(self.sample_new)
+        os.unlink(self.broken_new)
+        os.unlink(self.just_tag)
+        os.unlink(self.tag_at_start)
 
     def test_changed(self):
-        size = os.path.getsize(SAMPLE + ".new")
+        size = os.path.getsize(self.sample_new)
         self.tag.save()
         self.failUnlessEqual(
-            os.path.getsize(SAMPLE + ".new"), size - self.offset)
+            os.path.getsize(self.sample_new), size - self.offset)
 
     def test_fix_broken(self):
         # Clean up garbage from a bug in pre-Mutagen APEv2.
         # This also tests removing ID3v1 tags on writes.
         self.failIfEqual(os.path.getsize(OLD), os.path.getsize(BROKEN))
         tag = mutagen.apev2.APEv2(BROKEN)
-        tag.save(BROKEN + ".new")
+        tag.save(self.broken_new)
         self.failUnlessEqual(
-            os.path.getsize(OLD), os.path.getsize(BROKEN + ".new"))
+            os.path.getsize(OLD), os.path.getsize(self.broken_new))
 
     def test_readback(self):
         for k, v in self.tag.items():
@@ -85,16 +90,16 @@ class TAPEWriter(TestCase):
 
     def test_size(self):
         self.failUnlessEqual(
-            os.path.getsize(SAMPLE + ".new"),
-            os.path.getsize(SAMPLE) + os.path.getsize(SAMPLE + ".justtag"))
+            os.path.getsize(self.sample_new),
+            os.path.getsize(SAMPLE) + os.path.getsize(self.just_tag))
 
     def test_delete(self):
-        mutagen.apev2.delete(SAMPLE + ".justtag")
-        tag = mutagen.apev2.APEv2(SAMPLE + ".new")
+        mutagen.apev2.delete(self.just_tag)
+        tag = mutagen.apev2.APEv2(self.sample_new)
         tag.delete()
-        self.failUnlessEqual(os.path.getsize(SAMPLE + ".justtag"), self.offset)
+        self.failUnlessEqual(os.path.getsize(self.just_tag), self.offset)
         self.failUnlessEqual(os.path.getsize(SAMPLE) + self.offset,
-                             os.path.getsize(SAMPLE + ".new"))
+                             os.path.getsize(self.sample_new))
         self.failIf(tag)
 
     def test_empty(self):
@@ -103,22 +108,21 @@ class TAPEWriter(TestCase):
             os.path.join(DATA_DIR, "emptyfile.mp3"))
 
     def test_tag_at_start(self):
-        filename = SAMPLE + ".tag_at_start"
-        tag = mutagen.apev2.APEv2(filename)
+        tag = mutagen.apev2.APEv2(self.tag_at_start)
         self.failUnlessEqual(tag["album"], "Mutagen tests")
 
     def test_tag_at_start_write(self):
-        filename = SAMPLE + ".tag_at_start"
+        filename = self.tag_at_start
         tag = mutagen.apev2.APEv2(filename)
         tag.save()
         tag = mutagen.apev2.APEv2(filename)
         self.failUnlessEqual(tag["album"], "Mutagen tests")
         self.failUnlessEqual(
-            os.path.getsize(SAMPLE + ".justtag"),
+            os.path.getsize(self.just_tag),
             os.path.getsize(filename) - (len("tag garbage") * 1000))
 
     def test_tag_at_start_delete(self):
-        filename = SAMPLE + ".tag_at_start"
+        filename = self.tag_at_start
         tag = mutagen.apev2.APEv2(filename)
         tag.delete()
         self.failUnlessRaises(APEv2Error, mutagen.apev2.APEv2, filename)
@@ -126,35 +130,29 @@ class TAPEWriter(TestCase):
             os.path.getsize(filename), len("tag garbage") * 1000)
 
     def test_case_preservation(self):
-        mutagen.apev2.delete(SAMPLE + ".justtag")
-        tag = mutagen.apev2.APEv2(SAMPLE + ".new")
+        mutagen.apev2.delete(self.just_tag)
+        tag = mutagen.apev2.APEv2(self.sample_new)
         tag["FoObaR"] = "Quux"
         tag.save()
-        tag = mutagen.apev2.APEv2(SAMPLE + ".new")
+        tag = mutagen.apev2.APEv2(self.sample_new)
         self.failUnless("FoObaR" in tag.keys())
         self.failIf("foobar" in tag.keys())
 
     def test_unicode_key(self):
         # https://github.com/quodlibet/mutagen/issues/123
-        tag = mutagen.apev2.APEv2(SAMPLE + ".new")
+        tag = mutagen.apev2.APEv2(self.sample_new)
         tag["abc"] = u'\xf6\xe4\xfc'
         tag[u"cba"] = "abc"
         tag.save()
 
     def test_save_sort_is_deterministic(self):
-        tag = mutagen.apev2.APEv2(SAMPLE + ".new")
+        tag = mutagen.apev2.APEv2(self.sample_new)
         tag["cba"] = "my cba value"
         tag["abc"] = "my abc value"
         tag.save()
-        with open(SAMPLE + ".new", 'rb') as fobj:
+        with open(self.sample_new, 'rb') as fobj:
             content = fobj.read()
             self.assertTrue(content.index(b"abc") < content.index(b"cba"))
-
-    def tearDown(self):
-        os.unlink(SAMPLE + ".new")
-        os.unlink(BROKEN + ".new")
-        os.unlink(SAMPLE + ".justtag")
-        os.unlink(SAMPLE + ".tag_at_start")
 
 
 class TAPEv2ThenID3v1Writer(TAPEWriter):
@@ -162,15 +160,12 @@ class TAPEv2ThenID3v1Writer(TAPEWriter):
 
     def setUp(self):
         super(TAPEv2ThenID3v1Writer, self).setUp()
-        f = open(SAMPLE + ".new", "ab+")
-        f.write(b"TAG" + b"\x00" * 125)
-        f.close()
-        f = open(BROKEN + ".new", "ab+")
-        f.write(b"TAG" + b"\x00" * 125)
-        f.close()
-        f = open(SAMPLE + ".justtag", "ab+")
-        f.write(b"TAG" + b"\x00" * 125)
-        f.close()
+        with open(self.sample_new, "ab+") as f:
+            f.write(b"TAG" + b"\x00" * 125)
+        with open(self.broken_new, "ab+") as f:
+            f.write(b"TAG" + b"\x00" * 125)
+        with open(self.just_tag, "ab+") as f:
+            f.write(b"TAG" + b"\x00" * 125)
 
     def test_tag_at_start_write(self):
         pass
@@ -292,7 +287,8 @@ class TAPEv2ThenID3v1(TAPEv2):
 class TAPEv2WithLyrics2(TestCase):
 
     def setUp(self):
-        self.tag = mutagen.apev2.APEv2(LYRICS2)
+        self.tag = mutagen.apev2.APEv2(
+            os.path.join(DATA_DIR, "apev2-lyricsv2.mp3"))
 
     def test_values(self):
         self.failUnlessEqual(self.tag["MP3GAIN_MINMAX"], "000,179")
