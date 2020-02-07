@@ -1441,11 +1441,14 @@ class TFrameTest(object):
 
     @classmethod
     def create_frame_tests(cls):
+        tests = {}
         for kind in (list(Frames.values()) + list(Frames_2_2.values())):
             new_type = type(cls.__name__ + kind.__name__,
                             (cls, TestCase), {"FRAME": kind})
-            assert new_type.__name__ not in globals()
-            globals()[new_type.__name__] = new_type
+            assert new_type.__name__ not in tests
+            tests[new_type.__name__] = new_type
+        for name, test_type in sorted(tests.items()):
+            globals()[name] = test_type
 
 
 TFrameTest.create_frame_tests()

@@ -542,13 +542,16 @@ _FILETYPES[APEv2File] = _FILETYPES[MonkeysAudio]
 
 
 def create_filetype_tests():
+    tests = {}
     for kind, paths in _FILETYPES.items():
         for i, path in enumerate(paths):
             suffix = "_" + str(i + 1) if i else ""
             new_type = type("TFileType" + kind.__name__ + suffix,
                             (TAbstractFileType, TestCase),
                             {"PATH": path, "KIND": kind})
-            globals()[new_type.__name__] = new_type
+            tests[new_type.__name__] = new_type
+    for name, test_type in sorted(tests.items()):
+        globals()[name] = test_type
 
 create_filetype_tests()
 
