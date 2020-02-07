@@ -16,11 +16,14 @@ jobs:
         Python37-x64:
           python.version: '3.7'
           python.arch: 'x64'
+        Python38-x64:
+          python.version: '3.8'
+          python.arch: 'x64'
         Python27-x86:
           python.version: '2.7'
           python.arch: 'x86'
-        Python37-x86:
-          python.version: '3.7'
+        Python38-x86:
+          python.version: '3.8'
           python.arch: 'x86'
     steps:
     - task: UsePythonVersion@0
