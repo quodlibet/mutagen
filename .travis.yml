@@ -6,12 +6,12 @@ matrix:
       python: "2.7"
       env: TYPE="linux" PYVER="2.7" PYARGS="-R"
     - os: linux
-      dist: trusty
+      dist: xenial
       language: python
       python: "3.5"
       env: TYPE="linux" PYVER="3.5" PYARGS="-R -bb"
     - os: linux
-      dist: trusty
+      dist: xenial
       language: python
       python: "3.6"
       env: TYPE="linux" PYVER="3.6" PYARGS="-R -bb"
@@ -33,7 +33,7 @@ matrix:
       python: "pypy"
       env: TYPE="linux" PYVER="pypy" PYARGS="-R"
     - os: linux
-      dist: trusty
+      dist: xenial
       language: python
       python: "pypy3"
       env: TYPE="linux" PYVER="pypy3" PYARGS="-R -bb"
