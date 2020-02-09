@@ -1,11 +1,6 @@
 matrix:
   include:
     - os: linux
-      dist: trusty
-      language: python
-      python: "2.7"
-      env: TYPE="linux" PYVER="2.7" PYARGS="-R"
-    - os: linux
       dist: xenial
       language: python
       python: "3.5"
@@ -28,11 +23,6 @@ matrix:
       python: "3.8"
       env: TYPE="linux" PYVER="3.8" PYARGS="-R -bb"
     - os: linux
-      dist: trusty
-      language: python
-      python: "pypy"
-      env: TYPE="linux" PYVER="pypy" PYARGS="-R"
-    - os: linux
       dist: xenial
       language: python
       python: "pypy3"
@@ -40,19 +30,13 @@ matrix:
     - os: osx
       language: generic
       env: TYPE="osx" PYVER="3" PYARGS="-R -bb"
-    - os: osx
-      language: generic
-      env: TYPE="osx" PYVER="2" PYARGS="-R"
 
 install:
   - if [ "$TYPE" == "osx" ]; then brew update; fi
-  - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "3" ]; then brew unlink python@2 || true; fi
-  - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "3" ]; then brew install python || brew upgrade python; fi
-  - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "3" ]; then python3 -m pip install virtualenv; fi
-  - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "3" ]; then virtualenv venv -p python3; fi
-  - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "2" ]; then brew install python@2 || brew upgrade python@2; fi
-  - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "2" ]; then python2 -m pip install virtualenv; fi
-  - if [ "$TYPE" == "osx" ] && [ "$PYVER" == "2" ]; then virtualenv venv -p python2; fi
+  - if [ "$TYPE" == "osx" ]; then brew unlink python@2 || true; fi
+  - if [ "$TYPE" == "osx" ]; then brew install python || brew upgrade python; fi
+  - if [ "$TYPE" == "osx" ]; then python3 -m pip install virtualenv; fi
+  - if [ "$TYPE" == "osx" ]; then virtualenv venv -p python3; fi
   - if [ "$TYPE" == "osx" ]; then source venv/bin/activate; fi
   - if [ "$TYPE" == "linux" ] || [ "$TYPE" == "osx" ]; then python -m pip install --upgrade pycodestyle pyflakes pytest hypothesis coverage codecov attrs; fi
   - if [ "$TYPE" == "linux" ] || [ "$PYVER" == "3.6" ]; then python -m pip install --upgrade sphinx sphinx_rtd_theme; fi

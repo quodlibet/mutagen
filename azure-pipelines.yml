@@ -4,9 +4,6 @@ jobs:
       vmImage: 'vs2017-win2016'
     strategy:
       matrix:
-        Python27-x64:
-          python.version: '2.7'
-          python.arch: 'x64'
         Python35-x64:
           python.version: '3.5'
           python.arch: 'x64'
@@ -19,9 +16,6 @@ jobs:
         Python38-x64:
           python.version: '3.8'
           python.arch: 'x64'
-        Python27-x86:
-          python.version: '2.7'
-          python.arch: 'x86'
         Python38-x86:
           python.version: '3.8'
           python.arch: 'x86'

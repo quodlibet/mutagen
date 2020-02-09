@@ -60,7 +60,22 @@ class clean(distutils_clean):
 distutils_sdist = get_command_class("sdist")
 
 
-class distcheck(distutils_sdist):
+def check_setuptools_for_dist():
+    if "setuptools" not in sys.modules:
+        raise Exception("setuptools not available")
+    version = tuple(map(int, sys.modules["setuptools"].__version__.split(".")))
+    if version < (24, 2, 0):
+        raise Exception("setuptools too old")
+
+
+class sdist(distutils_sdist):
+
+    def run(self):
+        check_setuptools_for_dist()
+        distutils_sdist.run(self)
+
+
+class distcheck(sdist):
 
     def _check_manifest(self):
         assert self.get_archive_files()
@@ -115,7 +130,7 @@ class distcheck(distutils_sdist):
         os.chdir(old_pwd)
 
     def run(self):
-        distutils_sdist.run(self)
+        sdist.run(self)
         self._check_manifest()
         self._check_dist()
 
@@ -227,6 +242,9 @@ class coverage_cmd(Command):
 
 
 if __name__ == "__main__":
+    if sys.version_info[0] < 3:
+        raise Exception("Python 2 no longer supported")
+
     from mutagen import version
 
     with open('README.rst') as h:
@@ -245,6 +263,7 @@ if __name__ == "__main__":
         "coverage": coverage_cmd,
         "distcheck": distcheck,
         "build_sphinx": build_sphinx,
+        "sdist": sdist,
     }
 
     setup(cmdclass=cmd_classes,
@@ -257,8 +276,6 @@ if __name__ == "__main__":
           license="GPL-2.0-or-later",
           classifiers=[
             'Operating System :: OS Independent',
-            'Programming Language :: Python :: 2',
-            'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 3',
             'Programming Language :: Python :: 3.5',
             'Programming Language :: Python :: 3.6',
@@ -283,7 +300,7 @@ if __name__ == "__main__":
             ('share/man/man1', glob.glob("man/*.1")),
           ],
           python_requires=(
-            '>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4'),
+            '>=3.5, <4'),
           entry_points={
             'console_scripts': [
               'mid3cp=mutagen._tools.mid3cp:entry_point',
