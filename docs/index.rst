@@ -31,13 +31,13 @@ Installing
 
 ::
 
-    pip install mutagen
+    python3 -m pip install mutagen
 
 or
 
 ::
 
-    sudo apt-get install python-mutagen python3-mutagen
+    sudo apt-get install python3-mutagen
 
 
 Where do I get it?

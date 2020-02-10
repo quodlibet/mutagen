@@ -5,9 +5,8 @@ Working with File-like Objects
 .. currentmodule:: mutagen
 
 The first argument passed to a :class:`FileType` or :class:`Metadata` can
-either be a file name or a file-like object, such as `StringIO
-<StringIO.StringIO>`  (`BytesIO <io.BytesIO>` in Python 3) and mutagen will
-figure out what to do.
+either be a file name or a file-like object, such as `BytesIO <io.BytesIO>`
+and mutagen will figure out what to do.
 
 ::
 

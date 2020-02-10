@@ -52,20 +52,19 @@ Other Classes and Functions
 .. class:: text()
 
     This type only exists for documentation purposes. It represents
-    :obj:`unicode` under Python 2 and :obj:`str` under Python 3.
+    :obj:`python:str` under Python 3.
 
 
 .. class:: bytes()
 
     This type only exists for documentation purposes. It represents
-    :obj:`python:str` under Python 2 and :obj:`python3:bytes` under Python 3.
+    :obj:`python:bytes` under Python 3.
 
 
 .. class:: fspath()
 
     This type only exists for documentation purposes. It represents a file
-    name which can be :obj:`python:str` or :obj:`python:unicode` under Python
-    2 and :obj:`python3:bytes` or :obj:`python3:str` under Python 3.
+    name which can be :obj:`python:str` or :obj:`python:bytes` under Python 3.
 
 .. class:: fileobj()
 
