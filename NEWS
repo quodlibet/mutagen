@@ -1,3 +1,16 @@
+.. _release-1.44.0:
+
+1.44.0 - 2020-02-10
+-------------------
+
+* Python 2 is no longer supported :bug:`410`
+* mp4: Fix some infinite loops in the mp4 parser :pr:`429` (:user:`Julien Voisin <jvoisin>`)
+* flac: Fix pickle support for SeekPoint :pr:`428` (:user:`point-source`)
+* aiff: Fix a division by zero :pr:`431` (:user:`Julien Voisin <jvoisin>`)
+* asf: Catch a MemoryError :pr:`432` (:user:`Julien Voisin <jvoisin>`)
+* oggtheora: Fix a division by zero :pr:`430` (:user:`Julien Voisin <jvoisin>`)
+
+
 .. _release-1.43.0:
 
 1.43.0 - 2019-11-17
