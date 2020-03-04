@@ -264,6 +264,8 @@ class OggPage(object):
                 raise ValueError("invalid serial number in %r" % page)
             elif sequence != page.sequence:
                 raise ValueError("bad sequence number in %r" % page)
+            elif not page.packets:
+                raise ValueError("empty packets in %r" % page)
             else:
                 sequence += 1
 

@@ -56,6 +56,8 @@ class OggVorbisInfo(StreamInfo):
         """Raises ogg.error, IOError"""
 
         page = OggPage(fileobj)
+        if not page.packets:
+            raise OggVorbisHeaderError("page has not packets")
         while not page.packets[0].startswith(b"\x01vorbis"):
             page = OggPage(fileobj)
         if not page.first:
