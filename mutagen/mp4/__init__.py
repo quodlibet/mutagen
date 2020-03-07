@@ -25,6 +25,13 @@ were all consulted.
 
 import struct
 import sys
+try:
+    # Python 3
+    from collections.abc import Sequence
+except ImportError:
+    # Python 2.7
+    from collections import Sequence
+from datetime import timedelta
 
 from mutagen import FileType, Tags, StreamInfo, PaddingInfo
 from mutagen._constants import GENRES
@@ -899,6 +906,123 @@ class MP4Tags(DictProxy, Tags):
         return u"\n".join(values)
 
 
+class Chapter(object):
+    """Chapter()
+
+    Chapter information container
+    """
+    def __init__(self, start, title):
+        self.start = start
+        self.title = title
+
+
+class MP4Chapters(Sequence):
+    """MP4Chapters()
+
+    MPEG-4 Chapter information.
+
+    Supports the 'moov.udta.chpl' box.
+
+    A sequence of Chapter objects with the following members:
+        start (`float`): position from the start of the file in seconds
+        title (`str`): title of the chapter
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        self._timescale = None
+        self._duration = None
+        self._chapters = []
+        super(MP4Chapters, self).__init__()
+        if args or kwargs:
+            self.load(*args, **kwargs)
+
+    def __len__(self):
+        return self._chapters.__len__()
+
+    def __getitem__(self, key):
+        return self._chapters.__getitem__(key)
+
+    def load(self, atoms, fileobj):
+        try:
+            mvhd = atoms.path(b"moov", b"mvhd")[-1]
+        except KeyError as key:
+            return MP4MetadataError(key)
+
+        self._parse_mvhd(mvhd, fileobj)
+
+        if not self._timescale:
+            raise MP4MetadataError("Unable to get timescale")
+
+        try:
+            chpl = atoms.path(b"moov", b"udta", b"chpl")[-1]
+        except KeyError as key:
+            return MP4MetadataError(key)
+
+        self._parse_chpl(chpl, fileobj)
+
+    @classmethod
+    def _can_load(cls, atoms):
+        return b"moov.udta.chpl" in atoms and b"moov.mvhd" in atoms
+
+    def _parse_mvhd(self, atom, fileobj):
+        assert atom.name == b"mvhd"
+
+        ok, data = atom.read(fileobj)
+        if not ok:
+            raise MP4StreamInfoError("Invalid mvhd")
+
+        version = data[0]
+
+        pos = 4
+        if version == 0:
+            pos += 8  # created, modified
+
+            self._timescale = struct.unpack(">l", data[pos:pos + 4])[0]
+            pos += 4
+
+            self._duration = struct.unpack(">l", data[pos:pos + 4])[0]
+            pos += 4
+        elif version == 1:
+            pos += 16  # created, modified
+
+            self._timescale = struct.unpack(">l", data[pos:pos + 4])[0]
+            pos += 4
+
+            self._duration = struct.unpack(">q", data[pos:pos + 8])[0]
+            pos += 8
+
+    def _parse_chpl(self, atom, fileobj):
+        assert atom.name == b"chpl"
+
+        ok, data = atom.read(fileobj)
+        if not ok:
+            raise MP4StreamInfoError("Invalid atom")
+
+        chapters = data[8]
+
+        pos = 9
+        for i in range(chapters):
+            start = struct.unpack(">Q", data[pos:pos + 8])[0] / 10000
+            pos += 8
+
+            title_len = data[pos]
+            pos += 1
+
+            try:
+                title = data[pos:pos + title_len].decode()
+            except UnicodeDecodeError as e:
+                raise MP4MetadataError("chapter %d title: %s" % (i, e))
+            pos += title_len
+
+            self._chapters.append(Chapter(start / self._timescale, title))
+
+    def pprint(self):
+        chapters = ["%s %s" % (timedelta(seconds=chapter.start), chapter.title)
+                    for chapter in self._chapters]
+        return "chapters=%s" % '\n  '.join(chapters)
+
+
 class MP4Info(StreamInfo):
     """MP4Info()
 
@@ -1054,6 +1178,7 @@ class MP4(FileType):
     """
 
     MP4Tags = MP4Tags
+    MP4Chapters = MP4Chapters
 
     _mimes = ["audio/mp4", "audio/x-m4a", "audio/mpeg4", "audio/aac"]
 
@@ -1086,6 +1211,16 @@ class MP4(FileType):
             except Exception as err:
                 reraise(MP4MetadataError, err, sys.exc_info()[2])
 
+        if not MP4Chapters._can_load(atoms):
+            self.chapters = None
+        else:
+            try:
+                self.chapters = self.MP4Chapters(atoms, fileobj)
+            except error:
+                raise
+            except Exception as err:
+                reraise(MP4MetadataError, err, sys.exc_info()[2])
+
     @property
     def _padding(self):
         if self.tags is None:
@@ -1097,6 +1232,28 @@ class MP4(FileType):
         """save(filething=None, padding=None)"""
 
         super(MP4, self).save(*args, **kwargs)
+
+    def pprint(self):
+        """
+        Returns:
+            text: stream information, comment key=value pairs and chapters.
+        """
+        stream = "%s (%s)" % (self.info.pprint(), self.mime[0])
+        try:
+            tags = self.tags.pprint()
+        except AttributeError:
+            pass
+        else:
+            stream += ((tags and "\n" + tags) or "")
+
+        try:
+            chapters = self.chapters.pprint()
+        except AttributeError:
+            pass
+        else:
+            stream += "\n" + chapters
+
+        return stream
 
     def add_tags(self):
         if self.tags is None:

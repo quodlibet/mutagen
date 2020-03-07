@@ -1191,6 +1191,17 @@ class TMP4AudioSampleEntry(TestCase):
         self.assertRaises(ASEntryError, AudioSampleEntry, atom, fileobj)
 
 
+class TMP4Chapters(TMP4):
+    original = os.path.join(DATA_DIR, "nero-chapters.m4b")
+
+    def test_has_chapters(self):
+        self.failUnless(hasattr(self.audio, 'chapters'))
+        chapters = self.audio.chapters
+        self.failUnlessEqual(len(chapters), 112)
+        for i, c in enumerate(chapters):
+            self.failUnlessEqual(c.title, str(i + 1).zfill(3))
+
+
 def call_faad(*args):
     with open(os.devnull, 'wb') as null:
         return subprocess.call(
