@@ -256,6 +256,8 @@ class FilePropertiesObject(BaseObject):
 
     def parse(self, asf, data):
         super(FilePropertiesObject, self).parse(asf, data)
+        if len(data) < 64:
+            raise ASFError("invalid field property entry")
         length, _, preroll = struct.unpack("<QQQ", data[40:64])
         # there are files where preroll is larger than length, limit to >= 0
         asf.info.length = max((length / 10000000.0) - (preroll / 1000.0), 0.0)
