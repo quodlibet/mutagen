@@ -114,7 +114,10 @@ class HeaderObject(BaseObject):
             if len(data) != payload_size:
                 raise ASFHeaderError("truncated")
 
-            obj.parse(asf, data)
+            try:
+                obj.parse(asf, data)
+            except struct.error:
+                raise ASFHeaderError("truncated")
             header.objects.append(obj)
 
         return header
@@ -379,6 +382,8 @@ class HeaderExtensionObject(BaseObject):
         while datapos < datasize:
             guid, size = struct.unpack(
                 "<16sQ", data[22 + datapos:22 + datapos + 24])
+            if size < 1:
+                raise ASFHeaderError("invalid size in header extension")
             obj = BaseObject._get_object(guid)
             obj.parse(asf, data[22 + datapos + 24:22 + datapos + size])
             self.objects.append(obj)
