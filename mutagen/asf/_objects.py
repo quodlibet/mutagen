@@ -154,7 +154,8 @@ class HeaderObject(BaseObject):
         # ask the user for padding adjustments
         file_size = get_size(fileobj)
         content_size = file_size - available
-        assert content_size >= 0
+        if content_size < 0:
+            raise ASFHeaderError("truncated content")
         info = PaddingInfo(available - needed_size, content_size)
 
         # add padding
