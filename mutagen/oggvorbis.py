@@ -68,6 +68,8 @@ class OggVorbisInfo(StreamInfo):
                 "page contains a packet too short to be valid")
         (self.channels, self.sample_rate, max_bitrate, nominal_bitrate,
          min_bitrate) = struct.unpack("<B4i", page.packets[0][11:28])
+        if self.sample_rate < 1:
+            raise OggVorbisHeaderError("sample rate can't be negative")
         self.serial = page.serial
 
         max_bitrate = max(0, max_bitrate)
