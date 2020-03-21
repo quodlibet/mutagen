@@ -99,6 +99,9 @@ class distcheck(sdist):
                            "azure-pipelines.yml"]:
                 tracked_files.remove(ignore)
 
+            tracked_files = [
+                f for f in tracked_files if os.path.dirname(f) != "fuzzing"]
+
             diff = set(tracked_files) - set(included_files)
             assert not diff, (
                 "Not all tracked files included in tarball, check MANIFEST.in",
