@@ -143,9 +143,13 @@ class MusepackInfo(StreamInfo):
             # packets can be at maximum data_size big and are padded with zeros
 
             if frame_type == b"SH":
+                if frame_type not in mandatory_packets:
+                    raise MusepackHeaderError("Duplicate SH packet")
                 mandatory_packets.remove(frame_type)
                 self.__parse_stream_header(fileobj, data_size)
             elif frame_type == b"RG":
+                if frame_type not in mandatory_packets:
+                    raise MusepackHeaderError("Duplicate RG packet")
                 mandatory_packets.remove(frame_type)
                 self.__parse_replaygain_packet(fileobj, data_size)
             else:
