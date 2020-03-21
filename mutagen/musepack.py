@@ -188,7 +188,7 @@ class MusepackInfo(StreamInfo):
         remaining_size -= l1 + l2
 
         data = fileobj.read(remaining_size)
-        if len(data) != remaining_size:
+        if len(data) != remaining_size or len(data) < 2:
             raise MusepackHeaderError("SH packet ended unexpectedly.")
         self.sample_rate = RATES[bytearray(data)[0] >> 5]
         self.channels = (bytearray(data)[1] >> 4) + 1
