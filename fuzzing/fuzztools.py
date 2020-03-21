@@ -59,15 +59,30 @@ def run(opener, data):
         if opener is File and res is None:
             return
 
+        # These can still fail because we might need to parse more data
+        # to rewrite the file
+
         f.seek(0)
-        res.save(f)
+        try:
+            res.save(f)
+        except MutagenError:
+            pass
+
         f.seek(0)
-        res.delete(f)
+        res = opener(f)
+
+        f.seek(0)
+        try:
+            res.delete(f)
+        except MutagenError:
+            pass
 
         # These can also save to empty files
         if isinstance(res, Metadata):
             f = BytesIO()
             res.save(f)
+            f.seek(0)
+            opener(f)
             f.seek(0)
             res.delete(f)
 
