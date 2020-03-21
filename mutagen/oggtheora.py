@@ -56,6 +56,8 @@ class OggTheoraInfo(StreamInfo):
             raise OggTheoraHeaderError(
                 "page has ID header, but doesn't start a stream")
         data = page.packets[0]
+        if len(data) < 42:
+            raise OggTheoraHeaderError("Truncated header")
         vmaj, vmin = struct.unpack("2B", data[7:9])
         if (vmaj, vmin) != (3, 2):
             raise OggTheoraHeaderError(
