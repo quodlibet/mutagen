@@ -684,7 +684,7 @@ class TModuleImportAll(TestCase):
         import mutagen
         files = os.listdir(mutagen.__path__[0])
         modules = set(os.path.splitext(f)[0] for f in files)
-        modules = [f for f in modules if not f.startswith("_")]
+        modules = [f for f in modules if not f.startswith(("_", "."))]
 
         self.modules = []
         for module in modules:
