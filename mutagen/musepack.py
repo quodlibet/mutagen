@@ -190,7 +190,11 @@ class MusepackInfo(StreamInfo):
         data = fileobj.read(remaining_size)
         if len(data) != remaining_size or len(data) < 2:
             raise MusepackHeaderError("SH packet ended unexpectedly.")
-        self.sample_rate = RATES[bytearray(data)[0] >> 5]
+        rate_index = (bytearray(data)[0] >> 5)
+        try:
+            self.sample_rate = RATES[rate_index]
+        except IndexError:
+            raise MusepackHeaderError("Invalid sample rate")
         self.channels = (bytearray(data)[1] >> 4) + 1
 
     def __parse_replaygain_packet(self, fileobj, data_size):
