@@ -264,16 +264,15 @@ class OggPage(object):
                 raise ValueError("invalid serial number in %r" % page)
             elif sequence != page.sequence:
                 raise ValueError("bad sequence number in %r" % page)
-            elif not page.packets:
-                raise ValueError("empty packets in %r" % page)
             else:
                 sequence += 1
 
-            if page.continued:
-                packets[-1].append(page.packets[0])
-            else:
-                packets.append([page.packets[0]])
-            packets.extend([p] for p in page.packets[1:])
+            if page.packets:
+                if page.continued:
+                    packets[-1].append(page.packets[0])
+                else:
+                    packets.append([page.packets[0]])
+                packets.extend([p] for p in page.packets[1:])
 
         return [b"".join(p) for p in packets]
 

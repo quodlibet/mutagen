@@ -27,6 +27,24 @@ class TOggPage(TestCase):
             page.serial = 1
         self.pages = pages
 
+    def test_to_packets_empty_page(self):
+        pages = [OggPage(), OggPage()]
+        for i in xrange(len(pages)):
+            pages[i].sequence = i
+        assert OggPage.to_packets(pages, True) == []
+        assert OggPage.to_packets(pages, False) == []
+
+        pages = [OggPage(), OggPage(), OggPage()]
+        pages[0].packets = [b"foo"]
+        pages[0].complete = False
+        pages[1].continued = True
+        pages[1].complete = False
+        pages[2].packets = [b"bar"]
+        pages[2].continued = True
+        for i in xrange(len(pages)):
+            pages[i].sequence = i
+        assert OggPage.to_packets(pages, True) == [b'foobar']
+
     def test_flags(self):
         self.failUnless(self.page.first)
         self.failIf(self.page.continued)
