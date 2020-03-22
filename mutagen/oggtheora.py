@@ -50,7 +50,8 @@ class OggTheoraInfo(StreamInfo):
 
     def __init__(self, fileobj):
         page = OggPage(fileobj)
-        while not page.packets[0].startswith(b"\x80theora"):
+        while not page.packets or \
+                not page.packets[0].startswith(b"\x80theora"):
             page = OggPage(fileobj)
         if not page.first:
             raise OggTheoraHeaderError(
@@ -96,7 +97,10 @@ class OggTheoraCommentDict(VCommentDict):
             if page.serial == info.serial:
                 pages.append(page)
                 complete = page.complete or (len(page.packets) > 1)
-        data = OggPage.to_packets(pages)[0][7:]
+        packets = OggPage.to_packets(pages)
+        if not packets:
+            raise error("Missing metadata packet")
+        data = packets[0][7:]
         super(OggTheoraCommentDict, self).__init__(data, framing=False)
         self._padding = len(data) - self._size
 
@@ -105,7 +109,8 @@ class OggTheoraCommentDict(VCommentDict):
 
         fileobj.seek(0)
         page = OggPage(fileobj)
-        while not page.packets[0].startswith(b"\x81theora"):
+        while not page.packets or \
+                not page.packets[0].startswith(b"\x81theora"):
             page = OggPage(fileobj)
 
         old_pages = [page]
