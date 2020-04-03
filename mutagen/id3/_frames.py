@@ -277,6 +277,8 @@ class Frame(object):
 
         elif header.version >= header._V23:
             if tflags & Frame.FLAG23_COMPRESS:
+                if len(data) < 4:
+                    raise ID3JunkFrameError('frame too small: %r' % data)
                 usize, = unpack('>L', data[:4])
                 data = data[4:]
             if tflags & Frame.FLAG23_ENCRYPT:
