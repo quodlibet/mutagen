@@ -20,12 +20,6 @@
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import os
-
-if os.name != "nt":
-    # make imports work
-    _winapi = object()
-
 from ._fsnative import fsnative, path2fsn, fsn2text, fsn2bytes, \
     bytes2fsn, uri2fsn, fsn2uri, text2fsn, fsn2norm
 from ._print import print_, input_, supports_ansi_escape_codes
@@ -42,7 +36,7 @@ fsnative, print_, getcwd, getenv, unsetenv, putenv, environ, expandvars, \
     supports_ansi_escape_codes, fsn2norm
 
 
-version = (1, 3, 5)
+version = (1, 4, 2)
 """Tuple[`int`, `int`, `int`]: The version tuple (major, minor, micro)"""
 
 

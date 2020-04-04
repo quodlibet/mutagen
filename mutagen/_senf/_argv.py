@@ -25,7 +25,7 @@ import ctypes
 try:
     from collections import abc
 except ImportError:
-    import collections as abc
+    import collections as abc  # type: ignore
 from functools import total_ordering
 
 from ._compat import PY2, string_types

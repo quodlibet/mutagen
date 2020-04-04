@@ -25,7 +25,7 @@ import ctypes
 try:
     from collections import abc
 except ImportError:
-    import collections as abc
+    import collections as abc  # type: ignore
 
 from ._compat import text_type, PY2
 from ._fsnative import path2fsn, is_win, _fsn2legacy, fsnative

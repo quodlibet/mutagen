@@ -56,45 +56,9 @@ def _swap_bytes(data):
     return bytes(data)
 
 
-def _codec_fails_on_encode_surrogates(codec, _cache={}):
-    """Returns if a codec fails correctly when passing in surrogates with
-    a surrogatepass/surrogateescape error handler. Some codecs were broken
-    in Python <3.4
-    """
-
-    try:
-        return _cache[codec]
-    except KeyError:
-        try:
-            u"\uD800\uDC01".encode(codec)
-        except UnicodeEncodeError:
-            _cache[codec] = True
-        else:
-            _cache[codec] = False
-        return _cache[codec]
-
-
-def _codec_can_decode_with_surrogatepass(codec, _cache={}):
-    """Returns if a codec supports the surrogatepass error handler when
-    decoding. Some codecs were broken in Python <3.4
-    """
-
-    try:
-        return _cache[codec]
-    except KeyError:
-        try:
-            u"\ud83d".encode(
-                codec, _surrogatepass).decode(codec, _surrogatepass)
-        except UnicodeDecodeError:
-            _cache[codec] = False
-        else:
-            _cache[codec] = True
-        return _cache[codec]
-
-
 def _decode_surrogatepass(data, codec):
     """Like data.decode(codec, 'surrogatepass') but makes utf-16-le/be work
-    on Python < 3.4 + Windows
+    on Python 2.
 
     https://bugs.python.org/issue27971
 
@@ -104,7 +68,7 @@ def _decode_surrogatepass(data, codec):
     try:
         return data.decode(codec, _surrogatepass)
     except UnicodeDecodeError:
-        if not _codec_can_decode_with_surrogatepass(codec):
+        if PY2:
             if _normalize_codec(codec) == "utf-16-be":
                 data = _swap_bytes(data)
                 codec = "utf-16-le"
@@ -120,30 +84,12 @@ def _decode_surrogatepass(data, codec):
             raise
 
 
-def _winpath2bytes_py3(text, codec):
-    """Fallback implementation for text including surrogates"""
+def _merge_surrogates(text):
+    """Returns a copy of the text with all surrogate pairs merged"""
 
-    # merge surrogate codepoints
-    if _normalize_codec(codec).startswith("utf-16"):
-        # fast path, utf-16 merges anyway
-        return text.encode(codec, _surrogatepass)
     return _decode_surrogatepass(
         text.encode("utf-16-le", _surrogatepass),
-        "utf-16-le").encode(codec, _surrogatepass)
-
-
-if PY2:
-    def _winpath2bytes(text, codec):
-        return text.encode(codec)
-else:
-    def _winpath2bytes(text, codec):
-        if _codec_fails_on_encode_surrogates(codec):
-            try:
-                return text.encode(codec)
-            except UnicodeEncodeError:
-                return _winpath2bytes_py3(text, codec)
-        else:
-            return _winpath2bytes_py3(text, codec)
+        "utf-16-le")
 
 
 def fsn2norm(path):
@@ -172,9 +118,7 @@ def fsn2norm(path):
     native = _fsn2native(path)
 
     if is_win:
-        return _decode_surrogatepass(
-            native.encode("utf-16-le", _surrogatepass),
-            "utf-16-le")
+        return _merge_surrogates(native)
     elif PY3:
         return bytes2fsn(native, None)
     else:
@@ -501,10 +445,23 @@ def fsn2bytes(path, encoding="utf-8"):
         if encoding is None:
             raise ValueError("invalid encoding %r" % encoding)
 
-        try:
-            return _winpath2bytes(path, encoding)
-        except LookupError:
-            raise ValueError("invalid encoding %r" % encoding)
+        if PY2:
+            try:
+                return path.encode(encoding)
+            except LookupError:
+                raise ValueError("invalid encoding %r" % encoding)
+        else:
+            try:
+                return path.encode(encoding)
+            except LookupError:
+                raise ValueError("invalid encoding %r" % encoding)
+            except UnicodeEncodeError:
+                # Fallback implementation for text including surrogates
+                # merge surrogate codepoints
+                if _normalize_codec(encoding).startswith("utf-16"):
+                    # fast path, utf-16 merges anyway
+                    return path.encode(encoding, _surrogatepass)
+                return _merge_surrogates(path).encode(encoding, _surrogatepass)
     else:
         return path
 
@@ -650,6 +607,8 @@ def fsn2uri(path):
         except WindowsError as e:
             raise ValueError(e)
         uri = buf[:length.value]
+        # https://bitbucket.org/pypy/pypy/issues/3133
+        uri = _merge_surrogates(uri)
 
         # For some reason UrlCreateFromPathW escapes some chars outside of
         # ASCII and some not. Unquote and re-quote with utf-8.
