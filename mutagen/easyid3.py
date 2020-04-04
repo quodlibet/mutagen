@@ -14,7 +14,6 @@ more like Vorbis or APEv2 tags.
 
 import mutagen.id3
 
-from ._compat import iteritems, text_type
 from mutagen import Metadata
 from mutagen._util import DictMixin, dict_match, loadfile
 from mutagen.id3 import ID3, error, delete, ID3FileType
@@ -216,7 +215,7 @@ class EasyID3(DictMixin, Metadata):
             raise EasyID3KeyError("%r is not a valid key" % key)
 
     def __setitem__(self, key, value):
-        if isinstance(value, text_type):
+        if isinstance(value, str):
             value = [value]
         func = dict_match(self.Set, key.lower(), self.SetFallback)
         if func is not None:
@@ -467,7 +466,7 @@ def peakgain_list(id3, key):
         keys.append("replaygain_%s_peak" % frame.desc)
     return keys
 
-for frameid, key in iteritems({
+for frameid, key in {
     "TALB": "album",
     "TBPM": "bpm",
     "TCMP": "compilation",  # iTunes extension
@@ -496,7 +495,7 @@ for frameid, key in iteritems({
     "TSRC": "isrc",
     "TSST": "discsubtitle",
     "TLAN": "language",
-}):
+}.items():
     EasyID3.RegisterTextKey(key, frameid)
 
 EasyID3.RegisterKey("genre", genre_get, genre_set, genre_delete)
@@ -517,7 +516,7 @@ EasyID3.RegisterKey("replaygain_*_peak", peak_get, peak_set, peak_delete)
 # http://musicbrainz.org/docs/specs/metadata_tags.html
 # http://bugs.musicbrainz.org/ticket/1383
 # http://musicbrainz.org/doc/MusicBrainzTag
-for desc, key in iteritems({
+for desc, key in {
     u"MusicBrainz Artist Id": "musicbrainz_artistid",
     u"MusicBrainz Album Id": "musicbrainz_albumid",
     u"MusicBrainz Album Artist Id": "musicbrainz_albumartistid",
@@ -538,7 +537,7 @@ for desc, key in iteritems({
     u"MusicBrainz Work Id": "musicbrainz_workid",
     u"Acoustid Fingerprint": "acoustid_fingerprint",
     u"Acoustid Id": "acoustid_id",
-}):
+}.items():
     EasyID3.RegisterTXXXKey(key, desc)
 
 

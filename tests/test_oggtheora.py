@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import os
+from io import BytesIO
 
-from mutagen._compat import cBytesIO
 from mutagen.oggtheora import OggTheora, OggTheoraInfo, delete, error
 from mutagen.ogg import OggPage
 
@@ -32,14 +32,14 @@ class TOggTheora(TestCase, TOggFileTypeMixin):
         packet = page.packets[0]
         packet = packet[:7] + b"\x03\x00" + packet[9:]
         page.packets = [packet]
-        fileobj = cBytesIO(page.write())
+        fileobj = BytesIO(page.write())
         self.failUnlessRaises(error, OggTheoraInfo, fileobj)
 
     def test_theora_not_first_page(self):
         with open(self.filename, "rb") as h:
             page = OggPage(h)
         page.first = False
-        fileobj = cBytesIO(page.write())
+        fileobj = BytesIO(page.write())
         self.failUnlessRaises(error, OggTheoraInfo, fileobj)
 
     def test_vendor(self):

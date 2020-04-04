@@ -9,10 +9,10 @@
 
 import re
 import struct
+from itertools import zip_longest
 
 from mutagen._tags import Tags
 from mutagen._util import DictProxy, convert_error, read_full
-from mutagen._compat import itervalues, izip_longest
 
 from ._util import BitPaddedInt, unsynch, ID3JunkFrameError, \
     ID3EncryptionUnsupportedError, is_valid_frame_id, error, \
@@ -187,7 +187,7 @@ class ID3Tags(DictProxy, Tags):
         order = ["TIT2", "TPE1", "TRCK", "TALB", "TPOS", "TDRC", "TCON"]
 
         framedata = [
-            (f, save_frame(f, config=config)) for f in itervalues(self)]
+            (f, save_frame(f, config=config)) for f in self.values()]
 
         def get_prio(frame):
             try:
@@ -367,7 +367,7 @@ class ID3Tags(DictProxy, Tags):
         # TDAT, TYER, and TIME have been turned into TDRC.
         timestamps = []
         old_frames = [self.pop(n, []) for n in ["TYER", "TDAT", "TIME"]]
-        for y, d, t in izip_longest(*old_frames, fillvalue=u""):
+        for y, d, t in zip_longest(*old_frames, fillvalue=u""):
             ym = re.match(r"([0-9]+)\Z", y)
             dm = re.match(r"([0-9]{2})([0-9]{2})\Z", d)
             tm = re.match(r"([0-9]{2})([0-9]{2})\Z", t)

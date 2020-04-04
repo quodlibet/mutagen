@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+from io import BytesIO
 
 from mutagen import id3
 from mutagen import MutagenError
@@ -14,7 +15,6 @@ from mutagen.id3._util import BitPaddedInt, error as ID3Error
 from mutagen.id3._tags import determine_bpi, ID3Header, \
     save_frame, ID3SaveConfig
 from mutagen.id3._id3v1 import find_id3v1
-from mutagen._compat import cBytesIO, xrange
 
 from tests import TestCase, DATA_DIR, get_temp_copy, get_temp_empty
 
@@ -381,60 +381,60 @@ class TID3Header(TestCase):
         self.assertEquals(header.size, 1314)
 
     def test_header_2_4_invalid_flags(self):
-        fileobj = cBytesIO(b'ID3\x04\x00\x1f\x00\x00\x00\x00')
+        fileobj = BytesIO(b'ID3\x04\x00\x1f\x00\x00\x00\x00')
         self.assertRaises(ID3Error, ID3Header, fileobj)
 
     def test_header_2_4_unsynch_size(self):
-        fileobj = cBytesIO(b'ID3\x04\x00\x10\x00\x00\x00\xFF')
+        fileobj = BytesIO(b'ID3\x04\x00\x10\x00\x00\x00\xFF')
         self.assertRaises(ID3Error, ID3Header, fileobj)
 
     def test_header_2_4_allow_footer(self):
-        fileobj = cBytesIO(b'ID3\x04\x00\x10\x00\x00\x00\x00')
+        fileobj = BytesIO(b'ID3\x04\x00\x10\x00\x00\x00\x00')
         self.assertTrue(ID3Header(fileobj).f_footer)
 
     def test_header_2_3_invalid_flags(self):
-        fileobj = cBytesIO(b'ID3\x03\x00\x1f\x00\x00\x00\x00')
+        fileobj = BytesIO(b'ID3\x03\x00\x1f\x00\x00\x00\x00')
         self.assertRaises(ID3Error, ID3Header, fileobj)
 
-        fileobj = cBytesIO(b'ID3\x03\x00\x0f\x00\x00\x00\x00')
+        fileobj = BytesIO(b'ID3\x03\x00\x0f\x00\x00\x00\x00')
         self.assertRaises(ID3Error, ID3Header, fileobj)
 
     def test_header_2_2(self):
-        fileobj = cBytesIO(b'ID3\x02\x00\x00\x00\x00\x00\x00')
+        fileobj = BytesIO(b'ID3\x02\x00\x00\x00\x00\x00\x00')
         header = ID3Header(fileobj)
         self.assertEquals(header.version, (2, 2, 0))
 
     def test_header_2_1(self):
-        fileobj = cBytesIO(b'ID3\x01\x00\x00\x00\x00\x00\x00')
+        fileobj = BytesIO(b'ID3\x01\x00\x00\x00\x00\x00\x00')
         self.assertRaises(ID3UnsupportedVersionError, ID3Header, fileobj)
 
     def test_header_too_small(self):
-        fileobj = cBytesIO(b'ID3\x01\x00\x00\x00\x00\x00')
+        fileobj = BytesIO(b'ID3\x01\x00\x00\x00\x00\x00')
         self.assertRaises(ID3Error, ID3Header, fileobj)
 
     def test_header_2_4_extended(self):
-        fileobj = cBytesIO(
+        fileobj = BytesIO(
             b'ID3\x04\x00\x40\x00\x00\x00\x00\x00\x00\x00\x05\x5a')
         header = ID3Header(fileobj)
         self.assertEquals(header._extdata, b'\x5a')
 
     def test_header_2_4_extended_unsynch_size(self):
-        fileobj = cBytesIO(
+        fileobj = BytesIO(
             b'ID3\x04\x00\x40\x00\x00\x00\x00\x00\x00\x00\xFF\x5a')
         self.assertRaises(ID3Error, ID3Header, fileobj)
 
     def test_header_2_4_extended_but_not(self):
-        fileobj = cBytesIO(
+        fileobj = BytesIO(
             b'ID3\x04\x00\x40\x00\x00\x00\x00TIT1\x00\x00\x00\x01a')
         header = ID3Header(fileobj)
         self.assertEquals(header._extdata, b'')
 
     def test_header_2_4_extended_but_not_but_not_tag(self):
-        fileobj = cBytesIO(b'ID3\x04\x00\x40\x00\x00\x00\x00TIT9')
+        fileobj = BytesIO(b'ID3\x04\x00\x40\x00\x00\x00\x00TIT9')
         self.failUnlessRaises(ID3Error, ID3Header, fileobj)
 
     def test_header_2_3_extended(self):
-        fileobj = cBytesIO(
+        fileobj = BytesIO(
             b'ID3\x03\x00\x40\x00\x00\x00\x00\x00\x00\x00\x06'
             b'\x00\x00\x56\x78\x9a\xbc')
         header = ID3Header(fileobj)
@@ -472,7 +472,7 @@ class TID3Tags(TestCase):
 
     def test_apic_duplicate_hash(self):
         id3 = ID3Tags()
-        for i in xrange(10):
+        for i in range(10):
             apic = APIC(encoding=0, mime=u"b", type=3, desc=u"", data=b"a")
             id3._add(apic, False)
 
@@ -1148,7 +1148,7 @@ class Issue69_BadV1Year(TestCase):
         self.failUnlessEqual(tag["TIT2"], "hello world")
         self.failUnlessEqual(tag["TDRC"], "0001")
 
-        frames, offset = find_id3v1(cBytesIO(data))
+        frames, offset = find_id3v1(BytesIO(data))
         self.assertEqual(offset, -125)
         self.assertEqual(frames, tag)
 

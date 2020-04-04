@@ -25,20 +25,15 @@ were all consulted.
 
 import struct
 import sys
-try:
-    # Python 3
-    from collections.abc import Sequence
-except ImportError:
-    # Python 2.7
-    from collections import Sequence
+from io import BytesIO
+from collections.abc import Sequence
 from datetime import timedelta
 
 from mutagen import FileType, Tags, StreamInfo, PaddingInfo
 from mutagen._constants import GENRES
 from mutagen._util import cdata, insert_bytes, DictProxy, MutagenError, \
-    hashable, enum, get_size, resize_bytes, loadfile, convert_error
-from mutagen._compat import (reraise, string_types, text_type, chr_,
-                             iteritems, cBytesIO, izip, xrange)
+    hashable, enum, get_size, resize_bytes, loadfile, convert_error, bchr, \
+    reraise
 from ._atom import Atoms, Atom, AtomError
 from ._util import parse_full_atom
 from ._as_entry import AudioSampleEntry, ASEntryError
@@ -249,7 +244,7 @@ def _item_sort_key(key, value):
              "\xa9gen", "gnre", "trkn", "disk",
              "\xa9day", "cpil", "pgap", "pcst", "tmpo",
              "\xa9too", "----", "covr", "\xa9lyr"]
-    order = dict(izip(order, xrange(len(order))))
+    order = dict(zip(order, range(len(order))))
     last = len(order)
     # If there's no key-based way to distinguish, order by length.
     # If there's still no way, go by string comparison on the
@@ -406,7 +401,7 @@ class MP4Tags(DictProxy, Tags):
             except (TypeError, ValueError) as s:
                 reraise(MP4MetadataValueError, s, sys.exc_info()[2])
 
-        for key, failed in iteritems(self._failed_atoms):
+        for key, failed in self._failed_atoms.items():
             # don't write atoms back if we have added a new one with
             # the same name, this excludes freeform which can have
             # multiple atoms with the same key (most parsers seem to be able
@@ -755,7 +750,7 @@ class MP4Tags(DictProxy, Tags):
 
     def __render_bool(self, key, value):
         return self.__render_data(
-            key, 0, AtomDataType.INTEGER, [chr_(bool(value))])
+            key, 0, AtomDataType.INTEGER, [bchr(bool(value))])
 
     def __parse_cover(self, atom, data):
         values = []
@@ -819,12 +814,12 @@ class MP4Tags(DictProxy, Tags):
         self.__add(key, values)
 
     def __render_text(self, key, value, flags=AtomDataType.UTF8):
-        if isinstance(value, string_types):
+        if isinstance(value, str):
             value = [value]
 
         encoded = []
         for v in value:
-            if not isinstance(v, text_type):
+            if not isinstance(v, str):
                 raise TypeError("%r not str" % v)
 
             encoded.append(v.encode("utf-8"))
@@ -878,14 +873,14 @@ class MP4Tags(DictProxy, Tags):
     def pprint(self):
 
         def to_line(key, value):
-            assert isinstance(key, text_type)
-            if isinstance(value, text_type):
+            assert isinstance(key, str)
+            if isinstance(value, str):
                 return u"%s=%s" % (key, value)
             return u"%s=%r" % (key, value)
 
         values = []
-        for key, value in sorted(iteritems(self)):
-            if not isinstance(key, text_type):
+        for key, value in sorted(self.items()):
+            if not isinstance(key, str):
                 key = key.decode("latin-1")
             if key == "covr":
                 values.append(u"%s=%s" % (key, u", ".join(
@@ -1130,7 +1125,7 @@ class MP4Info(StreamInfo):
             return
 
         # look at the first entry if there is one
-        entry_fileobj = cBytesIO(data[offset:])
+        entry_fileobj = BytesIO(data[offset:])
         try:
             entry_atom = Atom(entry_fileobj)
         except AtomError as e:

@@ -2,7 +2,6 @@
 
 import os
 
-from mutagen._compat import text_type
 from mutagen._senf import fsnative as fsn
 
 from tests.test_tools import _TTools
@@ -38,6 +37,6 @@ class TMOggSPlit(_TTools):
 
         for stream in [1002429366, 1806412655]:
             stream_path = os.path.join(
-                d, fsn(text_type(stream)) + fsn(u".ogg"))
+                d, fsn(str(stream)) + fsn(u".ogg"))
             self.failUnless(os.path.exists(stream_path))
             os.unlink(stream_path)

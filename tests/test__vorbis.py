@@ -2,7 +2,6 @@
 
 from tests import TestCase
 from mutagen._vorbis import VComment, VCommentDict, istag, error
-from mutagen._compat import text_type
 
 
 class Tistag(TestCase):
@@ -112,7 +111,7 @@ class TVComment(TestCase):
                 b'\x00abc\x01')
         comment = VComment(data)
         self.assertTrue(isinstance(comment[0][0], type('')))
-        self.assertTrue(isinstance(comment[0][1], text_type))
+        self.assertTrue(isinstance(comment[0][1], str))
 
     def test_python3_strict_str(self):
         comment = VComment()

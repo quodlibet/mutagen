@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import os
+from io import BytesIO
 
 from tests import TestCase, DATA_DIR, get_temp_copy
-from mutagen._compat import cBytesIO, text_type, xrange
 from mutagen.mp3 import MP3, error as MP3Error, delete, MPEGInfo, EasyMP3, \
     BitrateMode, iter_sync
 from mutagen.mp3._util import XingHeader, XingHeaderError, VBRIHeader, \
@@ -22,16 +22,16 @@ class TMP3Util(TestCase):
                 pos.append(fileobj.tell() - start)
             return pos
 
-        self.assertEqual(get_syncs(cBytesIO(b"abc"), 100), [])
-        self.assertEqual(get_syncs(cBytesIO(b""), 100), [])
-        self.assertEqual(get_syncs(cBytesIO(b"a\xff\xe0"), 1), [])
+        self.assertEqual(get_syncs(BytesIO(b"abc"), 100), [])
+        self.assertEqual(get_syncs(BytesIO(b""), 100), [])
+        self.assertEqual(get_syncs(BytesIO(b"a\xff\xe0"), 1), [])
 
-        self.assertEqual(get_syncs(cBytesIO(b"a\xff\xc0\xff\xe0"), 100), [3])
+        self.assertEqual(get_syncs(BytesIO(b"a\xff\xc0\xff\xe0"), 100), [3])
         self.assertEqual(
-            get_syncs(cBytesIO(b"a\xff\xe0\xff\xe0\xff\xe0"), 100), [1, 3, 5])
+            get_syncs(BytesIO(b"a\xff\xe0\xff\xe0\xff\xe0"), 100), [1, 3, 5])
 
-        for i in xrange(400):
-            fileobj = cBytesIO(b"\x00" * i + b"\xff\xe0")
+        for i in range(400):
+            fileobj = BytesIO(b"\x00" * i + b"\xff\xe0")
             self.assertEqual(get_syncs(fileobj, 100 + i), [i])
 
 
@@ -91,11 +91,11 @@ class TMP3(TestCase):
 
     def test_encoder_info(self):
         self.assertEqual(self.mp3.info.encoder_info, u"")
-        self.assertTrue(isinstance(self.mp3.info.encoder_info, text_type))
+        self.assertTrue(isinstance(self.mp3.info.encoder_info, str))
         self.assertEqual(self.mp3_2.info.encoder_info, u"")
         self.assertEqual(self.mp3_3.info.encoder_info, u"LAME 3.98.1+")
         self.assertEqual(self.mp3_4.info.encoder_info, u"LAME 3.98.1+")
-        self.assertTrue(isinstance(self.mp3_4.info.encoder_info, text_type))
+        self.assertTrue(isinstance(self.mp3_4.info.encoder_info, str))
 
     def test_bitrate_mode(self):
         self.failUnlessEqual(self.mp3.info.bitrate_mode, BitrateMode.UNKNOWN)
@@ -159,7 +159,7 @@ class TMP3(TestCase):
     def test_info_pprint(self):
         res = self.mp3.info.pprint()
         self.assertTrue(res)
-        self.assertTrue(isinstance(res, text_type))
+        self.assertTrue(isinstance(res, str))
         self.assertTrue(res.startswith(u"MPEG 1 layer 3"))
 
     def test_pprint_no_tags(self):
@@ -237,11 +237,11 @@ class TMPEGInfo(TestCase):
     def test_not_real_file(self):
         filename = os.path.join(DATA_DIR, "silence-44-s-v1.mp3")
         with open(filename, "rb") as h:
-            fileobj = cBytesIO(h.read(20))
+            fileobj = BytesIO(h.read(20))
         self.failUnlessRaises(MP3Error, MPEGInfo, fileobj)
 
     def test_empty(self):
-        fileobj = cBytesIO(b"")
+        fileobj = BytesIO(b"")
         self.failUnlessRaises(MP3Error, MPEGInfo, fileobj)
 
     def test_xing_unknown_framecount(self):
@@ -251,7 +251,7 @@ class TMPEGInfo(TestCase):
             b'\x00\x00\x00\x00Info\x00\x00\x00\x02\x00\xb4V@\x00\xb4R\x80\x00'
             b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
         )
-        fileobj = cBytesIO(frame)
+        fileobj = BytesIO(frame)
         info = MPEGInfo(fileobj)
         assert info.bitrate == 320000
         assert info.length > 0
@@ -296,7 +296,7 @@ class TXingHeader(TestCase):
                 b'\xc4\xc6\xca\xcc\xce\xd1\xd4\xd6\xd9\xdb\xdd\xe1\xe3\xe5\xe8'
                 b'\xeb\xed\xf0\xf2\xf5\xf8\xfa\xfc\x00\x00\x009')
 
-        fileobj = cBytesIO(data)
+        fileobj = BytesIO(data)
         xing = XingHeader(fileobj)
         self.assertEqual(xing.bytes, 15580472)
         self.assertEqual(xing.frames, 14910)
@@ -306,12 +306,12 @@ class TXingHeader(TestCase):
         self.assertEqual(sum(xing.toc), 12625)  # only for coverage..
         self.assertEqual(xing.is_info, True)
 
-        XingHeader(cBytesIO(data.replace(b'Info', b'Xing')))
+        XingHeader(BytesIO(data.replace(b'Info', b'Xing')))
 
     def test_invalid(self):
-        self.assertRaises(XingHeaderError, XingHeader, cBytesIO(b""))
-        self.assertRaises(XingHeaderError, XingHeader, cBytesIO(b"Xing"))
-        self.assertRaises(XingHeaderError, XingHeader, cBytesIO(b"aaaa"))
+        self.assertRaises(XingHeaderError, XingHeader, BytesIO(b""))
+        self.assertRaises(XingHeaderError, XingHeader, BytesIO(b"Xing"))
+        self.assertRaises(XingHeaderError, XingHeader, BytesIO(b"aaaa"))
 
     def test_get_offset(self):
         mp3 = MP3(os.path.join(DATA_DIR, "silence-44-s.mp3"))
@@ -326,7 +326,7 @@ class TVBRIHeader(TestCase):
                 b'\x01\x00\x02\x00\x08\n0\x19H\x18\xe0\x18x\x18\xe0\x18x\x19H'
                 b'\x18\xe0\x19H\x18\xe0\x18\xe0\x18x' + b'\x00' * 300)
 
-        fileobj = cBytesIO(data)
+        fileobj = BytesIO(data)
         vbri = VBRIHeader(fileobj)
         self.assertEqual(vbri.bytes, 831541)
         self.assertEqual(vbri.frames, 1081)
@@ -338,9 +338,9 @@ class TVBRIHeader(TestCase):
         self.assertEqual(sum(vbri.toc), 72656)
 
     def test_invalid(self):
-        self.assertRaises(VBRIHeaderError, VBRIHeader, cBytesIO(b""))
-        self.assertRaises(VBRIHeaderError, VBRIHeader, cBytesIO(b"VBRI"))
-        self.assertRaises(VBRIHeaderError, VBRIHeader, cBytesIO(b"Xing"))
+        self.assertRaises(VBRIHeaderError, VBRIHeader, BytesIO(b""))
+        self.assertRaises(VBRIHeaderError, VBRIHeader, BytesIO(b"VBRI"))
+        self.assertRaises(VBRIHeaderError, VBRIHeader, BytesIO(b"Xing"))
 
     def test_get_offset(self):
         mp3 = MP3(os.path.join(DATA_DIR, "silence-44-s.mp3"))
@@ -352,7 +352,7 @@ class TLAMEHeader(TestCase):
     def test_version(self):
 
         def parse(data):
-            data = cBytesIO(data + b"\x00" * (20 - len(data)))
+            data = BytesIO(data + b"\x00" * (20 - len(data)))
             return tuple(LAMEHeader.parse_version(data)[1:])
 
         self.assertEqual(parse(b"LAME3.80"), (u"3.80", False))
@@ -373,7 +373,7 @@ class TLAMEHeader(TestCase):
     def test_invalid(self):
 
         def parse(data):
-            data = cBytesIO(data + b"\x00" * (20 - len(data)))
+            data = BytesIO(data + b"\x00" * (20 - len(data)))
             return LAMEHeader.parse_version(data)
 
         self.assertRaises(LAMEError, parse, b"")

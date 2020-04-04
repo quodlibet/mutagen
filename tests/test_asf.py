@@ -2,8 +2,8 @@
 
 import os
 import warnings
+from io import BytesIO
 
-from mutagen._compat import text_type, izip, cBytesIO
 from mutagen.asf import ASF, ASFHeaderError, ASFValue, UNICODE, DWORD, QWORD
 from mutagen.asf import BOOL, WORD, BYTEARRAY, GUID
 from mutagen.asf._util import guid2bytes, bytes2guid
@@ -95,7 +95,7 @@ class TASFInfo(TestCase):
 
     def test_pprint(self):
         self.assertTrue(self.wma1.info.pprint())
-        self.assertTrue(isinstance(self.wma1.info.pprint(), text_type))
+        self.assertTrue(isinstance(self.wma1.info.pprint(), str))
 
 
 class TASF(TestCase):
@@ -135,7 +135,7 @@ class TASFMixin(object):
         self.failUnless(key in self.audio.tags.as_dict().keys())
         newvalue = self.audio[key]
         if isinstance(newvalue, list):
-            for a, b in izip(sorted(newvalue), sorted(result or value)):
+            for a, b in zip(sorted(newvalue), sorted(result or value)):
                 self.failUnlessEqual(a, b)
         else:
             self.failUnlessEqual(self.audio[key], result or value)
@@ -305,7 +305,7 @@ class TASFAttributes(TestCase):
         attr = ASFUnicodeAttribute(u"foo")
 
         self.assertEqual(bytes(attr), b"f\x00o\x00o\x00")
-        self.assertEqual(text_type(attr), u"foo")
+        self.assertEqual(str(attr), u"foo")
         self.assertEqual(repr(attr), "ASFUnicodeAttribute('foo')")
         self.assertRaises(TypeError, int, attr)
 
@@ -316,7 +316,7 @@ class TASFAttributes(TestCase):
     def test_ASFByteArrayAttribute_dunder(self):
         attr = ASFByteArrayAttribute(data=b"\xff")
         self.assertEqual(bytes(attr), b"\xff")
-        self.assertEqual(text_type(attr), u"[binary data (1 bytes)]")
+        self.assertEqual(str(attr), u"[binary data (1 bytes)]")
         self.assertEqual(repr(attr), r"ASFByteArrayAttribute(b'\xff')")
         self.assertRaises(TypeError, int, attr)
 
@@ -332,7 +332,7 @@ class TASFAttributes(TestCase):
     def test_ASFGUIDAttribute_dunder(self):
         attr = ASFGUIDAttribute(data=b"\xff")
         self.assertEqual(bytes(attr), b"\xff")
-        self.assertEqual(text_type(attr), u"b'\\xff'")
+        self.assertEqual(str(attr), u"b'\\xff'")
         self.assertEqual(repr(attr), "ASFGUIDAttribute(b'\\xff')")
         self.assertRaises(TypeError, int, attr)
 
@@ -346,7 +346,7 @@ class TASFAttributes(TestCase):
     def test_ASFBoolAttribute_dunder(self):
         attr = ASFBoolAttribute(False)
         self.assertEqual(bytes(attr), b"False")
-        self.assertEqual(text_type(attr), u"False")
+        self.assertEqual(str(attr), u"False")
         self.assertEqual(repr(attr), "ASFBoolAttribute(False)")
         self.assertRaises(TypeError, int, attr)
 
@@ -361,7 +361,7 @@ class TASFAttributes(TestCase):
     def test_ASFWordAttribute_dunder(self):
         attr = ASFWordAttribute(data=b"\x00" * 2)
         self.assertEqual(bytes(attr), b"0")
-        self.assertEqual(text_type(attr), u"0")
+        self.assertEqual(str(attr), u"0")
         self.assertEqual(repr(attr), "ASFWordAttribute(0)")
         self.assertEqual(int(attr), 0)
 
@@ -376,7 +376,7 @@ class TASFAttributes(TestCase):
     def test_ASFDWordAttribute_dunder(self):
         attr = ASFDWordAttribute(data=b"\x00" * 4)
         self.assertEqual(bytes(attr), b"0")
-        self.assertEqual(text_type(attr), u"0")
+        self.assertEqual(str(attr), u"0")
         self.assertEqual(repr(attr).replace("0L", "0"), "ASFDWordAttribute(0)")
         self.assertEqual(int(attr), 0)
 
@@ -391,7 +391,7 @@ class TASFAttributes(TestCase):
     def test_ASFQWordAttribute_dunder(self):
         attr = ASFQWordAttribute(data=b"\x00" * 8)
         self.assertEqual(bytes(attr), b"0")
-        self.assertEqual(text_type(attr), u"0")
+        self.assertEqual(str(attr), u"0")
         self.assertEqual(repr(attr).replace("0L", "0"), "ASFQWordAttribute(0)")
         self.assertEqual(int(attr), 0)
 
@@ -442,7 +442,7 @@ class TASFObjects(TestCase):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             asf = ASF()
-        fileobj = cBytesIO(
+        fileobj = BytesIO(
             b"0&\xb2u\x8ef\xcf\x11\xa6\xd9\x00\xaa\x00b\xcel\x19\xbf\x01\x00"
             b"\x00\x00\x00\x00\x07\x00\x00\x00\x01\x02")
         self.assertRaises(
@@ -504,7 +504,7 @@ class TASFAttrDest(TestCase):
         audio = ASF(self.filename)
         self.assertEqual(audio["WM/Composer"], [u"a", u"b", u"c"])
 
-    def test_non_text_type(self):
+    def test_non_str(self):
         audio = ASF(self.filename)
         audio["Author"] = [42]
         audio.save()

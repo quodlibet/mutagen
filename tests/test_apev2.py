@@ -6,7 +6,6 @@ from tests import TestCase, DATA_DIR, get_temp_copy, get_temp_empty
 
 import mutagen.apev2
 from mutagen import MutagenError
-from mutagen._compat import text_type, izip, xrange
 from mutagen.apev2 import APEv2File, APEv2, is_valid_apev2_key, \
     APEBadItemError, error as APEv2Error
 
@@ -233,11 +232,11 @@ class TAPEv2(TestCase):
 
         self.failUnlessEqual(
             self.audio.items(),
-            list(izip(self.audio.keys(), self.audio.values())))
+            list(zip(self.audio.keys(), self.audio.values())))
 
     def test_key_type(self):
         key = self.audio.keys()[0]
-        self.assertTrue(isinstance(key, text_type))
+        self.assertTrue(isinstance(key, str))
 
     def test_invalid_keys(self):
         self.failUnlessRaises(KeyError, self.audio.__getitem__, "\x00")
@@ -335,7 +334,7 @@ class TAPETextValue(TestCase):
         self.failUnless(isinstance(self.value, self.TV))
 
     def test_construct(self):
-        self.assertEqual(text_type(self.TV(u"foo")), u"foo")
+        self.assertEqual(str(self.TV(u"foo")), u"foo")
 
     def test_list(self):
         self.failUnlessEqual(self.sample, list(self.value))
@@ -347,7 +346,7 @@ class TAPETextValue(TestCase):
         self.value[2] = self.sample[2] = 'baz'
 
     def test_getitem(self):
-        for i in xrange(len(self.value)):
+        for i in range(len(self.value)):
             self.failUnlessEqual(self.sample[i], self.value[i])
 
     def test_delitem(self):
@@ -371,7 +370,7 @@ class TAPETextValue(TestCase):
         repr(self.value)
 
     def test_str(self):
-        self.assertEqual(text_type(self.value), u"foo\x00bar\x00baz")
+        self.assertEqual(str(self.value), u"foo\x00bar\x00baz")
 
     def test_pprint(self):
         self.assertEqual(self.value.pprint(), "foo / bar / baz")

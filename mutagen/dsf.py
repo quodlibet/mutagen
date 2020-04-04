@@ -11,11 +11,11 @@
 
 import sys
 import struct
-
-from ._compat import cBytesIO, reraise, endswith
+from io import BytesIO
 
 from mutagen import FileType, StreamInfo
-from mutagen._util import cdata, MutagenError, loadfile, convert_error
+from mutagen._util import cdata, MutagenError, loadfile, \
+    convert_error, reraise, endswith
 from mutagen.id3 import ID3
 from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
 
@@ -80,7 +80,7 @@ class DSDChunk(DSFChunk):
         self.offset_metdata_chunk = cdata.ulonglong_le(data[20:28])
 
     def write(self):
-        f = cBytesIO()
+        f = BytesIO()
         f.write(self.chunk_header)
         f.write(struct.pack("<Q", DSDChunk.CHUNK_SIZE))
         f.write(struct.pack("<Q", self.total_size))

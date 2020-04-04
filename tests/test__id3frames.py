@@ -4,8 +4,6 @@ import operator
 
 from tests import TestCase
 
-from mutagen._compat import text_type, xrange, iteritems, izip, \
-    integer_types
 from mutagen._constants import GENRES
 from mutagen.id3._tags import read_frames, save_frame, ID3Header
 from mutagen.id3._util import ID3SaveConfig, is_valid_frame_id, \
@@ -525,18 +523,18 @@ class TVariousFrames(TestCase):
             self.assertEquals(value, tag)
             if 'encoding' not in info:
                 self.assertRaises(AttributeError, getattr, tag, 'encoding')
-            for attr, value in iteritems(info):
+            for attr, value in info.items():
                 t = tag
                 if not isinstance(value, list):
                     value = [value]
                     t = [t]
-                for value, t in izip(value, iter(t)):
+                for value, t in zip(value, iter(t)):
                     if isinstance(value, float):
                         self.failUnlessAlmostEqual(value, getattr(t, attr), 5)
                     else:
                         self.assertEquals(value, getattr(t, attr))
 
-                    if isinstance(intval, integer_types):
+                    if isinstance(intval, int):
                         self.assertEquals(intval, operator.pos(t))
                     else:
                         self.assertRaises(TypeError, operator.pos, t)
@@ -1272,11 +1270,11 @@ class TTCON(TestCase):
         self.assertEquals(self._g(""), [])
 
     def test_num(self):
-        for i in xrange(len(GENRES)):
+        for i in range(len(GENRES)):
             self.assertEquals(self._g("%02d" % i), [GENRES[i]])
 
     def test_parened_num(self):
-        for i in xrange(len(GENRES)):
+        for i in range(len(GENRES)):
             self.assertEquals(self._g("(%02d)" % i), [GENRES[i]])
 
     def test_unknown(self):
@@ -1403,7 +1401,7 @@ class TID3TimeStamp(TestCase):
     def test_types(self):
         self.assertRaises(TypeError, ID3TimeStamp, b"blah")
         self.assertEquals(
-            text_type(ID3TimeStamp(u"2000-01-01")), u"2000-01-01")
+            str(ID3TimeStamp(u"2000-01-01")), u"2000-01-01")
         self.assertEquals(
             bytes(ID3TimeStamp(u"2000-01-01")), b"2000-01-01")
 
@@ -1468,7 +1466,7 @@ class TTimeStampTextFrame(TestCase):
 
     def test_compare_to_unicode(self):
         frame = TimeStampTextFrame(encoding=0, text=[u'1987', u'1988'])
-        self.failUnlessEqual(frame, text_type(frame))
+        self.failUnlessEqual(frame, str(frame))
 
 
 class TTextFrame(TestCase):

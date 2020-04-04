@@ -22,8 +22,7 @@ __all__ = ["OptimFROG", "Open", "delete"]
 
 import struct
 
-from ._compat import endswith
-from ._util import convert_error
+from ._util import convert_error, endswith
 from mutagen import StreamInfo
 from mutagen.apev2 import APEv2File, error, delete
 

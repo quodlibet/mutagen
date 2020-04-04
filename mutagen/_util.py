@@ -31,8 +31,28 @@ from contextlib import contextmanager
 from functools import wraps
 from fnmatch import fnmatchcase
 
-from ._compat import chr_, iteritems, iterbytes, integer_types, xrange, \
-    izip, text_type, reraise
+
+def endswith(text, end):
+    # usefull for paths which can be both, str and bytes
+    if isinstance(text, str):
+        if not isinstance(end, str):
+            end = end.decode("ascii")
+    else:
+        if not isinstance(end, bytes):
+            end = end.encode("ascii")
+    return text.endswith(end)
+
+
+def reraise(tp, value, tb):
+    raise tp(value).with_traceback(tb)
+
+
+def bchr(x):
+    return bytes([x])
+
+
+def iterbytes(b):
+    return (bytes([v]) for v in b)
 
 
 def intround(value):
@@ -50,7 +70,7 @@ def is_fileobj(fileobj):
             file object
     """
 
-    return not (isinstance(fileobj, (text_type, bytes)) or
+    return not (isinstance(fileobj, (str, bytes)) or
                 hasattr(fileobj, "__fspath__"))
 
 
@@ -105,8 +125,8 @@ def fileobj_name(fileobj):
     """
 
     value = getattr(fileobj, "name", u"")
-    if not isinstance(value, (text_type, bytes)):
-        value = text_type(value)
+    if not isinstance(value, (str, bytes)):
+        value = str(value)
     return value
 
 
@@ -212,7 +232,7 @@ def _openfile(instance, filething, filename, fileobj, writable, create):
             fileobj = filething
         elif hasattr(filething, "__fspath__"):
             filename = filething.__fspath__()
-            if not isinstance(filename, (bytes, text_type)):
+            if not isinstance(filename, (bytes, str)):
                 raise TypeError("expected __fspath__() to return a filename")
         else:
             filename = filething
@@ -337,8 +357,8 @@ def enum(cls):
     new_type.__module__ = cls.__module__
 
     map_ = {}
-    for key, value in iteritems(d):
-        if key.upper() == key and isinstance(value, integer_types):
+    for key, value in d.items():
+        if key.upper() == key and isinstance(value, int):
             value_instance = new_type(value)
             setattr(new_type, key, value_instance)
             map_[value] = key
@@ -386,8 +406,8 @@ def flags(cls):
     new_type.__module__ = cls.__module__
 
     map_ = {}
-    for key, value in iteritems(d):
-        if key.upper() == key and isinstance(value, integer_types):
+    for key, value in d.items():
+        if key.upper() == key and isinstance(value, int):
             value_instance = new_type(value)
             setattr(new_type, key, value_instance)
             map_[value] = key
@@ -400,7 +420,7 @@ def flags(cls):
                 matches.append("%s.%s" % (type(self).__name__, v))
                 value &= ~k
         if value != 0 or not matches:
-            matches.append(text_type(value))
+            matches.append(str(value))
 
         return " | ".join(matches)
 
@@ -446,7 +466,7 @@ class DictMixin(object):
         return [self[k] for k in self.keys()]
 
     def items(self):
-        return list(izip(self.keys(), self.values()))
+        return list(zip(self.keys(), self.values()))
 
     def clear(self):
         for key in list(self.keys()):
@@ -576,7 +596,7 @@ def _fill_cdata(cls):
                 funcs["to_%s%s%s" % (prefix, name, esuffix)] = pack
                 funcs["to_%sint%s%s" % (prefix, bits, esuffix)] = pack
 
-    for key, func in iteritems(funcs):
+    for key, func in funcs.items():
         setattr(cls, key, staticmethod(func))
 
 
@@ -591,8 +611,8 @@ class cdata(object):
     error = error
 
     bitswap = b''.join(
-        chr_(sum(((val >> i) & 1) << (7 - i) for i in xrange(8)))
-        for val in xrange(256))
+        bchr(sum(((val >> i) & 1) << (7 - i) for i in range(8)))
+        for val in range(256))
 
     test_bit = staticmethod(lambda value, n: bool((value >> n) & 1))
 
@@ -918,7 +938,7 @@ def dict_match(d, key, default=None):
     if key in d and "[" not in key:
         return d[key]
     else:
-        for pattern, value in iteritems(d):
+        for pattern, value in d.items():
             if fnmatchcase(key, pattern):
                 return value
     return default
@@ -1060,7 +1080,7 @@ class BitReader(object):
                 raise BitReaderError("not enough data")
             return data
 
-        return bytes(bytearray(self.bits(8) for _ in xrange(count)))
+        return bytes(bytearray(self.bits(8) for _ in range(count)))
 
     def skip(self, count):
         """Skip `count` bits.

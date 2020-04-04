@@ -5,14 +5,14 @@ from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes, \
     resize_bytes, seek_end, mmap_move, verify_fileobj, fileobj_name, \
     read_full, flags, resize_file, fallback_move, encode_endian, loadfile, \
     intround, verify_filename
-from mutagen._compat import text_type, itervalues, iterkeys, iteritems, \
-    cBytesIO, xrange, BytesIO, builtins
 from tests import TestCase, get_temp_empty
 import os
 import random
 import tempfile
 import mmap
 import errno
+import builtins
+from io import BytesIO
 
 try:
     import fcntl
@@ -70,19 +70,19 @@ class TDictMixin(TestCase):
     def test_keys(self):
         self.failUnlessEqual(list(self.fdict.keys()), list(self.rdict.keys()))
         self.failUnlessEqual(
-            list(iterkeys(self.fdict)), list(iterkeys(self.rdict)))
+            list(self.fdict.keys()), list(self.rdict.keys()))
 
     def test_values(self):
         self.failUnlessEqual(
             list(self.fdict.values()), list(self.rdict.values()))
         self.failUnlessEqual(
-            list(itervalues(self.fdict)), list(itervalues(self.rdict)))
+            list(self.fdict.values()), list(self.rdict.values()))
 
     def test_items(self):
         self.failUnlessEqual(
             list(self.fdict.items()), list(self.rdict.items()))
         self.failUnlessEqual(
-            list(iteritems(self.fdict)), list(iteritems(self.rdict)))
+            list(self.fdict.items()), list(self.rdict.items()))
 
     def test_pop(self):
         self.failUnlessEqual(self.fdict.pop("foo"), self.rdict.pop("foo"))
@@ -394,7 +394,7 @@ class MmapMove(TestCase, TMoveMixin):
     MOVE = staticmethod(mmap_move)
 
     def test_stringio(self):
-        self.assertRaises(mmap.error, mmap_move, cBytesIO(), 0, 0, 0)
+        self.assertRaises(mmap.error, mmap_move, BytesIO(), 0, 0, 0)
 
     def test_no_fileno(self):
         self.assertRaises(mmap.error, mmap_move, object(), 0, 0, 0)
@@ -521,7 +521,7 @@ class FileHandling(TestCase):
         # This appears to be due to ANSI C limitations in read/write on rb+
         # files. The problematic behavior only showed up in our mmap fallback
         # code for transfers of this or similar sizes.
-        data = u''.join(map(text_type, xrange(12574)))  # 51760 bytes
+        data = u''.join(map(str, range(12574)))  # 51760 bytes
         data = data.encode("ascii")
         with self.file(data) as o:
             insert_bytes(o, 6106, 79)
@@ -531,7 +531,7 @@ class FileHandling(TestCase):
         # This appears to be due to ANSI C limitations in read/write on rb+
         # files. The problematic behavior only showed up in our mmap fallback
         # code for transfers of this or similar sizes.
-        data = u''.join(map(text_type, xrange(12574)))  # 51760 bytes
+        data = u''.join(map(str, range(12574)))  # 51760 bytes
         data = data.encode("ascii")
         with self.file(data[:6106 + 79] + data[79:]) as o:
             delete_bytes(o, 6106, 79)
@@ -552,13 +552,13 @@ class FileHandling(TestCase):
                         min_change_size < max_change_size and
                         min_buffer_size < max_buffer_size,
                         "Given testing parameters make this test useless")
-        for j in xrange(num_runs):
+        for j in range(num_runs):
             data = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ" * 1024
             with self.file(data) as fobj:
                 filesize = len(data)
                 # Generate the list of changes to apply
                 changes = []
-                for i in xrange(num_changes):
+                for i in range(num_changes):
                     change_size = random.randrange(
                         min_change_size, max_change_size)
                     change_offset = random.randrange(0, filesize)
@@ -707,7 +707,7 @@ class Tfileobj_name(TestCase):
 
     def test_fileobj_name(self):
         with tempfile.TemporaryFile(mode="rb") as h:
-            self.assertEqual(fileobj_name(h), text_type(h.name))
+            self.assertEqual(fileobj_name(h), str(h.name))
 
 
 class Tseek_end(TestCase):
@@ -820,7 +820,7 @@ class Tloadfile(TestCase):
 class Tread_full(TestCase):
 
     def test_read_full(self):
-        fileobj = cBytesIO()
+        fileobj = BytesIO()
         self.assertRaises(ValueError, read_full, fileobj, -3)
         self.assertRaises(IOError, read_full, fileobj, 3)
 
@@ -828,7 +828,7 @@ class Tread_full(TestCase):
 class Tget_size(TestCase):
 
     def test_get_size(self):
-        f = cBytesIO(b"foo")
+        f = BytesIO(b"foo")
         f.seek(1, 0)
         self.assertEqual(f.tell(), 1)
         self.assertEqual(get_size(f), 3)
@@ -909,64 +909,64 @@ class TBitReader(TestCase):
         data = b"\x12\x34\x56\x78\x89\xAB\xCD\xEF"
         ref = cdata.uint64_be(data)
 
-        for i in xrange(64):
-            fo = cBytesIO(data)
+        for i in range(64):
+            fo = BytesIO(data)
             r = BitReader(fo)
             v = r.bits(i) << (64 - i) | r.bits(64 - i)
             self.assertEqual(v, ref)
 
     def test_bits_null(self):
-        r = BitReader(cBytesIO(b""))
+        r = BitReader(BytesIO(b""))
         self.assertEqual(r.bits(0), 0)
 
     def test_bits_error(self):
-        r = BitReader(cBytesIO(b""))
+        r = BitReader(BytesIO(b""))
         self.assertRaises(ValueError, r.bits, -1)
 
     def test_bytes_error(self):
-        r = BitReader(cBytesIO(b""))
+        r = BitReader(BytesIO(b""))
         self.assertRaises(ValueError, r.bytes, -1)
 
     def test_skip_error(self):
-        r = BitReader(cBytesIO(b""))
+        r = BitReader(BytesIO(b""))
         self.assertRaises(ValueError, r.skip, -1)
 
     def test_read_too_much(self):
-        r = BitReader(cBytesIO(b""))
+        r = BitReader(BytesIO(b""))
         self.assertEqual(r.bits(0), 0)
         self.assertRaises(BitReaderError, r.bits, 1)
 
     def test_skip(self):
-        r = BitReader(cBytesIO(b"\xEF"))
+        r = BitReader(BytesIO(b"\xEF"))
         r.skip(4)
         self.assertEqual(r.bits(4), 0xf)
 
     def test_skip_more(self):
-        r = BitReader(cBytesIO(b"\xAB\xCD"))
+        r = BitReader(BytesIO(b"\xAB\xCD"))
         self.assertEqual(r.bits(4), 0xa)
         r.skip(8)
         self.assertEqual(r.bits(4), 0xd)
         self.assertRaises(BitReaderError, r.bits, 1)
 
     def test_skip_too_much(self):
-        r = BitReader(cBytesIO(b"\xAB\xCD"))
+        r = BitReader(BytesIO(b"\xAB\xCD"))
         # aligned skips don't fail, but the following read will
         r.skip(32 + 8)
         self.assertRaises(BitReaderError, r.bits, 1)
         self.assertRaises(BitReaderError, r.skip, 1)
 
     def test_bytes(self):
-        r = BitReader(cBytesIO(b"\xAB\xCD\xEF"))
+        r = BitReader(BytesIO(b"\xAB\xCD\xEF"))
         self.assertEqual(r.bytes(2), b"\xAB\xCD")
         self.assertEqual(r.bytes(0), b"")
 
     def test_bytes_unaligned(self):
-        r = BitReader(cBytesIO(b"\xAB\xCD\xEF"))
+        r = BitReader(BytesIO(b"\xAB\xCD\xEF"))
         r.skip(4)
         self.assertEqual(r.bytes(2), b"\xBC\xDE")
 
     def test_get_position(self):
-        r = BitReader(cBytesIO(b"\xAB\xCD"))
+        r = BitReader(BytesIO(b"\xAB\xCD"))
         self.assertEqual(r.get_position(), 0)
         r.bits(3)
         self.assertEqual(r.get_position(), 3)
@@ -976,13 +976,13 @@ class TBitReader(TestCase):
         self.assertEqual(r.get_position(), 16)
 
     def test_align(self):
-        r = BitReader(cBytesIO(b"\xAB\xCD\xEF"))
+        r = BitReader(BytesIO(b"\xAB\xCD\xEF"))
         r.skip(3)
         self.assertEqual(r.align(), 5)
         self.assertEqual(r.get_position(), 8)
 
     def test_is_aligned(self):
-        r = BitReader(cBytesIO(b"\xAB\xCD\xEF"))
+        r = BitReader(BytesIO(b"\xAB\xCD\xEF"))
         self.assertTrue(r.is_aligned())
 
         r.skip(1)

@@ -5,12 +5,12 @@ import sys
 from tempfile import mkstemp
 import shutil
 import warnings
+from io import BytesIO
 
 from hypothesis.strategies import composite, integers, one_of
 from hypothesis import given
 
 from tests import TestCase, DATA_DIR, get_temp_copy
-from mutagen._compat import cBytesIO, text_type
 from mutagen import File, Metadata, FileType, MutagenError, PaddingInfo
 from mutagen._util import loadfile, get_size
 from mutagen.oggvorbis import OggVorbis
@@ -45,23 +45,23 @@ class TMetadata(TestCase):
             pass
 
     def test_virtual_constructor(self):
-        self.failUnlessRaises(NotImplementedError, Metadata, cBytesIO())
+        self.failUnlessRaises(NotImplementedError, Metadata, BytesIO())
 
     def test_load(self):
         m = Metadata()
-        self.failUnlessRaises(NotImplementedError, m.load, cBytesIO())
+        self.failUnlessRaises(NotImplementedError, m.load, BytesIO())
 
     def test_virtual_save(self):
         self.failUnlessRaises(
-            NotImplementedError, self.FakeMeta().save, cBytesIO())
+            NotImplementedError, self.FakeMeta().save, BytesIO())
         self.failUnlessRaises(
-            NotImplementedError, self.FakeMeta().save, cBytesIO())
+            NotImplementedError, self.FakeMeta().save, BytesIO())
 
     def test_virtual_delete(self):
         self.failUnlessRaises(
-            NotImplementedError, self.FakeMeta().delete, cBytesIO())
+            NotImplementedError, self.FakeMeta().delete, BytesIO())
         self.failUnlessRaises(
-            NotImplementedError, self.FakeMeta().delete, cBytesIO())
+            NotImplementedError, self.FakeMeta().delete, BytesIO())
 
 
 class TPaddingInfo(TestCase):
@@ -130,19 +130,19 @@ class TFileTypeLoad(TestCase):
 
     def test_both_args(self):
         # fileobj wins, but filename is saved
-        x = cBytesIO()
+        x = BytesIO()
         f = MyFileType(filename="foo", fileobj=x)
         self.assertTrue(f.fileobj is x)
         self.assertEquals(f.filename, "foo")
 
     def test_fileobj(self):
-        x = cBytesIO()
+        x = BytesIO()
         f = MyFileType(fileobj=x)
         self.assertTrue(f.fileobj is x)
         self.assertTrue(f.filename is None)
 
     def test_magic(self):
-        x = cBytesIO()
+        x = BytesIO()
         f = MyFileType(x)
         self.assertTrue(f.fileobj is x)
         self.assertTrue(f.filename is None)
@@ -150,11 +150,11 @@ class TFileTypeLoad(TestCase):
     def test_filething(self):
         # while load() has that arg, we don't allow it as kwarg, either
         # pass per arg, or be explicit about the type.
-        x = cBytesIO()
+        x = BytesIO()
         self.assertRaises(TypeError, MyFileType, filething=x)
 
     def test_filename_explicit(self):
-        x = cBytesIO()
+        x = BytesIO()
         self.assertRaises(ValueError, MyFileType, filename=x)
 
 
@@ -328,7 +328,7 @@ class TAbstractFileType(object):
 
     def test_stringio(self):
         with open(self.filename, "rb") as h:
-            fileobj = cBytesIO(h.read())
+            fileobj = BytesIO(h.read())
             self.KIND(fileobj)
             # make sure it's not closed
             fileobj.read(0)
@@ -388,7 +388,7 @@ class TAbstractFileType(object):
     def test_pprint(self):
         res = self.audio.pprint()
         self.assertTrue(res)
-        self.assertTrue(isinstance(res, text_type))
+        self.assertTrue(isinstance(res, str))
 
     def test_info(self):
         self.assertTrue(self.audio.info)
@@ -396,7 +396,7 @@ class TAbstractFileType(object):
     def test_info_pprint(self):
         res = self.audio.info.pprint()
         self.assertTrue(res)
-        self.assertTrue(isinstance(res, text_type))
+        self.assertTrue(isinstance(res, str))
 
     def test_mime(self):
         self.assertTrue(self.audio.mime)
@@ -592,7 +592,7 @@ class TFile(TestCase):
             with open(filename, "rb") as h:
                 self.assertTrue(File(h) is not None)
             with open(filename, "rb") as h:
-                fileobj = cBytesIO(h.read())
+                fileobj = BytesIO(h.read())
                 self.assertTrue(File(fileobj, filename=filename) is not None)
 
     def test_mock_fileobj(self):
@@ -624,7 +624,7 @@ class TFile(TestCase):
 
     def test_id3_indicates_mp3_not_tta(self):
         header = b"ID3 the rest of this is garbage"
-        fileobj = cBytesIO(header)
+        fileobj = BytesIO(header)
         filename = "not-identifiable.ext"
         self.failUnless(TrueAudio.score(filename, fileobj, header) <
                         MP3.score(filename, fileobj, header))
@@ -638,7 +638,7 @@ class TFile(TestCase):
             b"\x00\x00\x00\x00\x00\x00d#\xa8\x1f\x00\x00\x00\x00]Y\xc0\xc0"
             b"\x01\x1e\x01vorbis\x00\x00\x00\x00\x02\x80\xbb\x00\x00\x00\x00"
             b"\x00\x00\x00\xee\x02\x00\x00\x00\x00\x00\xb8\x01")
-        fileobj = cBytesIO(header)
+        fileobj = BytesIO(header)
         filename = "not-identifiable.ext"
         self.failUnless(OggVorbis.score(filename, fileobj, header) <
                         OggTheora.score(filename, fileobj, header))

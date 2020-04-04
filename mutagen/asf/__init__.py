@@ -13,7 +13,6 @@ __all__ = ["ASF", "Open"]
 
 from mutagen import FileType, Tags, StreamInfo
 from mutagen._util import resize_bytes, DictMixin, loadfile, convert_error
-from mutagen._compat import string_types, long_, izip
 
 from ._util import error, ASFError, ASFHeaderError
 from ._objects import HeaderObject, MetadataLibraryObject, MetadataObject, \
@@ -136,7 +135,7 @@ class ASFTags(list, DictMixin, Tags):
         to_append = []
         for value in values:
             if not isinstance(value, ASFBaseAttribute):
-                if isinstance(value, string_types):
+                if isinstance(value, str):
                     value = ASFUnicodeAttribute(value)
                 elif isinstance(value, bytes):
                     value = ASFByteArrayAttribute(value)
@@ -144,8 +143,6 @@ class ASFTags(list, DictMixin, Tags):
                     value = ASFBoolAttribute(value)
                 elif isinstance(value, int):
                     value = ASFDWordAttribute(value)
-                elif isinstance(value, long_):
-                    value = ASFQWordAttribute(value)
                 else:
                     raise TypeError("Invalid type %r" % type(value))
             to_append.append((key, value))
@@ -160,7 +157,7 @@ class ASFTags(list, DictMixin, Tags):
     def keys(self):
         """Return a sequence of all keys in the comment."""
 
-        return self and set(next(izip(*self)))
+        return self and set(next(zip(*self)))
 
     def as_dict(self):
         """Return a copy of the comment data in a real dict."""

@@ -4,13 +4,10 @@ import struct
 
 from tests import TestCase
 
-from mutagen.id3._util import BitPaddedInt, BitPaddedLong, unsynch
+from mutagen.id3._util import BitPaddedInt, unsynch
 
 
 class BitPaddedIntTest(TestCase):
-
-    def test_long(self):
-        self.assertTrue(BitPaddedInt is BitPaddedLong)
 
     def test_negative(self):
         self.assertRaises(ValueError, BitPaddedInt, -1)

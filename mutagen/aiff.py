@@ -14,7 +14,6 @@ import sys
 import struct
 from struct import pack
 
-from ._compat import endswith, text_type, reraise
 from mutagen import StreamInfo, FileType
 
 from mutagen.id3 import ID3
@@ -26,6 +25,8 @@ from mutagen._util import (
     insert_bytes,
     loadfile,
     resize_bytes,
+    reraise,
+    endswith,
 )
 
 __all__ = ["AIFF", "Open", "delete"]
@@ -44,7 +45,7 @@ _HUGE_VAL = 1.79769313486231e+308
 
 
 def is_valid_chunk_id(id):
-    assert isinstance(id, text_type)
+    assert isinstance(id, str)
 
     return ((len(id) <= 4) and (min(id) >= u' ') and
             (max(id) <= u'~'))
@@ -52,7 +53,7 @@ def is_valid_chunk_id(id):
 
 def assert_valid_chunk_id(id):
 
-    assert isinstance(id, text_type)
+    assert isinstance(id, str)
 
     if not is_valid_chunk_id(id):
         raise ValueError("AIFF key must be four ASCII characters.")
@@ -228,7 +229,7 @@ class FormIFFChunk(IFFChunk):
     def insert_chunk(self, id_, data=None):
         """Insert a new chunk at the end of the FORM chunk"""
 
-        assert isinstance(id_, text_type)
+        assert isinstance(id_, str)
 
         if not is_valid_chunk_id(id_):
             raise KeyError("Invalid IFF key.")

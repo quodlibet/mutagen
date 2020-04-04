@@ -3,8 +3,8 @@
 import os
 import random
 import subprocess
+from io import BytesIO
 
-from mutagen._compat import BytesIO, xrange
 from tests import TestCase, DATA_DIR, get_temp_copy
 from mutagen.ogg import OggPage, error as OggError
 from mutagen._util import cdata
@@ -21,7 +21,7 @@ class TOggPage(TestCase):
         pages[0].packets = [b"foo"]
         pages[1].packets = [b"bar"]
         pages[2].packets = [b"baz"]
-        for i in xrange(len(pages)):
+        for i in range(len(pages)):
             pages[i].sequence = i
         for page in pages:
             page.serial = 1
@@ -29,7 +29,7 @@ class TOggPage(TestCase):
 
     def test_to_packets_empty_page(self):
         pages = [OggPage(), OggPage()]
-        for i in xrange(len(pages)):
+        for i in range(len(pages)):
             pages[i].sequence = i
         assert OggPage.to_packets(pages, True) == []
         assert OggPage.to_packets(pages, False) == []
@@ -41,7 +41,7 @@ class TOggPage(TestCase):
         pages[1].complete = False
         pages[2].packets = [b"bar"]
         pages[2].continued = True
-        for i in xrange(len(pages)):
+        for i in range(len(pages)):
             pages[i].sequence = i
         assert OggPage.to_packets(pages, True) == [b'foobar']
 
@@ -227,13 +227,13 @@ class TOggPage(TestCase):
         fileobj.seek(0)
         OggPage.renumber(fileobj, 1, 10)
         fileobj.seek(0)
-        pages = [OggPage(fileobj) for i in xrange(3)]
+        pages = [OggPage(fileobj) for i in range(3)]
         self.failUnlessEqual([page.sequence for page in pages], [10, 11, 12])
 
         fileobj.seek(0)
         OggPage.renumber(fileobj, 1, 20)
         fileobj.seek(0)
-        pages = [OggPage(fileobj) for i in xrange(3)]
+        pages = [OggPage(fileobj) for i in range(3)]
         self.failUnlessEqual([page.sequence for page in pages], [20, 21, 22])
 
     def test_renumber_extradata(self):
@@ -246,7 +246,7 @@ class TOggPage(TestCase):
         self.failUnlessRaises(Exception, OggPage.renumber, fileobj, 1, 10)
         fileobj.seek(0)
         # But the already written data should remain valid,
-        pages = [OggPage(fileobj) for i in xrange(3)]
+        pages = [OggPage(fileobj) for i in range(3)]
         self.failUnlessEqual([page.sequence for page in pages], [10, 11, 12])
         # And the garbage that caused the error should be okay too.
         self.failUnlessEqual(fileobj.read(), b"left over data")
@@ -263,7 +263,7 @@ class TOggPage(TestCase):
             os.unlink(filename)
 
     def test_renumber_muxed(self):
-        pages = [OggPage() for i in xrange(10)]
+        pages = [OggPage() for i in range(10)]
         for seq, page in enumerate(pages[0:1] + pages[2:]):
             page.serial = 0
             page.sequence = seq
@@ -272,12 +272,12 @@ class TOggPage(TestCase):
         data = BytesIO(b"".join([page.write() for page in pages]))
         OggPage.renumber(data, 0, 20)
         data.seek(0)
-        pages = [OggPage(data) for i in xrange(10)]
+        pages = [OggPage(data) for i in range(10)]
         self.failUnlessEqual(pages[1].serial, 2)
         self.failUnlessEqual(pages[1].sequence, 100)
         pages.pop(1)
         self.failUnlessEqual(
-            [page.sequence for page in pages], list(xrange(20, 29)))
+            [page.sequence for page in pages], list(range(20, 29)))
 
     def test_to_packets(self):
         self.failUnlessEqual(
@@ -358,10 +358,10 @@ class TOggPage(TestCase):
             print("WARNING: Random data round trip test disabled.")
             return
         try:
-            for i in xrange(10):
+            for i in range(10):
                 num_packets = random.randrange(2, 100)
                 lengths = [random.randrange(10, 10000)
-                           for i in xrange(num_packets)]
+                           for i in range(num_packets)]
                 packets = list(map(random_file.read, lengths))
                 self.failUnlessEqual(
                     packets, OggPage.to_packets(OggPage.from_packets(packets)))
@@ -441,7 +441,7 @@ class TOggPage(TestCase):
         self.failIfEqual(OggPage(), 12)
 
     def test_find_last(self):
-        pages = [OggPage() for i in xrange(10)]
+        pages = [OggPage() for i in range(10)]
         for i, page in enumerate(pages):
             page.sequence = i
         data = BytesIO(b"".join([page.write() for page in pages]))
@@ -468,7 +468,7 @@ class TOggPage(TestCase):
 
     def test_find_last_last_empty(self):
         # https://github.com/quodlibet/mutagen/issues/308
-        pages = [OggPage() for i in xrange(10)]
+        pages = [OggPage() for i in range(10)]
         for i, page in enumerate(pages):
             page.sequence = i
             page.position = i
@@ -492,7 +492,7 @@ class TOggPage(TestCase):
         assert OggPage.find_last(data, page2.serial).serial == page2.serial
 
     def test_find_last_really_last(self):
-        pages = [OggPage() for i in xrange(10)]
+        pages = [OggPage() for i in range(10)]
         pages[-1].last = True
         for i, page in enumerate(pages):
             page.sequence = i
@@ -501,7 +501,7 @@ class TOggPage(TestCase):
             OggPage.find_last(data, pages[0].serial), pages[-1])
 
     def test_find_last_muxed(self):
-        pages = [OggPage() for i in xrange(10)]
+        pages = [OggPage() for i in range(10)]
         for i, page in enumerate(pages):
             page.sequence = i
         pages[-2].last = True
@@ -511,7 +511,7 @@ class TOggPage(TestCase):
             OggPage.find_last(data, pages[0].serial), pages[-2])
 
     def test_find_last_no_serial(self):
-        pages = [OggPage() for i in xrange(10)]
+        pages = [OggPage() for i in range(10)]
         for i, page in enumerate(pages):
             page.sequence = i
         data = BytesIO(b"".join([page.write() for page in pages]))

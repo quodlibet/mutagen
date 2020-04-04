@@ -13,7 +13,6 @@
 __all__ = ["AC3", "Open"]
 
 from mutagen import StreamInfo
-from mutagen._compat import endswith
 from mutagen._file import FileType
 from mutagen._util import (
     BitReader,
@@ -22,6 +21,7 @@ from mutagen._util import (
     convert_error,
     enum,
     loadfile,
+    endswith,
 )
 
 

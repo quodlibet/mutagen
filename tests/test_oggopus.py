@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import os
+from io import BytesIO
 
-from mutagen._compat import BytesIO
 from mutagen.oggopus import OggOpus, OggOpusInfo, delete, error
 from mutagen.ogg import OggPage
 from tests import TestCase, DATA_DIR, get_temp_copy

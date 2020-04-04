@@ -4,7 +4,6 @@ import os
 
 from mutagen.id3 import ID3
 from mutagen._senf import fsnative as fsn
-from mutagen._compat import text_type
 
 from tests.test_tools import _TTools
 from tests import DATA_DIR, get_temp_copy
@@ -59,7 +58,7 @@ class TMid3Iconv(_TTools):
             f.add(TALB(text=[AMBIGUOUS.decode("latin-1")], encoding=0))
             f.save()
             res, out = self.call(
-                fsn(u"-d"), fsn(u"-e"), fsn(text_type(codec)), self.filename)
+                fsn(u"-d"), fsn(u"-e"), fsn(str(codec)), self.filename)
             f = ID3(self.filename)
             self.failUnlessEqual(f["TALB"].encoding, 1)
             self.failUnlessEqual(f["TALB"].text[0], AMBIGUOUS.decode(codec))
@@ -74,7 +73,7 @@ class TMid3Iconv(_TTools):
             f.add(frame)
             f.save()
             res, out = self.call(
-                fsn(u"-d"), fsn(u"-e"), fsn(text_type(codec)), self.filename)
+                fsn(u"-d"), fsn(u"-e"), fsn(str(codec)), self.filename)
             f = ID3(self.filename)
             new_frame = f[frame.HashKey]
             self.failUnlessEqual(new_frame.encoding, 1)

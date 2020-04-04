@@ -2,8 +2,8 @@
 
 import os
 import shutil
+from io import BytesIO
 
-from mutagen._compat import cBytesIO
 from mutagen.ogg import OggPage
 from mutagen.oggspeex import OggSpeex, OggSpeexInfo, delete, error
 from tests import TestCase, DATA_DIR, get_temp_copy
@@ -38,7 +38,7 @@ class TOggSpeex(TestCase, TOggFileTypeMixin):
         with open(self.filename, "rb") as h:
             page = OggPage(h)
         page.first = False
-        self.failUnlessRaises(error, OggSpeexInfo, cBytesIO(page.write()))
+        self.failUnlessRaises(error, OggSpeexInfo, BytesIO(page.write()))
 
     def test_vendor(self):
         self.failUnless(

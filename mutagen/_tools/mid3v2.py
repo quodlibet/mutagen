@@ -20,7 +20,6 @@ import mutagen.id3
 from mutagen.id3 import Encoding, PictureType
 from mutagen._senf import fsnative, print_, argv, fsn2text, fsn2bytes, \
     bytes2fsn
-from mutagen._compat import text_type
 
 from ._util import split_escape, SignalHandler, OptionParser
 
@@ -89,7 +88,7 @@ def delete_frames(deletes, filenames):
     try:
         deletes = frame_from_fsnative(deletes)
     except ValueError as err:
-        print_(text_type(err), file=sys.stderr)
+        print_(str(err), file=sys.stderr)
 
     frames = deletes.split(",")
 
@@ -104,7 +103,7 @@ def delete_frames(deletes, filenames):
                 if verbose:
                     print_(u"No ID3 header found; skipping.", file=sys.stderr)
             except Exception as err:
-                print_(text_type(err), file=sys.stderr)
+                print_(str(err), file=sys.stderr)
                 raise SystemExit(1)
             else:
                 for frame in frames:
@@ -124,7 +123,7 @@ def frame_from_fsnative(arg):
 
 
 def value_from_fsnative(arg, escape):
-    """Takes an item from argv and returns a text_type value without
+    """Takes an item from argv and returns a str value without
     surrogate escapes or raises ValueError.
     """
 
@@ -166,7 +165,7 @@ def write_files(edits, filenames, escape):
         try:
             frame = frame_from_fsnative(frame)
         except ValueError as err:
-            print_(text_type(err), file=sys.stderr)
+            print_(str(err), file=sys.stderr)
 
         assert isinstance(frame, str)
 
@@ -176,9 +175,9 @@ def write_files(edits, filenames, escape):
         try:
             value = value_from_fsnative(value, escape)
         except ValueError as err:
-            error(u"%s: %s" % (frame, text_type(err)))
+            error(u"%s: %s" % (frame, str(err)))
 
-        assert isinstance(value, text_type)
+        assert isinstance(value, str)
 
         encoded_edits.append((frame, value))
     edits = encoded_edits
@@ -263,7 +262,7 @@ def write_files(edits, filenames, escape):
                             with open(fn, "rb") as h:
                                 data = h.read()
                         except IOError as e:
-                            error(text_type(e))
+                            error(str(e))
 
                         frame = mutagen.id3.APIC(encoding=encoding, mime=mime,
                             desc=desc, type=picture_type, data=data)
@@ -343,7 +342,7 @@ def list_tags(filenames):
         except mutagen.id3.ID3NoHeaderError:
             print_(u"No ID3 header found; skipping.")
         except Exception as err:
-            print_(text_type(err), file=sys.stderr)
+            print_(str(err), file=sys.stderr)
             raise SystemExit(1)
         else:
             print_(id3.pprint())
@@ -357,11 +356,11 @@ def list_tags_raw(filenames):
         except mutagen.id3.ID3NoHeaderError:
             print_(u"No ID3 header found; skipping.")
         except Exception as err:
-            print_(text_type(err), file=sys.stderr)
+            print_(str(err), file=sys.stderr)
             raise SystemExit(1)
         else:
             for frame in id3.values():
-                print_(text_type(repr(frame)))
+                print_(str(repr(frame)))
 
 
 def main(argv):

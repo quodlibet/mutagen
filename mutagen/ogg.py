@@ -19,10 +19,11 @@ http://www.xiph.org/ogg/doc/rfc3533.txt.
 import struct
 import sys
 import zlib
+from io import BytesIO
 
 from mutagen import FileType
-from mutagen._util import cdata, resize_bytes, MutagenError, loadfile, seek_end
-from ._compat import cBytesIO, reraise, chr_, izip, xrange
+from mutagen._util import cdata, resize_bytes, MutagenError, loadfile, \
+    seek_end, bchr, reraise
 
 
 class error(MutagenError):
@@ -145,11 +146,11 @@ class OggPage(object):
         lacing_data = []
         for datum in self.packets:
             quot, rem = divmod(len(datum), 255)
-            lacing_data.append(b"\xff" * quot + chr_(rem))
+            lacing_data.append(b"\xff" * quot + bchr(rem))
         lacing_data = b"".join(lacing_data)
         if not self.complete and lacing_data.endswith(b"\x00"):
             lacing_data = lacing_data[:-1]
-        data.append(chr_(len(lacing_data)))
+        data.append(bchr(len(lacing_data)))
         data.append(lacing_data)
         data.extend(self.packets)
         data = b"".join(data)
@@ -388,8 +389,8 @@ class OggPage(object):
 
         # Number the new pages starting from the first old page.
         first = old_pages[0].sequence
-        for page, seq in izip(new_pages,
-                              xrange(first, first + len(new_pages))):
+        for page, seq in zip(new_pages,
+                             range(first, first + len(new_pages))):
             page.sequence = seq
             page.serial = old_pages[0].serial
 
@@ -417,7 +418,7 @@ class OggPage(object):
         offset_adjust = 0
         new_data_end = None
         assert len(old_pages) == len(new_data)
-        for old_page, data in izip(old_pages, new_data):
+        for old_page, data in zip(old_pages, new_data):
             offset = old_page.offset + offset_adjust
             data_size = len(data)
             resize_bytes(fileobj, old_page.size, data_size, offset)
@@ -461,7 +462,7 @@ class OggPage(object):
             index = data.rindex(b"OggS")
         except ValueError:
             raise error("unable to find final Ogg header")
-        bytesobj = cBytesIO(data[index:])
+        bytesobj = BytesIO(data[index:])
 
         def is_valid(page):
             return not finishing or page.position != -1

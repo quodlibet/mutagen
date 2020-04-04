@@ -10,8 +10,7 @@
 import sys
 import struct
 
-from mutagen._compat import swap_to_string, text_type, reraise
-from mutagen._util import total_ordering
+from mutagen._util import total_ordering, reraise
 
 from ._util import ASFError
 
@@ -103,7 +102,6 @@ class ASFBaseAttribute(object):
 
 
 @ASFBaseAttribute._register
-@swap_to_string
 @total_ordering
 class ASFUnicodeAttribute(ASFBaseAttribute):
     """Unicode string attribute.
@@ -122,7 +120,7 @@ class ASFUnicodeAttribute(ASFBaseAttribute):
             reraise(ASFError, e, sys.exc_info()[2])
 
     def _validate(self, value):
-        if not isinstance(value, text_type):
+        if not isinstance(value, str):
             raise TypeError("%r not str" % value)
         return value
 
@@ -139,16 +137,15 @@ class ASFUnicodeAttribute(ASFBaseAttribute):
         return self.value
 
     def __eq__(self, other):
-        return text_type(self) == other
+        return str(self) == other
 
     def __lt__(self, other):
-        return text_type(self) < other
+        return str(self) < other
 
     __hash__ = ASFBaseAttribute.__hash__
 
 
 @ASFBaseAttribute._register
-@swap_to_string
 @total_ordering
 class ASFByteArrayAttribute(ASFBaseAttribute):
     """Byte array attribute.
@@ -191,7 +188,6 @@ class ASFByteArrayAttribute(ASFBaseAttribute):
 
 
 @ASFBaseAttribute._register
-@swap_to_string
 @total_ordering
 class ASFBoolAttribute(ASFBaseAttribute):
     """Bool attribute.
@@ -225,10 +221,10 @@ class ASFBoolAttribute(ASFBaseAttribute):
         return bool(self.value)
 
     def __bytes__(self):
-        return text_type(self.value).encode('utf-8')
+        return str(self.value).encode('utf-8')
 
     def __str__(self):
-        return text_type(self.value)
+        return str(self.value)
 
     def __eq__(self, other):
         return bool(self.value) == other
@@ -240,7 +236,6 @@ class ASFBoolAttribute(ASFBaseAttribute):
 
 
 @ASFBaseAttribute._register
-@swap_to_string
 @total_ordering
 class ASFDWordAttribute(ASFBaseAttribute):
     """DWORD attribute.
@@ -271,10 +266,10 @@ class ASFDWordAttribute(ASFBaseAttribute):
         return self.value
 
     def __bytes__(self):
-        return text_type(self.value).encode('utf-8')
+        return str(self.value).encode('utf-8')
 
     def __str__(self):
-        return text_type(self.value)
+        return str(self.value)
 
     def __eq__(self, other):
         return int(self.value) == other
@@ -286,7 +281,6 @@ class ASFDWordAttribute(ASFBaseAttribute):
 
 
 @ASFBaseAttribute._register
-@swap_to_string
 @total_ordering
 class ASFQWordAttribute(ASFBaseAttribute):
     """QWORD attribute.
@@ -317,10 +311,10 @@ class ASFQWordAttribute(ASFBaseAttribute):
         return self.value
 
     def __bytes__(self):
-        return text_type(self.value).encode('utf-8')
+        return str(self.value).encode('utf-8')
 
     def __str__(self):
-        return text_type(self.value)
+        return str(self.value)
 
     def __eq__(self, other):
         return int(self.value) == other
@@ -332,7 +326,6 @@ class ASFQWordAttribute(ASFBaseAttribute):
 
 
 @ASFBaseAttribute._register
-@swap_to_string
 @total_ordering
 class ASFWordAttribute(ASFBaseAttribute):
     """WORD attribute.
@@ -363,10 +356,10 @@ class ASFWordAttribute(ASFBaseAttribute):
         return self.value
 
     def __bytes__(self):
-        return text_type(self.value).encode('utf-8')
+        return str(self.value).encode('utf-8')
 
     def __str__(self):
-        return text_type(self.value)
+        return str(self.value)
 
     def __eq__(self, other):
         return int(self.value) == other
@@ -378,7 +371,6 @@ class ASFWordAttribute(ASFBaseAttribute):
 
 
 @ASFBaseAttribute._register
-@swap_to_string
 @total_ordering
 class ASFGUIDAttribute(ASFBaseAttribute):
     """GUID attribute."""

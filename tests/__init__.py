@@ -5,6 +5,7 @@ import os
 import sys
 import shutil
 import contextlib
+from io import StringIO
 from unittest import TestCase as BaseTestCase
 
 try:
@@ -12,7 +13,6 @@ try:
 except ImportError:
     raise SystemExit("pytest missing: sudo apt-get install python-pytest")
 
-from mutagen._compat import StringIO
 from mutagen._senf import text2fsn, fsn2text, path2fsn, mkstemp, fsnative
 
 

@@ -32,22 +32,16 @@ __all__ = ["APEv2", "APEv2File", "Open", "delete"]
 
 import sys
 import struct
-try:
-    # Python 3
-    from collections.abc import MutableSequence
-except ImportError:
-    # Python 2.7
-    from collections import MutableSequence
+from io import BytesIO
+from collections.abc import MutableSequence
 
-from ._compat import (cBytesIO, text_type, reraise, swap_to_string,
-                      xrange)
 from mutagen import Metadata, FileType, StreamInfo
 from mutagen._util import DictMixin, cdata, delete_bytes, total_ordering, \
-    MutagenError, loadfile, convert_error, seek_end, get_size
+    MutagenError, loadfile, convert_error, seek_end, get_size, reraise
 
 
 def is_valid_apev2_key(key):
-    if not isinstance(key, text_type):
+    if not isinstance(key, str):
         raise TypeError("APEv2 key must be str")
 
     # PY26 - Change to set literal syntax (since set is faster than list here)
@@ -60,7 +54,7 @@ def is_valid_apev2_key(key):
 #  1: Item contains binary information
 #  2: Item is a locator of external stored information [e.g. URL]
 #  3: reserved"
-TEXT, BINARY, EXTERNAL = xrange(3)
+TEXT, BINARY, EXTERNAL = range(3)
 
 HAS_HEADER = 1 << 31
 HAS_NO_FOOTER = 1 << 30
@@ -300,9 +294,9 @@ class APEv2(_CIDictProxy, Metadata):
     def __parse_tag(self, tag, count):
         """Raises IOError and APEBadItemError"""
 
-        fileobj = cBytesIO(tag)
+        fileobj = BytesIO(tag)
 
-        for i in xrange(count):
+        for i in range(count):
             tag_data = fileobj.read(8)
             # someone writes wrong item counts
             if not tag_data:
@@ -379,13 +373,13 @@ class APEv2(_CIDictProxy, Metadata):
 
         if not isinstance(value, _APEValue):
             # let's guess at the content if we're not already a value...
-            if isinstance(value, text_type):
+            if isinstance(value, str):
                 # unicode? we've got to be text.
                 value = APEValue(value, TEXT)
             elif isinstance(value, list):
                 items = []
                 for v in value:
-                    if not isinstance(v, text_type):
+                    if not isinstance(v, str):
                         raise TypeError("item in list not str")
                     items.append(v)
 
@@ -557,7 +551,6 @@ class _APEValue(object):
         return "%s(%r, %d)" % (type(self).__name__, self.value, self.kind)
 
 
-@swap_to_string
 @total_ordering
 class _APEUtf8Value(_APEValue):
 
@@ -568,7 +561,7 @@ class _APEUtf8Value(_APEValue):
             reraise(APEBadItemError, e, sys.exc_info()[2])
 
     def _validate(self, value):
-        if not isinstance(value, text_type):
+        if not isinstance(value, str):
             raise TypeError("value not str")
         return value
 
@@ -612,7 +605,7 @@ class APETextValue(_APEUtf8Value, MutableSequence):
         return self.value.count(u"\0") + 1
 
     def __setitem__(self, index, value):
-        if not isinstance(value, text_type):
+        if not isinstance(value, str):
             raise TypeError("value not str")
 
         values = list(self)
@@ -620,7 +613,7 @@ class APETextValue(_APEUtf8Value, MutableSequence):
         self.value = u"\0".join(values)
 
     def insert(self, index, value):
-        if not isinstance(value, text_type):
+        if not isinstance(value, str):
             raise TypeError("value not str")
 
         values = list(self)
@@ -636,7 +629,6 @@ class APETextValue(_APEUtf8Value, MutableSequence):
         return u" / ".join(self)
 
 
-@swap_to_string
 @total_ordering
 class APEBinaryValue(_APEValue):
     """An APEv2 binary value."""

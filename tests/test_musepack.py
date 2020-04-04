@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import os
+from io import BytesIO
 
 from mutagen.id3 import ID3, TIT2
 from mutagen.musepack import Musepack, MusepackInfo, MusepackHeaderError
-from mutagen._compat import cBytesIO
 from tests import TestCase, DATA_DIR, get_temp_copy
 
 
@@ -70,15 +70,15 @@ class TMusepack(TestCase):
 
     def test_almost_my_file(self):
         self.failUnlessRaises(
-            MusepackHeaderError, MusepackInfo, cBytesIO(b"MP+" + b"\x00" * 32))
+            MusepackHeaderError, MusepackInfo, BytesIO(b"MP+" + b"\x00" * 32))
         self.failUnlessRaises(
             MusepackHeaderError,
             MusepackInfo,
-            cBytesIO(b"MP+" + b"\x00" * 100))
+            BytesIO(b"MP+" + b"\x00" * 100))
         self.failUnlessRaises(
             MusepackHeaderError,
             MusepackInfo,
-            cBytesIO(b"MPCK" + b"\x00" * 100))
+            BytesIO(b"MPCK" + b"\x00" * 100))
 
     def test_pprint(self):
         self.sv8.pprint()
@@ -94,7 +94,7 @@ class TMusepack(TestCase):
         data = (b"MPCKSH\x10\x95 Q\xa2\x08\x81\xb8\xc9T\x00\x1e\x1b"
                 b"\x00RG\x0c\x01A\xcdY\x06?\x80Z\x06EI")
 
-        fileobj = cBytesIO(data)
+        fileobj = BytesIO(data)
         info = MusepackInfo(fileobj)
         self.assertEqual(info.channels, 2)
         self.assertEqual(info.samples, 3024084)

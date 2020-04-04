@@ -17,9 +17,9 @@ Based on http://tools.ietf.org/html/draft-terriberry-oggopus-01
 __all__ = ["OggOpus", "Open", "delete"]
 
 import struct
+from io import BytesIO
 
 from mutagen import StreamInfo
-from mutagen._compat import BytesIO
 from mutagen._util import get_size, loadfile, convert_error
 from mutagen._tags import PaddingInfo
 from mutagen._vorbis import VCommentDict

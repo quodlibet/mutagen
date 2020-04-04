@@ -3,8 +3,8 @@
 import os
 import struct
 import subprocess
+from io import BytesIO
 
-from mutagen._compat import cBytesIO, text_type, izip
 from tests import TestCase, DATA_DIR, get_temp_copy
 from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
                          MP4MetadataError, MP4FreeForm, error, AtomDataType,
@@ -17,29 +17,29 @@ from mutagen._util import cdata
 class TAtom(TestCase):
 
     def test_no_children(self):
-        fileobj = cBytesIO(b"\x00\x00\x00\x08atom")
+        fileobj = BytesIO(b"\x00\x00\x00\x08atom")
         atom = Atom(fileobj)
         self.failUnlessRaises(KeyError, atom.__getitem__, "test")
 
     def test_length_1(self):
-        fileobj = cBytesIO(b"\x00\x00\x00\x01atom"
-                           b"\x00\x00\x00\x00\x00\x00\x00\x10" + b"\x00" * 16)
+        fileobj = BytesIO(b"\x00\x00\x00\x01atom"
+                          b"\x00\x00\x00\x00\x00\x00\x00\x10" + b"\x00" * 16)
         atom = Atom(fileobj)
         self.failUnlessEqual(atom.length, 16)
         self.failUnlessEqual(atom.datalength, 0)
 
     def test_length_64bit_less_than_16(self):
-        fileobj = cBytesIO(b"\x00\x00\x00\x01atom"
-                           b"\x00\x00\x00\x00\x00\x00\x00\x08" + b"\x00" * 8)
+        fileobj = BytesIO(b"\x00\x00\x00\x01atom"
+                          b"\x00\x00\x00\x00\x00\x00\x00\x08" + b"\x00" * 8)
         self.assertRaises(AtomError, Atom, fileobj)
 
     def test_length_less_than_8(self):
-        fileobj = cBytesIO(b"\x00\x00\x00\x02atom")
+        fileobj = BytesIO(b"\x00\x00\x00\x02atom")
         self.assertRaises(AtomError, Atom, fileobj)
 
     def test_truncated(self):
-        self.assertRaises(AtomError, Atom, cBytesIO(b"\x00"))
-        self.assertRaises(AtomError, Atom, cBytesIO(b"\x00\x00\x00\x01atom"))
+        self.assertRaises(AtomError, Atom, BytesIO(b"\x00"))
+        self.assertRaises(AtomError, Atom, BytesIO(b"\x00\x00\x00\x01atom"))
 
     def test_render_too_big(self):
         class TooBig(bytes):
@@ -56,19 +56,19 @@ class TAtom(TestCase):
             self.failUnlessEqual(len(data), 4 + 4 + 8 + 4)
 
     def test_non_top_level_length_0_is_invalid(self):
-        data = cBytesIO(struct.pack(">I4s", 0, b"whee"))
+        data = BytesIO(struct.pack(">I4s", 0, b"whee"))
         self.assertRaises(AtomError, Atom, data, level=1)
 
     def test_length_0(self):
-        fileobj = cBytesIO(b"\x00\x00\x00\x00atom" + 40 * b"\x00")
+        fileobj = BytesIO(b"\x00\x00\x00\x00atom" + 40 * b"\x00")
         atom = Atom(fileobj)
         self.failUnlessEqual(fileobj.tell(), 48)
         self.failUnlessEqual(atom.length, 48)
         self.failUnlessEqual(atom.datalength, 40)
 
     def test_length_0_container(self):
-        data = cBytesIO(struct.pack(">I4s", 0, b"moov") +
-                        Atom.render(b"data", b"whee"))
+        data = BytesIO(struct.pack(">I4s", 0, b"moov") +
+                       Atom.render(b"data", b"whee"))
         atom = Atom(data)
         self.failUnlessEqual(len(atom.children), 1)
         self.failUnlessEqual(atom.length, 20)
@@ -76,14 +76,14 @@ class TAtom(TestCase):
 
     def test_read(self):
         payload = 8 * b"\xff"
-        fileobj = cBytesIO(b"\x00\x00\x00\x10atom" + payload)
+        fileobj = BytesIO(b"\x00\x00\x00\x10atom" + payload)
         atom = Atom(fileobj)
         ok, data = atom.read(fileobj)
         self.assertTrue(ok)
         self.assertEqual(data, payload)
 
         payload = 7 * b"\xff"
-        fileobj = cBytesIO(b"\x00\x00\x00\x10atom" + payload)
+        fileobj = BytesIO(b"\x00\x00\x00\x10atom" + payload)
         atom = Atom(fileobj)
         ok, data = atom.read(fileobj)
         self.assertFalse(ok)
@@ -117,7 +117,7 @@ class TAtoms(TestCase):
         self.failUnless(self.atoms.atoms[0].children is None)
 
     def test_extra_trailing_data(self):
-        data = cBytesIO(Atom.render(b"data", b"whee") + b"\x00\x00")
+        data = BytesIO(Atom.render(b"data", b"whee") + b"\x00\x00")
         self.failUnless(Atoms(data))
 
     def test_repr(self):
@@ -138,7 +138,7 @@ class TMP4Info(TestCase):
         mdia = Atom.render(b"mdia", mdhd + hdlr)
         trak = Atom.render(b"trak", mdia)
         moov = Atom.render(b"moov", trak)
-        fileobj = cBytesIO(moov)
+        fileobj = BytesIO(moov)
         atoms = Atoms(fileobj)
         info = MP4Info(atoms, fileobj)
         self.failUnlessEqual(info.length, 8)
@@ -154,14 +154,14 @@ class TMP4Info(TestCase):
         mdia = Atom.render(b"mdia", mdhd + hdlr)
         trak2 = Atom.render(b"trak", mdia)
         moov = Atom.render(b"moov", trak1 + trak2)
-        fileobj = cBytesIO(moov)
+        fileobj = BytesIO(moov)
         atoms = Atoms(fileobj)
         info = MP4Info(atoms, fileobj)
         self.failUnlessEqual(info.length, 8)
 
     def test_no_tracks(self):
         moov = Atom.render(b"moov", b"")
-        fileobj = cBytesIO(moov)
+        fileobj = BytesIO(moov)
         atoms = Atoms(fileobj)
         with self.assertRaises(MP4StreamInfoError):
             MP4Info(atoms, fileobj)
@@ -173,7 +173,7 @@ class TMP4Tags(TestCase):
         ilst = Atom.render(b"ilst", data)
         meta = Atom.render(b"meta", b"\x00" * 4 + ilst)
         data = Atom.render(b"moov", Atom.render(b"udta", meta))
-        fileobj = cBytesIO(data)
+        fileobj = BytesIO(data)
         return MP4Tags(Atoms(fileobj), fileobj)
 
     def test_parse_multiple_atoms(self):
@@ -705,7 +705,7 @@ class TMP4Mixin(object):
 
     def test_pprint(self):
         self.failUnless(self.audio.pprint())
-        self.assertTrue(isinstance(self.audio.pprint(), text_type))
+        self.assertTrue(isinstance(self.audio.pprint(), str))
 
     def test_pprint_binary(self):
         self.audio["covr"] = [b"\x00\xa9garbage"]
@@ -769,7 +769,7 @@ class TMP4Mixin(object):
         self.audio["\xa9nam"] = "wheeeeeeee"
         self.audio.save()
         bb = self.__read_offsets(self.filename)
-        for a, b in izip(aa, bb):
+        for a, b in zip(aa, bb):
             self.failUnlessEqual(a, b)
 
     def test_mime(self):
@@ -970,7 +970,7 @@ class TMP4Misc(TestCase):
 
     def test_no_audio_tracks(self):
         data = Atom.render(b"moov", Atom.render(b"udta", b""))
-        fileobj = cBytesIO(data)
+        fileobj = BytesIO(data)
         audio = MP4(fileobj)
         assert audio.info
         assert audio.pprint()
@@ -980,8 +980,8 @@ class TMP4Misc(TestCase):
         assert isinstance(info.channels, int)
         assert isinstance(info.sample_rate, int)
         assert isinstance(info.bits_per_sample, int)
-        assert isinstance(info.codec, text_type)
-        assert isinstance(info.codec_description, text_type)
+        assert isinstance(info.codec, str)
+        assert isinstance(info.codec_description, str)
 
     def test_parse_full_atom(self):
         p = parse_full_atom(b"\x01\x02\x03\x04\xff")
@@ -1044,7 +1044,7 @@ class TMP4AudioSampleEntry(TestCase):
             b'\x00\x00\x00\x00$alac\x00\x00\x00\x00\x00\x00\x10\x00\x00\x10'
             b'(\n\x0e\x01\x00\xff\x00\x00P\x01\x00\x00\x00\x00\x00\x00\x1f@')
 
-        fileobj = cBytesIO(atom_data)
+        fileobj = BytesIO(atom_data)
         atom = Atom(fileobj)
         entry = AudioSampleEntry(atom, fileobj)
         self.assertEqual(entry.bitrate, 0)
@@ -1062,7 +1062,7 @@ class TMP4AudioSampleEntry(TestCase):
             b'\x00\x00\x00\x00$alac\x00\x00\x00\x00\x00\x00\x10\x00\x00\x18'
             b'(\n\x0e\x02\x00\xff\x00\x00F/\x00%2\xd5\x00\x01X\x88')
 
-        fileobj = cBytesIO(atom_data)
+        fileobj = BytesIO(atom_data)
         atom = Atom(fileobj)
         entry = AudioSampleEntry(atom, fileobj)
         self.assertEqual(entry.bitrate, 2437845)
@@ -1080,7 +1080,7 @@ class TMP4AudioSampleEntry(TestCase):
             b'\x03k\x00\x05\x80\x80\x80\x0f+\x01\x88\x02\xc4\x04\x90,\x10\x8c'
             b'\x80\x00\x00\xed@\x06\x80\x80\x80\x01\x02')
 
-        fileobj = cBytesIO(atom_data)
+        fileobj = BytesIO(atom_data)
         atom = Atom(fileobj)
         entry = AudioSampleEntry(atom, fileobj)
 
@@ -1100,7 +1100,7 @@ class TMP4AudioSampleEntry(TestCase):
             b"\xda\xc0\x05\x80\x80\x80\x07\x13\x08V\xe5\x9dH\x80\x06\x80\x80"
             b"\x80\x01\x02")
 
-        fileobj = cBytesIO(atom_data)
+        fileobj = BytesIO(atom_data)
         atom = Atom(fileobj)
         entry = AudioSampleEntry(atom, fileobj)
 
@@ -1111,8 +1111,8 @@ class TMP4AudioSampleEntry(TestCase):
         self.assertEqual(entry.sample_rate, 48000)
         self.assertEqual(entry.sample_size, 16)
 
-        self.assertTrue(isinstance(entry.codec, text_type))
-        self.assertTrue(isinstance(entry.codec_description, text_type))
+        self.assertTrue(isinstance(entry.codec, str))
+        self.assertTrue(isinstance(entry.codec_description, str))
 
     def test_als(self):
         atom_data = (
@@ -1125,7 +1125,7 @@ class TMP4AudioSampleEntry(TestCase):
             b'\x10\x00\x00\x00\x01\x00\x00\x02\xd0\x07\x00\x00\x00@\x1f\x00'
             b'\x00\x04\x10\x00data\x00$0\x00\xf6\xceF+\x06\x01\x02')
 
-        fileobj = cBytesIO(atom_data)
+        fileobj = BytesIO(atom_data)
         atom = Atom(fileobj)
         entry = AudioSampleEntry(atom, fileobj)
 
@@ -1142,7 +1142,7 @@ class TMP4AudioSampleEntry(TestCase):
             b'\x00\x00\x00\x00\x00\x00\x02\x00\x10\x00\x00\x00\x00V"\x00\x00'
             b'\x00\x00\x00\x0bdac3R\t\x00')
 
-        fileobj = cBytesIO(atom_data)
+        fileobj = BytesIO(atom_data)
         atom = Atom(fileobj)
         entry = AudioSampleEntry(atom, fileobj)
 
@@ -1153,8 +1153,8 @@ class TMP4AudioSampleEntry(TestCase):
         self.assertEqual(entry.sample_rate, 22050)
         self.assertEqual(entry.sample_size, 16)
 
-        self.assertTrue(isinstance(entry.codec, text_type))
-        self.assertTrue(isinstance(entry.codec_description, text_type))
+        self.assertTrue(isinstance(entry.codec, str))
+        self.assertTrue(isinstance(entry.codec_description, str))
 
     def test_samr(self):
         # parsing not implemented, values are wrong but at least it loads.
@@ -1164,7 +1164,7 @@ class TMP4AudioSampleEntry(TestCase):
             b'\x00\x00\x00\x00\x00\x00\x02\x00\x10\x00\x00\x00\x00\x1f@\x00'
             b'\x00\x00\x00\x00\x11damrFFMP\x00\x81\xff\x00\x01')
 
-        fileobj = cBytesIO(atom_data)
+        fileobj = BytesIO(atom_data)
         atom = Atom(fileobj)
         entry = AudioSampleEntry(atom, fileobj)
 
@@ -1175,11 +1175,11 @@ class TMP4AudioSampleEntry(TestCase):
         self.assertEqual(entry.sample_rate, 8000)
         self.assertEqual(entry.sample_size, 16)
 
-        self.assertTrue(isinstance(entry.codec, text_type))
-        self.assertTrue(isinstance(entry.codec_description, text_type))
+        self.assertTrue(isinstance(entry.codec, str))
+        self.assertTrue(isinstance(entry.codec_description, str))
 
     def test_error(self):
-        fileobj = cBytesIO(b"\x00" * 20)
+        fileobj = BytesIO(b"\x00" * 20)
         atom = Atom(fileobj)
         self.assertRaises(ASEntryError, AudioSampleEntry, atom, fileobj)
 

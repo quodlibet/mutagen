@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from mutagen._tools._util import split_escape
-from mutagen._compat import text_type
 
 from tests import TestCase
 
@@ -38,12 +37,12 @@ class Tsplit_escape(TestCase):
 
         parts = split_escape(u"a:b", u":")
         self.assertEqual(parts, [u"a", u"b"])
-        self.assertTrue(all(isinstance(p, text_type) for p in parts))
+        self.assertTrue(all(isinstance(p, str) for p in parts))
 
         parts = split_escape(u"", u":")
         self.assertEqual(parts, [u""])
-        self.assertTrue(all(isinstance(p, text_type) for p in parts))
+        self.assertTrue(all(isinstance(p, str) for p in parts))
 
         parts = split_escape(u":", u":")
         self.assertEqual(parts, [u"", u""])
-        self.assertTrue(all(isinstance(p, text_type) for p in parts))
+        self.assertTrue(all(isinstance(p, str) for p in parts))

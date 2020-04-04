@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import os
+from io import BytesIO
 
-from mutagen._compat import cBytesIO
 from mutagen.aiff import AIFF, AIFFInfo, delete, IFFFile, IFFChunk
 from mutagen.aiff import error as AIFFError, read_float
 
@@ -184,7 +184,7 @@ class TAIFF(TestCase):
 class TAIFFInfo(TestCase):
 
     def test_empty(self):
-        fileobj = cBytesIO(b"")
+        fileobj = BytesIO(b"")
         self.failUnlessRaises(AIFFError, AIFFInfo, fileobj)
 
 

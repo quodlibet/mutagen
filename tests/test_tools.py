@@ -2,8 +2,8 @@
 
 import sys
 import importlib
+from io import StringIO
 
-from mutagen._compat import StringIO, text_type
 from mutagen._senf import fsnative
 
 from tests import TestCase
@@ -19,7 +19,7 @@ class _TTools(TestCase):
     TOOL_NAME = None
 
     def setUp(self):
-        self.assertTrue(isinstance(self.TOOL_NAME, text_type))
+        self.assertTrue(isinstance(self.TOOL_NAME, str))
         self._main = get_var(self.TOOL_NAME)
 
     def get_var(self, name):

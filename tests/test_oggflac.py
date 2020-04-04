@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import os
+from io import BytesIO
 
-from mutagen._compat import cBytesIO
 from mutagen.oggflac import OggFLAC, OggFLACStreamInfo, delete, error
 from mutagen.ogg import OggPage, error as OggError
 
@@ -31,18 +31,18 @@ class TOggFLAC(TestCase, TOggFileTypeMixin):
         with open(self.filename, "rb") as h:
             page = OggPage(h).write()
         page = page.replace(b"fLaC", b"!fLa", 1)
-        self.failUnlessRaises(error, OggFLACStreamInfo, cBytesIO(page))
+        self.failUnlessRaises(error, OggFLACStreamInfo, BytesIO(page))
 
     def test_streaminfo_too_short(self):
         with open(self.filename, "rb") as h:
             page = OggPage(h).write()
-        self.failUnlessRaises(OggError, OggFLACStreamInfo, cBytesIO(page[:10]))
+        self.failUnlessRaises(OggError, OggFLACStreamInfo, BytesIO(page[:10]))
 
     def test_streaminfo_bad_version(self):
         with open(self.filename, "rb") as h:
             page = OggPage(h).write()
         page = page.replace(b"\x01\x00", b"\x02\x00", 1)
-        self.failUnlessRaises(error, OggFLACStreamInfo, cBytesIO(page))
+        self.failUnlessRaises(error, OggFLACStreamInfo, BytesIO(page))
 
     def test_flac_reference_simple_save(self):
         if not have_flac:

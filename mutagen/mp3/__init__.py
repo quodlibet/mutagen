@@ -12,8 +12,7 @@ import struct
 
 from mutagen import StreamInfo
 from mutagen._util import MutagenError, enum, BitReader, BitReaderError, \
-    convert_error, intround
-from mutagen._compat import endswith, xrange
+    convert_error, intround, endswith
 from mutagen.id3 import ID3FileType, delete
 from mutagen.id3._util import BitPaddedInt
 
@@ -75,7 +74,7 @@ def _guess_xing_bitrate_mode(xing):
 
 
 # Mode values.
-STEREO, JOINTSTEREO, DUALCHANNEL, MONO = xrange(4)
+STEREO, JOINTSTEREO, DUALCHANNEL, MONO = range(4)
 
 
 class MPEGFrame(object):
@@ -95,7 +94,7 @@ class MPEGFrame(object):
     }
 
     __BITRATE[(2, 3)] = __BITRATE[(2, 2)]
-    for i in xrange(1, 4):
+    for i in range(1, 4):
         __BITRATE[(2.5, i)] = __BITRATE[(2, i)]
 
     # Map version to sample rates.
@@ -370,7 +369,7 @@ class MPEGInfo(StreamInfo):
             if max_syncs <= 0:
                 break
 
-            for _ in xrange(enough_frames):
+            for _ in range(enough_frames):
                 try:
                     frame = MPEGFrame(fileobj)
                 except HeaderNotFoundError:

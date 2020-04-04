@@ -17,10 +17,9 @@ True Audio files use ID3 tags.
 
 __all__ = ["TrueAudio", "Open", "delete", "EasyTrueAudio"]
 
-from ._compat import endswith
 from mutagen import StreamInfo
 from mutagen.id3 import ID3FileType, delete
-from mutagen._util import cdata, MutagenError, convert_error
+from mutagen._util import cdata, MutagenError, convert_error, endswith
 
 
 class error(MutagenError):

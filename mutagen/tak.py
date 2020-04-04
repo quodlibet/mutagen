@@ -21,7 +21,6 @@ __all__ = ["TAK", "Open", "delete"]
 
 import struct
 
-from ._compat import endswith
 from mutagen import StreamInfo
 from mutagen.apev2 import (
     APEv2File,
@@ -33,6 +32,7 @@ from mutagen._util import (
     BitReaderError,
     convert_error,
     enum,
+    endswith,
 )
 
 

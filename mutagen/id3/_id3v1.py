@@ -11,7 +11,7 @@
 import errno
 from struct import error as StructError, unpack
 
-from mutagen._util import chr_, text_type
+from mutagen._util import bchr
 
 from ._frames import TCON, TRCK, COMM, TDRC, TYER, TALB, TPE1, TIT2
 
@@ -181,7 +181,7 @@ def MakeID3v1(id3):
 
     if "TRCK" in id3:
         try:
-            v1["track"] = chr_(+id3["TRCK"])
+            v1["track"] = bchr(+id3["TRCK"])
         except ValueError:
             v1["track"] = b"\x00"
     else:
@@ -194,14 +194,14 @@ def MakeID3v1(id3):
             pass
         else:
             if genre in TCON.GENRES:
-                v1["genre"] = chr_(TCON.GENRES.index(genre))
+                v1["genre"] = bchr(TCON.GENRES.index(genre))
     if "genre" not in v1:
         v1["genre"] = b"\xff"
 
     if "TDRC" in id3:
-        year = text_type(id3["TDRC"]).encode('ascii')
+        year = str(id3["TDRC"]).encode('ascii')
     elif "TYER" in id3:
-        year = text_type(id3["TYER"]).encode('ascii')
+        year = str(id3["TYER"]).encode('ascii')
     else:
         year = b""
     v1["year"] = (year + b"\x00\x00\x00\x00")[:4]

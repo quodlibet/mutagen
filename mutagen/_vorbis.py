@@ -17,10 +17,10 @@ The specification is at http://www.xiph.org/vorbis/doc/v-comment.html.
 """
 
 import sys
+from io import BytesIO
 
 import mutagen
-from ._compat import reraise, BytesIO, text_type, xrange
-from mutagen._util import DictMixin, cdata, MutagenError
+from mutagen._util import DictMixin, cdata, MutagenError, reraise
 
 
 def is_valid_key(key):
@@ -104,7 +104,7 @@ class VComment(mutagen.Tags, list):
             vendor_length = cdata.uint_le(fileobj.read(4))
             self.vendor = fileobj.read(vendor_length).decode('utf-8', errors)
             count = cdata.uint_le(fileobj.read(4))
-            for i in xrange(count):
+            for i in range(count):
                 length = cdata.uint_le(fileobj.read(4))
                 try:
                     string = fileobj.read(length).decode('utf-8', errors)
@@ -143,7 +143,7 @@ class VComment(mutagen.Tags, list):
         In Python 3 all keys and values have to be a string.
         """
 
-        if not isinstance(self.vendor, text_type):
+        if not isinstance(self.vendor, str):
             raise ValueError("vendor needs to be str")
 
         for key, value in self:
@@ -153,7 +153,7 @@ class VComment(mutagen.Tags, list):
             except TypeError:
                 raise ValueError("%r is not a valid key" % key)
 
-            if not isinstance(value, text_type):
+            if not isinstance(value, str):
                 err = "%r needs to be str for key %r" % (value, key)
                 raise ValueError(err)
 
@@ -200,7 +200,7 @@ class VComment(mutagen.Tags, list):
     def pprint(self):
 
         def _decode(value):
-            if not isinstance(value, text_type):
+            if not isinstance(value, str):
                 return value.decode('utf-8', 'replace')
             return value
 

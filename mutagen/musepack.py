@@ -19,11 +19,10 @@ __all__ = ["Musepack", "Open", "delete"]
 
 import struct
 
-from ._compat import endswith, xrange
 from mutagen import StreamInfo
 from mutagen.apev2 import APEv2File, error, delete
 from mutagen.id3._util import BitPaddedInt
-from mutagen._util import cdata, convert_error, intround
+from mutagen._util import cdata, convert_error, intround, endswith
 
 
 class MusepackHeaderError(error):
@@ -44,7 +43,7 @@ def _parse_sv8_int(fileobj, limit=9):
     """
 
     num = 0
-    for i in xrange(limit):
+    for i in range(limit):
         c = fileobj.read(1)
         if len(c) != 1:
             raise EOFError

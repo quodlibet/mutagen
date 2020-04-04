@@ -9,7 +9,6 @@
 from mutagen import Tags
 from mutagen._util import DictMixin, dict_match
 from mutagen.mp4 import MP4, MP4Tags, error, delete
-from ._compat import text_type
 
 
 __all__ = ["EasyMP4Tags", "EasyMP4", "delete", "error"]
@@ -106,7 +105,7 @@ class EasyMP4Tags(DictMixin, Tags):
         """
 
         def getter(tags, key):
-            return list(map(text_type, tags[atomid]))
+            return list(map(str, tags[atomid]))
 
         def setter(tags, key, value):
             clamp = lambda x: int(min(max(min_value, x), max_value))
@@ -126,7 +125,7 @@ class EasyMP4Tags(DictMixin, Tags):
                 if total:
                     ret.append(u"%d/%d" % (track, total))
                 else:
-                    ret.append(text_type(track))
+                    ret.append(str(track))
             return ret
 
         def setter(tags, key, value):
@@ -167,7 +166,7 @@ class EasyMP4Tags(DictMixin, Tags):
         def setter(tags, key, value):
             encoded = []
             for v in value:
-                if not isinstance(v, text_type):
+                if not isinstance(v, str):
                     raise TypeError("%r not str" % v)
                 encoded.append(v.encode("utf-8"))
             tags[atomid] = encoded
@@ -188,7 +187,7 @@ class EasyMP4Tags(DictMixin, Tags):
     def __setitem__(self, key, value):
         key = key.lower()
 
-        if isinstance(value, text_type):
+        if isinstance(value, str):
             value = [value]
 
         func = dict_match(self.Set, key)
