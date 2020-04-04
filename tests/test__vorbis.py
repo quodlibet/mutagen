@@ -2,7 +2,7 @@
 
 from tests import TestCase
 from mutagen._vorbis import VComment, VCommentDict, istag, error
-from mutagen._compat import text_type, PY3
+from mutagen._compat import text_type
 
 
 class Tistag(TestCase):
@@ -34,9 +34,8 @@ class Tistag(TestCase):
     def test_unicode(self):
         self.failUnless(istag(u"ti tle"))
 
-    if PY3:
-        def test_py3(self):
-            self.failUnlessRaises(TypeError, istag, b"abc")
+    def test_py3(self):
+        self.failUnlessRaises(TypeError, istag, b"abc")
 
 
 class TVComment(TestCase):
@@ -95,10 +94,7 @@ class TVComment(TestCase):
 
     def test_validate_utf8_value(self):
         self.c.append((u"valid", b"\xc3\xbc\xc3\xb6\xc3\xa4"))
-        if PY3:
-            self.failUnlessRaises(ValueError, self.c.validate)
-        else:
-            self.c.validate()
+        self.failUnlessRaises(ValueError, self.c.validate)
 
     def test_invalid_format_strict(self):
         data = (b'\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x03\x00\x00'
@@ -118,15 +114,14 @@ class TVComment(TestCase):
         self.assertTrue(isinstance(comment[0][0], type('')))
         self.assertTrue(isinstance(comment[0][1], text_type))
 
-    if PY3:
-        def test_python3_strict_str(self):
-            comment = VComment()
-            comment.append((u"abc", u"test"))
-            comment.validate()
-            comment[0] = (u"abc", b"test")
-            self.failUnlessRaises(ValueError, comment.validate)
-            comment[0] = (b"abc", u"test")
-            self.failUnlessRaises(ValueError, comment.validate)
+    def test_python3_strict_str(self):
+        comment = VComment()
+        comment.append((u"abc", u"test"))
+        comment.validate()
+        comment[0] = (u"abc", b"test")
+        self.failUnlessRaises(ValueError, comment.validate)
+        comment[0] = (b"abc", u"test")
+        self.failUnlessRaises(ValueError, comment.validate)
 
     def test_invalid_format_ignore(self):
         data = (b'\x07\x00\x00\x00Mutagen\x01\x00\x00\x00\x03\x00\x00'
@@ -268,13 +263,12 @@ class TVCommentDict(TestCase):
         self.failUnlessRaises(
             ValueError, self.c.__delitem__, u"\u1234")
 
-    if PY3:
-        def test_py3_bad_key(self):
-            self.failUnlessRaises(TypeError, self.c.get, b"a")
-            self.failUnlessRaises(
-                TypeError, self.c.__setitem__, b"a", "foo")
-            self.failUnlessRaises(
-                TypeError, self.c.__delitem__, b"a")
+    def test_py3_bad_key(self):
+        self.failUnlessRaises(TypeError, self.c.get, b"a")
+        self.failUnlessRaises(
+            TypeError, self.c.__setitem__, b"a", "foo")
+        self.failUnlessRaises(
+            TypeError, self.c.__delitem__, b"a")
 
     def test_duplicate_keys(self):
         self.c = VCommentDict()

@@ -1,24 +1,16 @@
 # -*- coding: utf-8 -*-
 
-import sys
 import struct
 
 from tests import TestCase
 
-from mutagen._compat import PY2
 from mutagen.id3._util import BitPaddedInt, BitPaddedLong, unsynch
 
 
 class BitPaddedIntTest(TestCase):
 
     def test_long(self):
-        if PY2:
-            data = BitPaddedInt.to_str(sys.maxint + 1, width=16)
-            val = BitPaddedInt(data)
-            self.assertEqual(val, sys.maxint + 1)
-            self.assertTrue(isinstance(val, BitPaddedLong))
-        else:
-            self.assertTrue(BitPaddedInt is BitPaddedLong)
+        self.assertTrue(BitPaddedInt is BitPaddedLong)
 
     def test_negative(self):
         self.assertRaises(ValueError, BitPaddedInt, -1)
@@ -94,12 +86,6 @@ class BitPaddedIntTest(TestCase):
 
     def test_inval_input(self):
         self.assertRaises(TypeError, BitPaddedInt, None)
-
-    if PY2:
-        def test_promote_long(self):
-            l = BitPaddedInt(sys.maxint ** 2)
-            self.assertTrue(isinstance(l, long))
-            self.assertEqual(BitPaddedInt(l.as_str(width=-1)), l)
 
     def test_has_valid_padding(self):
         self.failUnless(BitPaddedInt.has_valid_padding(b"\xff\xff", bits=8))

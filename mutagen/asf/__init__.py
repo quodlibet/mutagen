@@ -13,7 +13,7 @@ __all__ = ["ASF", "Open"]
 
 from mutagen import FileType, Tags, StreamInfo
 from mutagen._util import resize_bytes, DictMixin, loadfile, convert_error
-from mutagen._compat import string_types, long_, PY3, izip
+from mutagen._compat import string_types, long_, izip
 
 from ._util import error, ASFError, ASFHeaderError
 from ._objects import HeaderObject, MetadataLibraryObject, MetadataObject, \
@@ -89,7 +89,6 @@ class ASFTags(list, DictMixin, Tags):
 
         """
 
-        # PY3 only
         if isinstance(key, slice):
             return list.__getitem__(self, key)
 
@@ -102,7 +101,6 @@ class ASFTags(list, DictMixin, Tags):
     def __delitem__(self, key):
         """Delete all values associated with the key."""
 
-        # PY3 only
         if isinstance(key, slice):
             return list.__delitem__(self, key)
 
@@ -129,7 +127,6 @@ class ASFTags(list, DictMixin, Tags):
         string.
         """
 
-        # PY3 only
         if isinstance(key, slice):
             return list.__setitem__(self, key, values)
 
@@ -141,7 +138,7 @@ class ASFTags(list, DictMixin, Tags):
             if not isinstance(value, ASFBaseAttribute):
                 if isinstance(value, string_types):
                     value = ASFUnicodeAttribute(value)
-                elif PY3 and isinstance(value, bytes):
+                elif isinstance(value, bytes):
                     value = ASFByteArrayAttribute(value)
                 elif isinstance(value, bool):
                     value = ASFBoolAttribute(value)

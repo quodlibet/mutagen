@@ -39,7 +39,7 @@ except ImportError:
     # Python 2.7
     from collections import MutableSequence
 
-from ._compat import (cBytesIO, PY3, text_type, PY2, reraise, swap_to_string,
+from ._compat import (cBytesIO, text_type, reraise, swap_to_string,
                       xrange)
 from mutagen import Metadata, FileType, StreamInfo
 from mutagen._util import DictMixin, cdata, delete_bytes, total_ordering, \
@@ -48,13 +48,7 @@ from mutagen._util import DictMixin, cdata, delete_bytes, total_ordering, \
 
 def is_valid_apev2_key(key):
     if not isinstance(key, text_type):
-        if PY3:
-            raise TypeError("APEv2 key must be str")
-
-        try:
-            key = key.decode('ascii')
-        except UnicodeDecodeError:
-            return False
+        raise TypeError("APEv2 key must be str")
 
     # PY26 - Change to set literal syntax (since set is faster than list here)
     return ((2 <= len(key) <= 255) and (min(key) >= u' ') and
@@ -335,11 +329,10 @@ class APEv2(_CIDictProxy, Metadata):
             if key[-1:] == b"\x00":
                 key = key[:-1]
 
-            if PY3:
-                try:
-                    key = key.decode("ascii")
-                except UnicodeError as err:
-                    reraise(APEBadItemError, err, sys.exc_info()[2])
+            try:
+                key = key.decode("ascii")
+            except UnicodeError as err:
+                reraise(APEBadItemError, err, sys.exc_info()[2])
             value = fileobj.read(size)
             if len(value) != size:
                 raise APEBadItemError
@@ -351,16 +344,12 @@ class APEv2(_CIDictProxy, Metadata):
     def __getitem__(self, key):
         if not is_valid_apev2_key(key):
             raise KeyError("%r is not a valid APEv2 key" % key)
-        if PY2:
-            key = key.encode('ascii')
 
         return super(APEv2, self).__getitem__(key)
 
     def __delitem__(self, key):
         if not is_valid_apev2_key(key):
             raise KeyError("%r is not a valid APEv2 key" % key)
-        if PY2:
-            key = key.encode('ascii')
 
         super(APEv2, self).__delitem__(key)
 
@@ -388,9 +377,6 @@ class APEv2(_CIDictProxy, Metadata):
         if not is_valid_apev2_key(key):
             raise KeyError("%r is not a valid APEv2 key" % key)
 
-        if PY2:
-            key = key.encode('ascii')
-
         if not isinstance(value, _APEValue):
             # let's guess at the content if we're not already a value...
             if isinstance(value, text_type):
@@ -400,25 +386,13 @@ class APEv2(_CIDictProxy, Metadata):
                 items = []
                 for v in value:
                     if not isinstance(v, text_type):
-                        if PY3:
-                            raise TypeError("item in list not str")
-                        v = v.decode("utf-8")
+                        raise TypeError("item in list not str")
                     items.append(v)
 
                 # list? text.
                 value = APEValue(u"\0".join(items), TEXT)
             else:
-                if PY3:
-                    value = APEValue(value, BINARY)
-                else:
-                    try:
-                        value.decode("utf-8")
-                    except UnicodeError:
-                        # invalid UTF8 text, probably binary
-                        value = APEValue(value, BINARY)
-                    else:
-                        # valid UTF8, probably text
-                        value = APEValue(value, TEXT)
+                value = APEValue(value, BINARY)
 
         super(APEv2, self).__setitem__(key, value)
 
@@ -595,10 +569,7 @@ class _APEUtf8Value(_APEValue):
 
     def _validate(self, value):
         if not isinstance(value, text_type):
-            if PY3:
-                raise TypeError("value not str")
-            else:
-                value = value.decode("utf-8")
+            raise TypeError("value not str")
         return value
 
     def _write(self):
@@ -642,10 +613,7 @@ class APETextValue(_APEUtf8Value, MutableSequence):
 
     def __setitem__(self, index, value):
         if not isinstance(value, text_type):
-            if PY3:
-                raise TypeError("value not str")
-            else:
-                value = value.decode("utf-8")
+            raise TypeError("value not str")
 
         values = list(self)
         values[index] = value
@@ -653,10 +621,7 @@ class APETextValue(_APEUtf8Value, MutableSequence):
 
     def insert(self, index, value):
         if not isinstance(value, text_type):
-            if PY3:
-                raise TypeError("value not str")
-            else:
-                value = value.decode("utf-8")
+            raise TypeError("value not str")
 
         values = list(self)
         values.insert(index, value)

@@ -12,7 +12,7 @@ import struct
 
 from mutagen._tags import Tags
 from mutagen._util import DictProxy, convert_error, read_full
-from mutagen._compat import PY3, itervalues, izip_longest
+from mutagen._compat import itervalues, izip_longest
 
 from ._util import BitPaddedInt, unsynch, ID3JunkFrameError, \
     ID3EncryptionUnsupportedError, is_valid_frame_id, error, \
@@ -83,10 +83,7 @@ class ID3Header(object):
         if self.f_extended:
             extsize_data = read_full(fileobj, 4)
 
-            if PY3:
-                frame_id = extsize_data.decode("ascii", "replace")
-            else:
-                frame_id = extsize_data
+            frame_id = extsize_data.decode("ascii", "replace")
 
             if frame_id in Frames:
                 # Some tagger sets the extended header flag but
@@ -132,11 +129,10 @@ def determine_bpi(data, frames, EMPTY=b"\x00" * 10):
         name, size, flags = struct.unpack('>4sLH', part)
         size = BitPaddedInt(size)
         o += 10 + size
-        if PY3:
-            try:
-                name = name.decode("ascii")
-            except UnicodeDecodeError:
-                continue
+        try:
+            name = name.decode("ascii")
+        except UnicodeDecodeError:
+            continue
         if name in frames:
             asbpi += 1
     else:
@@ -152,11 +148,10 @@ def determine_bpi(data, frames, EMPTY=b"\x00" * 10):
             break
         name, size, flags = struct.unpack('>4sLH', part)
         o += 10 + size
-        if PY3:
-            try:
-                name = name.decode("ascii")
-            except UnicodeDecodeError:
-                continue
+        try:
+            name = name.decode("ascii")
+        except UnicodeDecodeError:
+            continue
         if name in frames:
             asint += 1
     else:
@@ -533,8 +528,7 @@ def save_frame(frame, name=None, config=None):
         frame_name = name
     else:
         frame_name = type(frame).__name__
-        if PY3:
-            frame_name = frame_name.encode("ascii")
+        frame_name = frame_name.encode("ascii")
 
     header = struct.pack('>4s4sH', frame_name, datasize, flags)
     return header + framedata
@@ -575,11 +569,10 @@ def read_frames(id3, data, frames):
             if size == 0:
                 continue  # drop empty frames
 
-            if PY3:
-                try:
-                    name = name.decode('ascii')
-                except UnicodeDecodeError:
-                    continue
+            try:
+                name = name.decode('ascii')
+            except UnicodeDecodeError:
+                continue
 
             try:
                 # someone writes 2.3 frames with 2.2 names
@@ -614,11 +607,10 @@ def read_frames(id3, data, frames):
             if size == 0:
                 continue  # drop empty frames
 
-            if PY3:
-                try:
-                    name = name.decode('ascii')
-                except UnicodeDecodeError:
-                    continue
+            try:
+                name = name.decode('ascii')
+            except UnicodeDecodeError:
+                continue
 
             try:
                 tag = frames[name]

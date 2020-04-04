@@ -8,7 +8,7 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
-from mutagen._compat import long_, integer_types, PY3
+from mutagen._compat import long_, integer_types
 from mutagen._util import MutagenError
 
 
@@ -158,11 +158,8 @@ class BitPaddedInt(int, _BitPaddedMixin):
         self.bigendian = bigendian
         return self
 
-if PY3:
-    BitPaddedLong = BitPaddedInt
-else:
-    class BitPaddedLong(long_, _BitPaddedMixin):
-        pass
+
+BitPaddedLong = BitPaddedInt
 
 
 class ID3BadUnsynchData(error, ValueError):

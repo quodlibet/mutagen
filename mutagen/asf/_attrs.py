@@ -10,7 +10,7 @@
 import sys
 import struct
 
-from mutagen._compat import swap_to_string, text_type, PY2, reraise
+from mutagen._compat import swap_to_string, text_type, reraise
 from mutagen._util import total_ordering
 
 from ._util import ASFError
@@ -123,10 +123,7 @@ class ASFUnicodeAttribute(ASFBaseAttribute):
 
     def _validate(self, value):
         if not isinstance(value, text_type):
-            if PY2:
-                return value.decode("utf-8")
-            else:
-                raise TypeError("%r not str" % value)
+            raise TypeError("%r not str" % value)
         return value
 
     def _render(self):

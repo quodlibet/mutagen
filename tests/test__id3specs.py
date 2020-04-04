@@ -2,7 +2,6 @@
 
 from tests import TestCase
 
-from mutagen._compat import PY3
 from mutagen.id3._specs import SpecError, Latin1TextListSpec, ID3FramesSpec, \
     ASPIIndexSpec, ByteSpec, EncodingSpec, StringSpec, BinaryDataSpec, \
     EncodedTextSpec, VolumePeakSpec, VolumeAdjustmentSpec, CTOCFlagsSpec, \
@@ -163,10 +162,8 @@ class TStringSpec(TestCase):
         self.assertRaises(ValueError, s.validate, None, "abc2")
         self.assertRaises(ValueError, s.validate, None, "ab")
         self.assertRaises(TypeError, s.validate, None, None)
-
-        if PY3:
-            self.assertRaises(TypeError, s.validate, None, b"ABC")
-            self.assertRaises(ValueError, s.validate, None, u"\xf6\xe4\xfc")
+        self.assertRaises(TypeError, s.validate, None, b"ABC")
+        self.assertRaises(ValueError, s.validate, None, u"\xf6\xe4\xfc")
 
     def test_read(self):
         s = StringSpec('name', 3)
@@ -186,11 +183,7 @@ class TBinaryDataSpec(TestCase):
         s = BinaryDataSpec('name')
         self.assertRaises(TypeError, s.validate, None, None)
         self.assertEqual(s.validate(None, b"abc"), b"abc")
-        if PY3:
-            self.assertRaises(TypeError, s.validate, None, "abc")
-        else:
-            self.assertEqual(s.validate(None, u"abc"), b"abc")
-            self.assertRaises(ValueError, s.validate, None, u"\xf6\xe4\xfc")
+        self.assertRaises(TypeError, s.validate, None, "abc")
 
     def test_read(self):
         s = BinaryDataSpec('name')

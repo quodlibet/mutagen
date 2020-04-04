@@ -4,7 +4,7 @@ import os
 import struct
 import subprocess
 
-from mutagen._compat import cBytesIO, PY3, text_type, PY2, izip
+from mutagen._compat import cBytesIO, text_type, izip
 from tests import TestCase, DATA_DIR, get_temp_copy
 from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
                          MP4MetadataError, MP4FreeForm, error, AtomDataType,
@@ -567,8 +567,7 @@ class TMP4Mixin(object):
             self.set_key('\xa9nam', [b'\xe3\x82\x8a\xe3\x81\x8b'],
                          result=[u'\u308a\u304b'])
         except TypeError:
-            if not PY3:
-                raise
+            pass
 
     def test_preserve_freeform(self):
         self.set_key('----:net.sacredchao.Mutagen:test key',
@@ -1017,9 +1016,6 @@ class TMP4Freeform(TestCase):
     def test_cmp_bytes(self):
         self.assertReallyEqual(MP4FreeForm(b'woooo'), b"woooo")
         self.assertReallyNotEqual(MP4FreeForm(b'woooo'), b"foo")
-        if PY2:
-            self.assertReallyEqual(MP4FreeForm(b'woooo'), u"woooo")
-            self.assertReallyNotEqual(MP4FreeForm(b'woooo'), u"foo")
 
 
 class TMP4Cover(TestCase):
@@ -1035,9 +1031,6 @@ class TMP4Cover(TestCase):
     def test_cmp_bytes(self):
         self.assertReallyEqual(MP4Cover(b'woooo'), b"woooo")
         self.assertReallyNotEqual(MP4Cover(b'woooo'), b"foo")
-        if PY2:
-            self.assertReallyEqual(MP4Cover(b'woooo'), u"woooo")
-            self.assertReallyNotEqual(MP4Cover(b'woooo'), u"foo")
 
 
 class TMP4AudioSampleEntry(TestCase):

@@ -10,7 +10,7 @@ import struct
 import codecs
 from struct import unpack, pack
 
-from .._compat import text_type, chr_, PY3, swap_to_string, string_types, \
+from .._compat import text_type, chr_, swap_to_string, string_types, \
     xrange
 from .._util import total_ordering, decode_terminated, enum, izip, flags, \
     cdata, encode_endian, intround
@@ -289,26 +289,22 @@ class StringSpec(Spec):
         except UnicodeDecodeError:
             raise SpecError("not ascii")
         else:
-            if PY3:
-                chunk = ascii
+            chunk = ascii
 
         return chunk, data[s.len:]
 
     def write(self, config, frame, value):
-        if PY3:
-            value = value.encode("ascii")
+
+        value = value.encode("ascii")
         return (bytes(value) + b'\x00' * self.len)[:self.len]
 
     def validate(self, frame, value):
         if value is None:
             raise TypeError
-        if PY3:
-            if not isinstance(value, str):
-                raise TypeError("%s has to be str" % self.name)
-            value.encode("ascii")
-        else:
-            if not isinstance(value, bytes):
-                value = value.encode("ascii")
+
+        if not isinstance(value, str):
+            raise TypeError("%s has to be str" % self.name)
+        value.encode("ascii")
 
         if len(value) == self.len:
             return value
@@ -432,7 +428,7 @@ class BinaryDataSpec(Spec):
             raise TypeError
         if isinstance(value, bytes):
             return value
-        elif PY3:
+        else:
             raise TypeError("%s has to be bytes" % self.name)
 
         value = text_type(value).encode("ascii")
@@ -666,9 +662,7 @@ class ID3TimeStamp(object):
         if isinstance(text, ID3TimeStamp):
             text = text.text
         elif not isinstance(text, text_type):
-            if PY3:
-                raise TypeError("not a str")
-            text = text.decode("utf-8")
+            raise TypeError("not a str")
 
         self.text = text
 

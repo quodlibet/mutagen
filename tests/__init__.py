@@ -12,7 +12,7 @@ try:
 except ImportError:
     raise SystemExit("pytest missing: sudo apt-get install python-pytest")
 
-from mutagen._compat import PY3, StringIO
+from mutagen._compat import StringIO
 from mutagen._senf import text2fsn, fsn2text, path2fsn, mkstemp, fsnative
 
 
@@ -96,9 +96,6 @@ class TestCase(BaseTestCase):
         self.assertTrue(b == a)
         self.assertFalse(a != b)
         self.assertFalse(b != a)
-        if not PY3:
-            self.assertEqual(0, cmp(a, b))
-            self.assertEqual(0, cmp(b, a))
 
     def assertReallyNotEqual(self, a, b):
         self.assertNotEqual(a, b)
@@ -107,9 +104,6 @@ class TestCase(BaseTestCase):
         self.assertFalse(b == a)
         self.assertTrue(a != b)
         self.assertTrue(b != a)
-        if not PY3:
-            self.assertNotEqual(0, cmp(a, b))
-            self.assertNotEqual(0, cmp(b, a))
 
 
 def check():

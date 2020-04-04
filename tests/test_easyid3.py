@@ -6,7 +6,6 @@ import pickle
 from mutagen import MutagenError
 from mutagen.id3 import ID3FileType, ID3, RVA2, CHAP, TDRC, CTOC
 from mutagen.easyid3 import EasyID3, error as ID3Error
-from mutagen._compat import PY3
 
 from tests import TestCase, DATA_DIR, get_temp_copy
 
@@ -99,10 +98,6 @@ class TEasyID3(TestCase):
 
     def test_in(self):
         self.failIf("foo" in self.id3)
-
-    if not PY3:
-        def test_has_key(self):
-            self.failIf(self.id3.has_key("foo"))
 
     def test_empty_file(self):
         empty = os.path.join(DATA_DIR, 'emptyfile.mp3')

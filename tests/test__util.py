@@ -5,7 +5,7 @@ from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes, \
     resize_bytes, seek_end, mmap_move, verify_fileobj, fileobj_name, \
     read_full, flags, resize_file, fallback_move, encode_endian, loadfile, \
     intround, verify_filename
-from mutagen._compat import text_type, itervalues, iterkeys, iteritems, PY2, \
+from mutagen._compat import text_type, itervalues, iterkeys, iteritems, \
     cBytesIO, xrange, BytesIO, builtins
 from tests import TestCase, get_temp_empty
 import os
@@ -58,9 +58,6 @@ class TDictMixin(TestCase):
     def test_has_key_contains(self):
         self.failUnless("foo" in self.fdict)
         self.failIf("bar" in self.fdict)
-        if PY2:
-            self.failUnless(self.fdict.has_key("foo"))
-            self.failIf(self.fdict.has_key("bar"))
 
     def test_iter(self):
         self.failUnlessEqual(list(iter(self.fdict)), ["foo"])

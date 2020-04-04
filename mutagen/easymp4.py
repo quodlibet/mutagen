@@ -9,7 +9,7 @@
 from mutagen import Tags
 from mutagen._util import DictMixin, dict_match
 from mutagen.mp4 import MP4, MP4Tags, error, delete
-from ._compat import PY2, text_type, PY3
+from ._compat import text_type
 
 
 __all__ = ["EasyMP4Tags", "EasyMP4", "delete", "error"]
@@ -168,9 +168,7 @@ class EasyMP4Tags(DictMixin, Tags):
             encoded = []
             for v in value:
                 if not isinstance(v, text_type):
-                    if PY3:
-                        raise TypeError("%r not str" % v)
-                    v = v.decode("utf-8")
+                    raise TypeError("%r not str" % v)
                 encoded.append(v.encode("utf-8"))
             tags[atomid] = encoded
 
@@ -190,12 +188,8 @@ class EasyMP4Tags(DictMixin, Tags):
     def __setitem__(self, key, value):
         key = key.lower()
 
-        if PY2:
-            if isinstance(value, basestring):
-                value = [value]
-        else:
-            if isinstance(value, text_type):
-                value = [value]
+        if isinstance(value, text_type):
+            value = [value]
 
         func = dict_match(self.Set, key)
         if func is not None:

@@ -6,7 +6,7 @@ from tests import TestCase, DATA_DIR, get_temp_copy, get_temp_empty
 
 import mutagen.apev2
 from mutagen import MutagenError
-from mutagen._compat import PY3, text_type, izip, xrange
+from mutagen._compat import text_type, izip, xrange
 from mutagen.apev2 import APEv2File, APEv2, is_valid_apev2_key, \
     APEBadItemError, error as APEv2Error
 
@@ -26,9 +26,8 @@ class Tis_valid_apev2_key(TestCase):
         for key in ["\x11hi", "ffoo\xFF", u"\u1234", "a", "", "foo" * 100]:
             self.failIf(is_valid_apev2_key(key))
 
-    if PY3:
-        def test_py3(self):
-            self.assertRaises(TypeError, is_valid_apev2_key, b"abc")
+    def test_py3(self):
+        self.assertRaises(TypeError, is_valid_apev2_key, b"abc")
 
 
 class TAPEInvalidItemCount(TestCase):
@@ -238,10 +237,7 @@ class TAPEv2(TestCase):
 
     def test_key_type(self):
         key = self.audio.keys()[0]
-        if PY3:
-            self.assertTrue(isinstance(key, text_type))
-        else:
-            self.assertTrue(isinstance(key, bytes))
+        self.assertTrue(isinstance(key, text_type))
 
     def test_invalid_keys(self):
         self.failUnlessRaises(KeyError, self.audio.__getitem__, "\x00")
@@ -340,9 +336,6 @@ class TAPETextValue(TestCase):
 
     def test_construct(self):
         self.assertEqual(text_type(self.TV(u"foo")), u"foo")
-        if not PY3:
-            self.assertEqual(text_type(self.TV(b"foo")), u"foo")
-            self.assertRaises(ValueError, self.TV, b"\xff")
 
     def test_list(self):
         self.failUnlessEqual(self.sample, list(self.value))
@@ -367,14 +360,12 @@ class TAPETextValue(TestCase):
         self.sample.insert(0, "a")
         self.assertEqual(len(self.sample), 4)
         self.assertEqual(self.sample[0], "a")
-        if PY3:
-            self.assertRaises(TypeError, self.value.insert, 2, b"abc")
+        self.assertRaises(TypeError, self.value.insert, 2, b"abc")
 
     def test_types(self):
-        if PY3:
-            self.assertRaises(TypeError, self.value.__setitem__, 2, b"abc")
-            self.assertRaises(
-                TypeError, mutagen.apev2.APEValue, b"abc", mutagen.apev2.TEXT)
+        self.assertRaises(TypeError, self.value.__setitem__, 2, b"abc")
+        self.assertRaises(
+            TypeError, mutagen.apev2.APEValue, b"abc", mutagen.apev2.TEXT)
 
     def test_repr(self):
         repr(self.value)
@@ -405,11 +396,10 @@ class TAPEExtValue(TestCase):
     def test_repr(self):
         repr(self.value)
 
-    if PY3:
-        def test_py3(self):
-            self.assertRaises(
-                TypeError, mutagen.apev2.APEValue, b"abc",
-                mutagen.apev2.EXTERNAL)
+    def test_py3(self):
+        self.assertRaises(
+            TypeError, mutagen.apev2.APEValue, b"abc",
+            mutagen.apev2.EXTERNAL)
 
     def test_pprint(self):
         self.assertEqual(self.value.pprint(), "[External] http://foo")

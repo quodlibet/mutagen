@@ -37,8 +37,8 @@ from mutagen import FileType, Tags, StreamInfo, PaddingInfo
 from mutagen._constants import GENRES
 from mutagen._util import cdata, insert_bytes, DictProxy, MutagenError, \
     hashable, enum, get_size, resize_bytes, loadfile, convert_error
-from mutagen._compat import (reraise, PY2, string_types, text_type, chr_,
-                             iteritems, PY3, cBytesIO, izip, xrange)
+from mutagen._compat import (reraise, string_types, text_type, chr_,
+                             iteritems, cBytesIO, izip, xrange)
 from ._atom import Atoms, Atom, AtomError
 from ._util import parse_full_atom
 from ._as_entry import AudioSampleEntry, ASEntryError
@@ -212,14 +212,10 @@ class MP4FreeForm(bytes):
 
 
 def _name2key(name):
-    if PY2:
-        return name
     return name.decode("latin-1")
 
 
 def _key2name(key):
-    if PY2:
-        return key
     return key.encode("latin-1")
 
 
@@ -829,12 +825,8 @@ class MP4Tags(DictProxy, Tags):
         encoded = []
         for v in value:
             if not isinstance(v, text_type):
-                if PY3:
-                    raise TypeError("%r not str" % v)
-                try:
-                    v = v.decode("utf-8")
-                except (AttributeError, UnicodeDecodeError) as e:
-                    raise TypeError(e)
+                raise TypeError("%r not str" % v)
+
             encoded.append(v.encode("utf-8"))
 
         return self.__render_data(key, 0, flags, encoded)

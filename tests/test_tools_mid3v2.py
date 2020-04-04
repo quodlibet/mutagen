@@ -7,7 +7,6 @@ import locale
 
 import mutagen
 from mutagen.id3 import ID3
-from mutagen._compat import PY2, PY3
 from mutagen._senf import fsnative as fsn
 
 from tests.test_tools import _TTools
@@ -281,19 +280,10 @@ class TMid3v2(_TTools):
         self.assertTrue("fooAPIC" in out)
 
     def test_encoding_with_escape(self):
-        is_bytes = PY2 and os.name != "nt"
-
         text = u'\xe4\xf6\xfc'
-        if is_bytes:
-            enc = locale.getpreferredencoding()
-            # don't fail in case getpreferredencoding doesn't give us a unicode
-            # encoding.
-            text = text.encode(enc, "replace")
         res, out = self.call(fsn(u"-e"), fsn(u"-a"), text, self.filename)
         self.failUnlessEqual((res, out), (0, ""))
         f = ID3(self.filename)
-        if is_bytes:
-            text = text.decode(enc)
         self.assertEqual(f.getall("TPE1")[0], text)
 
     def test_invalid_encoding_escaped(self):
@@ -319,8 +309,7 @@ class TMid3v2(_TTools):
         else:
             return
 
-        if not PY2:
-            value = value.decode(enc, "surrogateescape")
+        value = value.decode(enc, "surrogateescape")
         res, out, err = self.call2("--TALB", value, self.filename)
         self.failIfEqual(res, 0)
         self.failUnless("TALB" in err)
@@ -341,7 +330,7 @@ class TMid3v2(_TTools):
         self.assertEqual(vffs(fsn(u"öäü\\n"), True), u"öäü\n")
         self.assertEqual(vffs(fsn(u"öäü\\n"), False), u"öäü\\n")
 
-        if os.name != "nt" and PY3:
+        if os.name != "nt":
             se = b"\xff".decode("utf-8", "surrogateescape")
             self.assertRaises(ValueError, vffs, se, False)
 

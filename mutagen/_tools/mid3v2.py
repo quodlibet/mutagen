@@ -20,7 +20,7 @@ import mutagen.id3
 from mutagen.id3 import Encoding, PictureType
 from mutagen._senf import fsnative, print_, argv, fsn2text, fsn2bytes, \
     bytes2fsn
-from mutagen._compat import PY2, text_type
+from mutagen._compat import text_type
 
 from ._util import split_escape, SignalHandler, OptionParser
 
@@ -120,10 +120,7 @@ def frame_from_fsnative(arg):
     assert isinstance(arg, fsnative)
 
     text = fsn2text(arg, strict=True)
-    if PY2:
-        return text.encode("ascii")
-    else:
-        return text.encode("ascii").decode("ascii")
+    return text.encode("ascii").decode("ascii")
 
 
 def value_from_fsnative(arg, escape):
@@ -135,14 +132,11 @@ def value_from_fsnative(arg, escape):
 
     if escape:
         bytes_ = fsn2bytes(arg)
-        if PY2:
-            bytes_ = bytes_.decode("string_escape")
-        else:
-            # With py3.7 this has started to warn for invalid escapes, but we
-            # don't control the input so ignore it.
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                bytes_ = codecs.escape_decode(bytes_)[0]
+        # With py3.7 this has started to warn for invalid escapes, but we
+        # don't control the input so ignore it.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            bytes_ = codecs.escape_decode(bytes_)[0]
         arg = bytes2fsn(bytes_)
 
     text = fsn2text(arg, strict=True)

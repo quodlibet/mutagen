@@ -31,7 +31,7 @@ from contextlib import contextmanager
 from functools import wraps
 from fnmatch import fnmatchcase
 
-from ._compat import chr_, PY2, iteritems, iterbytes, integer_types, xrange, \
+from ._compat import chr_, iteritems, iterbytes, integer_types, xrange, \
     izip, text_type, reraise
 
 
@@ -302,9 +302,6 @@ def hashable(cls):
     Needs a working __eq__ and __hash__ and will add a __ne__.
     """
 
-    # py2
-    assert "__hash__" in cls.__dict__
-    # py3
     assert cls.__dict__["__hash__"] is not None
     assert "__eq__" in cls.__dict__
 
@@ -443,25 +440,13 @@ class DictMixin(object):
         else:
             return True
 
-    if PY2:
-        has_key = __has_key
-
     __contains__ = __has_key
-
-    if PY2:
-        iterkeys = lambda self: iter(self.keys())
 
     def values(self):
         return [self[k] for k in self.keys()]
 
-    if PY2:
-        itervalues = lambda self: iter(self.values())
-
     def items(self):
         return list(izip(self.keys(), self.values()))
-
-    if PY2:
-        iteritems = lambda s: iter(s.items())
 
     def clear(self):
         for key in list(self.keys()):

@@ -9,7 +9,6 @@ from mutagen import MutagenError
 from mutagen.id3 import ID3, TIT2, ID3NoHeaderError
 from mutagen.flac import to_int_be, Padding, VCFLACDict, MetadataBlock, error
 from mutagen.flac import StreamInfo, SeekTable, CueSheet, FLAC, delete, Picture
-from mutagen._compat import PY3
 
 from tests import TestCase, DATA_DIR, get_temp_copy
 from tests.test__vorbis import TVCommentDict, VComment
@@ -402,35 +401,18 @@ class TFLAC(TestCase):
 
     def test_write_changetitle(self):
         f = FLAC(self.NEW)
-        if PY3:
-            self.assertRaises(
-                TypeError, f.__setitem__, b'title', b"A New Title")
-        else:
-            f[b"title"] = b"A New Title"
-            f.save()
-            f = FLAC(self.NEW)
-            self.failUnlessEqual(f[b"title"][0], b"A New Title")
+        self.assertRaises(
+            TypeError, f.__setitem__, b'title', b"A New Title")
 
     def test_write_changetitle_unicode_value(self):
         f = FLAC(self.NEW)
-        if PY3:
-            self.assertRaises(
-                TypeError, f.__setitem__, b'title', u"A Unicode Title \u2022")
-        else:
-            f[b"title"] = u"A Unicode Title \u2022"
-            f.save()
-            f = FLAC(self.NEW)
-            self.failUnlessEqual(f[b"title"][0], u"A Unicode Title \u2022")
+        self.assertRaises(
+            TypeError, f.__setitem__, b'title', u"A Unicode Title \u2022")
 
     def test_write_changetitle_unicode_key(self):
         f = FLAC(self.NEW)
         f[u"title"] = b"A New Title"
-        if PY3:
-            self.assertRaises(ValueError, f.save)
-        else:
-            f.save()
-            f = FLAC(self.NEW)
-            self.failUnlessEqual(f[u"title"][0], b"A New Title")
+        self.assertRaises(ValueError, f.save)
 
     def test_write_changetitle_unicode_key_and_value(self):
         f = FLAC(self.NEW)

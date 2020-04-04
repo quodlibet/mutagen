@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import os
 import sys
 import importlib
 
-from mutagen._compat import StringIO, text_type, PY2
+from mutagen._compat import StringIO, text_type
 from mutagen._senf import fsnative
 
 from tests import TestCase
@@ -43,10 +42,6 @@ class _TTools(TestCase):
             ret = ret or 0
             out_val = out.getvalue()
             err_val = err.getvalue()
-            if os.name == "nt" and PY2:
-                encoding = getattr(sys.stdout, "encoding", None) or "mbcs"
-                out_val = text_type(out_val, encoding)
-                err_val = text_type(err_val, encoding)
             return (ret, out_val, err_val)
         finally:
             sys.stdout = old_stdout

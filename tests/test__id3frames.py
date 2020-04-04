@@ -4,7 +4,7 @@ import operator
 
 from tests import TestCase
 
-from mutagen._compat import text_type, xrange, PY2, PY3, iteritems, izip, \
+from mutagen._compat import text_type, xrange, iteritems, izip, \
     integer_types
 from mutagen._constants import GENRES
 from mutagen.id3._tags import read_frames, save_frame, ID3Header
@@ -480,12 +480,8 @@ class TVariousFrames(TestCase):
             tag = kind._fromData(_23, 0, data)
             self.assertTrue(isinstance(tag.__str__(), str))
             self.assertTrue(isinstance(tag.__repr__(), str))
-            if PY2:
-                if hasattr(tag, "__unicode__"):
-                    self.assertTrue(isinstance(tag.__unicode__(), unicode))
-            else:
-                if hasattr(tag, "__bytes__"):
-                    self.assertTrue(isinstance(tag.__bytes__(), bytes))
+            if hasattr(tag, "__bytes__"):
+                self.assertTrue(isinstance(tag.__bytes__(), bytes))
 
     def test_tag_write(self):
         for frame_id, data, value, intval, info in self.DATA:
@@ -1405,8 +1401,7 @@ class TID3TimeStamp(TestCase):
         self.assert_(u > s > t)
 
     def test_types(self):
-        if PY3:
-            self.assertRaises(TypeError, ID3TimeStamp, b"blah")
+        self.assertRaises(TypeError, ID3TimeStamp, b"blah")
         self.assertEquals(
             text_type(ID3TimeStamp(u"2000-01-01")), u"2000-01-01")
         self.assertEquals(
@@ -1684,14 +1679,9 @@ class TAPIC(TestCase):
 
     def test_repr(self):
         frame = APIC(encoding=0, mime=u"m", type=3, desc=u"d", data=b"\x42")
-        if PY2:
-            expected = (
-                "APIC(encoding=<Encoding.LATIN1: 0>, mime=u'm', "
-                "type=<PictureType.COVER_FRONT: 3>, desc=u'd', data='B')")
-        else:
-            expected = (
-                "APIC(encoding=<Encoding.LATIN1: 0>, mime='m', "
-                "type=<PictureType.COVER_FRONT: 3>, desc='d', data=b'B')")
+        expected = (
+            "APIC(encoding=<Encoding.LATIN1: 0>, mime='m', "
+            "type=<PictureType.COVER_FRONT: 3>, desc='d', data=b'B')")
 
         self.assertEqual(repr(frame), expected)
         new_frame = APIC()

@@ -3,7 +3,7 @@
 import os
 import warnings
 
-from mutagen._compat import PY3, text_type, PY2, izip, cBytesIO
+from mutagen._compat import text_type, izip, cBytesIO
 from mutagen.asf import ASF, ASFHeaderError, ASFValue, UNICODE, DWORD, QWORD
 from mutagen.asf import BOOL, WORD, BYTEARRAY, GUID
 from mutagen.asf._util import guid2bytes, bytes2guid
@@ -168,14 +168,11 @@ class TASFMixin(object):
         self.set_key(u"WM/WMCollectionGroupID", value, [value])
 
     def test_py3_bytes(self):
-        if PY3:
-            value = ASFValue(b'\xff\x00', BYTEARRAY)
-            self.set_key(u"QL/Something", [b'\xff\x00'], [value])
+        value = ASFValue(b'\xff\x00', BYTEARRAY)
+        self.set_key(u"QL/Something", [b'\xff\x00'], [value])
 
     def test_set_invalid(self):
         setitem = self.audio.__setitem__
-        if PY2:
-            self.assertRaises(ValueError, setitem, u"QL/Something", [b"\xff"])
         self.assertRaises(TypeError, setitem, u"QL/Something", [object()])
 
         # don't delete on error
@@ -298,13 +295,7 @@ class TASFMixin(object):
 class TASFAttributes(TestCase):
 
     def test_ASFUnicodeAttribute(self):
-        if PY3:
-            self.assertRaises(TypeError, ASFUnicodeAttribute, b"\xff")
-        else:
-            self.assertRaises(ValueError, ASFUnicodeAttribute, b"\xff")
-            val = u'\xf6\xe4\xfc'
-            self.assertEqual(ASFUnicodeAttribute(val.encode("utf-8")), val)
-
+        self.assertRaises(TypeError, ASFUnicodeAttribute, b"\xff")
         self.assertRaises(ASFError, ASFUnicodeAttribute, data=b"\x00")
         self.assertEqual(ASFUnicodeAttribute(u"foo").value, u"foo")
 
@@ -315,10 +306,7 @@ class TASFAttributes(TestCase):
 
         self.assertEqual(bytes(attr), b"f\x00o\x00o\x00")
         self.assertEqual(text_type(attr), u"foo")
-        if PY3:
-            self.assertEqual(repr(attr), "ASFUnicodeAttribute('foo')")
-        else:
-            self.assertEqual(repr(attr), "ASFUnicodeAttribute(u'foo')")
+        self.assertEqual(repr(attr), "ASFUnicodeAttribute('foo')")
         self.assertRaises(TypeError, int, attr)
 
     def test_ASFByteArrayAttribute(self):
@@ -329,10 +317,7 @@ class TASFAttributes(TestCase):
         attr = ASFByteArrayAttribute(data=b"\xff")
         self.assertEqual(bytes(attr), b"\xff")
         self.assertEqual(text_type(attr), u"[binary data (1 bytes)]")
-        if PY3:
-            self.assertEqual(repr(attr), r"ASFByteArrayAttribute(b'\xff')")
-        else:
-            self.assertEqual(repr(attr), r"ASFByteArrayAttribute('\xff')")
+        self.assertEqual(repr(attr), r"ASFByteArrayAttribute(b'\xff')")
         self.assertRaises(TypeError, int, attr)
 
     def test_ASFByteArrayAttribute_compat(self):
@@ -347,12 +332,8 @@ class TASFAttributes(TestCase):
     def test_ASFGUIDAttribute_dunder(self):
         attr = ASFGUIDAttribute(data=b"\xff")
         self.assertEqual(bytes(attr), b"\xff")
-        if PY3:
-            self.assertEqual(text_type(attr), u"b'\\xff'")
-            self.assertEqual(repr(attr), "ASFGUIDAttribute(b'\\xff')")
-        else:
-            self.assertEqual(text_type(attr), u"'\\xff'")
-            self.assertEqual(repr(attr), "ASFGUIDAttribute('\\xff')")
+        self.assertEqual(text_type(attr), u"b'\\xff'")
+        self.assertEqual(repr(attr), "ASFGUIDAttribute(b'\\xff')")
         self.assertRaises(TypeError, int, attr)
 
     def test_ASFBoolAttribute(self):
