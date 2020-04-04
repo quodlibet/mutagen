@@ -4,9 +4,11 @@ import os
 
 from mutagen._compat import cBytesIO
 from mutagen.aiff import AIFF, AIFFInfo, delete, IFFFile, IFFChunk
-from mutagen.aiff import error as AIFFError
+from mutagen.aiff import error as AIFFError, read_float
 
 from tests import TestCase, DATA_DIR, get_temp_copy
+
+import pytest
 
 
 class TAIFF(TestCase):
@@ -31,6 +33,13 @@ class TAIFF(TestCase):
         self.aiff_3 = AIFF(self.silence_3)
         self.aiff_4 = AIFF(self.silence_4)
         self.aiff_5 = AIFF(self.silence_5)
+
+    def test_read_float(self):
+        assert read_float(b'@\x0b\xfa\x00\x00\x00\x00\x00\x00\x00') == 8000.0
+        with pytest.raises(OverflowError):
+            read_float(b"\xfa\x00\x00\xfa\x00\x00\x00\x00\x00\x00")
+        with pytest.raises(OverflowError):
+            read_float(b"\x7f\xff\x00\xfa\x00\x00\x00\x00\x00\x00")
 
     def test_channels(self):
         self.failUnlessEqual(self.aiff_1.info.channels, 1)

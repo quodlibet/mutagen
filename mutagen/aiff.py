@@ -58,7 +58,10 @@ def assert_valid_chunk_id(id):
         raise ValueError("AIFF key must be four ASCII characters.")
 
 
-def read_float(data):  # 10 bytes
+def read_float(data):
+    """Raises OverflowError"""
+
+    assert len(data) == 10
     expon, himant, lomant = struct.unpack('>hLL', data)
     sign = 1
     if expon < 0:
@@ -67,9 +70,10 @@ def read_float(data):  # 10 bytes
     if expon == himant == lomant == 0:
         f = 0.0
     elif expon == 0x7FFF:
-        f = _HUGE_VAL
+        raise OverflowError("inf and nan not supported")
     else:
         expon = expon - 16383
+        # this can raise OverflowError too
         f = (himant * 0x100000000 + lomant) * pow(2.0, expon - 63)
     return sign * f
 
@@ -358,9 +362,15 @@ class AIFFInfo(StreamInfo):
         info = struct.unpack('>hLh10s', data[:18])
         channels, frame_count, sample_size, sample_rate = info
 
-        self.sample_rate = int(read_float(sample_rate))
-        if self.sample_rate > 0:
+        try:
+            self.sample_rate = int(read_float(sample_rate))
+        except OverflowError:
+            raise error("Invalid sample rate")
+        if self.sample_rate < 0:
+            raise error("Invalid sample rate")
+        if self.sample_rate != 0:
             self.length = frame_count / float(self.sample_rate)
+
         self.bits_per_sample = sample_size
         self.sample_size = sample_size  # For backward compatibility
         self.channels = channels
