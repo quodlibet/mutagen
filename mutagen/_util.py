@@ -24,7 +24,7 @@ try:
 except ImportError:
     # Google App Engine has no mmap:
     #   https://github.com/quodlibet/mutagen/issues/286
-    mmap = None
+    mmap = None  # type: ignore
 
 from collections import namedtuple
 from contextlib import contextmanager
@@ -607,8 +607,7 @@ class cdata(object):
     uint32_le(data)/to_uint32_le(num)/uint32_le_from(data, offset=0)
     """
 
-    from struct import error
-    error = error
+    error = struct.error
 
     bitswap = b''.join(
         bchr(sum(((val >> i) & 1) << (7 - i) for i in range(8)))
