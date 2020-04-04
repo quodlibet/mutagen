@@ -35,10 +35,9 @@ install:
   - if [ "$TYPE" == "osx" ]; then brew update; fi
   - if [ "$TYPE" == "osx" ]; then brew unlink python@2 || true; fi
   - if [ "$TYPE" == "osx" ]; then brew install python || brew upgrade python; fi
-  - if [ "$TYPE" == "osx" ]; then python3 -m pip install virtualenv; fi
-  - if [ "$TYPE" == "osx" ]; then virtualenv venv -p python3; fi
-  - if [ "$TYPE" == "osx" ]; then source venv/bin/activate; fi
-  - if [ "$TYPE" == "linux" ] || [ "$TYPE" == "osx" ]; then python -m pip install --upgrade pycodestyle pyflakes pytest hypothesis coverage codecov attrs; fi
+  - if [ "$TYPE" == "osx" ]; then python3 -m venv /tmp/_venv; fi
+  - if [ "$TYPE" == "osx" ]; then source /tmp/_venv/bin/activate; fi
+  - if [ "$TYPE" == "linux" ] || [ "$TYPE" == "osx" ]; then python -m pip install --upgrade flake8 pytest hypothesis coverage codecov attrs; fi
   - if [ "$TYPE" == "linux" ] || [ "$PYVER" == "3.6" ]; then python -m pip install --upgrade sphinx sphinx_rtd_theme; fi
 
 script:

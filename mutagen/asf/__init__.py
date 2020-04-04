@@ -24,7 +24,7 @@ from ._attrs import ASFGUIDAttribute, ASFWordAttribute, ASFQWordAttribute, \
     ASFUnicodeAttribute, ASFBaseAttribute, ASFValue
 
 
-# pyflakes
+# flake8
 error, ASFError, ASFHeaderError, ASFValue
 
 

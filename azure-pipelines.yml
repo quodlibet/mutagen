@@ -25,7 +25,7 @@ jobs:
         versionSpec: '$(python.version)'
         architecture: '$(python.arch)'
     - script: |
-        pip install pytest pytest-xdist hypothesis coverage codecov pycodestyle pyflakes
+        pip install pytest pytest-xdist hypothesis coverage codecov flake8
       displayName: Install Dependencies
     - script: |
         python.exe -m coverage run --branch setup.py test
