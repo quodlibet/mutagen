@@ -34,3 +34,24 @@ footer hr {
 .versionmodified {
     color: #008000;
 }
+
+a.icon-home, a.icon-home:hover {
+    display: inline-block;
+    padding: 4px 4px 4px 23px;
+    background: transparent url(logo-small.svg) center left no-repeat;
+    background-size: 1.5em;
+    margin-top: 0.2em;
+    margin-bottom: 1em;
+}
+
+
+.fa-home::before, .icon-home::before {
+    content: "";
+}
+
+.wy-nav-top a {
+    margin: -2em;
+    background: transparent url(logo-small.svg) center left no-repeat;
+    background-size: 1.5em;
+    padding: 4px 4px 4px 26px;
+}

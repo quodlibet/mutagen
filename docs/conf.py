@@ -51,6 +51,7 @@ html_context = {
 
 html_static_path = [
     "extra.css",
+    "images/logo-small.svg",
 ]
 
 suppress_warnings = ["image.nonlocal_uri"]
