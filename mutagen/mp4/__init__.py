@@ -462,7 +462,10 @@ class MP4Tags(DictProxy, Tags):
         fileobj.seek(offset)
         fileobj.write(data)
         self.__update_parents(fileobj, path, len(data))
-        self.__update_offsets(fileobj, atoms, len(data), offset)
+        try:
+            self.__update_offsets(fileobj, atoms, len(data), offset)
+        except struct.error:
+            raise MP4MetadataError('Invalid offsets')
 
     def __save_existing(self, fileobj, atoms, path, ilst_data, padding_func):
         # Replace the old ilst atom.
@@ -494,7 +497,10 @@ class MP4Tags(DictProxy, Tags):
         fileobj.seek(offset)
         fileobj.write(ilst_data)
         self.__update_parents(fileobj, path[:-1], delta)
-        self.__update_offsets(fileobj, atoms, delta, offset)
+        try:
+            self.__update_offsets(fileobj, atoms, delta, offset)
+        except struct.error:
+            raise MP4MetadataError('Invalid offsets')
 
     def __update_parents(self, fileobj, path, delta):
         """Update all parent atoms with the new size."""
