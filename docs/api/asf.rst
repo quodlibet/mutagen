@@ -25,12 +25,6 @@ ASF
     :members:
 
 
-.. autoclass:: mutagen.asf.ASFBoolAttribute(value)
-    :members:
-
-    :bases: `ASFBaseAttribute`
-
-
 .. autoclass:: mutagen.asf.ASFGUIDAttribute(value)
     :members:
 
@@ -62,12 +56,6 @@ ASF
 
 
 .. autoclass:: mutagen.asf.ASFByteArrayAttribute(value)
-    :members:
-
-    :bases: `ASFBaseAttribute`
-
-
-.. autoclass:: mutagen.asf.ASFUnicodeAttribute(value)
     :members:
 
     :bases: `ASFBaseAttribute`

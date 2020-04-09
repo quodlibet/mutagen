@@ -827,8 +827,6 @@ class FLAC(mutagen.FileType):
 
     @property
     def pictures(self):
-        """list[Picture]: List of embedded pictures"""
-
         return [b for b in self.metadata_blocks if b.code == Picture.code]
 
     @convert_error(IOError, error)

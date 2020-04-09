@@ -78,8 +78,6 @@ class ID3(ID3Tags, mutagen.Metadata):
 
     @property
     def version(self):
-        """`tuple`: ID3 tag version as a tuple (of the loaded file)"""
-
         if self._header is not None:
             return self._header.version
         return self._version
