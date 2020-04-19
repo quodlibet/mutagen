@@ -38,7 +38,7 @@ class OggPage(object):
     A page is a header of 26 bytes, followed by the length of the
     data, followed by the data.
 
-    The constructor is givin a file-like object pointing to the start
+    The constructor is given a file-like object pointing to the start
     of an Ogg page. After the constructor is finished it is pointing
     to the start of the next page.
 
