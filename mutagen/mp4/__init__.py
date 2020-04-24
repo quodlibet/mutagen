@@ -521,10 +521,13 @@ class MP4Tags(DictProxy, Tags):
         fileobj.seek(atom.offset + 12)
         data = fileobj.read(atom.length - 12)
         fmt = fmt % cdata.uint_be(data[:4])
-        offsets = struct.unpack(fmt, data[4:])
-        offsets = [o + (0, delta)[offset < o] for o in offsets]
-        fileobj.seek(atom.offset + 16)
-        fileobj.write(struct.pack(fmt, *offsets))
+        try:
+            offsets = struct.unpack(fmt, data[4:])
+            offsets = [o + (0, delta)[offset < o] for o in offsets]
+            fileobj.seek(atom.offset + 16)
+            fileobj.write(struct.pack(fmt, *offsets))
+        except struct.error:
+            raise MP4MetadataError("wrong offset inside %r" % atom.name)
 
     def __update_tfhd(self, fileobj, atom, delta, offset):
         if atom.offset > offset:
