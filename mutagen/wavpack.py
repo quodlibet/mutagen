@@ -91,6 +91,10 @@ class WavPackInfo(StreamInfo):
         self.channels = bool(header.flags & 4) or 2
         self.sample_rate = RATES[(header.flags >> 23) & 0xF]
 
+        # most common multiplier (DSD64)
+        if (header.flags >> 31) & 1:
+            self.sample_rate *= 4
+
         if header.total_samples == -1 or header.block_index != 0:
             # TODO: we could make this faster by using the tag size
             # and search backwards for the last block, then do
