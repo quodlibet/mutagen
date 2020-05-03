@@ -5,6 +5,8 @@ import struct
 import subprocess
 from io import BytesIO
 
+import pytest
+
 from tests import TestCase, DATA_DIR, get_temp_copy
 from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
                          MP4MetadataError, MP4FreeForm, error, AtomDataType,
@@ -1182,6 +1184,22 @@ class TMP4AudioSampleEntry(TestCase):
         fileobj = BytesIO(b"\x00" * 20)
         atom = Atom(fileobj)
         self.assertRaises(ASEntryError, AudioSampleEntry, atom, fileobj)
+
+
+def test_weird_descriptor_size():
+    path = os.path.join(DATA_DIR, "ep7.m4b")
+    t = MP4(path)
+    assert t.info.length == pytest.approx(2.02, 2)
+    assert t.info.bitrate == 125591
+    assert t.info.sample_rate == 44100
+    assert t.info.codec_description == "AAC LC"
+
+    path = os.path.join(DATA_DIR, "ep9.m4b")
+    t = MP4(path)
+    assert t.info.length == pytest.approx(2.02, 2)
+    assert t.info.bitrate == 61591
+    assert t.info.sample_rate == 44100
+    assert t.info.codec_description == "AAC LC"
 
 
 class TMP4Chapters(TMP4):

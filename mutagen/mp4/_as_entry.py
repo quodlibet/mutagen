@@ -239,9 +239,13 @@ class BaseDescriptor(object):
         pos = fileobj.tell()
         instance = cls(fileobj, length)
         left = length - (fileobj.tell() - pos)
-        if left < 0:
-            raise DescriptorError("descriptor parsing read too much data")
-        fileobj.seek(left, 1)
+        if left > 0:
+            fileobj.seek(left, 1)
+        else:
+            # XXX: In case the instance length is shorted than the content
+            # assume the size is wrong and just continue parsing
+            # https://github.com/quodlibet/mutagen/issues/444
+            pass
         return instance
 
 
