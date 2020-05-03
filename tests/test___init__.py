@@ -521,6 +521,8 @@ _FILETYPES = {
         os.path.join(DATA_DIR, "no-tags.m4a"),
         os.path.join(DATA_DIR, "no-tags.3g2"),
         os.path.join(DATA_DIR, "truncated-64bit.mp4"),
+        os.path.join(DATA_DIR, "ep7.m4b"),
+        os.path.join(DATA_DIR, "ep9.m4b"),
     ],
     SMF: [
         os.path.join(DATA_DIR, "sample.mid"),
