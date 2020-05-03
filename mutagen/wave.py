@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2017  Borewit
-# Copyright (C) 2019  Philipp Wolfer
+# Copyright (C) 2019-2020  Philipp Wolfer
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,14 +12,18 @@
 import sys
 import struct
 
-from ._compat import endswith, reraise
-
 from mutagen import StreamInfo, FileType
 
 from mutagen.id3 import ID3
 from mutagen._riff import RiffFile, InvalidChunk
 from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
-from mutagen._util import loadfile, convert_error, MutagenError
+from mutagen._util import (
+    MutagenError,
+    convert_error,
+    endswith,
+    loadfile,
+    reraise,
+)
 
 __all__ = ["WAVE", "Open", "delete"]
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2017  Borewit
-# Copyright (C) 2019  Philipp Wolfer
+# Copyright (C) 2019-2020  Philipp Wolfer
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -11,8 +11,6 @@
 
 import struct
 from struct import pack
-
-from ._compat import text_type
 
 from mutagen._util import (
     MutagenError,
@@ -41,8 +39,8 @@ def is_valid_chunk_id(id):
     Check if argument id is valid FOURCC type.
     """
 
-    assert isinstance(id, text_type), \
-        'id is of type %s, must be text_type: %r' % (type(id), id)
+    assert isinstance(id, str), \
+        'id is of type %s, must be str: %r' % (type(id), id)
 
     if len(id) < 3 or len(id) > 4:
         return False
@@ -211,7 +209,7 @@ class ListRiffChunk(RiffChunk):
     def insert_chunk(self, id_, data=None):
         """Insert a new chunk at the end of the RIFF or LIST"""
 
-        assert isinstance(id_, text_type)
+        assert isinstance(id_, str)
 
         if not is_valid_chunk_id(id_):
             raise KeyError("Invalid RIFF key.")
