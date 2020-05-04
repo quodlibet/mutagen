@@ -20,6 +20,9 @@ class TWavPack(TestCase):
     def test_sample_rate(self):
         self.failUnlessEqual(self.audio.info.sample_rate, 44100)
 
+    def test_bits_per_sample(self):
+        self.failUnlessEqual(self.audio.info.bits_per_sample, 16)
+
     def test_length(self):
         self.failUnlessAlmostEqual(self.audio.info.length, 3.68, 2)
 
@@ -48,6 +51,9 @@ class TWavPackNoLength(TestCase):
     def test_sample_rate(self):
         self.failUnlessEqual(self.audio.info.sample_rate, 44100)
 
+    def test_bits_per_sample(self):
+        self.failUnlessEqual(self.audio.info.bits_per_sample, 16)
+
     def test_length(self):
         self.failUnlessAlmostEqual(self.audio.info.length, 3.705, 3)
 
@@ -71,6 +77,9 @@ class TWavPackDSD(TestCase):
 
     def test_sample_rate(self):
         self.failUnlessEqual(self.audio.info.sample_rate, 352800)
+
+    def test_bits_per_sample(self):
+        self.failUnlessEqual(self.audio.info.bits_per_sample, 1)
 
     def test_length(self):
         self.failUnlessAlmostEqual(self.audio.info.length, 0.01, 3)
