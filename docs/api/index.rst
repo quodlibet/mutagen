@@ -27,4 +27,5 @@ API Reference
     tak
     trueaudio
     vcomment
+    wave
     wavpack
