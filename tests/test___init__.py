@@ -34,6 +34,7 @@ from mutagen.aac import AAC
 from mutagen.ac3 import AC3
 from mutagen.smf import SMF
 from mutagen.tak import TAK
+from mutagen.dsdiff import DSDIFF
 from mutagen.dsf import DSF
 from mutagen.wave import WAVE
 from os import devnull
@@ -531,6 +532,11 @@ _FILETYPES = {
     TAK: [
         os.path.join(DATA_DIR, "silence-44-s.tak"),
         os.path.join(DATA_DIR, "has-tags.tak"),
+    ],
+    DSDIFF: [
+        os.path.join(DATA_DIR, '2822400-1ch-0s-silence.dff'),
+        os.path.join(DATA_DIR, '5644800-2ch-s01-silence.dff'),
+        os.path.join(DATA_DIR, '5644800-2ch-s01-silence-dst.dff'),
     ],
     DSF: [
         os.path.join(DATA_DIR, '2822400-1ch-0s-silence.dsf'),
