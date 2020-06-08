@@ -38,6 +38,11 @@ class TDSDIFF(TestCase):
     def test_bits_per_sample(self):
         self.failUnlessEqual(self.dff_1.info.bits_per_sample, 1)
 
+    def test_bitrate(self):
+        self.failUnlessEqual(self.dff_1.info.bitrate, 2822400)
+        self.failUnlessEqual(self.dff_2.info.bitrate, 11289600)
+        self.failUnlessEqual(self.dff_dst.info.bitrate, 0)
+
     def test_notdsf(self):
         self.failUnlessRaises(IffError, DSDIFF, os.path.join(
             DATA_DIR, '2822400-1ch-0s-silence.dsf'))

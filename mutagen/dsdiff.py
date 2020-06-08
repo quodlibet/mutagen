@@ -171,9 +171,13 @@ class DSDIFFInfo(StreamInfo):
 
             if self.sample_rate != 0:
                 self.length = sample_count / float(self.sample_rate)
+
+            self.bitrate = (self.channels * self.bits_per_sample
+                            * self.sample_rate)
         elif self.compression == 'DST':
             try:
-                dst_frame_info = iff['DST']['FRTE']
+                dst_frame = iff['DST']
+                dst_frame_info = dst_frame['FRTE']
             except KeyError as e:
                 raise error(str(e))
 
@@ -185,7 +189,10 @@ class DSDIFFInfo(StreamInfo):
                 if frame_rate:
                     self.length = frame_count / frame_rate
 
-        self.bitrate = self.channels * self.bits_per_sample * self.sample_rate
+                if frame_count:
+                    dst_data_size = dst_frame.data_size - dst_frame_info.size
+                    avg_frame_size = dst_data_size / frame_count
+                    self.bitrate = avg_frame_size * 8 * frame_rate
 
     def pprint(self):
         return u"%d channel DSDIFF (%s) @ %d bps, %s Hz, %.2f seconds" % (
