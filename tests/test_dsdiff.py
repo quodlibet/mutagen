@@ -4,7 +4,7 @@ import os
 
 from mutagen.dsdiff import DSDIFF, IffError
 
-from tests import TestCase, DATA_DIR
+from tests import TestCase, DATA_DIR, get_temp_copy
 
 
 class TDSDIFF(TestCase):
@@ -16,6 +16,9 @@ class TDSDIFF(TestCase):
         self.dff_1 = DSDIFF(self.silence_1)
         self.dff_2 = DSDIFF(self.silence_2)
         self.dff_dst = DSDIFF(self.silence_dst)
+
+        self.dff_id3 = DSDIFF(get_temp_copy(self.silence_dst))
+        self.dff_no_id3 = DSDIFF(get_temp_copy(self.silence_2))
 
     def test_channels(self):
         self.failUnlessEqual(self.dff_1.info.channels, 1)
@@ -44,3 +47,27 @@ class TDSDIFF(TestCase):
 
     def test_mime(self):
         self.failUnless("audio/x-dff" in self.dff_1.mime)
+
+    def test_update_tags(self):
+        from mutagen.id3 import TIT1
+        tags = self.dff_id3.tags
+        tags.add(TIT1(encoding=3, text="foobar"))
+        tags.save()
+
+        new = DSDIFF(self.dff_id3.filename)
+        self.failUnlessEqual(new["TIT1"], ["foobar"])
+
+    def test_delete_tags(self):
+        self.dff_id3.tags.delete()
+        new = DSDIFF(self.dff_id3.filename)
+        self.failUnlessEqual(new.tags, None)
+
+    def test_save_tags(self):
+        from mutagen.id3 import TIT1
+        self.dff_no_id3.add_tags()
+        tags = self.dff_no_id3.tags
+        tags.add(TIT1(encoding=3, text="foobar"))
+        tags.save(self.dff_no_id3.filename)
+
+        new = DSDIFF(self.dff_no_id3.filename)
+        self.failUnlessEqual(new["TIT1"], ["foobar"])

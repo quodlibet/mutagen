@@ -15,10 +15,12 @@ from mutagen._file import FileType
 from mutagen._iff import (
     IffChunk,
     IffContainerChunkMixin,
+    IffID3,
     IffFile,
     InvalidChunk,
     error as IffError,
 )
+from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
 from mutagen._util import (
     convert_error,
     loadfile,
@@ -26,7 +28,7 @@ from mutagen._util import (
 )
 
 
-__all__ = ["DSDIFF", "Open"]
+__all__ = ["DSDIFF", "Open", "delete"]
 
 
 class error(IffError):
@@ -192,17 +194,36 @@ class DSDIFFInfo(StreamInfo):
             self.length)
 
 
+class _DSDIFFID3(IffID3):
+    """A DSDIFF file with ID3v2 tags"""
+
+    def _load_file(self, fileobj):
+        return DSDIFFFile(fileobj)
+
+
+@convert_error(IOError, error)
+@loadfile(method=False, writable=True)
+def delete(filething):
+    """Completely removes the ID3 chunk from the DSDIFF file"""
+
+    try:
+        del DSDIFFFile(filething.fileobj)[u'ID3']
+    except KeyError:
+        pass
+
+
 class DSDIFF(FileType):
     """DSDIFF(filething)
+
+    An DSDIFF audio file.
+
+    For tagging ID3v2 data is added to a chunk with the ID `ID3 `.
 
     Arguments:
         filething (filething)
 
-    Load DSDIFF files.
-
-    Tagging is not supported.
-
     Attributes:
+        tags (`mutagen.id3.ID3`)
         info (`DSDIFFInfo`)
     """
 
@@ -210,11 +231,27 @@ class DSDIFF(FileType):
 
     @convert_error(IOError, error)
     @loadfile()
-    def load(self, filething):
-        self.info = DSDIFFInfo(filething.fileobj)
+    def load(self, filething, **kwargs):
+        fileobj = filething.fileobj
+
+        try:
+            self.tags = _DSDIFFID3(fileobj, **kwargs)
+        except ID3NoHeaderError:
+            self.tags = None
+        except ID3Error as e:
+            raise error(e)
+        else:
+            self.tags.filename = self.filename
+
+        fileobj.seek(0, 0)
+        self.info = DSDIFFInfo(fileobj)
 
     def add_tags(self):
-        raise error("doesn't support tags")
+        """Add empty ID3 tags to the file."""
+        if self.tags is None:
+            self.tags = _DSDIFFID3()
+        else:
+            raise error("an ID3 tag already exists")
 
     @staticmethod
     def score(filename, fileobj, header):
