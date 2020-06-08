@@ -10,25 +10,23 @@
 
 """AIFF audio stream information and tags."""
 
-import sys
 import struct
 from struct import pack
 
 from mutagen import StreamInfo, FileType
 
-from mutagen.id3 import ID3
 from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
 from mutagen._iff import (
     IffChunk,
     IffContainerChunkMixin,
     IffFile,
+    IffID3,
     InvalidChunk,
     error as IffError,
 )
 from mutagen._util import (
     convert_error,
     loadfile,
-    reraise,
     endswith,
 )
 
@@ -177,45 +175,11 @@ class AIFFInfo(StreamInfo):
             self.channels, self.bitrate, self.sample_rate, self.length)
 
 
-class _IFFID3(ID3):
+class _IFFID3(IffID3):
     """A AIFF file with ID3v2 tags"""
 
-    def _pre_load_header(self, fileobj):
-        try:
-            fileobj.seek(AIFFFile(fileobj)[u'ID3'].data_offset)
-        except (InvalidChunk, KeyError):
-            raise ID3NoHeaderError("No ID3 chunk")
-
-    @convert_error(IOError, error)
-    @loadfile(writable=True)
-    def save(self, filething=None, v2_version=4, v23_sep='/', padding=None):
-        """Save ID3v2 data to the AIFF file"""
-
-        fileobj = filething.fileobj
-
-        iff_file = AIFFFile(fileobj)
-
-        if u'ID3' not in iff_file:
-            iff_file.insert_chunk(u'ID3')
-
-        chunk = iff_file[u'ID3']
-
-        try:
-            data = self._prepare_data(
-                fileobj, chunk.data_offset, chunk.data_size, v2_version,
-                v23_sep, padding)
-        except ID3Error as e:
-            reraise(error, e, sys.exc_info()[2])
-
-        chunk.resize(len(data))
-        chunk.write(data)
-
-    @loadfile(writable=True)
-    def delete(self, filething=None):
-        """Completely removes the ID3 chunk from the AIFF file"""
-
-        delete(filething)
-        self.clear()
+    def _load_file(self, fileobj):
+        return AIFFFile(fileobj)
 
 
 @convert_error(IOError, error)

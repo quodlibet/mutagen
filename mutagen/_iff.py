@@ -11,13 +11,17 @@
 
 """Base classes for various IFF based formats (e.g. AIFF or RIFF)."""
 
-# import struct
-# from struct import pack
+import sys
 
+from mutagen.id3 import ID3
+from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
 from mutagen._util import (
     MutagenError,
+    convert_error,
     delete_bytes,
     insert_bytes,
+    loadfile,
+    reraise,
     resize_bytes,
 )
 
@@ -48,8 +52,8 @@ def is_valid_chunk_id(id):
     assert isinstance(id, str), \
         'id is of type %s, must be str: %r' % (type(id), id)
 
-    return ((len(id) <= 4) and (min(id) >= u' ') and
-            (max(id) <= u'~'))
+    return ((len(id) <= 4) and (min(id) >= ' ') and
+            (max(id) <= '~'))
 
 
 #  Assert FOURCC formatted valid
@@ -332,3 +336,52 @@ class IffFile:
     def insert_chunk(self, id_, data=None):
         """Insert a new chunk at the end of the IFF file"""
         return self.root.insert_chunk(id_, data)
+
+
+class IffID3(ID3):
+    """A generic IFF file with ID3v2 tags"""
+
+    def _load_file(self, fileobj):
+        raise error("Not implemented")
+
+    def _pre_load_header(self, fileobj):
+        try:
+            fileobj.seek(self._load_file(fileobj)['ID3'].data_offset)
+        except (InvalidChunk, KeyError):
+            raise ID3NoHeaderError("No ID3 chunk")
+
+    @convert_error(IOError, error)
+    @loadfile(writable=True)
+    def save(self, filething=None, v2_version=4, v23_sep='/', padding=None):
+        """Save ID3v2 data to the IFF file"""
+
+        fileobj = filething.fileobj
+
+        iff_file = self._load_file(fileobj)
+
+        if 'ID3' not in iff_file:
+            iff_file.insert_chunk('ID3')
+
+        chunk = iff_file['ID3']
+
+        try:
+            data = self._prepare_data(
+                fileobj, chunk.data_offset, chunk.data_size, v2_version,
+                v23_sep, padding)
+        except ID3Error as e:
+            reraise(error, e, sys.exc_info()[2])
+
+        chunk.resize(len(data))
+        chunk.write(data)
+
+    @convert_error(IOError, error)
+    @loadfile(writable=True)
+    def delete(self, filething=None):
+        """Completely removes the ID3 chunk from the IFF file"""
+
+        try:
+            iff_file = self._load_file(filething.fileobj)
+            del iff_file['ID3']
+        except KeyError:
+            pass
+        self.clear()

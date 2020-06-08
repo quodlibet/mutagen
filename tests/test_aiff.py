@@ -175,7 +175,7 @@ class TAIFF(TestCase):
         self.assertEqual(AIFF(self.filename_1).tags._padding, 100)
 
         tags = AIFF(self.filename_1)
-        self.assertRaises(AIFFError, tags.save, padding=lambda x: -1)
+        self.assertRaises(IffError, tags.save, padding=lambda x: -1)
 
     def tearDown(self):
         os.unlink(self.filename_1)
