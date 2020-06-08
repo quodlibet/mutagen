@@ -108,7 +108,6 @@ class DSDIFFFile(IffFile):
 class DSDIFFInfo(StreamInfo):
 
     """DSDIFF stream information.
-    The length of the stream is just a guess and might not be correct.
 
     Attributes:
         channels (`int`): number of audio channels
@@ -217,7 +216,7 @@ class DSDIFF(FileType):
 
     An DSDIFF audio file.
 
-    For tagging ID3v2 data is added to a chunk with the ID `ID3 `.
+    For tagging ID3v2 data is added to a chunk with the ID "ID3 ".
 
     Arguments:
         filething (filething)
