@@ -220,13 +220,13 @@ def File(filething, options=None, easy=False):
         filething (filething)
         options: Sequence of :class:`FileType` implementations,
             defaults to all included ones.
-        easy (bool):  If the easy wrappers should be returnd if available.
+        easy (bool):  If the easy wrappers should be returned if available.
             For example :class:`EasyMP3 <mp3.EasyMP3>` instead of
             :class:`MP3 <mp3.MP3>`.
 
     Returns:
         FileType: A FileType instance for the detected type or `None` in case
-            the type couln't be determined.
+            the type couldn't be determined.
 
     Raises:
         MutagenError: in case the detected type fails to load the file.
