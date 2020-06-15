@@ -37,7 +37,11 @@ class InvalidMPEGHeader(error):
 
 @enum
 class BitrateMode(object):
-
+    # no-op to satisfy function for GAE's appstat module.
+    # If you use appstats in your project this will be necessary to
+    # satisfy the TypeError where __dict__ descriptor is needed. 
+    def __dict__(self, object):
+        return ''
     UNKNOWN = 0
     """Probably a CBR file, but not sure"""
 
