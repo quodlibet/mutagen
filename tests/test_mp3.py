@@ -72,6 +72,9 @@ class TMP3(TestCase):
         self.failUnlessEqual(self.mp3_3.info.mode, JOINTSTEREO)
         self.failUnlessEqual(self.mp3_4.info.mode, JOINTSTEREO)
 
+    def test_dict_descriptor(self):
+        self.assertEqual(self.mp3.__dict__, '')
+
     def test_replaygain(self):
         self.assertEqual(self.mp3_3.info.track_gain, 51.0)
         self.assertEqual(self.mp3_4.info.track_gain, 51.0)
