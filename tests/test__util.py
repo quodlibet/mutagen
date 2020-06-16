@@ -13,6 +13,7 @@ import random
 import tempfile
 import mmap
 import errno
+import pickle
 
 try:
     import fcntl
@@ -639,6 +640,12 @@ class Tdict_match(TestCase):
         self.assertEqual(dict_match({"[ab]": 1}, "[ab]"), None)
 
 
+@enum
+class ModuleFoo(object):
+    FOO = 1
+    BAR = 3
+
+
 class Tenum(TestCase):
 
     def test_enum(self):
@@ -659,6 +666,10 @@ class Tenum(TestCase):
 
         self.assertTrue(isinstance(str(Foo.FOO), str))
         self.assertTrue(isinstance(repr(Foo.FOO), str))
+
+    def test_enum_pickle(self):
+        assert pickle.loads(pickle.dumps(ModuleFoo.FOO)) == ModuleFoo.FOO
+        assert pickle.loads(pickle.dumps(ModuleFoo(0))) == ModuleFoo(0)
 
 
 class Tflags(TestCase):
