@@ -3,8 +3,9 @@
 import os
 from io import BytesIO
 
-from mutagen.aiff import AIFF, AIFFInfo, delete, IFFFile, IFFChunk
+from mutagen.aiff import AIFF, AIFFInfo, delete, AIFFFile, AIFFChunk
 from mutagen.aiff import error as AIFFError, read_float
+from mutagen._iff import error as IffError
 
 from tests import TestCase, DATA_DIR, get_temp_copy
 
@@ -84,7 +85,7 @@ class TAIFF(TestCase):
 
     def test_notaiff(self):
         self.failUnlessRaises(
-            AIFFError, AIFF, os.path.join(DATA_DIR, 'empty.ofr'))
+            IffError, AIFF, os.path.join(DATA_DIR, 'empty.ofr'))
 
     def test_pprint(self):
         self.failUnless(self.aiff_1.pprint())
@@ -153,7 +154,7 @@ class TAIFF(TestCase):
 
     def test_corrupt_tag(self):
         with open(self.filename_1, "r+b") as h:
-            chunk = IFFFile(h)[u'ID3']
+            chunk = AIFFFile(h)[u'ID3']
             h.seek(chunk.data_offset)
             h.seek(4, 1)
             h.write(b"\xff\xff")
@@ -174,7 +175,7 @@ class TAIFF(TestCase):
         self.assertEqual(AIFF(self.filename_1).tags._padding, 100)
 
         tags = AIFF(self.filename_1)
-        self.assertRaises(AIFFError, tags.save, padding=lambda x: -1)
+        self.assertRaises(IffError, tags.save, padding=lambda x: -1)
 
     def tearDown(self):
         os.unlink(self.filename_1)
@@ -185,26 +186,26 @@ class TAIFFInfo(TestCase):
 
     def test_empty(self):
         fileobj = BytesIO(b"")
-        self.failUnlessRaises(AIFFError, AIFFInfo, fileobj)
+        self.failUnlessRaises(IffError, AIFFInfo, fileobj)
 
 
-class TIFFFile(TestCase):
+class TAIFFFile(TestCase):
     has_tags = os.path.join(DATA_DIR, 'with-id3.aif')
     no_tags = os.path.join(DATA_DIR, '8k-1ch-1s-silence.aif')
 
     def setUp(self):
         self.file_1 = open(self.has_tags, 'rb')
-        self.iff_1 = IFFFile(self.file_1)
+        self.iff_1 = AIFFFile(self.file_1)
         self.file_2 = open(self.no_tags, 'rb')
-        self.iff_2 = IFFFile(self.file_2)
+        self.iff_2 = AIFFFile(self.file_2)
 
         self.tmp_1_name = get_temp_copy(self.has_tags)
         self.file_1_tmp = open(self.tmp_1_name, 'rb+')
-        self.iff_1_tmp = IFFFile(self.file_1_tmp)
+        self.iff_1_tmp = AIFFFile(self.file_1_tmp)
 
         self.tmp_2_name = get_temp_copy(self.no_tags)
         self.file_2_tmp = open(self.tmp_2_name, 'rb+')
-        self.iff_2_tmp = IFFFile(self.file_2_tmp)
+        self.iff_2_tmp = AIFFFile(self.file_2_tmp)
 
     def tearDown(self):
         self.file_1.close()
@@ -225,10 +226,10 @@ class TIFFFile(TestCase):
         self.failUnless(u'SSND' in self.iff_2)
 
     def test_is_chunks(self):
-        self.failUnless(isinstance(self.iff_1[u'FORM'], IFFChunk))
-        self.failUnless(isinstance(self.iff_1[u'COMM'], IFFChunk))
-        self.failUnless(isinstance(self.iff_1[u'SSND'], IFFChunk))
-        self.failUnless(isinstance(self.iff_1[u'ID3'], IFFChunk))
+        self.failUnless(isinstance(self.iff_1[u'FORM'], AIFFChunk))
+        self.failUnless(isinstance(self.iff_1[u'COMM'], AIFFChunk))
+        self.failUnless(isinstance(self.iff_1[u'SSND'], AIFFChunk))
+        self.failUnless(isinstance(self.iff_1[u'ID3'], AIFFChunk))
 
     def test_chunk_size(self):
         self.failUnlessEqual(self.iff_1[u'FORM'].size, 17096)
@@ -241,9 +242,9 @@ class TIFFFile(TestCase):
     def test_FORM_chunk_resize(self):
         self.iff_1_tmp[u'FORM'].resize(17000)
         self.failUnlessEqual(
-            IFFFile(self.file_1_tmp)[u'FORM'].data_size, 17000)
+            AIFFFile(self.file_1_tmp)[u'FORM'].data_size, 17000)
         self.iff_2_tmp[u'FORM'].resize(4)
-        self.failUnlessEqual(IFFFile(self.file_2_tmp)[u'FORM'].data_size, 4)
+        self.failUnlessEqual(AIFFFile(self.file_2_tmp)[u'FORM'].data_size, 4)
 
     def test_child_chunk_resize(self):
         self.iff_1_tmp[u'ID3'].resize(128)
@@ -252,26 +253,26 @@ class TIFFFile(TestCase):
         id3.write(b"\xff" * 128)
         self.assertEqual(id3.read(), b"\xff" * 128)
 
-        self.failUnlessEqual(IFFFile(self.file_1_tmp)[u'ID3'].data_size, 128)
+        self.failUnlessEqual(AIFFFile(self.file_1_tmp)[u'ID3'].data_size, 128)
         self.failUnlessEqual(
-            IFFFile(self.file_1_tmp)[u'FORM'].data_size, 16182)
+            AIFFFile(self.file_1_tmp)[u'FORM'].data_size, 16182)
 
     def test_chunk_delete(self):
         del self.iff_1_tmp[u'ID3']
         self.failIf(u'ID3' in self.iff_1_tmp)
-        self.failIf(u'ID3' in IFFFile(self.file_1_tmp))
-        self.failUnlessEqual(IFFFile(self.file_1_tmp)[u'FORM'].size, 16054)
+        self.failIf(u'ID3' in AIFFFile(self.file_1_tmp))
+        self.failUnlessEqual(AIFFFile(self.file_1_tmp)[u'FORM'].size, 16054)
         del self.iff_2_tmp[u'SSND']
         self.failIf(u'SSND' in self.iff_2_tmp)
-        self.failIf(u'SSND' in IFFFile(self.file_2_tmp))
-        self.failUnlessEqual(IFFFile(self.file_2_tmp)[u'FORM'].size, 38)
+        self.failIf(u'SSND' in AIFFFile(self.file_2_tmp))
+        self.failUnlessEqual(AIFFFile(self.file_2_tmp)[u'FORM'].size, 38)
 
     def test_insert_chunk(self):
         self.iff_2_tmp.insert_chunk(u'ID3')
 
-        new_iff = IFFFile(self.file_2_tmp)
+        new_iff = AIFFFile(self.file_2_tmp)
         self.failUnless(u'ID3' in new_iff)
-        self.failUnless(isinstance(new_iff[u'ID3'], IFFChunk))
+        self.failUnless(isinstance(new_iff[u'ID3'], AIFFChunk))
         self.failUnlessEqual(new_iff[u'FORM'].size, 16062)
         self.failUnlessEqual(new_iff[u'FORM'].data_size, 16054)
         self.failUnlessEqual(new_iff[u'ID3'].size, 8)
@@ -325,7 +326,7 @@ class TIFFFile(TestCase):
         self.failUnlessEqual(iff_file[u'TST2'].data_size, 2)
         self.failUnlessEqual(iff_file[u'TST2'].data_offset, 16062)
         # Reloading the file should give the same results
-        new_iff_file = IFFFile(self.file_2_tmp)
+        new_iff_file = AIFFFile(self.file_2_tmp)
         self.failUnlessEqual(new_iff_file[u'FORM'].size,
                              iff_file[u'FORM'].size)
         self.failUnlessEqual(new_iff_file[u'TST2'].size,
