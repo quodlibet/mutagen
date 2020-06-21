@@ -37,12 +37,6 @@ matrix:
       language: python
       python: "pypy3"
       env: TYPE="linux" PYVER="pypy3" PYARGS="-R -bb"
-    - os: osx
-      language: generic
-      env: TYPE="osx" PYVER="3" PYARGS="-R -bb"
-    - os: osx
-      language: generic
-      env: TYPE="osx" PYVER="2" PYARGS="-R"
 
 install:
   - if [ "$TYPE" == "osx" ]; then brew update; fi
