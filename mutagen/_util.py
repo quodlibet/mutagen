@@ -356,8 +356,16 @@ def enum(cls):
             return "<%s.%s: %d>" % (type(self).__name__, map_[self], int(self))
         return "%d" % int(self)
 
+    def getstate(self):
+        return {}
+
+    def setstate(self, state):
+        assert not state
+
     setattr(new_type, "__repr__", repr_)
     setattr(new_type, "__str__", str_)
+    setattr(new_type, "__getstate__", getstate)
+    setattr(new_type, "__setstate__", setstate)
 
     return new_type
 
