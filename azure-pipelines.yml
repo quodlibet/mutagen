@@ -25,12 +25,12 @@ jobs:
         versionSpec: '$(python.version)'
         architecture: '$(python.arch)'
     - script: |
-        pip install pytest pytest-xdist hypothesis coverage codecov flake8
+        pip install pytest hypothesis coverage codecov flake8
       displayName: Install Dependencies
     - script: |
         python.exe -m coverage run --branch setup.py test
       env:
-        PYTEST_ADDOPTS: '-n auto -v --junitxml=test-results.xml'
+        PYTEST_ADDOPTS: '-v --junitxml=test-results.xml'
         PYTHONHASHSEED: '0'
       displayName: Run Tests
     - task: PublishTestResults@2
