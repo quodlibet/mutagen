@@ -23,5 +23,8 @@ jobs:
       run: |
         python -m coverage run --branch setup.py test
         python -m coverage xml -i
+    - name: Run flake8
+      run: |
+        python -m flake8
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
