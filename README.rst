@@ -1,4 +1,4 @@
-.. image:: https://cdn.rawgit.com/quodlibet/mutagen/master/docs/images/logo.svg
+.. image:: https://raw.githubusercontent.com/quodlibet/mutagen/master/docs/images/logo.svg
    :align: center
    :width: 400px
 
