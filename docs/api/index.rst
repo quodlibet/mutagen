@@ -9,6 +9,7 @@ API Reference
     aiff
     ape
     asf
+    dsdiff
     dsf
     flac
     id3
