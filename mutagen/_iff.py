@@ -52,7 +52,7 @@ def is_valid_chunk_id(id):
     assert isinstance(id, str), \
         'id is of type %s, must be str: %r' % (type(id), id)
 
-    return ((len(id) <= 4) and (min(id) >= ' ') and
+    return ((0 < len(id) <= 4) and (min(id) >= ' ') and
             (max(id) <= '~'))
 
 
