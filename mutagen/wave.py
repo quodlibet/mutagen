@@ -95,12 +95,12 @@ class WaveStreamInfo(StreamInfo):
         if block_align > 0:
             try:
                 data_chunk = wave_file[u'data']
-                self.number_of_samples = data_chunk.data_size / block_align
+                self._number_of_samples = data_chunk.data_size / block_align
             except KeyError:
-                self.number_of_samples = 0
+                self._number_of_samples = 0
 
         if self.sample_rate > 0:
-            self.length = self.number_of_samples / self.sample_rate
+            self.length = self._number_of_samples / self.sample_rate
 
     def pprint(self):
         return u"%d channel RIFF @ %d bps, %s Hz, %.2f seconds" % (

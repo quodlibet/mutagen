@@ -44,9 +44,9 @@ class TWave(TestCase):
 
     def test_number_of_samples(self):
         self.failUnlessEqual(self.wav_pcm_2s_16000_08_ID3v23.
-                             info.number_of_samples, 32000)
+                             info._number_of_samples, 32000)
         self.failUnlessEqual(self.wav_pcm_2s_44100_16_ID3v23.
-                             info.number_of_samples, 88200)
+                             info._number_of_samples, 88200)
 
     def test_bits_per_sample(self):
         self.failUnlessEqual(self.wav_pcm_2s_16000_08_ID3v23.
