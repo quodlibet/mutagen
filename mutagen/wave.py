@@ -92,12 +92,13 @@ class WaveStreamInfo(StreamInfo):
         self.bitrate = self.channels * block_align * self.sample_rate
 
         # Calculate duration
+        self._number_of_samples = 0
         if block_align > 0:
             try:
                 data_chunk = wave_file[u'data']
                 self._number_of_samples = data_chunk.data_size / block_align
             except KeyError:
-                self._number_of_samples = 0
+                pass
 
         if self.sample_rate > 0:
             self.length = self._number_of_samples / self.sample_rate
