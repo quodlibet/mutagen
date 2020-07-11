@@ -1,3 +1,33 @@
+.. _release-1.45.0:
+
+1.45.0 - 2020-07-11
+-------------------
+
+* WAVE support with ID3 tags :pr:`408` (:user:`Philipp Wolfer <phw>`, :user:`Borewit`)
+* DSDIFF support with ID3 tags :pr:`473` :pr:`472` (:user:`Philipp Wolfer <phw>`)
+* MP4: Add support for nero chapters :pr:`398` (:user:`Martin Weinelt <mweinelt>`)
+* wavpack: add support for wavpack DSD :pr:`464` (:user:`Timothy Redaelli <drizzt>`)
+* wavpack: add bits_per_sample :pr:`467` (:user:`Timothy Redaelli <drizzt>`)
+* MP4: handle DecoderSpecificInfo with wrong instance size :pr:`465`
+* docs: various fixes :pr:`461` (:user:`Terence Eden <edent>`), :pr:`474` (:user:`naglis`)
+* tests: depend on flake8 now (instead of pycodestyle and pyflakes)
+* docs: fix warnings with sphinx v3
+
+Fuzzing related:
+
+* Fuzzing integration with `python-afl <https://github.com/jwilk/python-afl>`__ :pr:`449`
+* Fix various unhandled error cases in ogg, asf, oggvorbis, id3 :pr:`441`, :pr:`445`, :pr:`446`, :pr:`447`, :pr:`448`, :pr:`454` (:user:`Julien Voisin <jvoisin>`)
+* aac: Fix ZeroDivisionError in case frequency is unknown
+* musepack: handle truncated stream header
+* musepack: handle invalid sample rate index
+* musepack: handle duplicate RG/SH packets
+* oggtheora: handle truncated header packet
+* oggtheora: fail if FRN in the header packet is zero
+* oggtheora: handle empty pages in more cases
+* ogg: handle empty pages in to_packets()
+* aiff: handle overflow in read_float() :pr:`456`
+
+
 .. _release-1.43.1:
 
 1.43.1 - 2020-07-11
