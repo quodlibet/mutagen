@@ -95,8 +95,8 @@ class distcheck(sdist):
             assert process.returncode == 0
 
             tracked_files = out.splitlines()
-            for ignore in [".travis.yml", ".gitignore", ".codecov.yml",
-                           "azure-pipelines.yml"]:
+            for ignore in [".gitignore", ".codecov.yml", ".github/workflows/docs.yml",
+                           ".github/workflows/test.yml"]:
                 tracked_files.remove(ignore)
 
             tracked_files = [
