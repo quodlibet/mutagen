@@ -35,6 +35,8 @@ from mutagen.ac3 import AC3
 from mutagen.smf import SMF
 from mutagen.tak import TAK
 from mutagen.dsf import DSF
+from mutagen.wave import WAVE
+from mutagen.dsdiff import DSDIFF
 
 
 OPENERS = [
@@ -42,7 +44,7 @@ OPENERS = [
     FLAC, AIFF, APEv2File, MP4, ID3FileType, WavPack,
     Musepack, MonkeysAudio, OptimFROG, ASF, OggOpus, AC3,
     TAK, DSF, EasyMP3, EasyID3FileType, EasyTrueAudio, EasyMP4,
-    File, SMF, AAC, EasyID3, ID3, APEv2]
+    File, SMF, AAC, EasyID3, ID3, APEv2, WAVE, DSDIFF]
 
 # If you only want to test one:
 # OPENERS = [AAC]
