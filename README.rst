@@ -18,11 +18,5 @@ is licensed under the GPL version 2 or later.
 
 For more information visit https://mutagen.readthedocs.org
 
-.. image:: https://travis-ci.org/quodlibet/mutagen.svg?branch=master
-    :target: https://travis-ci.org/quodlibet/mutagen
-
-.. image:: https://dev.azure.com/quodlibet/mutagen/_apis/build/status/quodlibet.mutagen
-    :target: https://dev.azure.com/quodlibet/mutagen/_build/latest?definitionId=3
-
 .. image:: https://codecov.io/gh/quodlibet/mutagen/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/quodlibet/mutagen
