@@ -19,13 +19,6 @@ import errno
 import decimal
 from io import BytesIO
 
-try:
-    import mmap
-except ImportError:
-    # Google App Engine has no mmap:
-    #   https://github.com/quodlibet/mutagen/issues/286
-    mmap = None  # type: ignore
-
 from collections import namedtuple
 from contextlib import contextmanager
 from functools import wraps
@@ -687,64 +680,6 @@ def seek_end(fileobj, offset):
         fileobj.seek(-offset, 2)
 
 
-def mmap_move(fileobj, dest, src, count):
-    """Mmaps the file object if possible and moves 'count' data
-    from 'src' to 'dest'. All data has to be inside the file size
-    (enlarging the file through this function isn't possible)
-
-    Will adjust the file offset.
-
-    Args:
-        fileobj (fileobj)
-        dest (int): The destination offset
-        src (int): The source offset
-        count (int) The amount of data to move
-    Raises:
-        mmap.error: In case move failed
-        IOError: In case an operation on the fileobj fails
-        ValueError: In case invalid parameters were given
-    """
-
-    assert mmap is not None, "no mmap support"
-
-    if dest < 0 or src < 0 or count < 0:
-        raise ValueError("Invalid parameters")
-
-    try:
-        fileno = fileobj.fileno()
-    except (AttributeError, IOError):
-        raise mmap.error(
-            "File object does not expose/support a file descriptor")
-
-    fileobj.seek(0, 2)
-    filesize = fileobj.tell()
-    length = max(dest, src) + count
-
-    if length > filesize:
-        raise ValueError("Not in file size boundary")
-
-    offset = ((min(dest, src) // mmap.ALLOCATIONGRANULARITY) *
-              mmap.ALLOCATIONGRANULARITY)
-    assert dest >= offset
-    assert src >= offset
-    assert offset % mmap.ALLOCATIONGRANULARITY == 0
-
-    # Windows doesn't handle empty mappings, add a fast path here instead
-    if count == 0:
-        return
-
-    # fast path
-    if src == dest:
-        return
-
-    fileobj.flush()
-    file_map = mmap.mmap(fileno, length - offset, offset=offset)
-    try:
-        file_map.move(dest - offset, src - offset, count)
-    finally:
-        file_map.close()
-
-
 def resize_file(fobj, diff, BUFFER_SIZE=2 ** 16):
     """Resize a file by `diff`.
 
@@ -782,7 +717,7 @@ def resize_file(fobj, diff, BUFFER_SIZE=2 ** 16):
             raise
 
 
-def fallback_move(fobj, dest, src, count, BUFFER_SIZE=2 ** 16):
+def move_bytes(fobj, dest, src, count, BUFFER_SIZE=2 ** 16):
     """Moves data around using read()/write().
 
     Args:
@@ -829,8 +764,7 @@ def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
     """Insert size bytes of empty space starting at offset.
 
     fobj must be an open file object, open rb+ or
-    equivalent. Mutagen tries to use mmap to resize the file, but
-    falls back to a significantly slower method if mmap fails.
+    equivalent.
 
     Args:
         fobj (fileobj)
@@ -851,22 +785,14 @@ def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
         raise ValueError
 
     resize_file(fobj, size, BUFFER_SIZE)
-
-    if mmap is not None:
-        try:
-            mmap_move(fobj, offset + size, offset, movesize)
-        except mmap.error:
-            fallback_move(fobj, offset + size, offset, movesize, BUFFER_SIZE)
-    else:
-        fallback_move(fobj, offset + size, offset, movesize, BUFFER_SIZE)
+    move_bytes(fobj, offset + size, offset, movesize, BUFFER_SIZE)
 
 
 def delete_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
     """Delete size bytes of empty space starting at offset.
 
     fobj must be an open file object, open rb+ or
-    equivalent. Mutagen tries to use mmap to resize the file, but
-    falls back to a significantly slower method if mmap fails.
+    equivalent.
 
     Args:
         fobj (fileobj)
@@ -886,14 +812,7 @@ def delete_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
     if movesize < 0:
         raise ValueError
 
-    if mmap is not None:
-        try:
-            mmap_move(fobj, offset, offset + size, movesize)
-        except mmap.error:
-            fallback_move(fobj, offset, offset + size, movesize, BUFFER_SIZE)
-    else:
-        fallback_move(fobj, offset, offset + size, movesize, BUFFER_SIZE)
-
+    move_bytes(fobj, offset, offset + size, movesize, BUFFER_SIZE)
     resize_file(fobj, -size, BUFFER_SIZE)
 
 
