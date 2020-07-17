@@ -101,7 +101,7 @@ class IOInterface(object):
         """Returns the file descriptor (int) or raises IOError
         if there is none.
 
-        Will be used for mmap if available.
+        Will be used for low level operations if available.
         """
 
         raise NotImplementedError
