@@ -25,6 +25,9 @@ from functools import wraps
 from fnmatch import fnmatchcase
 
 
+_DEFAULT_BUFFER_SIZE = 2 ** 18
+
+
 def endswith(text, end):
     # usefull for paths which can be both, str and bytes
     if isinstance(text, str):
@@ -680,7 +683,7 @@ def seek_end(fileobj, offset):
         fileobj.seek(-offset, 2)
 
 
-def resize_file(fobj, diff, BUFFER_SIZE=2 ** 16):
+def resize_file(fobj, diff, BUFFER_SIZE=_DEFAULT_BUFFER_SIZE):
     """Resize a file by `diff`.
 
     New space will be filled with zeros.
@@ -717,7 +720,7 @@ def resize_file(fobj, diff, BUFFER_SIZE=2 ** 16):
             raise
 
 
-def move_bytes(fobj, dest, src, count, BUFFER_SIZE=2 ** 16):
+def move_bytes(fobj, dest, src, count, BUFFER_SIZE=_DEFAULT_BUFFER_SIZE):
     """Moves data around using read()/write().
 
     Args:
@@ -760,7 +763,7 @@ def move_bytes(fobj, dest, src, count, BUFFER_SIZE=2 ** 16):
         fobj.flush()
 
 
-def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
+def insert_bytes(fobj, size, offset, BUFFER_SIZE=_DEFAULT_BUFFER_SIZE):
     """Insert size bytes of empty space starting at offset.
 
     fobj must be an open file object, open rb+ or
@@ -788,7 +791,7 @@ def insert_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
     move_bytes(fobj, offset + size, offset, movesize, BUFFER_SIZE)
 
 
-def delete_bytes(fobj, size, offset, BUFFER_SIZE=2 ** 16):
+def delete_bytes(fobj, size, offset, BUFFER_SIZE=_DEFAULT_BUFFER_SIZE):
     """Delete size bytes of empty space starting at offset.
 
     fobj must be an open file object, open rb+ or
