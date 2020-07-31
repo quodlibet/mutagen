@@ -1,3 +1,12 @@
+.. _release-1.45.1:
+
+1.45.1 - 2020-07-31
+-------------------
+
+* Fix flake8 tests when run after calling ``setup.py build`` :bug:`482`
+* No longer use mmap when rewriting files. Fixes slow save performance with Windows network shares, ZFS and more :pr:`483` :pr:`484`
+
+
 .. _release-1.45.0:
 
 1.45.0 - 2020-07-11
