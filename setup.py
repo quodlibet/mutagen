@@ -280,7 +280,6 @@ if __name__ == "__main__":
           classifiers=[
             'Operating System :: OS Independent',
             'Programming Language :: Python :: 3',
-            'Programming Language :: Python :: 3.5',
             'Programming Language :: Python :: 3.6',
             'Programming Language :: Python :: 3.7',
             'Programming Language :: Python :: 3.8',
@@ -303,7 +302,7 @@ if __name__ == "__main__":
             ('share/man/man1', glob.glob("man/*.1")),
           ],
           python_requires=(
-            '>=3.5, <4'),
+            '>=3.6, <4'),
           entry_points={
             'console_scripts': [
               'mid3cp=mutagen._tools.mid3cp:entry_point',
