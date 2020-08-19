@@ -204,7 +204,7 @@ class DescriptorError(Exception):
 
 class BaseDescriptor(object):
 
-    TAG = None
+    TAG: int
 
     @classmethod
     def _parse_desc_length_file(cls, fileobj):

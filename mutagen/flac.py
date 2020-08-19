@@ -688,7 +688,6 @@ class FLAC(mutagen.FileType):
 
     _mimes = ["audio/flac", "audio/x-flac", "application/x-flac"]
 
-    info = None
     tags = None
 
     METADATA_BLOCKS = [StreamInfo, Padding, None, SeekTable, VCFLACDict,

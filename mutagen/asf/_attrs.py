@@ -9,6 +9,7 @@
 
 import sys
 import struct
+from typing import Dict, Type
 
 from mutagen._util import total_ordering, reraise
 
@@ -18,9 +19,9 @@ from ._util import ASFError
 class ASFBaseAttribute(object):
     """Generic attribute."""
 
-    TYPE = None
+    TYPE: int
 
-    _TYPES = {}
+    _TYPES: "Dict[int, Type[ASFBaseAttribute]]" = {}
 
     value = None
     """The Python value of this attribute (type depends on the class)"""

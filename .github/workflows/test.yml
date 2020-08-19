@@ -30,6 +30,12 @@ jobs:
       run: |
         python -m coverage run --branch setup.py test
         python -m coverage xml -i
+    - name: Install and run mypy
+      # mypy fails to install
+      if: matrix.python-version != 'pypy3'
+      run: |
+        pip install mypy
+        python -m mypy .
     - name: Run flake8
       run: |
         python -m flake8

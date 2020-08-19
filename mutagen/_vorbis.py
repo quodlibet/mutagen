@@ -208,7 +208,7 @@ class VComment(mutagen.Tags, list):
         return u"\n".join(tags)
 
 
-class VCommentDict(VComment, DictMixin):
+class VCommentDict(VComment, DictMixin):  # type: ignore
     """A VComment that looks like a dictionary.
 
     This object differs from a dictionary in two ways. First,

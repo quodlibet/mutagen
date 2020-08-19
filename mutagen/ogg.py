@@ -20,10 +20,13 @@ import struct
 import sys
 import zlib
 from io import BytesIO
+from typing import Type
 
 from mutagen import FileType
 from mutagen._util import cdata, resize_bytes, MutagenError, loadfile, \
     seek_end, bchr, reraise
+from mutagen._file import StreamInfo
+from mutagen._tags import Tags
 
 
 class error(MutagenError):
@@ -508,9 +511,9 @@ class OggFileType(FileType):
         filething (filething)
     """
 
-    _Info = None
-    _Tags = None
-    _Error = None
+    _Info: Type[StreamInfo]
+    _Tags: Type[Tags]
+    _Error: Type[error]
     _mimes = ["application/ogg", "application/x-ogg"]
 
     @loadfile()
