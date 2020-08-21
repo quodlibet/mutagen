@@ -98,4 +98,4 @@ class EasyTrueAudio(TrueAudio):
     """
 
     from mutagen.easyid3 import EasyID3 as ID3
-    ID3 = ID3
+    ID3 = ID3  # type: ignore

@@ -74,7 +74,7 @@ class ASFInfo(StreamInfo):
         return s
 
 
-class ASFTags(list, DictMixin, Tags):
+class ASFTags(list, DictMixin, Tags):  # type: ignore
     """ASFTags()
 
     Dictionary containing ASF attributes.

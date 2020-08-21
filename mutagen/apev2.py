@@ -517,7 +517,7 @@ def APEValue(value, kind):
 
 class _APEValue(object):
 
-    kind = None
+    kind: int
     value = None
 
     def __init__(self, value, kind=None):
