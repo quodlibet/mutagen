@@ -298,6 +298,9 @@ if __name__ == "__main__":
             "mutagen._senf",
             "mutagen._tools",
           ],
+          package_data={
+            "mutagen": ["py.typed"],
+          },
           data_files=[
             ('share/man/man1', glob.glob("man/*.1")),
           ],

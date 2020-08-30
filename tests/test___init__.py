@@ -697,7 +697,7 @@ class TModuleImportAll(TestCase):
     def setUp(self):
         import mutagen
         files = os.listdir(mutagen.__path__[0])
-        modules = set(os.path.splitext(f)[0] for f in files)
+        modules = set(os.path.splitext(f)[0] for f in files if f not in ['py.typed'])
         modules = [f for f in modules if not f.startswith(("_", "."))]
 
         self.modules = []
