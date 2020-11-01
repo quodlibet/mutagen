@@ -797,7 +797,7 @@ class FLAC(mutagen.FileType):
             pass
 
         try:
-            self.metadata_blocks[0].length
+            self.info.length
         except (AttributeError, IndexError):
             raise FLACNoHeaderError("Stream info block not found")
 
@@ -811,7 +811,11 @@ class FLAC(mutagen.FileType):
 
     @property
     def info(self):
-        return self.metadata_blocks[0]
+        streaminfo_blocks = [
+            block for block in self.metadata_blocks
+            if block.code == StreamInfo.code
+        ]
+        return streaminfo_blocks[0]
 
     def add_picture(self, picture):
         """Add a new picture to the file.
