@@ -479,6 +479,7 @@ for frameid, key in {
     "TLEN": "length",
     "TMED": "media",
     "TMOO": "mood",
+    "TIT1": "grouping",
     "TIT2": "title",
     "TIT3": "version",
     "TPE1": "artist",
