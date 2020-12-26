@@ -258,11 +258,24 @@ def write_files(edits, filenames, escape):
 
                         encoding = get_frame_encoding(frame, desc)
 
-                        try:
-                            with open(fn, "rb") as h:
-                                data = h.read()
-                        except IOError as e:
-                            error(str(e))
+# START - J.Smolka (ttimer) - Mime type: -->
+# With mime type '-->' a URL has to be stored in 'data' instead of the embedded picture.
+#
+#                       try:
+#                           with open(fn, "rb") as h:
+#                               data = h.read()
+#                       except IOError as e:
+#                           error(str(e))
+
+                        if mime == "-->":
+                            data = fn
+                        else:
+                            try:
+                                with open(fn, "rb") as h:
+                                    data = h.read()
+                            except IOError as e:
+                                error(text_type(e))
+# END - J.Smolka (ttimer) - Mime type: -->
 
                         frame = mutagen.id3.APIC(encoding=encoding, mime=mime,
                             desc=desc, type=picture_type, data=data)
