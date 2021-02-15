@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "mutagen"
+version = "1.45.2"
+description = "read and write audio tags for many formats"
+authors = []
+
+[tool.poetry.dependencies]
+python = "^3.6"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.2"
+hypothesis = "^6.2.0"
+flake8 = "^3.8.4"
+mypy = {version = "^0.800", markers = "platform_python_implementation != 'PyPy'"}
+coverage = "^5.4"
+Sphinx = "^3.5.0"
+sphinx-rtd-theme = "^0.5.1"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+
+[tool.pytest.ini_options]
+markers = ["quality"]
+
+[tool.coverage.run]
+include=["mutagen/*", "tests/*"]
+omit=["mutagen/_senf/*"]
