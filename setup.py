@@ -248,7 +248,7 @@ if __name__ == "__main__":
 
     from mutagen import version
 
-    with open('README.rst') as h:
+    with open('README.rst', encoding='utf-8') as h:
         long_description = h.read()
 
     # convert to a setuptools compatible version string
