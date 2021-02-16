@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2005  Michael Urman
 #               2013  Christoph Reiter
 #               2014  Ben Ockmore

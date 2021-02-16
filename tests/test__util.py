@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes, \
     decode_terminated, dict_match, enum, get_size, BitReader, BitReaderError, \

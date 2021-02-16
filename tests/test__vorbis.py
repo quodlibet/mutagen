@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 from tests import TestCase
 from mutagen._vorbis import VComment, VCommentDict, istag, error
