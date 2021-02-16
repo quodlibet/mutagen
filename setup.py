@@ -15,7 +15,6 @@ import subprocess
 import tarfile
 
 from setuptools import setup, Command, Distribution
-from distutils import dir_util
 
 
 def get_command_class(name):
@@ -112,7 +111,7 @@ class distcheck(sdist):
 
         distcheck_dir = os.path.join(self.dist_dir, "distcheck")
         if os.path.exists(distcheck_dir):
-            dir_util.remove_tree(distcheck_dir)
+            shutil.rmtree(distcheck_dir)
         self.mkpath(distcheck_dir)
 
         archive = self.get_archive_files()[0]
