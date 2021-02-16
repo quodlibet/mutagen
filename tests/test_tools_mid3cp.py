@@ -16,7 +16,6 @@ import shutil
 
 import mutagen.id3
 from mutagen.id3 import ID3, ParseID3v1
-from mutagen._senf import fsnative as fsn
 
 from tests.test_tools import _TTools
 from tests import DATA_DIR
@@ -28,12 +27,12 @@ class TMid3cp(_TTools):
 
     def setUp(self):
         super(TMid3cp, self).setUp()
-        original = os.path.join(DATA_DIR, fsn(u'silence-44-s.mp3'))
-        fd, self.filename = mkstemp(suffix=fsn(u'öäü.mp3'))
+        original = os.path.join(DATA_DIR, 'silence-44-s.mp3')
+        fd, self.filename = mkstemp(suffix='öäü.mp3')
         os.close(fd)
         shutil.copy(original, self.filename)
 
-        fd, self.blank_file = mkstemp(suffix=fsn(u'.mp3'))
+        fd, self.blank_file = mkstemp(suffix='.mp3')
         os.close(fd)
 
     def tearDown(self):
@@ -52,7 +51,7 @@ class TMid3cp(_TTools):
         target.save(self.blank_file, v2_version=4)
 
         res, out, err = self.call2(
-            self.filename, self.blank_file, fsn(u"--merge"))
+            self.filename, self.blank_file, "--merge")
         assert not any([res, out, err])
 
         result = ID3(self.blank_file)
@@ -68,7 +67,7 @@ class TMid3cp(_TTools):
         with open(self.blank_file, "wb") as h:
             h.write(b"SOMEDATA")
         res, out, err = self.call2(
-            self.filename, self.blank_file, fsn(u"--merge"))
+            self.filename, self.blank_file, "--merge")
         assert not any([res, out, err])
 
         result = ID3(self.blank_file)
@@ -105,7 +104,7 @@ class TMid3cp(_TTools):
             self.failUnlessEqual(copied_id3[key], original_id3[key])
 
     def test_include_id3v1(self):
-        self.call(fsn(u'--write-v1'), self.filename, self.blank_file)
+        self.call('--write-v1', self.filename, self.blank_file)
 
         with open(self.blank_file, 'rb') as fileobj:
             fileobj.seek(-128, 2)
@@ -116,10 +115,10 @@ class TMid3cp(_TTools):
         self.failUnless(frames)
 
     def test_exclude_tag_unicode(self):
-        self.call(fsn(u'-x'), fsn(u''), self.filename, self.blank_file)
+        self.call('-x', '', self.filename, self.blank_file)
 
     def test_exclude_single_tag(self):
-        self.call(fsn(u'-x'), fsn(u'TLEN'), self.filename, self.blank_file)
+        self.call('-x', 'TLEN', self.filename, self.blank_file)
 
         original_id3 = ID3(self.filename)
         copied_id3 = ID3(self.blank_file)
@@ -128,8 +127,8 @@ class TMid3cp(_TTools):
         self.failIf('TLEN' in copied_id3)
 
     def test_exclude_multiple_tag(self):
-        self.call(fsn(u'-x'), fsn(u'TLEN'), fsn(u'-x'), fsn(u'TCON'),
-                  fsn(u'-x'), fsn(u'TALB'), self.filename, self.blank_file)
+        self.call('-x', 'TLEN', '-x', 'TCON',
+                  '-x', 'TALB', self.filename, self.blank_file)
 
         original_id3 = ID3(self.filename)
         copied_id3 = ID3(self.blank_file)
@@ -142,7 +141,7 @@ class TMid3cp(_TTools):
         self.failIf('TALB' in copied_id3)
 
     def test_no_src_header(self):
-        fd, blank_file2 = mkstemp(suffix=fsn(u'.mp3'))
+        fd, blank_file2 = mkstemp(suffix='.mp3')
         os.close(fd)
         try:
             err = self.call2(self.blank_file, blank_file2)[2]
@@ -151,7 +150,7 @@ class TMid3cp(_TTools):
             os.unlink(blank_file2)
 
     def test_verbose(self):
-        err = self.call2(self.filename, fsn(u"--verbose"), self.blank_file)[2]
+        err = self.call2(self.filename, "--verbose", self.blank_file)[2]
         self.failUnless('mp3 contains:' in err)
         self.failUnless('Successfully saved' in err)
 
@@ -169,7 +168,7 @@ class TMid3cp(_TTools):
         status, out, err = self.call2(self.blank_file, self.filename)
         self.assertTrue(status)
 
-        status, out, err = self.call2(fsn(u""), self.filename)
+        status, out, err = self.call2("", self.filename)
         self.assertTrue(status)
 
         status, out, err = self.call2(self.filename, self.blank_file)

@@ -6,7 +6,6 @@ import locale
 
 import mutagen
 from mutagen.id3 import ID3
-from mutagen._senf import fsnative as fsn
 
 from tests.test_tools import _TTools
 from tests import DATA_DIR
@@ -18,9 +17,9 @@ class TMid3v2(_TTools):
 
     def setUp(self):
         super(TMid3v2, self).setUp()
-        original = os.path.join(DATA_DIR, fsn(u'silence-44-s.mp3'))
-        fd, self.filename = mkstemp(suffix=fsn(u'öäü.mp3'))
-        assert isinstance(self.filename, fsn)
+        original = os.path.join(DATA_DIR, 'silence-44-s.mp3')
+        fd, self.filename = mkstemp(suffix='öäü.mp3')
+        assert isinstance(self.filename, str)
         os.close(fd)
         shutil.copy(original, self.filename)
 
@@ -31,17 +30,17 @@ class TMid3v2(_TTools):
     def test_no_tags(self):
         f = ID3(self.filename)
         f.delete()
-        res, out, err = self.call2(fsn(u"-l"), self.filename)
+        res, out, err = self.call2("-l", self.filename)
         self.assertTrue("No ID3 header found" in out)
 
     def test_list_genres(self):
-        for arg in [fsn(u"-L"), fsn(u"--list-genres")]:
+        for arg in ["-L", "--list-genres"]:
             res, out = self.call(arg)
             self.failUnlessEqual(res, 0)
             self.failUnless("Acid Punk" in out)
 
     def test_list_frames(self):
-        for arg in [fsn(u"-f"), fsn(u"--list-frames")]:
+        for arg in ["-f", "--list-frames"]:
             res, out = self.call(arg)
             self.failUnlessEqual(res, 0)
             self.failUnless("--APIC" in out)
@@ -50,20 +49,20 @@ class TMid3v2(_TTools):
     def test_list(self):
         f = ID3(self.filename)
         album = f["TALB"].text[0]
-        for arg in [fsn(u"-l"), fsn(u"--list")]:
+        for arg in ["-l", "--list"]:
             res, out = self.call(arg, self.filename)
             self.assertFalse("b'" in out)
             self.failUnlessEqual(res, 0)
-            self.failUnless("TALB=" + fsn(album) in out)
+            self.failUnless("TALB=" + album in out)
 
     def test_list_raw(self):
         f = ID3(self.filename)
-        res, out = self.call(fsn(u"--list-raw"), self.filename)
+        res, out = self.call("--list-raw", self.filename)
         self.failUnlessEqual(res, 0)
         self.failUnless(repr(f["TALB"]) in out)
 
     def _test_text_frame(self, short, longer, frame):
-        new_value = fsn(u"TEST")
+        new_value = "TEST"
         for arg in [short, longer]:
             orig = ID3(self.filename)
             frame_class = mutagen.id3.Frames[frame]
@@ -76,24 +75,24 @@ class TMid3v2(_TTools):
             self.failUnlessEqual(ID3(self.filename)[frame].text, [new_value])
 
     def test_artist(self):
-        self._test_text_frame(fsn(u"-a"), fsn(u"--artist"), "TPE1")
+        self._test_text_frame("-a", "--artist", "TPE1")
 
     def test_album(self):
-        self._test_text_frame(fsn(u"-A"), fsn(u"--album"), "TALB")
+        self._test_text_frame("-A", "--album", "TALB")
 
     def test_title(self):
-        self._test_text_frame(fsn(u"-t"), fsn(u"--song"), "TIT2")
+        self._test_text_frame("-t", "--song", "TIT2")
 
     def test_genre(self):
-        self._test_text_frame(fsn(u"-g"), fsn(u"--genre"), "TCON")
+        self._test_text_frame("-g", "--genre", "TCON")
 
     def test_convert(self):
-        res, out = self.call(fsn(u"--convert"), self.filename)
+        res, out = self.call("--convert", self.filename)
         self.failUnlessEqual((res, out), (0, ""))
 
     def test_artist_escape(self):
         res, out = self.call(
-            fsn(u"-e"), fsn(u"-a"), fsn(u"foo\\nbar"), self.filename)
+            "-e", "-a", "foo\\nbar", self.filename)
         self.failUnlessEqual(res, 0)
         self.failIf(out)
         f = ID3(self.filename)
@@ -101,8 +100,8 @@ class TMid3v2(_TTools):
 
     def test_txxx_escape(self):
         res, out = self.call(
-            fsn(u"-e"), fsn(u"--TXXX"),
-            fsn(u"EscapeTest\\\\:\\\\:albumartist:Ex\\\\:ample"),
+            "-e", "--TXXX",
+            "EscapeTest\\\\:\\\\:albumartist:Ex\\\\:ample",
             self.filename)
         self.failUnlessEqual(res, 0)
         self.failIf(out)
@@ -113,7 +112,7 @@ class TMid3v2(_TTools):
         self.failUnlessEqual(frame.text, [u"Ex:ample"])
 
     def test_txxx(self):
-        res, out = self.call(fsn(u"--TXXX"), fsn(u"A\\:B:C"), self.filename)
+        res, out = self.call("--TXXX", "A\\:B:C", self.filename)
         self.failUnlessEqual((res, out), (0, ""))
 
         f = ID3(self.filename)
@@ -123,15 +122,15 @@ class TMid3v2(_TTools):
 
     def test_txxx_multiple(self):
         res, out = self.call(
-            fsn(u"--TXXX"), fsn(u"A:B"),
-            fsn(u"--TXXX"), fsn(u"C:D"),
+            "--TXXX", "A:B",
+            "--TXXX", "C:D",
             self.filename)
         self.failUnlessEqual((res, out), (0, ""))
         f = ID3(self.filename)
         assert len(f.getall("TXXX")) == 2
 
     def test_wcom(self):
-        res, out = self.call(fsn(u"--WCOM"), fsn(u"foo"), self.filename)
+        res, out = self.call("--WCOM", "foo", self.filename)
         self.failUnlessEqual((res, out), (0, ""))
         f = ID3(self.filename)
         frames = f.getall("WCOM")
@@ -140,8 +139,8 @@ class TMid3v2(_TTools):
 
     def test_wcom_multiple(self):
         res, out = self.call(
-            fsn(u"--WCOM"), fsn(u"foo"),
-            fsn(u"--WCOM"), fsn(u"bar"),
+            "--WCOM", "foo",
+            "--WCOM", "bar",
             self.filename)
         self.failUnlessEqual((res, out), (0, ""))
         f = ID3(self.filename)
@@ -150,7 +149,7 @@ class TMid3v2(_TTools):
         assert frames[0].url == "bar"
 
     def test_wxxx(self):
-        res, out = self.call(fsn(u"--WXXX"), fsn(u"foobar"), self.filename)
+        res, out = self.call("--WXXX", "foobar", self.filename)
         self.failUnlessEqual((res, out), (0, ""))
         f = ID3(self.filename)
         frames = f.getall("WXXX")
@@ -159,7 +158,7 @@ class TMid3v2(_TTools):
 
     def test_wxxx_escape(self):
         res, out = self.call(
-            fsn(u"-e"), fsn(u"--WXXX"), fsn(u"http\\://example.com/"),
+            "-e", "--WXXX", "http\\://example.com/",
             self.filename)
         self.failUnlessEqual((res, out), (0, ""))
         f = ID3(self.filename)
@@ -168,8 +167,8 @@ class TMid3v2(_TTools):
 
     def test_wxxx_multiple(self):
         res, out = self.call(
-            fsn(u"--WXXX"), fsn(u"A:B"),
-            fsn(u"--WXXX"), fsn(u"C:D"),
+            "--WXXX", "A:B",
+            "--WXXX", "C:D",
             self.filename)
         self.failUnlessEqual((res, out), (0, ""))
         f = ID3(self.filename)
@@ -182,7 +181,7 @@ class TMid3v2(_TTools):
 
     def test_ufid(self):
         res, out, err = self.call2(
-            fsn(u"--UFID"), fsn(u"foo:bar"), self.filename)
+            "--UFID", "foo:bar", self.filename)
         self.assertEqual((res, out, err), (0, "", ""))
 
         f = ID3(self.filename)
@@ -191,7 +190,7 @@ class TMid3v2(_TTools):
         self.assertEqual(frame.data, b"bar")
 
     def test_comm1(self):
-        res, out = self.call(fsn(u"--COMM"), fsn(u"A"), self.filename)
+        res, out = self.call("--COMM", "A", self.filename)
         self.failUnlessEqual((res, out), (0, ""))
 
         f = ID3(self.filename)
@@ -200,7 +199,7 @@ class TMid3v2(_TTools):
         self.failUnlessEqual(frame.text, ["A"])
 
     def test_comm2(self):
-        res, out = self.call(fsn(u"--COMM"), fsn(u"Y:B"), self.filename)
+        res, out = self.call("--COMM", "Y:B", self.filename)
         self.failUnlessEqual((res, out), (0, ""))
 
         f = ID3(self.filename)
@@ -210,7 +209,7 @@ class TMid3v2(_TTools):
 
     def test_comm2_escape(self):
         res, out = self.call(
-            fsn(u"-e"), fsn(u"--COMM"), fsn(u"Y\\\\:B\\nG"), self.filename)
+            "-e", "--COMM", "Y\\\\:B\\nG", self.filename)
         self.failUnlessEqual((res, out), (0, ""))
 
         f = ID3(self.filename)
@@ -220,7 +219,7 @@ class TMid3v2(_TTools):
 
     def test_comm3(self):
         res, out = self.call(
-            fsn(u"--COMM"), fsn(u"Z:B:C:D:ger"), self.filename)
+            "--COMM", "Z:B:C:D:ger", self.filename)
         self.failUnlessEqual((res, out), (0, ""))
 
         f = ID3(self.filename)
@@ -230,7 +229,7 @@ class TMid3v2(_TTools):
         self.failUnlessEqual(frame.lang, "ger")
 
     def test_USLT(self):
-        res, out = self.call(fsn(u"--USLT"), fsn(u"Y:foo"), self.filename)
+        res, out = self.call("--USLT", "Y:foo", self.filename)
         assert (res, out) == (0, "")
 
         f = ID3(self.filename)
@@ -239,7 +238,7 @@ class TMid3v2(_TTools):
         assert frame.text == "foo"
         assert frame.lang == "eng"
 
-        res, out = self.call(fsn(u"--USLT"), fsn(u"Z:bar:ger"), self.filename)
+        res, out = self.call("--USLT", "Z:bar:ger", self.filename)
         assert (res, out) == (0, "")
 
         f = ID3(self.filename)
@@ -248,7 +247,7 @@ class TMid3v2(_TTools):
         assert frame.text == "bar"
         assert frame.lang == "ger"
 
-        res, out = self.call(fsn(u"--USLT"), fsn(u"X"), self.filename)
+        res, out = self.call("--USLT", "X", self.filename)
         assert (res, out) == (0, "")
 
         f = ID3(self.filename)
@@ -261,7 +260,7 @@ class TMid3v2(_TTools):
         image_path = os.path.join(DATA_DIR, "image.jpg")
         image_path = os.path.relpath(image_path)
         res, out, err = self.call2(
-            fsn(u"--APIC"), image_path + fsn(u":fooAPIC:3:image/jpeg"),
+            "--APIC", image_path + ":fooAPIC:3:image/jpeg",
             self.filename)
         self.failUnlessEqual((res, out, err), (0, "", ""))
 
@@ -274,20 +273,20 @@ class TMid3v2(_TTools):
         self.assertEqual(frame.mime, "image/jpeg")
         self.assertEqual(frame.data, data)
 
-        res, out = self.call(fsn(u"--list"), self.filename)
+        res, out = self.call("--list", self.filename)
         self.assertEqual(res, 0)
         self.assertTrue("fooAPIC" in out)
 
     def test_encoding_with_escape(self):
         text = u'\xe4\xf6\xfc'
-        res, out = self.call(fsn(u"-e"), fsn(u"-a"), text, self.filename)
+        res, out = self.call("-e", "-a", text, self.filename)
         self.failUnlessEqual((res, out), (0, ""))
         f = ID3(self.filename)
         self.assertEqual(f.getall("TPE1")[0], text)
 
     def test_invalid_encoding_escaped(self):
         res, out, err = self.call2(
-            fsn(u"--TALB"), fsn(u'\\xff\\x81'), fsn(u'-e'), self.filename)
+            "--TALB", '\\xff\\x81', '-e', self.filename)
         self.failIfEqual(res, 0)
         self.failUnless("TALB" in err)
 
@@ -315,19 +314,19 @@ class TMid3v2(_TTools):
 
     def test_invalid_escape(self):
         res, out, err = self.call2(
-            fsn(u"--TALB"), fsn(u'\\xaz'), fsn(u'-e'), self.filename)
+            "--TALB", '\\xaz', '-e', self.filename)
         self.failIfEqual(res, 0)
         self.failUnless("TALB" in err)
 
         res, out, err = self.call2(
-            fsn(u"--TALB"), fsn(u'\\'), fsn(u'-e'), self.filename)
+            "--TALB", '\\', '-e', self.filename)
         self.failIfEqual(res, 0)
         self.failUnless("TALB" in err)
 
     def test_value_from_fsnative(self):
         vffs = self.get_var("value_from_fsnative")
-        self.assertEqual(vffs(fsn(u"öäü\\n"), True), u"öäü\n")
-        self.assertEqual(vffs(fsn(u"öäü\\n"), False), u"öäü\\n")
+        self.assertEqual(vffs("öäü\\n", True), u"öäü\n")
+        self.assertEqual(vffs("öäü\\n", False), u"öäü\\n")
 
         if os.name != "nt":
             se = b"\xff".decode("utf-8", "surrogateescape")
@@ -335,6 +334,6 @@ class TMid3v2(_TTools):
 
     def test_frame_from_fsnative(self):
         fffs = self.get_var("frame_from_fsnative")
-        self.assertTrue(isinstance(fffs(fsn(u"abc")), str))
-        self.assertEqual(fffs(fsn(u"abc")), "abc")
-        self.assertRaises(ValueError, fffs, fsn(u"öäü"))
+        self.assertTrue(isinstance(fffs("abc"), str))
+        self.assertEqual(fffs("abc"), "abc")
+        self.assertRaises(ValueError, fffs, "öäü")

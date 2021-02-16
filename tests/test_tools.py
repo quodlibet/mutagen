@@ -3,8 +3,6 @@ import sys
 import importlib
 from io import StringIO
 
-from mutagen._senf import fsnative
-
 from tests import TestCase
 
 
@@ -26,7 +24,7 @@ class _TTools(TestCase):
 
     def call2(self, *args):
         for arg in args:
-            self.assertTrue(isinstance(arg, fsnative))
+            self.assertTrue(isinstance(arg, str))
         old_stdout = sys.stdout
         old_stderr = sys.stderr
         try:
@@ -35,7 +33,7 @@ class _TTools(TestCase):
             sys.stdout = out
             sys.stderr = err
             try:
-                ret = self._main([fsnative(self.TOOL_NAME)] + list(args))
+                ret = self._main([self.TOOL_NAME] + list(args))
             except SystemExit as e:
                 ret = e.code
             ret = ret or 0
