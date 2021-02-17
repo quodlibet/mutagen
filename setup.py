@@ -293,7 +293,6 @@ if __name__ == "__main__":
             "mutagen.mp4",
             "mutagen.asf",
             "mutagen.mp3",
-            "mutagen._senf",
             "mutagen._tools",
           ],
           package_data={
