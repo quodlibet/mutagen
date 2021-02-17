@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2005 Joe Wreschnig
 #
 # This program is free software; you can redistribute it and/or modify
@@ -8,7 +7,7 @@
 
 """Full tag list for any given file."""
 
-from mutagen._senf import print_, argv
+import sys
 
 from ._util import SignalHandler, OptionParser
 
@@ -29,16 +28,16 @@ def main(argv):
         raise SystemExit(parser.print_help() or 1)
 
     for filename in args:
-        print_(u"--", filename)
+        print(u"--", filename)
         try:
-            print_(u"-", File(filename).pprint())
+            print(u"-", File(filename).pprint())
         except AttributeError:
-            print_(u"- Unknown file type")
+            print(u"- Unknown file type")
         except Exception as err:
-            print_(str(err))
-        print_(u"")
+            print(str(err))
+        print(u"")
 
 
 def entry_point():
     _sig.init()
-    return main(argv)
+    return main(sys.argv)

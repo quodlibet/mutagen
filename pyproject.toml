@@ -24,4 +24,3 @@ markers = ["quality"]
 
 [tool.coverage.run]
 include=["mutagen/*", "tests/*"]
-omit=["mutagen/_senf/*"]

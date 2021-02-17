@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
 
 import os
 
 from mutagen.id3 import ID3
-from mutagen._senf import fsnative as fsn
 
 from tests.test_tools import _TTools
 from tests import DATA_DIR, get_temp_copy
@@ -22,7 +20,7 @@ class TMid3Iconv(_TTools):
     def setUp(self):
         super(TMid3Iconv, self).setUp()
         self.filename = get_temp_copy(
-            os.path.join(DATA_DIR, fsn(u'silence-44-s.mp3')))
+            os.path.join(DATA_DIR, 'silence-44-s.mp3'))
 
     def tearDown(self):
         super(TMid3Iconv, self).tearDown()
@@ -34,13 +32,13 @@ class TMid3Iconv(_TTools):
         self.failUnless("Usage:" in out)
 
     def test_debug(self):
-        res, out = self.call(fsn(u"-d"), fsn(u"-p"), self.filename)
+        res, out = self.call("-d", "-p", self.filename)
         self.failIf(res)
         self.assertFalse("b'" in out)
         self.failUnless("TCON=Silence" in out)
 
     def test_quiet(self):
-        res, out = self.call(fsn(u"-q"), self.filename)
+        res, out = self.call("-q", self.filename)
         self.failIf(res)
         self.failIf(out)
 
@@ -58,7 +56,7 @@ class TMid3Iconv(_TTools):
             f.add(TALB(text=[AMBIGUOUS.decode("latin-1")], encoding=0))
             f.save()
             res, out = self.call(
-                fsn(u"-d"), fsn(u"-e"), fsn(str(codec)), self.filename)
+                "-d", "-e", str(codec), self.filename)
             f = ID3(self.filename)
             self.failUnlessEqual(f["TALB"].encoding, 1)
             self.failUnlessEqual(f["TALB"].text[0], AMBIGUOUS.decode(codec))
@@ -73,7 +71,7 @@ class TMid3Iconv(_TTools):
             f.add(frame)
             f.save()
             res, out = self.call(
-                fsn(u"-d"), fsn(u"-e"), fsn(str(codec)), self.filename)
+                "-d", "-e", str(codec), self.filename)
             f = ID3(self.filename)
             new_frame = f[frame.HashKey]
             self.failUnlessEqual(new_frame.encoding, 1)
@@ -81,7 +79,7 @@ class TMid3Iconv(_TTools):
 
     def test_remove_v1(self):
         from mutagen.id3 import ParseID3v1
-        res, out = self.call(fsn(u"--remove-v1"), self.filename)
+        res, out = self.call("--remove-v1", self.filename)
 
         with open(self.filename, "rb") as h:
             h.seek(-128, 2)

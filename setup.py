@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Copyright 2005-2009,2011 Joe Wreschnig
 #
 # This program is free software; you can redistribute it and/or modify
@@ -15,7 +14,6 @@ import subprocess
 import tarfile
 
 from setuptools import setup, Command, Distribution
-from distutils import dir_util
 
 
 def get_command_class(name):
@@ -112,7 +110,7 @@ class distcheck(sdist):
 
         distcheck_dir = os.path.join(self.dist_dir, "distcheck")
         if os.path.exists(distcheck_dir):
-            dir_util.remove_tree(distcheck_dir)
+            shutil.rmtree(distcheck_dir)
         self.mkpath(distcheck_dir)
 
         archive = self.get_archive_files()[0]
@@ -250,7 +248,7 @@ if __name__ == "__main__":
 
     from mutagen import version
 
-    with open('README.rst') as h:
+    with open('README.rst', encoding='utf-8') as h:
         long_description = h.read()
 
     # convert to a setuptools compatible version string
@@ -295,7 +293,6 @@ if __name__ == "__main__":
             "mutagen.mp4",
             "mutagen.asf",
             "mutagen.mp3",
-            "mutagen._senf",
             "mutagen._tools",
           ],
           package_data={

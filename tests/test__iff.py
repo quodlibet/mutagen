@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 from mutagen._iff import is_valid_chunk_id
 

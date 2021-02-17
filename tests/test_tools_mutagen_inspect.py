@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
 
 import os
 import glob
 
 from tests.test_tools import _TTools
-
-from mutagen._senf import fsnative as fsn
 
 
 class TMutagenInspect(_TTools):
@@ -13,7 +10,7 @@ class TMutagenInspect(_TTools):
     TOOL_NAME = u"mutagen-inspect"
 
     def test_basic(self):
-        base = os.path.join(fsn(u'tests'), fsn(u'data'))
+        base = os.path.join('tests', 'data')
         self.paths = glob.glob(os.path.join(base, "empty*"))
         self.paths += glob.glob(os.path.join(base, "silence-*"))
 

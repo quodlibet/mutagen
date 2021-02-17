@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2008  Lukáš Lalinský
 # Copyright (C) 2019  Philipp Wolfer
 #

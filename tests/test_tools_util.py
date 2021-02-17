@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 from mutagen._tools._util import split_escape
 
