@@ -8,9 +8,9 @@
 """Split a multiplex/chained Ogg file into its component parts."""
 
 import os
+import sys
 
 import mutagen.ogg
-from mutagen._senf import argv
 
 from ._util import SignalHandler, OptionParser
 
@@ -71,4 +71,4 @@ def main(argv):
 
 def entry_point():
     _sig.init()
-    return main(argv)
+    return main(sys.argv)
