@@ -6,6 +6,10 @@ authors = []
 
 [tool.poetry.dependencies]
 python = "^3.6"
+python-afl = {version = "^0.7.3", optional = true}
+
+[tool.poetry.extras]
+fuzzing-dev = ["python-afl"]
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"

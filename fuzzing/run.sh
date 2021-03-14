@@ -18,6 +18,6 @@ for i in `seq 2 $(nproc)`; do
     py-afl-fuzz -i "$EXAMPLES" -o "$RESULTS" -S "worker-$i"  -- $(which python) sut.py > /dev/null 2>&1 &
 done
 
-py-afl-fuzz -i "$EXAMPLES" -o "$RESULTS" -M "main" -- $(which python) sut.py # > /dev/null 2>&1 &
-#watch -n 1 -c afl-whatsup -s "$RESULTS"
+py-afl-fuzz -i "$EXAMPLES" -o "$RESULTS" -M "main" -- $(which python) sut.py > /dev/null 2>&1 &
+watch -n 1 -c afl-whatsup -s "$RESULTS"
 pkill afl-fuzz
