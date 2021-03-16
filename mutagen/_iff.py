@@ -1,7 +1,7 @@
 # Copyright (C) 2014  Evan Purkhiser
 #               2014  Ben Ockmore
 #               2017  Borewit
-#               2019-2020  Philipp Wolfer
+#               2019-2021  Philipp Wolfer
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -336,6 +336,17 @@ class IffFile:
         """Insert a new chunk at the end of the IFF file"""
         return self.root.insert_chunk(id_, data)
 
+    def _resize_to_content(self):
+        # Some IFF files report a larger data size then their actual file size
+        # as trailing null bytes are truncated. Detect this and extend the file
+        # size to the needed size.
+        fileobj = self.root._fileobj
+        fileobj.seek(0, 2)
+        file_size = fileobj.tell()
+        required_size = self.root.size
+        if file_size < required_size:
+            resize_bytes(fileobj, file_size, required_size, 0)
+
 
 class IffID3(ID3):
     """A generic IFF file with ID3v2 tags"""
@@ -357,6 +368,7 @@ class IffID3(ID3):
         fileobj = filething.fileobj
 
         iff_file = self._load_file(fileobj)
+        iff_file._resize_to_content()
 
         if 'ID3' not in iff_file:
             iff_file.insert_chunk('ID3')

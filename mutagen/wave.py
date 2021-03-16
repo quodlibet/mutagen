@@ -1,5 +1,5 @@
 # Copyright (C) 2017  Borewit
-# Copyright (C) 2019-2020  Philipp Wolfer
+# Copyright (C) 2019-2021  Philipp Wolfer
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -123,6 +123,7 @@ class _WaveID3(ID3):
 
         fileobj = filething.fileobj
         wave_file = _WaveFile(fileobj)
+        wave_file._resize_to_content()
 
         if u'id3' not in wave_file:
             wave_file.insert_chunk(u'id3')
