@@ -1,7 +1,7 @@
 # Copyright (C) 2014  Evan Purkhiser
 #               2014  Ben Ockmore
 #               2017  Borewit
-#               2019-2020  Philipp Wolfer
+#               2019-2021  Philipp Wolfer
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -175,8 +175,9 @@ class IffChunk(object):
     def resize(self, new_data_size):
         """Resize the file and update the chunk sizes"""
 
+        old_size = self._get_actual_data_size()
         padding = new_data_size % 2
-        resize_bytes(self._fileobj, self.data_size + self.padding(),
+        resize_bytes(self._fileobj, old_size,
                      new_data_size + padding, self.data_offset)
         size_diff = new_data_size - self.data_size
         self._update_size(size_diff)
@@ -188,6 +189,18 @@ class IffChunk(object):
         data_size is odd a padding byte will be added at the end.
         """
         return self.data_size % 2
+
+    def _get_actual_data_size(self):
+        """Returns the data size that is actually possible.
+        Some files have chunks that are truncated and their reported size
+        would be outside of the file's actual size."""
+        fileobj = self._fileobj
+        fileobj.seek(0, 2)
+        file_size = fileobj.tell()
+
+        expected_size = self.data_size + self.padding()
+        max_size_possible = file_size - self.data_offset
+        return min(expected_size, max_size_possible)
 
 
 class IffContainerChunkMixin():
@@ -249,7 +262,7 @@ class IffContainerChunkMixin():
         if not is_valid_chunk_id(id_):
             raise KeyError("Invalid IFF key.")
 
-        next_offset = self.offset + self.size
+        next_offset = self.data_offset + self._get_actual_data_size()
         size = self.HEADER_SIZE
         data_size = 0
         if data:
