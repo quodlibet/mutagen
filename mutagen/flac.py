@@ -519,7 +519,7 @@ class CueSheet(MetadataBlock):
                 track_flags |= 0x40
             track_packed = struct.pack(
                 self.__CUESHEET_TRACK_FORMAT, track.start_offset,
-                track.track_number, track.isrc, track_flags,
+                track.track_number, track.isrc or b"\0", track_flags,
                 len(track.indexes))
             f.write(track_packed)
             for index in track.indexes:
@@ -846,6 +846,15 @@ class FLAC(mutagen.FileType):
 
         If no filename is given, the one most recently loaded is used.
         """
+        # add new cuesheet and seektable
+        if self.cuesheet and self.cuesheet not in self.metadata_blocks:
+            if not isinstance(self.cuesheet, CueSheet):
+                raise ValueError("Invalid cuesheet object type!")
+            self.metadata_blocks.append(self.cuesheet)
+        if self.seektable and self.seektable not in self.metadata_blocks:
+            if not isinstance(self.seektable, SeekTable):
+                raise ValueError("Invalid seektable object type!")
+            self.metadata_blocks.append(self.seektable)
 
         self._save(filething, self.metadata_blocks, deleteid3, padding)
 
