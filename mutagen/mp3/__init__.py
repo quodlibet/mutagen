@@ -183,6 +183,7 @@ class MPEGFrame(object):
             lame = xing.lame_header
             self.sketchy = False
             self.bitrate_mode = _guess_xing_bitrate_mode(xing)
+            self.vbr_quality_scale = xing.vbr_scale
             self.encoder_settings = xing.get_encoder_settings()
             if xing.frames != -1:
                 samples = frame_size * xing.frames
@@ -217,6 +218,7 @@ class MPEGFrame(object):
             pass
         else:
             self.bitrate_mode = BitrateMode.VBR
+            self.vbr_quality_scale = vbri.quality
             self.encoder_info = u"FhG"
             self.sketchy = False
             self.length = float(frame_size * vbri.frames) / self.sample_rate
@@ -313,6 +315,7 @@ class MPEGInfo(StreamInfo):
             the settings used for encoding. The format is undefined and
             depends on the encoder.
         bitrate_mode (`BitrateMode`): a :class:`BitrateMode`
+        vbr_quality_scale (`int`): VBR quality scale from 0 to 100, or -1
         track_gain (`float` or `None`): replaygain track gain (89db) or None
         track_peak (`float` or `None`): replaygain track peak or None
         album_gain (`float` or `None`): replaygain album gain (89db) or None
@@ -331,6 +334,7 @@ class MPEGInfo(StreamInfo):
     encoder_info = u""
     encoder_settings = u""
     bitrate_mode = BitrateMode.UNKNOWN
+    vbr_quality_scale = -1
     track_gain = track_peak = album_gain = album_peak = None
 
     @convert_error(IOError, error)

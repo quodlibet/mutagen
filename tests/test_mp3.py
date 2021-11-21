@@ -102,6 +102,12 @@ class TMP3(TestCase):
         self.failUnlessEqual(self.mp3_3.info.bitrate_mode, BitrateMode.VBR)
         self.failUnlessEqual(self.mp3_4.info.bitrate_mode, BitrateMode.VBR)
 
+    def test_vbr_quality_scale(self):
+        self.failUnlessEqual(self.mp3.info.vbr_quality_scale, -1)
+        self.failUnlessEqual(self.mp3_2.info.vbr_quality_scale, -1)
+        self.failUnlessEqual(self.mp3_3.info.vbr_quality_scale, 7)
+        self.failUnlessEqual(self.mp3_4.info.vbr_quality_scale, 7)
+
     def test_id3(self):
         self.failUnlessEqual(self.mp3.tags, ID3(self.silence))
         self.failUnlessEqual(self.mp3_2.tags, ID3(self.silence_nov2))
