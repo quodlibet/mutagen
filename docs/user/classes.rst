@@ -40,8 +40,8 @@ It provides a dict-like interface which acts as a proxy to the containing
 Tags
 ----
 
-Each FileType has an attribute `tags` which holds a :class:`Tags` instance. If the
-file's tags failed to be read, `tags` is set to `None`.
+Each FileType has an attribute ``tags`` which holds a :class:`Tags` instance. If the
+file's tags failed to be read, ``tags`` is set to ``None``.
 
 The Tags interface depends mostly on each format. It exposes a dict-like interface
 where the type of keys and values depends on the implementation of each
