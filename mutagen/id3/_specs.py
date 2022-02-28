@@ -561,9 +561,11 @@ class EncodedNumericPartTextSpec(EncodedTextSpec):
 
 
 class Latin1TextSpec(Spec):
+    terminated: bool
 
-    def __init__(self, name, default=u""):
+    def __init__(self, name, default=u"", terminated: bool=True):
         super(Latin1TextSpec, self).__init__(name, default)
+        self.terminated = terminated
 
     def read(self, header, frame, data):
         if b'\x00' in data:
@@ -573,7 +575,8 @@ class Latin1TextSpec(Spec):
         return data.decode('latin1'), ret
 
     def write(self, config, data, value):
-        return value.encode('latin1') + b'\x00'
+        ret = value.encode('latin1')
+        return ret + b'\x00' if self.terminated else ret
 
     def validate(self, frame, value):
         return str(value)

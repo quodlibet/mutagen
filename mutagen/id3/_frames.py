@@ -922,7 +922,7 @@ class WXXX(UrlFrame):
     _framespec = [
         EncodingSpec('encoding', default=Encoding.UTF16),
         EncodedTextSpec('desc'),
-        Latin1TextSpec('url'),
+        Latin1TextSpec('url', terminated=False),
     ]
 
     @property
