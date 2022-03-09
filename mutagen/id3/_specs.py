@@ -563,7 +563,7 @@ class EncodedNumericPartTextSpec(EncodedTextSpec):
 class Latin1TextSpec(Spec):
     terminated: bool
 
-    def __init__(self, name, default=u"", terminated: bool=True):
+    def __init__(self, name, default=u"", terminated: bool = True):
         super(Latin1TextSpec, self).__init__(name, default)
         self.terminated = terminated
 
