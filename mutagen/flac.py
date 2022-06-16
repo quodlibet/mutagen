@@ -280,7 +280,7 @@ class SeekPoint(tuple):
     """
 
     def __new__(cls, first_sample, byte_offset, num_samples):
-        return super(cls, SeekPoint).__new__(
+        return super(SeekPoint, cls).__new__(
             cls, (first_sample, byte_offset, num_samples))
 
     def __getnewargs__(self):
@@ -373,7 +373,7 @@ class CueSheetTrackIndex(tuple):
     """
 
     def __new__(cls, index_number, index_offset):
-        return super(cls, CueSheetTrackIndex).__new__(
+        return super(CueSheetTrackIndex, cls).__new__(
             cls, (index_number, index_offset))
 
     index_number = property(lambda self: self[0])
