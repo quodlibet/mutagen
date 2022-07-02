@@ -213,7 +213,7 @@ class OggPage(object):
         to logical stream 'serial'. Other pages will be ignored.
 
         fileobj must point to the start of a valid Ogg page; any
-        occuring after it and part of the specified logical stream
+        occurring after it and part of the specified logical stream
         will be numbered. No adjustment will be made to the data in
         the pages nor the granule position; only the page number, and
         so also the CRC.
