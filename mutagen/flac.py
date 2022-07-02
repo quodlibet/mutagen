@@ -712,7 +712,7 @@ class FLAC(mutagen.FileType):
         if block_type._distrust_size:
             # Some jackass is writing broken Metadata block length
             # for Vorbis comment blocks, and the FLAC reference
-            # implementaton can parse them (mostly by accident),
+            # implementation can parse them (mostly by accident),
             # so we have to too.  Instead of parsing the size
             # given, parse an actual Vorbis comment, leaving
             # fileobj in the right position.
