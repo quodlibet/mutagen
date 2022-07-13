@@ -55,9 +55,9 @@ class TWave(TestCase):
 
     def test_bitrate(self):
         self.failUnlessEqual(self.wav_pcm_2s_16000_08_ID3v23.
-                             info.bitrate, 64000)
+                             info.bitrate, 256000)
         self.failUnlessEqual(self.wav_pcm_2s_44100_16_ID3v23.
-                             info.bitrate, 352800)
+                             info.bitrate, 1411200)
 
     def test_length(self):
         self.failUnlessAlmostEqual(self.wav_pcm_2s_16000_08_ID3v23.info.length,
