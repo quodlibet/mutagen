@@ -93,8 +93,14 @@ class distcheck(sdist):
             assert process.returncode == 0
 
             tracked_files = out.splitlines()
-            for ignore in [".gitignore", ".codecov.yml",
-                           ".github/workflows/test.yml"]:
+            to_ignore = [
+                ".gitignore",
+                ".codecov.yml",
+                ".github/workflows/test.yml",
+                ".readthedocs.yaml",
+                "docs/requirements.txt",
+            ]
+            for ignore in to_ignore:
                 tracked_files.remove(ignore)
 
             tracked_files = [
