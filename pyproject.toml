@@ -23,8 +23,5 @@ sphinx-rtd-theme = "^1.0.0"
 [build-system]
 requires = ["setuptools", "wheel"]
 
-[tool.pytest.ini_options]
-markers = ["quality"]
-
 [tool.coverage.run]
 include=["mutagen/*", "tests/*"]
