@@ -105,11 +105,7 @@ class TestCase(BaseTestCase):
         self.assertTrue(b != a)
 
 
-def check():
-    return pytest.main(args=[os.path.join("tests", "quality")])
-
-
-def unit(run=[], exitfirst=False, no_quality=False):
+def unit(run=[], exitfirst=False):
     args = []
 
     if run:
@@ -118,9 +114,6 @@ def unit(run=[], exitfirst=False, no_quality=False):
 
     if exitfirst:
         args.append("-x")
-
-    if no_quality:
-        args.extend(["-m", "not quality"])
 
     args.append("tests")
 

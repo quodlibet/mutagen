@@ -12,6 +12,7 @@ import shutil
 import sys
 import subprocess
 import tarfile
+import warnings
 
 from setuptools import setup, Command, Distribution
 
@@ -179,29 +180,15 @@ class test_cmd(Command):
             self.to_run = self.to_run.split(",")
         self.exitfirst = bool(self.exitfirst)
         self.no_quality = bool(self.no_quality)
+        if self.no_quality:
+            warnings.warn(
+                "--no-quality is deprecated and doesn't do anything anymore",
+                DeprecationWarning)
 
     def run(self):
         import tests
 
-        status = tests.unit(self.to_run, self.exitfirst, self.no_quality)
-        if status != 0:
-            raise SystemExit(status)
-
-
-class quality_cmd(Command):
-    description = "run flake8 tests"
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        import tests
-
-        status = tests.check()
+        status = tests.unit(self.to_run, self.exitfirst)
         if status != 0:
             raise SystemExit(status)
 
@@ -266,7 +253,6 @@ if __name__ == "__main__":
     cmd_classes = {
         "clean": clean,
         "test": test_cmd,
-        "quality": quality_cmd,
         "coverage": coverage_cmd,
         "distcheck": distcheck,
         "build_sphinx": build_sphinx,

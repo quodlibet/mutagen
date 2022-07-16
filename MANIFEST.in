@@ -5,7 +5,6 @@ include .mypy.ini
 include .flake8
 include MANIFEST.in
 include tests/data/*
-include tests/quality/*
 include tests/*.py
 include man/*.1
 recursive-include mutagen *.pyi *.typed
