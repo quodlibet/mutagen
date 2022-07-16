@@ -24,7 +24,7 @@ from functools import wraps
 from fnmatch import fnmatchcase
 
 
-_DEFAULT_BUFFER_SIZE = 2 ** 18
+_DEFAULT_BUFFER_SIZE = 2 ** 20
 
 
 def endswith(text, end):
