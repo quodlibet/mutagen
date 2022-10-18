@@ -18,7 +18,7 @@ _sig = SignalHandler()
 def main(argv):
     from mutagen import File
 
-    parser = OptionParser()
+    parser = OptionParser(usage="usage: %prog [options] FILE [FILE...]")
     parser.add_option("--no-flac", help="Compatibility; does nothing.")
     parser.add_option("--no-mp3", help="Compatibility; does nothing.")
     parser.add_option("--no-apev2", help="Compatibility; does nothing.")

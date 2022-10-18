@@ -12,6 +12,7 @@ import shutil
 import sys
 import subprocess
 import tarfile
+import warnings
 
 from setuptools import setup, Command, Distribution
 
@@ -93,8 +94,14 @@ class distcheck(sdist):
             assert process.returncode == 0
 
             tracked_files = out.splitlines()
-            for ignore in [".gitignore", ".codecov.yml",
-                           ".github/workflows/test.yml"]:
+            to_ignore = [
+                ".gitignore",
+                ".codecov.yml",
+                ".github/workflows/test.yml",
+                ".readthedocs.yaml",
+                "docs/requirements.txt",
+            ]
+            for ignore in to_ignore:
                 tracked_files.remove(ignore)
 
             tracked_files = [
@@ -173,29 +180,15 @@ class test_cmd(Command):
             self.to_run = self.to_run.split(",")
         self.exitfirst = bool(self.exitfirst)
         self.no_quality = bool(self.no_quality)
+        if self.no_quality:
+            warnings.warn(
+                "--no-quality is deprecated and doesn't do anything anymore",
+                DeprecationWarning)
 
     def run(self):
         import tests
 
-        status = tests.unit(self.to_run, self.exitfirst, self.no_quality)
-        if status != 0:
-            raise SystemExit(status)
-
-
-class quality_cmd(Command):
-    description = "run flake8 tests"
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        import tests
-
-        status = tests.check()
+        status = tests.unit(self.to_run, self.exitfirst)
         if status != 0:
             raise SystemExit(status)
 
@@ -236,8 +229,7 @@ class coverage_cmd(Command):
         cov.html_report(
             directory=dest,
             ignore_errors=True,
-            include=["mutagen/*"],
-            omit=["mutagen/_senf/*"])
+            include=["mutagen/*"])
 
         print("Coverage summary: file://%s/index.html" % dest)
 
@@ -260,7 +252,6 @@ if __name__ == "__main__":
     cmd_classes = {
         "clean": clean,
         "test": test_cmd,
-        "quality": quality_cmd,
         "coverage": coverage_cmd,
         "distcheck": distcheck,
         "build_sphinx": build_sphinx,
@@ -278,9 +269,6 @@ if __name__ == "__main__":
           classifiers=[
             'Operating System :: OS Independent',
             'Programming Language :: Python :: 3',
-            'Programming Language :: Python :: 3.6',
-            'Programming Language :: Python :: 3.7',
-            'Programming Language :: Python :: 3.8',
             'Programming Language :: Python :: Implementation :: CPython',
             'Programming Language :: Python :: Implementation :: PyPy',
             ('License :: OSI Approved :: '
@@ -302,7 +290,7 @@ if __name__ == "__main__":
             ('share/man/man1', glob.glob("man/*.1")),
           ],
           python_requires=(
-            '>=3.6, <4'),
+            '>=3.7'),
           entry_points={
             'console_scripts': [
               'mid3cp=mutagen._tools.mid3cp:entry_point',

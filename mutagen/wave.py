@@ -88,7 +88,7 @@ class WaveStreamInfo(StreamInfo):
         info = struct.unpack('<hhLLhh', data[:self.SIZE])
         self.audio_format, self.channels, self.sample_rate, byte_rate, \
             block_align, self.bits_per_sample = info
-        self.bitrate = self.channels * block_align * self.sample_rate
+        self.bitrate = self.channels * self.bits_per_sample * self.sample_rate
 
         # Calculate duration
         self._number_of_samples = 0
