@@ -22,7 +22,7 @@ sphinx-rtd-theme = "^1.0.0"
 sphinx-autobuild = "^2021.3.14"
 
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools"]
 
 [tool.coverage.run]
 include=["mutagen/*", "tests/*"]
