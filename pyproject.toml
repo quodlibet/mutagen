@@ -23,6 +23,7 @@ sphinx-autobuild = "^2021.3.14"
 
 [build-system]
 requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
 
 [tool.coverage.run]
 include=["mutagen/*", "tests/*"]
