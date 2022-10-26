@@ -238,6 +238,9 @@ if __name__ == "__main__":
     if sys.version_info[0] < 3:
         raise Exception("Python 2 no longer supported")
 
+    # required for PEP 517
+    sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+
     from mutagen import version
 
     with open('README.rst', encoding='utf-8') as h:
