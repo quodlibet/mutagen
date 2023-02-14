@@ -366,17 +366,20 @@ class ID3Tags(DictProxy, Tags):
         # TDAT, TYER, and TIME have been turned into TDRC.
         timestamps = []
         old_frames = [self.pop(n, []) for n in ["TYER", "TDAT", "TIME"]]
-        for y, d, t in zip_longest(*old_frames, fillvalue=u""):
-            ym = re.match(r"([0-9]+)\Z", y)
-            dm = re.match(r"([0-9]{2})([0-9]{2})\Z", d)
-            tm = re.match(r"([0-9]{2})([0-9]{2})\Z", t)
+        for tyer, tdat, time in zip_longest(*old_frames, fillvalue=""):
+            ym = re.match(r"([0-9]{4})(-[0-9]{2}-[0-9]{2})?\Z", tyer)
+            dm = re.match(r"([0-9]{2})([0-9]{2})\Z", tdat)
+            tm = re.match(r"([0-9]{2})([0-9]{2})\Z", time)
             timestamp = ""
             if ym:
-                timestamp += u"%s" % ym.groups()
+                (year, month_day) = ym.groups()
+                timestamp += "%s" % year
                 if dm:
-                    timestamp += u"-%s-%s" % dm.groups()[::-1]
+                    month_day = "-%s-%s" % dm.groups()[::-1]
+                if month_day:
+                    timestamp += month_day
                     if tm:
-                        timestamp += u"T%s:%s:00" % tm.groups()
+                        timestamp += "T%s:%s:00" % tm.groups()
             if timestamp:
                 timestamps.append(timestamp)
         if timestamps and "TDRC" not in self:
