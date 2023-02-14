@@ -231,7 +231,7 @@ class ID3(ID3Tags, mutagen.Metadata):
                 if 0, ID3v1 tags will be removed.
                 if 1, ID3v1 tags will be updated but not added.
                 if 2, ID3v1 tags will be created and/or updated
-            v2 (int):
+            v2_version (int):
                 version of ID3v2 tags (3 or 4).
             v23_sep (text):
                 the separator used to join multiple text values
