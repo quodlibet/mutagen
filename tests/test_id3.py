@@ -61,6 +61,21 @@ class TID3Read(TestCase):
         self.failIf("TYER" in audio)
         self.failUnless("TIT2" in audio)
 
+    def test_handle_tyer_full_date(self):
+        id3 = ID3()
+        id3.version = (2, 3)
+        id3.add(TYER(encoding=0, text="2022-02-14"))
+        id3.update_to_v24()
+        self.failUnlessEqual(id3["TDRC"], "2022-02-14")
+
+    def test_handle_tyer_full_date_with_tdat(self):
+        id3 = ID3()
+        id3.version = (2, 3)
+        id3.add(TYER(encoding=0, text="2022-02-14"))
+        id3.add(TDAT(encoding=0, text="0504"))
+        id3.update_to_v24()
+        self.failUnlessEqual(id3["TDRC"], "2022-04-05")
+
     def test_tdrc(self):
         tags = ID3()
         tags.add(id3.TDRC(encoding=1, text="2003-04-05 12:03"))
