@@ -85,7 +85,7 @@ class WaveStreamInfo(StreamInfo):
         # RIFF: http://soundfile.sapp.org/doc/WaveFormat/
         #  Python struct.unpack:
         #    https://docs.python.org/2/library/struct.html#byte-order-size-and-alignment
-        info = struct.unpack('<hhLLhh', data[:self.SIZE])
+        info = struct.unpack('<HHLLHH', data[:self.SIZE])
         self.audio_format, self.channels, self.sample_rate, byte_rate, \
             block_align, self.bits_per_sample = info
         self.bitrate = self.channels * self.bits_per_sample * self.sample_rate
