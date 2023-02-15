@@ -1,9 +1,3 @@
-
-import sys
-import glob
-import os
-import traceback
-import textwrap
 from io import BytesIO
 
 from mutagen import File, Metadata
@@ -49,52 +43,51 @@ OPENERS = [
 # OPENERS = [AAC]
 
 
-def run(opener, data):
-    f = BytesIO(data)
+def run(opener, f):
     try:
         res = opener(f)
     except MutagenError:
-        pass
-    else:
-        # File is special and returns None if loading fails
-        if opener is File and res is None:
-            return
+        return
 
-        # These can still fail because we might need to parse more data
-        # to rewrite the file
+    # File is special and returns None if loading fails
+    if opener is File and res is None:
+        return
 
+    # These can still fail because we might need to parse more data
+    # to rewrite the file
+
+    f.seek(0)
+    try:
+        res.save(f)
+    except MutagenError:
+        return
+
+    f.seek(0)
+    res = opener(f)
+
+    f.seek(0)
+    try:
+        res.delete(f)
+    except MutagenError:
+        return
+
+    # These can also save to empty files
+    if isinstance(res, Metadata):
+        f = BytesIO()
+        res.save(f)
         f.seek(0)
-        try:
-            res.save(f)
-        except MutagenError:
-            pass
-
+        opener(f)
         f.seek(0)
-        res = opener(f)
-
-        f.seek(0)
-        try:
-            res.delete(f)
-        except MutagenError:
-            pass
-
-        # These can also save to empty files
-        if isinstance(res, Metadata):
-            f = BytesIO()
-            res.save(f)
-            f.seek(0)
-            opener(f)
-            f.seek(0)
-            res.delete(f)
+        res.delete(f)
 
 
 def run_all(data):
-    for opener in OPENERS:
-        run(opener, data)
+    f = BytesIO(data)
+    [run(opener, f) for opener in OPENERS]
 
 
 def group_crashes(result_path):
-    """Re-cchecks all errors, and groups them by stack trace
+    """Re-checks all errors, and groups them by stack trace
     and error type.
     """
 
@@ -140,4 +133,9 @@ def group_crashes(result_path):
 
 
 if __name__ == '__main__':
+    import sys
+    import glob
+    import os
+    import traceback
+    import textwrap
     group_crashes(sys.argv[1])
