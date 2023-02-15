@@ -14,6 +14,8 @@ RESULTS=_results
 mkdir -p "$RESULTS"
 mkdir -p "$EXAMPLES"
 
+cp -f ../tests/data/* "$EXAMPLES"
+
 for i in `seq 2 $(nproc)`; do
     py-afl-fuzz -i "$EXAMPLES" -o "$RESULTS" -S "worker-$i"  -- $(which python) sut.py > /dev/null 2>&1 &
 done
