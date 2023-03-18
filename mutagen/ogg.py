@@ -429,7 +429,7 @@ class OggPage(object):
             new_data_end = offset + data_size
             offset_adjust += (data_size - old_page.size)
 
-        # Finally, if there's any discrepency in length, we need to
+        # Finally, if there's any discrepancy in length, we need to
         # renumber the pages for the logical stream.
         if len(old_pages) != len(new_pages):
             fileobj.seek(new_data_end, 0)

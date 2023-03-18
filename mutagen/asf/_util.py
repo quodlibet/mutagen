@@ -284,7 +284,7 @@ CODECS = {
     0xA10C: u"Media Foundation Spectrum Analyzer Output",
     0xA10D: u"GSM 6.10 (Full-Rate) Speech",
     0xA10E: u"GSM 6.20 (Half-Rate) Speech",
-    0xA10F: u"GSM 6.60 (Enchanced Full-Rate) Speech",
+    0xA10F: u"GSM 6.60 (Enhanced Full-Rate) Speech",
     0xA110: u"GSM 6.90 (Adaptive Multi-Rate) Speech",
     0xA111: u"GSM Adaptive Multi-Rate WideBand Speech",
     0xA112: u"Polycom G.722",
