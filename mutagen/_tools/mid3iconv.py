@@ -6,7 +6,7 @@
 # (at your option) any later version.
 
 """
-ID3iconv is a Java based ID3 encoding convertor, here's the Python version.
+ID3iconv is a Java based ID3 encoding converter, here's the Python version.
 """
 
 import sys

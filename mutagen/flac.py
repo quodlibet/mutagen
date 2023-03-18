@@ -387,7 +387,7 @@ class CueSheetTrack(object):
 
     For CD-DA, track_numbers must be 1-99, or 170 for the
     lead-out. Track_numbers must be unique within a cue sheet. There
-    must be atleast one index in every track except the lead-out track
+    must be at least one index in every track except the lead-out track
     which must have none.
 
     Attributes:

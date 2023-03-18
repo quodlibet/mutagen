@@ -832,7 +832,7 @@ class TSOC(TextFrame):
 
 
 class TSOP(TextFrame):
-    "Perfomer Sort Order key"
+    "Performer Sort Order key"
 
 
 class TSOT(TextFrame):
@@ -1110,7 +1110,7 @@ class SYLT(Frame):
 class COMM(TextFrame):
     """User comment.
 
-    User comment frames have a descrption, like TXXX, and also a three
+    User comment frames have a description, like TXXX, and also a three
     letter ISO language code in the 'lang' attribute.
     """
 
@@ -1895,7 +1895,7 @@ class TS2(TSO2):
 
 
 class TSP(TSOP):
-    "Perfomer Sort Order key"
+    "Performer Sort Order key"
 
 
 class TSC(TSOC):
@@ -1931,7 +1931,7 @@ class TOT(TOAL):
 
 
 class TOA(TOPE):
-    "Original Artist/Perfomer"
+    "Original Artist/Performer"
 
 
 class TOL(TOLY):
@@ -1995,7 +1995,7 @@ class STC(SYTC):
 
 
 class ULT(USLT):
-    "Unsychronised lyrics/text transcription"
+    "Unsynchronised lyrics/text transcription"
 
 
 class SLT(SYLT):

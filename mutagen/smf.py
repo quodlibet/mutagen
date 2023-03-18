@@ -32,12 +32,12 @@ def _var_int(data, offset=0):
 
 
 def _read_track(chunk):
-    """Retuns a list of midi events and tempo change events"""
+    """Returns a list of midi events and tempo change events"""
 
     TEMPO, MIDI = range(2)
 
     # Deviations: The running status should be reset on non midi events, but
-    # some files contain meta events inbetween.
+    # some files contain meta events in between.
     # TODO: Offset and time signature are not considered.
 
     tempos = []

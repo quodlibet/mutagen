@@ -540,7 +540,7 @@ class MultiSpec(Spec):
         spec = self.specs[0]
 
         # Merge single text spec multispecs only.
-        # (TimeStampSpec beeing the exception, but it's not a valid v2.3 frame)
+        # (TimeStampSpec being the exception, but it's not a valid v2.3 frame)
         if not isinstance(spec, EncodedTextSpec) or \
                 isinstance(spec, TimeStampSpec):
             return value

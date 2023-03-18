@@ -247,7 +247,7 @@ def _item_sort_key(key, value):
     last = len(order)
     # If there's no key-based way to distinguish, order by length.
     # If there's still no way, go by string comparison on the
-    # values, so we at least have something determinstic.
+    # values, so we at least have something deterministic.
     return (order.get(key[:4], last), len(repr(value)), repr(value))
 
 

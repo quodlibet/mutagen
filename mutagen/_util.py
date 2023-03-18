@@ -28,7 +28,7 @@ _DEFAULT_BUFFER_SIZE = 2 ** 20
 
 
 def endswith(text, end):
-    # usefull for paths which can be both, str and bytes
+    # useful for paths which can be both, str and bytes
     if isinstance(text, str):
         if not isinstance(end, str):
             end = end.decode("ascii")
