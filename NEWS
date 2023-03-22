@@ -10,6 +10,7 @@
 * easyid3: map easyid3 grouping to TIT1 :pr:`505`
 * mutagen-inspect: add usage documentation :pr:`540`
 * wave: Fix bitrate calculation :pr:`566`
+* FLAC: handle files where the first metadata block is not STREAMINFO :pr:`500`
 * Increase buffer size for rewriting files from 256K to 1M to improve performance with network shares :pr:`570`
 * Other changes: code cleanup :pr:`514`, typos :pr:`565`, remove upper limit for python version :pr:`579`
 
