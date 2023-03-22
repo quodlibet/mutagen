@@ -481,6 +481,7 @@ _FILETYPES = {
         os.path.join(DATA_DIR, "bad-xing.mp3"),
         os.path.join(DATA_DIR, "xing.mp3"),
         os.path.join(DATA_DIR, "silence-44-s.mp3"),
+        os.path.join(DATA_DIR, "no-tags.mp3"),
     ],
     Musepack: [
         os.path.join(DATA_DIR, "click.mpc"),

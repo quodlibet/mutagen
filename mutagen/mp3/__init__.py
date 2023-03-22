@@ -455,7 +455,11 @@ class MP3(ID3FileType):
     def score(filename, fileobj, header_data):
         filename = filename.lower()
 
-        return (header_data.startswith(b"ID3") * 2 +
+        return ((header_data.startswith(b"ID3") or
+                 header_data.startswith(b'\xFF\xF2') or
+                 header_data.startswith(b'\xFF\xF3') or
+                 header_data.startswith(b'\xFF\xFA') or
+                 header_data.startswith(b'\xFF\xFB')) * 2 +
                 endswith(filename, b".mp3") +
                 endswith(filename, b".mp2") + endswith(filename, b".mpg") +
                 endswith(filename, b".mpeg"))
