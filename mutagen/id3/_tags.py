@@ -205,7 +205,7 @@ class ID3Tags(DictProxy, Tags):
                 frame_key = frame.FrameID
                 frame_size = frame.start_time
 
-            return (get_prio(frame), frame_key, frame_size)
+            return (get_prio(frame), frame_size, frame_key)
 
         framedata = [d for (f, d) in sorted(framedata, key=sort_key)]
 
