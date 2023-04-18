@@ -186,9 +186,7 @@ class ID3Tags(DictProxy, Tags):
         order = ["TIT2", "TPE1", "TRCK", "TALB", "TPOS", "TDRC", "TCON"]
 
         framedata = [
-            (f, save_frame(f, config=config)) for f in self.values()
-            if f.FrameID != "CHAP"  # sort CHAP separately, see below
-        ]
+            (f, save_frame(f, config=config)) for f in self.values()]
 
         def get_prio(frame):
             try:
@@ -198,16 +196,18 @@ class ID3Tags(DictProxy, Tags):
 
         def sort_key(items):
             frame, data = items
-            return (get_prio(frame), len(data), frame.HashKey)
+            frame_key = frame.HashKey
+            frame_size = len(data)
+
+            # Let's ensure chapters are always sorted by their 'start_time'
+            # and not by size/element_id pair.
+            if frame.FrameID == "CHAP":
+                frame_key = frame.FrameID
+                frame_size = frame.start_time
+
+            return (get_prio(frame), frame_key, frame_size)
 
         framedata = [d for (f, d) in sorted(framedata, key=sort_key)]
-
-        # Sort CHAP frames by start_time, ref #506
-        chapter_frames = sorted(
-            [f for f in self.values() if f.FrameID == "CHAP"],
-            key=lambda c: c.start_time
-        )
-        framedata.extend([save_frame(f, config=config) for f in chapter_frames])
 
         # only write unknown frames if they were loaded from the version
         # we are saving with. Theoretically we could upgrade frames
