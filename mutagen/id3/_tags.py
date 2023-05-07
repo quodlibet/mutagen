@@ -108,6 +108,9 @@ class ID3Header(object):
                 # excludes itself."
                 extsize = struct.unpack('>L', extsize_data)[0]
 
+            if extsize < 0:
+                raise error("invalid extended header size")
+
             self._extdata = read_full(fileobj, extsize)
 
 

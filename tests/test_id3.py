@@ -454,6 +454,11 @@ class TID3Header(TestCase):
         header = ID3Header(fileobj)
         self.assertEquals(header._extdata, b'\x00\x00\x56\x78\x9a\xbc')
 
+    def test_negative_header_size(self):
+        fileobj = BytesIO(
+            b'ID3\x04B@\x00\x00\x00\x00\x00\x00\x00\x00')
+        self.failUnlessRaises(ID3Error, ID3Header, fileobj)
+
     def test_23(self):
         id3 = ID3(self.silence)
         self.assertEqual(id3.version, (2, 3, 0))
