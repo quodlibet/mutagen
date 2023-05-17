@@ -127,7 +127,7 @@ class TEasyID3(TestCase):
             self.failUnlessEqual(id3[key], ["a test value"])
             self.failUnlessEqual(id3.keys(), [key])
 
-            del(self.id3[key])
+            del self.id3[key]
 
     def test_write_double(self):
         for key in EasyID3.valid_keys:
@@ -152,7 +152,7 @@ class TEasyID3(TestCase):
             self.failUnlessEqual(sorted(id3.get(key)), ["a test", "value"])
             self.failUnlessEqual(id3.keys(), [key])
 
-            del(self.id3[key])
+            del self.id3[key]
 
     def test_write_date(self):
         self.id3["date"] = "2004"
@@ -168,7 +168,7 @@ class TEasyID3(TestCase):
     def test_date_delete(self):
         self.id3["date"] = "2004"
         self.failUnlessEqual(self.id3["date"], ["2004"])
-        del(self.id3["date"])
+        del self.id3["date"]
         self.failIf("date" in self.id3.keys())
 
     def test_write_date_double(self):
@@ -196,7 +196,7 @@ class TEasyID3(TestCase):
     def test_original_date_delete(self):
         self.id3["originaldate"] = "2004"
         self.failUnlessEqual(self.id3["originaldate"], ["2004"])
-        del(self.id3["originaldate"])
+        del self.id3["originaldate"]
         self.failIf("originaldate" in self.id3.keys())
 
     def test_write_original_date_double(self):
@@ -230,10 +230,10 @@ class TEasyID3(TestCase):
         self.id3["performer:bar"] = "Joe"
         self.failUnless("performer:foo" in self.id3)
         self.failUnless("performer:bar" in self.id3)
-        del(self.id3["performer:foo"])
+        del self.id3["performer:foo"]
         self.failIf("performer:foo" in self.id3)
         self.failUnless("performer:bar" in self.id3)
-        del(self.id3["performer:bar"])
+        del self.id3["performer:bar"]
         self.failIf("performer:bar" in self.id3)
         self.failIf("TMCL" in self.realid3)
 
@@ -259,7 +259,7 @@ class TEasyID3(TestCase):
         self.id3["asin"] = "Hello"
         self.failUnless("asin" in self.id3.keys())
         self.failUnlessEqual(self.id3["asin"], ["Hello"])
-        del(self.id3["asin"])
+        del self.id3["asin"]
         self.failIf("asin" in self.id3.keys())
         self.failUnlessRaises(KeyError, self.id3.__delitem__, "asin")
 
@@ -331,18 +331,18 @@ class TEasyID3(TestCase):
     def test_gain_peak_delete(self):
         self.id3["replaygain_foo_gain"] = "+3.5 dB"
         self.id3["replaygain_bar_peak"] = "0.5"
-        del(self.id3["replaygain_bar_gain"])
-        del(self.id3["replaygain_foo_peak"])
+        del self.id3["replaygain_bar_gain"]
+        del self.id3["replaygain_foo_peak"]
         self.failUnless("replaygain_foo_gain" in self.id3.keys())
         self.failUnless("replaygain_bar_gain" in self.id3.keys())
 
-        del(self.id3["replaygain_foo_gain"])
-        del(self.id3["replaygain_bar_peak"])
+        del self.id3["replaygain_foo_gain"]
+        del self.id3["replaygain_bar_peak"]
         self.failIf("replaygain_foo_gain" in self.id3.keys())
         self.failIf("replaygain_bar_gain" in self.id3.keys())
 
-        del(self.id3["replaygain_foo_gain"])
-        del(self.id3["replaygain_bar_peak"])
+        del self.id3["replaygain_foo_gain"]
+        del self.id3["replaygain_bar_peak"]
         self.failIf("replaygain_foo_gain" in self.id3.keys())
         self.failIf("replaygain_bar_gain" in self.id3.keys())
 

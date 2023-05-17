@@ -214,7 +214,7 @@ class coverage_cmd(Command):
 
         for key in list(sys.modules.keys()):
             if key.startswith('mutagen'):
-                del(sys.modules[key])
+                del sys.modules[key]
 
         cov = coverage()
         cov.start()

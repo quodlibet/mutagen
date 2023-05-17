@@ -623,7 +623,7 @@ class ID3v1Tags(TestCase):
         self.id3["TRCK"] = TRCK(encoding=0, text="32")
         tag = MakeID3v1(self.id3)
         self.failUnless(32, ParseID3v1(tag)["TRCK"])
-        del(self.id3["TRCK"])
+        del self.id3["TRCK"]
         tag = MakeID3v1(self.id3)
         tag = tag[:125] + b'  ' + tag[-1:]
         self.failIf("TRCK" in ParseID3v1(tag))

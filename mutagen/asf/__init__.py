@@ -147,7 +147,7 @@ class ASFTags(list, DictMixin, Tags):  # type: ignore
             to_append.append((key, value))
 
         try:
-            del(self[key])
+            del self[key]
         except KeyError:
             pass
 

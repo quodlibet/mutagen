@@ -477,7 +477,7 @@ class DictMixin(object):
                 return args[0]
             else:
                 raise
-        del(self[key])
+        del self[key]
         return value
 
     def popitem(self):
@@ -539,7 +539,7 @@ class DictProxy(DictMixin):
         self.__dict[key] = value
 
     def __delitem__(self, key):
-        del(self.__dict[key])
+        del self.__dict[key]
 
     def keys(self):
         return self.__dict.keys()

@@ -62,7 +62,7 @@ class TEasyMP4(TestCase):
             self.failUnlessEqual(mp4[key], ["a test value"])
             self.failUnlessEqual(mp4.keys(), [key])
 
-            del(self.mp4[key])
+            del self.mp4[key]
 
     def test_write_double(self):
         for key in EasyMP4.Get:
@@ -81,7 +81,7 @@ class TEasyMP4(TestCase):
             self.failUnlessEqual(mp4.get(key), ["a test", "value"])
             self.failUnlessEqual(mp4.keys(), [key])
 
-            del(self.mp4[key])
+            del self.mp4[key]
 
     def test_write_date(self):
         self.mp4["date"] = "2004"
@@ -97,7 +97,7 @@ class TEasyMP4(TestCase):
     def test_date_delete(self):
         self.mp4["date"] = "2004"
         self.failUnlessEqual(self.mp4["date"], ["2004"])
-        del(self.mp4["date"])
+        del self.mp4["date"]
         self.failIf("date" in self.mp4)
 
     def test_write_date_double(self):
@@ -125,7 +125,7 @@ class TEasyMP4(TestCase):
             mp4 = EasyMP4(self.filename)
             self.failUnlessEqual(mp4[tag], ["3"])
 
-            del(mp4[tag])
+            del mp4[tag]
             self.failIf(tag in mp4)
             self.failUnlessRaises(KeyError, mp4.__delitem__, tag)
 
@@ -140,7 +140,7 @@ class TEasyMP4(TestCase):
             mp4 = EasyMP4(self.filename)
             self.failUnlessEqual(mp4[tag], ["3"])
 
-            del(mp4[tag])
+            del mp4[tag]
             self.failIf(tag in mp4)
             self.failUnlessRaises(KeyError, mp4.__delitem__, tag)
 
@@ -150,7 +150,7 @@ class TEasyMP4(TestCase):
             mp4 = EasyMP4(self.filename)
             self.failUnlessEqual(mp4[tag], ["3/10"])
 
-            del(mp4[tag])
+            del mp4[tag]
             self.failIf(tag in mp4)
             self.failUnlessRaises(KeyError, mp4.__delitem__, tag)
 

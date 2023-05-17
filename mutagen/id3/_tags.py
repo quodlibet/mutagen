@@ -256,12 +256,12 @@ class ID3Tags(DictProxy, Tags):
         """
 
         if key in self:
-            del(self[key])
+            del self[key]
         else:
             key = key + ":"
             for k in list(self.keys()):
                 if k.startswith(key):
-                    del(self[k])
+                    del self[k]
 
     def pprint(self):
         """
@@ -407,7 +407,7 @@ class ID3Tags(DictProxy, Tags):
         # should have been removed already.
         for key in ["RVAD", "EQUA", "TRDA", "TSIZ", "TDAT", "TIME"]:
             if key in self:
-                del(self[key])
+                del self[key]
 
         # Recurse into chapters
         for f in self.getall("CHAP"):
@@ -471,7 +471,7 @@ class ID3Tags(DictProxy, Tags):
 
         for key in v24_frames:
             if key in self:
-                del(self[key])
+                del self[key]
 
         # Recurse into chapters
         for f in self.getall("CHAP"):
