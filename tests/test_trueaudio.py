@@ -1,5 +1,6 @@
 
 import os
+import io
 
 from mutagen.trueaudio import TrueAudio, delete, error
 from mutagen.id3 import TIT1
@@ -46,6 +47,10 @@ class TTrueAudio(TestCase):
             self.failUnlessEqual(audio["TIT1"], "A Title")
         finally:
             os.unlink(filename)
+
+    def test_zero_sample_rate(self):
+        header = io.BytesIO(b'TTA  \x00AD\xa0\x00\x00\x00\x00\x00\x00\x00\xfe3')
+        assert TrueAudio(header).info.length == 0.0
 
     def test_mime(self):
         self.failUnless("audio/x-tta" in self.audio.mime)
