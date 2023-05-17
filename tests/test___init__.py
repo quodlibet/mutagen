@@ -181,7 +181,7 @@ class TFileType(TestCase):
 
     def test_delitem(self):
         self.vorbis["foobar"] = "quux"
-        del(self.vorbis["foobar"])
+        del self.vorbis["foobar"]
         self.failIf("quux" in self.vorbis)
 
     def test_save_no_tags(self):

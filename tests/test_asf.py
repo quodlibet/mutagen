@@ -426,7 +426,7 @@ class TASFIssue29(TestCase):
         audio = ASF(self.filename)
         self.failUnless("Description" in audio)
         self.failUnlessEqual(audio["Description"], ["Hello"])
-        del(audio["Description"])
+        del audio["Description"]
         self.failIf("Description" in audio)
         audio.save()
         audio = ASF(self.filename)
@@ -599,7 +599,7 @@ class TASFSave(TestCase):
 
         audio = ASF(self.filename)
         for tag in audio.keys():
-            del(audio[tag])
+            del audio[tag]
             audio.save()
 
     def test_readd_objects(self):

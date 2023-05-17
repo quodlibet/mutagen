@@ -251,8 +251,8 @@ class _CIDictProxy(DictMixin):
 
     def __delitem__(self, key):
         lower = key.lower()
-        del(self.__casemap[lower])
-        del(self.__dict[lower])
+        del self.__casemap[lower]
+        del self.__dict[lower]
 
     def keys(self):
         return [self.__casemap.get(key, key) for key in self.__dict.keys()]

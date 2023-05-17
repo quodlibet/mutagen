@@ -289,7 +289,7 @@ class VCommentDict(VComment, DictMixin):  # type: ignore
         if not isinstance(values, list):
             values = [values]
         try:
-            del(self[key])
+            del self[key]
         except KeyError:
             pass
 

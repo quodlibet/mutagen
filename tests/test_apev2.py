@@ -248,7 +248,7 @@ class TAPEv2(TestCase):
 
     def test_del(self):
         s = self.audio["artist"]
-        del(self.audio["artist"])
+        del self.audio["artist"]
         self.failIf("artist" in self.audio)
         self.failUnlessRaises(KeyError, self.audio.__getitem__, "artist")
         self.audio["Artist"] = s

@@ -73,7 +73,7 @@ class Report(object):
         else:
             strings.append("\nNo errors!")
 
-        return("\n".join(strings))
+        return "\n".join(strings)
 
 
 def check_dir(path):

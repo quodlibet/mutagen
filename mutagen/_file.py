@@ -81,7 +81,7 @@ class FileType(DictMixin):
         if self.tags is None:
             raise KeyError(key)
         else:
-            del(self.tags[key])
+            del self.tags[key]
 
     def keys(self):
         """Return a list of keys in the metadata tag.

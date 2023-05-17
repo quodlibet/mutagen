@@ -96,7 +96,7 @@ class EasyMP4Tags(DictMixin, Tags):
             tags[atomid] = value
 
         def deleter(tags, key):
-            del(tags[atomid])
+            del tags[atomid]
 
         cls.RegisterKey(key, getter, setter, deleter)
 
@@ -113,7 +113,7 @@ class EasyMP4Tags(DictMixin, Tags):
             tags[atomid] = [clamp(v) for v in map(int, value)]
 
         def deleter(tags, key):
-            del(tags[atomid])
+            del tags[atomid]
 
         cls.RegisterKey(key, getter, setter, deleter)
 
@@ -144,7 +144,7 @@ class EasyMP4Tags(DictMixin, Tags):
             tags[atomid] = data
 
         def deleter(tags, key):
-            del(tags[atomid])
+            del tags[atomid]
 
         cls.RegisterKey(key, getter, setter, deleter)
 
@@ -173,7 +173,7 @@ class EasyMP4Tags(DictMixin, Tags):
             tags[atomid] = encoded
 
         def deleter(tags, key):
-            del(tags[atomid])
+            del tags[atomid]
 
         cls.RegisterKey(key, getter, setter, deleter)
 
