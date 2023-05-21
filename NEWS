@@ -1,3 +1,20 @@
+.. _release-1.46.1:
+
+1.46.1 - 2023-??-??
+-------------------
+* ID3: Allow reading TYER tags in the form of "yyyy-mm-dd" :pr:`597`
+* ID3: Handle negative extended header sizes :pr:`607`
+* MP3: Auto-detect MP3 files without ID3 tags :pr:`601`
+* Extensible wave format support :bug:`595` :pr:`596`
+* WAVE, AIFF: Handle truncated IFF files :bug:`496` :pr:`517`
+* MP4: add a check for wrong offsets in mp4 files :bug:`426` :pr:`462`
+* FLAC: Fix cuesheet and seektable saving :pr:`534`
+* TrueAudio: Read sample rate as unsigned and handle zero sample rate :pr:`609`
+* docs: Fixed documentation for id3.ID3.save parameter v2_version
+* docs: Make extlinks compatible with sphinx 6.0 :pr:`590`
+* docs: Fixed various typos :pr:`602`
+
+
 .. _release-1.46.0:
 
 1.46.0 - 2022-10-09
