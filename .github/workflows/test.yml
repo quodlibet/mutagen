@@ -10,7 +10,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.7, 3.8, 3.9, '3.10', 3.11, pypy-3.7]
+        python-version: [3.7, 3.8, 3.9, '3.10', 3.11, '3.12', pypy-3.7]
         exclude:
           # hangs
           - os: macos-latest
@@ -39,6 +39,7 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
 
     - uses: actions/cache@v3
       with:
