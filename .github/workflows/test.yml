@@ -10,13 +10,13 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.7, 3.8, 3.9, '3.10', 3.11, '3.12', pypy-3.7]
+        python-version: [3.7, 3.8, 3.9, '3.10', 3.11, '3.12', 'pypy-3.8']
         exclude:
           # hangs
           - os: macos-latest
-            python-version: pypy-3.7
+            python-version: pypy-3.8
           - os: windows-latest
-            python-version: pypy-3.7
+            python-version: pypy-3.8
         include:
           - os: ubuntu-latest
             pip-cache: ~/.cache/pip
@@ -60,7 +60,7 @@ jobs:
         poetry run coverage xml -i
     - name: Run mypy
       # mypy fails to install
-      if: matrix.python-version != 'pypy-3.7'
+      if: matrix.python-version != 'pypy-3.8'
       run: |
         poetry run mypy .
     - name: Run flake8
