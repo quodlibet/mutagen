@@ -1,5 +1,6 @@
 
 import os
+import io
 
 from mutagen.tak import TAK, TAKHeaderError
 from tests import TestCase, DATA_DIR
@@ -47,3 +48,7 @@ class TTAK(TestCase):
     def test_pprint(self):
         self.failUnless(self.tak_no_tags.pprint())
         self.failUnless(self.tak_tags.pprint())
+
+    def test_fuzz_only_end(self):
+        with self.assertRaises(TAKHeaderError):
+            TAK(io.BytesIO(b'tBaK\x00\x00\x00\x00'))
