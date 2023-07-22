@@ -167,7 +167,7 @@ class OggPage(object):
         return data
 
     @property
-    def size(self):
+    def size(self) -> int:
         """Total frame size."""
 
         size = 27  # Initial header size

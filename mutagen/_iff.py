@@ -37,7 +37,7 @@ class EmptyChunk(InvalidChunk):
     pass
 
 
-def is_valid_chunk_id(id):
+def is_valid_chunk_id(id: str) -> bool:
     """ is_valid_chunk_id(FOURCC)
 
     Arguments:
@@ -56,7 +56,7 @@ def is_valid_chunk_id(id):
 
 
 #  Assert FOURCC formatted valid
-def assert_valid_chunk_id(id):
+def assert_valid_chunk_id(id: str) -> None:
     if not is_valid_chunk_id(id):
         raise ValueError("IFF chunk ID must be four ASCII characters.")
 
@@ -126,13 +126,13 @@ class IffChunk(object):
             % (type(self).__name__, self.id, self.offset, self.size,
                self.data_offset, self.data_size))
 
-    def read(self):
+    def read(self) -> bytes:
         """Read the chunks data"""
 
         self._fileobj.seek(self.data_offset)
         return self._fileobj.read(self.data_size)
 
-    def write(self, data):
+    def write(self, data: bytes) -> None:
         """Write the chunk data"""
 
         if len(data) > self.data_size:
@@ -146,7 +146,7 @@ class IffChunk(object):
             self._fileobj.seek(self.data_offset + self.data_size)
             self._fileobj.write(b'\x00' * padding)
 
-    def delete(self):
+    def delete(self) -> None:
         """Removes the chunk from the file"""
 
         delete_bytes(self._fileobj, self.size, self.offset)
@@ -172,7 +172,7 @@ class IffChunk(object):
         self.size = self.HEADER_SIZE + self.data_size + self.padding()
         assert self.size % 2 == 0
 
-    def resize(self, new_data_size):
+    def resize(self, new_data_size: int) -> None:
         """Resize the file and update the chunk sizes"""
 
         old_size = self._get_actual_data_size()
@@ -183,14 +183,14 @@ class IffChunk(object):
         self._update_size(size_diff)
         self._fileobj.flush()
 
-    def padding(self):
+    def padding(self) -> int:
         """Returns the number of padding bytes (0 or 1).
         IFF chunks are required to be a even number in total length. If
         data_size is odd a padding byte will be added at the end.
         """
         return self.data_size % 2
 
-    def _get_actual_data_size(self):
+    def _get_actual_data_size(self) -> int:
         """Returns the data size that is actually possible.
         Some files have chunks that are truncated and their reported size
         would be outside of the file's actual size."""

@@ -22,7 +22,7 @@ import mutagen
 from mutagen._util import DictMixin, cdata, MutagenError, reraise
 
 
-def is_valid_key(key):
+def is_valid_key(key: str) -> bool:
     """Return true if a string is a valid Vorbis comment key.
 
     Valid Vorbis comment keys are printable ASCII between 0x20 (space)
@@ -158,7 +158,7 @@ class VComment(mutagen.Tags, list):
 
         return True
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all keys from the comment."""
 
         for i in list(self):
@@ -196,7 +196,7 @@ class VComment(mutagen.Tags, list):
             f.write(b"\x01")
         return f.getvalue()
 
-    def pprint(self):
+    def pprint(self) -> str:
 
         def _decode(value):
             if not isinstance(value, str):

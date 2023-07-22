@@ -7,6 +7,7 @@
 # (at your option) any later version.
 
 import struct
+from typing import List
 
 from mutagen._util import MutagenError
 
@@ -23,7 +24,7 @@ class ASFHeaderError(error):
     pass
 
 
-def guid2bytes(s):
+def guid2bytes(s: str) -> bytes:
     """Converts a GUID to the serialized bytes representation"""
 
     assert isinstance(s, str)
@@ -37,13 +38,13 @@ def guid2bytes(s):
     ])
 
 
-def bytes2guid(s):
+def bytes2guid(s: bytes) -> str:
     """Converts a serialized GUID to a text GUID"""
 
     assert isinstance(s, bytes)
 
     u = struct.unpack
-    v = []
+    v: List[int] = []
     v.extend(u("<IHH", s[:8]))
     v.extend(u(">HQ", s[8:10] + b"\x00\x00" + s[10:]))
     return "%08X-%04X-%04X-%04X-%012X" % tuple(v)

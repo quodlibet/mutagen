@@ -17,6 +17,7 @@ import codecs
 import errno
 import decimal
 from io import BytesIO
+from typing import Tuple, List
 
 from collections import namedtuple
 from contextlib import contextmanager
@@ -50,7 +51,7 @@ def iterbytes(b):
     return (bytes([v]) for v in b)
 
 
-def intround(value):
+def intround(value: float) -> int:
     """Given a float returns a rounded int. Should give the same result on
     both Py2/3
     """
@@ -59,7 +60,7 @@ def intround(value):
         value).to_integral_value(decimal.ROUND_HALF_EVEN))
 
 
-def is_fileobj(fileobj):
+def is_fileobj(fileobj) -> bool:
     """Returns:
         bool: if an argument passed ot mutagen should be treated as a
             file object
@@ -614,7 +615,7 @@ class cdata(object):
 _fill_cdata(cdata)
 
 
-def get_size(fileobj):
+def get_size(fileobj) -> int:
     """Returns the size of the file.
     The position when passed in will be preserved if no error occurs.
 
@@ -634,7 +635,7 @@ def get_size(fileobj):
         fileobj.seek(old_pos, 0)
 
 
-def read_full(fileobj, size):
+def read_full(fileobj, size: int) -> None:
     """Like fileobj.read but raises IOError if not all requested data is
     returned.
 
@@ -657,7 +658,7 @@ def read_full(fileobj, size):
     return data
 
 
-def seek_end(fileobj, offset):
+def seek_end(fileobj, offset: int) -> None:
     """Like fileobj.seek(-offset, 2), but will not try to go beyond the start
 
     Needed since file objects from BytesIO will not raise IOError and
@@ -682,7 +683,7 @@ def seek_end(fileobj, offset):
         fileobj.seek(-offset, 2)
 
 
-def resize_file(fobj, diff, BUFFER_SIZE=_DEFAULT_BUFFER_SIZE):
+def resize_file(fobj, diff: int, BUFFER_SIZE: int = _DEFAULT_BUFFER_SIZE) -> None:
     """Resize a file by `diff`.
 
     New space will be filled with zeros.
@@ -719,7 +720,8 @@ def resize_file(fobj, diff, BUFFER_SIZE=_DEFAULT_BUFFER_SIZE):
             raise
 
 
-def move_bytes(fobj, dest, src, count, BUFFER_SIZE=_DEFAULT_BUFFER_SIZE):
+def move_bytes(fobj, dest: int, src: int, count: int,
+               BUFFER_SIZE: int = _DEFAULT_BUFFER_SIZE) -> None:
     """Moves data around using read()/write().
 
     Args:
@@ -762,7 +764,8 @@ def move_bytes(fobj, dest, src, count, BUFFER_SIZE=_DEFAULT_BUFFER_SIZE):
         fobj.flush()
 
 
-def insert_bytes(fobj, size, offset, BUFFER_SIZE=_DEFAULT_BUFFER_SIZE):
+def insert_bytes(fobj, size: int, offset: int,
+                 BUFFER_SIZE: int = _DEFAULT_BUFFER_SIZE) -> None:
     """Insert size bytes of empty space starting at offset.
 
     fobj must be an open file object, open rb+ or
@@ -790,7 +793,8 @@ def insert_bytes(fobj, size, offset, BUFFER_SIZE=_DEFAULT_BUFFER_SIZE):
     move_bytes(fobj, offset + size, offset, movesize, BUFFER_SIZE)
 
 
-def delete_bytes(fobj, size, offset, BUFFER_SIZE=_DEFAULT_BUFFER_SIZE):
+def delete_bytes(fobj, size: int, offset: int,
+                 BUFFER_SIZE: int = _DEFAULT_BUFFER_SIZE) -> None:
     """Delete size bytes of empty space starting at offset.
 
     fobj must be an open file object, open rb+ or
@@ -818,7 +822,7 @@ def delete_bytes(fobj, size, offset, BUFFER_SIZE=_DEFAULT_BUFFER_SIZE):
     resize_file(fobj, -size, BUFFER_SIZE)
 
 
-def resize_bytes(fobj, old_size, new_size, offset):
+def resize_bytes(fobj, old_size: int, new_size: int, offset: int) -> None:
     """Resize an area in a file adding and deleting at the end of it.
     Does nothing if no resizing is needed.
 
@@ -864,7 +868,8 @@ def dict_match(d, key, default=None):
     return default
 
 
-def encode_endian(text, encoding, errors="strict", le=True):
+def encode_endian(text: str, encoding: str,
+                  errors: str = "strict", le: bool = True) -> bytes:
     """Like text.encode(encoding) but always returns little endian/big endian
     BOMs instead of the system one.
 
@@ -896,7 +901,8 @@ def encode_endian(text, encoding, errors="strict", le=True):
         return text.encode(encoding, errors)
 
 
-def decode_terminated(data, encoding, strict=True):
+def decode_terminated(data: bytes, encoding: str,
+                      strict: bool = True) -> Tuple[str, bytes]:
     """Returns the decoded data until the first NULL terminator
     and all data after it.
 
@@ -936,7 +942,7 @@ def decode_terminated(data, encoding, strict=True):
 
     # slow path
     decoder = codec_info.incrementaldecoder()
-    r = []
+    r: List[str] = []
     for i, b in enumerate(iterbytes(data)):
         c = decoder.decode(b)
         if c == u"\x00":
@@ -962,7 +968,7 @@ class BitReader(object):
         self._bits = 0
         self._pos = fileobj.tell()
 
-    def bits(self, count):
+    def bits(self, count: int) -> int:
         """Reads `count` bits and returns an uint, MSB read first.
 
         May raise BitReaderError if not enough data could be read or
@@ -987,7 +993,7 @@ class BitReader(object):
         assert self._bits < 8
         return value
 
-    def bytes(self, count):
+    def bytes(self, count: int) -> bytes:
         """Returns a bytearray of length `count`. Works unaligned."""
 
         if count < 0:
@@ -1002,7 +1008,7 @@ class BitReader(object):
 
         return bytes(bytearray(self.bits(8) for _ in range(count)))
 
-    def skip(self, count):
+    def skip(self, count: int) -> None:
         """Skip `count` bits.
 
         Might raise BitReaderError if there wasn't enough data to skip,
@@ -1021,12 +1027,12 @@ class BitReader(object):
             count -= n_bytes * 8
             self.bits(count)
 
-    def get_position(self):
+    def get_position(self) -> int:
         """Returns the amount of bits read or skipped so far"""
 
         return (self._fileobj.tell() - self._pos) * 8 - self._bits
 
-    def align(self):
+    def align(self) -> int:
         """Align to the next byte, returns the amount of bits skipped"""
 
         bits = self._bits
@@ -1034,7 +1040,7 @@ class BitReader(object):
         self._bits = 0
         return bits
 
-    def is_aligned(self):
+    def is_aligned(self) -> bool:
         """If we are currently aligned to bytes and nothing is buffered"""
 
         return self._bits == 0

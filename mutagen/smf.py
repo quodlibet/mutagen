@@ -8,6 +8,7 @@
 """Standard MIDI File (SMF)"""
 
 import struct
+from typing import Tuple
 
 from mutagen import StreamInfo, MutagenError
 from mutagen._file import FileType
@@ -18,7 +19,7 @@ class SMFError(MutagenError):
     pass
 
 
-def _var_int(data, offset=0):
+def _var_int(data: bytearray, offset: int = 0) -> Tuple[int, int]:
     val = 0
     while 1:
         try:
