@@ -1,5 +1,6 @@
 
 import os
+import io
 
 from mutagen.ac3 import AC3, AC3Error
 
@@ -44,3 +45,7 @@ class TAC3(TestCase):
     def test_pprint(self):
         self.assertTrue("ac-3" in self.ac3.pprint())
         self.assertTrue("ec-3" in self.eac3.pprint())
+
+    def test_fuzz_extra_bitstream_info(self):
+        with self.assertRaises(AC3Error):
+            AC3(io.BytesIO(b'\x0bwII\x00\x00\xe3\xe3//'))
