@@ -40,6 +40,7 @@ from mutagen._util import DictMixin, cdata, delete_bytes, total_ordering, \
 
 
 def is_valid_apev2_key(key):
+    # https://wiki.hydrogenaud.io/index.php?title=APE_key
     if not isinstance(key, str):
         raise TypeError("APEv2 key must be str")
 
@@ -326,6 +327,10 @@ class APEv2(_CIDictProxy, Metadata):
                 key = key.decode("ascii")
             except UnicodeError as err:
                 reraise(APEBadItemError, err, sys.exc_info()[2])
+
+            if not is_valid_apev2_key(key):
+                raise APEBadItemError("%r is not a valid APEv2 key" % key)
+
             value = fileobj.read(size)
             if len(value) != size:
                 raise APEBadItemError
