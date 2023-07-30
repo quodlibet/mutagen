@@ -36,11 +36,11 @@ class PaddingInfo(object):
         size (`int`): The amount of data following the padding
     """
 
-    def __init__(self, padding, size):
+    def __init__(self, padding: int, size: int):
         self.padding = padding
         self.size = size
 
-    def get_default_padding(self):
+    def get_default_padding(self) -> int:
         """The default implementation which tries to select a reasonable
         amount of padding and which might change in future versions.
 
