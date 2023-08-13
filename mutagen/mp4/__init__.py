@@ -350,6 +350,9 @@ class MP4Tags(DictProxy, Tags):
 
         Recursing helps if the mp4/m4a container didn't store metadata correctly,
         which is usually expected at moov.udta.meta.ilst"""
+        if parent.children is None:
+            return
+
         if parent.name != b"ilst":
             for atom in parent.children:
                 if parent.name == b"meta" and atom.name == b"ilst":
