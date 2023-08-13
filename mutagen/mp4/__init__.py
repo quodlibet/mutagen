@@ -340,17 +340,27 @@ class MP4Tags(DictProxy, Tags):
         if args or kwargs:
             self.load(*args, **kwargs)
 
-    def load(self, atoms, fileobj):
-        try:
-            path = atoms.path(b"moov", b"udta", b"meta", b"ilst")
-        except KeyError as key:
-            raise MP4MetadataError(key)
+    def load(self, atoms: Atoms, fileobj):
+        for atom in atoms.atoms:
+            if atom.children is not None:
+                self._recurse_atom(atom, fileobj)
 
-        free = _find_padding(path)
-        self._padding = free.datalength if free is not None else 0
+    def _recurse_atom(self, parent: Atom, fileobj):
+        """Recursively search for an ilst atom to read metadata from.
 
-        ilst = path[-1]
-        for atom in ilst.children:
+        Recursing helps if the mp4/m4a container didn't store metadata correctly,
+        which is usually expected at moov.udta.meta.ilst"""
+        if parent.name != b"ilst":
+            for atom in parent.children:
+                if parent.name == b"meta" and atom.name == b"ilst":
+                    free = _find_padding([parent, atom])
+                    self._padding = free.datalength if free is not None else 0
+
+                if atom.children is not None and atom.name != 'ilst':
+                    self._recurse_atom(atom, fileobj)
+            return
+
+        for atom in parent.children:
             ok, data = atom.read(fileobj)
             if not ok:
                 raise MP4MetadataError("Not enough data")
