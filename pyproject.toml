@@ -5,7 +5,7 @@ description = "read and write audio tags for many formats"
 authors = []
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8.1"
 python-afl = {version = "^0.7.3", optional = true}
 
 [tool.poetry.extras]
@@ -20,6 +20,7 @@ coverage = "^7.2.5"
 Sphinx = "^4.0.0"
 sphinx-rtd-theme = "^1.0.0"
 sphinx-autobuild = "^2021.3.14"
+setuptools = "^68.1.2"
 
 [build-system]
 requires = ["setuptools"]
