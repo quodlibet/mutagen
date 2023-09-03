@@ -1,6 +1,6 @@
-.. _release-1.46.1:
+.. _release-1.47.0:
 
-1.46.1 - 2023-09-03
+1.47.0 - 2023-09-03
 -------------------
 
 * ID3: Allow reading TYER tags in the form of "yyyy-mm-dd" :pr:`597`
