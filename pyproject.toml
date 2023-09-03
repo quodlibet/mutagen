@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mutagen"
-version = "1.47.0"
+version = "1.47.1"
 description = "read and write audio tags for many formats"
 authors = []
 
