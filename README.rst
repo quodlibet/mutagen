@@ -1,4 +1,4 @@
-.. image:: https://raw.githubusercontent.com/quodlibet/mutagen/master/docs/images/logo.svg
+.. image:: https://raw.githubusercontent.com/quodlibet/mutagen/main/docs/images/logo.svg
    :align: center
    :width: 400px
 
@@ -19,5 +19,5 @@ later <https://spdx.org/licenses/GPL-2.0-or-later.html>`__.
 
 For more information visit https://mutagen.readthedocs.org
 
-.. image:: https://codecov.io/gh/quodlibet/mutagen/branch/master/graph/badge.svg
+.. image:: https://codecov.io/gh/quodlibet/mutagen/branch/main/graph/badge.svg
   :target: https://codecov.io/gh/quodlibet/mutagen
