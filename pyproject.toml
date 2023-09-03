@@ -20,6 +20,7 @@ coverage = "^7.2.5"
 Sphinx = "^4.0.0"
 sphinx-rtd-theme = "^1.0.0"
 sphinx-autobuild = "^2021.3.14"
+setuptools = "^68.1.2"
 
 [build-system]
 requires = ["setuptools"]
