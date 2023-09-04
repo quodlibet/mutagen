@@ -14,10 +14,10 @@ fuzzing-dev = ["python-afl"]
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
 hypothesis = "^6.50.1"
-flake8 = "^5.0.4"
-mypy = "1.3.0"
+flake8 = "^6.1.0"
+mypy = "1.5.1"
 coverage = "^7.2.5"
-Sphinx = "^4.0.0"
+Sphinx = "^6.2.1"
 sphinx-rtd-theme = "^1.0.0"
 sphinx-autobuild = "^2021.3.14"
 setuptools = "^68.1.2"
