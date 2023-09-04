@@ -6,10 +6,6 @@ authors = []
 
 [tool.poetry.dependencies]
 python = "^3.8.1"
-python-afl = {version = "^0.7.3", optional = true}
-
-[tool.poetry.extras]
-fuzzing-dev = ["python-afl"]
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
@@ -21,6 +17,12 @@ Sphinx = "^6.2.1"
 sphinx-rtd-theme = "^1.0.0"
 sphinx-autobuild = "^2021.3.14"
 setuptools = "^68.1.2"
+
+[tool.poetry.group.fuzzing]
+optional = true
+
+[tool.poetry.group.fuzzing.dependencies]
+python-afl = "^0.7.3"
 
 [build-system]
 requires = ["setuptools"]
