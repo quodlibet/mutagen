@@ -1,8 +1,8 @@
 Fuzzing
 =======
 
-Local fuzzing via `python-afl <https://github.com/jwilk/python-afl>`__ and `afl++
-  <https://aflplus.plus/>`__:
+Local fuzzing via `python-afl <https://github.com/jwilk/python-afl>`__ and
+`afl++ <https://aflplus.plus/>`__:
 
 * Install afl, for example ``sudo apt install afl++`` on Debian/Ubuntu
 * ``poetry install --with fuzzing``
