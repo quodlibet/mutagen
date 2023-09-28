@@ -31,6 +31,7 @@ class TID3Read(TestCase):
     silence = os.path.join(DATA_DIR, 'silence-44-s.mp3')
     silence_v1 = os.path.join(DATA_DIR, 'silence-44-s-v1.mp3')
     unsynch = os.path.join(DATA_DIR, 'id3v23_unsynch.id3')
+    extended_header = os.path.join(DATA_DIR, 'id3v24_extended_header.id3')
     v22 = os.path.join(DATA_DIR, "id3v22-test.mp3")
     bad_tyer = os.path.join(DATA_DIR, 'bad-TYER-frame.mp3')
     v1v2_combined = os.path.join(DATA_DIR, "id3v1v2-combined.mp3")
@@ -231,6 +232,10 @@ class TID3Read(TestCase):
     def test_load_v23_unsynch(self):
         id3 = ID3(self.unsynch)
         self.assertEquals(id3["TPE1"], ["Nina Simone"])
+
+    def test_v24_extended_header(self):
+        id3 = ID3(self.extended_header)
+        self.assertEquals(id3["TIT2"], ["One Second of Silence"])
 
     def test_bad_extended_header_flags(self):
         # Files with bad extended header flags failed to read tags.
