@@ -166,7 +166,10 @@ class ID3(ID3Tags, mutagen.Metadata):
             if known_frames is not None:
                 self._header._known_frames = known_frames
 
-            data = read_full(fileobj, self.size - 10)
+            size = self.size - 10
+            if self.f_extended:
+                size -= 4 + len(self._header._extdata)
+            data = read_full(fileobj, size)
             remaining_data = self._read(self._header, data)
             self._padding = len(remaining_data)
 
