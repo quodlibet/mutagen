@@ -7,7 +7,7 @@ Frame Base Classes
     :members:
 
 
-.. autoclass:: mutagen.id3.BinaryFrame(data='')
+.. autoclass:: mutagen.id3.BinaryFrame(data=b'')
     :show-inheritance:
     :members:
 
@@ -22,7 +22,7 @@ Frame Base Classes
     :members:
 
 
-.. autoclass:: mutagen.id3.UrlFrame(url=u'')
+.. autoclass:: mutagen.id3.UrlFrame(url='')
     :show-inheritance:
     :members:
 
@@ -42,7 +42,7 @@ Frame Base Classes
     :members:
 
 
-.. autoclass:: mutagen.id3.UrlFrameU(url=u'')
+.. autoclass:: mutagen.id3.UrlFrameU(url='')
     :show-inheritance:
     :members:
 
@@ -50,12 +50,12 @@ ID3v2.3/4 Frames
 ----------------
 
 
-.. autoclass:: mutagen.id3.AENC(owner=u'', preview_start=0, preview_length=0, data='')
+.. autoclass:: mutagen.id3.AENC(owner='', preview_start=0, preview_length=0, data=b'')
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.APIC(encoding=<Encoding.UTF16: 1>, mime=u'', type=<PictureType.COVER_FRONT: 3>, desc=u'', data='')
+.. autoclass:: mutagen.id3.APIC(encoding=<Encoding.UTF16: 1>, mime='', type=<PictureType.COVER_FRONT: 3>, desc='', data=b'')
     :show-inheritance:
     :members:
 
@@ -65,32 +65,32 @@ ID3v2.3/4 Frames
     :members:
 
 
-.. autoclass:: mutagen.id3.CHAP(element_id=u'', start_time=0, end_time=0, start_offset=4294967295, end_offset=4294967295, sub_frames={})
+.. autoclass:: mutagen.id3.CHAP(element_id='', start_time=0, end_time=0, start_offset=4294967295, end_offset=4294967295, sub_frames={})
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.COMM(encoding=<Encoding.UTF16: 1>, lang='XXX', desc=u'', text=[])
+.. autoclass:: mutagen.id3.COMM(encoding=<Encoding.UTF16: 1>, lang='XXX', desc='', text=[])
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.COMR(encoding=<Encoding.UTF16: 1>, price=u'', valid_until='19700101', contact=u'', format=0, seller=u'', desc=u'')
+.. autoclass:: mutagen.id3.COMR(encoding=<Encoding.UTF16: 1>, price='', valid_until='19700101', contact='', format=0, seller='', desc='')
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.CTOC(element_id=u'', flags=<0: 0>, child_element_ids=[], sub_frames={})
+.. autoclass:: mutagen.id3.CTOC(element_id='', flags=<0: 0>, child_element_ids=[], sub_frames={})
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.ENCR(owner=u'', method=128, data='')
+.. autoclass:: mutagen.id3.ENCR(owner='', method=128, data=b'')
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.EQU2(method=0, desc=u'', adjustments=[])
+.. autoclass:: mutagen.id3.EQU2(method=0, desc='', adjustments=[])
     :show-inheritance:
     :members:
 
@@ -100,12 +100,12 @@ ID3v2.3/4 Frames
     :members:
 
 
-.. autoclass:: mutagen.id3.GEOB(encoding=<Encoding.UTF16: 1>, mime=u'', filename=u'', desc=u'', data='')
+.. autoclass:: mutagen.id3.GEOB(encoding=<Encoding.UTF16: 1>, mime='', filename='', desc='', data=b'')
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.GRID(owner=u'', group=128, data='')
+.. autoclass:: mutagen.id3.GRID(owner='', group=128, data=b'')
     :show-inheritance:
     :members:
 
@@ -120,17 +120,17 @@ ID3v2.3/4 Frames
     :members:
 
 
-.. autoclass:: mutagen.id3.LINK(frameid='XXXX', url=u'', data='')
+.. autoclass:: mutagen.id3.LINK(frameid='XXXX', url='', data=b'')
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.MCDI(data='')
+.. autoclass:: mutagen.id3.MCDI(data=b'')
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.MLLT(frames=0, bytes=0, milliseconds=0, bits_for_bytes=0, bits_for_milliseconds=0, data='')
+.. autoclass:: mutagen.id3.MLLT(frames=0, bytes=0, milliseconds=0, bits_for_bytes=0, bits_for_milliseconds=0, data=b'')
     :show-inheritance:
     :members:
 
@@ -145,7 +145,7 @@ ID3v2.3/4 Frames
     :members:
 
 
-.. autoclass:: mutagen.id3.OWNE(encoding=<Encoding.UTF16: 1>, price=u'', date='19700101', seller=u'')
+.. autoclass:: mutagen.id3.OWNE(encoding=<Encoding.UTF16: 1>, price='', date='19700101', seller='')
     :show-inheritance:
     :members:
 
@@ -160,7 +160,7 @@ ID3v2.3/4 Frames
     :members:
 
 
-.. autoclass:: mutagen.id3.POPM(email=u'', rating=0)
+.. autoclass:: mutagen.id3.POPM(email='', rating=0)
     :show-inheritance:
     :members:
 
@@ -170,7 +170,7 @@ ID3v2.3/4 Frames
     :members:
 
 
-.. autoclass:: mutagen.id3.PRIV(owner=u'', data='')
+.. autoclass:: mutagen.id3.PRIV(owner='', data=b'')
     :show-inheritance:
     :members:
 
@@ -180,7 +180,7 @@ ID3v2.3/4 Frames
     :members:
 
 
-.. autoclass:: mutagen.id3.RVA2(desc=u'', channel=1, gain=1, peak=1)
+.. autoclass:: mutagen.id3.RVA2(desc='', channel=1, gain=1, peak=1)
     :show-inheritance:
     :members:
 
@@ -200,17 +200,17 @@ ID3v2.3/4 Frames
     :members:
 
 
-.. autoclass:: mutagen.id3.SIGN(group=128, sig='')
+.. autoclass:: mutagen.id3.SIGN(group=128, sig=b'')
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.SYLT(encoding=<Encoding.UTF16: 1>, lang='XXX', format=1, type=0, desc=u'', text=u'')
+.. autoclass:: mutagen.id3.SYLT(encoding=<Encoding.UTF16: 1>, lang='XXX', format=1, type=0, desc='', text='')
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.SYTC(format=1, data='')
+.. autoclass:: mutagen.id3.SYTC(format=1, data=b'')
     :show-inheritance:
     :members:
 
@@ -500,7 +500,7 @@ ID3v2.3/4 Frames
     :members:
 
 
-.. autoclass:: mutagen.id3.TXXX(encoding=<Encoding.UTF16: 1>, desc=u'', text=[])
+.. autoclass:: mutagen.id3.TXXX(encoding=<Encoding.UTF16: 1>, desc='', text=[])
     :show-inheritance:
     :members:
 
@@ -510,67 +510,67 @@ ID3v2.3/4 Frames
     :members:
 
 
-.. autoclass:: mutagen.id3.UFID(owner=u'', data='')
+.. autoclass:: mutagen.id3.UFID(owner='', data=b'')
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.USER(encoding=<Encoding.UTF16: 1>, lang='XXX', text=u'')
+.. autoclass:: mutagen.id3.USER(encoding=<Encoding.UTF16: 1>, lang='XXX', text='')
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.USLT(encoding=<Encoding.UTF16: 1>, lang='XXX', desc=u'', text=u'')
+.. autoclass:: mutagen.id3.USLT(encoding=<Encoding.UTF16: 1>, lang='XXX', desc='', text='')
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.WCOM(url=u'')
+.. autoclass:: mutagen.id3.WCOM(url='')
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.WCOP(url=u'')
+.. autoclass:: mutagen.id3.WCOP(url='')
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.WFED(url=u'')
+.. autoclass:: mutagen.id3.WFED(url='')
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.WOAF(url=u'')
+.. autoclass:: mutagen.id3.WOAF(url='')
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.WOAR(url=u'')
+.. autoclass:: mutagen.id3.WOAR(url='')
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.WOAS(url=u'')
+.. autoclass:: mutagen.id3.WOAS(url='')
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.WORS(url=u'')
+.. autoclass:: mutagen.id3.WORS(url='')
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.WPAY(url=u'')
+.. autoclass:: mutagen.id3.WPAY(url='')
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.WPUB(url=u'')
+.. autoclass:: mutagen.id3.WPUB(url='')
     :show-inheritance:
     :members:
 
 
-.. autoclass:: mutagen.id3.WXXX(encoding=<Encoding.UTF16: 1>, desc=u'', url=u'')
+.. autoclass:: mutagen.id3.WXXX(encoding=<Encoding.UTF16: 1>, desc='', url='')
     :show-inheritance:
     :members:
 
