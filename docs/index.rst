@@ -13,6 +13,7 @@
     user/index
     api/index
     man/index
+    dev/index
     contact
 
 .. title:: Overview
