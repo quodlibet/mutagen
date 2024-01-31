@@ -991,7 +991,7 @@ class MP4Chapters(Sequence):
 
         pos = 9
         for i in range(chapters):
-            start = struct.unpack(">Q", data[pos:pos + 8])[0] / 10000
+            start = struct.unpack(">Q", data[pos:pos + 8])[0] / 10000000
             pos += 8
 
             title_len = data[pos]
@@ -1003,7 +1003,7 @@ class MP4Chapters(Sequence):
                 raise MP4MetadataError("chapter %d title: %s" % (i, e))
             pos += title_len
 
-            self._chapters.append(Chapter(start / self._timescale, title))
+            self._chapters.append(Chapter(start, title))
 
     def pprint(self):
         chapters = ["%s %s" % (timedelta(seconds=chapter.start), chapter.title)
