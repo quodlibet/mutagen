@@ -820,10 +820,12 @@ class MP4Tags(DictProxy, Tags):
 
         encoded = []
         for v in value:
-            if not isinstance(v, str):
-                raise TypeError("%r not str" % v)
-
-            encoded.append(v.encode("utf-8"))
+            if isinstance(v, bytes):
+                encoded.append(v)
+            elif isinstance(v, str):
+                encoded.append(v.encode("utf-8"))
+            else:
+                raise TypeError("%r neither str or bytes" % v)
 
         return self.__render_data(key, 0, flags, encoded)
 
