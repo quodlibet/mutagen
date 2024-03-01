@@ -18,6 +18,7 @@ from ._util import error, ID3NoHeaderError, ID3UnsupportedVersionError, \
     BitPaddedInt
 from ._tags import ID3Tags, ID3Header, ID3SaveConfig
 from ._id3v1 import MakeID3v1, find_id3v1
+import os.path
 
 
 @enum
@@ -221,8 +222,8 @@ class ID3(ID3Tags, mutagen.Metadata):
     @convert_error(IOError, error)
     @loadfile(writable=True, create=True)
     def save(self, filething=None, v1=1, v2_version=4, v23_sep='/',
-             padding=None):
-        """save(filething=None, v1=1, v2_version=4, v23_sep='/', padding=None)
+             padding=None, preserve_mtime=False):
+        """save(filething=None, v1=1, v2_version=4, v23_sep='/', padding=None, preserve_mtime=False)
 
         Save changes to a file.
 
@@ -241,6 +242,8 @@ class ID3(ID3Tags, mutagen.Metadata):
                 if v2_version == 3. Defaults to '/' but if it's None
                 will be the ID3v2v2.4 null separator.
             padding (:obj:`mutagen.PaddingFunction`)
+            preserve_mtime:
+                Keep the original file modified time as it was before saving.
 
         Raises:
             mutagen.MutagenError
@@ -252,6 +255,10 @@ class ID3(ID3Tags, mutagen.Metadata):
         """
 
         f = filething.fileobj
+        
+        filename = filething.filename
+        if filename is not None:
+            original_mtime = os.stat(filename).st_mtime_ns
 
         try:
             header = ID3Header(filething.fileobj)
@@ -270,8 +277,13 @@ class ID3(ID3Tags, mutagen.Metadata):
             delete_bytes(f, old_size - new_size, new_size)
         f.seek(0)
         f.write(data)
-
+        
         self.__save_v1(f, v1)
+        
+        if preserve_mtime is True and filename is not None:
+            new_atime = os.stat(filename).st_atime_ns
+            print("\nRetaining original mtime. file={}, atime={}, o_mtime={}".format(filename, new_atime, original_mtime))
+            os.utime(filename, ns=(new_atime, original_mtime))
 
     def __save_v1(self, f, v1):
         tag, offset = find_id3v1(f)

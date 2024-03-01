@@ -2,6 +2,8 @@
 import os
 from io import BytesIO
 
+import time
+
 from mutagen import id3
 from mutagen import MutagenError
 from mutagen.apev2 import APEv2
@@ -892,6 +894,51 @@ class TID3Write(TestCase):
         frame = id3["TPE1"]
         self.assertEqual(frame.encoding, 1)
         self.assertEqual(frame.text, strings)
+
+    def test_retain_mtime(self):
+
+        def run_test(label, flag):
+
+            print("\n" + label)
+            
+            file = get_temp_copy( os.path.join(DATA_DIR, 'silence-44-s.mp3'))
+            audio = ID3(file)
+
+            # import datetime
+            # initial_mtime = datetime.datetime(2021, 1, 1, 12, 0, 0).timestamp()
+            # os.utime(file, times=(initial_mtime, initial_mtime))
+
+            mtime_before = os.stat(file).st_mtime
+            if flag is False:
+                time.sleep(0.1) 
+            audio.save(v2_version=3, preserve_mtime=flag)
+            mtime_after = os.stat(file).st_mtime
+            print("\nfile {}, before={}, after={}".format(file, mtime_before, mtime_after))
+            if flag:
+                tolerance = 0.1
+                self.assertTrue(abs(mtime_after - mtime_before) < tolerance, "mtime difference greater than tolerance")
+                #self.assertEqual(mtime_before, mtime_after)
+            else:
+                self.assertNotEqual(mtime_before, mtime_after)
+
+        
+        run_test("file mtime will be preserved", flag=True)
+        run_test("file mtime will not be preserved", flag=False)
+
+
+        # audio = ID3(self.filename)
+        # mtime_before = os.path.getmtime(test_file_name)
+        # audio.save(v2_version=3, preserve_mtime=True)
+        # mtime_after = os.path.getmtime(self.filename)
+        # self.assertEqual(mtime_before, mtime_after)
+
+        # audio2 = ID3(self.filename)
+        # #time.sleep(1)
+        # mtime_before_2 = os.path.getmtime(test_file_name)
+        # audio.save(v2_version=3)
+        # mtime_after_2 = os.path.getmtime(self.filename)
+        # self.assertNotEqual(mtime_before_2, mtime_after_2)
+
 
     def test_save_off_spec_frames(self):
         # These are not defined in v2.3 and shouldn't be written.
