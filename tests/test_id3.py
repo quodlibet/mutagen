@@ -17,7 +17,7 @@ from mutagen.id3._tags import determine_bpi, ID3Header, \
     save_frame, ID3SaveConfig
 from mutagen.id3._id3v1 import find_id3v1
 
-from tests import TestCase, DATA_DIR, get_temp_copy, get_temp_empty
+from tests import TestCase, DATA_DIR, get_temp_copy, get_temp_copy_keep_metadata, get_temp_empty
 
 
 def test_id3_module_exports_all_frames():
@@ -898,46 +898,24 @@ class TID3Write(TestCase):
     def test_retain_mtime(self):
 
         def run_test(label, flag):
-
-            print("\n" + label)
             
-            file = get_temp_copy( os.path.join(DATA_DIR, 'silence-44-s.mp3'))
+            file = get_temp_copy_keep_metadata( os.path.join(DATA_DIR, 'silence-44-s-aged-filetime.mp3'))
             audio = ID3(file)
-
-            # import datetime
-            # initial_mtime = datetime.datetime(2021, 1, 1, 12, 0, 0).timestamp()
-            # os.utime(file, times=(initial_mtime, initial_mtime))
 
             mtime_before = os.stat(file).st_mtime
             if flag is False:
                 time.sleep(0.1) 
             audio.save(v2_version=3, preserve_mtime=flag)
             mtime_after = os.stat(file).st_mtime
-            print("\nfile {}, before={}, after={}".format(file, mtime_before, mtime_after))
+            
             if flag:
                 tolerance = 0.1
                 self.assertTrue(abs(mtime_after - mtime_before) < tolerance, "mtime difference greater than tolerance")
-                #self.assertEqual(mtime_before, mtime_after)
             else:
                 self.assertNotEqual(mtime_before, mtime_after)
 
-        
         run_test("file mtime will be preserved", flag=True)
         run_test("file mtime will not be preserved", flag=False)
-
-
-        # audio = ID3(self.filename)
-        # mtime_before = os.path.getmtime(test_file_name)
-        # audio.save(v2_version=3, preserve_mtime=True)
-        # mtime_after = os.path.getmtime(self.filename)
-        # self.assertEqual(mtime_before, mtime_after)
-
-        # audio2 = ID3(self.filename)
-        # #time.sleep(1)
-        # mtime_before_2 = os.path.getmtime(test_file_name)
-        # audio.save(v2_version=3)
-        # mtime_after_2 = os.path.getmtime(self.filename)
-        # self.assertNotEqual(mtime_before_2, mtime_after_2)
 
 
     def test_save_off_spec_frames(self):

@@ -16,6 +16,7 @@ import struct
 import codecs
 import errno
 import decimal
+import os
 from io import BytesIO
 from typing import Tuple, List
 
@@ -271,17 +272,25 @@ def _openfile(instance, filething, filename, fileobj, writable, create):
             else:
                 raise MutagenError(e)
 
-        with fileobj as fileobj:
-            yield FileThing(fileobj, filename, filename)
+        try:
+            with fileobj as fileobj:
+                yield FileThing(fileobj, filename, filename)
 
-            if inmemory_fileobj:
-                assert writable
-                data = fileobj.getvalue()
-                try:
-                    with open(filename, "wb") as fileobj:
-                        fileobj.write(data)
-                except IOError as e:
-                    raise MutagenError(e)
+                if inmemory_fileobj:
+                    assert writable
+                    data = fileobj.getvalue()
+                    try:
+                        with open(filename, "wb") as fileobj:
+                            fileobj.write(data)
+                    except IOError as e:
+                        raise MutagenError(e)
+        finally:
+            if hasattr(fileobj, "__restore_mtime__"):
+                new_atime = os.stat(filename).st_atime_ns
+                original_mtime = fileobj.__restore_mtime__
+                print("\nRetaining original mtime. file={}, atime={}, o_mtime={}".format(filename, new_atime, original_mtime))
+                os.utime(filename, ns=(new_atime, original_mtime))
+                
     else:
         raise TypeError("Missing filename or fileobj argument")
 

@@ -257,8 +257,9 @@ class ID3(ID3Tags, mutagen.Metadata):
         f = filething.fileobj
         
         filename = filething.filename
-        if filename is not None:
+        if filename is not None and preserve_mtime:
             original_mtime = os.stat(filename).st_mtime_ns
+            setattr(f, "__restore_mtime__", original_mtime)
 
         try:
             header = ID3Header(filething.fileobj)
@@ -280,10 +281,6 @@ class ID3(ID3Tags, mutagen.Metadata):
         
         self.__save_v1(f, v1)
         
-        if preserve_mtime is True and filename is not None:
-            new_atime = os.stat(filename).st_atime_ns
-            print("\nRetaining original mtime. file={}, atime={}, o_mtime={}".format(filename, new_atime, original_mtime))
-            os.utime(filename, ns=(new_atime, original_mtime))
 
     def __save_v1(self, f, v1):
         tag, offset = find_id3v1(f)

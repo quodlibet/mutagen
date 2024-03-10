@@ -34,6 +34,15 @@ def get_temp_copy(path):
     shutil.copy(path, filename)
     return filename
 
+def get_temp_copy_keep_metadata(path):
+    """Returns a copy of the file with the same extension"""
+
+    ext = os.path.splitext(path)[-1]
+    fd, filename = mkstemp(suffix=ext)
+    os.close(fd)
+    shutil.copy2(path, filename)
+    return filename
+
 
 def get_temp_empty(ext=""):
     """Returns an empty file with the extension"""
