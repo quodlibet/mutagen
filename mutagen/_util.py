@@ -294,6 +294,11 @@ def _openfile(instance, filething, filename, fileobj, writable, create):
     else:
         raise TypeError("Missing filename or fileobj argument")
 
+def set_restore_mtime(filename, fileobj):
+    if filename is not None and fileobj is not None:
+        original_mtime = os.stat(filename).st_mtime_ns
+        setattr(fileobj, "__restore_mtime__", original_mtime)
+
 
 class MutagenError(Exception):
     """Base class for all custom exceptions in mutagen

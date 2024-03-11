@@ -11,7 +11,7 @@ import struct
 
 import mutagen
 from mutagen._util import insert_bytes, delete_bytes, enum, \
-    loadfile, convert_error, read_full
+    loadfile, convert_error, read_full, set_restore_mtime
 from mutagen._tags import PaddingInfo
 
 from ._util import error, ID3NoHeaderError, ID3UnsupportedVersionError, \
@@ -257,9 +257,8 @@ class ID3(ID3Tags, mutagen.Metadata):
         f = filething.fileobj
         
         filename = filething.filename
-        if filename is not None and preserve_mtime:
-            original_mtime = os.stat(filename).st_mtime_ns
-            setattr(f, "__restore_mtime__", original_mtime)
+        if preserve_mtime:
+            set_restore_mtime(filename, f)
 
         try:
             header = ID3Header(filething.fileobj)
