@@ -17,6 +17,7 @@ import codecs
 import errno
 import decimal
 import os
+import time
 from io import BytesIO
 from typing import Tuple, List
 
@@ -286,7 +287,7 @@ def _openfile(instance, filething, filename, fileobj, writable, create):
                         raise MutagenError(e)
         finally:
             if hasattr(fileobj, "__restore_mtime__"):
-                new_atime = os.stat(filename).st_atime_ns
+                new_atime = time.time_ns()
                 original_mtime = fileobj.__restore_mtime__
                 print("\nRetaining original mtime. file={}, atime={}, o_mtime={}".format(filename, new_atime, original_mtime))
                 os.utime(filename, ns=(new_atime, original_mtime))
@@ -294,9 +295,9 @@ def _openfile(instance, filething, filename, fileobj, writable, create):
     else:
         raise TypeError("Missing filename or fileobj argument")
 
-def set_restore_mtime(filename, fileobj):
-    if filename is not None and fileobj is not None:
-        original_mtime = os.stat(filename).st_mtime_ns
+def set_restore_mtime(fileobj):
+    if fileobj is not None:
+        original_mtime = os.stat(fileobj.name).st_mtime_ns
         setattr(fileobj, "__restore_mtime__", original_mtime)
 
 

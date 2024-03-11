@@ -256,9 +256,8 @@ class ID3(ID3Tags, mutagen.Metadata):
 
         f = filething.fileobj
         
-        filename = filething.filename
         if preserve_mtime:
-            set_restore_mtime(filename, f)
+            set_restore_mtime(f)
 
         try:
             header = ID3Header(filething.fileobj)
