@@ -34,6 +34,7 @@ def get_temp_copy(path):
     shutil.copy(path, filename)
     return filename
 
+
 def get_temp_copy_keep_metadata(path):
     """Returns a copy of the file with the same extension"""
 

@@ -365,9 +365,9 @@ class IffID3(ID3):
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
-    def save(self, filething=None, v2_version=4, v23_sep='/', padding=None, preserve_mtime=False):
+    def save(self, filething=None, v2_version=4, v23_sep='/',
+    padding=None, preserve_mtime=False):
         """Save ID3v2 data to the IFF file"""
-
         fileobj = filething.fileobj
 
         if preserve_mtime:

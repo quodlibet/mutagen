@@ -418,7 +418,6 @@ class MP4Tags(DictProxy, Tags):
         except AtomError as err:
             reraise(error, err, sys.exc_info()[2])
 
-
         fileobj = filething.fileobj
         if preserve_mtime:
             set_restore_mtime(fileobj)

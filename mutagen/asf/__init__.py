@@ -11,7 +11,8 @@
 __all__ = ["ASF", "Open"]
 
 from mutagen import FileType, Tags, StreamInfo
-from mutagen._util import resize_bytes, DictMixin, loadfile, convert_error, set_restore_mtime
+from mutagen._util import resize_bytes, DictMixin, loadfile, convert_error, \
+    set_restore_mtime
 
 from ._util import error, ASFError, ASFHeaderError
 from ._objects import HeaderObject, MetadataLibraryObject, MetadataObject, \

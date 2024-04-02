@@ -119,14 +119,15 @@ class _WaveID3(ID3):
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
-    def save(self, filething, v1=1, v2_version=4, v23_sep='/', padding=None, preserve_mtime=False):
+    def save(self, filething, v1=1, v2_version=4, v23_sep='/', padding=None,
+            preserve_mtime=False):
         """Save ID3v2 data to the Wave/RIFF file"""
 
         fileobj = filething.fileobj
 
         if preserve_mtime:
             set_restore_mtime(fileobj)
-            
+
         wave_file = _WaveFile(fileobj)
 
         if u'id3' not in wave_file:

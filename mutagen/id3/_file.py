@@ -18,7 +18,6 @@ from ._util import error, ID3NoHeaderError, ID3UnsupportedVersionError, \
     BitPaddedInt
 from ._tags import ID3Tags, ID3Header, ID3SaveConfig
 from ._id3v1 import MakeID3v1, find_id3v1
-import os.path
 
 
 @enum
@@ -223,7 +222,8 @@ class ID3(ID3Tags, mutagen.Metadata):
     @loadfile(writable=True, create=True)
     def save(self, filething=None, v1=1, v2_version=4, v23_sep='/',
              padding=None, preserve_mtime=False):
-        """save(filething=None, v1=1, v2_version=4, v23_sep='/', padding=None, preserve_mtime=False)
+        """save(filething=None, v1=1, v2_version=4, v23_sep='/', padding=None,
+                preserve_mtime=False)
 
         Save changes to a file.
 
@@ -255,7 +255,7 @@ class ID3(ID3Tags, mutagen.Metadata):
         """
 
         f = filething.fileobj
-        
+
         if preserve_mtime:
             set_restore_mtime(f)
 
@@ -276,9 +276,8 @@ class ID3(ID3Tags, mutagen.Metadata):
             delete_bytes(f, old_size - new_size, new_size)
         f.seek(0)
         f.write(data)
-        
+
         self.__save_v1(f, v1)
-        
 
     def __save_v1(self, f, v1):
         tag, offset = find_id3v1(f)

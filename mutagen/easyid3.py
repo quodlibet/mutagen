@@ -175,7 +175,8 @@ class EasyID3(DictMixin, Metadata):
     @loadfile(writable=True, create=True)
     def save(self, filething=None, v1=1, v2_version=4, v23_sep='/',
              padding=None, preserve_mtime=False):
-        """save(filething=None, v1=1, v2_version=4, v23_sep='/', padding=None, preserve_mtime=False)
+        """save(filething=None, v1=1, v2_version=4, v23_sep='/', padding=None,
+                preserve_mtime=False)
 
         Save changes to a file.
         See :meth:`mutagen.id3.ID3.save` for more info.
