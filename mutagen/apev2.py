@@ -36,7 +36,7 @@ from collections.abc import MutableSequence
 
 from mutagen import Metadata, FileType, StreamInfo
 from mutagen._util import DictMixin, cdata, delete_bytes, total_ordering, \
-    MutagenError, loadfile, convert_error, seek_end, get_size, reraise
+    MutagenError, loadfile, convert_error, seek_end, get_size, reraise, set_restore_mtime
 
 
 def is_valid_apev2_key(key):
@@ -396,7 +396,7 @@ class APEv2(_CIDictProxy, Metadata):
 
     @convert_error(IOError, error)
     @loadfile(writable=True, create=True)
-    def save(self, filething=None):
+    def save(self, filething=None, preserve_mtime=False):
         """Save changes to a file.
 
         If no filename is given, the one most recently loaded is used.
@@ -406,6 +406,9 @@ class APEv2(_CIDictProxy, Metadata):
         """
 
         fileobj = filething.fileobj
+
+        if preserve_mtime:
+            set_restore_mtime(fileobj)
 
         data = _APEv2Data(fileobj)
 

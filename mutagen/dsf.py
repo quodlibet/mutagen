@@ -14,7 +14,7 @@ from io import BytesIO
 
 from mutagen import FileType, StreamInfo
 from mutagen._util import cdata, MutagenError, loadfile, \
-    convert_error, reraise, endswith
+    convert_error, reraise, endswith, set_restore_mtime
 from mutagen.id3 import ID3
 from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
 
@@ -198,10 +198,14 @@ class _DSFID3(ID3):
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
-    def save(self, filething=None, v2_version=4, v23_sep='/', padding=None):
+    def save(self, filething=None, v2_version=4, v23_sep='/', padding=None, preserve_mtime=False):
         """Save ID3v2 data to the DSF file"""
 
         fileobj = filething.fileobj
+
+        if preserve_mtime:
+            set_restore_mtime(fileobj)
+
         fileobj.seek(0)
 
         dsd_header = DSDChunk(fileobj)

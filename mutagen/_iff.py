@@ -20,6 +20,7 @@ from mutagen._util import (
     delete_bytes,
     insert_bytes,
     loadfile,
+    set_restore_mtime,
     reraise,
     resize_bytes,
 )
@@ -364,10 +365,13 @@ class IffID3(ID3):
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
-    def save(self, filething=None, v2_version=4, v23_sep='/', padding=None):
+    def save(self, filething=None, v2_version=4, v23_sep='/', padding=None, preserve_mtime=False):
         """Save ID3v2 data to the IFF file"""
 
         fileobj = filething.fileobj
+
+        if preserve_mtime:
+            set_restore_mtime(fileobj)
 
         iff_file = self._load_file(fileobj)
 
