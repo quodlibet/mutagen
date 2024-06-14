@@ -530,7 +530,6 @@ for desc, key in {
     u"MusicBrainz Album Release Country": "releasecountry",
     u"MusicBrainz Disc Id": "musicbrainz_discid",
     u"ASIN": "asin",
-    u"ALBUMARTISTSORT": "albumartistsort",
     u"PERFORMER": "performer",
     u"BARCODE": "barcode",
     u"CATALOGNUMBER": "catalognumber",
