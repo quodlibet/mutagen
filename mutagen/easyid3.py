@@ -12,6 +12,7 @@ more like Vorbis or APEv2 tags.
 """
 
 from typing import Callable, Dict
+from functools import partial
 
 import mutagen.id3
 
@@ -540,6 +541,51 @@ for desc, key in {
     u"Acoustid Id": "acoustid_id",
 }.items():
     EasyID3.RegisterTXXXKey(key, desc)
+
+
+def fallback_getter_helper(id3, key, original, fallback):
+    try:
+        return original(id3, key)
+    except KeyError as e:
+        try:
+            return fallback(id3, key)
+        except KeyError:
+            raise e
+
+
+def fallback_deleter_helper(id3, key, original, fallback):
+    try:
+        original(id3, key)
+    except KeyError as e:
+        exception1 = e
+    else:
+        exception1 = None
+
+    try:
+        return fallback(id3, key)
+    except KeyError:
+        if exception1:
+            raise exception1
+
+
+def txxxkey_getter(id3, key, frameid):
+    return list(id3[frameid])
+
+
+def txxxkey_deleter(id3, key, frameid):
+    del id3[frameid]
+
+for key, extra_source in {
+    "albumartistsort": "TXXX:ALBUMARTISTSORT",
+}.items():
+    EasyID3.Get[key] = partial(fallback_getter_helper,
+                               original=EasyID3.Get[key],
+                               fallback=partial(txxxkey_getter,
+                                                frameid=extra_source))
+    EasyID3.Delete[key] = partial(fallback_deleter_helper,
+                                  original=EasyID3.Delete[key],
+                                  fallback=partial(txxxkey_deleter,
+                                                   frameid=extra_source))
 
 
 class EasyID3FileType(ID3FileType):
