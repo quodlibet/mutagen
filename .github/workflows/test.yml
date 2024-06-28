@@ -34,14 +34,14 @@ jobs:
             python-version: 3.11
             build-docs: true
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
 
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
         path: |
           ${{ matrix.pip-cache }}
@@ -67,7 +67,7 @@ jobs:
       run: |
         poetry run flake8
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
     - name: Build docs
       if: matrix.build-docs
       run: |
