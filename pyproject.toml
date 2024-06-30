@@ -5,7 +5,7 @@ description = "read and write audio tags for many formats"
 authors = []
 
 [tool.poetry.dependencies]
-python = "^3.8.1"
+python = "^3.9"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.2"

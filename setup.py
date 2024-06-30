@@ -293,7 +293,7 @@ if __name__ == "__main__":
             ('share/man/man1', glob.glob("man/*.1")),
           ],
           python_requires=(
-            '>=3.8'),
+            '>=3.9'),
           entry_points={
             'console_scripts': [
               'mid3cp=mutagen._tools.mid3cp:entry_point',
