@@ -11,6 +11,7 @@
 * See ISO/IEC 13818-7 / 14496-03
 """
 
+import io
 from mutagen import StreamInfo
 from mutagen._file import FileType
 from mutagen._util import BitReader, BitReaderError, MutagenError, loadfile, \
@@ -409,11 +410,39 @@ class AAC(FileType):
         raise AACError("doesn't support tags")
 
     @staticmethod
+    def _is_probably_adts_header(header: bytes) -> bool:
+        r = BitReader(io.BytesIO(header))
+
+        # Syncword
+        if not r.bits(12) == 0xFFF:
+            return False
+
+        # MPEG version
+        r.skip(1)
+
+        # Layer
+        if not r.bits(2) == 0:
+            return False
+
+        # Protection absence
+        r.skip(1)
+
+        # Profile
+        r.skip(2)
+
+        # Sampling index
+        if r.bits(4) > 0xC:
+            return False
+
+        return True
+
+    @staticmethod
     def score(filename, fileobj, header):
         filename = filename.lower()
         s = endswith(filename, ".aac") or endswith(filename, ".adts") or \
             endswith(filename, ".adif")
         s += b"ADIF" in header
+        s += int(AAC._is_probably_adts_header(header))
         return s
 
 
