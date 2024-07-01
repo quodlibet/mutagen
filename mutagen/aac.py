@@ -411,6 +411,9 @@ class AAC(FileType):
 
     @staticmethod
     def _is_probably_adts_header(header: bytes) -> bool:
+        if len(header) < 9:
+            return False
+
         r = BitReader(io.BytesIO(header))
 
         # Syncword
