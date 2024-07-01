@@ -11,7 +11,6 @@
 * See ISO/IEC 13818-7 / 14496-03
 """
 
-import io
 from mutagen import StreamInfo
 from mutagen._file import FileType
 from mutagen._util import BitReader, BitReaderError, MutagenError, loadfile, \
@@ -414,27 +413,18 @@ class AAC(FileType):
         if len(header) < 9:
             return False
 
-        r = BitReader(io.BytesIO(header))
-
         # Syncword
-        if not r.bits(12) == 0xFFF:
+        if not (header[0] == 0xFF):
             return False
-
-        # MPEG version
-        r.skip(1)
+        if not (header[1] & 0xF0 == 0xF0):
+            return False
 
         # Layer
-        if not r.bits(2) == 0:
+        if not (header[1] & 0b0000_0110 == 0):
             return False
 
-        # Protection absence
-        r.skip(1)
-
-        # Profile
-        r.skip(2)
-
         # Sampling index
-        if r.bits(4) > 0xC:
+        if ((header[2] & 0b0011_1100) >> 2) > 0xC:
             return False
 
         return True
