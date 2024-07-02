@@ -27,7 +27,7 @@ from ._vorbis import VCommentDict
 import mutagen
 
 from mutagen._util import resize_bytes, MutagenError, get_size, loadfile, \
-    convert_error, bchr, endswith
+    convert_error, bchr, endswith, set_restore_mtime
 from mutagen._tags import PaddingInfo
 from mutagen.id3._util import BitPaddedInt
 from functools import reduce
@@ -836,13 +836,14 @@ class FLAC(mutagen.FileType):
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
-    def save(self, filething=None, deleteid3=False, padding=None):
+    def save(self, filething=None, deleteid3=False, padding=None, preserve_mtime=False):
         """Save metadata blocks to a file.
 
         Args:
             filething (filething)
             deleteid3 (bool): delete id3 tags while at it
             padding (:obj:`mutagen.PaddingFunction`)
+            preserve_mtime (bool): Keep existing modified time on save
 
         If no filename is given, the one most recently loaded is used.
         """
@@ -855,6 +856,9 @@ class FLAC(mutagen.FileType):
             if not isinstance(self.seektable, SeekTable):
                 raise ValueError("Invalid seektable object type!")
             self.metadata_blocks.append(self.seektable)
+
+        if preserve_mtime:
+            set_restore_mtime(filething.fileobj)
 
         self._save(filething, self.metadata_blocks, deleteid3, padding)
 
