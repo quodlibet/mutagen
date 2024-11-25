@@ -358,6 +358,7 @@ class TLAMEHeader(TestCase):
         self.assertEqual(parse(b"LAME3.80 "), (u"3.80", False))
         self.assertEqual(parse(b"LAME3.88 (beta)"), (u"3.88 (beta)", False))
         self.assertEqual(parse(b"LAME3.90 (alpha)"), (u"3.90 (alpha)", False))
+        self.assertEqual(parse(b"LAME3.80 (no-ascii-\xff)"), (u"3.80 (?)", False))
         self.assertEqual(parse(b"LAME3.90 "), (u"3.90.0+", True))
         self.assertEqual(parse(b"LAME3.96a"), (u"3.96 (alpha)", True))
         self.assertEqual(parse(b"LAME3.96b"), (u"3.96 (beta)", True))
