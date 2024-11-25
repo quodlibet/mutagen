@@ -304,8 +304,12 @@ class LAMEHeader(object):
         # (I have seen such a file)
         if (major, minor) < (3, 90) or (
                 (major, minor) == (3, 90) and data[-11:-10] == b"("):
-            flag = data.strip(b"\x00").rstrip().decode("ascii")
-            return (major, minor), u"%d.%d%s" % (major, minor, flag), False
+            flag = data.strip(b"\x00").rstrip()
+            try:
+                flag_string = flag.decode("ascii")
+            except UnicodeDecodeError:
+                flag_string = " (?)"
+            return (major, minor), u"%d.%d%s" % (major, minor, flag_string), False
 
         if len(data) < 11:
             raise LAMEError("Invalid version: too long")
