@@ -199,7 +199,16 @@ class ID3Tags(DictProxy, Tags):
 
         def sort_key(items):
             frame, data = items
-            return (get_prio(frame), len(data), frame.HashKey)
+            frame_key = frame.HashKey
+            frame_size = len(data)
+
+            # Let's ensure chapters are always sorted by their 'start_time'
+            # and not by size/element_id pair.
+            if frame.FrameID == "CHAP":
+                frame_key = frame.FrameID
+                frame_size = frame.start_time
+
+            return (get_prio(frame), frame_size, frame_key)
 
         framedata = [d for (f, d) in sorted(framedata, key=sort_key)]
 
