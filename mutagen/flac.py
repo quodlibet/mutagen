@@ -559,7 +559,7 @@ class Picture(MetadataBlock):
     instantiate this object without passing anything to the constructor and
     then set the properties manually::
 
-        p = Picture()
+        pic = Picture()
 
         with open("Folder.jpg", "rb") as f:
             pic.data = f.read()
