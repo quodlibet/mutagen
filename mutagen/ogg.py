@@ -81,6 +81,12 @@ class OggPage(object):
         self.offset = fileobj.tell()
 
         header = fileobj.read(27)
+
+        # If there is not enough data to make up the header...
+        # we might be looking at trailing null bytes on the file.
+        if len(header) != 27 and all(byte == 0 for byte in header):
+            header = b""
+
         if len(header) == 0:
             raise EOFError
 
