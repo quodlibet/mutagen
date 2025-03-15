@@ -1253,8 +1253,8 @@ class APIC(Frame):
     * type -- the source of the image (3 is the album front cover)
     * desc -- a text description of the image
     * data -- raw image data, as a byte string
-
-    Mutagen will automatically compress large images when saving tags.
+    * salt -- will be added to the `HashKey`; this allows for
+      multiple `APIC` frames with the same description
     """
 
     _framespec = [
@@ -1265,6 +1265,8 @@ class APIC(Frame):
         BinaryDataSpec('data'),
     ]
 
+    salt = u''
+
     def __eq__(self, other):
         return self.data == other
 
@@ -1272,10 +1274,10 @@ class APIC(Frame):
 
     @property
     def HashKey(self):
-        return '%s:%s' % (self.FrameID, self.desc)
+        return '%s:%s%s' % (self.FrameID, self.desc, self.salt)
 
     def _merge_frame(self, other):
-        other.desc += u" "
+        other.salt += u' '
         return other
 
     def _pprint(self):
