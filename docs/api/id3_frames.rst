@@ -59,6 +59,58 @@ ID3v2.3/4 Frames
     :show-inheritance:
     :members:
 
+    -----
+
+    **Examples:**
+
+    To set the cover image for a file you may, for example, do it this way:
+    
+    .. code-block:: python
+
+        import mimetypes
+        from mutagen.id3 import ID3, APIC, PictureType
+
+        image_filename = 'example.jpeg'
+        image_mime_type = mimetypes.guess_file_type(image_filename)[0]
+        with open(image_filename, 'rb') as f:
+            image_data = f.read()
+
+        tags = ID3('example.mp3')
+        tags.setall('APIC', [APIC(
+            mime=image_mime_type,
+            type=PictureType.COVER_FRONT
+            data=image_data
+        )])
+    
+    Setting multiple cover images is a tad more complicated. Since tags in Mutagen are identified by their `HashKey`, each APIC needs to have a unique `HashKey`. Usually, `HashKey`\ s in Mutagen are set as ``<frame ID>:<desc>``, but this would mean that `APIC`\ s couldn't have the same description. To that end, the `APIC` class has the ``salt`` attribute, which exists only to be added to the `HashKey`\  – that is to say, `APIC`\ s' `HashKey`\ s are set as ``APIC:<desc><salt>``.
+
+    Thus, to add multiple cover images, you can either ensure that each `APIC` has a unique description, or you can add to ``salt``:
+
+    .. code-block:: python
+
+        import mimetypes
+        from mutagen.id3 import ID3, APIC, PictureType
+
+        tags = ID3('example.mp3')
+
+        image_filenames = ['example.jpeg', 'example.png']
+        for image_filename in image_filenames:
+            image_mime_type = mimetypes.guess_file_type(image_filename)[0]
+            with open(image_filename, 'rb') as f:
+                image_data = f.read()
+            
+            apic = APIC(
+                mime=image_mime_type,
+                type=PictureType.COVER_FRONT
+                data=image_data
+            )
+            
+            while apic.HashKey in tags:
+                apic.salt += ' '
+            
+            tags.add(apic)
+
+    -----
 
 .. autoclass:: mutagen.id3.ASPI(S=0, L=0, N=0, b=0, Fi=[])
     :show-inheritance:
