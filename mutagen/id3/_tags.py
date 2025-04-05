@@ -195,13 +195,27 @@ class ID3Tags(DictProxy, Tags):
             try:
                 return order.index(frame.FrameID)
             except ValueError:
-                return len(order)
+                # Pictures are placed last due to their presumed size.
+                if frame.FrameID == "APIC":
+                    return len(order) + 1
+                else:
+                    return len(order)
 
         def sort_key(items):
-            frame, data = items
-            return (get_prio(frame), len(data), frame.HashKey)
+            i, (frame, data) = items
 
-        framedata = [d for (f, d) in sorted(framedata, key=sort_key)]
+            if frame.FrameID == "APIC":
+                # The order among APIC frames is preserved, as their order
+                # can influence, say, what image is chosen as cover image
+                # in many players.
+                secondary_key = i
+            else:
+                secondary_key = len(data)
+
+            return (get_prio(frame), secondary_key, frame.HashKey)
+
+        framedata = [
+            d for (i, (f, d)) in sorted(enumerate(framedata), key=sort_key)]
 
         # only write unknown frames if they were loaded from the version
         # we are saving with. Theoretically we could upgrade frames
