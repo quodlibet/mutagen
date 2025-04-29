@@ -2,6 +2,8 @@
 import os
 from io import BytesIO
 
+import time
+
 from mutagen import id3
 from mutagen import MutagenError
 from mutagen.apev2 import APEv2
@@ -15,7 +17,8 @@ from mutagen.id3._tags import determine_bpi, ID3Header, \
     save_frame, ID3SaveConfig
 from mutagen.id3._id3v1 import find_id3v1
 
-from tests import TestCase, DATA_DIR, get_temp_copy, get_temp_empty
+from tests import TestCase, DATA_DIR, get_temp_copy, \
+    get_temp_copy_keep_metadata, get_temp_empty
 
 
 def test_id3_module_exports_all_frames():
@@ -892,6 +895,33 @@ class TID3Write(TestCase):
         frame = id3["TPE1"]
         self.assertEqual(frame.encoding, 1)
         self.assertEqual(frame.text, strings)
+
+    def test_retain_mtime(self):
+
+        def run_test(label, flag):
+
+            file = get_temp_copy_keep_metadata(
+                os.path.join(DATA_DIR, 'silence-44-s-aged-filetime.mp3')
+            )
+            audio = ID3(file)
+
+            mtime_before = os.stat(file).st_mtime
+            if flag is False:
+                time.sleep(0.1)
+            audio.save(v2_version=3, preserve_mtime=flag)
+            mtime_after = os.stat(file).st_mtime
+
+            if flag:
+                tolerance = 0.1
+                self.assertTrue(
+                    abs(mtime_after - mtime_before) < tolerance,
+                    "mtime difference greater than tolerance"
+                )
+            else:
+                self.assertNotEqual(mtime_before, mtime_after)
+
+        run_test("file mtime will be preserved", flag=True)
+        run_test("file mtime will not be preserved", flag=False)
 
     def test_save_off_spec_frames(self):
         # These are not defined in v2.3 and shouldn't be written.
