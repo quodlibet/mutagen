@@ -10,13 +10,13 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.9, '3.10', 3.11, '3.12', '3.13', '3.14', 'pypy-3.9']
+        python-version: [3.9, '3.10', 3.11, '3.12', '3.13', '3.14', 'pypy-3.11']
         exclude:
-          # hangs
+          # too slow
           - os: macos-latest
-            python-version: pypy-3.9
+            python-version: pypy-3.11
           - os: windows-latest
-            python-version: pypy-3.9
+            python-version: pypy-3.11
         include:
           - os: ubuntu-latest
             pip-cache: ~/.cache/pip
