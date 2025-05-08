@@ -31,10 +31,10 @@ jobs:
             python-version: 3.9
             build-docs: true
           - os: ubuntu-latest
-            python-version: 3.11
+            python-version: 3.12
             build-docs: true
             build-dist: true
-          - python-version: 3.11
+          - python-version: 3.12
             run-mypy: true
     steps:
     - uses: actions/checkout@v4
