@@ -53,7 +53,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade poetry build
+        pipx install poetry build
         poetry install
     - name: Run tests
       run: |
@@ -77,7 +77,7 @@ jobs:
     - name: Build dist
       if: matrix.build-dist
       run: |
-        python -m build
+        pyproject-build
     - name: Upload dist
       if: matrix.build-dist
       uses: actions/upload-artifact@v4
