@@ -7,15 +7,12 @@ authors = []
 [tool.poetry.dependencies]
 python = "^3.9"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^8.2"
 hypothesis = "^6.50.1"
 flake8 = "^7.1.0"
 mypy = "1.10.1"
 coverage = "^7.2.5"
-Sphinx = "^7.1"
-sphinx-rtd-theme = "^2.0.0"
-sphinx-autobuild = "^2021.3.14"
 setuptools = "^70.1.1"
 
 [tool.poetry.group.fuzzing]
@@ -23,6 +20,14 @@ optional = true
 
 [tool.poetry.group.fuzzing.dependencies]
 python-afl = "^0.7.3"
+
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+Sphinx = "^7.1"
+sphinx-rtd-theme = "^2.0.0"
+sphinx-autobuild = "^2021.3.14"
 
 [build-system]
 requires = ["setuptools"]
