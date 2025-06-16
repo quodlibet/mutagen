@@ -266,9 +266,10 @@ class TOggPage(TestCase):
             filename = get_temp_copy(
                 os.path.join(DATA_DIR, "multipagecomment.ogg"))
 
+            # Append some trailing bytes to the file
             with open(filename, "rb+") as fileobj:
-                fileobj.seek(0, 2)  # Go to end of file
-                fileobj.write(b"\x00" * 2) # Add some trailing bytes
+                fileobj.seek(0, 2)
+                fileobj.write(b"\x00" * 2)
 
             with open(filename, "rb+") as fileobj:
                 OggPage.renumber(fileobj, 1002429366, 20)
