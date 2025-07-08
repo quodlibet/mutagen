@@ -261,6 +261,24 @@ class TOggPage(TestCase):
         finally:
             os.unlink(filename)
 
+    def test_renumber_reread_trailing_bytes(self):
+        try:
+            filename = get_temp_copy(
+                os.path.join(DATA_DIR, "multipagecomment.ogg"))
+
+            # Append some trailing bytes to the file
+            with open(filename, "rb+") as fileobj:
+                fileobj.seek(0, 2)
+                fileobj.write(b"\x00" * 2)
+
+            with open(filename, "rb+") as fileobj:
+                OggPage.renumber(fileobj, 1002429366, 20)
+
+            with open(filename, "rb+") as fileobj:
+                OggPage.renumber(fileobj, 1002429366, 0)
+        finally:
+            os.unlink(filename)
+
     def test_renumber_muxed(self):
         pages = [OggPage() for i in range(10)]
         for seq, page in enumerate(pages[0:1] + pages[2:]):
