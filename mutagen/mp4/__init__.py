@@ -1062,7 +1062,14 @@ class MP4Info(StreamInfo):
             if data[8:12] == b"soun":
                 break
         else:
-            raise MP4NoTrackError("track has no audio data")
+            try:
+                # No track info. Fall back to reading the overall length
+                # from mvhd.
+                mvhd = moov[b'mvhd',]
+                self._parse_mvhd(mvhd, fileobj)
+                return
+            except KeyError:
+                raise MP4NoTrackError("track has no audio data")
 
         mdhd = trak[b"mdia", b"mdhd"]
         ok, data = mdhd.read(fileobj)
@@ -1143,6 +1150,23 @@ class MP4Info(StreamInfo):
             self.bitrate = entry.bitrate
             self.codec = entry.codec
             self.codec_description = entry.codec_description
+
+    def _parse_mvhd(self, mvhd, fileobj):
+        ok, data = mvhd.read(fileobj)
+        if not ok:
+            raise MP4StreamInfoError("Invalid mvhd")
+        try:
+            version, _flags, data = parse_full_atom(data)
+            if version == 0:
+                timescale, duration = struct.unpack(">LL", data[8:16])
+            elif version == 1:
+                timescale, duration = struct.unpack(">LQ", data[16:28])
+            else:
+                # Unknown version, skip reading the length
+                return
+            self.length = duration / timescale
+        except ValueError as e:
+            raise MP4StreamInfoError(e) from e
 
     def pprint(self):
         return "MPEG-4 audio (%s), %.2f seconds, %d bps" % (
