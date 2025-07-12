@@ -61,8 +61,7 @@ def list_frames(option, opt, value, parser):
 
 def list_frames_2_2(option, opt, value, parser):
     items = mutagen.id3.Frames_2_2.items()
-    items.sort()
-    for name, frame in items:
+    for name, frame in sorted(items):
         print(u"    --%s    %s" % (name, frame.__doc__.split("\n")[0]))
     raise SystemExit
 
