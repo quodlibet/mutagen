@@ -1,4 +1,4 @@
 [flake8]
 ignore=E128,W601,E402,E731,W503,E741,E305,E121,E124,W504
-exclude=build,dist
+exclude=build,dist,.venv
 max-line-length=88
