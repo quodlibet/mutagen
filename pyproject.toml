@@ -1,36 +1,71 @@
-[tool.poetry]
+[project]
 name = "mutagen"
 version = "1.47.1"
 description = "read and write audio tags for many formats"
-authors = []
+readme = { file = "README.rst", content-type = "text/x-rst" }
+authors = [{ name = "Christoph Reiter", email = "reiter.christoph@gmail.com" }]
+license = "GPL-2.0-or-later"
+requires-python = ">=3.9, <4"
+classifiers = [
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+  "Topic :: Multimedia :: Sound/Audio",
+]
 
-[tool.poetry.dependencies]
-python = "^3.9"
+[project.urls]
+Homepage = "https://mutagen.readthedocs.io"
+Repository = "https://github.com/quodlibet/mutagen"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.2"
-hypothesis = "^6.50.1"
-flake8 = "^7.1.0"
-mypy = "1.15.0"
-coverage = "^7.2.5"
-setuptools = "^70.1.1"
+[project.scripts]
+mid3cp = "mutagen._tools.mid3cp:entry_point"
+mid3iconv = "mutagen._tools.mid3iconv:entry_point"
+mid3v2 = "mutagen._tools.mid3v2:entry_point"
+moggsplit = "mutagen._tools.moggsplit:entry_point"
+mutagen-inspect = "mutagen._tools.mutagen_inspect:entry_point"
+mutagen-pony = "mutagen._tools.mutagen_pony:entry_point"
+
+[dependency-groups]
+dev = [
+    "pytest~=8.2",
+    "hypothesis>=6.50.1,<7",
+    "flake8>=7.1.0,<8",
+    "mypy==1.15.0",
+    "coverage>=7.2.5,<8",
+    "setuptools>=77.0.0,<78",
+]
+fuzzing = ["python-afl>=0.7.3,<0.8"]
+docs = [
+    "Sphinx~=7.1",
+    "sphinx-rtd-theme>=2.0.0,<3",
+    "sphinx-autobuild>=2021.3.14,<2022",
+]
 
 [tool.poetry.group.fuzzing]
 optional = true
 
-[tool.poetry.group.fuzzing.dependencies]
-python-afl = "^0.7.3"
-
 [tool.poetry.group.docs]
 optional = true
 
-[tool.poetry.group.docs.dependencies]
-Sphinx = "^7.1"
-sphinx-rtd-theme = "^2.0.0"
-sphinx-autobuild = "^2021.3.14"
+[tool.setuptools]
+packages = [
+  "mutagen",
+  "mutagen.id3",
+  "mutagen.mp4",
+  "mutagen.asf",
+  "mutagen.mp3",
+  "mutagen._tools",
+]
+
+[tool.setuptools.package-data]
+mutagen = ["py.typed"]
+
+[tool.setuptools.data-files]
+"share/man/man1" = ["man/*.1"]
 
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [tool.coverage.run]

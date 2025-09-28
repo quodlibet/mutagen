@@ -6,7 +6,6 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
-import glob
 import os
 import shutil
 import sys
@@ -59,22 +58,7 @@ class clean(distutils_clean):
 distutils_sdist = get_command_class("sdist")
 
 
-def check_setuptools_for_dist():
-    if "setuptools" not in sys.modules:
-        raise Exception("setuptools not available")
-    version = tuple(map(int, sys.modules["setuptools"].__version__.split(".")))
-    if version < (24, 2, 0):
-        raise Exception("setuptools too old")
-
-
-class sdist(distutils_sdist):
-
-    def run(self):
-        check_setuptools_for_dist()
-        distutils_sdist.run(self)
-
-
-class distcheck(sdist):
+class distcheck(distutils_sdist):
 
     def _check_manifest(self):
         assert self.get_archive_files()
@@ -138,7 +122,7 @@ class distcheck(sdist):
         os.chdir(old_pwd)
 
     def run(self):
-        sdist.run(self)
+        distutils_sdist.run(self)
         self._check_manifest()
         self._check_dist()
 
@@ -243,9 +227,6 @@ if __name__ == "__main__":
 
     from mutagen import version
 
-    with open('README.rst', encoding='utf-8') as h:
-        long_description = h.read()
-
     # convert to a setuptools compatible version string
     if version[-1] == -1:
         version_string = ".".join(map(str, version[:-1])) + ".dev0"
@@ -258,51 +239,8 @@ if __name__ == "__main__":
         "coverage": coverage_cmd,
         "distcheck": distcheck,
         "build_sphinx": build_sphinx,
-        "sdist": sdist,
     }
 
     setup(cmdclass=cmd_classes,
-          name="mutagen",
           version=version_string,
-          url="https://github.com/quodlibet/mutagen",
-          description="read and write audio tags for many formats",
-          author="Christoph Reiter",
-          author_email="reiter.christoph@gmail.com",
-          license="GPL-2.0-or-later",
-          classifiers=[
-            'Operating System :: OS Independent',
-            'Programming Language :: Python :: 3',
-            'Programming Language :: Python :: Implementation :: CPython',
-            'Programming Language :: Python :: Implementation :: PyPy',
-            ('License :: OSI Approved :: '
-             'GNU General Public License v2 or later (GPLv2+)'),
-            'Topic :: Multimedia :: Sound/Audio',
-          ],
-          packages=[
-            "mutagen",
-            "mutagen.id3",
-            "mutagen.mp4",
-            "mutagen.asf",
-            "mutagen.mp3",
-            "mutagen._tools",
-          ],
-          package_data={
-            "mutagen": ["py.typed"],
-          },
-          data_files=[
-            ('share/man/man1', glob.glob("man/*.1")),
-          ],
-          python_requires=(
-            '>=3.9'),
-          entry_points={
-            'console_scripts': [
-              'mid3cp=mutagen._tools.mid3cp:entry_point',
-              'mid3iconv=mutagen._tools.mid3iconv:entry_point',
-              'mid3v2=mutagen._tools.mid3v2:entry_point',
-              'moggsplit=mutagen._tools.moggsplit:entry_point',
-              'mutagen-inspect=mutagen._tools.mutagen_inspect:entry_point',
-              'mutagen-pony=mutagen._tools.mutagen_pony:entry_point',
-            ],
-          },
-          long_description=long_description,
     )
