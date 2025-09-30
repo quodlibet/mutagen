@@ -1,5 +1,4 @@
 import os
-import struct
 from io import BytesIO
 
 EBML_HEADER = 0x1A45DFA3
@@ -141,7 +140,8 @@ class MKVFile:
     def _load(self):
         with open(self.filename, 'rb') as f:
             header_id_bytes = f.read(4)
-            if not header_id_bytes or int.from_bytes(header_id_bytes, 'big') != EBML_HEADER:
+            if not header_id_bytes or \
+               int.from_bytes(header_id_bytes, 'big') != EBML_HEADER:
                 return
 
             try:
@@ -151,7 +151,6 @@ class MKVFile:
                 return
 
             try:
-                segment_pos = f.tell()
                 segment_id_val, id_len = _read_vint_raw(f)
                 segment_size, size_len = _read_vint_value(f)
                 if segment_id_val != SEGMENT:
@@ -162,42 +161,60 @@ class MKVFile:
 
             tags_pos, info_pos = None, None
             f.seek(segment_data_pos)
-            for eid, edata in _iter_elements(f, end_pos=segment_data_pos + 4096):
+            for eid, edata in _iter_elements(
+                f, end_pos=segment_data_pos + 4096
+            ):
                 if eid == SEEK_HEAD:
                     for seek_id, seek_data in _iter_elements(BytesIO(edata)):
                         if seek_id == SEEK:
                             s_id, s_pos = None, None
-                            for sub_id, sub_data in _iter_elements(BytesIO(seek_data)):
-                                if sub_id == SEEK_ID: s_id = int.from_bytes(sub_data, 'big')
-                                elif sub_id == SEEK_POSITION: s_pos = int.from_bytes(sub_data, 'big')
-                            if s_id == TAGS: tags_pos = segment_data_pos + s_pos
-                            elif s_id == INFO: info_pos = segment_data_pos + s_pos
+                            for sub_id, sub_data in _iter_elements(
+                                BytesIO(seek_data)
+                            ):
+                                if sub_id == SEEK_ID:
+                                    s_id = int.from_bytes(sub_data, 'big')
+                                elif sub_id == SEEK_POSITION:
+                                    s_pos = int.from_bytes(sub_data, 'big')
+                            if s_id == TAGS:
+                                tags_pos = segment_data_pos + s_pos
+                            elif s_id == INFO:
+                                info_pos = segment_data_pos + s_pos
                     break
 
             if info_pos is not None:
                 f.seek(info_pos)
                 try:
                     info_id, info_data = next(_iter_elements(f))
-                    if info_id == INFO: self._parse_info(info_data)
-                    else: info_pos = None
-                except (StopIteration, IOError, ValueError): info_pos = None
+                    if info_id == INFO:
+                        self._parse_info(info_data)
+                    else:
+                        info_pos = None
+                except (StopIteration, IOError, ValueError):
+                    info_pos = None
 
             tags_data = None
             if tags_pos is not None:
                 f.seek(tags_pos)
                 try:
                     tags_id, tags_data_read = next(_iter_elements(f))
-                    if tags_id == TAGS: tags_data = tags_data_read
-                except (StopIteration, IOError, ValueError): pass
+                    if tags_id == TAGS:
+                        tags_data = tags_data_read
+                except (StopIteration, IOError, ValueError):
+                    pass
             if tags_data is None or info_pos is None:
                 f.seek(segment_data_pos)
-                scan_end_pos = min(segment_data_pos + segment_size, segment_data_pos + 10 * 1024 * 1024)
+                scan_end_pos = min(
+                    segment_data_pos + segment_size,
+                    segment_data_pos + 10 * 1024 * 1024
+                )
                 for eid, edata in _iter_elements(f, scan_end_pos):
-                    if eid == TAGS and tags_data is None: tags_data = edata
+                    if eid == TAGS and tags_data is None:
+                        tags_data = edata
                     elif eid == INFO and info_pos is None:
-                         self._parse_info(edata)
-                         info_pos = True
-                    if tags_data is not None and info_pos is not None: break
+                        self._parse_info(edata)
+                        info_pos = True
+                    if tags_data is not None and info_pos is not None:
+                        break
 
             if tags_data:
                 self._parse_tags_element(tags_data)
@@ -223,10 +240,14 @@ class MKVFile:
         nested_tags_data = []
 
         for eid, edata in _iter_elements(BytesIO(simple_tag_data)):
-            if eid == TAG_NAME: tag_name = edata.decode('utf-8', 'replace')
-            elif eid == TAG_STRING: tag_value = edata.decode('utf-8', 'replace')
-            elif eid == TAG_BINARY: tag_value = edata
-            elif eid == SIMPLE_TAG: nested_tags_data.append(edata)
+            if eid == TAG_NAME:
+                tag_name = edata.decode('utf-8', 'replace')
+            elif eid == TAG_STRING:
+                tag_value = edata.decode('utf-8', 'replace')
+            elif eid == TAG_BINARY:
+                tag_value = edata
+            elif eid == SIMPLE_TAG:
+                nested_tags_data.append(edata)
 
         if tag_name and tag_value is not None:
             self.tags.add_tag(tag_name, tag_value)
@@ -250,20 +271,26 @@ class MKVFile:
             for key, values in sorted(self.tags.items()):
                 for v in values:
                     simple_tag_payload = b""
-                    simple_tag_payload += _write_element(TAG_NAME, key.encode('utf-8'))
+                    simple_tag_payload += _write_element(
+                        TAG_NAME, key.encode('utf-8')
+                    )
                     if isinstance(v, str):
-                        simple_tag_payload += _write_element(TAG_STRING, v.encode('utf-8'))
+                        simple_tag_payload += _write_element(
+                            TAG_STRING, v.encode('utf-8')
+                        )
                     elif isinstance(v, bytes):
                         simple_tag_payload += _write_element(TAG_BINARY, v)
                     else:
                         continue
-                    tags_payload += _write_element(TAG, _write_element(SIMPLE_TAG, simple_tag_payload))
+                    tags_payload += _write_element(
+                        TAG, _write_element(SIMPLE_TAG, simple_tag_payload)
+                    )
         return _write_element(TAGS, tags_payload) if tags_payload else b""
 
     def save(self, filename=None, delete_tags=False):
         if filename is None:
             filename = self.filename
-        
+
         temp_filename = filename + ".tmp"
 
         with open(self.filename, 'rb') as f_in, open(temp_filename, 'wb') as f_out:
@@ -271,7 +298,8 @@ class MKVFile:
             ebml_header_end = 0
             try:
                 eid, id_len = _read_vint_raw(f_in)
-                if eid != EBML_HEADER: raise ValueError("No EBML Header")
+                if eid != EBML_HEADER:
+                    raise ValueError("No EBML Header")
                 size, size_len = _read_vint_value(f_in)
                 ebml_header_end = f_in.tell() + size
                 f_in.seek(0)
@@ -282,7 +310,8 @@ class MKVFile:
             segment_data_start_pos = 0
             try:
                 eid, id_len = _read_vint_raw(f_in)
-                if eid != SEGMENT: raise ValueError("No Segment found after EBML Header")
+                if eid != SEGMENT:
+                    raise ValueError("No Segment found after EBML Header")
                 f_out.write(eid.to_bytes(4, 'big'))
                 f_out.write(b'\x01\xFF\xFF\xFF\xFF\xFF\xFF\xFF')
                 _, size_len = _read_vint_value(f_in)
@@ -310,7 +339,8 @@ class MKVFile:
                     try:
                         eid, id_len = _read_vint_raw(f_in)
                         size, size_len = _read_vint_value(f_in)
-                    except (IOError, ValueError): break
+                    except (IOError, ValueError):
+                        break
 
                     if eid == TAGS:
                         tags_element_start_pos = element_start
@@ -318,7 +348,7 @@ class MKVFile:
                         break
                     f_in.seek(element_start + id_len + size_len + size)
             except (IOError, ValueError):
-                 insert_pos = segment_data_start_pos
+                insert_pos = segment_data_start_pos
             f_in.seek(segment_data_start_pos)
             if tags_element_start_pos != -1:
                 bytes_before = tags_element_start_pos - segment_data_start_pos
@@ -332,7 +362,7 @@ class MKVFile:
                 f_out.write(new_tags_element)
                 f_out.write(f_in.read())
             else:
-                 f_out.write(new_tags_element)
-                 f_out.write(f_in.read())
+                f_out.write(new_tags_element)
+                f_out.write(f_in.read())
 
         os.replace(temp_filename, filename)
