@@ -1,5 +1,4 @@
 import os
-import struct
 from io import BytesIO
 
 from mutagen._util import MutagenError
@@ -151,7 +150,8 @@ class MKVFile:
     def _load(self):
         with open(self.filename, 'rb') as f:
             header_id_bytes = f.read(4)
-            if not header_id_bytes or int.from_bytes(header_id_bytes, 'big') != EBML_HEADER:
+            if (not header_id_bytes or
+                    int.from_bytes(header_id_bytes, 'big') != EBML_HEADER):
                 return
 
             try:
@@ -171,12 +171,14 @@ class MKVFile:
 
             tags_pos, info_pos = None, None
             f.seek(segment_data_pos)
-            for eid, edata in _iter_elements(f, end_pos=segment_data_pos + 4096):
+            for eid, edata in _iter_elements(
+                    f, end_pos=segment_data_pos + 4096):
                 if eid == SEEK_HEAD:
                     for seek_id, seek_data in _iter_elements(BytesIO(edata)):
                         if seek_id == SEEK:
                             s_id, s_pos = None, None
-                            for sub_id, sub_data in _iter_elements(BytesIO(seek_data)):
+                            for sub_id, sub_data in _iter_elements(
+                                    BytesIO(seek_data)):
                                 if sub_id == SEEK_ID:
                                     s_id = int.from_bytes(sub_data, 'big')
                                 elif sub_id == SEEK_POSITION:
@@ -209,8 +211,9 @@ class MKVFile:
                     pass
             if tags_data is None or info_pos is None:
                 f.seek(segment_data_pos)
-                scan_end_pos = min(segment_data_pos + segment_size,
-                                   segment_data_pos + 10 * 1024 * 1024)
+                scan_end_pos = min(
+                    segment_data_pos + segment_size,
+                    segment_data_pos + 10 * 1024 * 1024)
                 for eid, edata in _iter_elements(f, scan_end_pos):
                     if eid == TAGS and tags_data is None:
                         tags_data = edata
@@ -275,23 +278,27 @@ class MKVFile:
             for key, values in sorted(self.tags.items()):
                 for v in values:
                     simple_tag_payload = b""
-                    simple_tag_payload += _write_element(TAG_NAME, key.encode('utf-8'))
+                    simple_tag_payload += _write_element(
+                        TAG_NAME, key.encode('utf-8'))
                     if isinstance(v, str):
-                        simple_tag_payload += _write_element(TAG_STRING, v.encode('utf-8'))
+                        simple_tag_payload += _write_element(
+                            TAG_STRING, v.encode('utf-8'))
                     elif isinstance(v, bytes):
                         simple_tag_payload += _write_element(TAG_BINARY, v)
                     else:
                         continue
-                    tags_payload += _write_element(TAG, _write_element(SIMPLE_TAG, simple_tag_payload))
+                    tags_payload += _write_element(
+                        TAG, _write_element(SIMPLE_TAG, simple_tag_payload))
         return _write_element(TAGS, tags_payload) if tags_payload else b""
 
     def save(self, filename=None, delete_tags=False):
         if filename is None:
             filename = self.filename
-        
+
         temp_filename = filename + ".tmp"
 
-        with open(self.filename, 'rb') as f_in, open(temp_filename, 'wb') as f_out:
+        with open(self.filename, 'rb') as f_in, \
+                open(temp_filename, 'wb') as f_out:
             f_in.seek(0)
             ebml_header_end = 0
             try:
@@ -346,7 +353,7 @@ class MKVFile:
                         break
                     f_in.seek(element_start + id_len + size_len + size)
             except (IOError, ValueError):
-                 insert_pos = segment_data_start_pos
+                insert_pos = segment_data_start_pos
             f_in.seek(segment_data_start_pos)
             if tags_element_start_pos != -1:
                 bytes_before = tags_element_start_pos - segment_data_start_pos
@@ -360,7 +367,7 @@ class MKVFile:
                 f_out.write(new_tags_element)
                 f_out.write(f_in.read())
             else:
-                 f_out.write(new_tags_element)
-                 f_out.write(f_in.read())
+                f_out.write(new_tags_element)
+                f_out.write(f_in.read())
 
         os.replace(temp_filename, filename)
