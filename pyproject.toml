@@ -5,7 +5,7 @@ description = "read and write audio tags for many formats"
 readme = { file = "README.rst", content-type = "text/x-rst" }
 authors = [{ name = "Christoph Reiter", email = "reiter.christoph@gmail.com" }]
 license = "GPL-2.0-or-later"
-requires-python = ">=3.9, <4"
+requires-python = ">=3.10, <4"
 classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
