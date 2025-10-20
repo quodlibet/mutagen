@@ -99,16 +99,22 @@ def ParseID3v1(data, v2_version=4, known_frames=None):
     # wrote only the characters available - e.g. "1" or "" - into the
     # year field. To parse those, reduce the size of the year field.
     # Amazingly, "0s" works as a struct format string.
-    unpack_fmt = "3s30s30s30s%ds29sBB" % (len(data) - 124)
+    unpack_fmt = "3s30s30s30s%ds30sB" % (len(data) - 124)
 
     try:
-        tag, title, artist, album, year, comment, track, genre = unpack(
+        tag, title, artist, album, year, comment, genre = unpack(
             unpack_fmt, data)
     except StructError:
         return None
 
     if tag != b"TAG":
         return None
+
+    track = 0
+    if comment[-2] == 0:
+        # treat it as v1.1
+        track = comment[-1]
+        comment = comment[:-2]
 
     def fix(data):
         return data.split(b"\x00")[0].strip().decode('latin1')
@@ -149,10 +155,7 @@ def ParseID3v1(data, v2_version=4, known_frames=None):
         frames["COMM"] = frame_class["COMM"](
             encoding=0, lang="eng", desc="ID3v1 Comment", text=comment)
 
-    # Don't read a track number if it looks like the comment was
-    # padded with spaces instead of nulls (thanks, WinAmp).
-    if (track and frame_class["TRCK"] and
-            ((track != 32) or (data[-3] == b'\x00'[0]))):
+    if track and frame_class["TRCK"]:
         frames["TRCK"] = TRCK(encoding=0, text=str(track))
     if genre != 255 and frame_class["TCON"]:
         frames["TCON"] = TCON(encoding=0, text=str(genre))
@@ -173,18 +176,26 @@ def MakeID3v1(id3):
         v1[name] = text + (b"\x00" * (30 - len(text)))
 
     if "COMM" in id3:
-        cmnt = id3["COMM"].text[0].encode('latin1', 'replace')[:28]
+        cmnt = id3["COMM"].text[0].encode('latin1', 'replace')[:30]
     else:
         cmnt = b""
-    v1["comment"] = cmnt + (b"\x00" * (29 - len(cmnt)))
+    v1["comment"] = cmnt.ljust(30, b"\x00")
 
     if "TRCK" in id3:
         try:
             v1["track"] = bchr(+id3["TRCK"])
         except ValueError:
-            v1["track"] = b"\x00"
+            # nothing useful to add, keep it as v1.0
+            v1["track"] = b""
+        else:
+            # make it v1.1
+            v1["comment"] = v1["comment"][:-2]
+            v1["track"] = b"\x00" + v1["track"]
     else:
-        v1["track"] = b"\x00"
+        v1["track"] = b""
+
+    if len(v1["comment"]) + len(v1["track"]) != 30:
+        raise ValueError("comment/track field must be 30 bytes long")
 
     if "TCON" in id3:
         try:
