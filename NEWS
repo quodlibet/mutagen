@@ -4,7 +4,7 @@
 -------------------
 
 * Changed the default branch from master to main
-
+* Changed project linter from flake8 to ruff
 
 .. _release-1.47.0:
 
