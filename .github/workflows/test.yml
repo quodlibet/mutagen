@@ -65,9 +65,10 @@ jobs:
       if: matrix.run-mypy
       run: |
         poetry run mypy .
-    - name: Run flake8
+    - name: Run ruff
       run: |
-        poetry run flake8
+        poetry run ruff check --output-format=github .
+        poetry run ruff format --check .
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
     - name: Build docs

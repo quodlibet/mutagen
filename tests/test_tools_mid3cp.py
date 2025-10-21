@@ -11,19 +11,17 @@ usage.
 """
 
 import os
-from tempfile import mkstemp
 import shutil
+from tempfile import mkstemp
 
 import mutagen.id3
 from mutagen.id3 import ID3, ParseID3v1
-
-from tests.test_tools import _TTools
 from tests import DATA_DIR
+from tests.test_tools import _TTools
 
 
 class TMid3cp(_TTools):
-
-    TOOL_NAME = u"mid3cp"
+    TOOL_NAME = 'mid3cp'
 
     def setUp(self):
         super(TMid3cp, self).setUp()
@@ -43,31 +41,29 @@ class TMid3cp(_TTools):
     def test_merge(self):
         id3 = ID3(self.filename)
         id3.delete()
-        id3.add(mutagen.id3.TALB(text=[u"foo"]))
+        id3.add(mutagen.id3.TALB(text=['foo']))
         id3.save(v2_version=3)
 
         target = ID3()
-        target.add(mutagen.id3.TPE1(text=[u"bar", u"quux"]))
+        target.add(mutagen.id3.TPE1(text=['bar', 'quux']))
         target.save(self.blank_file, v2_version=4)
 
-        res, out, err = self.call2(
-            self.filename, self.blank_file, "--merge")
+        res, out, err = self.call2(self.filename, self.blank_file, '--merge')
         assert not any([res, out, err])
 
         result = ID3(self.blank_file)
         assert result.version == (2, 4, 0)
-        assert result.getall("TALB")[0].text == [u"foo"]
-        assert result.getall("TPE1")[0].text == [u"bar", u"quux"]
+        assert result.getall('TALB')[0].text == ['foo']
+        assert result.getall('TPE1')[0].text == ['bar', 'quux']
 
     def test_merge_dst_no_tag(self):
         id3 = ID3(self.filename)
         id3.delete()
         id3.save(v2_version=3)
 
-        with open(self.blank_file, "wb") as h:
-            h.write(b"SOMEDATA")
-        res, out, err = self.call2(
-            self.filename, self.blank_file, "--merge")
+        with open(self.blank_file, 'wb') as h:
+            h.write(b'SOMEDATA')
+        res, out, err = self.call2(self.filename, self.blank_file, '--merge')
         assert not any([res, out, err])
 
         result = ID3(self.blank_file)
@@ -76,7 +72,7 @@ class TMid3cp(_TTools):
     def test_noop(self):
         res, out, err = self.call2()
         self.assertNotEqual(res, 0)
-        self.failUnless("Usage:" in err)
+        self.failUnless('Usage:' in err)
 
     def test_src_equal_dst(self):
         res = self.call2(self.filename, self.filename)[0]
@@ -92,8 +88,8 @@ class TMid3cp(_TTools):
 
         # XXX: the v2.3 frame contains duplicate TPE1 frames which get merged
         # when saving to v2.3 again
-        frame = copied_id3["TPE1"]
-        frame.text = frame.text[0].split("/")
+        frame = copied_id3['TPE1']
+        frame.text = frame.text[0].split('/')
 
         self.failUnlessEqual(original_id3, copied_id3)
 
@@ -127,8 +123,9 @@ class TMid3cp(_TTools):
         self.failIf('TLEN' in copied_id3)
 
     def test_exclude_multiple_tag(self):
-        self.call('-x', 'TLEN', '-x', 'TCON',
-                  '-x', 'TALB', self.filename, self.blank_file)
+        self.call(
+            '-x', 'TLEN', '-x', 'TCON', '-x', 'TALB', self.filename, self.blank_file
+        )
 
         original_id3 = ID3(self.filename)
         copied_id3 = ID3(self.blank_file)
@@ -145,12 +142,12 @@ class TMid3cp(_TTools):
         os.close(fd)
         try:
             err = self.call2(self.blank_file, blank_file2)[2]
-            self.failUnless("No ID3 header found" in err)
+            self.failUnless('No ID3 header found' in err)
         finally:
             os.unlink(blank_file2)
 
     def test_verbose(self):
-        err = self.call2(self.filename, "--verbose", self.blank_file)[2]
+        err = self.call2(self.filename, '--verbose', self.blank_file)[2]
         self.failUnless('mp3 contains:' in err)
         self.failUnless('Successfully saved' in err)
 
@@ -168,7 +165,7 @@ class TMid3cp(_TTools):
         status, out, err = self.call2(self.blank_file, self.filename)
         self.assertTrue(status)
 
-        status, out, err = self.call2("", self.filename)
+        status, out, err = self.call2('', self.filename)
         self.assertTrue(status)
 
         status, out, err = self.call2(self.filename, self.blank_file)

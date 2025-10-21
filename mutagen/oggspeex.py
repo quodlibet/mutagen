@@ -16,13 +16,14 @@ and clarifications after personal communication with Jean-Marc,
 http://lists.xiph.org/pipermail/speex-dev/2006-July/004676.html.
 """
 
-__all__ = ["OggSpeex", "Open", "delete"]
+__all__ = ['OggSpeex', 'Open', 'delete']
 
 from mutagen import StreamInfo
-from mutagen._vorbis import VCommentDict
-from mutagen.ogg import OggPage, OggFileType, error as OggError
-from mutagen._util import cdata, get_size, loadfile, convert_error
 from mutagen._tags import PaddingInfo
+from mutagen._util import cdata, convert_error, get_size, loadfile
+from mutagen._vorbis import VCommentDict
+from mutagen.ogg import OggFileType, OggPage
+from mutagen.ogg import error as OggError
 
 
 class error(OggError):
@@ -52,11 +53,10 @@ class OggSpeexInfo(StreamInfo):
 
     def __init__(self, fileobj):
         page = OggPage(fileobj)
-        while not page.packets[0].startswith(b"Speex   "):
+        while not page.packets[0].startswith(b'Speex   '):
             page = OggPage(fileobj)
         if not page.first:
-            raise OggSpeexHeaderError(
-                "page has ID header, but doesn't start a stream")
+            raise OggSpeexHeaderError("page has ID header, but doesn't start a stream")
         self.sample_rate = cdata.uint_le(page.packets[0][36:40])
         self.channels = cdata.uint_le(page.packets[0][48:52])
         self.bitrate = max(0, cdata.int_le(page.packets[0][52:56]))
@@ -69,7 +69,7 @@ class OggSpeexInfo(StreamInfo):
         self.length = page.position / float(self.sample_rate)
 
     def pprint(self):
-        return u"Ogg Speex, %.2f seconds" % self.length
+        return 'Ogg Speex, %.2f seconds' % self.length
 
 
 class OggSpeexVComment(VCommentDict):
@@ -95,7 +95,7 @@ class OggSpeexVComment(VCommentDict):
         # Find the first header page, with the stream info.
         # Use it to get the serial number.
         page = OggPage(fileobj)
-        while not page.packets[0].startswith(b"Speex   "):
+        while not page.packets[0].startswith(b'Speex   '):
             page = OggPage(fileobj)
 
         # Look for the next page with that serial number, it'll start
@@ -122,7 +122,7 @@ class OggSpeexVComment(VCommentDict):
         new_padding = info._get_padding(padding_func)
 
         # Set the new comment packet.
-        packets[0] = vcomment_data + b"\x00" * new_padding
+        packets[0] = vcomment_data + b'\x00' * new_padding
 
         new_pages = OggPage._from_packets_try_preserve(packets, old_pages)
         OggPage.replace(fileobj, old_pages, new_pages)
@@ -144,14 +144,14 @@ class OggSpeex(OggFileType):
     _Info = OggSpeexInfo
     _Tags = OggSpeexVComment
     _Error = OggSpeexHeaderError
-    _mimes = ["audio/x-speex"]
+    _mimes = ['audio/x-speex']
 
     info = None
     tags = None
 
     @staticmethod
     def score(filename, fileobj, header):
-        return (header.startswith(b"OggS") * (b"Speex   " in header))
+        return header.startswith(b'OggS') * (b'Speex   ' in header)
 
 
 Open = OggSpeex
@@ -160,7 +160,7 @@ Open = OggSpeex
 @convert_error(IOError, error)
 @loadfile(method=False, writable=True)
 def delete(filething):
-    """ delete(filething)
+    """delete(filething)
 
     Arguments:
         filething (filething)

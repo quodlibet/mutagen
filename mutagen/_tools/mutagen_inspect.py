@@ -9,8 +9,7 @@
 
 import sys
 
-from ._util import SignalHandler, OptionParser
-
+from ._util import OptionParser, SignalHandler
 
 _sig = SignalHandler()
 
@@ -18,24 +17,24 @@ _sig = SignalHandler()
 def main(argv):
     from mutagen import File
 
-    parser = OptionParser(usage="usage: %prog [options] FILE [FILE...]")
-    parser.add_option("--no-flac", help="Compatibility; does nothing.")
-    parser.add_option("--no-mp3", help="Compatibility; does nothing.")
-    parser.add_option("--no-apev2", help="Compatibility; does nothing.")
+    parser = OptionParser(usage='usage: %prog [options] FILE [FILE...]')
+    parser.add_option('--no-flac', help='Compatibility; does nothing.')
+    parser.add_option('--no-mp3', help='Compatibility; does nothing.')
+    parser.add_option('--no-apev2', help='Compatibility; does nothing.')
 
     (options, args) = parser.parse_args(argv[1:])
     if not args:
         raise SystemExit(parser.print_help() or 1)
 
     for filename in args:
-        print(u"--", filename)
+        print('--', filename)
         try:
-            print(u"-", File(filename).pprint())
+            print('-', File(filename).pprint())
         except AttributeError:
-            print(u"- Unknown file type")
+            print('- Unknown file type')
         except Exception as err:
             print(str(err))
-        print(u"")
+        print('')
 
 
 def entry_point():

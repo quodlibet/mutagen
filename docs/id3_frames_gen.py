@@ -10,25 +10,30 @@
 ./id3_frames_gen.py > api/id3_frames.rst
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.abspath('../'))
 
 import mutagen.id3
-from mutagen.id3 import Frames, Frames_2_2, Frame
+from mutagen.id3 import Frame, Frames, Frames_2_2
+
+BaseFrames = dict(
+    [
+        (k, v)
+        for (k, v) in vars(mutagen.id3).items()
+        if v not in Frames.values()
+        and v not in Frames_2_2.values()
+        and isinstance(v, type)
+        and (issubclass(v, Frame) or v is Frame)
+    ]
+)
 
 
-BaseFrames = dict([(k, v) for (k, v) in vars(mutagen.id3).items()
-                   if v not in Frames.values() and v not in Frames_2_2.values()
-                   and isinstance(v, type) and
-                   (issubclass(v, Frame) or v is Frame)])
-
-
-def print_header(header, type_="-"):
+def print_header(header, type_='-'):
     print(header)
     print(type_ * len(header))
-    print("")
+    print('')
 
 
 def print_frames(frames, sort_mro=False):
@@ -39,16 +44,18 @@ def print_frames(frames, sort_mro=False):
         sort_func = lambda x: x
 
     for name, cls in sorted(frames.items(), key=sort_func):
-        print("""
+        print(
+            """
 .. autoclass:: mutagen.id3.%s
     :show-inheritance:
     :members:
-""" % repr(cls()))
+"""
+            % repr(cls())
+        )
 
 
-if __name__ == "__main__":
-
-    print_header("Frame Base Classes")
+if __name__ == '__main__':
+    print_header('Frame Base Classes')
     print_frames(BaseFrames, sort_mro=True)
-    print_header("ID3v2.3/4 Frames")
+    print_header('ID3v2.3/4 Frames')
     print_frames(Frames)
