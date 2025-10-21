@@ -1,14 +1,13 @@
-
 import os
 
-from mutagen.wavpack import WavPack, error as WavPackError
-from tests import TestCase, DATA_DIR
+from mutagen.wavpack import WavPack
+from mutagen.wavpack import error as WavPackError
+from tests import DATA_DIR, TestCase
 
 
 class TWavPack(TestCase):
-
     def setUp(self):
-        self.audio = WavPack(os.path.join(DATA_DIR, "silence-44-s.wv"))
+        self.audio = WavPack(os.path.join(DATA_DIR, 'silence-44-s.wv'))
 
     def test_version(self):
         self.failUnlessEqual(self.audio.info.version, 0x403)
@@ -27,19 +26,19 @@ class TWavPack(TestCase):
 
     def test_not_my_file(self):
         self.failUnlessRaises(
-            WavPackError, WavPack, os.path.join(DATA_DIR, "empty.ogg"))
+            WavPackError, WavPack, os.path.join(DATA_DIR, 'empty.ogg')
+        )
 
     def test_pprint(self):
         self.audio.pprint()
 
     def test_mime(self):
-        self.failUnless("audio/x-wavpack" in self.audio.mime)
+        self.failUnless('audio/x-wavpack' in self.audio.mime)
 
 
 class TWavPackNoLength(TestCase):
-
     def setUp(self):
-        self.audio = WavPack(os.path.join(DATA_DIR, "no_length.wv"))
+        self.audio = WavPack(os.path.join(DATA_DIR, 'no_length.wv'))
 
     def test_version(self):
         self.failUnlessEqual(self.audio.info.version, 0x407)
@@ -60,13 +59,12 @@ class TWavPackNoLength(TestCase):
         self.audio.pprint()
 
     def test_mime(self):
-        self.failUnless("audio/x-wavpack" in self.audio.mime)
+        self.failUnless('audio/x-wavpack' in self.audio.mime)
 
 
 class TWavPackDSD(TestCase):
-
     def setUp(self):
-        self.audio = WavPack(os.path.join(DATA_DIR, "dsd.wv"))
+        self.audio = WavPack(os.path.join(DATA_DIR, 'dsd.wv'))
 
     def test_version(self):
         self.failUnlessEqual(self.audio.info.version, 0x410)
@@ -87,4 +85,4 @@ class TWavPackDSD(TestCase):
         self.audio.pprint()
 
     def test_mime(self):
-        self.failUnless("audio/x-wavpack" in self.audio.mime)
+        self.failUnless('audio/x-wavpack' in self.audio.mime)

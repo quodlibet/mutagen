@@ -1,25 +1,24 @@
-
 import os
 import random
 import subprocess
 from io import BytesIO
 
-from tests import TestCase, DATA_DIR, get_temp_copy
-from mutagen.ogg import OggPage, error as OggError
-from mutagen._util import cdata
 from mutagen import _util
+from mutagen._util import cdata
+from mutagen.ogg import OggPage
+from mutagen.ogg import error as OggError
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TOggPage(TestCase):
-
     def setUp(self):
-        self.fileobj = open(os.path.join(DATA_DIR, "empty.ogg"), "rb")
+        self.fileobj = open(os.path.join(DATA_DIR, 'empty.ogg'), 'rb')
         self.page = OggPage(self.fileobj)
 
         pages = [OggPage(), OggPage(), OggPage()]
-        pages[0].packets = [b"foo"]
-        pages[1].packets = [b"bar"]
-        pages[2].packets = [b"baz"]
+        pages[0].packets = [b'foo']
+        pages[1].packets = [b'bar']
+        pages[2].packets = [b'baz']
         for i in range(len(pages)):
             pages[i].sequence = i
         for page in pages:
@@ -34,11 +33,11 @@ class TOggPage(TestCase):
         assert OggPage.to_packets(pages, False) == []
 
         pages = [OggPage(), OggPage(), OggPage()]
-        pages[0].packets = [b"foo"]
+        pages[0].packets = [b'foo']
         pages[0].complete = False
         pages[1].continued = True
         pages[1].complete = False
-        pages[2].packets = [b"bar"]
+        pages[2].packets = [b'bar']
         pages[2].continued = True
         for i in range(len(pages)):
             pages[i].sequence = i
@@ -75,8 +74,7 @@ class TOggPage(TestCase):
         self.failIf(OggPage(self.fileobj).continued)
 
     def test_single_page_roundtrip(self):
-        self.failUnlessEqual(
-            self.page, OggPage(BytesIO(self.page.write())))
+        self.failUnlessEqual(self.page, OggPage(BytesIO(self.page.write())))
 
     def test_at_least_one_audio_page(self):
         page = OggPage(self.fileobj)
@@ -85,22 +83,20 @@ class TOggPage(TestCase):
         self.failUnless(page.last)
 
     def test_crappy_fragmentation(self):
-        packets = [b"1" * 511, b"2" * 511, b"3" * 511]
+        packets = [b'1' * 511, b'2' * 511, b'3' * 511]
         pages = OggPage.from_packets(packets, default_size=510, wiggle_room=0)
         self.failUnless(len(pages) > 3)
         self.failUnlessEqual(OggPage.to_packets(pages), packets)
 
     def test_wiggle_room(self):
-        packets = [b"1" * 511, b"2" * 511, b"3" * 511]
-        pages = OggPage.from_packets(
-            packets, default_size=510, wiggle_room=100)
+        packets = [b'1' * 511, b'2' * 511, b'3' * 511]
+        pages = OggPage.from_packets(packets, default_size=510, wiggle_room=100)
         self.failUnlessEqual(len(pages), 3)
         self.failUnlessEqual(OggPage.to_packets(pages), packets)
 
     def test_one_packet_per_wiggle(self):
-        packets = [b"1" * 511, b"2" * 511, b"3" * 511]
-        pages = OggPage.from_packets(
-            packets, default_size=1000, wiggle_room=1000000)
+        packets = [b'1' * 511, b'2' * 511, b'3' * 511]
+        pages = OggPage.from_packets(packets, default_size=1000, wiggle_room=1000000)
         self.failUnlessEqual(len(pages), 2)
         self.failUnlessEqual(OggPage.to_packets(pages), packets)
 
@@ -110,37 +106,34 @@ class TOggPage(TestCase):
         pages = [OggPage(), OggPage(), OggPage()]
         pages[0].serial = 42
         pages[0].sequence = 0
-        pages[0].packets = [b"foo"]
+        pages[0].packets = [b'foo']
         pages[1].serial = 24
         pages[1].sequence = 0
-        pages[1].packets = [b"bar"]
+        pages[1].packets = [b'bar']
         pages[2].serial = 42
         pages[2].sequence = 1
-        pages[2].packets = [b"baz"]
+        pages[2].packets = [b'baz']
         for page in pages:
             fileobj.write(page.write())
 
         fileobj.seek(0, 0)
-        pages_from_file = [OggPage(fileobj), OggPage(fileobj),
-                           OggPage(fileobj)]
+        pages_from_file = [OggPage(fileobj), OggPage(fileobj), OggPage(fileobj)]
 
         old_pages = [pages_from_file[0], pages_from_file[2]]
         packets = OggPage.to_packets(old_pages, strict=True)
-        self.assertEqual(packets, [b"foo", b"baz"])
-        new_packets = [b"1111", b"2222"]
-        new_pages = OggPage.from_packets(new_packets,
-                                         sequence=old_pages[0].sequence)
+        self.assertEqual(packets, [b'foo', b'baz'])
+        new_packets = [b'1111', b'2222']
+        new_pages = OggPage.from_packets(new_packets, sequence=old_pages[0].sequence)
         self.assertEqual(len(new_pages), 1)
         OggPage.replace(fileobj, old_pages, new_pages)
 
         fileobj.seek(0, 0)
         first = OggPage(fileobj)
         self.assertEqual(first.serial, 42)
-        self.assertEqual(OggPage.to_packets([first], strict=True),
-                         [b"1111", b"2222"])
+        self.assertEqual(OggPage.to_packets([first], strict=True), [b'1111', b'2222'])
         second = OggPage(fileobj)
         self.assertEqual(second.serial, 24)
-        self.assertEqual(OggPage.to_packets([second], strict=True), [b"bar"])
+        self.assertEqual(OggPage.to_packets([second], strict=True), [b'bar'])
 
     def test_replace_fast_path(self):
         # create interleaved pages
@@ -148,24 +141,23 @@ class TOggPage(TestCase):
         pages = [OggPage(), OggPage(), OggPage()]
         pages[0].serial = 42
         pages[0].sequence = 0
-        pages[0].packets = [b"foo"]
+        pages[0].packets = [b'foo']
         pages[1].serial = 24
         pages[1].sequence = 0
-        pages[1].packets = [b"bar"]
+        pages[1].packets = [b'bar']
         pages[2].serial = 42
         pages[2].sequence = 1
-        pages[2].packets = [b"baz"]
+        pages[2].packets = [b'baz']
         for page in pages:
             fileobj.write(page.write())
 
         fileobj.seek(0, 0)
-        pages_from_file = [OggPage(fileobj), OggPage(fileobj),
-                           OggPage(fileobj)]
+        pages_from_file = [OggPage(fileobj), OggPage(fileobj), OggPage(fileobj)]
 
         old_pages = [pages_from_file[0], pages_from_file[2]]
         packets = OggPage.to_packets(old_pages, strict=True)
-        self.assertEqual(packets, [b"foo", b"baz"])
-        new_packets = [b"111", b"222"]
+        self.assertEqual(packets, [b'foo', b'baz'])
+        new_packets = [b'111', b'222']
         new_pages = OggPage._from_packets_try_preserve(new_packets, old_pages)
         self.assertEqual(len(new_pages), 2)
 
@@ -180,13 +172,13 @@ class TOggPage(TestCase):
         # validate that the new data was written and the other pages
         # are untouched
         fileobj.seek(0, 0)
-        pages_from_file = [OggPage(fileobj), OggPage(fileobj),
-                           OggPage(fileobj)]
+        pages_from_file = [OggPage(fileobj), OggPage(fileobj), OggPage(fileobj)]
         packets = OggPage.to_packets(
-            [pages_from_file[0], pages_from_file[2]], strict=True)
-        self.assertEqual(packets, [b"111", b"222"])
+            [pages_from_file[0], pages_from_file[2]], strict=True
+        )
+        self.assertEqual(packets, [b'111', b'222'])
         packets = OggPage.to_packets([pages_from_file[1]], strict=True)
-        self.assertEqual(packets, [b"bar"])
+        self.assertEqual(packets, [b'bar'])
 
     def test_replace_continued(self):
         # take a partial packet and replace it with a new page
@@ -196,30 +188,29 @@ class TOggPage(TestCase):
         pages[0].serial = 1
         pages[0].sequence = 0
         pages[0].complete = False
-        pages[0].packets = [b"foo"]
+        pages[0].packets = [b'foo']
         pages[1].serial = 1
         pages[1].sequence = 1
         pages[1].continued = True
-        pages[1].packets = [b"bar"]
+        pages[1].packets = [b'bar']
         fileobj = BytesIO()
         for page in pages:
             fileobj.write(page.write())
 
         fileobj.seek(0, 0)
         pages_from_file = [OggPage(fileobj), OggPage(fileobj)]
-        self.assertEqual(OggPage.to_packets(pages_from_file), [b"foobar"])
+        self.assertEqual(OggPage.to_packets(pages_from_file), [b'foobar'])
         packets_part = OggPage.to_packets([pages_from_file[0]])
-        self.assertEqual(packets_part, [b"foo"])
-        new_pages = OggPage.from_packets([b"quuux"])
+        self.assertEqual(packets_part, [b'foo'])
+        new_pages = OggPage.from_packets([b'quuux'])
         OggPage.replace(fileobj, [pages_from_file[0]], new_pages)
 
         fileobj.seek(0, 0)
         written = OggPage.to_packets([OggPage(fileobj), OggPage(fileobj)])
-        self.assertEquals(written, [b"quuuxbar"])
+        self.assertEquals(written, [b'quuuxbar'])
 
     def test_renumber(self):
-        self.failUnlessEqual(
-            [page.sequence for page in self.pages], [0, 1, 2])
+        self.failUnlessEqual([page.sequence for page in self.pages], [0, 1, 2])
         fileobj = BytesIO()
         for page in self.pages:
             fileobj.write(page.write())
@@ -239,7 +230,7 @@ class TOggPage(TestCase):
         fileobj = BytesIO()
         for page in self.pages:
             fileobj.write(page.write())
-        fileobj.write(b"left over data")
+        fileobj.write(b'left over data')
         fileobj.seek(0)
         # Trying to rewrite should raise an error...
         self.failUnlessRaises(Exception, OggPage.renumber, fileobj, 1, 10)
@@ -248,33 +239,31 @@ class TOggPage(TestCase):
         pages = [OggPage(fileobj) for i in range(3)]
         self.failUnlessEqual([page.sequence for page in pages], [10, 11, 12])
         # And the garbage that caused the error should be okay too.
-        self.failUnlessEqual(fileobj.read(), b"left over data")
+        self.failUnlessEqual(fileobj.read(), b'left over data')
 
     def test_renumber_reread(self):
         try:
-            filename = get_temp_copy(
-                os.path.join(DATA_DIR, "multipagecomment.ogg"))
-            with open(filename, "rb+") as fileobj:
+            filename = get_temp_copy(os.path.join(DATA_DIR, 'multipagecomment.ogg'))
+            with open(filename, 'rb+') as fileobj:
                 OggPage.renumber(fileobj, 1002429366, 20)
-            with open(filename, "rb+") as fileobj:
+            with open(filename, 'rb+') as fileobj:
                 OggPage.renumber(fileobj, 1002429366, 0)
         finally:
             os.unlink(filename)
 
     def test_renumber_reread_trailing_bytes(self):
         try:
-            filename = get_temp_copy(
-                os.path.join(DATA_DIR, "multipagecomment.ogg"))
+            filename = get_temp_copy(os.path.join(DATA_DIR, 'multipagecomment.ogg'))
 
             # Append some trailing bytes to the file
-            with open(filename, "rb+") as fileobj:
+            with open(filename, 'rb+') as fileobj:
                 fileobj.seek(0, 2)
-                fileobj.write(b"\x00" * 2)
+                fileobj.write(b'\x00' * 2)
 
-            with open(filename, "rb+") as fileobj:
+            with open(filename, 'rb+') as fileobj:
                 OggPage.renumber(fileobj, 1002429366, 20)
 
-            with open(filename, "rb+") as fileobj:
+            with open(filename, 'rb+') as fileobj:
                 OggPage.renumber(fileobj, 1002429366, 0)
         finally:
             os.unlink(filename)
@@ -286,23 +275,20 @@ class TOggPage(TestCase):
             page.sequence = seq
         pages[1].serial = 2
         pages[1].sequence = 100
-        data = BytesIO(b"".join([page.write() for page in pages]))
+        data = BytesIO(b''.join([page.write() for page in pages]))
         OggPage.renumber(data, 0, 20)
         data.seek(0)
         pages = [OggPage(data) for i in range(10)]
         self.failUnlessEqual(pages[1].serial, 2)
         self.failUnlessEqual(pages[1].sequence, 100)
         pages.pop(1)
-        self.failUnlessEqual(
-            [page.sequence for page in pages], list(range(20, 29)))
+        self.failUnlessEqual([page.sequence for page in pages], list(range(20, 29)))
 
     def test_to_packets(self):
-        self.failUnlessEqual(
-            [b"foo", b"bar", b"baz"], OggPage.to_packets(self.pages))
+        self.failUnlessEqual([b'foo', b'bar', b'baz'], OggPage.to_packets(self.pages))
         self.pages[0].complete = False
         self.pages[1].continued = True
-        self.failUnlessEqual(
-            [b"foobar", b"baz"], OggPage.to_packets(self.pages))
+        self.failUnlessEqual([b'foobar', b'baz'], OggPage.to_packets(self.pages))
 
     def test_to_packets_mixed_stream(self):
         self.pages[0].serial = 3
@@ -314,27 +300,24 @@ class TOggPage(TestCase):
 
     def test_to_packets_continued(self):
         self.pages[0].continued = True
-        self.failUnlessEqual(
-            OggPage.to_packets(self.pages), [b"foo", b"bar", b"baz"])
+        self.failUnlessEqual(OggPage.to_packets(self.pages), [b'foo', b'bar', b'baz'])
 
     def test_to_packets_continued_strict(self):
         self.pages[0].continued = True
-        self.failUnlessRaises(
-            ValueError, OggPage.to_packets, self.pages, strict=True)
+        self.failUnlessRaises(ValueError, OggPage.to_packets, self.pages, strict=True)
 
     def test_to_packets_strict(self):
         for page in self.pages:
             page.complete = False
-        self.failUnlessRaises(
-            ValueError, OggPage.to_packets, self.pages, strict=True)
+        self.failUnlessRaises(ValueError, OggPage.to_packets, self.pages, strict=True)
 
     def test_from_packets_short_enough(self):
-        packets = [b"1" * 200, b"2" * 200, b"3" * 200]
+        packets = [b'1' * 200, b'2' * 200, b'3' * 200]
         pages = OggPage.from_packets(packets)
         self.failUnlessEqual(OggPage.to_packets(pages), packets)
 
     def test_from_packets_position(self):
-        packets = [b"1" * 100000]
+        packets = [b'1' * 100000]
         pages = OggPage.from_packets(packets)
         self.failUnless(len(pages) > 1)
         for page in pages[:-1]:
@@ -342,7 +325,7 @@ class TOggPage(TestCase):
         self.failUnlessEqual(0, pages[-1].position)
 
     def test_from_packets_long(self):
-        packets = [b"1" * 100000, b"2" * 100000, b"3" * 100000]
+        packets = [b'1' * 100000, b'2' * 100000, b'3' * 100000]
         pages = OggPage.from_packets(packets)
         self.failIf(pages[0].complete)
         self.failUnless(pages[1].continued)
@@ -351,7 +334,7 @@ class TOggPage(TestCase):
     def test__from_packets_try_preserve(self):
         # if the packet layout matches, just create pages with
         # the same layout and copy things over
-        packets = [b"1" * 100000, b"2" * 100000, b"3" * 100000]
+        packets = [b'1' * 100000, b'2' * 100000, b'3' * 100000]
         pages = OggPage.from_packets(packets, sequence=42, default_size=977)
         new_pages = OggPage._from_packets_try_preserve(packets, pages)
         self.assertEqual(pages, new_pages)
@@ -363,75 +346,73 @@ class TOggPage(TestCase):
         # if the layout doesn't match we should fall back to creating new
         # pages starting with the sequence of the first given page
         other_packets = list(packets)
-        other_packets[1] += b"\xff"
+        other_packets[1] += b'\xff'
         other_pages = OggPage.from_packets(other_packets, 42)
         new_pages = OggPage._from_packets_try_preserve(other_packets, pages)
         self.assertEqual(new_pages, other_pages)
 
     def test_random_data_roundtrip(self):
         try:
-            random_file = open("/dev/urandom", "rb")
+            random_file = open('/dev/urandom', 'rb')
         except (IOError, OSError):
-            print("WARNING: Random data round trip test disabled.")
+            print('WARNING: Random data round trip test disabled.')
             return
         try:
             for i in range(10):
                 num_packets = random.randrange(2, 100)
-                lengths = [random.randrange(10, 10000)
-                           for i in range(num_packets)]
+                lengths = [random.randrange(10, 10000) for i in range(num_packets)]
                 packets = list(map(random_file.read, lengths))
                 self.failUnlessEqual(
-                    packets, OggPage.to_packets(OggPage.from_packets(packets)))
+                    packets, OggPage.to_packets(OggPage.from_packets(packets))
+                )
         finally:
             random_file.close()
 
     def test_packet_exactly_255(self):
         page = OggPage()
-        page.packets = [b"1" * 255]
+        page.packets = [b'1' * 255]
         page.complete = False
         page2 = OggPage()
-        page2.packets = [b""]
+        page2.packets = [b'']
         page2.sequence = 1
         page2.continued = True
-        self.failUnlessEqual(
-            [b"1" * 255], OggPage.to_packets([page, page2]))
+        self.failUnlessEqual([b'1' * 255], OggPage.to_packets([page, page2]))
 
     def test_page_max_size_alone_too_big(self):
         page = OggPage()
-        page.packets = [b"1" * 255 * 255]
+        page.packets = [b'1' * 255 * 255]
         page.complete = True
         self.failUnlessRaises(ValueError, page.write)
 
     def test_page_max_size(self):
         page = OggPage()
-        page.packets = [b"1" * 255 * 255]
+        page.packets = [b'1' * 255 * 255]
         page.complete = False
         page2 = OggPage()
-        page2.packets = [b""]
+        page2.packets = [b'']
         page2.sequence = 1
         page2.continued = True
-        self.failUnlessEqual(
-            [b"1" * 255 * 255], OggPage.to_packets([page, page2]))
+        self.failUnlessEqual([b'1' * 255 * 255], OggPage.to_packets([page, page2]))
 
     def test_complete_zero_length(self):
-        packets = [b""] * 20
+        packets = [b''] * 20
         page = OggPage.from_packets(packets)[0]
         new_page = OggPage(BytesIO(page.write()))
         self.failUnlessEqual(new_page, page)
         self.failUnlessEqual(OggPage.to_packets([new_page]), packets)
 
     def test_too_many_packets(self):
-        packets = [b"1"] * 3000
+        packets = [b'1'] * 3000
         pages = OggPage.from_packets(packets)
         map(OggPage.write, pages)
         self.failUnless(len(pages) > 3000 // 255)
 
     def test_read_max_size(self):
         page = OggPage()
-        page.packets = [b"1" * 255 * 255]
+        page.packets = [b'1' * 255 * 255]
         page.complete = False
         page2 = OggPage()
-        page2.packets = [b"", b"foo"]
+        page2.packets = [b'', b'foo']
         page2.sequence = 1
         page2.continued = True
         data = page.write() + page2.write()
@@ -447,11 +428,11 @@ class TOggPage(TestCase):
         self.failUnlessRaises(OggError, OggPage, BytesIO(page.write()))
 
     def test_not_enough_lacing(self):
-        data = OggPage().write()[:-1] + b"\x10"
+        data = OggPage().write()[:-1] + b'\x10'
         self.failUnlessRaises(OggError, OggPage, BytesIO(data))
 
     def test_not_enough_data(self):
-        data = OggPage().write()[:-1] + b"\x01\x10"
+        data = OggPage().write()[:-1] + b'\x01\x10'
         self.failUnlessRaises(OggError, OggPage, BytesIO(data))
 
     def test_not_equal(self):
@@ -461,9 +442,8 @@ class TOggPage(TestCase):
         pages = [OggPage() for i in range(10)]
         for i, page in enumerate(pages):
             page.sequence = i
-        data = BytesIO(b"".join([page.write() for page in pages]))
-        self.failUnlessEqual(
-            OggPage.find_last(data, pages[0].serial), pages[-1])
+        data = BytesIO(b''.join([page.write() for page in pages]))
+        self.failUnlessEqual(OggPage.find_last(data, pages[0].serial), pages[-1])
 
     def test_find_last_none_finishing(self):
         page = OggPage()
@@ -478,7 +458,7 @@ class TOggPage(TestCase):
         page2 = OggPage()
         page2.serial = page1.serial + 1
         pages = [page1, page2]
-        data = BytesIO(b"".join([page.write() for page in pages]))
+        data = BytesIO(b''.join([page.write() for page in pages]))
 
         assert OggPage.find_last(data, page1.serial, finishing=True) is None
         assert OggPage.find_last(data, page2.serial, finishing=True) == page2
@@ -491,7 +471,7 @@ class TOggPage(TestCase):
             page.position = i
         pages[-1].last = True
         pages[-1].position = -1
-        data = BytesIO(b"".join([page.write() for page in pages]))
+        data = BytesIO(b''.join([page.write() for page in pages]))
         page = OggPage.find_last(data, pages[-1].serial, finishing=True)
         assert page is not None
         assert page.position == 8
@@ -505,7 +485,7 @@ class TOggPage(TestCase):
         page2 = OggPage()
         page2.serial = page1.serial + 1
         pages = [page1, page2]
-        data = BytesIO(b"".join([page.write() for page in pages]))
+        data = BytesIO(b''.join([page.write() for page in pages]))
         assert OggPage.find_last(data, page2.serial).serial == page2.serial
 
     def test_find_last_really_last(self):
@@ -513,9 +493,8 @@ class TOggPage(TestCase):
         pages[-1].last = True
         for i, page in enumerate(pages):
             page.sequence = i
-        data = BytesIO(b"".join([page.write() for page in pages]))
-        self.failUnlessEqual(
-            OggPage.find_last(data, pages[0].serial), pages[-1])
+        data = BytesIO(b''.join([page.write() for page in pages]))
+        self.failUnlessEqual(OggPage.find_last(data, pages[0].serial), pages[-1])
 
     def test_find_last_muxed(self):
         pages = [OggPage() for i in range(10)]
@@ -523,15 +502,14 @@ class TOggPage(TestCase):
             page.sequence = i
         pages[-2].last = True
         pages[-1].serial = pages[0].serial + 1
-        data = BytesIO(b"".join([page.write() for page in pages]))
-        self.failUnlessEqual(
-            OggPage.find_last(data, pages[0].serial), pages[-2])
+        data = BytesIO(b''.join([page.write() for page in pages]))
+        self.failUnlessEqual(OggPage.find_last(data, pages[0].serial), pages[-2])
 
     def test_find_last_no_serial(self):
         pages = [OggPage() for i in range(10)]
         for i, page in enumerate(pages):
             page.sequence = i
-        data = BytesIO(b"".join([page.write() for page in pages]))
+        data = BytesIO(b''.join([page.write() for page in pages]))
         self.failUnless(OggPage.find_last(data, pages[0].serial + 1) is None)
 
     def test_find_last_invalid(self):
@@ -557,17 +535,18 @@ class TOggPage(TestCase):
         # http://docs.python.org/library/zlib.html#zlib.crc32
 
         import zlib
+
         old_crc = zlib.crc32
 
         def zlib_uint(*args):
-            return (old_crc(*args) & 0xffffffff)
+            return old_crc(*args) & 0xFFFFFFFF
 
         def zlib_int(*args):
-            return cdata.int_be(cdata.to_uint_be(old_crc(*args) & 0xffffffff))
+            return cdata.int_be(cdata.to_uint_be(old_crc(*args) & 0xFFFFFFFF))
 
         try:
             page = OggPage()
-            page.packets = [b"abc"]
+            page.packets = [b'abc']
             zlib.crc32 = zlib_uint
             uint_data = page.write()
             zlib.crc32 = zlib_int
@@ -582,11 +561,10 @@ class TOggPage(TestCase):
 
 
 class TOggFileTypeMixin(object):
-
     PADDING_SUPPORT = True
 
     def scan_file(self):
-        with open(self.filename, "rb") as fileobj:
+        with open(self.filename, 'rb') as fileobj:
             try:
                 while True:
                     OggPage(fileobj)
@@ -608,19 +586,19 @@ class TOggFileTypeMixin(object):
         self.failIf(self.audio.tags is None)
 
     def test_vendor_safe(self):
-        self.audio["vendor"] = "a vendor"
+        self.audio['vendor'] = 'a vendor'
         self.audio.save()
         audio = self.Kind(self.filename)
-        self.failUnlessEqual(audio["vendor"], ["a vendor"])
+        self.failUnlessEqual(audio['vendor'], ['a vendor'])
 
     def test_set_two_tags(self):
-        self.audio["foo"] = ["a"]
-        self.audio["bar"] = ["b"]
+        self.audio['foo'] = ['a']
+        self.audio['bar'] = ['b']
         self.audio.save()
         audio = self.Kind(self.filename)
         self.failUnlessEqual(len(audio.tags.keys()), 2)
-        self.failUnlessEqual(audio["foo"], ["a"])
-        self.failUnlessEqual(audio["bar"], ["b"])
+        self.failUnlessEqual(audio['foo'], ['a'])
+        self.failUnlessEqual(audio['bar'], ['b'])
         self.scan_file()
 
     def test_save_twice(self):
@@ -644,10 +622,10 @@ class TOggFileTypeMixin(object):
         audio = self.Kind(self.filename)
         self.failIf(audio.tags)
 
-        self.audio["foobar"] = "foobar" * 1000
+        self.audio['foobar'] = 'foobar' * 1000
         self.audio.save()
         audio = self.Kind(self.filename)
-        self.failUnlessEqual(self.audio["foobar"], audio["foobar"])
+        self.failUnlessEqual(self.audio['foobar'], audio['foobar'])
 
         self.scan_file()
 
@@ -662,20 +640,20 @@ class TOggFileTypeMixin(object):
         self.assertTrue(os.path.getsize(self.audio.filename) <= filesize)
 
     def test_really_big(self):
-        self.audio["foo"] = "foo" * (2 ** 16)
-        self.audio["bar"] = "bar" * (2 ** 16)
-        self.audio["baz"] = "quux" * (2 ** 16)
+        self.audio['foo'] = 'foo' * (2**16)
+        self.audio['bar'] = 'bar' * (2**16)
+        self.audio['baz'] = 'quux' * (2**16)
         self.audio.save()
         audio = self.Kind(self.filename)
-        self.failUnlessEqual(audio["foo"], ["foo" * 2 ** 16])
-        self.failUnlessEqual(audio["bar"], ["bar" * 2 ** 16])
-        self.failUnlessEqual(audio["baz"], ["quux" * 2 ** 16])
+        self.failUnlessEqual(audio['foo'], ['foo' * 2**16])
+        self.failUnlessEqual(audio['bar'], ['bar' * 2**16])
+        self.failUnlessEqual(audio['baz'], ['quux' * 2**16])
         self.scan_file()
 
     def test_delete_really_big(self):
-        self.audio["foo"] = "foo" * (2 ** 16)
-        self.audio["bar"] = "bar" * (2 ** 16)
-        self.audio["baz"] = "quux" * (2 ** 16)
+        self.audio['foo'] = 'foo' * (2**16)
+        self.audio['bar'] = 'bar' * (2**16)
+        self.audio['baz'] = 'quux' * (2**16)
         self.audio.save()
 
         self.audio.delete()
@@ -684,28 +662,33 @@ class TOggFileTypeMixin(object):
         self.scan_file()
 
     def test_invalid_open(self):
-        self.failUnlessRaises(OggError, self.Kind,
-                              os.path.join(DATA_DIR, 'xing.mp3'))
+        self.failUnlessRaises(OggError, self.Kind, os.path.join(DATA_DIR, 'xing.mp3'))
 
     def test_invalid_delete(self):
-        self.failUnlessRaises(OggError, self.audio.delete,
-                              os.path.join(DATA_DIR, 'xing.mp3'))
+        self.failUnlessRaises(
+            OggError, self.audio.delete, os.path.join(DATA_DIR, 'xing.mp3')
+        )
 
     def test_invalid_save(self):
-        self.failUnlessRaises(OggError, self.audio.save,
-                              os.path.join(DATA_DIR, 'xing.mp3'))
+        self.failUnlessRaises(
+            OggError, self.audio.save, os.path.join(DATA_DIR, 'xing.mp3')
+        )
 
     def ogg_reference(self, filename):
         self.scan_file()
         if have_ogginfo:
-            self.assertEqual(call_ogginfo(filename), 0,
-                             msg="ogginfo failed on %s" % filename)
+            self.assertEqual(
+                call_ogginfo(filename), 0, msg='ogginfo failed on %s' % filename
+            )
 
         if have_oggz_validate:
-            if filename.endswith(".opus") and not have_oggz_validate_opus:
+            if filename.endswith('.opus') and not have_oggz_validate_opus:
                 return
-            self.assertEqual(call_oggz_validate(filename), 0,
-                             msg="oggz-validate failed on %s" % filename)
+            self.assertEqual(
+                call_oggz_validate(filename),
+                0,
+                msg='oggz-validate failed on %s' % filename,
+            )
 
     def test_ogg_reference_simple_save(self):
         self.audio.save()
@@ -721,14 +704,14 @@ class TOggFileTypeMixin(object):
         self.ogg_reference(self.filename)
 
     def test_ogg_reference_medium_sized(self):
-        self.audio["foobar"] = "foobar" * 1000
+        self.audio['foobar'] = 'foobar' * 1000
         self.audio.save()
         self.ogg_reference(self.filename)
 
     def test_ogg_reference_delete_readd(self):
         self.audio.delete()
         self.audio.tags.clear()
-        self.audio["foobar"] = "foobar" * 1000
+        self.audio['foobar'] = 'foobar' * 1000
         self.audio.save()
         self.ogg_reference(self.filename)
 
@@ -740,34 +723,34 @@ class TOggFileTypeMixin(object):
             return
 
         self.audio.clear()
-        self.audio["foo"] = ["bar"]
+        self.audio['foo'] = ['bar']
 
         for i in [0, 1, 2, 42, 5000, 4999]:
             self.audio.save(padding=lambda x: i)
             new = self.Kind(self.filename)
             self.assertEqual(new.tags._padding, i)
-            self.assertEqual(new["foo"], ["bar"])
+            self.assertEqual(new['foo'], ['bar'])
             self.ogg_reference(self.filename)
 
 
 def call_ogginfo(*args):
     with open(os.devnull, 'wb') as null:
         return subprocess.call(
-            ["ogginfo"] + list(args), stdout=null, stderr=subprocess.STDOUT)
+            ['ogginfo'] + list(args), stdout=null, stderr=subprocess.STDOUT
+        )
 
 
 def call_oggz_validate(*args):
     with open(os.devnull, 'wb') as null:
         return subprocess.call(
-            ["oggz-validate"] + list(args),
-            stdout=null, stderr=subprocess.STDOUT)
+            ['oggz-validate'] + list(args), stdout=null, stderr=subprocess.STDOUT
+        )
 
 
 def get_oggz_validate_version():
     """A version tuple or OSError if oggz-validate isn't available"""
 
-    process = subprocess.Popen(["oggz-validate", "--version"],
-                               stdout=subprocess.PIPE)
+    process = subprocess.Popen(['oggz-validate', '--version'], stdout=subprocess.PIPE)
     output, unused_err = process.communicate()
     retcode = process.poll()
     if retcode != 0:
@@ -779,7 +762,7 @@ def get_oggz_validate_version():
     if not parts:
         return (0,)
     try:
-        return tuple(map(int, parts[-1].split(b".")))
+        return tuple(map(int, parts[-1].split(b'.')))
     except ValueError:
         return (0,)
 
@@ -789,7 +772,7 @@ try:
     call_ogginfo()
 except OSError:
     have_ogginfo = False
-    print("WARNING: Skipping ogginfo reference tests.")
+    print('WARNING: Skipping ogginfo reference tests.')
 
 
 have_oggz_validate = True
@@ -798,8 +781,8 @@ try:
     call_oggz_validate()
 except OSError:
     have_oggz_validate = False
-    print("WARNING: Skipping oggz-validate reference tests.")
+    print('WARNING: Skipping oggz-validate reference tests.')
 else:
     if get_oggz_validate_version() <= (0, 9, 9):
         have_oggz_validate_opus = False
-        print("WARNING: Skipping oggz-validate reference tests for opus")
+        print('WARNING: Skipping oggz-validate reference tests for opus')

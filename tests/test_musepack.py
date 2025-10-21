@@ -1,24 +1,22 @@
-
 import os
 from io import BytesIO
 
 from mutagen.id3 import ID3, TIT2
-from mutagen.musepack import Musepack, MusepackInfo, MusepackHeaderError
-from tests import TestCase, DATA_DIR, get_temp_copy
+from mutagen.musepack import Musepack, MusepackHeaderError, MusepackInfo
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TMusepack(TestCase):
-
     def setUp(self):
-        self.sv8 = Musepack(os.path.join(DATA_DIR, "sv8_header.mpc"))
-        self.sv7 = Musepack(os.path.join(DATA_DIR, "click.mpc"))
-        self.sv5 = Musepack(os.path.join(DATA_DIR, "sv5_header.mpc"))
-        self.sv4 = Musepack(os.path.join(DATA_DIR, "sv4_header.mpc"))
+        self.sv8 = Musepack(os.path.join(DATA_DIR, 'sv8_header.mpc'))
+        self.sv7 = Musepack(os.path.join(DATA_DIR, 'click.mpc'))
+        self.sv5 = Musepack(os.path.join(DATA_DIR, 'sv5_header.mpc'))
+        self.sv4 = Musepack(os.path.join(DATA_DIR, 'sv4_header.mpc'))
 
     def test_bad_header(self):
         self.failUnlessRaises(
-            MusepackHeaderError,
-            Musepack, os.path.join(DATA_DIR, "almostempty.mpc"))
+            MusepackHeaderError, Musepack, os.path.join(DATA_DIR, 'almostempty.mpc')
+        )
 
     def test_channels(self):
         self.failUnlessEqual(self.sv8.info.channels, 2)
@@ -47,37 +45,32 @@ class TMusepack(TestCase):
     def test_gain(self):
         self.failUnlessAlmostEqual(self.sv8.info.title_gain, -4.668, 3)
         self.failUnlessAlmostEqual(self.sv8.info.title_peak, 0.5288, 3)
-        self.failUnlessEqual(
-            self.sv8.info.title_gain, self.sv8.info.album_gain)
-        self.failUnlessEqual(
-            self.sv8.info.title_peak, self.sv8.info.album_peak)
+        self.failUnlessEqual(self.sv8.info.title_gain, self.sv8.info.album_gain)
+        self.failUnlessEqual(self.sv8.info.title_peak, self.sv8.info.album_peak)
         self.failUnlessAlmostEqual(self.sv7.info.title_gain, 9.27, 6)
         self.failUnlessAlmostEqual(self.sv7.info.title_peak, 0.1149, 4)
-        self.failUnlessEqual(
-            self.sv7.info.title_gain, self.sv7.info.album_gain)
-        self.failUnlessEqual(
-            self.sv7.info.title_peak, self.sv7.info.album_peak)
+        self.failUnlessEqual(self.sv7.info.title_gain, self.sv7.info.album_gain)
+        self.failUnlessEqual(self.sv7.info.title_peak, self.sv7.info.album_peak)
         self.failUnlessRaises(AttributeError, getattr, self.sv5, 'title_gain')
 
     def test_not_my_file(self):
         self.failUnlessRaises(
-            MusepackHeaderError, Musepack,
-            os.path.join(DATA_DIR, "empty.ogg"))
+            MusepackHeaderError, Musepack, os.path.join(DATA_DIR, 'empty.ogg')
+        )
         self.failUnlessRaises(
-            MusepackHeaderError, Musepack,
-            os.path.join(DATA_DIR, "emptyfile.mp3"))
+            MusepackHeaderError, Musepack, os.path.join(DATA_DIR, 'emptyfile.mp3')
+        )
 
     def test_almost_my_file(self):
         self.failUnlessRaises(
-            MusepackHeaderError, MusepackInfo, BytesIO(b"MP+" + b"\x00" * 32))
+            MusepackHeaderError, MusepackInfo, BytesIO(b'MP+' + b'\x00' * 32)
+        )
         self.failUnlessRaises(
-            MusepackHeaderError,
-            MusepackInfo,
-            BytesIO(b"MP+" + b"\x00" * 100))
+            MusepackHeaderError, MusepackInfo, BytesIO(b'MP+' + b'\x00' * 100)
+        )
         self.failUnlessRaises(
-            MusepackHeaderError,
-            MusepackInfo,
-            BytesIO(b"MPCK" + b"\x00" * 100))
+            MusepackHeaderError, MusepackInfo, BytesIO(b'MPCK' + b'\x00' * 100)
+        )
 
     def test_pprint(self):
         self.sv8.pprint()
@@ -86,12 +79,14 @@ class TMusepack(TestCase):
         self.sv4.pprint()
 
     def test_mime(self):
-        self.failUnless("audio/x-musepack" in self.sv7.mime)
+        self.failUnless('audio/x-musepack' in self.sv7.mime)
 
     def test_zero_padded_sh_packet(self):
         # https://github.com/quodlibet/mutagen/issues/198
-        data = (b"MPCKSH\x10\x95 Q\xa2\x08\x81\xb8\xc9T\x00\x1e\x1b"
-                b"\x00RG\x0c\x01A\xcdY\x06?\x80Z\x06EI")
+        data = (
+            b'MPCKSH\x10\x95 Q\xa2\x08\x81\xb8\xc9T\x00\x1e\x1b'
+            b'\x00RG\x0c\x01A\xcdY\x06?\x80Z\x06EI'
+        )
 
         fileobj = BytesIO(data)
         info = MusepackInfo(fileobj)
@@ -100,9 +95,8 @@ class TMusepack(TestCase):
 
 
 class TMusepackWithID3(TestCase):
-
     def setUp(self):
-        self.filename = get_temp_copy(os.path.join(DATA_DIR, "click.mpc"))
+        self.filename = get_temp_copy(os.path.join(DATA_DIR, 'click.mpc'))
 
     def tearDown(self):
         os.unlink(self.filename)

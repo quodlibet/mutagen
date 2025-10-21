@@ -13,15 +13,29 @@
 
 from mutagen import StreamInfo
 from mutagen._file import FileType
-from mutagen._util import BitReader, BitReaderError, MutagenError, loadfile, \
-    convert_error, endswith
+from mutagen._util import (
+    BitReader,
+    BitReaderError,
+    MutagenError,
+    convert_error,
+    endswith,
+    loadfile,
+)
 from mutagen.id3._util import BitPaddedInt
 
-
 _FREQS = [
-    96000, 88200, 64000, 48000,
-    44100, 32000, 24000, 22050,
-    16000, 12000, 11025, 8000,
+    96000,
+    88200,
+    64000,
+    48000,
+    44100,
+    32000,
+    24000,
+    22050,
+    16000,
+    12000,
+    11025,
+    8000,
     7350,
 ]
 
@@ -61,8 +75,8 @@ class _ADTSStream(object):
         while max_bytes > 0:
             try:
                 b = r.bytes(1)
-                if b == b"\xff":
-                    if r.bits(4) == 0xf:
+                if b == b'\xff':
+                    if r.bits(4) == 0xF:
                         return True
                     r.align()
                     max_bytes -= 2
@@ -89,7 +103,7 @@ class _ADTSStream(object):
     def bitrate(self):
         """Bitrate of the raw aac blocks, excluding framing/crc"""
 
-        assert self.parsed_frames, "no frame parsed yet"
+        assert self.parsed_frames, 'no frame parsed yet'
 
         if self._samples == 0:
             return 0
@@ -100,7 +114,7 @@ class _ADTSStream(object):
     def samples(self):
         """samples so far"""
 
-        assert self.parsed_frames, "no frame parsed yet"
+        assert self.parsed_frames, 'no frame parsed yet'
 
         return self._samples
 
@@ -108,7 +122,7 @@ class _ADTSStream(object):
     def size(self):
         """bytes read in the stream so far (including framing)"""
 
-        assert self.parsed_frames, "no frame parsed yet"
+        assert self.parsed_frames, 'no frame parsed yet'
 
         return self._last - self._start
 
@@ -116,7 +130,7 @@ class _ADTSStream(object):
     def channels(self):
         """0 means unknown"""
 
-        assert self.parsed_frames, "no frame parsed yet"
+        assert self.parsed_frames, 'no frame parsed yet'
 
         b_index = self._fixed_header_key[6]
         if b_index == 7:
@@ -130,7 +144,7 @@ class _ADTSStream(object):
     def frequency(self):
         """0 means unknown"""
 
-        assert self.parsed_frames, "no frame parsed yet"
+        assert self.parsed_frames, 'no frame parsed yet'
 
         f_index = self._fixed_header_key[4]
         try:
@@ -168,8 +182,15 @@ class _ADTSStream(object):
 
         # the fixed header has to be the same for every frame in the stream
         fixed_header_key = (
-            id_, layer, protection_absent, profile, sampling_frequency_index,
-            private_bit, channel_configuration, original_copy, home,
+            id_,
+            layer,
+            protection_absent,
+            profile,
+            sampling_frequency_index,
+            private_bit,
+            channel_configuration,
+            original_copy,
+            home,
         )
 
         if self._fixed_header_key is None:
@@ -206,7 +227,6 @@ class _ADTSStream(object):
 
 
 class ProgramConfigElement(object):
-
     element_instance_tag = None
     object_type = None
     sampling_frequency_index = None
@@ -238,8 +258,11 @@ class ProgramConfigElement(object):
         if matrix_mixdown_idx_present == 1:
             r.skip(3)
 
-        elms = num_front_channel_elements + num_side_channel_elements + \
-            num_back_channel_elements
+        elms = (
+            num_front_channel_elements
+            + num_side_channel_elements
+            + num_back_channel_elements
+        )
         channels = 0
         for i in range(elms):
             channels += 1
@@ -287,18 +310,18 @@ class AACInfo(StreamInfo):
         # skip id3v2 header
         start_offset = 0
         header = fileobj.read(10)
-        if header.startswith(b"ID3"):
+        if header.startswith(b'ID3'):
             size = BitPaddedInt(header[6:])
             start_offset = size + 10
 
         fileobj.seek(start_offset)
         adif = fileobj.read(4)
-        if adif == b"ADIF":
+        if adif == b'ADIF':
             self._parse_adif(fileobj)
-            self._type = "ADIF"
+            self._type = 'ADIF'
         else:
             self._parse_adts(fileobj, start_offset)
-            self._type = "ADTS"
+            self._type = 'ADTS'
 
     def _parse_adif(self, fileobj):
         r = BitReader(fileobj)
@@ -349,7 +372,7 @@ class AACInfo(StreamInfo):
             fileobj.seek(offset)
             s = _ADTSStream.find_stream(fileobj, max_initial_read)
             if s is None:
-                raise AACError("sync not found")
+                raise AACError('sync not found')
             # start right after the last found offset
             offset += s.offset + 1
 
@@ -362,8 +385,7 @@ class AACInfo(StreamInfo):
             if s.parsed_frames >= frames_needed:
                 break
         else:
-            raise AACError(
-                "no valid stream found (only %d frames)" % s.parsed_frames)
+            raise AACError('no valid stream found (only %d frames)' % s.parsed_frames)
 
         self.sample_rate = s.frequency
         self.channels = s.channels
@@ -375,13 +397,16 @@ class AACInfo(StreamInfo):
         # approx
         self.length = 0.0
         if s.frequency != 0:
-            self.length = \
-                float(s.samples * stream_size) / (s.size * s.frequency)
+            self.length = float(s.samples * stream_size) / (s.size * s.frequency)
 
     def pprint(self):
-        return u"AAC (%s), %d Hz, %.2f seconds, %d channel(s), %d bps" % (
-            self._type, self.sample_rate, self.length, self.channels,
-            self.bitrate)
+        return 'AAC (%s), %d Hz, %.2f seconds, %d channel(s), %d bps' % (
+            self._type,
+            self.sample_rate,
+            self.length,
+            self.channels,
+            self.bitrate,
+        )
 
 
 class AAC(FileType):
@@ -399,7 +424,7 @@ class AAC(FileType):
         info (`AACInfo`)
     """
 
-    _mimes = ["audio/x-aac"]
+    _mimes = ['audio/x-aac']
 
     @loadfile()
     def load(self, filething):
@@ -411,13 +436,16 @@ class AAC(FileType):
     @staticmethod
     def score(filename, fileobj, header):
         filename = filename.lower()
-        s = endswith(filename, ".aac") or endswith(filename, ".adts") or \
-            endswith(filename, ".adif")
-        s += b"ADIF" in header
+        s = (
+            endswith(filename, '.aac')
+            or endswith(filename, '.adts')
+            or endswith(filename, '.adif')
+        )
+        s += b'ADIF' in header
         return s
 
 
 Open = AAC
 error = AACError
 
-__all__ = ["AAC", "Open"]
+__all__ = ['AAC', 'Open']

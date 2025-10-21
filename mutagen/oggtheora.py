@@ -13,15 +13,16 @@ first Theora stream found is used.
 Based on the specification at http://theora.org/doc/Theora_I_spec.pdf.
 """
 
-__all__ = ["OggTheora", "Open", "delete"]
+__all__ = ['OggTheora', 'Open', 'delete']
 
 import struct
 
 from mutagen import StreamInfo
-from mutagen._vorbis import VCommentDict
-from mutagen._util import cdata, get_size, loadfile, convert_error
 from mutagen._tags import PaddingInfo
-from mutagen.ogg import OggPage, OggFileType, error as OggError
+from mutagen._util import cdata, convert_error, get_size, loadfile
+from mutagen._vorbis import VCommentDict
+from mutagen.ogg import OggFileType, OggPage
+from mutagen.ogg import error as OggError
 
 
 class error(OggError):
@@ -49,24 +50,23 @@ class OggTheoraInfo(StreamInfo):
 
     def __init__(self, fileobj):
         page = OggPage(fileobj)
-        while not page.packets or \
-                not page.packets[0].startswith(b"\x80theora"):
+        while not page.packets or not page.packets[0].startswith(b'\x80theora'):
             page = OggPage(fileobj)
         if not page.first:
-            raise OggTheoraHeaderError(
-                "page has ID header, but doesn't start a stream")
+            raise OggTheoraHeaderError("page has ID header, but doesn't start a stream")
         data = page.packets[0]
         if len(data) < 42:
-            raise OggTheoraHeaderError("Truncated header")
-        vmaj, vmin = struct.unpack("2B", data[7:9])
+            raise OggTheoraHeaderError('Truncated header')
+        vmaj, vmin = struct.unpack('2B', data[7:9])
         if (vmaj, vmin) != (3, 2):
             raise OggTheoraHeaderError(
-                "found Theora version %d.%d != 3.2" % (vmaj, vmin))
-        fps_num, fps_den = struct.unpack(">2I", data[22:30])
+                'found Theora version %d.%d != 3.2' % (vmaj, vmin)
+            )
+        fps_num, fps_den = struct.unpack('>2I', data[22:30])
         if not fps_den or not fps_num:
-            raise OggTheoraHeaderError("FRN or FRD is equal to zero")
+            raise OggTheoraHeaderError('FRN or FRD is equal to zero')
         self.fps = fps_num / float(fps_den)
-        self.bitrate = cdata.uint_be(b"\x00" + data[37:40])
+        self.bitrate = cdata.uint_be(b'\x00' + data[37:40])
         self.granule_shift = (cdata.ushort_be(data[40:42]) >> 5) & 0x1F
         self.serial = page.serial
 
@@ -81,8 +81,7 @@ class OggTheoraInfo(StreamInfo):
         self.length = frames / float(self.fps)
 
     def pprint(self):
-        return u"Ogg Theora, %.2f seconds, %d bps" % (self.length,
-                                                      self.bitrate)
+        return 'Ogg Theora, %.2f seconds, %d bps' % (self.length, self.bitrate)
 
 
 class OggTheoraCommentDict(VCommentDict):
@@ -98,7 +97,7 @@ class OggTheoraCommentDict(VCommentDict):
                 complete = page.complete or (len(page.packets) > 1)
         packets = OggPage.to_packets(pages)
         if not packets:
-            raise error("Missing metadata packet")
+            raise error('Missing metadata packet')
         data = packets[0][7:]
         super(OggTheoraCommentDict, self).__init__(data, framing=False)
         self._padding = len(data) - self._size
@@ -108,8 +107,7 @@ class OggTheoraCommentDict(VCommentDict):
 
         fileobj.seek(0)
         page = OggPage(fileobj)
-        while not page.packets or \
-                not page.packets[0].startswith(b"\x81theora"):
+        while not page.packets or not page.packets[0].startswith(b'\x81theora'):
             page = OggPage(fileobj)
 
         old_pages = [page]
@@ -121,13 +119,13 @@ class OggTheoraCommentDict(VCommentDict):
         packets = OggPage.to_packets(old_pages, strict=False)
 
         content_size = get_size(fileobj) - len(packets[0])  # approx
-        vcomment_data = b"\x81theora" + self.write(framing=False)
+        vcomment_data = b'\x81theora' + self.write(framing=False)
         padding_left = len(packets[0]) - len(vcomment_data)
 
         info = PaddingInfo(padding_left, content_size)
         new_padding = info._get_padding(padding_func)
 
-        packets[0] = vcomment_data + b"\x00" * new_padding
+        packets[0] = vcomment_data + b'\x00' * new_padding
 
         new_pages = OggPage._from_packets_try_preserve(packets, old_pages)
         OggPage.replace(fileobj, old_pages, new_pages)
@@ -149,15 +147,18 @@ class OggTheora(OggFileType):
     _Info = OggTheoraInfo
     _Tags = OggTheoraCommentDict
     _Error = OggTheoraHeaderError
-    _mimes = ["video/x-theora"]
+    _mimes = ['video/x-theora']
 
     info = None
     tags = None
 
     @staticmethod
     def score(filename, fileobj, header):
-        return (header.startswith(b"OggS") *
-                ((b"\x80theora" in header) + (b"\x81theora" in header)) * 2)
+        return (
+            header.startswith(b'OggS')
+            * ((b'\x80theora' in header) + (b'\x81theora' in header))
+            * 2
+        )
 
 
 Open = OggTheora
@@ -166,7 +167,7 @@ Open = OggTheora
 @convert_error(IOError, error)
 @loadfile(method=False, writable=True)
 def delete(filething):
-    """ delete(filething)
+    """delete(filething)
 
     Arguments:
         filething (filething)

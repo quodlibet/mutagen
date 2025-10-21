@@ -8,19 +8,31 @@
 
 """Read and write ASF (Window Media Audio) files."""
 
-__all__ = ["ASF", "Open"]
+__all__ = ['ASF', 'Open']
 
-from mutagen import FileType, Tags, StreamInfo
-from mutagen._util import resize_bytes, DictMixin, loadfile, convert_error
+from mutagen import FileType, StreamInfo, Tags
+from mutagen._util import DictMixin, convert_error, loadfile, resize_bytes
 
-from ._util import error, ASFError, ASFHeaderError
-from ._objects import HeaderObject, MetadataLibraryObject, MetadataObject, \
-    ExtendedContentDescriptionObject, HeaderExtensionObject, \
-    ContentDescriptionObject
-from ._attrs import ASFGUIDAttribute, ASFWordAttribute, ASFQWordAttribute, \
-    ASFDWordAttribute, ASFBoolAttribute, ASFByteArrayAttribute, \
-    ASFUnicodeAttribute, ASFBaseAttribute, ASFValue
-
+from ._attrs import (
+    ASFBaseAttribute,
+    ASFBoolAttribute,
+    ASFByteArrayAttribute,
+    ASFDWordAttribute,
+    ASFGUIDAttribute,
+    ASFQWordAttribute,
+    ASFUnicodeAttribute,
+    ASFValue,
+    ASFWordAttribute,
+)
+from ._objects import (
+    ContentDescriptionObject,
+    ExtendedContentDescriptionObject,
+    HeaderExtensionObject,
+    HeaderObject,
+    MetadataLibraryObject,
+    MetadataObject,
+)
+from ._util import ASFError, ASFHeaderError, error
 
 # flake8
 error, ASFError, ASFHeaderError, ASFValue
@@ -49,27 +61,31 @@ class ASFInfo(StreamInfo):
     sample_rate = 0
     bitrate = 0
     channels = 0
-    codec_type = u""
-    codec_name = u""
-    codec_description = u""
+    codec_type = ''
+    codec_name = ''
+    codec_description = ''
 
     def __init__(self):
         self.length = 0.0
         self.sample_rate = 0
         self.bitrate = 0
         self.channels = 0
-        self.codec_type = u""
-        self.codec_name = u""
-        self.codec_description = u""
+        self.codec_type = ''
+        self.codec_name = ''
+        self.codec_description = ''
 
     def pprint(self):
         """Returns:
-            text: a stream information text summary
+        text: a stream information text summary
         """
 
-        s = u"ASF (%s) %d bps, %s Hz, %d channels, %.2f seconds" % (
-            self.codec_type or self.codec_name or u"???", self.bitrate,
-            self.sample_rate, self.channels, self.length)
+        s = 'ASF (%s) %d bps, %s Hz, %d channels, %.2f seconds' % (
+            self.codec_type or self.codec_name or '???',
+            self.bitrate,
+            self.sample_rate,
+            self.channels,
+            self.length,
+        )
         return s
 
 
@@ -143,7 +159,7 @@ class ASFTags(list, DictMixin, Tags):  # type: ignore
                 elif isinstance(value, int):
                     value = ASFDWordAttribute(value)
                 else:
-                    raise TypeError("Invalid type %r" % type(value))
+                    raise TypeError('Invalid type %r' % type(value))
             to_append.append((key, value))
 
         try:
@@ -172,7 +188,7 @@ class ASFTags(list, DictMixin, Tags):  # type: ignore
         :rtype: text
         """
 
-        return "\n".join("%s=%s" % (k, v) for k, v in self)
+        return '\n'.join('%s=%s' % (k, v) for k, v in self)
 
 
 UNICODE = ASFUnicodeAttribute.TYPE
@@ -210,8 +226,13 @@ class ASF(FileType):
         tags (`ASFTags`)
     """
 
-    _mimes = ["audio/x-ms-wma", "audio/x-ms-wmv", "video/x-ms-asf",
-              "audio/x-wma", "video/x-wmv"]
+    _mimes = [
+        'audio/x-ms-wma',
+        'audio/x-ms-wmv',
+        'video/x-ms-asf',
+        'audio/x-wma',
+        'video/x-wmv',
+    ]
 
     info = None
     tags = None
@@ -235,10 +256,12 @@ class ASF(FileType):
         self._tags = {}
         self._header = HeaderObject.parse_full(self, fileobj)
 
-        for guid in [ContentDescriptionObject.GUID,
-                     ExtendedContentDescriptionObject.GUID,
-                     MetadataObject.GUID,
-                     MetadataLibraryObject.GUID]:
+        for guid in [
+            ContentDescriptionObject.GUID,
+            ExtendedContentDescriptionObject.GUID,
+            MetadataObject.GUID,
+            MetadataLibraryObject.GUID,
+        ]:
             self.tags.extend(self._tags.pop(guid, []))
 
         assert not self._tags
@@ -263,7 +286,7 @@ class ASF(FileType):
         self.to_metadata = {}
         self.to_metadata_library = []
         for name, value in self.tags:
-            library_only = (value.data_size() > 0xFFFF or value.TYPE == GUID)
+            library_only = value.data_size() > 0xFFFF or value.TYPE == GUID
             can_cont_desc = value.TYPE == UNICODE
 
             if library_only or value.language is not None:
@@ -327,5 +350,6 @@ class ASF(FileType):
     @staticmethod
     def score(filename, fileobj, header):
         return header.startswith(HeaderObject.GUID) * 2
+
 
 Open = ASF

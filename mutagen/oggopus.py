@@ -13,16 +13,17 @@ first Opus stream found is used.
 Based on http://tools.ietf.org/html/draft-terriberry-oggopus-01
 """
 
-__all__ = ["OggOpus", "Open", "delete"]
+__all__ = ['OggOpus', 'Open', 'delete']
 
 import struct
 from io import BytesIO
 
 from mutagen import StreamInfo
-from mutagen._util import get_size, loadfile, convert_error
 from mutagen._tags import PaddingInfo
+from mutagen._util import convert_error, get_size, loadfile
 from mutagen._vorbis import VCommentDict
-from mutagen.ogg import OggPage, OggFileType, error as OggError
+from mutagen.ogg import OggFileType, OggPage
+from mutagen.ogg import error as OggError
 
 
 class error(OggError):
@@ -48,24 +49,29 @@ class OggOpusInfo(StreamInfo):
 
     def __init__(self, fileobj):
         page = OggPage(fileobj)
-        while not page.packets[0].startswith(b"OpusHead"):
+        while not page.packets[0].startswith(b'OpusHead'):
             page = OggPage(fileobj)
 
         self.serial = page.serial
 
         if not page.first:
-            raise OggOpusHeaderError(
-                "page has ID header, but doesn't start a stream")
+            raise OggOpusHeaderError("page has ID header, but doesn't start a stream")
 
-        (version, self.channels, pre_skip, orig_sample_rate, output_gain,
-         channel_map) = struct.unpack("<BBHIhB", page.packets[0][8:19])
+        (
+            version,
+            self.channels,
+            pre_skip,
+            orig_sample_rate,
+            output_gain,
+            channel_map,
+        ) = struct.unpack('<BBHIhB', page.packets[0][8:19])
 
         self.__pre_skip = pre_skip
 
         # only the higher 4 bits change on incombatible changes
         major = version >> 4
         if major != 0:
-            raise OggOpusHeaderError("version %r unsupported" % major)
+            raise OggOpusHeaderError('version %r unsupported' % major)
 
     def _post_tags(self, fileobj):
         page = OggPage.find_last(fileobj, self.serial, finishing=True)
@@ -74,7 +80,7 @@ class OggOpusInfo(StreamInfo):
         self.length = (page.position - self.__pre_skip) / float(48000)
 
     def pprint(self):
-        return u"Ogg Opus, %.2f seconds" % (self.length)
+        return 'Ogg Opus, %.2f seconds' % (self.length)
 
 
 class OggOpusVComment(VCommentDict):
@@ -83,8 +89,9 @@ class OggOpusVComment(VCommentDict):
     def __get_comment_pages(self, fileobj, info):
         # find the first tags page with the right serial
         page = OggPage(fileobj)
-        while ((info.serial != page.serial) or
-                not page.packets[0].startswith(b"OpusTags")):
+        while (info.serial != page.serial) or not page.packets[0].startswith(
+            b'OpusTags'
+        ):
             page = OggPage(fileobj)
 
         # get all comment pages
@@ -110,7 +117,7 @@ class OggOpusVComment(VCommentDict):
             self._pad_data = padding_flag + fileobj.read()
             self._padding = 0  # we have to preserve, so no padding
         else:
-            self._pad_data = b""
+            self._pad_data = b''
 
     def _inject(self, fileobj, padding_func):
         fileobj.seek(0)
@@ -118,7 +125,7 @@ class OggOpusVComment(VCommentDict):
         old_pages = self.__get_comment_pages(fileobj, info)
 
         packets = OggPage.to_packets(old_pages)
-        vcomment_data = b"OpusTags" + self.write(framing=False)
+        vcomment_data = b'OpusTags' + self.write(framing=False)
 
         if self._pad_data:
             # if we have padding data to preserver we can't add more padding
@@ -129,7 +136,7 @@ class OggOpusVComment(VCommentDict):
             padding_left = len(packets[0]) - len(vcomment_data)
             info = PaddingInfo(padding_left, content_size)
             new_padding = info._get_padding(padding_func)
-            packets[0] = vcomment_data + b"\x00" * new_padding
+            packets[0] = vcomment_data + b'\x00' * new_padding
 
         new_pages = OggPage._from_packets_try_preserve(packets, old_pages)
         OggPage.replace(fileobj, old_pages, new_pages)
@@ -152,14 +159,14 @@ class OggOpus(OggFileType):
     _Info = OggOpusInfo
     _Tags = OggOpusVComment
     _Error = OggOpusHeaderError
-    _mimes = ["audio/ogg", "audio/ogg; codecs=opus"]
+    _mimes = ['audio/ogg', 'audio/ogg; codecs=opus']
 
     info = None
     tags = None
 
     @staticmethod
     def score(filename, fileobj, header):
-        return (header.startswith(b"OggS") * (b"OpusHead" in header))
+        return header.startswith(b'OggS') * (b'OpusHead' in header)
 
 
 Open = OggOpus
@@ -168,7 +175,7 @@ Open = OggOpus
 @convert_error(IOError, error)
 @loadfile(method=False, writable=True)
 def delete(filething):
-    """ delete(filething)
+    """delete(filething)
 
     Arguments:
         filething (filething)

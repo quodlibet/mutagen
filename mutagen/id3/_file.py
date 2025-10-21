@@ -10,19 +10,23 @@
 import struct
 
 import mutagen
-from mutagen._util import insert_bytes, delete_bytes, enum, \
-    loadfile, convert_error, read_full
 from mutagen._tags import PaddingInfo
+from mutagen._util import (
+    convert_error,
+    delete_bytes,
+    enum,
+    insert_bytes,
+    loadfile,
+    read_full,
+)
 
-from ._util import error, ID3NoHeaderError, ID3UnsupportedVersionError, \
-    BitPaddedInt
-from ._tags import ID3Tags, ID3Header, ID3SaveConfig
 from ._id3v1 import MakeID3v1, find_id3v1
+from ._tags import ID3Header, ID3SaveConfig, ID3Tags
+from ._util import BitPaddedInt, ID3NoHeaderError, ID3UnsupportedVersionError, error
 
 
 @enum
 class ID3v1SaveOptions(object):
-
     REMOVE = 0
     """ID3v1 tags will be removed"""
 
@@ -58,7 +62,7 @@ class ID3(ID3Tags, mutagen.Metadata):
         size (int): the total size of the ID3 tag, including the header
     """
 
-    __module__ = "mutagen.id3"
+    __module__ = 'mutagen.id3'
 
     PEDANTIC = True
     """`bool`:
@@ -109,8 +113,9 @@ class ID3(ID3Tags, mutagen.Metadata):
 
     @convert_error(IOError, error)
     @loadfile()
-    def load(self, filething, known_frames=None, translate=True, v2_version=4,
-             load_v1=True):
+    def load(
+        self, filething, known_frames=None, translate=True, v2_version=4, load_v1=True
+    ):
         """Load tags from a filename.
 
         Args:
@@ -139,7 +144,7 @@ class ID3(ID3Tags, mutagen.Metadata):
         fileobj = filething.fileobj
 
         if v2_version not in (3, 4):
-            raise ValueError("Only 3 and 4 possible for v2_version")
+            raise ValueError('Only 3 and 4 possible for v2_version')
 
         self.unknown_frames = []
         self._header = None
@@ -187,11 +192,9 @@ class ID3(ID3Tags, mutagen.Metadata):
             else:
                 self.update_to_v24()
 
-    def _prepare_data(self, fileobj, start, available, v2_version, v23_sep,
-                      pad_func):
-
+    def _prepare_data(self, fileobj, start, available, v2_version, v23_sep, pad_func):
         if v2_version not in (3, 4):
-            raise ValueError("Only 3 or 4 allowed for v2_version")
+            raise ValueError('Only 3 or 4 allowed for v2_version')
 
         config = ID3SaveConfig(v2_version, v23_sep)
         framedata = self._write(config)
@@ -204,12 +207,11 @@ class ID3(ID3Tags, mutagen.Metadata):
         info = PaddingInfo(available - needed, trailing_size)
         new_padding = info._get_padding(pad_func)
         if new_padding < 0:
-            raise error("invalid padding")
+            raise error('invalid padding')
         new_size = needed + new_padding
 
         new_framesize = BitPaddedInt.to_str(new_size - 10, width=4)
-        header = struct.pack(
-            '>3sBBB4s', b'ID3', v2_version, 0, 0, new_framesize)
+        header = struct.pack('>3sBBB4s', b'ID3', v2_version, 0, 0, new_framesize)
 
         data = header + framedata
         assert new_size >= len(data)
@@ -220,8 +222,7 @@ class ID3(ID3Tags, mutagen.Metadata):
 
     @convert_error(IOError, error)
     @loadfile(writable=True, create=True)
-    def save(self, filething=None, v1=1, v2_version=4, v23_sep='/',
-             padding=None):
+    def save(self, filething=None, v1=1, v2_version=4, v23_sep='/', padding=None):
         """save(filething=None, v1=1, v2_version=4, v23_sep='/', padding=None)
 
         Save changes to a file.
@@ -260,13 +261,12 @@ class ID3(ID3Tags, mutagen.Metadata):
         else:
             old_size = header.size
 
-        data = self._prepare_data(
-            f, 0, old_size, v2_version, v23_sep, padding)
+        data = self._prepare_data(f, 0, old_size, v2_version, v23_sep, padding)
         new_size = len(data)
 
-        if (old_size < new_size):
+        if old_size < new_size:
             insert_bytes(f, new_size - old_size, old_size)
-        elif (old_size > new_size):
+        elif old_size > new_size:
             delete_bytes(f, old_size - new_size, new_size)
         f.seek(0)
         f.write(data)
@@ -278,8 +278,7 @@ class ID3(ID3Tags, mutagen.Metadata):
         has_v1 = tag is not None
 
         f.seek(offset, 2)
-        if v1 == ID3v1SaveOptions.UPDATE and has_v1 or \
-                v1 == ID3v1SaveOptions.CREATE:
+        if v1 == ID3v1SaveOptions.UPDATE and has_v1 or v1 == ID3v1SaveOptions.CREATE:
             f.write(MakeID3v1(self))
         else:
             f.truncate()
@@ -357,7 +356,7 @@ class ID3FileType(mutagen.FileType):
     mutagen.id3.ID3 object, e.g. an EasyID3 reader.
     """
 
-    __module__ = "mutagen.id3"
+    __module__ = 'mutagen.id3'
 
     ID3 = ID3
 
@@ -369,11 +368,11 @@ class ID3FileType(mutagen.FileType):
 
         @staticmethod
         def pprint():
-            return u"Unknown format with ID3 tag"
+            return 'Unknown format with ID3 tag'
 
     @staticmethod
     def score(filename, fileobj, header_data):
-        return header_data.startswith(b"ID3")
+        return header_data.startswith(b'ID3')
 
     def add_tags(self, ID3=None):
         """Add an empty ID3 tag to the file.
@@ -392,7 +391,7 @@ class ID3FileType(mutagen.FileType):
             self.ID3 = ID3
             self.tags = ID3()
         else:
-            raise error("an ID3 tag already exists")
+            raise error('an ID3 tag already exists')
 
     @loadfile()
     def load(self, filething, ID3=None, **kwargs):

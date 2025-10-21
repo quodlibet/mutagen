@@ -5,14 +5,13 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
-from typing import Dict, Callable
+from typing import Callable, Dict
 
 from mutagen import Tags
 from mutagen._util import DictMixin, dict_match
-from mutagen.mp4 import MP4, MP4Tags, error, delete
+from mutagen.mp4 import MP4, MP4Tags, delete, error
 
-
-__all__ = ["EasyMP4Tags", "EasyMP4", "delete", "error"]
+__all__ = ['EasyMP4Tags', 'EasyMP4', 'delete', 'error']
 
 
 class EasyMP4KeyError(error, KeyError, ValueError):
@@ -43,16 +42,16 @@ class EasyMP4Tags(DictMixin, Tags):
         self.save = self.__mp4.save
         self.delete = self.__mp4.delete
 
-    filename = property(lambda s: s.__mp4.filename,
-                        lambda s, fn: setattr(s.__mp4, 'filename', fn))
+    filename = property(
+        lambda s: s.__mp4.filename, lambda s, fn: setattr(s.__mp4, 'filename', fn)
+    )
 
     @property
     def _padding(self):
         return self.__mp4._padding
 
     @classmethod
-    def RegisterKey(cls, key,
-                    getter=None, setter=None, deleter=None, lister=None):
+    def RegisterKey(cls, key, getter=None, setter=None, deleter=None, lister=None):
         """Register a new key mapping.
 
         A key mapping is four functions, a getter, setter, deleter,
@@ -89,6 +88,7 @@ class EasyMP4Tags(DictMixin, Tags):
 
             EasyMP4Tags.RegisterTextKey("artist", "\xa9ART")
         """
+
         def getter(tags, key):
             return tags[atomid]
 
@@ -101,9 +101,8 @@ class EasyMP4Tags(DictMixin, Tags):
         cls.RegisterKey(key, getter, setter, deleter)
 
     @classmethod
-    def RegisterIntKey(cls, key, atomid, min_value=0, max_value=(2 ** 16) - 1):
-        """Register a scalar integer key.
-        """
+    def RegisterIntKey(cls, key, atomid, min_value=0, max_value=(2**16) - 1):
+        """Register a scalar integer key."""
 
         def getter(tags, key):
             return list(map(str, tags[atomid]))
@@ -118,13 +117,12 @@ class EasyMP4Tags(DictMixin, Tags):
         cls.RegisterKey(key, getter, setter, deleter)
 
     @classmethod
-    def RegisterIntPairKey(cls, key, atomid, min_value=0,
-                           max_value=(2 ** 16) - 1):
+    def RegisterIntPairKey(cls, key, atomid, min_value=0, max_value=(2**16) - 1):
         def getter(tags, key):
             ret = []
-            for (track, total) in tags[atomid]:
+            for track, total in tags[atomid]:
                 if total:
-                    ret.append(u"%d/%d" % (track, total))
+                    ret.append('%d/%d' % (track, total))
                 else:
                     ret.append(str(track))
             return ret
@@ -134,7 +132,7 @@ class EasyMP4Tags(DictMixin, Tags):
             data = []
             for v in value:
                 try:
-                    tracks, total = v.split("/")
+                    tracks, total = v.split('/')
                     tracks = clamp(int(tracks))
                     total = clamp(int(total))
                 except (ValueError, TypeError):
@@ -149,7 +147,7 @@ class EasyMP4Tags(DictMixin, Tags):
         cls.RegisterKey(key, getter, setter, deleter)
 
     @classmethod
-    def RegisterFreeformKey(cls, key, name, mean="com.apple.iTunes"):
+    def RegisterFreeformKey(cls, key, name, mean='com.apple.iTunes'):
         """Register a text key.
 
         If the key you need to register is a simple one-to-one mapping
@@ -159,17 +157,17 @@ class EasyMP4Tags(DictMixin, Tags):
             EasyMP4Tags.RegisterFreeformKey(
                 "musicbrainz_artistid", "MusicBrainz Artist Id")
         """
-        atomid = "----:" + mean + ":" + name
+        atomid = '----:' + mean + ':' + name
 
         def getter(tags, key):
-            return [s.decode("utf-8", "replace") for s in tags[atomid]]
+            return [s.decode('utf-8', 'replace') for s in tags[atomid]]
 
         def setter(tags, key, value):
             encoded = []
             for v in value:
                 if not isinstance(v, str):
-                    raise TypeError("%r not str" % v)
-                encoded.append(v.encode("utf-8"))
+                    raise TypeError('%r not str' % v)
+                encoded.append(v.encode('utf-8'))
             tags[atomid] = encoded
 
         def deleter(tags, key):
@@ -183,7 +181,7 @@ class EasyMP4Tags(DictMixin, Tags):
         if func is not None:
             return func(self.__mp4, key)
         else:
-            raise EasyMP4KeyError("%r is not a valid key" % key)
+            raise EasyMP4KeyError('%r is not a valid key' % key)
 
     def __setitem__(self, key, value):
         key = key.lower()
@@ -195,7 +193,7 @@ class EasyMP4Tags(DictMixin, Tags):
         if func is not None:
             return func(self.__mp4, key, value)
         else:
-            raise EasyMP4KeyError("%r is not a valid key" % key)
+            raise EasyMP4KeyError('%r is not a valid key' % key)
 
     def __delitem__(self, key):
         key = key.lower()
@@ -203,7 +201,7 @@ class EasyMP4Tags(DictMixin, Tags):
         if func is not None:
             return func(self.__mp4, key)
         else:
-            raise EasyMP4KeyError("%r is not a valid key" % key)
+            raise EasyMP4KeyError('%r is not a valid key' % key)
 
     def keys(self):
         keys = []
@@ -220,8 +218,9 @@ class EasyMP4Tags(DictMixin, Tags):
         for key in sorted(self.keys()):
             values = self[key]
             for value in values:
-                strings.append("%s=%s" % (key, value))
-        return "\n".join(strings)
+                strings.append('%s=%s' % (key, value))
+        return '\n'.join(strings)
+
 
 for atomid, key in {
     '\xa9nam': 'title',
@@ -255,13 +254,13 @@ for name, key in {
     EasyMP4Tags.RegisterFreeformKey(key, name)
 
 for name, key in {
-    "tmpo": "bpm",
+    'tmpo': 'bpm',
 }.items():
     EasyMP4Tags.RegisterIntKey(key, name)
 
 for name, key in {
-    "trkn": "tracknumber",
-    "disk": "discnumber",
+    'trkn': 'tracknumber',
+    'disk': 'discnumber',
 }.items():
     EasyMP4Tags.RegisterIntPairKey(key, name)
 

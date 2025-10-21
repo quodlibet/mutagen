@@ -17,7 +17,6 @@ def is_valid_frame_id(frame_id):
 
 
 class ID3SaveConfig(object):
-
     def __init__(self, v2_version=4, v23_separator=None):
         assert v2_version in (3, 4)
         self.v2_version = v2_version
@@ -70,13 +69,17 @@ class unsynch(object):
 
 
 class _BitPaddedMixin(object):
-
     def as_str(self, width=4, minwidth=4):
         return self.to_str(self, self.bits, self.bigendian, width, minwidth)
 
     @staticmethod
-    def to_str(value: int, bits: int = 7, bigendian: bool = True,
-               width: int = 4, minwidth: int = 4) -> bytes:
+    def to_str(
+        value: int,
+        bits: int = 7,
+        bigendian: bool = True,
+        width: int = 4,
+        minwidth: int = 4,
+    ) -> bytes:
         mask = (1 << bits) - 1
 
         if width != -1:
@@ -97,7 +100,7 @@ class _BitPaddedMixin(object):
             while value:
                 append(value & mask)
                 value >>= bits
-            bytes_ = bytes_.ljust(minwidth, b"\x00")
+            bytes_ = bytes_.ljust(minwidth, b'\x00')
 
         if bigendian:
             bytes_.reverse()
@@ -109,7 +112,7 @@ class _BitPaddedMixin(object):
 
         assert bits <= 8
 
-        mask = (((1 << (8 - bits)) - 1) << bits)
+        mask = ((1 << (8 - bits)) - 1) << bits
 
         if isinstance(value, int):
             while value:
@@ -127,9 +130,7 @@ class _BitPaddedMixin(object):
 
 
 class BitPaddedInt(int, _BitPaddedMixin):
-
     def __new__(cls, value, bits=7, bigendian=True):
-
         mask = (1 << (bits)) - 1
         numeric_value = 0
         shift = 0

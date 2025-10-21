@@ -14,11 +14,11 @@ http://tausoft.org/wiki/True_Audio_Codec_Format
 True Audio files use ID3 tags.
 """
 
-__all__ = ["TrueAudio", "Open", "delete", "EasyTrueAudio"]
+__all__ = ['TrueAudio', 'Open', 'delete', 'EasyTrueAudio']
 
 from mutagen import StreamInfo
+from mutagen._util import MutagenError, cdata, convert_error, endswith
 from mutagen.id3 import ID3FileType, delete
-from mutagen._util import cdata, MutagenError, convert_error, endswith
 
 
 class error(MutagenError):
@@ -45,8 +45,8 @@ class TrueAudioInfo(StreamInfo):
 
         fileobj.seek(offset or 0)
         header = fileobj.read(18)
-        if len(header) != 18 or not header.startswith(b"TTA"):
-            raise TrueAudioHeaderError("TTA header not found")
+        if len(header) != 18 or not header.startswith(b'TTA'):
+            raise TrueAudioHeaderError('TTA header not found')
         self.sample_rate = cdata.uint_le(header[10:14])
         samples = cdata.uint_le(header[14:18])
         self.length = 0.0
@@ -54,8 +54,7 @@ class TrueAudioInfo(StreamInfo):
             self.length = float(samples) / self.sample_rate
 
     def pprint(self):
-        return u"True Audio, %.2f seconds, %d Hz." % (
-            self.length, self.sample_rate)
+        return 'True Audio, %.2f seconds, %d Hz.' % (self.length, self.sample_rate)
 
 
 class TrueAudio(ID3FileType):
@@ -73,12 +72,15 @@ class TrueAudio(ID3FileType):
     """
 
     _Info = TrueAudioInfo
-    _mimes = ["audio/x-tta"]
+    _mimes = ['audio/x-tta']
 
     @staticmethod
     def score(filename, fileobj, header):
-        return (header.startswith(b"ID3") + header.startswith(b"TTA") +
-                endswith(filename.lower(), b".tta") * 2)
+        return (
+            header.startswith(b'ID3')
+            + header.startswith(b'TTA')
+            + endswith(filename.lower(), b'.tta') * 2
+        )
 
 
 Open = TrueAudio
@@ -99,4 +101,5 @@ class EasyTrueAudio(TrueAudio):
     """
 
     from mutagen.easyid3 import EasyID3 as ID3
+
     ID3 = ID3  # type: ignore

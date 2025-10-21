@@ -1,20 +1,17 @@
-
 import os
 
-from mutagen.id3 import ID3, TIT1
 from mutagen.aac import AAC, AACError
-
-from tests import TestCase, DATA_DIR, get_temp_copy
+from mutagen.id3 import ID3, TIT1
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TADTS(TestCase):
-
     def setUp(self):
-        original = os.path.join(DATA_DIR, "empty.aac")
+        original = os.path.join(DATA_DIR, 'empty.aac')
         self.filename = get_temp_copy(original)
 
         tag = ID3()
-        tag.add(TIT1(text=[u"a" * 5000], encoding=3))
+        tag.add(TIT1(text=['a' * 5000], encoding=3))
         tag.save(self.filename)
 
         self.aac = AAC(original)
@@ -40,27 +37,22 @@ class TADTS(TestCase):
         self.failUnlessAlmostEqual(self.aac_id3.info.length, 3.70, 2)
 
     def test_not_my_file(self):
-        self.failUnlessRaises(
-            AACError, AAC,
-            os.path.join(DATA_DIR, "empty.ogg"))
+        self.failUnlessRaises(AACError, AAC, os.path.join(DATA_DIR, 'empty.ogg'))
 
-        self.failUnlessRaises(
-            AACError, AAC,
-            os.path.join(DATA_DIR, "silence-44-s.mp3"))
+        self.failUnlessRaises(AACError, AAC, os.path.join(DATA_DIR, 'silence-44-s.mp3'))
 
     def test_pprint(self):
         self.assertEqual(self.aac.pprint(), self.aac_id3.pprint())
-        self.assertTrue("ADTS" in self.aac.pprint())
+        self.assertTrue('ADTS' in self.aac.pprint())
 
 
 class TADIF(TestCase):
-
     def setUp(self):
-        original = os.path.join(DATA_DIR, "adif.aac")
+        original = os.path.join(DATA_DIR, 'adif.aac')
         self.filename = get_temp_copy(original)
 
         tag = ID3()
-        tag.add(TIT1(text=[u"a" * 5000], encoding=3))
+        tag.add(TIT1(text=['a' * 5000], encoding=3))
         tag.save(self.filename)
 
         self.aac = AAC(original)
@@ -86,14 +78,10 @@ class TADIF(TestCase):
         self.failUnlessAlmostEqual(self.aac_id3.info.length, 0.25, 2)
 
     def test_not_my_file(self):
-        self.failUnlessRaises(
-            AACError, AAC,
-            os.path.join(DATA_DIR, "empty.ogg"))
+        self.failUnlessRaises(AACError, AAC, os.path.join(DATA_DIR, 'empty.ogg'))
 
-        self.failUnlessRaises(
-            AACError, AAC,
-            os.path.join(DATA_DIR, "silence-44-s.mp3"))
+        self.failUnlessRaises(AACError, AAC, os.path.join(DATA_DIR, 'silence-44-s.mp3'))
 
     def test_pprint(self):
         self.assertEqual(self.aac.pprint(), self.aac_id3.pprint())
-        self.assertTrue("ADIF" in self.aac.pprint())
+        self.assertTrue('ADIF' in self.aac.pprint())

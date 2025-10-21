@@ -1,43 +1,67 @@
 from io import BytesIO
 
-from mutagen import File, Metadata
-from mutagen import MutagenError
+from mutagen import File, Metadata, MutagenError
+from mutagen.aac import AAC
+from mutagen.ac3 import AC3
+from mutagen.aiff import AIFF
+from mutagen.apev2 import APEv2, APEv2File
 from mutagen.asf import ASF
-from mutagen.apev2 import APEv2File, APEv2
+from mutagen.dsdiff import DSDIFF
+from mutagen.dsf import DSF
+from mutagen.easyid3 import EasyID3, EasyID3FileType
+from mutagen.easymp4 import EasyMP4
 from mutagen.flac import FLAC
-from mutagen.easyid3 import EasyID3FileType, EasyID3
-from mutagen.id3 import ID3FileType, ID3
-from mutagen.mp3 import MP3
-from mutagen.mp3 import EasyMP3
+from mutagen.id3 import ID3, ID3FileType
+from mutagen.monkeysaudio import MonkeysAudio
+from mutagen.mp3 import MP3, EasyMP3
+from mutagen.mp4 import MP4
+from mutagen.musepack import Musepack
 from mutagen.oggflac import OggFLAC
+from mutagen.oggopus import OggOpus
 from mutagen.oggspeex import OggSpeex
 from mutagen.oggtheora import OggTheora
 from mutagen.oggvorbis import OggVorbis
-from mutagen.oggopus import OggOpus
-from mutagen.trueaudio import EasyTrueAudio
-from mutagen.trueaudio import TrueAudio
-from mutagen.wavpack import WavPack
-from mutagen.easymp4 import EasyMP4
-from mutagen.mp4 import MP4
-from mutagen.musepack import Musepack
-from mutagen.monkeysaudio import MonkeysAudio
 from mutagen.optimfrog import OptimFROG
-from mutagen.aiff import AIFF
-from mutagen.aac import AAC
-from mutagen.ac3 import AC3
 from mutagen.smf import SMF
 from mutagen.tak import TAK
-from mutagen.dsf import DSF
+from mutagen.trueaudio import EasyTrueAudio, TrueAudio
 from mutagen.wave import WAVE
-from mutagen.dsdiff import DSDIFF
-
+from mutagen.wavpack import WavPack
 
 OPENERS = [
-    MP3, TrueAudio, OggTheora, OggSpeex, OggVorbis, OggFLAC,
-    FLAC, AIFF, APEv2File, MP4, ID3FileType, WavPack,
-    Musepack, MonkeysAudio, OptimFROG, ASF, OggOpus, AC3,
-    TAK, DSF, EasyMP3, EasyID3FileType, EasyTrueAudio, EasyMP4,
-    File, SMF, AAC, EasyID3, ID3, APEv2, WAVE, DSDIFF]
+    MP3,
+    TrueAudio,
+    OggTheora,
+    OggSpeex,
+    OggVorbis,
+    OggFLAC,
+    FLAC,
+    AIFF,
+    APEv2File,
+    MP4,
+    ID3FileType,
+    WavPack,
+    Musepack,
+    MonkeysAudio,
+    OptimFROG,
+    ASF,
+    OggOpus,
+    AC3,
+    TAK,
+    DSF,
+    EasyMP3,
+    EasyID3FileType,
+    EasyTrueAudio,
+    EasyMP4,
+    File,
+    SMF,
+    AAC,
+    EasyID3,
+    ID3,
+    APEv2,
+    WAVE,
+    DSDIFF,
+]
 
 # If you only want to test one:
 # OPENERS = [AAC]
@@ -94,26 +118,26 @@ def group_crashes(result_path):
     crash_paths = []
     pattern = os.path.join(result_path, '**', 'crashes', '*')
     for path in glob.glob(pattern):
-        if os.path.splitext(path)[-1] == ".txt":
+        if os.path.splitext(path)[-1] == '.txt':
             continue
         crash_paths.append(path)
 
     if not crash_paths:
-        print("No crashes found")
+        print('No crashes found')
         return
 
     def norm_exc():
         lines = traceback.format_exc().splitlines()
-        if ":" in lines[-1]:
-            lines[-1], message = lines[-1].split(":", 1)
+        if ':' in lines[-1]:
+            lines[-1], message = lines[-1].split(':', 1)
         else:
-            message = ""
-        return "\n".join(lines), message.strip()
+            message = ''
+        return '\n'.join(lines), message.strip()
 
     traces = {}
     messages = {}
     for path in crash_paths:
-        with open(path, "rb") as h:
+        with open(path, 'rb') as h:
             data = h.read()
         try:
             run_all(data)
@@ -124,18 +148,19 @@ def group_crashes(result_path):
 
     for trace, paths in traces.items():
         print('-' * 80)
-        print("\n".join(paths))
+        print('\n'.join(paths))
         print()
         print(textwrap.indent(trace, '    '))
         print(messages[trace])
 
-    print("%d crashes with %d traces" % (len(crash_paths), len(traces)))
+    print('%d crashes with %d traces' % (len(crash_paths), len(traces)))
 
 
 if __name__ == '__main__':
-    import sys
     import glob
     import os
-    import traceback
+    import sys
     import textwrap
+    import traceback
+
     group_crashes(sys.argv[1])

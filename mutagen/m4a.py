@@ -13,12 +13,11 @@ since 1.31: mutagen.m4a will no longer work; any operation that could fail
 
 import warnings
 
-from mutagen import FileType, Tags, StreamInfo
+from mutagen import FileType, StreamInfo, Tags
+
 from ._util import DictProxy, MutagenError, loadfile
 
-warnings.warn(
-    "mutagen.m4a is deprecated; use mutagen.mp4 instead.",
-    DeprecationWarning)
+warnings.warn('mutagen.m4a is deprecated; use mutagen.mp4 instead.', DeprecationWarning)
 
 
 class error(MutagenError):
@@ -41,7 +40,6 @@ __all__ = ['M4A', 'Open', 'delete', 'M4ACover']
 
 
 class M4ACover(bytes):
-
     FORMAT_JPEG = 0x0D
     FORMAT_PNG = 0x0E
 
@@ -54,38 +52,35 @@ class M4ACover(bytes):
 
 
 class M4ATags(DictProxy, Tags):
-
     def load(self, atoms, fileobj):
-        raise error("deprecated")
+        raise error('deprecated')
 
     def save(self, filename):
-        raise error("deprecated")
+        raise error('deprecated')
 
     def delete(self, filename):
-        raise error("deprecated")
+        raise error('deprecated')
 
     def pprint(self):
-        return u""
+        return ''
 
 
 class M4AInfo(StreamInfo):
-
     bitrate = 0
 
     def __init__(self, atoms, fileobj):
-        raise error("deprecated")
+        raise error('deprecated')
 
     def pprint(self):
-        return u""
+        return ''
 
 
 class M4A(FileType):
-
-    _mimes = ["audio/mp4", "audio/x-m4a", "audio/mpeg4", "audio/aac"]
+    _mimes = ['audio/mp4', 'audio/x-m4a', 'audio/mpeg4', 'audio/aac']
 
     @loadfile()
     def load(self, filething):
-        raise error("deprecated")
+        raise error('deprecated')
 
     def add_tags(self):
         self.tags = M4ATags()
@@ -99,4 +94,4 @@ Open = M4A
 
 
 def delete(filename):
-    raise error("deprecated")
+    raise error('deprecated')

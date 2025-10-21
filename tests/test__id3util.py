@@ -1,13 +1,10 @@
-
 import struct
 
-from tests import TestCase
-
 from mutagen.id3._util import BitPaddedInt, unsynch
+from tests import TestCase
 
 
 class BitPaddedIntTest(TestCase):
-
     def test_negative(self):
         self.assertRaises(ValueError, BitPaddedInt, -1)
 
@@ -18,8 +15,7 @@ class BitPaddedIntTest(TestCase):
         self.assertEquals(BitPaddedInt(b'\x00\x00\x00\x01'), 1)
 
     def test_1l(self):
-        self.assertEquals(
-            BitPaddedInt(b'\x01\x00\x00\x00', bigendian=False), 1)
+        self.assertEquals(BitPaddedInt(b'\x01\x00\x00\x00', bigendian=False), 1)
 
     def test_129(self):
         self.assertEquals(BitPaddedInt(b'\x00\x00\x01\x01'), 0x81)
@@ -31,15 +27,15 @@ class BitPaddedIntTest(TestCase):
         self.assertEquals(BitPaddedInt(b'\x00\x00\x01\x81', 6), 0x41)
 
     def test_32b(self):
-        self.assertEquals(BitPaddedInt(b'\xFF\xFF\xFF\xFF', bits=8),
-                          0xFFFFFFFF)
+        self.assertEquals(BitPaddedInt(b'\xff\xff\xff\xff', bits=8), 0xFFFFFFFF)
 
     def test_32bi(self):
         self.assertEquals(BitPaddedInt(0xFFFFFFFF, bits=8), 0xFFFFFFFF)
 
     def test_s32b(self):
-        self.assertEquals(BitPaddedInt(b'\xFF\xFF\xFF\xFF', bits=8).as_str(),
-                          b'\xFF\xFF\xFF\xFF')
+        self.assertEquals(
+            BitPaddedInt(b'\xff\xff\xff\xff', bits=8).as_str(), b'\xff\xff\xff\xff'
+        )
 
     def test_s0(self):
         self.assertEquals(BitPaddedInt.to_str(0), b'\x00\x00\x00\x00')
@@ -48,8 +44,7 @@ class BitPaddedIntTest(TestCase):
         self.assertEquals(BitPaddedInt.to_str(1), b'\x00\x00\x00\x01')
 
     def test_s1l(self):
-        self.assertEquals(
-            BitPaddedInt.to_str(1, bigendian=False), b'\x01\x00\x00\x00')
+        self.assertEquals(BitPaddedInt.to_str(1, bigendian=False), b'\x01\x00\x00\x00')
 
     def test_s129(self):
         self.assertEquals(BitPaddedInt.to_str(129), b'\x00\x00\x01\x01')
@@ -62,46 +57,46 @@ class BitPaddedIntTest(TestCase):
 
     def test_w129l(self):
         self.assertEquals(
-            BitPaddedInt.to_str(129, width=2, bigendian=False), b'\x01\x01')
+            BitPaddedInt.to_str(129, width=2, bigendian=False), b'\x01\x01'
+        )
 
     def test_wsmall(self):
         self.assertRaises(ValueError, BitPaddedInt.to_str, 129, width=1)
 
     def test_str_int_init(self):
-        self.assertEquals(BitPaddedInt(238).as_str(),
-                          BitPaddedInt(struct.pack('>L', 238)).as_str())
+        self.assertEquals(
+            BitPaddedInt(238).as_str(), BitPaddedInt(struct.pack('>L', 238)).as_str()
+        )
 
     def test_varwidth(self):
         self.assertEquals(len(BitPaddedInt.to_str(100)), 4)
         self.assertEquals(len(BitPaddedInt.to_str(100, width=-1)), 4)
-        self.assertEquals(len(BitPaddedInt.to_str(2 ** 32, width=-1)), 5)
+        self.assertEquals(len(BitPaddedInt.to_str(2**32, width=-1)), 5)
 
     def test_minwidth(self):
-        self.assertEquals(
-            len(BitPaddedInt.to_str(100, width=-1, minwidth=6)), 6)
+        self.assertEquals(len(BitPaddedInt.to_str(100, width=-1, minwidth=6)), 6)
 
     def test_inval_input(self):
         self.assertRaises(TypeError, BitPaddedInt, None)
 
     def test_has_valid_padding(self):
-        self.failUnless(BitPaddedInt.has_valid_padding(b"\xff\xff", bits=8))
-        self.failIf(BitPaddedInt.has_valid_padding(b"\xff"))
-        self.failIf(BitPaddedInt.has_valid_padding(b"\x00\xff"))
-        self.failUnless(BitPaddedInt.has_valid_padding(b"\x7f\x7f"))
-        self.failIf(BitPaddedInt.has_valid_padding(b"\x7f", bits=6))
-        self.failIf(BitPaddedInt.has_valid_padding(b"\x9f", bits=6))
-        self.failUnless(BitPaddedInt.has_valid_padding(b"\x3f", bits=6))
+        self.failUnless(BitPaddedInt.has_valid_padding(b'\xff\xff', bits=8))
+        self.failIf(BitPaddedInt.has_valid_padding(b'\xff'))
+        self.failIf(BitPaddedInt.has_valid_padding(b'\x00\xff'))
+        self.failUnless(BitPaddedInt.has_valid_padding(b'\x7f\x7f'))
+        self.failIf(BitPaddedInt.has_valid_padding(b'\x7f', bits=6))
+        self.failIf(BitPaddedInt.has_valid_padding(b'\x9f', bits=6))
+        self.failUnless(BitPaddedInt.has_valid_padding(b'\x3f', bits=6))
 
-        self.failUnless(BitPaddedInt.has_valid_padding(0xff, bits=8))
-        self.failIf(BitPaddedInt.has_valid_padding(0xff))
-        self.failIf(BitPaddedInt.has_valid_padding(0xff << 8))
-        self.failUnless(BitPaddedInt.has_valid_padding(0x7f << 8))
-        self.failIf(BitPaddedInt.has_valid_padding(0x9f << 32, bits=6))
-        self.failUnless(BitPaddedInt.has_valid_padding(0x3f << 16, bits=6))
+        self.failUnless(BitPaddedInt.has_valid_padding(0xFF, bits=8))
+        self.failIf(BitPaddedInt.has_valid_padding(0xFF))
+        self.failIf(BitPaddedInt.has_valid_padding(0xFF << 8))
+        self.failUnless(BitPaddedInt.has_valid_padding(0x7F << 8))
+        self.failIf(BitPaddedInt.has_valid_padding(0x9F << 32, bits=6))
+        self.failUnless(BitPaddedInt.has_valid_padding(0x3F << 16, bits=6))
 
 
 class TestUnsynch(TestCase):
-
     def test_unsync_encode_decode(self):
         pairs = [
             (b'', b''),

@@ -12,24 +12,26 @@
 import struct
 from struct import pack
 
-from mutagen import StreamInfo, FileType
-
-from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
+from mutagen import FileType, StreamInfo
 from mutagen._iff import (
     IffChunk,
     IffContainerChunkMixin,
     IffFile,
     IffID3,
     InvalidChunk,
+)
+from mutagen._iff import (
     error as IffError,
 )
 from mutagen._util import (
     convert_error,
-    loadfile,
     endswith,
+    loadfile,
 )
+from mutagen.id3._util import ID3NoHeaderError
+from mutagen.id3._util import error as ID3Error
 
-__all__ = ["AIFF", "Open", "delete"]
+__all__ = ['AIFF', 'Open', 'delete']
 
 
 class error(IffError):
@@ -37,7 +39,7 @@ class error(IffError):
 
 
 # based on stdlib's aifc
-_HUGE_VAL = 1.79769313486231e+308
+_HUGE_VAL = 1.79769313486231e308
 
 
 def read_float(data):
@@ -52,7 +54,7 @@ def read_float(data):
     if expon == himant == lomant == 0:
         f = 0.0
     elif expon == 0x7FFF:
-        raise OverflowError("inf and nan not supported")
+        raise OverflowError('inf and nan not supported')
     else:
         expon = expon - 16383
         # this can raise OverflowError too
@@ -88,7 +90,7 @@ class AIFFFormChunk(AIFFChunk, IffContainerChunkMixin):
         return AIFFChunk.parse(self._fileobj, self)
 
     def __init__(self, fileobj, id, data_size, parent_chunk):
-        if id != u'FORM':
+        if id != 'FORM':
             raise InvalidChunk('Expected FORM chunk, got %s' % id)
 
         AIFFChunk.__init__(self, fileobj, id, data_size, parent_chunk)
@@ -103,9 +105,8 @@ class AIFFFile(IffFile):
         # ID before the start of other chunks
         super().__init__(AIFFChunk, fileobj)
 
-        if self.root.id != u'FORM':
-            raise InvalidChunk("Root chunk must be a FORM chunk, got %s"
-                               % self.root.id)
+        if self.root.id != 'FORM':
+            raise InvalidChunk('Root chunk must be a FORM chunk, got %s' % self.root.id)
 
     def __contains__(self, id_):
         if id_ == 'FORM':  # For backwards compatibility
@@ -144,7 +145,7 @@ class AIFFInfo(StreamInfo):
 
         iff = AIFFFile(fileobj)
         try:
-            common_chunk = iff[u'COMM']
+            common_chunk = iff['COMM']
         except KeyError as e:
             raise error(str(e))
 
@@ -158,9 +159,9 @@ class AIFFInfo(StreamInfo):
         try:
             self.sample_rate = int(read_float(sample_rate))
         except OverflowError:
-            raise error("Invalid sample rate")
+            raise error('Invalid sample rate')
         if self.sample_rate < 0:
-            raise error("Invalid sample rate")
+            raise error('Invalid sample rate')
         if self.sample_rate != 0:
             self.length = frame_count / float(self.sample_rate)
 
@@ -170,8 +171,12 @@ class AIFFInfo(StreamInfo):
         self.bitrate = channels * sample_size * self.sample_rate
 
     def pprint(self):
-        return u"%d channel AIFF @ %d bps, %s Hz, %.2f seconds" % (
-            self.channels, self.bitrate, self.sample_rate, self.length)
+        return '%d channel AIFF @ %d bps, %s Hz, %.2f seconds' % (
+            self.channels,
+            self.bitrate,
+            self.sample_rate,
+            self.length,
+        )
 
 
 class _IFFID3(IffID3):
@@ -187,7 +192,7 @@ def delete(filething):
     """Completely removes the ID3 chunk from the AIFF file"""
 
     try:
-        del AIFFFile(filething.fileobj)[u'ID3']
+        del AIFFFile(filething.fileobj)['ID3']
     except KeyError:
         pass
 
@@ -205,21 +210,25 @@ class AIFF(FileType):
         info (`AIFFInfo`)
     """
 
-    _mimes = ["audio/aiff", "audio/x-aiff"]
+    _mimes = ['audio/aiff', 'audio/x-aiff']
 
     @staticmethod
     def score(filename, fileobj, header):
         filename = filename.lower()
 
-        return (header.startswith(b"FORM") * 2 + endswith(filename, b".aif") +
-                endswith(filename, b".aiff") + endswith(filename, b".aifc"))
+        return (
+            header.startswith(b'FORM') * 2
+            + endswith(filename, b'.aif')
+            + endswith(filename, b'.aiff')
+            + endswith(filename, b'.aifc')
+        )
 
     def add_tags(self):
         """Add an empty ID3 tag to the file."""
         if self.tags is None:
             self.tags = _IFFID3()
         else:
-            raise error("an ID3 tag already exists")
+            raise error('an ID3 tag already exists')
 
     @convert_error(IOError, error)
     @loadfile()

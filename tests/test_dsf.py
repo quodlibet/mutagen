@@ -1,10 +1,8 @@
-
 import os
 
 from mutagen.dsf import DSF, DSFFile, delete
 from mutagen.dsf import error as DSFError
-
-from tests import TestCase, DATA_DIR, get_temp_copy
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TDSF(TestCase):
@@ -40,8 +38,7 @@ class TDSF(TestCase):
         self.failUnlessEqual(self.dsf_1.info.bits_per_sample, 1)
 
     def test_notdsf(self):
-        self.failUnlessRaises(
-            DSFError, DSF, os.path.join(DATA_DIR, 'empty.ofr'))
+        self.failUnlessRaises(DSFError, DSF, os.path.join(DATA_DIR, 'empty.ofr'))
 
     def test_pprint(self):
         self.failUnless(self.dsf_tmp_id3.pprint())
@@ -73,32 +70,33 @@ class TDSF(TestCase):
         self.failUnlessRaises(Exception, self.dsf_tmp_id3.add_tags)
 
     def test_mime(self):
-        self.failUnless("audio/dsf" in self.dsf_tmp_id3.mime)
+        self.failUnless('audio/dsf' in self.dsf_tmp_id3.mime)
 
     def test_loaded_tags(self):
-        self.failUnless(self.dsf_tmp_id3["TIT2"] == "DSF title")
+        self.failUnless(self.dsf_tmp_id3['TIT2'] == 'DSF title')
 
     def test_roundtrip(self):
-        self.failUnlessEqual(self.dsf_tmp_id3["TIT2"], ["DSF title"])
+        self.failUnlessEqual(self.dsf_tmp_id3['TIT2'], ['DSF title'])
         self.dsf_tmp_id3.save()
         new = DSF(self.dsf_tmp_id3.filename)
-        self.failUnlessEqual(new["TIT2"], ["DSF title"])
+        self.failUnlessEqual(new['TIT2'], ['DSF title'])
 
     def test_save_tags(self):
         from mutagen.id3 import TIT2
+
         tags = self.dsf_tmp_id3.tags
-        tags.add(TIT2(encoding=3, text="foobar"))
+        tags.add(TIT2(encoding=3, text='foobar'))
         tags.save()
 
         new = DSF(self.dsf_tmp_id3.filename)
-        self.failUnlessEqual(new["TIT2"], ["foobar"])
+        self.failUnlessEqual(new['TIT2'], ['foobar'])
 
     def test_corrupt_tag(self):
-        with open(self.filename_1, "r+b") as h:
+        with open(self.filename_1, 'r+b') as h:
             chunk = DSFFile(h).dsd_chunk
             h.seek(chunk.offset_metdata_chunk)
             h.seek(4, 1)
-            h.write(b"\xff\xff")
+            h.write(b'\xff\xff')
         self.assertRaises(DSFError, DSF, self.filename_1)
 
     def test_padding(self):

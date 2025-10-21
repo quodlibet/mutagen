@@ -1,12 +1,11 @@
-
 import os
 import sys
 
 dir_ = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, dir_)
-sys.path.insert(0, os.path.abspath(os.path.join(dir_, "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(dir_, '..')))
 
-needs_sphinx = "1.3"
+needs_sphinx = '1.3'
 
 extensions = [
     'sphinx.ext.autodoc',
@@ -20,8 +19,10 @@ intersphinx_mapping = {
 source_suffix = '.rst'
 master_doc = 'index'
 project = 'mutagen'
-copyright = u'2016, Joe Wreschnig, Michael Urman, Lukáš Lalinský, ' \
-            u'Christoph Reiter, Ben Ockmore & others'
+copyright = (
+    '2016, Joe Wreschnig, Michael Urman, Lukáš Lalinský, '
+    'Christoph Reiter, Ben Ockmore & others'
+)
 html_title = project
 exclude_patterns = ['_build']
 
@@ -33,13 +34,13 @@ extlinks = {
 }
 
 
-autodoc_member_order = "bysource"
-default_role = "obj"
+autodoc_member_order = 'bysource'
+default_role = 'obj'
 
-html_theme = "sphinx_rtd_theme"
-html_favicon = "images/favicon.ico"
+html_theme = 'sphinx_rtd_theme'
+html_favicon = 'images/favicon.ico'
 html_theme_options = {
-    "display_version": False,
+    'display_version': False,
 }
 
 html_context = {
@@ -49,8 +50,8 @@ html_context = {
 }
 
 html_static_path = [
-    "extra.css",
-    "images/logo-small.svg",
+    'extra.css',
+    'images/logo-small.svg',
 ]
 
-suppress_warnings = ["image.nonlocal_uri"]
+suppress_warnings = ['image.nonlocal_uri']

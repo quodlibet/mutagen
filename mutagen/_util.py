@@ -11,31 +11,29 @@ You should not rely on the interfaces here being stable. They are
 intended for internal use in Mutagen only.
 """
 
-import sys
-import struct
 import codecs
-import errno
 import decimal
-from io import BytesIO
-from typing import Tuple, List
-
+import errno
+import struct
+import sys
 from collections import namedtuple
 from contextlib import contextmanager
-from functools import wraps
 from fnmatch import fnmatchcase
+from functools import wraps
+from io import BytesIO
+from typing import List, Tuple
 
-
-_DEFAULT_BUFFER_SIZE = 2 ** 20
+_DEFAULT_BUFFER_SIZE = 2**20
 
 
 def endswith(text, end):
     # useful for paths which can be both, str and bytes
     if isinstance(text, str):
         if not isinstance(end, str):
-            end = end.decode("ascii")
+            end = end.decode('ascii')
     else:
         if not isinstance(end, bytes):
-            end = end.encode("ascii")
+            end = end.encode('ascii')
     return text.endswith(end)
 
 
@@ -56,18 +54,18 @@ def intround(value: float) -> int:
     both Py2/3
     """
 
-    return int(decimal.Decimal.from_float(
-        value).to_integral_value(decimal.ROUND_HALF_EVEN))
+    return int(
+        decimal.Decimal.from_float(value).to_integral_value(decimal.ROUND_HALF_EVEN)
+    )
 
 
 def is_fileobj(fileobj) -> bool:
     """Returns:
-        bool: if an argument passed ot mutagen should be treated as a
-            file object
+    bool: if an argument passed ot mutagen should be treated as a
+        file object
     """
 
-    return not (isinstance(fileobj, (str, bytes)) or
-                hasattr(fileobj, "__fspath__"))
+    return not (isinstance(fileobj, (str, bytes)) or hasattr(fileobj, '__fspath__'))
 
 
 def verify_fileobj(fileobj, writable=False):
@@ -85,20 +83,19 @@ def verify_fileobj(fileobj, writable=False):
     try:
         data = fileobj.read(0)
     except Exception:
-        if not hasattr(fileobj, "read"):
-            raise ValueError("%r not a valid file object" % fileobj)
+        if not hasattr(fileobj, 'read'):
+            raise ValueError('%r not a valid file object' % fileobj)
         raise ValueError("Can't read from file object %r" % fileobj)
 
     if not isinstance(data, bytes):
-        raise ValueError(
-            "file object %r not opened in binary mode" % fileobj)
+        raise ValueError('file object %r not opened in binary mode' % fileobj)
 
     if writable:
         try:
-            fileobj.write(b"")
+            fileobj.write(b'')
         except Exception:
-            if not hasattr(fileobj, "write"):
-                raise ValueError("%r not a valid file object" % fileobj)
+            if not hasattr(fileobj, 'write'):
+                raise ValueError('%r not a valid file object' % fileobj)
             raise ValueError("Can't write to file object %r" % fileobj)
 
 
@@ -110,7 +107,7 @@ def verify_filename(filename):
     """
 
     if is_fileobj(filename):
-        raise ValueError("%r not a filename" % filename)
+        raise ValueError('%r not a filename' % filename)
 
 
 def fileobj_name(fileobj):
@@ -120,7 +117,7 @@ def fileobj_name(fileobj):
             path type, but might be empty or non-existent.
     """
 
-    value = getattr(fileobj, "name", u"")
+    value = getattr(fileobj, 'name', '')
     if not isinstance(value, (str, bytes)):
         value = str(value)
     return value
@@ -141,26 +138,21 @@ def loadfile(method=True, writable=False, create=False):
 
     def convert_file_args(args, kwargs):
         filething = args[0] if args else None
-        filename = kwargs.pop("filename", None)
-        fileobj = kwargs.pop("fileobj", None)
+        filename = kwargs.pop('filename', None)
+        fileobj = kwargs.pop('fileobj', None)
         return filething, filename, fileobj, args[1:], kwargs
 
     def wrap(func):
-
         @wraps(func)
         def wrapper(self, *args, **kwargs):
-            filething, filename, fileobj, args, kwargs = \
-                convert_file_args(args, kwargs)
-            with _openfile(self, filething, filename, fileobj,
-                           writable, create) as h:
+            filething, filename, fileobj, args, kwargs = convert_file_args(args, kwargs)
+            with _openfile(self, filething, filename, fileobj, writable, create) as h:
                 return func(self, h, *args, **kwargs)
 
         @wraps(func)
         def wrapper_func(*args, **kwargs):
-            filething, filename, fileobj, args, kwargs = \
-                convert_file_args(args, kwargs)
-            with _openfile(None, filething, filename, fileobj,
-                           writable, create) as h:
+            filething, filename, fileobj, args, kwargs = convert_file_args(args, kwargs)
+            with _openfile(None, filething, filename, fileobj, writable, create) as h:
                 return func(h, *args, **kwargs)
 
         return wrapper if method else wrapper_func
@@ -178,7 +170,6 @@ def convert_error(exc_src, exc_dest):
     """
 
     def wrap(func):
-
         @wraps(func)
         def wrapper(*args, **kwargs):
             try:
@@ -193,7 +184,7 @@ def convert_error(exc_src, exc_dest):
     return wrap
 
 
-FileThing = namedtuple("FileThing", ["fileobj", "filename", "name"])
+FileThing = namedtuple('FileThing', ['fileobj', 'filename', 'name'])
 """filename is None if the source is not a filename. name is a filename which
 can be used for file type detection
 """
@@ -226,10 +217,10 @@ def _openfile(instance, filething, filename, fileobj, writable, create):
     if filething is not None:
         if is_fileobj(filething):
             fileobj = filething
-        elif hasattr(filething, "__fspath__"):
+        elif hasattr(filething, '__fspath__'):
             filename = filething.__fspath__()
             if not isinstance(filename, (bytes, str)):
-                raise TypeError("expected __fspath__() to return a filename")
+                raise TypeError('expected __fspath__() to return a filename')
         else:
             filename = filething
 
@@ -238,7 +229,7 @@ def _openfile(instance, filething, filename, fileobj, writable, create):
         if not writable:
             instance.filename = filename
         elif filename is None:
-            filename = getattr(instance, "filename", None)
+            filename = getattr(instance, 'filename', None)
 
     if fileobj is not None:
         verify_fileobj(fileobj, writable=writable)
@@ -248,7 +239,7 @@ def _openfile(instance, filething, filename, fileobj, writable, create):
 
         inmemory_fileobj = False
         try:
-            fileobj = open(filename, "rb+" if writable else "rb")
+            fileobj = open(filename, 'rb+' if writable else 'rb')
         except IOError as e:
             if writable and e.errno == errno.EOPNOTSUPP:
                 # Some file systems (gvfs over fuse) don't support opening
@@ -257,7 +248,7 @@ def _openfile(instance, filething, filename, fileobj, writable, create):
                 # later.
                 # https://github.com/quodlibet/mutagen/issues/300
                 try:
-                    with open(filename, "rb") as fileobj:
+                    with open(filename, 'rb') as fileobj:
                         fileobj = BytesIO(fileobj.read())
                 except IOError as e2:
                     raise MutagenError(e2)
@@ -265,7 +256,7 @@ def _openfile(instance, filething, filename, fileobj, writable, create):
             elif create and e.errno == errno.ENOENT:
                 assert writable
                 try:
-                    fileobj = open(filename, "wb+")
+                    fileobj = open(filename, 'wb+')
                 except IOError as e2:
                     raise MutagenError(e2)
             else:
@@ -278,12 +269,12 @@ def _openfile(instance, filething, filename, fileobj, writable, create):
                 assert writable
                 data = fileobj.getvalue()
                 try:
-                    with open(filename, "wb") as fileobj:
+                    with open(filename, 'wb') as fileobj:
                         fileobj.write(data)
                 except IOError as e:
                     raise MutagenError(e)
     else:
-        raise TypeError("Missing filename or fileobj argument")
+        raise TypeError('Missing filename or fileobj argument')
 
 
 class MutagenError(Exception):
@@ -292,7 +283,7 @@ class MutagenError(Exception):
     .. versionadded:: 1.25
     """
 
-    __module__ = "mutagen"
+    __module__ = 'mutagen'
 
 
 def total_ordering(cls):
@@ -301,8 +292,8 @@ def total_ordering(cls):
     Needs a working __eq__ and __lt__ and will supply the rest.
     """
 
-    assert "__eq__" in cls.__dict__
-    assert "__lt__" in cls.__dict__
+    assert '__eq__' in cls.__dict__
+    assert '__lt__' in cls.__dict__
 
     cls.__le__ = lambda self, other: self == other or self < other
     cls.__gt__ = lambda self, other: not (self == other or self < other)
@@ -318,8 +309,8 @@ def hashable(cls):
     Needs a working __eq__ and __hash__ and will add a __ne__.
     """
 
-    assert cls.__dict__["__hash__"] is not None
-    assert "__eq__" in cls.__dict__
+    assert cls.__dict__['__hash__'] is not None
+    assert '__eq__' in cls.__dict__
 
     cls.__ne__ = lambda self, other: not self.__eq__(other)
 
@@ -361,16 +352,16 @@ def enum(cls):
 
     def str_(self):
         if self in map_:
-            return "%s.%s" % (type(self).__name__, map_[self])
-        return "%d" % int(self)
+            return '%s.%s' % (type(self).__name__, map_[self])
+        return '%d' % int(self)
 
     def repr_(self):
         if self in map_:
-            return "<%s.%s: %d>" % (type(self).__name__, map_[self], int(self))
-        return "%d" % int(self)
+            return '<%s.%s: %d>' % (type(self).__name__, map_[self], int(self))
+        return '%d' % int(self)
 
-    setattr(new_type, "__repr__", repr_)
-    setattr(new_type, "__str__", str_)
+    setattr(new_type, '__repr__', repr_)
+    setattr(new_type, '__str__', str_)
 
     return new_type
 
@@ -413,18 +404,18 @@ def flags(cls):
         matches = []
         for k, v in map_.items():
             if value & k:
-                matches.append("%s.%s" % (type(self).__name__, v))
+                matches.append('%s.%s' % (type(self).__name__, v))
                 value &= ~k
         if value != 0 or not matches:
             matches.append(str(value))
 
-        return " | ".join(matches)
+        return ' | '.join(matches)
 
     def repr_(self):
-        return "<%s: %d>" % (str(self), int(self))
+        return '<%s: %d>' % (str(self), int(self))
 
-    setattr(new_type, "__repr__", repr_)
-    setattr(new_type, "__str__", str_)
+    setattr(new_type, '__repr__', repr_)
+    setattr(new_type, '__str__', str_)
 
     return new_type
 
@@ -470,7 +461,7 @@ class DictMixin(object):
 
     def pop(self, key, *args):
         if len(args) > 1:
-            raise TypeError("pop takes at most two arguments")
+            raise TypeError('pop takes at most two arguments')
         try:
             value = self[key]
         except KeyError:
@@ -485,7 +476,7 @@ class DictMixin(object):
         for key in self.keys():
             break
         else:
-            raise KeyError("dictionary is empty")
+            raise KeyError('dictionary is empty')
         return key, self.pop(key)
 
     def update(self, other=None, **kwargs):
@@ -550,10 +541,9 @@ def _fill_cdata(cls):
     """Add struct pack/unpack functions"""
 
     funcs = {}
-    for key, name in [("b", "char"), ("h", "short"),
-                      ("i", "int"), ("q", "longlong")]:
-        for echar, esuffix in [("<", "le"), (">", "be")]:
-            esuffix = "_" + esuffix
+    for key, name in [('b', 'char'), ('h', 'short'), ('i', 'int'), ('q', 'longlong')]:
+        for echar, esuffix in [('<', 'le'), ('>', 'be')]:
+            esuffix = '_' + esuffix
             for unsigned in [True, False]:
                 s = struct.Struct(echar + (key.upper() if unsigned else key))
                 get_wrapper = lambda f: lambda *a, **k: f(*a, **k)[0]
@@ -563,14 +553,15 @@ def _fill_cdata(cls):
                 def get_unpack_from(s):
                     def unpack_from(data, offset=0):
                         return s.unpack_from(data, offset)[0], offset + s.size
+
                     return unpack_from
 
                 unpack_from = get_unpack_from(s)
                 pack = s.pack
 
-                prefix = "u" if unsigned else ""
+                prefix = 'u' if unsigned else ''
                 if s.size == 1:
-                    esuffix = ""
+                    esuffix = ''
                 bits = str(s.size * 8)
 
                 if unsigned:
@@ -578,19 +569,19 @@ def _fill_cdata(cls):
                     min_ = 0
                 else:
                     max_ = 2 ** (s.size * 8 - 1) - 1
-                    min_ = - 2 ** (s.size * 8 - 1)
+                    min_ = -(2 ** (s.size * 8 - 1))
 
-                funcs["%s%s_min" % (prefix, name)] = min_
-                funcs["%s%s_max" % (prefix, name)] = max_
-                funcs["%sint%s_min" % (prefix, bits)] = min_
-                funcs["%sint%s_max" % (prefix, bits)] = max_
+                funcs['%s%s_min' % (prefix, name)] = min_
+                funcs['%s%s_max' % (prefix, name)] = max_
+                funcs['%sint%s_min' % (prefix, bits)] = min_
+                funcs['%sint%s_max' % (prefix, bits)] = max_
 
-                funcs["%s%s%s" % (prefix, name, esuffix)] = unpack
-                funcs["%sint%s%s" % (prefix, bits, esuffix)] = unpack
-                funcs["%s%s%s_from" % (prefix, name, esuffix)] = unpack_from
-                funcs["%sint%s%s_from" % (prefix, bits, esuffix)] = unpack_from
-                funcs["to_%s%s%s" % (prefix, name, esuffix)] = pack
-                funcs["to_%sint%s%s" % (prefix, bits, esuffix)] = pack
+                funcs['%s%s%s' % (prefix, name, esuffix)] = unpack
+                funcs['%sint%s%s' % (prefix, bits, esuffix)] = unpack
+                funcs['%s%s%s_from' % (prefix, name, esuffix)] = unpack_from
+                funcs['%sint%s%s_from' % (prefix, bits, esuffix)] = unpack_from
+                funcs['to_%s%s%s' % (prefix, name, esuffix)] = pack
+                funcs['to_%sint%s%s' % (prefix, bits, esuffix)] = pack
 
     for key, func in funcs.items():
         setattr(cls, key, staticmethod(func))
@@ -606,8 +597,8 @@ class cdata(object):
     error = struct.error
 
     bitswap = b''.join(
-        bchr(sum(((val >> i) & 1) << (7 - i) for i in range(8)))
-        for val in range(256))
+        bchr(sum(((val >> i) & 1) << (7 - i) for i in range(8))) for val in range(256)
+    )
 
     test_bit = staticmethod(lambda value, n: bool((value >> n) & 1))
 
@@ -650,7 +641,7 @@ def read_full(fileobj, size: int) -> None:
     """
 
     if size < 0:
-        raise ValueError("size must not be negative")
+        raise ValueError('size must not be negative')
 
     data = fileobj.read(size)
     if len(data) != size:
@@ -707,7 +698,7 @@ def resize_file(fobj, diff: int, BUFFER_SIZE: int = _DEFAULT_BUFFER_SIZE) -> Non
         try:
             while diff:
                 addsize = min(BUFFER_SIZE, diff)
-                fobj.write(b"\x00" * addsize)
+                fobj.write(b'\x00' * addsize)
                 diff -= addsize
             fobj.flush()
         except IOError as e:
@@ -720,8 +711,9 @@ def resize_file(fobj, diff: int, BUFFER_SIZE: int = _DEFAULT_BUFFER_SIZE) -> Non
             raise
 
 
-def move_bytes(fobj, dest: int, src: int, count: int,
-               BUFFER_SIZE: int = _DEFAULT_BUFFER_SIZE) -> None:
+def move_bytes(
+    fobj, dest: int, src: int, count: int, BUFFER_SIZE: int = _DEFAULT_BUFFER_SIZE
+) -> None:
     """Moves data around using read()/write().
 
     Args:
@@ -741,7 +733,7 @@ def move_bytes(fobj, dest: int, src: int, count: int,
     filesize = fobj.tell()
 
     if max(dest, src) + count > filesize:
-        raise ValueError("area outside of file")
+        raise ValueError('area outside of file')
 
     if src > dest:
         moved = 0
@@ -764,8 +756,9 @@ def move_bytes(fobj, dest: int, src: int, count: int,
         fobj.flush()
 
 
-def insert_bytes(fobj, size: int, offset: int,
-                 BUFFER_SIZE: int = _DEFAULT_BUFFER_SIZE) -> None:
+def insert_bytes(
+    fobj, size: int, offset: int, BUFFER_SIZE: int = _DEFAULT_BUFFER_SIZE
+) -> None:
     """Insert size bytes of empty space starting at offset.
 
     fobj must be an open file object, open rb+ or
@@ -793,8 +786,9 @@ def insert_bytes(fobj, size: int, offset: int,
     move_bytes(fobj, offset + size, offset, movesize, BUFFER_SIZE)
 
 
-def delete_bytes(fobj, size: int, offset: int,
-                 BUFFER_SIZE: int = _DEFAULT_BUFFER_SIZE) -> None:
+def delete_bytes(
+    fobj, size: int, offset: int, BUFFER_SIZE: int = _DEFAULT_BUFFER_SIZE
+) -> None:
     """Delete size bytes of empty space starting at offset.
 
     fobj must be an open file object, open rb+ or
@@ -859,7 +853,7 @@ def dict_match(d, key, default=None):
             Or default if there was no match.
     """
 
-    if key in d and "[" not in key:
+    if key in d and '[' not in key:
         return d[key]
     else:
         for pattern, value in d.items():
@@ -868,8 +862,9 @@ def dict_match(d, key, default=None):
     return default
 
 
-def encode_endian(text: str, encoding: str,
-                  errors: str = "strict", le: bool = True) -> bytes:
+def encode_endian(
+    text: str, encoding: str, errors: str = 'strict', le: bool = True
+) -> bytes:
     """Like text.encode(encoding) but always returns little endian/big endian
     BOMs instead of the system one.
 
@@ -887,22 +882,23 @@ def encode_endian(text: str, encoding: str,
 
     encoding = codecs.lookup(encoding).name
 
-    if encoding == "utf-16":
+    if encoding == 'utf-16':
         if le:
-            return codecs.BOM_UTF16_LE + text.encode("utf-16-le", errors)
+            return codecs.BOM_UTF16_LE + text.encode('utf-16-le', errors)
         else:
-            return codecs.BOM_UTF16_BE + text.encode("utf-16-be", errors)
-    elif encoding == "utf-32":
+            return codecs.BOM_UTF16_BE + text.encode('utf-16-be', errors)
+    elif encoding == 'utf-32':
         if le:
-            return codecs.BOM_UTF32_LE + text.encode("utf-32-le", errors)
+            return codecs.BOM_UTF32_LE + text.encode('utf-32-le', errors)
         else:
-            return codecs.BOM_UTF32_BE + text.encode("utf-32-be", errors)
+            return codecs.BOM_UTF32_BE + text.encode('utf-32-be', errors)
     else:
         return text.encode(encoding, errors)
 
 
-def decode_terminated(data: bytes, encoding: str,
-                      strict: bool = True) -> Tuple[str, bytes]:
+def decode_terminated(
+    data: bytes, encoding: str, strict: bool = True
+) -> Tuple[str, bytes]:
     """Returns the decoded data until the first NULL terminator
     and all data after it.
 
@@ -929,31 +925,31 @@ def decode_terminated(data: bytes, encoding: str,
     encoding = codec_info.name
 
     # fast path
-    if encoding in ("utf-8", "iso8859-1"):
-        index = data.find(b"\x00")
+    if encoding in ('utf-8', 'iso8859-1'):
+        index = data.find(b'\x00')
         if index == -1:
             # make sure we raise UnicodeError first, like in the slow path
-            res = data.decode(encoding), b""
+            res = data.decode(encoding), b''
             if strict:
-                raise ValueError("not null terminated")
+                raise ValueError('not null terminated')
             else:
                 return res
-        return data[:index].decode(encoding), data[index + 1:]
+        return data[:index].decode(encoding), data[index + 1 :]
 
     # slow path
     decoder = codec_info.incrementaldecoder()
     r: List[str] = []
     for i, b in enumerate(iterbytes(data)):
         c = decoder.decode(b)
-        if c == u"\x00":
-            return u"".join(r), data[i + 1:]
+        if c == '\x00':
+            return ''.join(r), data[i + 1 :]
         r.append(c)
     else:
         # make sure the decoder is finished
-        r.append(decoder.decode(b"", True))
+        r.append(decoder.decode(b'', True))
         if strict:
-            raise ValueError("not null terminated")
-        return u"".join(r), b""
+            raise ValueError('not null terminated')
+        return ''.join(r), b''
 
 
 class BitReaderError(Exception):
@@ -961,7 +957,6 @@ class BitReaderError(Exception):
 
 
 class BitReader(object):
-
     def __init__(self, fileobj):
         self._fileobj = fileobj
         self._buffer = 0
@@ -982,7 +977,7 @@ class BitReader(object):
             n_bytes = (count - self._bits + 7) // 8
             data = self._fileobj.read(n_bytes)
             if len(data) != n_bytes:
-                raise BitReaderError("not enough data")
+                raise BitReaderError('not enough data')
             for b in bytearray(data):
                 self._buffer = (self._buffer << 8) | b
             self._bits += n_bytes * 8
@@ -1003,7 +998,7 @@ class BitReader(object):
         if self._bits == 0:
             data = self._fileobj.read(count)
             if len(data) != count:
-                raise BitReaderError("not enough data")
+                raise BitReaderError('not enough data')
             return data
 
         return bytes(bytearray(self.bits(8) for _ in range(count)))
