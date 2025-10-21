@@ -69,8 +69,11 @@ class PaddingInfo(object):
             return user_func(self)
 
     def __repr__(self):
-        return "<%s size=%d padding=%d>" % (
-            type(self).__name__, self.size, self.padding)
+        return '<%s size=%d padding=%d>' % (
+            type(self).__name__,
+            self.size,
+            self.padding,
+        )
 
 
 class Tags(object):
@@ -79,7 +82,7 @@ class Tags(object):
     In many cases it has a dict like interface.
     """
 
-    __module__ = "mutagen"
+    __module__ = 'mutagen'
 
     def pprint(self):
         """
@@ -103,7 +106,7 @@ class Metadata(Tags):
     Provides methods to load, save and delete tags.
     """
 
-    __module__ = "mutagen"
+    __module__ = 'mutagen'
 
     def __init__(self, *args, **kwargs):
         if args or kwargs:

@@ -8,23 +8,23 @@
 
 """Microsoft WAVE/RIFF audio file/stream information and tags."""
 
-import sys
 import struct
+import sys
 
-from mutagen import StreamInfo, FileType
-
-from mutagen.id3 import ID3
-from mutagen._riff import RiffFile, InvalidChunk
+from mutagen import FileType, StreamInfo
 from mutagen._iff import error as IffError
-from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
+from mutagen._riff import InvalidChunk, RiffFile
 from mutagen._util import (
     convert_error,
     endswith,
     loadfile,
     reraise,
 )
+from mutagen.id3 import ID3
+from mutagen.id3._util import ID3NoHeaderError
+from mutagen.id3._util import error as ID3Error
 
-__all__ = ["WAVE", "Open", "delete"]
+__all__ = ['WAVE', 'Open', 'delete']
 
 
 class error(IffError):
@@ -37,12 +37,12 @@ class _WaveFile(RiffFile):
     def __init__(self, fileobj):
         RiffFile.__init__(self, fileobj)
 
-        if self.file_type != u'WAVE':
-            raise error("Expected RIFF/WAVE.")
+        if self.file_type != 'WAVE':
+            raise error('Expected RIFF/WAVE.')
 
         # Normalize ID3v2-tag-chunk to lowercase
-        if u'ID3' in self:
-            self[u'ID3'].id = u'id3'
+        if 'ID3' in self:
+            self['ID3'].id = 'id3'
 
 
 class WaveStreamInfo(StreamInfo):
@@ -74,7 +74,7 @@ class WaveStreamInfo(StreamInfo):
 
         wave_file = _WaveFile(fileobj)
         try:
-            format_chunk = wave_file[u'fmt']
+            format_chunk = wave_file['fmt']
         except KeyError as e:
             raise error(str(e))
 
@@ -85,16 +85,22 @@ class WaveStreamInfo(StreamInfo):
         # RIFF: http://soundfile.sapp.org/doc/WaveFormat/
         #  Python struct.unpack:
         #    https://docs.python.org/2/library/struct.html#byte-order-size-and-alignment
-        info = struct.unpack('<HHLLHH', data[:self.SIZE])
-        self.audio_format, self.channels, self.sample_rate, byte_rate, \
-            block_align, self.bits_per_sample = info
+        info = struct.unpack('<HHLLHH', data[: self.SIZE])
+        (
+            self.audio_format,
+            self.channels,
+            self.sample_rate,
+            byte_rate,
+            block_align,
+            self.bits_per_sample,
+        ) = info
         self.bitrate = self.channels * self.bits_per_sample * self.sample_rate
 
         # Calculate duration
         self._number_of_samples = 0
         if block_align > 0:
             try:
-                data_chunk = wave_file[u'data']
+                data_chunk = wave_file['data']
                 self._number_of_samples = data_chunk.data_size / block_align
             except KeyError:
                 pass
@@ -103,8 +109,12 @@ class WaveStreamInfo(StreamInfo):
             self.length = self._number_of_samples / self.sample_rate
 
     def pprint(self):
-        return u"%d channel RIFF @ %d bps, %s Hz, %.2f seconds" % (
-            self.channels, self.bitrate, self.sample_rate, self.length)
+        return '%d channel RIFF @ %d bps, %s Hz, %.2f seconds' % (
+            self.channels,
+            self.bitrate,
+            self.sample_rate,
+            self.length,
+        )
 
 
 class _WaveID3(ID3):
@@ -112,9 +122,9 @@ class _WaveID3(ID3):
 
     def _pre_load_header(self, fileobj):
         try:
-            fileobj.seek(_WaveFile(fileobj)[u'id3'].data_offset)
+            fileobj.seek(_WaveFile(fileobj)['id3'].data_offset)
         except (InvalidChunk, KeyError):
-            raise ID3NoHeaderError("No ID3 chunk")
+            raise ID3NoHeaderError('No ID3 chunk')
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
@@ -124,15 +134,20 @@ class _WaveID3(ID3):
         fileobj = filething.fileobj
         wave_file = _WaveFile(fileobj)
 
-        if u'id3' not in wave_file:
-            wave_file.insert_chunk(u'id3')
+        if 'id3' not in wave_file:
+            wave_file.insert_chunk('id3')
 
-        chunk = wave_file[u'id3']
+        chunk = wave_file['id3']
 
         try:
             data = self._prepare_data(
-                fileobj, chunk.data_offset, chunk.data_size, v2_version,
-                v23_sep, padding)
+                fileobj,
+                chunk.data_offset,
+                chunk.data_size,
+                v2_version,
+                v23_sep,
+                padding,
+            )
         except ID3Error as e:
             reraise(error, e, sys.exc_info()[2])
 
@@ -152,7 +167,7 @@ def delete(filething):
     """Completely removes the ID3 chunk from the RIFF/WAVE file"""
 
     try:
-        _WaveFile(filething.fileobj).delete_chunk(u'id3')
+        _WaveFile(filething.fileobj).delete_chunk('id3')
     except KeyError:
         pass
 
@@ -171,21 +186,25 @@ class WAVE(FileType):
         info (`WaveStreamInfo`)
     """
 
-    _mimes = ["audio/wav", "audio/wave"]
+    _mimes = ['audio/wav', 'audio/wave']
 
     @staticmethod
     def score(filename, fileobj, header):
         filename = filename.lower()
 
-        return (header.startswith(b"RIFF") + (header[8:12] == b'WAVE')
-                + endswith(filename, b".wav") + endswith(filename, b".wave"))
+        return (
+            header.startswith(b'RIFF')
+            + (header[8:12] == b'WAVE')
+            + endswith(filename, b'.wav')
+            + endswith(filename, b'.wave')
+        )
 
     def add_tags(self):
         """Add an empty ID3 tag to the file."""
         if self.tags is None:
             self.tags = _WaveID3()
         else:
-            raise error("an ID3 tag already exists")
+            raise error('an ID3 tag already exists')
 
     @convert_error(IOError, error)
     @loadfile()

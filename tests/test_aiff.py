@@ -1,14 +1,12 @@
-
 import os
 from io import BytesIO
 
-from mutagen.aiff import AIFF, AIFFInfo, delete, AIFFFile, AIFFChunk
-from mutagen.aiff import error as AIFFError, read_float
-from mutagen._iff import error as IffError
-
-from tests import TestCase, DATA_DIR, get_temp_copy
-
 import pytest
+
+from mutagen._iff import error as IffError
+from mutagen.aiff import AIFF, AIFFChunk, AIFFFile, AIFFInfo, delete, read_float
+from mutagen.aiff import error as AIFFError
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TAIFF(TestCase):
@@ -37,9 +35,9 @@ class TAIFF(TestCase):
     def test_read_float(self):
         assert read_float(b'@\x0b\xfa\x00\x00\x00\x00\x00\x00\x00') == 8000.0
         with pytest.raises(OverflowError):
-            read_float(b"\xfa\x00\x00\xfa\x00\x00\x00\x00\x00\x00")
+            read_float(b'\xfa\x00\x00\xfa\x00\x00\x00\x00\x00\x00')
         with pytest.raises(OverflowError):
-            read_float(b"\x7f\xff\x00\xfa\x00\x00\x00\x00\x00\x00")
+            read_float(b'\x7f\xff\x00\xfa\x00\x00\x00\x00\x00\x00')
 
     def test_channels(self):
         self.failUnlessEqual(self.aiff_1.info.channels, 1)
@@ -77,14 +75,12 @@ class TAIFF(TestCase):
         self.failUnlessEqual(self.aiff_5.info.bits_per_sample, 16)
 
     def test_sample_size(self):
-        for test in [self.aiff_1, self.aiff_2, self.aiff_3, self.aiff_4,
-                     self.aiff_5]:
+        for test in [self.aiff_1, self.aiff_2, self.aiff_3, self.aiff_4, self.aiff_5]:
             info = test.info
             self.failUnlessEqual(info.sample_size, info.bits_per_sample)
 
     def test_notaiff(self):
-        self.failUnlessRaises(
-            IffError, AIFF, os.path.join(DATA_DIR, 'empty.ofr'))
+        self.failUnlessRaises(IffError, AIFF, os.path.join(DATA_DIR, 'empty.ofr'))
 
     def test_pprint(self):
         self.failUnless(self.aiff_1.pprint())
@@ -117,46 +113,49 @@ class TAIFF(TestCase):
         self.failUnlessRaises(Exception, self.aiff_tmp_id3.add_tags)
 
     def test_mime(self):
-        self.failUnless("audio/aiff" in self.aiff_1.mime)
-        self.failUnless("audio/x-aiff" in self.aiff_1.mime)
+        self.failUnless('audio/aiff' in self.aiff_1.mime)
+        self.failUnless('audio/x-aiff' in self.aiff_1.mime)
 
     def test_loaded_tags(self):
-        self.failUnless(self.aiff_tmp_id3["TIT2"] == "AIFF title")
+        self.failUnless(self.aiff_tmp_id3['TIT2'] == 'AIFF title')
 
     def test_roundtrip(self):
-        self.failUnlessEqual(self.aiff_tmp_id3["TIT2"], ["AIFF title"])
+        self.failUnlessEqual(self.aiff_tmp_id3['TIT2'], ['AIFF title'])
         self.aiff_tmp_id3.save()
         new = AIFF(self.aiff_tmp_id3.filename)
-        self.failUnlessEqual(new["TIT2"], ["AIFF title"])
+        self.failUnlessEqual(new['TIT2'], ['AIFF title'])
 
     def test_save_tags(self):
         from mutagen.id3 import TIT1
+
         tags = self.aiff_tmp_id3.tags
-        tags.add(TIT1(encoding=3, text="foobar"))
+        tags.add(TIT1(encoding=3, text='foobar'))
         tags.save()
 
         new = AIFF(self.aiff_tmp_id3.filename)
-        self.failUnlessEqual(new["TIT1"], ["foobar"])
+        self.failUnlessEqual(new['TIT1'], ['foobar'])
 
     def test_save_with_ID3_chunk(self):
         from mutagen.id3 import TIT1
-        self.aiff_tmp_id3["TIT1"] = TIT1(encoding=3, text="foobar")
+
+        self.aiff_tmp_id3['TIT1'] = TIT1(encoding=3, text='foobar')
         self.aiff_tmp_id3.save()
-        self.failUnless(AIFF(self.filename_1)["TIT1"] == "foobar")
-        self.failUnless(self.aiff_tmp_id3["TIT2"] == "AIFF title")
+        self.failUnless(AIFF(self.filename_1)['TIT1'] == 'foobar')
+        self.failUnless(self.aiff_tmp_id3['TIT2'] == 'AIFF title')
 
     def test_save_without_ID3_chunk(self):
         from mutagen.id3 import TIT1
-        self.aiff_tmp_no_id3["TIT1"] = TIT1(encoding=3, text="foobar")
+
+        self.aiff_tmp_no_id3['TIT1'] = TIT1(encoding=3, text='foobar')
         self.aiff_tmp_no_id3.save()
-        self.failUnless(AIFF(self.filename_2)["TIT1"] == "foobar")
+        self.failUnless(AIFF(self.filename_2)['TIT1'] == 'foobar')
 
     def test_corrupt_tag(self):
-        with open(self.filename_1, "r+b") as h:
-            chunk = AIFFFile(h)[u'ID3']
+        with open(self.filename_1, 'r+b') as h:
+            chunk = AIFFFile(h)['ID3']
             h.seek(chunk.data_offset)
             h.seek(4, 1)
-            h.write(b"\xff\xff")
+            h.write(b'\xff\xff')
         self.assertRaises(AIFFError, AIFF, self.filename_1)
 
     def test_padding(self):
@@ -182,9 +181,8 @@ class TAIFF(TestCase):
 
 
 class TAIFFInfo(TestCase):
-
     def test_empty(self):
-        fileobj = BytesIO(b"")
+        fileobj = BytesIO(b'')
         self.failUnlessRaises(IffError, AIFFInfo, fileobj)
 
 
@@ -215,71 +213,69 @@ class TAIFFFile(TestCase):
         os.unlink(self.tmp_2_name)
 
     def test_has_chunks(self):
-        self.failUnless(u'FORM' in self.iff_1)
-        self.failUnless(u'COMM' in self.iff_1)
-        self.failUnless(u'SSND' in self.iff_1)
-        self.failUnless(u'ID3' in self.iff_1)
+        self.failUnless('FORM' in self.iff_1)
+        self.failUnless('COMM' in self.iff_1)
+        self.failUnless('SSND' in self.iff_1)
+        self.failUnless('ID3' in self.iff_1)
 
-        self.failUnless(u'FORM' in self.iff_2)
-        self.failUnless(u'COMM' in self.iff_2)
-        self.failUnless(u'SSND' in self.iff_2)
+        self.failUnless('FORM' in self.iff_2)
+        self.failUnless('COMM' in self.iff_2)
+        self.failUnless('SSND' in self.iff_2)
 
     def test_is_chunks(self):
-        self.failUnless(isinstance(self.iff_1[u'FORM'], AIFFChunk))
-        self.failUnless(isinstance(self.iff_1[u'COMM'], AIFFChunk))
-        self.failUnless(isinstance(self.iff_1[u'SSND'], AIFFChunk))
-        self.failUnless(isinstance(self.iff_1[u'ID3'], AIFFChunk))
+        self.failUnless(isinstance(self.iff_1['FORM'], AIFFChunk))
+        self.failUnless(isinstance(self.iff_1['COMM'], AIFFChunk))
+        self.failUnless(isinstance(self.iff_1['SSND'], AIFFChunk))
+        self.failUnless(isinstance(self.iff_1['ID3'], AIFFChunk))
 
     def test_chunk_size(self):
-        self.failUnlessEqual(self.iff_1[u'FORM'].size, 17096)
-        self.failUnlessEqual(self.iff_2[u'FORM'].size, 16054)
+        self.failUnlessEqual(self.iff_1['FORM'].size, 17096)
+        self.failUnlessEqual(self.iff_2['FORM'].size, 16054)
 
     def test_chunk_data_size(self):
-        self.failUnlessEqual(self.iff_1[u'FORM'].data_size, 17088)
-        self.failUnlessEqual(self.iff_2[u'FORM'].data_size, 16046)
+        self.failUnlessEqual(self.iff_1['FORM'].data_size, 17088)
+        self.failUnlessEqual(self.iff_2['FORM'].data_size, 16046)
 
     def test_FORM_chunk_resize(self):
-        self.iff_1_tmp[u'FORM'].resize(17000)
-        self.failUnlessEqual(
-            AIFFFile(self.file_1_tmp)[u'FORM'].data_size, 17000)
-        self.iff_2_tmp[u'FORM'].resize(4)
-        self.failUnlessEqual(AIFFFile(self.file_2_tmp)[u'FORM'].data_size, 4)
+        self.iff_1_tmp['FORM'].resize(17000)
+        self.failUnlessEqual(AIFFFile(self.file_1_tmp)['FORM'].data_size, 17000)
+        self.iff_2_tmp['FORM'].resize(4)
+        self.failUnlessEqual(AIFFFile(self.file_2_tmp)['FORM'].data_size, 4)
 
     def test_child_chunk_resize(self):
-        self.iff_1_tmp[u'ID3'].resize(128)
+        self.iff_1_tmp['ID3'].resize(128)
 
-        id3 = self.iff_1_tmp[u'ID3']
-        id3.write(b"\xff" * 128)
-        self.assertEqual(id3.read(), b"\xff" * 128)
+        id3 = self.iff_1_tmp['ID3']
+        id3.write(b'\xff' * 128)
+        self.assertEqual(id3.read(), b'\xff' * 128)
 
-        self.failUnlessEqual(AIFFFile(self.file_1_tmp)[u'ID3'].data_size, 128)
-        self.failUnlessEqual(
-            AIFFFile(self.file_1_tmp)[u'FORM'].data_size, 16182)
+        self.failUnlessEqual(AIFFFile(self.file_1_tmp)['ID3'].data_size, 128)
+        self.failUnlessEqual(AIFFFile(self.file_1_tmp)['FORM'].data_size, 16182)
 
     def test_chunk_delete(self):
-        del self.iff_1_tmp[u'ID3']
-        self.failIf(u'ID3' in self.iff_1_tmp)
-        self.failIf(u'ID3' in AIFFFile(self.file_1_tmp))
-        self.failUnlessEqual(AIFFFile(self.file_1_tmp)[u'FORM'].size, 16054)
-        del self.iff_2_tmp[u'SSND']
-        self.failIf(u'SSND' in self.iff_2_tmp)
-        self.failIf(u'SSND' in AIFFFile(self.file_2_tmp))
-        self.failUnlessEqual(AIFFFile(self.file_2_tmp)[u'FORM'].size, 38)
+        del self.iff_1_tmp['ID3']
+        self.failIf('ID3' in self.iff_1_tmp)
+        self.failIf('ID3' in AIFFFile(self.file_1_tmp))
+        self.failUnlessEqual(AIFFFile(self.file_1_tmp)['FORM'].size, 16054)
+        del self.iff_2_tmp['SSND']
+        self.failIf('SSND' in self.iff_2_tmp)
+        self.failIf('SSND' in AIFFFile(self.file_2_tmp))
+        self.failUnlessEqual(AIFFFile(self.file_2_tmp)['FORM'].size, 38)
 
     def test_insert_chunk(self):
-        self.iff_2_tmp.insert_chunk(u'ID3')
+        self.iff_2_tmp.insert_chunk('ID3')
 
         new_iff = AIFFFile(self.file_2_tmp)
-        self.failUnless(u'ID3' in new_iff)
-        self.failUnless(isinstance(new_iff[u'ID3'], AIFFChunk))
-        self.failUnlessEqual(new_iff[u'FORM'].size, 16062)
-        self.failUnlessEqual(new_iff[u'FORM'].data_size, 16054)
-        self.failUnlessEqual(new_iff[u'ID3'].size, 8)
-        self.failUnlessEqual(new_iff[u'ID3'].data_size, 0)
+        self.failUnless('ID3' in new_iff)
+        self.failUnless(isinstance(new_iff['ID3'], AIFFChunk))
+        self.failUnlessEqual(new_iff['FORM'].size, 16062)
+        self.failUnlessEqual(new_iff['FORM'].data_size, 16054)
+        self.failUnlessEqual(new_iff['ID3'].size, 8)
+        self.failUnlessEqual(new_iff['ID3'].data_size, 0)
 
     def test_insert_padded_chunks(self):
-        padded = self.iff_2_tmp.insert_chunk(u'TST1')
-        unpadded = self.iff_2_tmp.insert_chunk(u'TST2')
+        padded = self.iff_2_tmp.insert_chunk('TST1')
+        unpadded = self.iff_2_tmp.insert_chunk('TST2')
         # The second chunk needs no padding
         unpadded.resize(4)
         self.failUnlessEqual(4, unpadded.data_size)
@@ -303,34 +299,32 @@ class TAIFFFile(TestCase):
 
     def test_delete_padded_chunks(self):
         iff_file = self.iff_2_tmp
-        iff_file.insert_chunk(u'TST')
+        iff_file.insert_chunk('TST')
         # Resize to odd length, should insert 1 padding byte
-        iff_file[u'TST'].resize(3)
+        iff_file['TST'].resize(3)
         # Insert another chunk after the first one
-        iff_file.insert_chunk(u'TST2')
-        iff_file[u'TST2'].resize(2)
-        self.failUnlessEqual(iff_file[u'FORM'].size, 16076)
-        self.failUnlessEqual(iff_file[u'FORM'].data_size, 16068)
-        self.failUnlessEqual(iff_file[u'TST'].size, 12)
-        self.failUnlessEqual(iff_file[u'TST'].data_size, 3)
-        self.failUnlessEqual(iff_file[u'TST'].data_offset, 16062)
-        self.failUnlessEqual(iff_file[u'TST2'].size, 10)
-        self.failUnlessEqual(iff_file[u'TST2'].data_size, 2)
-        self.failUnlessEqual(iff_file[u'TST2'].data_offset, 16074)
+        iff_file.insert_chunk('TST2')
+        iff_file['TST2'].resize(2)
+        self.failUnlessEqual(iff_file['FORM'].size, 16076)
+        self.failUnlessEqual(iff_file['FORM'].data_size, 16068)
+        self.failUnlessEqual(iff_file['TST'].size, 12)
+        self.failUnlessEqual(iff_file['TST'].data_size, 3)
+        self.failUnlessEqual(iff_file['TST'].data_offset, 16062)
+        self.failUnlessEqual(iff_file['TST2'].size, 10)
+        self.failUnlessEqual(iff_file['TST2'].data_size, 2)
+        self.failUnlessEqual(iff_file['TST2'].data_offset, 16074)
         # Delete the odd chunk
-        iff_file.delete_chunk(u'TST')
-        self.failUnlessEqual(iff_file[u'FORM'].size, 16064)
-        self.failUnlessEqual(iff_file[u'FORM'].data_size, 16056)
-        self.failUnlessEqual(iff_file[u'TST2'].size, 10)
-        self.failUnlessEqual(iff_file[u'TST2'].data_size, 2)
-        self.failUnlessEqual(iff_file[u'TST2'].data_offset, 16062)
+        iff_file.delete_chunk('TST')
+        self.failUnlessEqual(iff_file['FORM'].size, 16064)
+        self.failUnlessEqual(iff_file['FORM'].data_size, 16056)
+        self.failUnlessEqual(iff_file['TST2'].size, 10)
+        self.failUnlessEqual(iff_file['TST2'].data_size, 2)
+        self.failUnlessEqual(iff_file['TST2'].data_offset, 16062)
         # Reloading the file should give the same results
         new_iff_file = AIFFFile(self.file_2_tmp)
-        self.failUnlessEqual(new_iff_file[u'FORM'].size,
-                             iff_file[u'FORM'].size)
-        self.failUnlessEqual(new_iff_file[u'TST2'].size,
-            iff_file[u'TST2'].size)
-        self.failUnlessEqual(new_iff_file[u'TST2'].data_size,
-            iff_file[u'TST2'].data_size)
-        self.failUnlessEqual(new_iff_file[u'TST2'].data_offset,
-            iff_file[u'TST2'].data_offset)
+        self.failUnlessEqual(new_iff_file['FORM'].size, iff_file['FORM'].size)
+        self.failUnlessEqual(new_iff_file['TST2'].size, iff_file['TST2'].size)
+        self.failUnlessEqual(new_iff_file['TST2'].data_size, iff_file['TST2'].data_size)
+        self.failUnlessEqual(
+            new_iff_file['TST2'].data_offset, iff_file['TST2'].data_offset
+        )

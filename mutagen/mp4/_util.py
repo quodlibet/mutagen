@@ -14,8 +14,8 @@ def parse_full_atom(data):
     """
 
     if len(data) < 4:
-        raise ValueError("not enough data")
+        raise ValueError('not enough data')
 
     version = ord(data[0:1])
-    flags = cdata.uint_be(b"\x00" + data[1:4])
+    flags = cdata.uint_be(b'\x00' + data[1:4])
     return version, flags, data[4:]
