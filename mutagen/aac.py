@@ -409,11 +409,33 @@ class AAC(FileType):
         raise AACError("doesn't support tags")
 
     @staticmethod
+    def _is_probably_adts_header(header: bytes) -> bool:
+        if len(header) < 9:
+            return False
+
+        # Syncword
+        if not (header[0] == 0xFF):
+            return False
+        if not (header[1] & 0xF0 == 0xF0):
+            return False
+
+        # Layer
+        if not (header[1] & 0b0000_0110 == 0):
+            return False
+
+        # Sampling index
+        if ((header[2] & 0b0011_1100) >> 2) > 0xC:
+            return False
+
+        return True
+
+    @staticmethod
     def score(filename, fileobj, header):
         filename = filename.lower()
         s = endswith(filename, ".aac") or endswith(filename, ".adts") or \
             endswith(filename, ".adif")
         s += b"ADIF" in header
+        s += int(AAC._is_probably_adts_header(header))
         return s
 
 
