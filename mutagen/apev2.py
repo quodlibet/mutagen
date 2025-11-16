@@ -31,6 +31,7 @@ __all__ = ["APEv2", "APEv2File", "Open", "delete"]
 
 import sys
 import struct
+from typing import Type
 from io import BytesIO
 from collections.abc import MutableSequence
 
@@ -678,6 +679,18 @@ class APEExtValue(_APEUtf8Value):
         return u"[External] %s" % self.value
 
 
+class _UnknownInfo(StreamInfo):
+    length = 0
+    bitrate = 0
+
+    def __init__(self, fileobj):
+        pass
+
+    @staticmethod
+    def pprint():
+        return u"Unknown format with APEv2 tag."
+
+
 class APEv2File(FileType):
     """APEv2File(filething)
 
@@ -688,16 +701,7 @@ class APEv2File(FileType):
         tags (`APEv2`)
     """
 
-    class _Info(StreamInfo):
-        length = 0
-        bitrate = 0
-
-        def __init__(self, fileobj):
-            pass
-
-        @staticmethod
-        def pprint():
-            return u"Unknown format with APEv2 tag."
+    _Info: Type[StreamInfo] = _UnknownInfo
 
     @loadfile()
     def load(self, filething):
