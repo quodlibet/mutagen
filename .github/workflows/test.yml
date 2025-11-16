@@ -10,7 +10,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.10', 3.11, '3.12', '3.13', '3.14', 'pypy-3.11']
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14', 'pypy-3.11']
         exclude:
           # too slow
           - os: macos-latest
@@ -20,13 +20,13 @@ jobs:
         include:
           - os: ubuntu-latest
             pip-cache: ~/.cache/pip
-            poetry-cache: ~/.cache/pypoetry
+            uv-cache: ~/.cache/uv
           - os: macos-latest
             pip-cache: ~/Library/Caches/pip
-            poetry-cache: ~/Library/Caches/pypoetry
+            uv-cache: ~/.cache/uv
           - os: windows-latest
             pip-cache: ~\AppData\Local\pip\Cache
-            poetry-cache: ~\AppData\Local\pypoetry\Cache
+            uv-cache: ~\AppData\Local\uv\cache
           - os: ubuntu-latest
             python-version: 3.10
             build-docs: true
@@ -48,33 +48,33 @@ jobs:
       with:
         path: |
           ${{ matrix.pip-cache }}
-          ${{ matrix.poetry-cache }}
+          ${{ matrix.uv-cache }}
         key: ${{ runner.os }}-${{ hashFiles('**/pyproject.toml') }}
         restore-keys: |
           ${{ runner.os }}-
 
     - name: Install dependencies
       run: |
-        pipx install poetry build
-        poetry install
+        pipx install uv build
+        uv sync
     - name: Run tests
       run: |
-        poetry run coverage run --branch setup.py test
-        poetry run coverage xml -i
+        uv run coverage run --branch setup.py test
+        uv run coverage xml -i
     - name: Run mypy
       if: matrix.run-mypy
       run: |
-        poetry run mypy .
+        uv run mypy .
     - name: Run flake8
       run: |
-        poetry run flake8
+        uv run flake8
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
     - name: Build docs
       if: matrix.build-docs
       run: |
-        poetry install --with docs
-        poetry run sphinx-build -W -a -E -b html -n docs docs/_build
+        uv sync --group docs
+        uv run sphinx-build -W -a -E -b html -n docs docs/_build
     - name: Build dist
       if: matrix.build-dist
       run: |
