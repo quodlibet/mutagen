@@ -206,7 +206,7 @@ class StreamInfo(object):
 
 
 @loadfile(method=False)
-def File(filething, options=None, easy=False):
+def File(filething, options=None, easy=False) -> FileType | None:
     """File(filething, options=None, easy=False)
 
     Guess the type of the file and try to open it.
@@ -274,9 +274,8 @@ def File(filething, options=None, easy=False):
                    FLAC, AIFF, APEv2File, MP4, ID3FileType, WavPack,
                    Musepack, MonkeysAudio, OptimFROG, ASF, OggOpus, AAC, AC3,
                    SMF, TAK, DSF, DSDIFF, WAVE]
-
-    if not options:
-        return None
+    elif len(options) == 0:
+        raise ValueError("empty options given")
 
     fileobj = filething.fileobj
 
