@@ -31,7 +31,7 @@ dev = [
     "pytest~=8.2",
     "hypothesis>=6.50.1,<7",
     "flake8>=7.1.0,<8",
-    "mypy==1.15.0",
+    "mypy==1.18.2",
     "coverage>=7.2.5,<8",
     "setuptools>=77.0.0,<78",
 ]
