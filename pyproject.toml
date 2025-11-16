@@ -28,7 +28,7 @@ mutagen-pony = "mutagen._tools.mutagen_pony:entry_point"
 
 [dependency-groups]
 dev = [
-    "pytest~=8.2",
+    "pytest>=8.2,<10",
     "hypothesis>=6.50.1,<7",
     "flake8>=7.1.0,<8",
     "mypy==1.18.2",
