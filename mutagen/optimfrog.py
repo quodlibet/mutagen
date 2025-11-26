@@ -17,14 +17,14 @@ Only versions 4.5 and higher are supported.
 For more information, see http://www.losslessaudio.org/
 """
 
-__all__ = ["OptimFROG", "Open", "delete"]
+__all__ = ['OptimFROG', 'Open', 'delete']
 
 import struct
 
-from ._util import convert_error, endswith
 from mutagen import StreamInfo
-from mutagen.apev2 import APEv2File, error, delete
+from mutagen.apev2 import APEv2File, delete, error
 
+from ._util import convert_error, endswith
 
 SAMPLE_TYPE_BITS = {
     0: 8,
@@ -60,31 +60,34 @@ class OptimFROGInfo(StreamInfo):
         """Raises OptimFROGHeaderError"""
 
         header = fileobj.read(76)
-        if len(header) != 76 or not header.startswith(b"OFR "):
-            raise OptimFROGHeaderError("not an OptimFROG file")
-        data_size = struct.unpack("<I", header[4:8])[0]
+        if len(header) != 76 or not header.startswith(b'OFR '):
+            raise OptimFROGHeaderError('not an OptimFROG file')
+        data_size = struct.unpack('<I', header[4:8])[0]
         if data_size != 12 and data_size < 15:
-            raise OptimFROGHeaderError("not an OptimFROG file")
-        (total_samples, total_samples_high, sample_type, self.channels,
-         self.sample_rate) = struct.unpack("<IHBBI", header[8:20])
+            raise OptimFROGHeaderError('not an OptimFROG file')
+        (
+            total_samples,
+            total_samples_high,
+            sample_type,
+            self.channels,
+            self.sample_rate,
+        ) = struct.unpack('<IHBBI', header[8:20])
         total_samples += total_samples_high << 32
         self.channels += 1
         self.bits_per_sample = SAMPLE_TYPE_BITS.get(sample_type)
         if self.sample_rate:
-            self.length = float(total_samples) / (self.channels *
-                                                  self.sample_rate)
+            self.length = float(total_samples) / (self.channels * self.sample_rate)
         else:
             self.length = 0.0
         if data_size >= 15:
-            encoder_id = struct.unpack("<H", header[20:22])[0]
+            encoder_id = struct.unpack('<H', header[20:22])[0]
             version = str((encoder_id >> 4) + 4500)
-            self.encoder_info = "%s.%s" % (version[0], version[1:])
+            self.encoder_info = '%s.%s' % (version[0], version[1:])
         else:
-            self.encoder_info = ""
+            self.encoder_info = ''
 
     def pprint(self):
-        return u"OptimFROG, %.2f seconds, %d Hz" % (self.length,
-                                                    self.sample_rate)
+        return 'OptimFROG, %.2f seconds, %d Hz' % (self.length, self.sample_rate)
 
 
 class OptimFROG(APEv2File):
@@ -101,7 +104,11 @@ class OptimFROG(APEv2File):
     def score(filename, fileobj, header):
         filename = filename.lower()
 
-        return (header.startswith(b"OFR") + endswith(filename, b".ofr") +
-                endswith(filename, b".ofs"))
+        return (
+            header.startswith(b'OFR')
+            + endswith(filename, b'.ofr')
+            + endswith(filename, b'.ofs')
+        )
+
 
 Open = OptimFROG

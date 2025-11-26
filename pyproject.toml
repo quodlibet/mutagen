@@ -34,6 +34,7 @@ dev = [
     "mypy==1.18.2",
     "coverage>=7.2.5,<8",
     "setuptools>=77.0.0,<78",
+    "ruff>=0.14.1"
 ]
 fuzzing = ["python-afl>=0.7.3,<0.8"]
 docs = [
@@ -70,3 +71,35 @@ build-backend = "setuptools.build_meta"
 
 [tool.coverage.run]
 include=["mutagen/*", "tests/*"]
+
+[tool.ruff]
+target-version = "py310"
+include = ["mutagen/**/*.py", "tests/**/*.py", "fuzzing/**/*.py", "docs/**/*.py"]
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E", # pycodestyles
+    "F", # pyflakes
+    "G", # flake8-logging-format
+    "I", # isort
+    "ISC", # flake8-implicit-str-concat
+    "N", # pep8-naming
+    "W", # pycodestyle
+]
+ignore = [
+    # Todo: We should consider fixing these in the future.
+    "N801",  # Class name CapWords convention
+    "N802",  # Function name lowercase
+    "N806",  # Argument name lowercase
+    "N803",  # Variable in function lowercase
+    "N812",  # imported as non-lowercase
+    "N814",  # Consistent naming
+    "N815",  # MixedCase variable in function
+    "N818",  # Error suffix
+    "E741",  # ambiguous variable name
+    "E731",  # lambda assigned to variable
+]
+
+[tool.ruff.format]
+quote-style = 'single'

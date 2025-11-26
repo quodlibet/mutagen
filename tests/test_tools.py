@@ -1,14 +1,12 @@
-
-import sys
 import importlib
+import sys
 from io import StringIO
 
 from tests import TestCase
 
 
-def get_var(tool_name, entry="main"):
-    mod = importlib.import_module(
-        "mutagen._tools.%s" % tool_name.replace("-", "_"))
+def get_var(tool_name, entry='main'):
+    mod = importlib.import_module('mutagen._tools.%s' % tool_name.replace('-', '_'))
     return getattr(mod, entry)
 
 

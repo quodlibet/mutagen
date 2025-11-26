@@ -71,9 +71,10 @@ jobs:
       if: matrix.run-mypy
       run: |
         uv run mypy .
-    - name: Run flake8
+    - name: Run ruff
       run: |
-        uv run flake8
+        uv run ruff check --output-format=github .
+        uv run ruff format --check .
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
     - name: Build docs

@@ -14,15 +14,16 @@ Read more about Ogg Vorbis at http://vorbis.com/. This module is based
 on the specification at http://www.xiph.org/vorbis/doc/Vorbis_I_spec.html.
 """
 
-__all__ = ["OggVorbis", "Open", "delete"]
+__all__ = ['OggVorbis', 'Open', 'delete']
 
 import struct
 
 from mutagen import StreamInfo
-from mutagen._vorbis import VCommentDict
-from mutagen._util import get_size, loadfile, convert_error
 from mutagen._tags import PaddingInfo
-from mutagen.ogg import OggPage, OggFileType, error as OggError
+from mutagen._util import convert_error, get_size, loadfile
+from mutagen._vorbis import VCommentDict
+from mutagen.ogg import OggFileType, OggPage
+from mutagen.ogg import error as OggError
 
 
 class error(OggError):
@@ -56,17 +57,16 @@ class OggVorbisInfo(StreamInfo):
 
         page = OggPage(fileobj)
         if not page.packets:
-            raise OggVorbisHeaderError("page has not packets")
-        while not page.packets[0].startswith(b"\x01vorbis"):
+            raise OggVorbisHeaderError('page has not packets')
+        while not page.packets[0].startswith(b'\x01vorbis'):
             page = OggPage(fileobj)
         if not page.first:
-            raise OggVorbisHeaderError(
-                "page has ID header, but doesn't start a stream")
+            raise OggVorbisHeaderError("page has ID header, but doesn't start a stream")
         if len(page.packets[0]) < 28:
-            raise OggVorbisHeaderError(
-                "page contains a packet too short to be valid")
-        (self.channels, self.sample_rate, max_bitrate, nominal_bitrate,
-         min_bitrate) = struct.unpack("<BI3i", page.packets[0][11:28])
+            raise OggVorbisHeaderError('page contains a packet too short to be valid')
+        (self.channels, self.sample_rate, max_bitrate, nominal_bitrate, min_bitrate) = (
+            struct.unpack('<BI3i', page.packets[0][11:28])
+        )
         if self.sample_rate == 0:
             raise OggVorbisHeaderError("sample rate can't be zero")
         self.serial = page.serial
@@ -95,8 +95,7 @@ class OggVorbisInfo(StreamInfo):
         self.length = page.position / float(self.sample_rate)
 
     def pprint(self):
-        return u"Ogg Vorbis, %.2f seconds, %d bps" % (
-            self.length, self.bitrate)
+        return 'Ogg Vorbis, %.2f seconds, %d bps' % (self.length, self.bitrate)
 
 
 class OggVCommentDict(VCommentDict):
@@ -121,7 +120,7 @@ class OggVCommentDict(VCommentDict):
         # plus grab any stray setup packet data out of them.
         fileobj.seek(0)
         page = OggPage(fileobj)
-        while not page.packets[0].startswith(b"\x03vorbis"):
+        while not page.packets[0].startswith(b'\x03vorbis'):
             page = OggPage(fileobj)
 
         old_pages = [page]
@@ -133,14 +132,14 @@ class OggVCommentDict(VCommentDict):
         packets = OggPage.to_packets(old_pages, strict=False)
 
         content_size = get_size(fileobj) - len(packets[0])  # approx
-        vcomment_data = b"\x03vorbis" + self.write()
+        vcomment_data = b'\x03vorbis' + self.write()
         padding_left = len(packets[0]) - len(vcomment_data)
 
         info = PaddingInfo(padding_left, content_size)
         new_padding = info._get_padding(padding_func)
 
         # Set the new comment packet.
-        packets[0] = vcomment_data + b"\x00" * new_padding
+        packets[0] = vcomment_data + b'\x00' * new_padding
 
         new_pages = OggPage._from_packets_try_preserve(packets, old_pages)
         OggPage.replace(fileobj, old_pages, new_pages)
@@ -162,14 +161,14 @@ class OggVorbis(OggFileType):
     _Info = OggVorbisInfo
     _Tags = OggVCommentDict
     _Error = OggVorbisHeaderError
-    _mimes = ["audio/vorbis", "audio/x-vorbis"]
+    _mimes = ['audio/vorbis', 'audio/x-vorbis']
 
     info = None
     tags = None
 
     @staticmethod
     def score(filename, fileobj, header):
-        return (header.startswith(b"OggS") * (b"\x01vorbis" in header))
+        return header.startswith(b'OggS') * (b'\x01vorbis' in header)
 
 
 Open = OggVorbis
@@ -178,7 +177,7 @@ Open = OggVorbis
 @convert_error(IOError, error)
 @loadfile(method=False, writable=True)
 def delete(filething):
-    """ delete(filething)
+    """delete(filething)
 
     Arguments:
         filething (filething)

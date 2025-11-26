@@ -7,10 +7,11 @@
 
 from io import BytesIO
 
-from mutagen.aac import ProgramConfigElement
 from mutagen._util import BitReader, BitReaderError, cdata
-from ._util import parse_full_atom
+from mutagen.aac import ProgramConfigElement
+
 from ._atom import Atom, AtomError
+from ._util import parse_full_atom
 
 
 class ASEntryError(Exception):
@@ -44,7 +45,7 @@ class AudioSampleEntry(object):
     def __init__(self, atom, fileobj):
         ok, data = atom.read(fileobj)
         if not ok:
-            raise ASEntryError("too short %r atom" % atom.name)
+            raise ASEntryError('too short %r atom' % atom.name)
 
         fileobj = BytesIO(data)
         r = BitReader(fileobj)
@@ -71,14 +72,14 @@ class AudioSampleEntry(object):
         except AtomError as e:
             raise ASEntryError(e)
 
-        self.codec = atom.name.decode("latin-1")
+        self.codec = atom.name.decode('latin-1')
         self.codec_description = None
 
-        if atom.name == b"mp4a" and extra.name == b"esds":
+        if atom.name == b'mp4a' and extra.name == b'esds':
             self._parse_esds(extra, fileobj)
-        elif atom.name == b"alac" and extra.name == b"alac":
+        elif atom.name == b'alac' and extra.name == b'alac':
             self._parse_alac(extra, fileobj)
-        elif atom.name == b"ac-3" and extra.name == b"dac3":
+        elif atom.name == b'ac-3' and extra.name == b'dac3':
             self._parse_dac3(extra, fileobj)
 
         if self.codec_description is None:
@@ -87,11 +88,11 @@ class AudioSampleEntry(object):
     def _parse_dac3(self, atom, fileobj):
         # ETSI TS 102 366
 
-        assert atom.name == b"dac3"
+        assert atom.name == b'dac3'
 
         ok, data = atom.read(fileobj)
         if not ok:
-            raise ASEntryError("truncated %s atom" % atom.name)
+            raise ASEntryError('truncated %s atom' % atom.name)
         fileobj = BytesIO(data)
         r = BitReader(fileobj)
 
@@ -110,8 +111,26 @@ class AudioSampleEntry(object):
 
         try:
             self.bitrate = [
-                32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192,
-                224, 256, 320, 384, 448, 512, 576, 640][bit_rate_code] * 1000
+                32,
+                40,
+                48,
+                56,
+                64,
+                80,
+                96,
+                112,
+                128,
+                160,
+                192,
+                224,
+                256,
+                320,
+                384,
+                448,
+                512,
+                576,
+                640,
+            ][bit_rate_code] * 1000
         except IndexError:
             pass
 
@@ -119,11 +138,11 @@ class AudioSampleEntry(object):
         # https://alac.macosforge.org/trac/browser/trunk/
         #    ALACMagicCookieDescription.txt
 
-        assert atom.name == b"alac"
+        assert atom.name == b'alac'
 
         ok, data = atom.read(fileobj)
         if not ok:
-            raise ASEntryError("truncated %s atom" % atom.name)
+            raise ASEntryError('truncated %s atom' % atom.name)
 
         try:
             version, flags, data = parse_full_atom(data)
@@ -131,7 +150,7 @@ class AudioSampleEntry(object):
             raise ASEntryError(e)
 
         if version != 0:
-            raise ASEntryError("Unsupported version %d" % version)
+            raise ASEntryError('Unsupported version %d' % version)
 
         fileobj = BytesIO(data)
         r = BitReader(fileobj)
@@ -153,11 +172,11 @@ class AudioSampleEntry(object):
             raise ASEntryError(e)
 
     def _parse_esds(self, esds, fileobj):
-        assert esds.name == b"esds"
+        assert esds.name == b'esds'
 
         ok, data = esds.read(fileobj)
         if not ok:
-            raise ASEntryError("truncated %s atom" % esds.name)
+            raise ASEntryError('truncated %s atom' % esds.name)
 
         try:
             version, flags, data = parse_full_atom(data)
@@ -165,7 +184,7 @@ class AudioSampleEntry(object):
             raise ASEntryError(e)
 
         if version != 0:
-            raise ASEntryError("Unsupported version %d" % version)
+            raise ASEntryError('Unsupported version %d' % version)
 
         fileobj = BytesIO(data)
         r = BitReader(fileobj)
@@ -173,7 +192,7 @@ class AudioSampleEntry(object):
         try:
             tag = r.bits(8)
             if tag != ES_Descriptor.TAG:
-                raise ASEntryError("unexpected descriptor: %d" % tag)
+                raise ASEntryError('unexpected descriptor: %d' % tag)
             assert r.is_aligned()
         except BitReaderError as e:
             raise ASEntryError(e)
@@ -202,7 +221,6 @@ class DescriptorError(Exception):
 
 
 class BaseDescriptor(object):
-
     TAG: int
 
     @classmethod
@@ -215,11 +233,11 @@ class BaseDescriptor(object):
                 b = cdata.uint8(fileobj.read(1))
             except cdata.error as e:
                 raise ValueError(e)
-            value = (value << 7) | (b & 0x7f)
+            value = (value << 7) | (b & 0x7F)
             if not b >> 7:
                 break
         else:
-            raise ValueError("invalid descriptor length")
+            raise ValueError('invalid descriptor length')
 
         return value
 
@@ -249,7 +267,6 @@ class BaseDescriptor(object):
 
 
 class ES_Descriptor(BaseDescriptor):
-
     TAG = 0x3
 
     def __init__(self, fileobj, length):
@@ -275,14 +292,13 @@ class ES_Descriptor(BaseDescriptor):
             raise DescriptorError(e)
 
         if tag != DecoderConfigDescriptor.TAG:
-            raise DescriptorError("unexpected DecoderConfigDescrTag %d" % tag)
+            raise DescriptorError('unexpected DecoderConfigDescrTag %d' % tag)
 
         assert r.is_aligned()
         self.decConfigDescr = DecoderConfigDescriptor.parse(fileobj)
 
 
 class DecoderConfigDescriptor(BaseDescriptor):
-
     TAG = 0x4
 
     decSpecificInfo = None
@@ -321,10 +337,10 @@ class DecoderConfigDescriptor(BaseDescriptor):
     def codec_param(self):
         """string"""
 
-        param = u".%X" % self.objectTypeIndication
+        param = '.%X' % self.objectTypeIndication
         info = self.decSpecificInfo
         if info is not None:
-            param += u".%d" % info.audioObjectType
+            param += '.%d' % info.audioObjectType
         return param
 
     @property
@@ -339,24 +355,71 @@ class DecoderConfigDescriptor(BaseDescriptor):
 
 
 class DecoderSpecificInfo(BaseDescriptor):
-
     TAG = 0x5
 
     _TYPE_NAMES = [
-        None, "AAC MAIN", "AAC LC", "AAC SSR", "AAC LTP", "SBR",
-        "AAC scalable", "TwinVQ", "CELP", "HVXC", None, None, "TTSI",
-        "Main synthetic", "Wavetable synthesis", "General MIDI",
-        "Algorithmic Synthesis and Audio FX", "ER AAC LC", None, "ER AAC LTP",
-        "ER AAC scalable", "ER Twin VQ", "ER BSAC", "ER AAC LD", "ER CELP",
-        "ER HVXC", "ER HILN", "ER Parametric", "SSC", "PS", "MPEG Surround",
-        None, "Layer-1", "Layer-2", "Layer-3", "DST", "ALS", "SLS",
-        "SLS non-core", "ER AAC ELD", "SMR Simple", "SMR Main", "USAC",
-        "SAOC", "LD MPEG Surround", "USAC"
+        None,
+        'AAC MAIN',
+        'AAC LC',
+        'AAC SSR',
+        'AAC LTP',
+        'SBR',
+        'AAC scalable',
+        'TwinVQ',
+        'CELP',
+        'HVXC',
+        None,
+        None,
+        'TTSI',
+        'Main synthetic',
+        'Wavetable synthesis',
+        'General MIDI',
+        'Algorithmic Synthesis and Audio FX',
+        'ER AAC LC',
+        None,
+        'ER AAC LTP',
+        'ER AAC scalable',
+        'ER Twin VQ',
+        'ER BSAC',
+        'ER AAC LD',
+        'ER CELP',
+        'ER HVXC',
+        'ER HILN',
+        'ER Parametric',
+        'SSC',
+        'PS',
+        'MPEG Surround',
+        None,
+        'Layer-1',
+        'Layer-2',
+        'Layer-3',
+        'DST',
+        'ALS',
+        'SLS',
+        'SLS non-core',
+        'ER AAC ELD',
+        'SMR Simple',
+        'SMR Main',
+        'USAC',
+        'SAOC',
+        'LD MPEG Surround',
+        'USAC',
     ]
 
     _FREQS = [
-        96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000,
-        12000, 11025, 8000, 7350,
+        96000,
+        88200,
+        64000,
+        48000,
+        44100,
+        32000,
+        24000,
+        22050,
+        16000,
+        12000,
+        11025,
+        8000,
+        7350,
     ]
 
     @property
@@ -371,9 +434,9 @@ class DecoderSpecificInfo(BaseDescriptor):
         if name is None:
             return
         if self.sbrPresentFlag == 1:
-            name += "+SBR"
+            name += '+SBR'
         if self.psPresentFlag == 1:
-            name += "+PS"
+            name += '+PS'
         return str(name)
 
     @property
@@ -400,11 +463,10 @@ class DecoderSpecificInfo(BaseDescriptor):
         """channel count or 0 for unknown"""
 
         # from ProgramConfigElement()
-        if hasattr(self, "pce_channels"):
+        if hasattr(self, 'pce_channels'):
             return self.pce_channels
 
-        conf = getattr(
-            self, "extensionChannelConfiguration", self.channelConfiguration)
+        conf = getattr(self, 'extensionChannelConfiguration', self.channelConfiguration)
 
         if conf == 1:
             if self.psPresentFlag == -1:
@@ -433,7 +495,7 @@ class DecoderSpecificInfo(BaseDescriptor):
         """Raises BitReaderError"""
 
         samplingFrequencyIndex = r.bits(4)
-        if samplingFrequencyIndex == 0xf:
+        if samplingFrequencyIndex == 0xF:
             samplingFrequency = r.bits(24)
         else:
             try:
@@ -485,8 +547,7 @@ class DecoderSpecificInfo(BaseDescriptor):
             # unsupported
             return
 
-        if self.audioObjectType in (
-                17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 39):
+        if self.audioObjectType in (17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 39):
             epConfig = r.bits(2)
             if epConfig in (2, 3):
                 # unsupported
@@ -494,14 +555,13 @@ class DecoderSpecificInfo(BaseDescriptor):
 
         if self.extensionAudioObjectType != 5 and bits_left() >= 16:
             syncExtensionType = r.bits(11)
-            if syncExtensionType == 0x2b7:
+            if syncExtensionType == 0x2B7:
                 self.extensionAudioObjectType = self._get_audio_object_type(r)
 
                 if self.extensionAudioObjectType == 5:
                     self.sbrPresentFlag = r.bits(1)
                     if self.sbrPresentFlag == 1:
-                        self.extensionSamplingFrequency = \
-                            self._get_sampling_freq(r)
+                        self.extensionSamplingFrequency = self._get_sampling_freq(r)
                         if bits_left() >= 12:
                             syncExtensionType = r.bits(11)
                             if syncExtensionType == 0x548:
@@ -510,8 +570,7 @@ class DecoderSpecificInfo(BaseDescriptor):
                 if self.extensionAudioObjectType == 22:
                     self.sbrPresentFlag = r.bits(1)
                     if self.sbrPresentFlag == 1:
-                        self.extensionSamplingFrequency = \
-                            self._get_sampling_freq(r)
+                        self.extensionSamplingFrequency = self._get_sampling_freq(r)
                     self.extensionChannelConfiguration = r.bits(4)
 
 
@@ -543,4 +602,4 @@ def GASpecificConfig(r, info):
             r.skip(1 + 1 + 1)
         extensionFlag3 = r.bits(1)
         if extensionFlag3 != 0:
-            raise NotImplementedError("extensionFlag3 set")
+            raise NotImplementedError('extensionFlag3 set')

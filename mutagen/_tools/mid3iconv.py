@@ -9,21 +9,20 @@
 ID3iconv is a Java based ID3 encoding converter, here's the Python version.
 """
 
-import sys
 import locale
+import sys
 
 import mutagen
 import mutagen.id3
 
-from ._util import SignalHandler, OptionParser
-
+from ._util import OptionParser, SignalHandler
 
 VERSION = (0, 3)
 _sig = SignalHandler()
 
 
 def getpreferredencoding():
-    return locale.getpreferredencoding() or "utf-8"
+    return locale.getpreferredencoding() or 'utf-8'
 
 
 def isascii(string):
@@ -43,20 +42,23 @@ def isascii(string):
 
 class ID3OptionParser(OptionParser):
     def __init__(self):
-        mutagen_version = ".".join(map(str, mutagen.version))
-        my_version = ".".join(map(str, VERSION))
-        version = "mid3iconv %s\nUses Mutagen %s" % (
-            my_version, mutagen_version)
+        mutagen_version = '.'.join(map(str, mutagen.version))
+        my_version = '.'.join(map(str, VERSION))
+        version = 'mid3iconv %s\nUses Mutagen %s' % (my_version, mutagen_version)
         return OptionParser.__init__(
-            self, version=version,
-            usage="%prog [OPTION] [FILE]...",
-            description=("Mutagen-based replacement the id3iconv utility, "
-                         "which converts ID3 tags from legacy encodings "
-                         "to Unicode and stores them using the ID3v2 format."))
+            self,
+            version=version,
+            usage='%prog [OPTION] [FILE]...',
+            description=(
+                'Mutagen-based replacement the id3iconv utility, '
+                'which converts ID3 tags from legacy encodings '
+                'to Unicode and stores them using the ID3v2 format.'
+            ),
+        )
 
     def format_help(self, *args, **kwargs):
         text = OptionParser.format_help(self, *args, **kwargs)
-        return text + "\nFiles are updated in-place, so use --dry-run first.\n"
+        return text + '\nFiles are updated in-place, so use --dry-run first.\n'
 
 
 def update(options, filenames):
@@ -71,8 +73,8 @@ def update(options, filenames):
 
     for filename in filenames:
         with _sig.block():
-            if verbose != "quiet":
-                print(u"Updating", filename)
+            if verbose != 'quiet':
+                print('Updating', filename)
 
             if has_id3v1(filename) and not noupdate and force_v1:
                 mutagen.id3.delete(filename, False, True)
@@ -80,14 +82,14 @@ def update(options, filenames):
             try:
                 id3 = mutagen.id3.ID3(filename)
             except mutagen.id3.ID3NoHeaderError:
-                if verbose != "quiet":
-                    print(u"No ID3 header found; skipping...")
+                if verbose != 'quiet':
+                    print('No ID3 header found; skipping...')
                 continue
             except Exception as err:
                 print(str(err), file=sys.stderr)
                 continue
 
-            for tag in filter(lambda t: t.startswith(("T", "COMM")), id3):
+            for tag in filter(lambda t: t.startswith(('T', 'COMM')), id3):
                 frame = id3[tag]
                 if isinstance(frame, mutagen.id3.TimeStampTextFrame):
                     # non-unicode fields
@@ -107,7 +109,7 @@ def update(options, filenames):
                     else:
                         frame.encoding = 1
 
-            if verbose == "debug":
+            if verbose == 'debug':
                 print(id3.pprint())
 
             if not noupdate:
@@ -121,7 +123,7 @@ def has_id3v1(filename):
     try:
         with open(filename, 'rb') as f:
             f.seek(-128, 2)
-            return f.read(3) == b"TAG"
+            return f.read(3) == b'TAG'
     except IOError:
         return False
 
@@ -129,31 +131,57 @@ def has_id3v1(filename):
 def main(argv):
     parser = ID3OptionParser()
     parser.add_option(
-        "-e", "--encoding", metavar="ENCODING", action="store",
-        type="string", dest="encoding",
-        help=("Specify original tag encoding (default is %s)" % (
-              getpreferredencoding())))
+        '-e',
+        '--encoding',
+        metavar='ENCODING',
+        action='store',
+        type='string',
+        dest='encoding',
+        help=(
+            'Specify original tag encoding (default is %s)' % (getpreferredencoding())
+        ),
+    )
     parser.add_option(
-        "-p", "--dry-run", action="store_true", dest="noupdate",
-        help="Do not actually modify files")
+        '-p',
+        '--dry-run',
+        action='store_true',
+        dest='noupdate',
+        help='Do not actually modify files',
+    )
     parser.add_option(
-        "--force-v1", action="store_true", dest="force_v1",
-        help="Use an ID3v1 tag even if an ID3v2 tag is present")
+        '--force-v1',
+        action='store_true',
+        dest='force_v1',
+        help='Use an ID3v1 tag even if an ID3v2 tag is present',
+    )
     parser.add_option(
-        "--remove-v1", action="store_true", dest="remove_v1",
-        help="Remove v1 tag after processing the files")
+        '--remove-v1',
+        action='store_true',
+        dest='remove_v1',
+        help='Remove v1 tag after processing the files',
+    )
     parser.add_option(
-        "-q", "--quiet", action="store_const", dest="verbose",
-        const="quiet", help="Only output errors")
+        '-q',
+        '--quiet',
+        action='store_const',
+        dest='verbose',
+        const='quiet',
+        help='Only output errors',
+    )
     parser.add_option(
-        "-d", "--debug", action="store_const", dest="verbose",
-        const="debug", help="Output updated tags")
+        '-d',
+        '--debug',
+        action='store_const',
+        dest='verbose',
+        const='debug',
+        help='Output updated tags',
+    )
 
     for i, arg in enumerate(argv):
-        if arg == "-v1":
-            argv[i] = "--force-v1"
-        elif arg == "-removev1":
-            argv[i] = "--remove-v1"
+        if arg == '-v1':
+            argv[i] = '--force-v1'
+        elif arg == '-removev1':
+            argv[i] = '--remove-v1'
 
     (options, args) = parser.parse_args(argv[1:])
 

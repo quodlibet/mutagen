@@ -6,11 +6,11 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
-import sys
 import struct
+import sys
 from typing import Dict, Type
 
-from mutagen._util import total_ordering, reraise
+from mutagen._util import reraise, total_ordering
 
 from ._util import ASFError
 
@@ -20,7 +20,7 @@ class ASFBaseAttribute(object):
 
     TYPE: int
 
-    _TYPES: "Dict[int, Type[ASFBaseAttribute]]" = {}
+    _TYPES: 'Dict[int, Type[ASFBaseAttribute]]' = {}
 
     value = None
     """The Python value of this attribute (type depends on the class)"""
@@ -31,8 +31,7 @@ class ASFBaseAttribute(object):
     stream = None
     """Stream"""
 
-    def __init__(self, value=None, data=None, language=None,
-                 stream=None, **kwargs):
+    def __init__(self, value=None, data=None, language=None, stream=None, **kwargs):
         self.language = language
         self.stream = stream
         if data is not None:
@@ -67,38 +66,55 @@ class ASFBaseAttribute(object):
         raise NotImplementedError
 
     def __repr__(self):
-        name = "%s(%r" % (type(self).__name__, self.value)
+        name = '%s(%r' % (type(self).__name__, self.value)
         if self.language:
-            name += ", language=%d" % self.language
+            name += ', language=%d' % self.language
         if self.stream:
-            name += ", stream=%d" % self.stream
-        name += ")"
+            name += ', stream=%d' % self.stream
+        name += ')'
         return name
 
     def render(self, name):
-        name = name.encode("utf-16-le") + b"\x00\x00"
+        name = name.encode('utf-16-le') + b'\x00\x00'
         data = self._render()
-        return (struct.pack("<H", len(name)) + name +
-                struct.pack("<HH", self.TYPE, len(data)) + data)
+        return (
+            struct.pack('<H', len(name))
+            + name
+            + struct.pack('<HH', self.TYPE, len(data))
+            + data
+        )
 
     def render_m(self, name):
-        name = name.encode("utf-16-le") + b"\x00\x00"
+        name = name.encode('utf-16-le') + b'\x00\x00'
         if self.TYPE == 2:
             data = self._render(dword=False)
         else:
             data = self._render()
-        return (struct.pack("<HHHHI", 0, self.stream or 0, len(name),
-                            self.TYPE, len(data)) + name + data)
+        return (
+            struct.pack('<HHHHI', 0, self.stream or 0, len(name), self.TYPE, len(data))
+            + name
+            + data
+        )
 
     def render_ml(self, name):
-        name = name.encode("utf-16-le") + b"\x00\x00"
+        name = name.encode('utf-16-le') + b'\x00\x00'
         if self.TYPE == 2:
             data = self._render(dword=False)
         else:
             data = self._render()
 
-        return (struct.pack("<HHHHI", self.language or 0, self.stream or 0,
-                            len(name), self.TYPE, len(data)) + name + data)
+        return (
+            struct.pack(
+                '<HHHHI',
+                self.language or 0,
+                self.stream or 0,
+                len(name),
+                self.TYPE,
+                len(data),
+            )
+            + name
+            + data
+        )
 
 
 @ASFBaseAttribute._register
@@ -115,23 +131,23 @@ class ASFUnicodeAttribute(ASFBaseAttribute):
 
     def parse(self, data):
         try:
-            return data.decode("utf-16-le").strip("\x00")
+            return data.decode('utf-16-le').strip('\x00')
         except UnicodeDecodeError as e:
             reraise(ASFError, e, sys.exc_info()[2])
 
     def _validate(self, value):
         if not isinstance(value, str):
-            raise TypeError("%r not str" % value)
+            raise TypeError('%r not str' % value)
         return value
 
     def _render(self):
-        return self.value.encode("utf-16-le") + b"\x00\x00"
+        return self.value.encode('utf-16-le') + b'\x00\x00'
 
     def data_size(self):
         return len(self._render())
 
     def __bytes__(self):
-        return self.value.encode("utf-16-le")
+        return self.value.encode('utf-16-le')
 
     def __str__(self):
         return self.value
@@ -154,6 +170,7 @@ class ASFByteArrayAttribute(ASFBaseAttribute):
 
         ASFByteArrayAttribute(b'1234')
     """
+
     TYPE = 0x0001
 
     def parse(self, data):
@@ -166,7 +183,7 @@ class ASFByteArrayAttribute(ASFBaseAttribute):
 
     def _validate(self, value):
         if not isinstance(value, bytes):
-            raise TypeError("must be bytes/str: %r" % value)
+            raise TypeError('must be bytes/str: %r' % value)
         return value
 
     def data_size(self):
@@ -176,7 +193,7 @@ class ASFByteArrayAttribute(ASFBaseAttribute):
         return self.value
 
     def __str__(self):
-        return "[binary data (%d bytes)]" % len(self.value)
+        return '[binary data (%d bytes)]' % len(self.value)
 
     def __eq__(self, other):
         return self.value == other
@@ -201,15 +218,15 @@ class ASFBoolAttribute(ASFBaseAttribute):
 
     def parse(self, data, dword=True):
         if dword:
-            return struct.unpack("<I", data)[0] == 1
+            return struct.unpack('<I', data)[0] == 1
         else:
-            return struct.unpack("<H", data)[0] == 1
+            return struct.unpack('<H', data)[0] == 1
 
     def _render(self, dword=True):
         if dword:
-            return struct.pack("<I", bool(self.value))
+            return struct.pack('<I', bool(self.value))
         else:
-            return struct.pack("<H", bool(self.value))
+            return struct.pack('<H', bool(self.value))
 
     def _validate(self, value):
         return bool(value)
@@ -248,15 +265,15 @@ class ASFDWordAttribute(ASFBaseAttribute):
     TYPE = 0x0003
 
     def parse(self, data):
-        return struct.unpack("<L", data)[0]
+        return struct.unpack('<L', data)[0]
 
     def _render(self):
-        return struct.pack("<L", self.value)
+        return struct.pack('<L', self.value)
 
     def _validate(self, value):
         value = int(value)
-        if not 0 <= value <= 2 ** 32 - 1:
-            raise ValueError("Out of range")
+        if not 0 <= value <= 2**32 - 1:
+            raise ValueError('Out of range')
         return value
 
     def data_size(self):
@@ -293,15 +310,15 @@ class ASFQWordAttribute(ASFBaseAttribute):
     TYPE = 0x0004
 
     def parse(self, data):
-        return struct.unpack("<Q", data)[0]
+        return struct.unpack('<Q', data)[0]
 
     def _render(self):
-        return struct.pack("<Q", self.value)
+        return struct.pack('<Q', self.value)
 
     def _validate(self, value):
         value = int(value)
-        if not 0 <= value <= 2 ** 64 - 1:
-            raise ValueError("Out of range")
+        if not 0 <= value <= 2**64 - 1:
+            raise ValueError('Out of range')
         return value
 
     def data_size(self):
@@ -338,15 +355,15 @@ class ASFWordAttribute(ASFBaseAttribute):
     TYPE = 0x0005
 
     def parse(self, data):
-        return struct.unpack("<H", data)[0]
+        return struct.unpack('<H', data)[0]
 
     def _render(self):
-        return struct.pack("<H", self.value)
+        return struct.pack('<H', self.value)
 
     def _validate(self, value):
         value = int(value)
-        if not 0 <= value <= 2 ** 16 - 1:
-            raise ValueError("Out of range")
+        if not 0 <= value <= 2**16 - 1:
+            raise ValueError('Out of range')
         return value
 
     def data_size(self):
@@ -387,7 +404,7 @@ class ASFGUIDAttribute(ASFBaseAttribute):
 
     def _validate(self, value):
         if not isinstance(value, bytes):
-            raise TypeError("must be bytes/str: %r" % value)
+            raise TypeError('must be bytes/str: %r' % value)
         return value
 
     def data_size(self):
@@ -423,6 +440,6 @@ def ASFValue(value, kind, **kwargs):
     try:
         attr_type = ASFBaseAttribute._get_type(kind)
     except KeyError:
-        raise ValueError("Unknown value type %r" % kind)
+        raise ValueError('Unknown value type %r' % kind)
     else:
         return attr_type(value=value, **kwargs)

@@ -1,18 +1,15 @@
-
 import os
 import warnings
 
-from tests import TestCase, DATA_DIR
+from tests import DATA_DIR, TestCase
 
 with warnings.catch_warnings():
-    warnings.simplefilter("ignore", DeprecationWarning)
-    from mutagen.m4a import (M4A, M4ATags, M4AInfo, delete, M4ACover,
-                             error)
+    warnings.simplefilter('ignore', DeprecationWarning)
+    from mutagen.m4a import M4A, M4ACover, M4AInfo, M4ATags, delete, error
 
 
 class TM4ADeprecation(TestCase):
-
-    SOME_FILE = os.path.join(DATA_DIR, "no-tags.m4a")
+    SOME_FILE = os.path.join(DATA_DIR, 'no-tags.m4a')
 
     def test_fail(self):
         self.assertRaises(error, M4A, self.SOME_FILE)
@@ -21,12 +18,12 @@ class TM4ADeprecation(TestCase):
 
         M4AInfo  # flake8
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
+            warnings.simplefilter('ignore', DeprecationWarning)
             a = M4A()
         a.add_tags()
         self.assertEqual(a.tags.items(), [])
 
-        some_cover = M4ACover(b"foo", M4ACover.FORMAT_JPEG)
+        some_cover = M4ACover(b'foo', M4ACover.FORMAT_JPEG)
         self.assertEqual(some_cover.imageformat, M4ACover.FORMAT_JPEG)
 
         tags = M4ATags()

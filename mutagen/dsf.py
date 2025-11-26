@@ -7,19 +7,24 @@
 
 """Read and write DSF audio stream information and tags."""
 
-
-import sys
 import struct
+import sys
 from io import BytesIO
 
 from mutagen import FileType, StreamInfo
-from mutagen._util import cdata, MutagenError, loadfile, \
-    convert_error, reraise, endswith
+from mutagen._util import (
+    MutagenError,
+    cdata,
+    convert_error,
+    endswith,
+    loadfile,
+    reraise,
+)
 from mutagen.id3 import ID3
-from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
+from mutagen.id3._util import ID3NoHeaderError
+from mutagen.id3._util import error as ID3Error
 
-
-__all__ = ["DSF", "Open", "delete"]
+__all__ = ['DSF', 'Open', 'delete']
 
 
 class error(MutagenError):
@@ -30,7 +35,7 @@ class DSFChunk(object):
     """A generic chunk of a DSFFile."""
 
     chunk_offset = 0
-    chunk_header = "    "
+    chunk_header = '    '
     chunk_size = -1
 
     def __init__(self, fileobj, create=False):
@@ -59,21 +64,21 @@ class DSDChunk(DSFChunk):
         super(DSDChunk, self).__init__(fileobj, create)
 
         if create:
-            self.chunk_header = b"DSD "
+            self.chunk_header = b'DSD '
             self.chunk_size = DSDChunk.CHUNK_SIZE
 
     def load(self):
         data = self.fileobj.read(DSDChunk.CHUNK_SIZE)
         if len(data) != DSDChunk.CHUNK_SIZE:
-            raise error("DSF chunk truncated")
+            raise error('DSF chunk truncated')
 
         self.chunk_header = data[0:4]
-        if self.chunk_header != b"DSD ":
-            raise error("DSF dsd header not found")
+        if self.chunk_header != b'DSD ':
+            raise error('DSF dsd header not found')
 
         self.chunk_size = cdata.ulonglong_le(data[4:12])
         if self.chunk_size != DSDChunk.CHUNK_SIZE:
-            raise error("DSF dsd header size mismatch")
+            raise error('DSF dsd header size mismatch')
 
         self.total_size = cdata.ulonglong_le(data[12:20])
         self.offset_metdata_chunk = cdata.ulonglong_le(data[20:28])
@@ -81,21 +86,21 @@ class DSDChunk(DSFChunk):
     def write(self):
         f = BytesIO()
         f.write(self.chunk_header)
-        f.write(struct.pack("<Q", DSDChunk.CHUNK_SIZE))
-        f.write(struct.pack("<Q", self.total_size))
-        f.write(struct.pack("<Q", self.offset_metdata_chunk))
+        f.write(struct.pack('<Q', DSDChunk.CHUNK_SIZE))
+        f.write(struct.pack('<Q', self.total_size))
+        f.write(struct.pack('<Q', self.offset_metdata_chunk))
 
         self.fileobj.seek(self.chunk_offset)
         self.fileobj.write(f.getvalue())
 
     def pprint(self):
-        return (u"DSD Chunk (Total file size = %d, "
-                u"Pointer to Metadata chunk = %d)" % (
-                    self.total_size, self.offset_metdata_chunk))
+        return 'DSD Chunk (Total file size = %d, Pointer to Metadata chunk = %d)' % (
+            self.total_size,
+            self.offset_metdata_chunk,
+        )
 
 
 class FormatChunk(DSFChunk):
-
     CHUNK_SIZE = 52
 
     VERSION = 1
@@ -116,29 +121,29 @@ class FormatChunk(DSFChunk):
         super(FormatChunk, self).__init__(fileobj, create)
 
         if create:
-            self.chunk_header = b"fmt "
+            self.chunk_header = b'fmt '
             self.chunk_size = FormatChunk.CHUNK_SIZE
 
     def load(self):
         data = self.fileobj.read(FormatChunk.CHUNK_SIZE)
         if len(data) != FormatChunk.CHUNK_SIZE:
-            raise error("DSF chunk truncated")
+            raise error('DSF chunk truncated')
 
         self.chunk_header = data[0:4]
-        if self.chunk_header != b"fmt ":
-            raise error("DSF fmt header not found")
+        if self.chunk_header != b'fmt ':
+            raise error('DSF fmt header not found')
 
         self.chunk_size = cdata.ulonglong_le(data[4:12])
         if self.chunk_size != FormatChunk.CHUNK_SIZE:
-            raise error("DSF dsd header size mismatch")
+            raise error('DSF dsd header size mismatch')
 
         self.format_version = cdata.uint_le(data[12:16])
         if self.format_version != FormatChunk.VERSION:
-            raise error("Unsupported format version")
+            raise error('Unsupported format version')
 
         self.format_id = cdata.uint_le(data[16:20])
         if self.format_id != FormatChunk.FORMAT_DSD_RAW:
-            raise error("Unsupported format ID")
+            raise error('Unsupported format ID')
 
         self.channel_type = cdata.uint_le(data[20:24])
         self.channel_num = cdata.uint_le(data[24:28])
@@ -147,41 +152,48 @@ class FormatChunk(DSFChunk):
         self.sample_count = cdata.ulonglong_le(data[36:44])
 
     def pprint(self):
-        return u"fmt Chunk (Channel Type = %d, Channel Num = %d, " \
-               u"Sampling Frequency = %d, %.2f seconds)" % \
-               (self.channel_type, self.channel_num, self.sampling_frequency,
-                self.length)
+        return (
+            'fmt Chunk (Channel Type = %d, Channel Num = %d, '
+            'Sampling Frequency = %d, %.2f seconds)'
+            % (
+                self.channel_type,
+                self.channel_num,
+                self.sampling_frequency,
+                self.length,
+            )
+        )
 
 
 class DataChunk(DSFChunk):
-
     CHUNK_SIZE = 12
 
-    data = ""
+    data = ''
 
     def __init__(self, fileobj, create=False):
         super(DataChunk, self).__init__(fileobj, create)
 
         if create:
-            self.chunk_header = b"data"
+            self.chunk_header = b'data'
             self.chunk_size = DataChunk.CHUNK_SIZE
 
     def load(self):
         data = self.fileobj.read(DataChunk.CHUNK_SIZE)
         if len(data) != DataChunk.CHUNK_SIZE:
-            raise error("DSF chunk truncated")
+            raise error('DSF chunk truncated')
 
         self.chunk_header = data[0:4]
-        if self.chunk_header != b"data":
-            raise error("DSF data header not found")
+        if self.chunk_header != b'data':
+            raise error('DSF data header not found')
 
         self.chunk_size = cdata.ulonglong_le(data[4:12])
         if self.chunk_size < DataChunk.CHUNK_SIZE:
-            raise error("DSF data header size mismatch")
+            raise error('DSF data header size mismatch')
 
     def pprint(self):
-        return u"data Chunk (Chunk Offset = %d, Chunk Size = %d)" % (
-            self.chunk_offset, self.chunk_size)
+        return 'data Chunk (Chunk Offset = %d, Chunk Size = %d)' % (
+            self.chunk_offset,
+            self.chunk_size,
+        )
 
 
 class _DSFID3(ID3):
@@ -192,7 +204,7 @@ class _DSFID3(ID3):
         fileobj.seek(0)
         id3_location = DSDChunk(fileobj).offset_metdata_chunk
         if id3_location == 0:
-            raise ID3NoHeaderError("File has no existing ID3 tag")
+            raise ID3NoHeaderError('File has no existing ID3 tag')
 
         fileobj.seek(id3_location)
 
@@ -215,8 +227,13 @@ class _DSFID3(ID3):
 
         try:
             data = self._prepare_data(
-                fileobj, dsd_header.offset_metdata_chunk, self.size,
-                v2_version, v23_sep, padding)
+                fileobj,
+                dsd_header.offset_metdata_chunk,
+                self.size,
+                v2_version,
+                v23_sep,
+                padding,
+            )
         except ID3Error as e:
             reraise(error, e, sys.exc_info()[2])
 
@@ -268,12 +285,15 @@ class DSFInfo(StreamInfo):
         return self.sample_rate * self.bits_per_sample * self.channels
 
     def pprint(self):
-        return u"%d channel DSF @ %d bits, %s Hz, %.2f seconds" % (
-            self.channels, self.bits_per_sample, self.sample_rate, self.length)
+        return '%d channel DSF @ %d bits, %s Hz, %.2f seconds' % (
+            self.channels,
+            self.bits_per_sample,
+            self.sample_rate,
+            self.length,
+        )
 
 
 class DSFFile(object):
-
     dsd_chunk = None
     fmt_chunk = None
     data_chunk = None
@@ -295,12 +315,11 @@ class DSF(FileType):
         tags (`mutagen.id3.ID3Tags` or `None`)
     """
 
-    _mimes = ["audio/dsf"]
+    _mimes = ['audio/dsf']
 
     @staticmethod
     def score(filename, fileobj, header):
-        return header.startswith(b"DSD ") * 2 + \
-            endswith(filename.lower(), ".dsf")
+        return header.startswith(b'DSD ') * 2 + endswith(filename.lower(), '.dsf')
 
     def add_tags(self):
         """Add a DSF tag block to the file."""
@@ -308,7 +327,7 @@ class DSF(FileType):
         if self.tags is None:
             self.tags = _DSFID3()
         else:
-            raise error("an ID3 tag already exists")
+            raise error('an ID3 tag already exists')
 
     @convert_error(IOError, error)
     @loadfile()
