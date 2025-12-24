@@ -274,8 +274,9 @@ def File(filething, options=None, easy=False) -> FileType | None:
                    FLAC, AIFF, APEv2File, MP4, ID3FileType, WavPack,
                    Musepack, MonkeysAudio, OptimFROG, ASF, OggOpus, AAC, AC3,
                    SMF, TAK, DSF, DSDIFF, WAVE]
-    elif len(options) == 0:
-        raise ValueError("empty options given")
+
+    if not options:
+        return None
 
     fileobj = filething.fileobj
 
