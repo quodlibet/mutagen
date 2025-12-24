@@ -28,16 +28,14 @@ version = (1, 47, 1)
 version_string = ".".join(map(str, version))
 """Version string."""
 
-MutagenError
-
-FileType
-
-StreamInfo
-
-File
-
-Tags
-
-Metadata
-
-PaddingInfo
+__all__ = [
+    "MutagenError",
+    "FileType",
+    "StreamInfo",
+    "File",
+    "Tags",
+    "Metadata",
+    "PaddingInfo",
+    "version",
+    "version_string",
+]
