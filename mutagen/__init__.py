@@ -36,4 +36,6 @@ __all__ = [
     "Tags",
     "Metadata",
     "PaddingInfo",
+    "version",
+    "version_string",
 ]
