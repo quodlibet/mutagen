@@ -19,7 +19,7 @@ import sys
 from io import BytesIO
 
 import mutagen
-from mutagen._util import DictMixin, cdata, MutagenError, reraise
+from mutagen._util import DictMixin, MutagenError, cdata, reraise
 
 
 def is_valid_key(key: str) -> bool:
@@ -32,10 +32,10 @@ def is_valid_key(key: str) -> bool:
     """
 
     if isinstance(key, bytes):
-        raise TypeError("needs to be str not bytes")
+        raise TypeError('needs to be str not bytes')
 
     for c in key:
-        if c < " " or c > "}" or c == "=":
+        if c < ' ' or c > '}' or c == '=':
             return False
     else:
         return bool(key)
@@ -70,7 +70,7 @@ class VComment(mutagen.Tags, list):
         vendor (text): the stream 'vendor' (i.e. writer); default 'Mutagen'
     """
 
-    vendor = u"Mutagen " + mutagen.version_string
+    vendor = 'Mutagen ' + mutagen.version_string
 
     def __init__(self, data=None, *args, **kwargs):
         self._size = 0
@@ -81,7 +81,7 @@ class VComment(mutagen.Tags, list):
             if isinstance(data, bytes):
                 data = BytesIO(data)
             elif not hasattr(data, 'read'):
-                raise TypeError("VComment requires bytes or a file-like")
+                raise TypeError('VComment requires bytes or a file-like')
             start = data.tell()
             self.load(data, *args, **kwargs)
             self._size = data.tell() - start
@@ -108,29 +108,29 @@ class VComment(mutagen.Tags, list):
                 try:
                     string = fileobj.read(length).decode('utf-8', errors)
                 except (OverflowError, MemoryError):
-                    raise error("cannot read %d bytes, too large" % length)
+                    raise error('cannot read %d bytes, too large' % length)
                 try:
                     tag, value = string.split('=', 1)
                 except ValueError as err:
-                    if errors == "ignore":
+                    if errors == 'ignore':
                         continue
-                    elif errors == "replace":
-                        tag, value = u"unknown%d" % i, string
+                    elif errors == 'replace':
+                        tag, value = 'unknown%d' % i, string
                     else:
                         reraise(VorbisEncodingError, err, sys.exc_info()[2])
                 try:
                     tag = tag.encode('ascii', errors)
                 except UnicodeEncodeError:
-                    raise VorbisEncodingError("invalid tag name %r" % tag)
+                    raise VorbisEncodingError('invalid tag name %r' % tag)
                 else:
-                    tag = tag.decode("ascii")
+                    tag = tag.decode('ascii')
                     if is_valid_key(tag):
                         self.append((tag, value))
 
             if framing and not bytearray(fileobj.read(1))[0] & 0x01:
-                raise VorbisUnsetFrameError("framing bit was unset")
+                raise VorbisUnsetFrameError('framing bit was unset')
         except (cdata.error, TypeError):
-            raise error("file is not a valid Vorbis comment")
+            raise error('file is not a valid Vorbis comment')
 
     def validate(self):
         """Validate keys and values.
@@ -143,17 +143,17 @@ class VComment(mutagen.Tags, list):
         """
 
         if not isinstance(self.vendor, str):
-            raise ValueError("vendor needs to be str")
+            raise ValueError('vendor needs to be str')
 
         for key, value in self:
             try:
                 if not is_valid_key(key):
-                    raise ValueError("%r is not a valid key" % key)
+                    raise ValueError('%r is not a valid key' % key)
             except TypeError:
-                raise ValueError("%r is not a valid key" % key)
+                raise ValueError('%r is not a valid key' % key)
 
             if not isinstance(value, str):
-                err = "%r needs to be str for key %r" % (value, key)
+                err = '%r needs to be str for key %r' % (value, key)
                 raise ValueError(err)
 
         return True
@@ -189,22 +189,21 @@ class VComment(mutagen.Tags, list):
         for tag, value in self:
             tag = _encode(tag)
             value = _encode(value)
-            comment = tag + b"=" + value
+            comment = tag + b'=' + value
             f.write(cdata.to_uint_le(len(comment)))
             f.write(comment)
         if framing:
-            f.write(b"\x01")
+            f.write(b'\x01')
         return f.getvalue()
 
     def pprint(self) -> str:
-
         def _decode(value):
             if not isinstance(value, str):
                 return value.decode('utf-8', 'replace')
             return value
 
-        tags = [u"%s=%s" % (_decode(k), _decode(v)) for k, v in self]
-        return u"\n".join(tags)
+        tags = ['%s=%s' % (_decode(k), _decode(v)) for k, v in self]
+        return '\n'.join(tags)
 
 
 class VCommentDict(VComment, DictMixin):  # type: ignore

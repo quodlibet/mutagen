@@ -1,9 +1,8 @@
-
-import re
-import os
-import sys
-import shutil
 import contextlib
+import os
+import re
+import shutil
+import sys
 from io import StringIO
 from tempfile import mkstemp
 from unittest import TestCase as BaseTestCase
@@ -11,18 +10,18 @@ from unittest import TestCase as BaseTestCase
 try:
     import pytest
 except ImportError:
-    raise SystemExit("pytest missing: sudo apt-get install python-pytest")
+    raise SystemExit('pytest missing: sudo apt-get install python-pytest')
 
 
-DATA_DIR = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), "data")
+DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
 assert isinstance(DATA_DIR, str)
 
 
 _fs_enc = sys.getfilesystemencoding()
-if "öäü".encode(_fs_enc, "replace").decode(_fs_enc) != u"öäü":
-    raise RuntimeError("This test suite needs a unicode locale encoding. "
-                       "Try setting LANG=C.UTF-8")
+if 'öäü'.encode(_fs_enc, 'replace').decode(_fs_enc) != 'öäü':
+    raise RuntimeError(
+        'This test suite needs a unicode locale encoding. Try setting LANG=C.UTF-8'
+    )
 
 
 def get_temp_copy(path):
@@ -35,7 +34,7 @@ def get_temp_copy(path):
     return filename
 
 
-def get_temp_empty(ext=""):
+def get_temp_empty(ext=''):
     """Returns an empty file with the extension"""
 
     fd, filename = mkstemp(suffix=ext)
@@ -66,7 +65,6 @@ def capture_output():
 
 
 class TestCase(BaseTestCase):
-
     def failUnlessRaisesRegexp(self, exc, re_, fun, *args, **kwargs):
         def wrapped(*args, **kwargs):
             try:
@@ -74,6 +72,7 @@ class TestCase(BaseTestCase):
             except Exception as e:
                 self.failUnless(re.search(re_, str(e)))
                 raise
+
         self.failUnlessRaises(exc, wrapped, *args, **kwargs)
 
     # silence deprec warnings about useless renames
@@ -109,12 +108,12 @@ def unit(run=[], exitfirst=False):
     args = []
 
     if run:
-        args.append("-k")
-        args.append(" or ".join(run))
+        args.append('-k')
+        args.append(' or '.join(run))
 
     if exitfirst:
-        args.append("-x")
+        args.append('-x')
 
-    args.append("tests")
+    args.append('tests')
 
     return pytest.main(args=args)

@@ -28,7 +28,7 @@ class RiffChunk(IffChunk):
 
     @classmethod
     def get_class(cls, id):
-        if id in (u'LIST', u'RIFF'):
+        if id in ('LIST', 'RIFF'):
             return RiffListChunk
         else:
             return cls
@@ -49,7 +49,7 @@ class RiffListChunk(RiffChunk, IffContainerChunkMixin):
         return RiffChunk.parse(self._fileobj, self)
 
     def __init__(self, fileobj, id, data_size, parent_chunk):
-        if id not in (u'RIFF', u'LIST'):
+        if id not in ('RIFF', 'LIST'):
             raise InvalidChunk('Expected RIFF or LIST chunk, got %s' % id)
 
         RiffChunk.__init__(self, fileobj, id, data_size, parent_chunk)
@@ -62,8 +62,7 @@ class RiffFile(IffFile):
     def __init__(self, fileobj):
         super().__init__(RiffChunk, fileobj)
 
-        if self.root.id != u'RIFF':
-            raise InvalidChunk("Root chunk must be a RIFF chunk, got %s"
-                               % self.root.id)
+        if self.root.id != 'RIFF':
+            raise InvalidChunk('Root chunk must be a RIFF chunk, got %s' % self.root.id)
 
         self.file_type = self.root.name

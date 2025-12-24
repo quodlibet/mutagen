@@ -1,46 +1,44 @@
-
 import os
-import sys
-from tempfile import mkstemp
 import shutil
+import sys
 import warnings
 from io import BytesIO
+from os import devnull
+from tempfile import mkstemp
 
-from hypothesis.strategies import composite, integers, one_of
 from hypothesis import given
+from hypothesis.strategies import composite, integers, one_of
 
-from tests import TestCase, DATA_DIR, get_temp_copy
-from mutagen import File, Metadata, FileType, MutagenError, PaddingInfo
-from mutagen._util import loadfile, get_size
-from mutagen.oggvorbis import OggVorbis
-from mutagen.oggflac import OggFLAC
-from mutagen.oggspeex import OggSpeex
-from mutagen.oggtheora import OggTheora
-from mutagen.oggopus import OggOpus
-from mutagen.mp3 import MP3, EasyMP3
-from mutagen.id3 import ID3FileType
-from mutagen.apev2 import APEv2File
-from mutagen.flac import FLAC
-from mutagen.wavpack import WavPack
-from mutagen.trueaudio import TrueAudio, EasyTrueAudio
-from mutagen.mp4 import MP4
-from mutagen.musepack import Musepack
-from mutagen.monkeysaudio import MonkeysAudio
-from mutagen.optimfrog import OptimFROG
-from mutagen.asf import ASF
-from mutagen.aiff import AIFF
+from mutagen import File, FileType, Metadata, MutagenError, PaddingInfo
+from mutagen._util import get_size, loadfile
 from mutagen.aac import AAC
 from mutagen.ac3 import AC3
-from mutagen.smf import SMF
-from mutagen.tak import TAK
+from mutagen.aiff import AIFF
+from mutagen.apev2 import APEv2File
+from mutagen.asf import ASF
 from mutagen.dsdiff import DSDIFF
 from mutagen.dsf import DSF
+from mutagen.flac import FLAC
+from mutagen.id3 import ID3FileType
+from mutagen.monkeysaudio import MonkeysAudio
+from mutagen.mp3 import MP3, EasyMP3
+from mutagen.mp4 import MP4
+from mutagen.musepack import Musepack
+from mutagen.oggflac import OggFLAC
+from mutagen.oggopus import OggOpus
+from mutagen.oggspeex import OggSpeex
+from mutagen.oggtheora import OggTheora
+from mutagen.oggvorbis import OggVorbis
+from mutagen.optimfrog import OptimFROG
+from mutagen.smf import SMF
+from mutagen.tak import TAK
+from mutagen.trueaudio import EasyTrueAudio, TrueAudio
 from mutagen.wave import WAVE
-from os import devnull
+from mutagen.wavpack import WavPack
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TMetadata(TestCase):
-
     class FakeMeta(Metadata):
         def __init__(self):
             pass
@@ -53,20 +51,15 @@ class TMetadata(TestCase):
         self.failUnlessRaises(NotImplementedError, m.load, BytesIO())
 
     def test_virtual_save(self):
-        self.failUnlessRaises(
-            NotImplementedError, self.FakeMeta().save, BytesIO())
-        self.failUnlessRaises(
-            NotImplementedError, self.FakeMeta().save, BytesIO())
+        self.failUnlessRaises(NotImplementedError, self.FakeMeta().save, BytesIO())
+        self.failUnlessRaises(NotImplementedError, self.FakeMeta().save, BytesIO())
 
     def test_virtual_delete(self):
-        self.failUnlessRaises(
-            NotImplementedError, self.FakeMeta().delete, BytesIO())
-        self.failUnlessRaises(
-            NotImplementedError, self.FakeMeta().delete, BytesIO())
+        self.failUnlessRaises(NotImplementedError, self.FakeMeta().delete, BytesIO())
+        self.failUnlessRaises(NotImplementedError, self.FakeMeta().delete, BytesIO())
 
 
 class TPaddingInfo(TestCase):
-
     def test_props(self):
         info = PaddingInfo(10, 100)
         self.assertEqual(info.size, 100)
@@ -90,11 +83,10 @@ class TPaddingInfo(TestCase):
 
     def test_repr(self):
         info = PaddingInfo(10, 100)
-        self.assertEqual(repr(info), "<PaddingInfo size=100 padding=10>")
+        self.assertEqual(repr(info), '<PaddingInfo size=100 padding=10>')
 
 
 class MyFileType(FileType):
-
     @loadfile()
     def load(self, filething, arg=1):
         self.filename = filething.filename
@@ -103,14 +95,13 @@ class MyFileType(FileType):
 
 
 class TFileTypeLoad(TestCase):
-
-    filename = os.path.join(DATA_DIR, "empty.ogg")
+    filename = os.path.join(DATA_DIR, 'empty.ogg')
 
     def test_old_argument_handling(self):
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
+            warnings.simplefilter('ignore')
             f = MyFileType()
-        self.assertFalse(hasattr(f, "a"))
+        self.assertFalse(hasattr(f, 'a'))
 
         f = MyFileType(self.filename)
         self.assertEquals(f.arg, 1)
@@ -132,9 +123,9 @@ class TFileTypeLoad(TestCase):
     def test_both_args(self):
         # fileobj wins, but filename is saved
         x = BytesIO()
-        f = MyFileType(filename="foo", fileobj=x)
+        f = MyFileType(filename='foo', fileobj=x)
         self.assertTrue(f.fileobj is x)
-        self.assertEquals(f.filename, "foo")
+        self.assertEquals(f.filename, 'foo')
 
     def test_fileobj(self):
         x = BytesIO()
@@ -160,11 +151,10 @@ class TFileTypeLoad(TestCase):
 
 
 class TFileType(TestCase):
-
     def setUp(self):
-        self.vorbis = File(os.path.join(DATA_DIR, "empty.ogg"))
+        self.vorbis = File(os.path.join(DATA_DIR, 'empty.ogg'))
 
-        filename = get_temp_copy(os.path.join(DATA_DIR, "xing.mp3"))
+        filename = get_temp_copy(os.path.join(DATA_DIR, 'xing.mp3'))
         self.mp3_notags = File(filename)
         self.mp3_filename = filename
 
@@ -172,17 +162,17 @@ class TFileType(TestCase):
         os.remove(self.mp3_filename)
 
     def test_delitem_not_there(self):
-        self.failUnlessRaises(KeyError, self.vorbis.__delitem__, "foobar")
+        self.failUnlessRaises(KeyError, self.vorbis.__delitem__, 'foobar')
 
     def test_add_tags(self):
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
+            warnings.simplefilter('ignore')
             self.failUnlessRaises(NotImplementedError, FileType().add_tags)
 
     def test_delitem(self):
-        self.vorbis["foobar"] = "quux"
-        del self.vorbis["foobar"]
-        self.failIf("quux" in self.vorbis)
+        self.vorbis['foobar'] = 'quux'
+        del self.vorbis['foobar']
+        self.failIf('quux' in self.vorbis)
 
     def test_save_no_tags(self):
         self.assertTrue(self.mp3_notags.tags is None)
@@ -215,7 +205,7 @@ class _TestFileObj(object):
         self.operations += 1
         if self._fail_after != -1:
             if self.operations > self._fail_after:
-                raise IOError("fail")
+                raise IOError('fail')
 
     def tell(self):
         self._check_fail()
@@ -249,7 +239,7 @@ class _TestFileObj(object):
         data = self._fileobj.read(size)
         self.dataread += len(data)
         if self._stop_after != -1 and self.dataread > self._stop_after:
-            data = data[:self._stop_after - self.dataread]
+            data = data[: self._stop_after - self.dataread]
         return data
 
     def seek(self, offset, whence=0):
@@ -279,14 +269,13 @@ def generate_test_file_objects(fileobj, func):
 
     @composite
     def strategy(draw):
+        stop_strat = integers(min_value=0, max_value=t.dataread).map(
+            lambda i: _TestFileObj(fileobj, stop_after=i)
+        )
 
-        stop_strat = integers(
-            min_value=0, max_value=t.dataread).map(
-                lambda i: _TestFileObj(fileobj, stop_after=i))
-
-        fail_strat = integers(
-            min_value=0, max_value=t.operations).map(
-                lambda i: _TestFileObj(fileobj, fail_after=i))
+        fail_strat = integers(min_value=0, max_value=t.operations).map(
+            lambda i: _TestFileObj(fileobj, fail_after=i)
+        )
 
         x = draw(one_of(stop_strat, fail_strat))
         return x
@@ -295,7 +284,6 @@ def generate_test_file_objects(fileobj, func):
 
 
 class TAbstractFileType(object):
-
     PATH = None
     KIND = None
 
@@ -310,11 +298,11 @@ class TAbstractFileType(object):
             pass
 
     def test_fileobj_load(self):
-        with open(self.filename, "rb") as h:
+        with open(self.filename, 'rb') as h:
             self.KIND(h)
 
     def test_fileobj_save(self):
-        with open(self.filename, "rb+") as h:
+        with open(self.filename, 'rb+') as h:
             f = self.KIND(h)
             h.seek(0)
             f.save(h)
@@ -323,23 +311,23 @@ class TAbstractFileType(object):
 
     def test_module_delete_fileobj(self):
         mod = sys.modules[self.KIND.__module__]
-        if hasattr(mod, "delete"):
-            with open(self.filename, "rb+") as h:
+        if hasattr(mod, 'delete'):
+            with open(self.filename, 'rb+') as h:
                 mod.delete(fileobj=h)
 
     def test_stringio(self):
-        with open(self.filename, "rb") as h:
+        with open(self.filename, 'rb') as h:
             fileobj = BytesIO(h.read())
             self.KIND(fileobj)
             # make sure it's not closed
             fileobj.read(0)
 
     def test_testfileobj(self):
-        with open(self.filename, "rb") as h:
+        with open(self.filename, 'rb') as h:
             self.KIND(_TestFileObj(h))
 
     def test_test_fileobj_load(self):
-        with open(self.filename, "rb") as h:
+        with open(self.filename, 'rb') as h:
 
             @given(generate_test_file_objects(h, self.KIND))
             def run(t):
@@ -351,7 +339,7 @@ class TAbstractFileType(object):
             run()
 
     def test_test_fileobj_save(self):
-        with open(self.filename, "rb+") as h:
+        with open(self.filename, 'rb+') as h:
             o = self.KIND(_TestFileObj(h))
 
             @given(generate_test_file_objects(h, lambda t: o.save(fileobj=t)))
@@ -364,11 +352,10 @@ class TAbstractFileType(object):
             run()
 
     def test_test_fileobj_delete(self):
-        with open(self.filename, "rb+") as h:
+        with open(self.filename, 'rb+') as h:
             o = self.KIND(_TestFileObj(h))
 
-            @given(generate_test_file_objects(
-                h, lambda t: o.delete(fileobj=t)))
+            @given(generate_test_file_objects(h, lambda t: o.delete(fileobj=t)))
             def run(t):
                 try:
                     o.delete(fileobj=t)
@@ -384,7 +371,7 @@ class TAbstractFileType(object):
         self.assertTrue(isinstance(File(self.PATH), self.KIND))
 
     def test_not_file(self):
-        self.failUnlessRaises(MutagenError, self.KIND, "/dev/doesnotexist")
+        self.failUnlessRaises(MutagenError, self.KIND, '/dev/doesnotexist')
 
     def test_pprint(self):
         res = self.audio.pprint()
@@ -405,7 +392,7 @@ class TAbstractFileType(object):
 
     def test_load(self):
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
+            warnings.simplefilter('ignore')
             x = self.KIND()
         x.load(self.filename)
         x.save()
@@ -456,82 +443,82 @@ class TAbstractFileType(object):
         self.assertRaises(MutagenError, self.audio.add_tags)
 
     def test_score(self):
-        with open(self.filename, "rb") as fileobj:
+        with open(self.filename, 'rb') as fileobj:
             header = fileobj.read(128)
             self.KIND.score(self.filename, fileobj, header)
 
     def test_dict(self):
         self.audio.keys()
-        self.assertRaises(KeyError, self.audio.__delitem__, "nopenopenopenope")
+        self.assertRaises(KeyError, self.audio.__delitem__, 'nopenopenopenope')
         for key, value in self.audio.items():
             del self.audio[key]
             self.audio[key] = value
 
 
 _FILETYPES = {
-    OggVorbis: [os.path.join(DATA_DIR, "empty.ogg")],
-    OggFLAC: [os.path.join(DATA_DIR, "empty.oggflac")],
-    OggSpeex: [os.path.join(DATA_DIR, "empty.spx")],
-    OggTheora: [os.path.join(DATA_DIR, "sample.oggtheora")],
-    OggOpus: [os.path.join(DATA_DIR, "example.opus")],
-    FLAC: [os.path.join(DATA_DIR, "silence-44-s.flac")],
-    TrueAudio: [os.path.join(DATA_DIR, "empty.tta")],
-    WavPack: [os.path.join(DATA_DIR, "silence-44-s.wv")],
+    OggVorbis: [os.path.join(DATA_DIR, 'empty.ogg')],
+    OggFLAC: [os.path.join(DATA_DIR, 'empty.oggflac')],
+    OggSpeex: [os.path.join(DATA_DIR, 'empty.spx')],
+    OggTheora: [os.path.join(DATA_DIR, 'sample.oggtheora')],
+    OggOpus: [os.path.join(DATA_DIR, 'example.opus')],
+    FLAC: [os.path.join(DATA_DIR, 'silence-44-s.flac')],
+    TrueAudio: [os.path.join(DATA_DIR, 'empty.tta')],
+    WavPack: [os.path.join(DATA_DIR, 'silence-44-s.wv')],
     MP3: [
-        os.path.join(DATA_DIR, "bad-xing.mp3"),
-        os.path.join(DATA_DIR, "xing.mp3"),
-        os.path.join(DATA_DIR, "silence-44-s.mp3"),
-        os.path.join(DATA_DIR, "no-tags.mp3"),
+        os.path.join(DATA_DIR, 'bad-xing.mp3'),
+        os.path.join(DATA_DIR, 'xing.mp3'),
+        os.path.join(DATA_DIR, 'silence-44-s.mp3'),
+        os.path.join(DATA_DIR, 'no-tags.mp3'),
     ],
     Musepack: [
-        os.path.join(DATA_DIR, "click.mpc"),
-        os.path.join(DATA_DIR, "sv4_header.mpc"),
-        os.path.join(DATA_DIR, "sv5_header.mpc"),
-        os.path.join(DATA_DIR, "sv8_header.mpc"),
+        os.path.join(DATA_DIR, 'click.mpc'),
+        os.path.join(DATA_DIR, 'sv4_header.mpc'),
+        os.path.join(DATA_DIR, 'sv5_header.mpc'),
+        os.path.join(DATA_DIR, 'sv8_header.mpc'),
     ],
     OptimFROG: [
-        os.path.join(DATA_DIR, "empty.ofr"),
-        os.path.join(DATA_DIR, "empty.ofs"),
+        os.path.join(DATA_DIR, 'empty.ofr'),
+        os.path.join(DATA_DIR, 'empty.ofs'),
     ],
     AAC: [
-        os.path.join(DATA_DIR, "empty.aac"),
-        os.path.join(DATA_DIR, "adif.aac"),
+        os.path.join(DATA_DIR, 'empty.aac'),
+        os.path.join(DATA_DIR, 'adif.aac'),
     ],
     AC3: [
-        os.path.join(DATA_DIR, "silence-44-s.ac3"),
-        os.path.join(DATA_DIR, "silence-44-s.eac3"),
+        os.path.join(DATA_DIR, 'silence-44-s.ac3'),
+        os.path.join(DATA_DIR, 'silence-44-s.eac3'),
     ],
     ASF: [
-        os.path.join(DATA_DIR, "silence-1.wma"),
-        os.path.join(DATA_DIR, "silence-2.wma"),
-        os.path.join(DATA_DIR, "silence-3.wma"),
+        os.path.join(DATA_DIR, 'silence-1.wma'),
+        os.path.join(DATA_DIR, 'silence-2.wma'),
+        os.path.join(DATA_DIR, 'silence-3.wma'),
     ],
     AIFF: [
-        os.path.join(DATA_DIR, "with-id3.aif"),
-        os.path.join(DATA_DIR, "11k-1ch-2s-silence.aif"),
-        os.path.join(DATA_DIR, "48k-2ch-s16-silence.aif"),
-        os.path.join(DATA_DIR, "8k-1ch-1s-silence.aif"),
-        os.path.join(DATA_DIR, "8k-1ch-3.5s-silence.aif"),
-        os.path.join(DATA_DIR, "8k-4ch-1s-silence.aif")
+        os.path.join(DATA_DIR, 'with-id3.aif'),
+        os.path.join(DATA_DIR, '11k-1ch-2s-silence.aif'),
+        os.path.join(DATA_DIR, '48k-2ch-s16-silence.aif'),
+        os.path.join(DATA_DIR, '8k-1ch-1s-silence.aif'),
+        os.path.join(DATA_DIR, '8k-1ch-3.5s-silence.aif'),
+        os.path.join(DATA_DIR, '8k-4ch-1s-silence.aif'),
     ],
     MonkeysAudio: [
-        os.path.join(DATA_DIR, "mac-399.ape"),
-        os.path.join(DATA_DIR, "mac-396.ape"),
+        os.path.join(DATA_DIR, 'mac-399.ape'),
+        os.path.join(DATA_DIR, 'mac-396.ape'),
     ],
     MP4: [
-        os.path.join(DATA_DIR, "has-tags.m4a"),
-        os.path.join(DATA_DIR, "no-tags.m4a"),
-        os.path.join(DATA_DIR, "no-tags.3g2"),
-        os.path.join(DATA_DIR, "truncated-64bit.mp4"),
-        os.path.join(DATA_DIR, "ep7.m4b"),
-        os.path.join(DATA_DIR, "ep9.m4b"),
+        os.path.join(DATA_DIR, 'has-tags.m4a'),
+        os.path.join(DATA_DIR, 'no-tags.m4a'),
+        os.path.join(DATA_DIR, 'no-tags.3g2'),
+        os.path.join(DATA_DIR, 'truncated-64bit.mp4'),
+        os.path.join(DATA_DIR, 'ep7.m4b'),
+        os.path.join(DATA_DIR, 'ep9.m4b'),
     ],
     SMF: [
-        os.path.join(DATA_DIR, "sample.mid"),
+        os.path.join(DATA_DIR, 'sample.mid'),
     ],
     TAK: [
-        os.path.join(DATA_DIR, "silence-44-s.tak"),
-        os.path.join(DATA_DIR, "has-tags.tak"),
+        os.path.join(DATA_DIR, 'silence-44-s.tak'),
+        os.path.join(DATA_DIR, 'has-tags.tak'),
     ],
     DSDIFF: [
         os.path.join(DATA_DIR, '2822400-1ch-0s-silence.dff'),
@@ -548,7 +535,7 @@ _FILETYPES = {
         os.path.join(DATA_DIR, 'silence-2s-PCM-16000-08-ID3v23.wav'),
         os.path.join(DATA_DIR, 'silence-2s-PCM-16000-08-notags.wav'),
         os.path.join(DATA_DIR, 'silence-2s-PCM-44100-16-ID3v23.wav'),
-    ]
+    ],
 }
 
 _FILETYPES[ID3FileType] = _FILETYPES[MP3]
@@ -559,19 +546,21 @@ def create_filetype_tests():
     tests = {}
     for kind, paths in _FILETYPES.items():
         for i, path in enumerate(paths):
-            suffix = "_" + str(i + 1) if i else ""
-            new_type = type("TFileType" + kind.__name__ + suffix,
-                            (TAbstractFileType, TestCase),
-                            {"PATH": path, "KIND": kind})
+            suffix = '_' + str(i + 1) if i else ''
+            new_type = type(
+                'TFileType' + kind.__name__ + suffix,
+                (TAbstractFileType, TestCase),
+                {'PATH': path, 'KIND': kind},
+            )
             tests[new_type.__name__] = new_type
     for name, test_type in sorted(tests.items()):
         globals()[name] = test_type
+
 
 create_filetype_tests()
 
 
 class TFile(TestCase):
-
     @property
     def filenames(self):
         for kind, paths in _FILETYPES.items():
@@ -582,19 +571,19 @@ class TFile(TestCase):
         try:
             self.failUnless(File(devnull) is None)
         except (OSError, IOError):
-            print("WARNING: Unable to open %s." % devnull)
+            print('WARNING: Unable to open %s.' % devnull)
         self.failUnless(File(__file__) is None)
 
     def test_empty(self):
-        filename = os.path.join(DATA_DIR, "empty")
-        open(filename, "wb").close()
+        filename = os.path.join(DATA_DIR, 'empty')
+        open(filename, 'wb').close()
         try:
             self.failUnless(File(filename) is None)
         finally:
             os.unlink(filename)
 
     def test_not_file(self):
-        self.failUnlessRaises(MutagenError, File, "/dev/doesnotexist")
+        self.failUnlessRaises(MutagenError, File, '/dev/doesnotexist')
 
     def test_no_options(self):
         for filename in self.filenames:
@@ -603,15 +592,15 @@ class TFile(TestCase):
 
     def test_fileobj(self):
         for filename in self.filenames:
-            with open(filename, "rb") as h:
+            with open(filename, 'rb') as h:
                 self.assertTrue(File(h) is not None)
-            with open(filename, "rb") as h:
+            with open(filename, 'rb') as h:
                 fileobj = BytesIO(h.read())
                 self.assertTrue(File(fileobj, filename=filename) is not None)
 
     def test_mock_fileobj(self):
         for filename in self.filenames:
-            with open(filename, "rb") as h:
+            with open(filename, 'rb') as h:
 
                 @given(generate_test_file_objects(h, File))
                 def run(t):
@@ -623,53 +612,63 @@ class TFile(TestCase):
                 run()
 
     def test_easy_mp3(self):
-        self.failUnless(isinstance(
-            File(os.path.join(DATA_DIR, "silence-44-s.mp3"), easy=True),
-            EasyMP3))
+        self.failUnless(
+            isinstance(
+                File(os.path.join(DATA_DIR, 'silence-44-s.mp3'), easy=True), EasyMP3
+            )
+        )
 
     def test_apev2(self):
-        self.failUnless(isinstance(
-            File(os.path.join(DATA_DIR, "oldtag.apev2")), APEv2File))
+        self.failUnless(
+            isinstance(File(os.path.join(DATA_DIR, 'oldtag.apev2')), APEv2File)
+        )
 
     def test_easy_tta(self):
-        self.failUnless(isinstance(
-            File(os.path.join(DATA_DIR, "empty.tta"), easy=True),
-            EasyTrueAudio))
+        self.failUnless(
+            isinstance(
+                File(os.path.join(DATA_DIR, 'empty.tta'), easy=True), EasyTrueAudio
+            )
+        )
 
     def test_id3_indicates_mp3_not_tta(self):
-        header = b"ID3 the rest of this is garbage"
+        header = b'ID3 the rest of this is garbage'
         fileobj = BytesIO(header)
-        filename = "not-identifiable.ext"
-        self.failUnless(TrueAudio.score(filename, fileobj, header) <
-                        MP3.score(filename, fileobj, header))
+        filename = 'not-identifiable.ext'
+        self.failUnless(
+            TrueAudio.score(filename, fileobj, header)
+            < MP3.score(filename, fileobj, header)
+        )
 
     def test_prefer_theora_over_vorbis(self):
         header = (
-            b"OggS\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\xe1x\x06\x0f"
+            b'OggS\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\xe1x\x06\x0f'
             b"\x00\x00\x00\x00)S'\xf4\x01*\x80theora\x03\x02\x01\x006\x00\x1e"
-            b"\x00\x03V\x00\x01\xe0\x00\x00\x00\x00\x00\x18\x00\x00\x00\x01"
-            b"\x00\x00\x00\x00\x00\x00\x00&%\xa0\x00\xc0OggS\x00\x02\x00\x00"
-            b"\x00\x00\x00\x00\x00\x00d#\xa8\x1f\x00\x00\x00\x00]Y\xc0\xc0"
-            b"\x01\x1e\x01vorbis\x00\x00\x00\x00\x02\x80\xbb\x00\x00\x00\x00"
-            b"\x00\x00\x00\xee\x02\x00\x00\x00\x00\x00\xb8\x01")
+            b'\x00\x03V\x00\x01\xe0\x00\x00\x00\x00\x00\x18\x00\x00\x00\x01'
+            b'\x00\x00\x00\x00\x00\x00\x00&%\xa0\x00\xc0OggS\x00\x02\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00d#\xa8\x1f\x00\x00\x00\x00]Y\xc0\xc0'
+            b'\x01\x1e\x01vorbis\x00\x00\x00\x00\x02\x80\xbb\x00\x00\x00\x00'
+            b'\x00\x00\x00\xee\x02\x00\x00\x00\x00\x00\xb8\x01'
+        )
         fileobj = BytesIO(header)
-        filename = "not-identifiable.ext"
-        self.failUnless(OggVorbis.score(filename, fileobj, header) <
-                        OggTheora.score(filename, fileobj, header))
+        filename = 'not-identifiable.ext'
+        self.failUnless(
+            OggVorbis.score(filename, fileobj, header)
+            < OggTheora.score(filename, fileobj, header)
+        )
 
 
 class TFileUpperExt(TestCase):
     FILES = [
-        (os.path.join(DATA_DIR, "empty.ofr"), OptimFROG),
-        (os.path.join(DATA_DIR, "sv5_header.mpc"), Musepack),
-        (os.path.join(DATA_DIR, "silence-3.wma"), ASF),
-        (os.path.join(DATA_DIR, "truncated-64bit.mp4"), MP4),
-        (os.path.join(DATA_DIR, "silence-44-s.flac"), FLAC),
+        (os.path.join(DATA_DIR, 'empty.ofr'), OptimFROG),
+        (os.path.join(DATA_DIR, 'sv5_header.mpc'), Musepack),
+        (os.path.join(DATA_DIR, 'silence-3.wma'), ASF),
+        (os.path.join(DATA_DIR, 'truncated-64bit.mp4'), MP4),
+        (os.path.join(DATA_DIR, 'silence-44-s.flac'), FLAC),
     ]
 
     def setUp(self):
         checks = []
-        for (original, instance) in self.FILES:
+        for original, instance in self.FILES:
             ext = os.path.splitext(original)[1]
             fd, filename = mkstemp(suffix=ext.upper())
             os.close(fd)
@@ -678,31 +677,29 @@ class TFileUpperExt(TestCase):
         self.checks = checks
 
     def test_case_insensitive_ext(self):
-        for (path, instance) in self.checks:
+        for path, instance in self.checks:
             if isinstance(path, bytes):
-                path = path.decode("ascii")
-            self.failUnless(
-                isinstance(File(path, options=[instance]), instance))
-            path = path.encode("ascii")
-            self.failUnless(
-                isinstance(File(path, options=[instance]), instance))
+                path = path.decode('ascii')
+            self.failUnless(isinstance(File(path, options=[instance]), instance))
+            path = path.encode('ascii')
+            self.failUnless(isinstance(File(path, options=[instance]), instance))
 
     def tearDown(self):
-        for (path, instance) in self.checks:
+        for path, instance in self.checks:
             os.unlink(path)
 
 
 class TModuleImportAll(TestCase):
-
     def setUp(self):
         import mutagen
+
         files = os.listdir(mutagen.__path__[0])
         modules = set(os.path.splitext(f)[0] for f in files if f not in ['py.typed'])
-        modules = [f for f in modules if not f.startswith(("_", "."))]
+        modules = [f for f in modules if not f.startswith(('_', '.'))]
 
         self.modules = []
         for module in modules:
-            mod = getattr(__import__("mutagen." + module), module)
+            mod = getattr(__import__('mutagen.' + module), module)
             self.modules.append(mod)
 
     def tearDown(self):
@@ -710,7 +707,7 @@ class TModuleImportAll(TestCase):
 
     def test_all(self):
         for mod in self.modules:
-            for attr in getattr(mod, "__all__", []):
+            for attr in getattr(mod, '__all__', []):
                 getattr(mod, attr)
 
     def test_errors(self):

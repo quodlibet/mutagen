@@ -1,13 +1,12 @@
-
-import sys
-import afl
 import os
+import sys
 
+import afl
 from fuzztools import run_all
 
 
 def main():
-    run_all(b"smoke test")
+    run_all(b'smoke test')
 
     buffer = sys.stdin.buffer
     while afl.loop(1000):

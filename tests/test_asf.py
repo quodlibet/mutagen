@@ -1,37 +1,50 @@
-
 import os
 import warnings
 from io import BytesIO
 
-from mutagen.asf import ASF, ASFHeaderError, ASFValue, UNICODE, DWORD, QWORD
-from mutagen.asf import BOOL, WORD, BYTEARRAY, GUID
-from mutagen.asf._util import guid2bytes, bytes2guid
-from mutagen.asf._objects import ContentDescriptionObject, \
-    ExtendedContentDescriptionObject, HeaderExtensionObject, \
-    MetadataObject, MetadataLibraryObject, CodecListObject, PaddingObject, \
-    HeaderObject
-from mutagen.asf import ASFUnicodeAttribute, ASFError, ASFByteArrayAttribute, \
-    ASFBoolAttribute, ASFDWordAttribute, ASFQWordAttribute, ASFWordAttribute, \
-    ASFGUIDAttribute
-
-from tests import TestCase, DATA_DIR, get_temp_copy
+from mutagen.asf import (
+    ASF,
+    BOOL,
+    BYTEARRAY,
+    DWORD,
+    GUID,
+    QWORD,
+    UNICODE,
+    WORD,
+    ASFBoolAttribute,
+    ASFByteArrayAttribute,
+    ASFDWordAttribute,
+    ASFError,
+    ASFGUIDAttribute,
+    ASFHeaderError,
+    ASFQWordAttribute,
+    ASFUnicodeAttribute,
+    ASFValue,
+    ASFWordAttribute,
+)
+from mutagen.asf._objects import (
+    CodecListObject,
+    ContentDescriptionObject,
+    ExtendedContentDescriptionObject,
+    HeaderExtensionObject,
+    HeaderObject,
+    MetadataLibraryObject,
+    MetadataObject,
+    PaddingObject,
+)
+from mutagen.asf._util import bytes2guid, guid2bytes
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TASFFile(TestCase):
-
     def test_not_my_file(self):
-        self.failUnlessRaises(
-            ASFHeaderError, ASF,
-            os.path.join(DATA_DIR, "empty.ogg"))
-        self.failUnlessRaises(
-            ASFHeaderError, ASF,
-            os.path.join(DATA_DIR, "click.mpc"))
+        self.failUnlessRaises(ASFHeaderError, ASF, os.path.join(DATA_DIR, 'empty.ogg'))
+        self.failUnlessRaises(ASFHeaderError, ASF, os.path.join(DATA_DIR, 'click.mpc'))
 
 
 class TASFMisc(TestCase):
-
     def test_guid(self):
-        ex = "75B22633-668E-11CF-A6D9-00AA0062CE6C"
+        ex = '75B22633-668E-11CF-A6D9-00AA0062CE6C'
         b = guid2bytes(ex)
         self.assertEqual(len(b), 16)
         self.assertTrue(isinstance(b, bytes))
@@ -39,14 +52,13 @@ class TASFMisc(TestCase):
 
 
 class TASFInfo(TestCase):
-
     def setUp(self):
         # WMA 9.1 64kbps CBR 48khz
-        self.wma1 = ASF(os.path.join(DATA_DIR, "silence-1.wma"))
+        self.wma1 = ASF(os.path.join(DATA_DIR, 'silence-1.wma'))
         # WMA 9.1 Professional 192kbps VBR 44khz
-        self.wma2 = ASF(os.path.join(DATA_DIR, "silence-2.wma"))
+        self.wma2 = ASF(os.path.join(DATA_DIR, 'silence-2.wma'))
         # WMA 9.1 Lossless 44khz
-        self.wma3 = ASF(os.path.join(DATA_DIR, "silence-3.wma"))
+        self.wma3 = ASF(os.path.join(DATA_DIR, 'silence-3.wma'))
 
     def test_length(self):
         self.failUnlessAlmostEqual(self.wma1.info.length, 3.7, 1)
@@ -69,28 +81,31 @@ class TASFInfo(TestCase):
         self.failUnlessEqual(self.wma3.info.channels, 2)
 
     def test_codec_type(self):
-        self.assertEqual(self.wma1.info.codec_type,
-                         "Windows Media Audio 9 Standard")
-        self.assertEqual(self.wma2.info.codec_type,
-                         "Windows Media Audio 9 Professional")
-        self.assertEqual(self.wma3.info.codec_type,
-                         "Windows Media Audio 9 Lossless")
+        self.assertEqual(self.wma1.info.codec_type, 'Windows Media Audio 9 Standard')
+        self.assertEqual(
+            self.wma2.info.codec_type, 'Windows Media Audio 9 Professional'
+        )
+        self.assertEqual(self.wma3.info.codec_type, 'Windows Media Audio 9 Lossless')
 
     def test_codec_name(self):
-        self.assertEqual(self.wma1.info.codec_name,
-            "Windows Media Audio 9.1")
-        self.assertEqual(self.wma2.info.codec_name,
-            "Windows Media Audio 9.1 Professional")
-        self.assertEqual(self.wma3.info.codec_name,
-            "Windows Media Audio 9.1 Lossless")
+        self.assertEqual(self.wma1.info.codec_name, 'Windows Media Audio 9.1')
+        self.assertEqual(
+            self.wma2.info.codec_name, 'Windows Media Audio 9.1 Professional'
+        )
+        self.assertEqual(self.wma3.info.codec_name, 'Windows Media Audio 9.1 Lossless')
 
     def test_codec_description(self):
-        self.assertEqual(self.wma1.info.codec_description,
-            "64 kbps, 48 kHz, stereo 2-pass CBR")
-        self.assertEqual(self.wma2.info.codec_description,
-            "192 kbps, 44 kHz, 2 channel 24 bit 2-pass VBR")
-        self.assertEqual(self.wma3.info.codec_description,
-            "VBR Quality 100, 44 kHz, 2 channel 16 bit 1-pass VBR")
+        self.assertEqual(
+            self.wma1.info.codec_description, '64 kbps, 48 kHz, stereo 2-pass CBR'
+        )
+        self.assertEqual(
+            self.wma2.info.codec_description,
+            '192 kbps, 44 kHz, 2 channel 24 bit 2-pass VBR',
+        )
+        self.assertEqual(
+            self.wma3.info.codec_description,
+            'VBR Quality 100, 44 kHz, 2 channel 16 bit 1-pass VBR',
+        )
 
     def test_pprint(self):
         self.assertTrue(self.wma1.info.pprint())
@@ -98,7 +113,6 @@ class TASFInfo(TestCase):
 
 
 class TASF(TestCase):
-
     def setUp(self):
         self.filename = get_temp_copy(self.original)
         self.audio = ASF(self.filename)
@@ -108,14 +122,13 @@ class TASF(TestCase):
 
 
 class TASFMixin(object):
-
     def test_header_object_misc(self):
         header = self.audio._header
         header.pprint()
         repr(header)
 
     def test_delete(self):
-        self.audio["QL/Bla"] = u"Foooooooooooooooooo"
+        self.audio['QL/Bla'] = 'Foooooooooooooooooo'
         self.audio.save(padding=lambda x: 0)
         filesize = os.path.getsize(self.audio.filename)
         self.audio.delete()
@@ -142,273 +155,260 @@ class TASFMixin(object):
     def test_slice(self):
         tags = self.audio.tags
         tags.clear()
-        tags["Author"] = [u"Foo", u"Bar"]
-        self.assertEqual(tags[:], [("Author", "Foo"), ("Author", "Bar")])
+        tags['Author'] = ['Foo', 'Bar']
+        self.assertEqual(tags[:], [('Author', 'Foo'), ('Author', 'Bar')])
         del tags[:]
         self.assertEqual(tags[:], [])
-        tags[:] = [("Author", "Baz")]
-        self.assertEqual(tags.items(), [("Author", ["Baz"])])
+        tags[:] = [('Author', 'Baz')]
+        self.assertEqual(tags.items(), [('Author', ['Baz'])])
 
     def test_iter(self):
-        self.assertEqual(next(iter(self.audio.tags)), ("Title", "test"))
-        self.assertEqual(list(self.audio.tags)[0], ("Title", "test"))
+        self.assertEqual(next(iter(self.audio.tags)), ('Title', 'test'))
+        self.assertEqual(list(self.audio.tags)[0], ('Title', 'test'))
 
     def test_contains(self):
-        self.failUnlessEqual("notatag" in self.audio.tags, False)
+        self.failUnlessEqual('notatag' in self.audio.tags, False)
 
     def test_inval_type(self):
-        self.failUnlessRaises(ValueError, ASFValue, "", 4242)
+        self.failUnlessRaises(ValueError, ASFValue, '', 4242)
 
     def test_repr(self):
-        repr(ASFValue(u"foo", UNICODE, stream=1, language=2))
+        repr(ASFValue('foo', UNICODE, stream=1, language=2))
 
     def test_auto_guuid(self):
         value = ASFValue(b'\x9eZl}\x89\xa2\xb5D\xb8\xa30\xfe', GUID)
-        self.set_key(u"WM/WMCollectionGroupID", value, [value])
+        self.set_key('WM/WMCollectionGroupID', value, [value])
 
     def test_py3_bytes(self):
         value = ASFValue(b'\xff\x00', BYTEARRAY)
-        self.set_key(u"QL/Something", [b'\xff\x00'], [value])
+        self.set_key('QL/Something', [b'\xff\x00'], [value])
 
     def test_set_invalid(self):
         setitem = self.audio.__setitem__
-        self.assertRaises(TypeError, setitem, u"QL/Something", [object()])
+        self.assertRaises(TypeError, setitem, 'QL/Something', [object()])
 
         # don't delete on error
-        setitem(u"QL/Foobar", [u"ok"])
-        self.assertRaises(TypeError, setitem, u"QL/Foobar", [object()])
-        self.assertEqual(self.audio[u"QL/Foobar"], [u"ok"])
+        setitem('QL/Foobar', ['ok'])
+        self.assertRaises(TypeError, setitem, 'QL/Foobar', [object()])
+        self.assertEqual(self.audio['QL/Foobar'], ['ok'])
 
     def test_auto_unicode(self):
-        self.set_key(u"WM/AlbumTitle", u"foo",
-                     [ASFValue(u"foo", UNICODE)])
+        self.set_key('WM/AlbumTitle', 'foo', [ASFValue('foo', UNICODE)])
 
     def test_auto_unicode_list(self):
-        self.set_key(u"WM/AlbumTitle", [u"foo", u"bar"],
-                     [ASFValue(u"foo", UNICODE), ASFValue(u"bar", UNICODE)])
+        self.set_key(
+            'WM/AlbumTitle',
+            ['foo', 'bar'],
+            [ASFValue('foo', UNICODE), ASFValue('bar', UNICODE)],
+        )
 
     def test_word(self):
-        self.set_key(u"WM/Track", ASFValue(24, WORD), [ASFValue(24, WORD)])
+        self.set_key('WM/Track', ASFValue(24, WORD), [ASFValue(24, WORD)])
 
     def test_auto_word(self):
-        self.set_key(u"WM/Track", 12,
-                     [ASFValue(12, DWORD)])
+        self.set_key('WM/Track', 12, [ASFValue(12, DWORD)])
 
     def test_auto_word_list(self):
-        self.set_key(u"WM/Track", [12, 13],
-                     [ASFValue(12, WORD), ASFValue(13, WORD)])
+        self.set_key('WM/Track', [12, 13], [ASFValue(12, WORD), ASFValue(13, WORD)])
 
     def test_auto_dword(self):
-        self.set_key(u"WM/Track", 12,
-                     [ASFValue(12, DWORD)])
+        self.set_key('WM/Track', 12, [ASFValue(12, DWORD)])
 
     def test_auto_dword_list(self):
-        self.set_key(u"WM/Track", [12, 13],
-                     [ASFValue(12, DWORD), ASFValue(13, DWORD)])
+        self.set_key('WM/Track', [12, 13], [ASFValue(12, DWORD), ASFValue(13, DWORD)])
 
     def test_auto_qword(self):
-        self.set_key(u"WM/Track", 12,
-                     [ASFValue(12, QWORD)])
+        self.set_key('WM/Track', 12, [ASFValue(12, QWORD)])
 
     def test_auto_qword_list(self):
-        self.set_key(u"WM/Track", [12, 13],
-                     [ASFValue(12, QWORD), ASFValue(13, QWORD)])
+        self.set_key('WM/Track', [12, 13], [ASFValue(12, QWORD), ASFValue(13, QWORD)])
 
     def test_auto_bool(self):
-        self.set_key(u"IsVBR", True,
-                     [ASFValue(True, BOOL)])
+        self.set_key('IsVBR', True, [ASFValue(True, BOOL)])
 
     def test_auto_bool_list(self):
-        self.set_key(u"IsVBR", [True, False],
-                     [ASFValue(True, BOOL), ASFValue(False, BOOL)])
+        self.set_key(
+            'IsVBR', [True, False], [ASFValue(True, BOOL), ASFValue(False, BOOL)]
+        )
 
     def test_basic_tags(self):
-        self.set_key("Title", "Wheeee", ["Wheeee"])
-        self.set_key("Author", "Whoooo", ["Whoooo"])
-        self.set_key("Copyright", "Whaaaa", ["Whaaaa"])
-        self.set_key("Description", "Wii", ["Wii"])
-        self.set_key("Rating", "5", ["5"])
+        self.set_key('Title', 'Wheeee', ['Wheeee'])
+        self.set_key('Author', 'Whoooo', ['Whoooo'])
+        self.set_key('Copyright', 'Whaaaa', ['Whaaaa'])
+        self.set_key('Description', 'Wii', ['Wii'])
+        self.set_key('Rating', '5', ['5'])
 
     def test_stream(self):
-        self.audio["QL/OneHasStream"] = [
-            ASFValue("Whee", UNICODE, stream=2),
-            ASFValue("Whee", UNICODE),
+        self.audio['QL/OneHasStream'] = [
+            ASFValue('Whee', UNICODE, stream=2),
+            ASFValue('Whee', UNICODE),
         ]
-        self.audio["QL/AllHaveStream"] = [
-            ASFValue("Whee", UNICODE, stream=1),
-            ASFValue("Whee", UNICODE, stream=2),
+        self.audio['QL/AllHaveStream'] = [
+            ASFValue('Whee', UNICODE, stream=1),
+            ASFValue('Whee', UNICODE, stream=2),
         ]
-        self.audio["QL/NoStream"] = ASFValue("Whee", UNICODE)
+        self.audio['QL/NoStream'] = ASFValue('Whee', UNICODE)
         self.audio.save()
         self.audio = ASF(self.audio.filename)
-        self.failUnlessEqual(self.audio["QL/NoStream"][0].stream, None)
-        self.failUnlessEqual(self.audio["QL/OneHasStream"][1].stream, 2)
-        self.failUnlessEqual(self.audio["QL/OneHasStream"][0].stream, None)
-        self.failUnlessEqual(self.audio["QL/AllHaveStream"][0].stream, 1)
-        self.failUnlessEqual(self.audio["QL/AllHaveStream"][1].stream, 2)
+        self.failUnlessEqual(self.audio['QL/NoStream'][0].stream, None)
+        self.failUnlessEqual(self.audio['QL/OneHasStream'][1].stream, 2)
+        self.failUnlessEqual(self.audio['QL/OneHasStream'][0].stream, None)
+        self.failUnlessEqual(self.audio['QL/AllHaveStream'][0].stream, 1)
+        self.failUnlessEqual(self.audio['QL/AllHaveStream'][1].stream, 2)
 
     def test_language(self):
-        self.failIf("QL/OneHasLang" in self.audio)
-        self.failIf("QL/AllHaveLang" in self.audio)
-        self.audio["QL/OneHasLang"] = [
-            ASFValue("Whee", UNICODE, language=2),
-            ASFValue("Whee", UNICODE),
+        self.failIf('QL/OneHasLang' in self.audio)
+        self.failIf('QL/AllHaveLang' in self.audio)
+        self.audio['QL/OneHasLang'] = [
+            ASFValue('Whee', UNICODE, language=2),
+            ASFValue('Whee', UNICODE),
         ]
-        self.audio["QL/AllHaveLang"] = [
-            ASFValue("Whee", UNICODE, language=1),
-            ASFValue("Whee", UNICODE, language=2),
+        self.audio['QL/AllHaveLang'] = [
+            ASFValue('Whee', UNICODE, language=1),
+            ASFValue('Whee', UNICODE, language=2),
         ]
-        self.audio["QL/NoLang"] = ASFValue("Whee", UNICODE)
+        self.audio['QL/NoLang'] = ASFValue('Whee', UNICODE)
         self.audio.save()
         self.audio = ASF(self.audio.filename)
-        self.failUnlessEqual(self.audio["QL/NoLang"][0].language, None)
-        self.failUnlessEqual(self.audio["QL/OneHasLang"][1].language, 2)
-        self.failUnlessEqual(self.audio["QL/OneHasLang"][0].language, None)
-        self.failUnlessEqual(self.audio["QL/AllHaveLang"][0].language, 1)
-        self.failUnlessEqual(self.audio["QL/AllHaveLang"][1].language, 2)
+        self.failUnlessEqual(self.audio['QL/NoLang'][0].language, None)
+        self.failUnlessEqual(self.audio['QL/OneHasLang'][1].language, 2)
+        self.failUnlessEqual(self.audio['QL/OneHasLang'][0].language, None)
+        self.failUnlessEqual(self.audio['QL/AllHaveLang'][0].language, 1)
+        self.failUnlessEqual(self.audio['QL/AllHaveLang'][1].language, 2)
 
     def test_lang_and_stream_mix(self):
-        self.audio["QL/Mix"] = [
-            ASFValue("Whee", UNICODE, stream=1),
-            ASFValue("Whee", UNICODE, language=2),
-            ASFValue("Whee", UNICODE, stream=3, language=4),
-            ASFValue("Whee", UNICODE),
+        self.audio['QL/Mix'] = [
+            ASFValue('Whee', UNICODE, stream=1),
+            ASFValue('Whee', UNICODE, language=2),
+            ASFValue('Whee', UNICODE, stream=3, language=4),
+            ASFValue('Whee', UNICODE),
         ]
         self.audio.save()
         self.audio = ASF(self.audio.filename)
         # order not preserved here because they end up in different objects.
-        self.failUnlessEqual(self.audio["QL/Mix"][1].language, None)
-        self.failUnlessEqual(self.audio["QL/Mix"][1].stream, 1)
-        self.failUnlessEqual(self.audio["QL/Mix"][2].language, 2)
-        self.failUnlessEqual(self.audio["QL/Mix"][2].stream, 0)
-        self.failUnlessEqual(self.audio["QL/Mix"][3].language, 4)
-        self.failUnlessEqual(self.audio["QL/Mix"][3].stream, 3)
-        self.failUnlessEqual(self.audio["QL/Mix"][0].language, None)
-        self.failUnlessEqual(self.audio["QL/Mix"][0].stream, None)
+        self.failUnlessEqual(self.audio['QL/Mix'][1].language, None)
+        self.failUnlessEqual(self.audio['QL/Mix'][1].stream, 1)
+        self.failUnlessEqual(self.audio['QL/Mix'][2].language, 2)
+        self.failUnlessEqual(self.audio['QL/Mix'][2].stream, 0)
+        self.failUnlessEqual(self.audio['QL/Mix'][3].language, 4)
+        self.failUnlessEqual(self.audio['QL/Mix'][3].stream, 3)
+        self.failUnlessEqual(self.audio['QL/Mix'][0].language, None)
+        self.failUnlessEqual(self.audio['QL/Mix'][0].stream, None)
 
     def test_data_size(self):
-        v = ASFValue("", UNICODE, data=b'4\xd8\x1e\xdd\x00\x00')
+        v = ASFValue('', UNICODE, data=b'4\xd8\x1e\xdd\x00\x00')
         self.failUnlessEqual(v.data_size(), len(v._render()))
 
 
 class TASFAttributes(TestCase):
-
     def test_ASFUnicodeAttribute(self):
-        self.assertRaises(TypeError, ASFUnicodeAttribute, b"\xff")
-        self.assertRaises(ASFError, ASFUnicodeAttribute, data=b"\x00")
-        self.assertEqual(ASFUnicodeAttribute(u"foo").value, u"foo")
+        self.assertRaises(TypeError, ASFUnicodeAttribute, b'\xff')
+        self.assertRaises(ASFError, ASFUnicodeAttribute, data=b'\x00')
+        self.assertEqual(ASFUnicodeAttribute('foo').value, 'foo')
 
-        assert ASFUnicodeAttribute(data=b"") == u""
+        assert ASFUnicodeAttribute(data=b'') == ''
 
     def test_ASFUnicodeAttribute_dunder(self):
-        attr = ASFUnicodeAttribute(u"foo")
+        attr = ASFUnicodeAttribute('foo')
 
-        self.assertEqual(bytes(attr), b"f\x00o\x00o\x00")
-        self.assertEqual(str(attr), u"foo")
+        self.assertEqual(bytes(attr), b'f\x00o\x00o\x00')
+        self.assertEqual(str(attr), 'foo')
         self.assertEqual(repr(attr), "ASFUnicodeAttribute('foo')")
         self.assertRaises(TypeError, int, attr)
 
     def test_ASFByteArrayAttribute(self):
-        self.assertRaises(TypeError, ASFByteArrayAttribute, u"foo")
-        self.assertEqual(ASFByteArrayAttribute(data=b"\xff").value, b"\xff")
+        self.assertRaises(TypeError, ASFByteArrayAttribute, 'foo')
+        self.assertEqual(ASFByteArrayAttribute(data=b'\xff').value, b'\xff')
 
     def test_ASFByteArrayAttribute_dunder(self):
-        attr = ASFByteArrayAttribute(data=b"\xff")
-        self.assertEqual(bytes(attr), b"\xff")
-        self.assertEqual(str(attr), u"[binary data (1 bytes)]")
+        attr = ASFByteArrayAttribute(data=b'\xff')
+        self.assertEqual(bytes(attr), b'\xff')
+        self.assertEqual(str(attr), '[binary data (1 bytes)]')
         self.assertEqual(repr(attr), r"ASFByteArrayAttribute(b'\xff')")
         self.assertRaises(TypeError, int, attr)
 
     def test_ASFByteArrayAttribute_compat(self):
         ba = ASFByteArrayAttribute()
-        ba.value = b"\xff"
-        self.assertEqual(ba._render(), b"\xff")
+        ba.value = b'\xff'
+        self.assertEqual(ba._render(), b'\xff')
 
     def test_ASFGUIDAttribute(self):
-        self.assertEqual(ASFGUIDAttribute(data=b"\xff").value, b"\xff")
-        self.assertRaises(TypeError, ASFGUIDAttribute, u"foo")
+        self.assertEqual(ASFGUIDAttribute(data=b'\xff').value, b'\xff')
+        self.assertRaises(TypeError, ASFGUIDAttribute, 'foo')
 
     def test_ASFGUIDAttribute_dunder(self):
-        attr = ASFGUIDAttribute(data=b"\xff")
-        self.assertEqual(bytes(attr), b"\xff")
-        self.assertEqual(str(attr), u"b'\\xff'")
+        attr = ASFGUIDAttribute(data=b'\xff')
+        self.assertEqual(bytes(attr), b'\xff')
+        self.assertEqual(str(attr), "b'\\xff'")
         self.assertEqual(repr(attr), "ASFGUIDAttribute(b'\\xff')")
         self.assertRaises(TypeError, int, attr)
 
     def test_ASFBoolAttribute(self):
-        self.assertEqual(
-            ASFBoolAttribute(data=b"\x01\x00\x00\x00").value, True)
-        self.assertEqual(
-            ASFBoolAttribute(data=b"\x00\x00\x00\x00").value, False)
+        self.assertEqual(ASFBoolAttribute(data=b'\x01\x00\x00\x00').value, True)
+        self.assertEqual(ASFBoolAttribute(data=b'\x00\x00\x00\x00').value, False)
         self.assertEqual(ASFBoolAttribute(False).value, False)
 
     def test_ASFBoolAttribute_dunder(self):
         attr = ASFBoolAttribute(False)
-        self.assertEqual(bytes(attr), b"False")
-        self.assertEqual(str(attr), u"False")
-        self.assertEqual(repr(attr), "ASFBoolAttribute(False)")
+        self.assertEqual(bytes(attr), b'False')
+        self.assertEqual(str(attr), 'False')
+        self.assertEqual(repr(attr), 'ASFBoolAttribute(False)')
         self.assertRaises(TypeError, int, attr)
 
     def test_ASFWordAttribute(self):
-        self.assertEqual(
-            ASFWordAttribute(data=b"\x00" * 2).value, 0)
-        self.assertEqual(
-            ASFWordAttribute(data=b"\xff" * 2).value, 2 ** 16 - 1)
+        self.assertEqual(ASFWordAttribute(data=b'\x00' * 2).value, 0)
+        self.assertEqual(ASFWordAttribute(data=b'\xff' * 2).value, 2**16 - 1)
         self.assertRaises(ValueError, ASFWordAttribute, -1)
-        self.assertRaises(ValueError, ASFWordAttribute, 2 ** 16)
+        self.assertRaises(ValueError, ASFWordAttribute, 2**16)
 
     def test_ASFWordAttribute_dunder(self):
-        attr = ASFWordAttribute(data=b"\x00" * 2)
-        self.assertEqual(bytes(attr), b"0")
-        self.assertEqual(str(attr), u"0")
-        self.assertEqual(repr(attr), "ASFWordAttribute(0)")
+        attr = ASFWordAttribute(data=b'\x00' * 2)
+        self.assertEqual(bytes(attr), b'0')
+        self.assertEqual(str(attr), '0')
+        self.assertEqual(repr(attr), 'ASFWordAttribute(0)')
         self.assertEqual(int(attr), 0)
 
     def test_ASFDWordAttribute(self):
-        self.assertEqual(
-            ASFDWordAttribute(data=b"\x00" * 4).value, 0)
-        self.assertEqual(
-            ASFDWordAttribute(data=b"\xff" * 4).value, 2 ** 32 - 1)
+        self.assertEqual(ASFDWordAttribute(data=b'\x00' * 4).value, 0)
+        self.assertEqual(ASFDWordAttribute(data=b'\xff' * 4).value, 2**32 - 1)
         self.assertRaises(ValueError, ASFDWordAttribute, -1)
-        self.assertRaises(ValueError, ASFDWordAttribute, 2 ** 32)
+        self.assertRaises(ValueError, ASFDWordAttribute, 2**32)
 
     def test_ASFDWordAttribute_dunder(self):
-        attr = ASFDWordAttribute(data=b"\x00" * 4)
-        self.assertEqual(bytes(attr), b"0")
-        self.assertEqual(str(attr), u"0")
-        self.assertEqual(repr(attr).replace("0L", "0"), "ASFDWordAttribute(0)")
+        attr = ASFDWordAttribute(data=b'\x00' * 4)
+        self.assertEqual(bytes(attr), b'0')
+        self.assertEqual(str(attr), '0')
+        self.assertEqual(repr(attr).replace('0L', '0'), 'ASFDWordAttribute(0)')
         self.assertEqual(int(attr), 0)
 
     def test_ASFQWordAttribute(self):
-        self.assertEqual(
-            ASFQWordAttribute(data=b"\x00" * 8).value, 0)
-        self.assertEqual(
-            ASFQWordAttribute(data=b"\xff" * 8).value, 2 ** 64 - 1)
+        self.assertEqual(ASFQWordAttribute(data=b'\x00' * 8).value, 0)
+        self.assertEqual(ASFQWordAttribute(data=b'\xff' * 8).value, 2**64 - 1)
         self.assertRaises(ValueError, ASFQWordAttribute, -1)
-        self.assertRaises(ValueError, ASFQWordAttribute, 2 ** 64)
+        self.assertRaises(ValueError, ASFQWordAttribute, 2**64)
 
     def test_ASFQWordAttribute_dunder(self):
-        attr = ASFQWordAttribute(data=b"\x00" * 8)
-        self.assertEqual(bytes(attr), b"0")
-        self.assertEqual(str(attr), u"0")
-        self.assertEqual(repr(attr).replace("0L", "0"), "ASFQWordAttribute(0)")
+        attr = ASFQWordAttribute(data=b'\x00' * 8)
+        self.assertEqual(bytes(attr), b'0')
+        self.assertEqual(str(attr), '0')
+        self.assertEqual(repr(attr).replace('0L', '0'), 'ASFQWordAttribute(0)')
         self.assertEqual(int(attr), 0)
 
 
 class TASFTags1(TASF, TASFMixin):
-    original = os.path.join(DATA_DIR, "silence-1.wma")
+    original = os.path.join(DATA_DIR, 'silence-1.wma')
 
 
 class TASFTags2(TASF, TASFMixin):
-    original = os.path.join(DATA_DIR, "silence-2.wma")
+    original = os.path.join(DATA_DIR, 'silence-2.wma')
 
 
 class TASFTags3(TASF, TASFMixin):
-    original = os.path.join(DATA_DIR, "silence-3.wma")
+    original = os.path.join(DATA_DIR, 'silence-3.wma')
 
 
 class TASFIssue29(TestCase):
-    original = os.path.join(DATA_DIR, "issue_29.wma")
+    original = os.path.join(DATA_DIR, 'issue_29.wma')
 
     def setUp(self):
         self.filename = get_temp_copy(self.original)
@@ -421,36 +421,34 @@ class TASFIssue29(TestCase):
         self.audio.pprint()
 
     def test_issue_29_description(self):
-        self.audio["Description"] = "Hello"
+        self.audio['Description'] = 'Hello'
         self.audio.save()
         audio = ASF(self.filename)
-        self.failUnless("Description" in audio)
-        self.failUnlessEqual(audio["Description"], ["Hello"])
-        del audio["Description"]
-        self.failIf("Description" in audio)
+        self.failUnless('Description' in audio)
+        self.failUnlessEqual(audio['Description'], ['Hello'])
+        del audio['Description']
+        self.failIf('Description' in audio)
         audio.save()
         audio = ASF(self.filename)
-        self.failIf("Description" in audio)
+        self.failIf('Description' in audio)
 
 
 class TASFObjects(TestCase):
-
-    filename = os.path.join(DATA_DIR, "silence-1.wma")
+    filename = os.path.join(DATA_DIR, 'silence-1.wma')
 
     def test_invalid_header(self):
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
+            warnings.simplefilter('ignore')
             asf = ASF()
         fileobj = BytesIO(
-            b"0&\xb2u\x8ef\xcf\x11\xa6\xd9\x00\xaa\x00b\xcel\x19\xbf\x01\x00"
-            b"\x00\x00\x00\x00\x07\x00\x00\x00\x01\x02")
-        self.assertRaises(
-            ASFHeaderError, HeaderObject.parse_full, asf, fileobj)
+            b'0&\xb2u\x8ef\xcf\x11\xa6\xd9\x00\xaa\x00b\xcel\x19\xbf\x01\x00'
+            b'\x00\x00\x00\x00\x07\x00\x00\x00\x01\x02'
+        )
+        self.assertRaises(ASFHeaderError, HeaderObject.parse_full, asf, fileobj)
 
 
 class TASFAttrDest(TestCase):
-
-    original = os.path.join(DATA_DIR, "silence-1.wma")
+    original = os.path.join(DATA_DIR, 'silence-1.wma')
 
     def setUp(self):
         self.filename = get_temp_copy(self.original)
@@ -463,70 +461,70 @@ class TASFAttrDest(TestCase):
 
     def test_author(self):
         audio = ASF(self.filename)
-        values = [u"Foo", u"Bar", u"Baz"]
-        audio["Author"] = values
+        values = ['Foo', 'Bar', 'Baz']
+        audio['Author'] = values
         audio.save()
         self.assertEqual(
-            list(audio.to_content_description.items()), [(u"Author", u"Foo")])
+            list(audio.to_content_description.items()), [('Author', 'Foo')]
+        )
         self.assertEqual(
-            audio.to_metadata_library,
-            [(u"Author", u"Bar"), (u"Author", u"Baz")])
+            audio.to_metadata_library, [('Author', 'Bar'), ('Author', 'Baz')]
+        )
 
         new = ASF(self.filename)
-        self.assertEqual(new["Author"], values)
+        self.assertEqual(new['Author'], values)
 
     def test_author_long(self):
         audio = ASF(self.filename)
         # 2 ** 16 - 2 bytes encoded text + 2 bytes termination
-        just_small_enough = u"a" * (((2 ** 16) // 2) - 2)
-        audio["Author"] = [just_small_enough]
+        just_small_enough = 'a' * (((2**16) // 2) - 2)
+        audio['Author'] = [just_small_enough]
         audio.save()
         self.assertTrue(audio.to_content_description)
         self.assertFalse(audio.to_metadata_library)
 
-        audio["Author"] = [just_small_enough + u"a"]
+        audio['Author'] = [just_small_enough + 'a']
         audio.save()
         self.assertFalse(audio.to_content_description)
         self.assertTrue(audio.to_metadata_library)
 
     def test_multi_order(self):
         audio = ASF(self.filename)
-        audio["Author"] = [u"a", u"b", u"c"]
+        audio['Author'] = ['a', 'b', 'c']
         audio.save()
         audio = ASF(self.filename)
-        self.assertEqual(audio["Author"], [u"a", u"b", u"c"])
+        self.assertEqual(audio['Author'], ['a', 'b', 'c'])
 
     def test_multi_order_extended(self):
         audio = ASF(self.filename)
-        audio["WM/Composer"] = [u"a", u"b", u"c"]
+        audio['WM/Composer'] = ['a', 'b', 'c']
         audio.save()
         audio = ASF(self.filename)
-        self.assertEqual(audio["WM/Composer"], [u"a", u"b", u"c"])
+        self.assertEqual(audio['WM/Composer'], ['a', 'b', 'c'])
 
     def test_non_str(self):
         audio = ASF(self.filename)
-        audio["Author"] = [42]
+        audio['Author'] = [42]
         audio.save()
         self.assertFalse(audio.to_content_description)
         new = ASF(self.filename)
-        self.assertEqual(new["Author"], [42])
+        self.assertEqual(new['Author'], [42])
 
     def test_empty(self):
         audio = ASF(self.filename)
-        audio["Author"] = [u"", u""]
-        audio["Title"] = [u""]
-        audio["Copyright"] = []
+        audio['Author'] = ['', '']
+        audio['Title'] = ['']
+        audio['Copyright'] = []
         audio.save()
 
         new = ASF(self.filename)
-        self.assertEqual(new["Author"], [u"", u""])
-        self.assertEqual(new["Title"], [u""])
-        self.assertFalse("Copyright" in new)
+        self.assertEqual(new['Author'], ['', ''])
+        self.assertEqual(new['Title'], [''])
+        self.assertFalse('Copyright' in new)
 
 
 class TASFLargeValue(TestCase):
-
-    original = os.path.join(DATA_DIR, "silence-1.wma")
+    original = os.path.join(DATA_DIR, 'silence-1.wma')
 
     def setUp(self):
         self.filename = get_temp_copy(self.original)
@@ -536,52 +534,50 @@ class TASFLargeValue(TestCase):
 
     def test_save_small_bytearray(self):
         audio = ASF(self.filename)
-        audio["QL/LargeObject"] = [ASFValue(b"." * 0xFFFF, BYTEARRAY)]
+        audio['QL/LargeObject'] = [ASFValue(b'.' * 0xFFFF, BYTEARRAY)]
         audio.save()
-        self.failIf(
-            "QL/LargeObject" not in audio.to_extended_content_description)
-        self.failIf("QL/LargeObject" in audio.to_metadata)
-        self.failIf("QL/LargeObject" in dict(audio.to_metadata_library))
+        self.failIf('QL/LargeObject' not in audio.to_extended_content_description)
+        self.failIf('QL/LargeObject' in audio.to_metadata)
+        self.failIf('QL/LargeObject' in dict(audio.to_metadata_library))
 
     def test_save_large_bytearray(self):
         audio = ASF(self.filename)
-        audio["QL/LargeObject"] = [ASFValue(b"." * (0xFFFF + 1), BYTEARRAY)]
+        audio['QL/LargeObject'] = [ASFValue(b'.' * (0xFFFF + 1), BYTEARRAY)]
         audio.save()
-        self.failIf("QL/LargeObject" in audio.to_extended_content_description)
-        self.failIf("QL/LargeObject" in audio.to_metadata)
-        self.failIf("QL/LargeObject" not in dict(audio.to_metadata_library))
+        self.failIf('QL/LargeObject' in audio.to_extended_content_description)
+        self.failIf('QL/LargeObject' in audio.to_metadata)
+        self.failIf('QL/LargeObject' not in dict(audio.to_metadata_library))
 
     def test_save_small_string(self):
         audio = ASF(self.filename)
-        audio["QL/LargeObject"] = [ASFValue("." * (0x7FFF - 1), UNICODE)]
+        audio['QL/LargeObject'] = [ASFValue('.' * (0x7FFF - 1), UNICODE)]
         audio.save()
-        self.failIf(
-            "QL/LargeObject" not in audio.to_extended_content_description)
-        self.failIf("QL/LargeObject" in audio.to_metadata)
-        self.failIf("QL/LargeObject" in dict(audio.to_metadata_library))
+        self.failIf('QL/LargeObject' not in audio.to_extended_content_description)
+        self.failIf('QL/LargeObject' in audio.to_metadata)
+        self.failIf('QL/LargeObject' in dict(audio.to_metadata_library))
 
     def test_save_large_string(self):
         audio = ASF(self.filename)
-        audio["QL/LargeObject"] = [ASFValue("." * 0x7FFF, UNICODE)]
+        audio['QL/LargeObject'] = [ASFValue('.' * 0x7FFF, UNICODE)]
         audio.save()
-        self.failIf("QL/LargeObject" in audio.to_extended_content_description)
-        self.failIf("QL/LargeObject" in audio.to_metadata)
-        self.failIf("QL/LargeObject" not in dict(audio.to_metadata_library))
+        self.failIf('QL/LargeObject' in audio.to_extended_content_description)
+        self.failIf('QL/LargeObject' in audio.to_metadata)
+        self.failIf('QL/LargeObject' not in dict(audio.to_metadata_library))
 
     def test_save_guid(self):
         # https://github.com/quodlibet/mutagen/issues/81
         audio = ASF(self.filename)
-        audio["QL/GuidObject"] = [ASFValue(b" " * 16, GUID)]
+        audio['QL/GuidObject'] = [ASFValue(b' ' * 16, GUID)]
         audio.save()
-        self.failIf("QL/GuidObject" in audio.to_extended_content_description)
-        self.failIf("QL/GuidObject" in audio.to_metadata)
-        self.failIf("QL/GuidObject" not in dict(audio.to_metadata_library))
+        self.failIf('QL/GuidObject' in audio.to_extended_content_description)
+        self.failIf('QL/GuidObject' in audio.to_metadata)
+        self.failIf('QL/GuidObject' not in dict(audio.to_metadata_library))
 
 
 class TASFSave(TestCase):
     # https://github.com/quodlibet/mutagen/issues/81#issuecomment-207014936
 
-    original = os.path.join(DATA_DIR, "silence-1.wma")
+    original = os.path.join(DATA_DIR, 'silence-1.wma')
 
     def setUp(self):
         self.filename = get_temp_copy(self.original)
@@ -594,7 +590,7 @@ class TASFSave(TestCase):
         self.audio.save(self.audio.filename)
 
     def test_multiple_delete(self):
-        self.audio["large_value1"] = "#" * 50000
+        self.audio['large_value1'] = '#' * 50000
         self.audio.save()
 
         audio = ASF(self.filename)
@@ -607,8 +603,7 @@ class TASFSave(TestCase):
         del header.objects[:]
         self.audio.save()
         self.assertTrue(header.get_child(ContentDescriptionObject.GUID))
-        self.assertTrue(
-            header.get_child(ExtendedContentDescriptionObject.GUID))
+        self.assertTrue(header.get_child(ExtendedContentDescriptionObject.GUID))
         self.assertTrue(header.get_child(HeaderExtensionObject.GUID))
         ext = header.get_child(HeaderExtensionObject.GUID)
         self.assertTrue(ext.get_child(MetadataObject.GUID))

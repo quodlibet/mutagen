@@ -10,9 +10,9 @@
 import struct
 from typing import Tuple
 
-from mutagen import StreamInfo, MutagenError
+from mutagen import MutagenError, StreamInfo
 from mutagen._file import FileType
-from mutagen._util import loadfile, endswith
+from mutagen._util import endswith, loadfile
 
 
 class SMFError(MutagenError):
@@ -25,7 +25,7 @@ def _var_int(data: bytearray, offset: int = 0) -> Tuple[int, int]:
         try:
             x = data[offset]
         except IndexError:
-            raise SMFError("Not enough data")
+            raise SMFError('Not enough data')
         offset += 1
         val = (val << 7) + (x & 0x7F)
         if not (x & 0x80):
@@ -59,10 +59,10 @@ def _read_track(chunk):
             num, off = _var_int(chunk, off)
             # TODO: support offset/time signature
             if meta_type == 0x51:
-                data = chunk[off:off + num]
+                data = chunk[off : off + num]
                 if len(data) != 3:
                     raise SMFError
-                tempo = struct.unpack(">I", b"\x00" + bytes(data))[0]
+                tempo = struct.unpack('>I', b'\x00' + bytes(data))[0]
                 tempos.append((deltasum, TEMPO, tempo))
             off += num
         elif event_type in (0xF0, 0xF7):
@@ -77,7 +77,7 @@ def _read_track(chunk):
                 off += 2
                 status = event_type
             else:
-                raise SMFError("invalid event")
+                raise SMFError('invalid event')
 
             if event_type >> 4 in (0xD, 0xC):
                 off -= 1
@@ -95,36 +95,36 @@ def _read_midi_length(fileobj):
     def read_chunk(fileobj):
         info = fileobj.read(8)
         if len(info) != 8:
-            raise SMFError("truncated")
-        chunklen = struct.unpack(">I", info[4:])[0]
+            raise SMFError('truncated')
+        chunklen = struct.unpack('>I', info[4:])[0]
         data = fileobj.read(chunklen)
         if len(data) != chunklen:
-            raise SMFError("truncated")
+            raise SMFError('truncated')
         return info[:4], data
 
     identifier, chunk = read_chunk(fileobj)
-    if identifier != b"MThd":
-        raise SMFError("Not a MIDI file")
+    if identifier != b'MThd':
+        raise SMFError('Not a MIDI file')
 
     if len(chunk) != 6:
-        raise SMFError("truncated")
+        raise SMFError('truncated')
 
-    format_, ntracks, tickdiv = struct.unpack(">HHH", chunk)
+    format_, ntracks, tickdiv = struct.unpack('>HHH', chunk)
     if format_ > 1:
-        raise SMFError("Not supported format %d" % format_)
+        raise SMFError('Not supported format %d' % format_)
 
     if tickdiv >> 15:
         # fps = (-(tickdiv >> 8)) & 0xFF
         # subres = tickdiv & 0xFF
         # never saw one of those
-        raise SMFError("Not supported timing interval")
+        raise SMFError('Not supported timing interval')
 
     # get a list of events and tempo changes for each track
     tracks = []
     first_tempos = None
     for tracknum in range(ntracks):
         identifier, chunk = read_chunk(fileobj)
-        if identifier != b"MTrk":
+        if identifier != b'MTrk':
             continue
         events, tempos = _read_track(chunk)
 
@@ -142,7 +142,7 @@ def _read_midi_length(fileobj):
         tempo = 500000
         parts = []
         deltasum = 0
-        for (dummy, type_, data) in events:
+        for dummy, type_, data in events:
             if type_ == TEMPO:
                 parts.append((deltasum, tempo))
                 tempo = data
@@ -152,10 +152,10 @@ def _read_midi_length(fileobj):
         parts.append((deltasum, tempo))
 
         duration = 0
-        for (deltasum, tempo) in parts:
+        for deltasum, tempo in parts:
             quarter, tpq = deltasum / float(tickdiv), tempo
-            duration += (quarter * tpq)
-        duration /= 10 ** 6
+            duration += quarter * tpq
+        duration /= 10**6
 
         durations.append(duration)
 
@@ -177,7 +177,7 @@ class SMFInfo(StreamInfo):
         self.length = _read_midi_length(fileobj)
 
     def pprint(self):
-        return u"SMF, %.2f seconds" % self.length
+        return 'SMF, %.2f seconds' % self.length
 
 
 class SMF(FileType):
@@ -190,7 +190,7 @@ class SMF(FileType):
         tags: `None`
     """
 
-    _mimes = ["audio/midi", "audio/x-midi"]
+    _mimes = ['audio/midi', 'audio/x-midi']
 
     @loadfile()
     def load(self, filething):
@@ -205,11 +205,12 @@ class SMF(FileType):
     @staticmethod
     def score(filename, fileobj, header):
         filename = filename.lower()
-        return header.startswith(b"MThd") and (
-            endswith(filename, ".mid") or endswith(filename, ".midi"))
+        return header.startswith(b'MThd') and (
+            endswith(filename, '.mid') or endswith(filename, '.midi')
+        )
 
 
 Open = SMF
 error = SMFError
 
-__all__ = ["SMF"]
+__all__ = ['SMF']

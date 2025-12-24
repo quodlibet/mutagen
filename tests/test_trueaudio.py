@@ -1,17 +1,14 @@
-
-import os
 import io
+import os
 
-from mutagen.trueaudio import TrueAudio, delete, error
 from mutagen.id3 import TIT1
-
-from tests import TestCase, DATA_DIR, get_temp_copy
+from mutagen.trueaudio import TrueAudio, delete, error
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TTrueAudio(TestCase):
-
     def setUp(self):
-        self.audio = TrueAudio(os.path.join(DATA_DIR, "empty.tta"))
+        self.audio = TrueAudio(os.path.join(DATA_DIR, 'empty.tta'))
 
     def test_tags(self):
         self.failUnless(self.audio.tags is None)
@@ -23,11 +20,11 @@ class TTrueAudio(TestCase):
         self.failUnlessEqual(44100, self.audio.info.sample_rate)
 
     def test_not_my_file(self):
-        filename = os.path.join(DATA_DIR, "empty.ogg")
+        filename = os.path.join(DATA_DIR, 'empty.ogg')
         self.failUnlessRaises(error, TrueAudio, filename)
 
     def test_module_delete(self):
-        delete(os.path.join(DATA_DIR, "empty.tta"))
+        delete(os.path.join(DATA_DIR, 'empty.tta'))
 
     def test_delete(self):
         self.audio.delete()
@@ -41,10 +38,10 @@ class TTrueAudio(TestCase):
         try:
             audio = TrueAudio(filename)
             audio.add_tags()
-            audio.tags.add(TIT1(encoding=0, text="A Title"))
+            audio.tags.add(TIT1(encoding=0, text='A Title'))
             audio.save()
             audio = TrueAudio(filename)
-            self.failUnlessEqual(audio["TIT1"], "A Title")
+            self.failUnlessEqual(audio['TIT1'], 'A Title')
         finally:
             os.unlink(filename)
 
@@ -53,4 +50,4 @@ class TTrueAudio(TestCase):
         assert TrueAudio(header).info.length == 0.0
 
     def test_mime(self):
-        self.failUnless("audio/x-tta" in self.audio.mime)
+        self.failUnless('audio/x-tta' in self.audio.mime)

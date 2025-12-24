@@ -1,19 +1,15 @@
-
 import os
 
 from mutagen.optimfrog import OptimFROG, OptimFROGHeaderError
-from tests import TestCase, DATA_DIR
+from tests import DATA_DIR, TestCase
 
 
 class TOptimFROG(TestCase):
-
     def setUp(self):
-        self.ofr = OptimFROG(os.path.join(DATA_DIR, "empty.ofr"))
-        self.ofs = OptimFROG(os.path.join(DATA_DIR, "empty.ofs"))
-        self.ofr_5100 = OptimFROG(
-            os.path.join(DATA_DIR, "silence-2s-44100-16.ofr"))
-        self.ofs_5100 = OptimFROG(
-            os.path.join(DATA_DIR, "silence-2s-44100-16.ofs"))
+        self.ofr = OptimFROG(os.path.join(DATA_DIR, 'empty.ofr'))
+        self.ofs = OptimFROG(os.path.join(DATA_DIR, 'empty.ofs'))
+        self.ofr_5100 = OptimFROG(os.path.join(DATA_DIR, 'silence-2s-44100-16.ofr'))
+        self.ofs_5100 = OptimFROG(os.path.join(DATA_DIR, 'silence-2s-44100-16.ofs'))
 
     def test_channels(self):
         self.failUnlessEqual(self.ofr.info.channels, 2)
@@ -40,18 +36,18 @@ class TOptimFROG(TestCase):
         self.failUnlessAlmostEqual(self.ofs_5100.info.length, 2.0, 2)
 
     def test_encoder_info(self):
-        self.failUnlessEqual(self.ofr.info.encoder_info, "4.520")
-        self.failUnlessEqual(self.ofs.info.encoder_info, "4.520")
-        self.failUnlessEqual(self.ofr_5100.info.encoder_info, "5.100")
-        self.failUnlessEqual(self.ofs_5100.info.encoder_info, "5.100")
+        self.failUnlessEqual(self.ofr.info.encoder_info, '4.520')
+        self.failUnlessEqual(self.ofs.info.encoder_info, '4.520')
+        self.failUnlessEqual(self.ofr_5100.info.encoder_info, '5.100')
+        self.failUnlessEqual(self.ofs_5100.info.encoder_info, '5.100')
 
     def test_not_my_file(self):
         self.failUnlessRaises(
-            OptimFROGHeaderError, OptimFROG,
-            os.path.join(DATA_DIR, "empty.ogg"))
+            OptimFROGHeaderError, OptimFROG, os.path.join(DATA_DIR, 'empty.ogg')
+        )
         self.failUnlessRaises(
-            OptimFROGHeaderError, OptimFROG,
-            os.path.join(DATA_DIR, "click.mpc"))
+            OptimFROGHeaderError, OptimFROG, os.path.join(DATA_DIR, 'click.mpc')
+        )
 
     def test_pprint(self):
         self.failUnless(self.ofr.pprint())

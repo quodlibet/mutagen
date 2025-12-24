@@ -14,20 +14,22 @@ from mutagen._file import FileType
 from mutagen._iff import (
     IffChunk,
     IffContainerChunkMixin,
-    IffID3,
     IffFile,
+    IffID3,
     InvalidChunk,
+)
+from mutagen._iff import (
     error as IffError,
 )
-from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
 from mutagen._util import (
     convert_error,
-    loadfile,
     endswith,
+    loadfile,
 )
+from mutagen.id3._util import ID3NoHeaderError
+from mutagen.id3._util import error as ID3Error
 
-
-__all__ = ["DSDIFF", "Open", "delete"]
+__all__ = ['DSDIFF', 'Open', 'delete']
 
 
 class error(IffError):
@@ -62,8 +64,7 @@ class DSDIFFChunk(IffChunk):
 
 
 class DSDIFFListChunk(DSDIFFChunk, IffContainerChunkMixin):
-    """A DSDIFF chunk containing other chunks.
-    """
+    """A DSDIFF chunk containing other chunks."""
 
     LIST_CHUNK_IDS = ['FRM8', 'PROP']
 
@@ -79,8 +80,7 @@ class DSDIFFListChunk(DSDIFFChunk, IffContainerChunkMixin):
 
 
 class DSTChunk(DSDIFFChunk, IffContainerChunkMixin):
-    """A DSDIFF chunk containing other chunks.
-    """
+    """A DSDIFF chunk containing other chunks."""
 
     def parse_next_subchunk(self):
         return DSDIFFChunk.parse(self._fileobj, self)
@@ -99,13 +99,11 @@ class DSDIFFFile(IffFile):
     def __init__(self, fileobj):
         super().__init__(DSDIFFChunk, fileobj)
 
-        if self.root.id != u'FRM8':
-            raise InvalidChunk("Root chunk must be a FRM8 chunk, got %r"
-                               % self.root)
+        if self.root.id != 'FRM8':
+            raise InvalidChunk('Root chunk must be a FRM8 chunk, got %r' % self.root)
 
 
 class DSDIFFInfo(StreamInfo):
-
     """DSDIFF stream information.
 
     Attributes:
@@ -139,22 +137,22 @@ class DSDIFFInfo(StreamInfo):
                 if chunk.id == 'FS' and chunk.data_size == 4:
                     data = chunk.read()
                     if len(data) < 4:
-                        raise InvalidChunk("Not enough data in FS chunk")
-                    self.sample_rate, = struct.unpack('>L', data[:4])
+                        raise InvalidChunk('Not enough data in FS chunk')
+                    (self.sample_rate,) = struct.unpack('>L', data[:4])
                 elif chunk.id == 'CHNL' and chunk.data_size >= 2:
                     data = chunk.read()
                     if len(data) < 2:
-                        raise InvalidChunk("Not enough data in CHNL chunk")
-                    self.channels, = struct.unpack('>H', data[:2])
+                        raise InvalidChunk('Not enough data in CHNL chunk')
+                    (self.channels,) = struct.unpack('>H', data[:2])
                 elif chunk.id == 'CMPR' and chunk.data_size >= 4:
                     data = chunk.read()
                     if len(data) < 4:
-                        raise InvalidChunk("Not enough data in CMPR chunk")
-                    compression_id, = struct.unpack('>4s', data[:4])
+                        raise InvalidChunk('Not enough data in CMPR chunk')
+                    (compression_id,) = struct.unpack('>4s', data[:4])
                     self.compression = compression_id.decode('ascii').rstrip()
 
         if self.sample_rate < 0:
-            raise error("Invalid sample rate")
+            raise error('Invalid sample rate')
 
         if self.compression == 'DSD':  # not compressed
             try:
@@ -171,8 +169,7 @@ class DSDIFFInfo(StreamInfo):
             if self.sample_rate != 0:
                 self.length = sample_count / float(self.sample_rate)
 
-            self.bitrate = (self.channels * self.bits_per_sample
-                            * self.sample_rate)
+            self.bitrate = self.channels * self.bits_per_sample * self.sample_rate
         elif self.compression == 'DST':
             try:
                 dst_frame = iff['DST']
@@ -183,7 +180,7 @@ class DSDIFFInfo(StreamInfo):
             if dst_frame_info.data_size >= 6:
                 data = dst_frame_info.read()
                 if len(data) < 6:
-                    raise InvalidChunk("Not enough data in FRTE chunk")
+                    raise InvalidChunk('Not enough data in FRTE chunk')
                 frame_count, frame_rate = struct.unpack('>LH', data[:6])
                 if frame_rate:
                     self.length = frame_count / frame_rate
@@ -194,9 +191,13 @@ class DSDIFFInfo(StreamInfo):
                     self.bitrate = avg_frame_size * 8 * frame_rate
 
     def pprint(self):
-        return u"%d channel DSDIFF (%s) @ %d bps, %s Hz, %.2f seconds" % (
-            self.channels, self.compression, self.bitrate, self.sample_rate,
-            self.length)
+        return '%d channel DSDIFF (%s) @ %d bps, %s Hz, %.2f seconds' % (
+            self.channels,
+            self.compression,
+            self.bitrate,
+            self.sample_rate,
+            self.length,
+        )
 
 
 class _DSDIFFID3(IffID3):
@@ -212,7 +213,7 @@ def delete(filething):
     """Completely removes the ID3 chunk from the DSDIFF file"""
 
     try:
-        del DSDIFFFile(filething.fileobj)[u'ID3']
+        del DSDIFFFile(filething.fileobj)['ID3']
     except KeyError:
         pass
 
@@ -232,7 +233,7 @@ class DSDIFF(FileType):
         info (`DSDIFFInfo`)
     """
 
-    _mimes = ["audio/x-dff"]
+    _mimes = ['audio/x-dff']
 
     @convert_error(IOError, error)
     @loadfile()
@@ -256,11 +257,11 @@ class DSDIFF(FileType):
         if self.tags is None:
             self.tags = _DSDIFFID3()
         else:
-            raise error("an ID3 tag already exists")
+            raise error('an ID3 tag already exists')
 
     @staticmethod
     def score(filename, fileobj, header):
-        return header.startswith(b"FRM8") * 2 + endswith(filename, ".dff")
+        return header.startswith(b'FRM8') * 2 + endswith(filename, '.dff')
 
 
 Open = DSDIFF
