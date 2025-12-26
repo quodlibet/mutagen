@@ -932,6 +932,72 @@ class MP4Chapters(Sequence):
         return self._chapters.__getitem__(key)
 
     def load(self, atoms, fileobj):
+        if b"moov.udta.chpl" in atoms and b"moov.mvhd" in atoms:
+            self.load_nero(atoms, fileobj)
+        else:
+            self.load_quicktime(atoms, fileobj)
+
+    def load_quicktime(self, atoms, fileobj):
+        moov = atoms[b"moov"]
+        for trak in moov.findall(b"trak"):
+            try:
+                tref = trak[b"tref",]
+            except KeyError:
+                continue
+            ok, data = tref.read(fileobj)
+            if not ok or data[4:8] != b"chap":
+                continue
+            chap_trak_id = data[8:]
+            break
+        else:
+            raise MP4MetadataError("No reference to chapter list found")
+
+        for trak in moov.findall(b"trak"):
+            ok, data = trak[b"tkhd",].read(fileobj)
+            _, _, data = parse_full_atom(data)
+            if not ok:
+                continue
+            if data[8:12] == chap_trak_id:
+                break
+        else:
+            raise MP4MetadataError("Chapter list track missing")
+
+        mdhd = trak[b"mdia", b"mdhd"]
+        self._parse_mvhd(mdhd, fileobj)
+
+        stts = trak[b"mdia", b"minf", b"stbl", b"stts"]
+        ok, stts_data = stts.read(fileobj)
+        if not ok:
+            raise MP4MetadataError("Could not read chapter durations")
+
+        num_chaps = struct.unpack(">I", stts_data[4:8])[0]
+        start = 0
+        for offset in range(8, 8 * (num_chaps + 1), 8):
+            num_listed, duration = struct.unpack(">2I", stts_data[offset:offset + 8])
+            for _ in range(num_listed):
+                self._chapters.append(Chapter(start=start,
+                                              title=f"Chapter {offset // 8}"))
+                start = start + (duration / self._timescale)
+
+        stco = trak[b"mdia", b"minf", b"stbl", b"stco"]
+        ok, stco_data = stco.read(fileobj)
+        if not ok:
+            raise MP4MetadataError("Could not read chapter addresses")
+
+        num_titles = struct.unpack(">I", stco_data[4:8])[0]
+        assert num_titles == len(self._chapters)
+        for i, title_offset in enumerate(struct.unpack(f">{num_titles}I",
+                                         stco_data[8:])):
+            fileobj.seek(title_offset)
+            title_len = struct.unpack(">H", fileobj.read(2))[0]
+            try:
+                title = fileobj.read(title_len).decode()
+            except UnicodeDecodeError as e:
+                raise MP4MetadataError("chapter %d title: %s" % (i, e))
+            else:
+                self._chapters[i].title = title
+
+    def load_nero(self, atoms, fileobj):
         try:
             mvhd = atoms.path(b"moov", b"mvhd")[-1]
         except KeyError as key:
@@ -949,12 +1015,11 @@ class MP4Chapters(Sequence):
 
         self._parse_chpl(chpl, fileobj)
 
-    @classmethod
-    def _can_load(cls, atoms):
-        return b"moov.udta.chpl" in atoms and b"moov.mvhd" in atoms
+    # Not implementing _can_load because we can't check in advance whether chaps
+    # exist in QuickTime format
 
     def _parse_mvhd(self, atom, fileobj):
-        assert atom.name == b"mvhd"
+        assert atom.name in (b"mvhd", b"mdhd")
 
         ok, data = atom.read(fileobj)
         if not ok:
@@ -1199,15 +1264,12 @@ class MP4(FileType):
             except Exception as err:
                 reraise(MP4MetadataError, err, sys.exc_info()[2])
 
-        if not MP4Chapters._can_load(atoms):
+        try:
+            self.chapters = self.MP4Chapters(atoms, fileobj)
+        except error:
             self.chapters = None
-        else:
-            try:
-                self.chapters = self.MP4Chapters(atoms, fileobj)
-            except error:
-                raise
-            except Exception as err:
-                reraise(MP4MetadataError, err, sys.exc_info()[2])
+        except Exception as err:
+            reraise(MP4MetadataError, err, sys.exc_info()[2])
 
     @property
     def _padding(self):
