@@ -4,10 +4,15 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-
+import contextlib
 import warnings
-from typing import List
+from abc import ABC, abstractmethod
+from collections.abc import Sequence
+from io import BytesIO
+from typing import cast
 
+from mutagen._filething import FileThing
+from mutagen._tags import Tags
 from mutagen._util import DictMixin, loadfile
 
 
@@ -35,23 +40,23 @@ class FileType(DictMixin):
 
     __module__ = "mutagen"
 
-    info = None
-    tags = None
-    filename = None
-    _mimes = ["application/octet-stream"]
+    info: "StreamInfo | None" = None
+    tags: Tags | None = None
+    filename: str | None = None
+    _mimes: list[str] = ["application/octet-stream"]
 
     def __init__(self, *args, **kwargs):
         if not args and not kwargs:
             warnings.warn("FileType constructor requires a filename",
-                          DeprecationWarning)
+                          DeprecationWarning, stacklevel=2)
         else:
             self.load(*args, **kwargs)
 
     @loadfile()
-    def load(self, filething, *args, **kwargs):
+    def load(self, filething: FileThing, *args, **kwargs) -> None:
         raise NotImplementedError
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str):
         """Look up a metadata tag key.
 
         If the file has no tags at all, a KeyError is raised.
@@ -62,7 +67,7 @@ class FileType(DictMixin):
         else:
             return self.tags[key]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: object) -> None:
         """Set a metadata tag.
 
         If the file has no tags, an appropriate format is added (but
@@ -71,9 +76,10 @@ class FileType(DictMixin):
 
         if self.tags is None:
             self.add_tags()
+        assert self.tags is not None
         self.tags[key] = value
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: str) -> None:
         """Delete a metadata tag key.
 
         If the file has no tags at all, a KeyError is raised.
@@ -84,7 +90,7 @@ class FileType(DictMixin):
         else:
             del self.tags[key]
 
-    def keys(self) -> list:
+    def keys(self) -> list[str]:
         """Return a list of keys in the metadata tag.
 
         If the file has no tags at all, an empty list is returned.
@@ -96,7 +102,7 @@ class FileType(DictMixin):
             return self.tags.keys()
 
     @loadfile(writable=True)
-    def delete(self, filething=None):
+    def delete(self, filething: FileThing | None =None):
         """delete(filething=None)
 
         Remove tags from a file.
@@ -116,10 +122,11 @@ class FileType(DictMixin):
         """
 
         if self.tags is not None:
+            assert filething is not None
             return self.tags.delete(filething)
 
     @loadfile(writable=True)
-    def save(self, filething=None, **kwargs):
+    def save(self, filething: FileThing | None=None, **kwargs):
         """save(filething=None, **kwargs)
 
         Save metadata tags.
@@ -129,6 +136,7 @@ class FileType(DictMixin):
         """
 
         if self.tags is not None:
+            assert filething is not None
             return self.tags.save(filething, **kwargs)
 
     def pprint(self) -> str:
@@ -138,8 +146,10 @@ class FileType(DictMixin):
         """
 
         assert self.info is not None
-        stream = "%s (%s)" % (self.info.pprint(), self.mime[0])
+        stream = f"{self.info.pprint()} ({self.mime[0]})"
         try:
+            if self.tags is None:
+                raise AttributeError
             tags = self.tags.pprint()
         except AttributeError:
             return stream
@@ -157,18 +167,21 @@ class FileType(DictMixin):
         raise NotImplementedError
 
     @property
-    def mime(self) -> List[str]:
+    def mime(self) -> list[str]:
         """A list of mime types (:class:`mutagen.text`)"""
 
-        mimes = []
+        mimes: set[str] = set()
         for Kind in type(self).__mro__:
-            for mime in getattr(Kind, '_mimes', []):
-                if mime not in mimes:
-                    mimes.append(mime)
-        return mimes
+            for mime in cast(list[str], getattr(Kind, '_mimes', [])):
+                mimes.add(mime)
+        return list(mimes)
 
     @staticmethod
-    def score(filename, fileobj, header) -> int:
+    def score(
+        filename: str,
+        fileobj: BytesIO,
+        header: bytes,
+    ) -> int:
         """Returns a score for how likely the file can be parsed by this type.
 
         Args:
@@ -186,7 +199,7 @@ class FileType(DictMixin):
         raise NotImplementedError
 
 
-class StreamInfo(object):
+class StreamInfo(ABC):
     """Abstract stream information object.
 
     Provides attributes for length, bitrate, sample rate etc.
@@ -195,18 +208,27 @@ class StreamInfo(object):
     """
 
     __module__ = "mutagen"
+    length: float
 
+    @abstractmethod
+    def __init__(self, fileobj: BytesIO): ...
+
+    @abstractmethod
     def pprint(self) -> str:
         """
         Returns:
             text: Print stream information
         """
 
-        raise NotImplementedError
+        ...
 
 
 @loadfile(method=False)
-def File(filething, options=None, easy=False):
+def File(
+    filething: FileThing,
+    options: Sequence[type[FileType]] | None = None,
+    easy: bool = False,
+) -> FileType | None:
     """File(filething, options=None, easy=False)
 
     Guess the type of the file and try to open it.
@@ -234,8 +256,8 @@ def File(filething, options=None, easy=False):
     """
 
     if options is None:
-        from mutagen.asf import ASF
         from mutagen.apev2 import APEv2File
+        from mutagen.asf import ASF
         from mutagen.flac import FLAC
         if easy:
             from mutagen.easyid3 import EasyID3FileType as ID3FileType
@@ -246,10 +268,10 @@ def File(filething, options=None, easy=False):
         else:
             from mutagen.mp3 import MP3
         from mutagen.oggflac import OggFLAC
+        from mutagen.oggopus import OggOpus
         from mutagen.oggspeex import OggSpeex
         from mutagen.oggtheora import OggTheora
         from mutagen.oggvorbis import OggVorbis
-        from mutagen.oggopus import OggOpus
         if easy:
             from mutagen.trueaudio import EasyTrueAudio as TrueAudio
         else:
@@ -259,16 +281,16 @@ def File(filething, options=None, easy=False):
             from mutagen.easymp4 import EasyMP4 as MP4
         else:
             from mutagen.mp4 import MP4
-        from mutagen.musepack import Musepack
-        from mutagen.monkeysaudio import MonkeysAudio
-        from mutagen.optimfrog import OptimFROG
-        from mutagen.aiff import AIFF
         from mutagen.aac import AAC
         from mutagen.ac3 import AC3
+        from mutagen.aiff import AIFF
+        from mutagen.dsdiff import DSDIFF
+        from mutagen.dsf import DSF
+        from mutagen.monkeysaudio import MonkeysAudio
+        from mutagen.musepack import Musepack
+        from mutagen.optimfrog import OptimFROG
         from mutagen.smf import SMF
         from mutagen.tak import TAK
-        from mutagen.dsf import DSF
-        from mutagen.dsdiff import DSDIFF
         from mutagen.wave import WAVE
         options = [MP3, TrueAudio, OggTheora, OggSpeex, OggVorbis, OggFLAC,
                    FLAC, AIFF, APEv2File, MP4, ID3FileType, WavPack,
@@ -282,23 +304,22 @@ def File(filething, options=None, easy=False):
 
     try:
         header = fileobj.read(128)
-    except IOError:
+    except OSError:
         header = b""
 
     # Sort by name after score. Otherwise import order affects
     # Kind sort order, which affects treatment of things with
     # equals scores.
+    assert filething.name is not None
     results = [(Kind.score(filething.name, fileobj, header), Kind.__name__)
                for Kind in options]
 
-    results = list(zip(results, options))
+    results = list(zip(results, options, strict=False))
     results.sort()
     (score, name), Kind = results[-1]
     if score > 0:
-        try:
-            fileobj.seek(0, 0)
-        except IOError:
-            pass
+        with contextlib.suppress(OSError):
+            _ = fileobj.seek(0, 0)
         return Kind(fileobj, filename=filething.filename)
     else:
         return None

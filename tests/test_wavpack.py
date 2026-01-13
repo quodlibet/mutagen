@@ -1,8 +1,9 @@
 
 import os
 
-from mutagen.wavpack import WavPack, error as WavPackError
-from tests import TestCase, DATA_DIR
+from mutagen.wavpack import WavPack
+from mutagen.wavpack import error as WavPackError
+from tests import DATA_DIR, TestCase
 
 
 class TWavPack(TestCase):
@@ -11,29 +12,29 @@ class TWavPack(TestCase):
         self.audio = WavPack(os.path.join(DATA_DIR, "silence-44-s.wv"))
 
     def test_version(self):
-        self.failUnlessEqual(self.audio.info.version, 0x403)
+        self.assertEqual(self.audio.info.version, 0x403)
 
     def test_channels(self):
-        self.failUnlessEqual(self.audio.info.channels, 2)
+        self.assertEqual(self.audio.info.channels, 2)
 
     def test_sample_rate(self):
-        self.failUnlessEqual(self.audio.info.sample_rate, 44100)
+        self.assertEqual(self.audio.info.sample_rate, 44100)
 
     def test_bits_per_sample(self):
-        self.failUnlessEqual(self.audio.info.bits_per_sample, 16)
+        self.assertEqual(self.audio.info.bits_per_sample, 16)
 
     def test_length(self):
-        self.failUnlessAlmostEqual(self.audio.info.length, 3.68, 2)
+        self.assertAlmostEqual(self.audio.info.length, 3.68, 2)
 
     def test_not_my_file(self):
-        self.failUnlessRaises(
+        self.assertRaises(
             WavPackError, WavPack, os.path.join(DATA_DIR, "empty.ogg"))
 
     def test_pprint(self):
         self.audio.pprint()
 
     def test_mime(self):
-        self.failUnless("audio/x-wavpack" in self.audio.mime)
+        self.assertTrue("audio/x-wavpack" in self.audio.mime)
 
 
 class TWavPackNoLength(TestCase):
@@ -42,25 +43,25 @@ class TWavPackNoLength(TestCase):
         self.audio = WavPack(os.path.join(DATA_DIR, "no_length.wv"))
 
     def test_version(self):
-        self.failUnlessEqual(self.audio.info.version, 0x407)
+        self.assertEqual(self.audio.info.version, 0x407)
 
     def test_channels(self):
-        self.failUnlessEqual(self.audio.info.channels, 2)
+        self.assertEqual(self.audio.info.channels, 2)
 
     def test_sample_rate(self):
-        self.failUnlessEqual(self.audio.info.sample_rate, 44100)
+        self.assertEqual(self.audio.info.sample_rate, 44100)
 
     def test_bits_per_sample(self):
-        self.failUnlessEqual(self.audio.info.bits_per_sample, 16)
+        self.assertEqual(self.audio.info.bits_per_sample, 16)
 
     def test_length(self):
-        self.failUnlessAlmostEqual(self.audio.info.length, 3.705, 3)
+        self.assertAlmostEqual(self.audio.info.length, 3.705, 3)
 
     def test_pprint(self):
         self.audio.pprint()
 
     def test_mime(self):
-        self.failUnless("audio/x-wavpack" in self.audio.mime)
+        self.assertTrue("audio/x-wavpack" in self.audio.mime)
 
 
 class TWavPackDSD(TestCase):
@@ -69,22 +70,22 @@ class TWavPackDSD(TestCase):
         self.audio = WavPack(os.path.join(DATA_DIR, "dsd.wv"))
 
     def test_version(self):
-        self.failUnlessEqual(self.audio.info.version, 0x410)
+        self.assertEqual(self.audio.info.version, 0x410)
 
     def test_channels(self):
-        self.failUnlessEqual(self.audio.info.channels, 2)
+        self.assertEqual(self.audio.info.channels, 2)
 
     def test_sample_rate(self):
-        self.failUnlessEqual(self.audio.info.sample_rate, 352800)
+        self.assertEqual(self.audio.info.sample_rate, 352800)
 
     def test_bits_per_sample(self):
-        self.failUnlessEqual(self.audio.info.bits_per_sample, 1)
+        self.assertEqual(self.audio.info.bits_per_sample, 1)
 
     def test_length(self):
-        self.failUnlessAlmostEqual(self.audio.info.length, 0.01, 3)
+        self.assertAlmostEqual(self.audio.info.length, 0.01, 3)
 
     def test_pprint(self):
         self.audio.pprint()
 
     def test_mime(self):
-        self.failUnless("audio/x-wavpack" in self.audio.mime)
+        self.assertTrue("audio/x-wavpack" in self.audio.mime)

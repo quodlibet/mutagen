@@ -6,45 +6,84 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
+from __future__ import annotations
+
+import contextlib
 import re
 import struct
+from io import BytesIO
 from itertools import zip_longest
+from typing import cast, final, override
 
 from mutagen._tags import Tags
 from mutagen._util import DictProxy, convert_error, read_full
 
-from ._util import BitPaddedInt, unsynch, ID3JunkFrameError, \
-    ID3EncryptionUnsupportedError, is_valid_frame_id, error, \
-    ID3NoHeaderError, ID3UnsupportedVersionError, ID3SaveConfig
-from ._frames import TDRC, APIC, TDOR, TIME, TIPL, TORY, TDAT, Frames_2_2, \
-    TextFrame, TYER, Frame, IPLS, Frames
+from ._frames import (
+    APIC,
+    CHAP,
+    IPLS,
+    TDAT,
+    TDOR,
+    TDRC,
+    TIME,
+    TIPL,
+    TMCL,
+    TORY,
+    TYER,
+    Frame,
+    Frames,
+    Frames_2_2,
+    TextFrame,
+)
+from ._util import (
+    BitPaddedInt,
+    ID3EncryptionUnsupportedError,
+    ID3JunkFrameError,
+    ID3NoHeaderError,
+    ID3SaveConfig,
+    ID3UnsupportedVersionError,
+    error,
+    is_valid_frame_id,
+    unsynch,
+)
 
 
-class ID3Header(object):
+@final
+class ID3Header:
 
     _V24 = (2, 4, 0)
     _V23 = (2, 3, 0)
     _V22 = (2, 2, 0)
     _V11 = (1, 1)
 
-    f_unsynch = property(lambda s: bool(s._flags & 0x80))
-    f_extended = property(lambda s: bool(s._flags & 0x40))
-    f_experimental = property(lambda s: bool(s._flags & 0x20))
-    f_footer = property(lambda s: bool(s._flags & 0x10))
+    @property
+    def f_unsynch(self) -> bool:
+        return bool(self._flags & 0x80)
+    @property
+    def f_extended(self) -> bool:
+        return bool(self._flags & 0x40)
+    @property
+    def f_experimental(self) -> bool:
+        return bool(self._flags & 0x20)
+    @property
+    def f_footer(self) -> bool:
+        return bool(self._flags & 0x10)
 
-    _known_frames = None
+    _known_frames: dict[str, type[Frame]] | None = None
+    _flags: int
 
     @property
-    def known_frames(self):
+    def known_frames(self) -> dict[str, type[Frame]] | None:
         if self._known_frames is not None:
             return self._known_frames
         elif self.version >= ID3Header._V23:
             return Frames
         elif self.version >= ID3Header._V22:
             return Frames_2_2
+        return None
 
     @convert_error(IOError, error)
-    def __init__(self, fileobj=None):
+    def __init__(self, fileobj: BytesIO | None = None) -> None:
         """Raises ID3NoHeaderError, ID3UnsupportedVersionError or error"""
 
         if fileobj is None:
@@ -55,15 +94,15 @@ class ID3Header(object):
         fn = getattr(fileobj, "name", "<unknown>")
         data = fileobj.read(10)
         if len(data) != 10:
-            raise ID3NoHeaderError("%s: too small" % fn)
+            raise ID3NoHeaderError(f"{fn}: too small")
 
-        id3, vmaj, vrev, flags, size = struct.unpack('>3sBBB4s', data)
+        id3, vmaj, vrev, flags, size = cast(tuple[bytes, int, int, int, bytes], struct.unpack('>3sBBB4s', data))
         self._flags = flags
         self.size = BitPaddedInt(size) + 10
         self.version = (2, vmaj, vrev)
 
         if id3 != b'ID3':
-            raise ID3NoHeaderError("%r doesn't start with an ID3 tag" % fn)
+            raise ID3NoHeaderError(f"{fn!r} doesn't start with an ID3 tag")
 
         if vmaj not in [2, 3, 4]:
             raise ID3UnsupportedVersionError("%r ID3v2.%d not supported"
@@ -72,12 +111,9 @@ class ID3Header(object):
         if not BitPaddedInt.has_valid_padding(size):
             raise error("Header size not synchsafe")
 
-        if (self.version >= self._V24) and (flags & 0x0f):
+        if (self.version >= self._V24) and (flags & 0x0f) or (self._V23 <= self.version < self._V24) and (flags & 0x1f):
             raise error(
-                "%r has invalid flags %#02x" % (fn, flags))
-        elif (self._V23 <= self.version < self._V24) and (flags & 0x1f):
-            raise error(
-                "%r has invalid flags %#02x" % (fn, flags))
+                f"{fn!r} has invalid flags {flags:#02x}")
 
         if self.f_extended:
             extsize_data = read_full(fileobj, 4)
@@ -95,7 +131,7 @@ class ID3Header(object):
                 # https://github.com/quodlibet/quodlibet/issues/126
                 self._flags ^= 0x40
                 extsize = 0
-                fileobj.seek(-4, 1)
+                _ = fileobj.seek(-4, 1)
             elif self.version >= self._V24:
                 # "Where the 'Extended header size' is the size of the whole
                 # extended header, stored as a 32 bit synchsafe integer."
@@ -106,7 +142,7 @@ class ID3Header(object):
             else:
                 # "Where the 'Extended header size', currently 6 or 10 bytes,
                 # excludes itself."
-                extsize = struct.unpack('>L', extsize_data)[0]
+                extsize = cast(int, struct.unpack('>L', extsize_data)[0])
 
             if extsize < 0:
                 raise error("invalid extended header size")
@@ -114,7 +150,11 @@ class ID3Header(object):
             self._extdata = read_full(fileobj, extsize)
 
 
-def determine_bpi(data, frames, EMPTY=b"\x00" * 10):
+def determine_bpi(
+    data: bytes,
+    frames: dict[str, type[Frame]],
+    EMPTY: bytes = b"\x00" * 10
+) -> type[int] | type[BitPaddedInt]:
     """Takes id3v2.4 frame data and determines if ints or bitpaddedints
     should be used for parsing. Needed because iTunes used to write
     normal ints for frame sizes.
@@ -165,16 +205,18 @@ def determine_bpi(data, frames, EMPTY=b"\x00" * 10):
     return BitPaddedInt
 
 
-class ID3Tags(DictProxy, Tags):
+class ID3Tags(DictProxy[str, Frame], Tags):
 
     __module__ = "mutagen.id3"
+    unknown_frames: list[bytes]
+    _unknown_v2_version: int
 
     def __init__(self, *args, **kwargs):
         self.unknown_frames = []
         self._unknown_v2_version = 4
-        super(ID3Tags, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
-    def _read(self, header, data):
+    def _read(self, header: ID3Header, data: bytes) -> bytes:
         frames, unknown_frames, data = read_frames(
             header, data, header.known_frames)
         for frame in frames:
@@ -183,7 +225,7 @@ class ID3Tags(DictProxy, Tags):
         self._unknown_v2_version = header.version[1]
         return data
 
-    def _write(self, config):
+    def _write(self, config: ID3SaveConfig) -> bytearray:
         # Sort frames by 'importance', then reverse frame size and then frame
         # hash to get a stable result
         order = ["TIT2", "TPE1", "TRCK", "TALB", "TPOS", "TDRC", "TCON"]
@@ -191,7 +233,7 @@ class ID3Tags(DictProxy, Tags):
         framedata = [
             (f, save_frame(f, config=config)) for f in self.values()]
 
-        def get_prio(frame):
+        def get_prio(frame: Frame) -> int:
             try:
                 return order.index(frame.FrameID)
             except ValueError:
@@ -201,7 +243,7 @@ class ID3Tags(DictProxy, Tags):
                 else:
                     return len(order)
 
-        def sort_key(items):
+        def sort_key(items: tuple[int, tuple[Frame, bytearray]]) -> tuple[int, int, str]:
             i, (frame, data) = items
 
             if frame.FrameID == "APIC":
@@ -227,7 +269,7 @@ class ID3Tags(DictProxy, Tags):
 
         return bytearray().join(framedata)
 
-    def getall(self, key):
+    def getall(self, key: str) -> list[Frame]:
         """Return all frames with a given name (the list may be empty).
 
         Args:
@@ -250,7 +292,7 @@ class ID3Tags(DictProxy, Tags):
             key = key + ":"
             return [v for s, v in self.items() if s.startswith(key)]
 
-    def setall(self, key, values):
+    def setall(self, key: str, values: list[Frame]) -> None:
         """Delete frames of the given type and add frames in 'values'.
 
         Args:
@@ -262,7 +304,7 @@ class ID3Tags(DictProxy, Tags):
         for tag in values:
             self[tag.HashKey] = tag
 
-    def delall(self, key):
+    def delall(self, key: str) -> None:
         """Delete all tags of a given kind; see getall.
 
         Args:
@@ -277,7 +319,8 @@ class ID3Tags(DictProxy, Tags):
                 if k.startswith(key):
                     del self[k]
 
-    def pprint(self):
+    @override
+    def pprint(self) -> str:
         """
         Returns:
             text: tags in a human-readable format.
@@ -295,7 +338,7 @@ class ID3Tags(DictProxy, Tags):
         frames = sorted(Frame.pprint(s) for s in self.values())
         return "\n".join(frames)
 
-    def _add(self, frame, strict):
+    def _add(self, frame: Frame | object, strict: bool) -> None:
         """Add a frame.
 
         Args:
@@ -305,7 +348,7 @@ class ID3Tags(DictProxy, Tags):
         """
 
         if not isinstance(frame, Frame):
-            raise TypeError("%r not a Frame instance" % frame)
+            raise TypeError(f"{frame!r} not a Frame instance")
 
         orig_frame = frame
         frame = frame._upgrade_frame()
@@ -313,7 +356,7 @@ class ID3Tags(DictProxy, Tags):
             if not strict:
                 return
             raise TypeError(
-                "Can't upgrade %r frame" % type(orig_frame).__name__)
+                f"Can't upgrade {type(orig_frame).__name__!r} frame")
 
         hash_key = frame.HashKey
         if strict or hash_key not in self:
@@ -337,12 +380,12 @@ class ID3Tags(DictProxy, Tags):
                     break
                 hash_key = new_hash
 
-    def loaded_frame(self, tag):
+    def loaded_frame(self, tag: Frame) -> None:
         """Deprecated; use the add method."""
 
         self._add(tag, True)
 
-    def add(self, frame):
+    def add(self, frame: Frame) -> None:
         """Add a frame to the tag."""
 
         # add = loaded_frame (and vice versa) break applications that
@@ -350,12 +393,13 @@ class ID3Tags(DictProxy, Tags):
         # as does making loaded_frame call add.
         self.loaded_frame(frame)
 
-    def __setitem__(self, key, tag):
+    @override
+    def __setitem__(self, key: str, tag: Frame | object) -> None:
         if not isinstance(tag, Frame):
-            raise TypeError("%r not a Frame instance" % tag)
-        super(ID3Tags, self).__setitem__(key, tag)
+            raise TypeError(f"{tag!r} not a Frame instance")
+        super().__setitem__(key, tag)
 
-    def __update_common(self):
+    def __update_common(self) -> None:
         """Updates done by both v23 and v24 update"""
 
         if "TCON" in self:
@@ -364,13 +408,14 @@ class ID3Tags(DictProxy, Tags):
 
         mimes = {"PNG": "image/png", "JPG": "image/jpeg"}
         for pic in self.getall("APIC"):
+            assert isinstance(pic, APIC)
             if pic.mime in mimes:
                 newpic = APIC(
                     encoding=pic.encoding, mime=mimes[pic.mime],
                     type=pic.type, desc=pic.desc, data=pic.data)
                 self.add(newpic)
 
-    def update_to_v24(self):
+    def update_to_v24(self) -> None:
         """Convert older tags into an ID3v2.4 tag.
 
         This updates old ID3v2 frames to ID3v2.4 ones (e.g. TYER to
@@ -381,7 +426,7 @@ class ID3Tags(DictProxy, Tags):
         self.__update_common()
 
         # TDAT, TYER, and TIME have been turned into TDRC.
-        timestamps = []
+        timestamps: list[str] = []
         old_frames = [self.pop(n, []) for n in ["TYER", "TDAT", "TIME"]]
         for tyer, tdat, time in zip_longest(*old_frames, fillvalue=""):
             ym = re.match(r"([0-9]{4})(-[0-9]{2}-[0-9]{2})?\Z", tyer)
@@ -390,13 +435,13 @@ class ID3Tags(DictProxy, Tags):
             timestamp = ""
             if ym:
                 (year, month_day) = ym.groups()
-                timestamp += "%s" % year
+                timestamp += f"{year}"
                 if dm:
-                    month_day = "-%s-%s" % dm.groups()[::-1]
+                    month_day = "-{}-{}".format(*dm.groups()[::-1])
                 if month_day:
                     timestamp += month_day
                     if tm:
-                        timestamp += "T%s:%s:00" % tm.groups()
+                        timestamp += "T{}:{}:00".format(*tm.groups())
             if timestamp:
                 timestamps.append(timestamp)
         if timestamps and "TDRC" not in self:
@@ -406,10 +451,8 @@ class ID3Tags(DictProxy, Tags):
         if "TORY" in self:
             f = self.pop("TORY")
             if "TDOR" not in self:
-                try:
+                with contextlib.suppress(UnicodeDecodeError):
                     self.add(TDOR(encoding=0, text=str(f)))
-                except UnicodeDecodeError:
-                    pass
 
         # IPLS is now TIPL.
         if "IPLS" in self:
@@ -425,11 +468,13 @@ class ID3Tags(DictProxy, Tags):
 
         # Recurse into chapters
         for f in self.getall("CHAP"):
+            assert isinstance(f, CHAP)
             f.sub_frames.update_to_v24()
         for f in self.getall("CTOC"):
+            assert isinstance(f, CHAP)
             f.sub_frames.update_to_v24()
 
-    def update_to_v23(self):
+    def update_to_v23(self) -> None:
         """Convert older (and newer) tags into an ID3v2.3 tag.
 
         This updates incompatible ID3v2 frames to ID3v2.3 ones. If you
@@ -444,11 +489,14 @@ class ID3Tags(DictProxy, Tags):
 
         # TMCL, TIPL -> TIPL
         if "TIPL" in self or "TMCL" in self:
+            assert isinstance(self, (TMCL, TIPL))
             people = []
             if "TIPL" in self:
+                assert isinstance(self, TIPL)
                 f = self.pop("TIPL")
                 people.extend(f.people)
             if "TMCL" in self:
+                assert isinstance(self, TMCL)
                 f = self.pop("TMCL")
                 people.extend(f.people)
             if "IPLS" not in self:
@@ -464,6 +512,7 @@ class ID3Tags(DictProxy, Tags):
 
         # TDRC -> TYER, TDAT, TIME
         if "TDRC" in self:
+            assert isinstance(self, TDRC)
             f = self.pop("TDRC")
             if f.text:
                 d = f.text[0]
@@ -493,16 +542,22 @@ class ID3Tags(DictProxy, Tags):
         for f in self.getall("CTOC"):
             f.sub_frames.update_to_v23()
 
-    def _copy(self):
+    def _copy(self) -> tuple[list[tuple[str, Frame]], dict[str, tuple[list[tuple[str, Frame]], dict[str, object]]]]:
         """Creates a shallow copy of all tags"""
 
         items = self.items()
-        subs = {}
+        subs: dict[str, tuple[list[tuple[str, Frame]], dict[str, object]]] = {}
         for f in (self.getall("CHAP") + self.getall("CTOC")):
             subs[f.HashKey] = f.sub_frames._copy()
         return (items, subs)
 
-    def _restore(self, value):
+    def _restore(
+        self,
+        value: tuple[
+            list[tuple[str, Frame]],
+            dict[str, tuple[list[tuple[str, Frame]], dict[str, object]]]
+        ]
+    ) -> None:
         """Restores the state copied with _copy()"""
 
         items, subs = value
@@ -513,14 +568,17 @@ class ID3Tags(DictProxy, Tags):
                 value.sub_frames._restore(subs[key])
 
 
-def save_frame(frame, name=None, config=None):
+def save_frame(
+    frame: Frame,
+    name: bytes | None = None,
+    config: ID3SaveConfig | None = None
+) -> bytes:
     if config is None:
         config = ID3SaveConfig()
 
     flags = 0
-    if isinstance(frame, TextFrame):
-        if len(str(frame)) == 0:
-            return b''
+    if isinstance(frame, TextFrame) and len(str(frame)) == 0:
+        return b''
 
     framedata = frame._writeData(config)
 
@@ -553,43 +611,43 @@ def save_frame(frame, name=None, config=None):
     return header + framedata
 
 
-def read_frames(id3, data, frames):
+def read_frames(
+    id3: ID3Header,
+    data: bytes,
+    frames: dict[str, type[Frame]] | None
+) -> tuple[list[Frame], list[bytes], bytes]:
     """Does not error out"""
 
     assert id3.version >= ID3Header._V22
 
-    result = []
-    unsupported_frames = []
+    result: list[Frame] = []
+    unsupported_frames: list[bytes] = []
 
     if id3.version < ID3Header._V24 and id3.f_unsynch:
-        try:
+        with contextlib.suppress(ValueError):
             data = unsynch.decode(data)
-        except ValueError:
-            pass
 
     if id3.version >= ID3Header._V23:
-        if id3.version < ID3Header._V24:
-            bpi = int
-        else:
-            bpi = determine_bpi(data, frames)
+        bpi = int if id3.version < ID3Header._V24 else determine_bpi(data, frames)
 
         while data:
             header = data[:10]
             try:
-                name, size, flags = struct.unpack('>4sLH', header)
+                nameb, sizeb, flags = cast(tuple[bytes, bytes, int],
+                                        struct.unpack('>4sLH', header))
             except struct.error:
                 break  # not enough header
-            if name.strip(b'\x00') == b'':
+            if nameb.strip(b'\x00') == b'':
                 break
 
-            size = bpi(size)
+            size = bpi(sizeb)
             framedata = data[10:10 + size]
             data = data[10 + size:]
             if size == 0:
                 continue  # drop empty frames
 
             try:
-                name = name.decode('ascii')
+                name = nameb.decode('ascii')
             except UnicodeDecodeError:
                 continue
 
@@ -614,11 +672,12 @@ def read_frames(id3, data, frames):
         while data:
             header = data[0:6]
             try:
-                name, size = struct.unpack('>3s3s', header)
+                nameb, sizeb = cast(tuple[bytes, bytes],
+                                 struct.unpack('>3s3s', header))
             except struct.error:
                 break  # not enough header
-            size, = struct.unpack('>L', b'\x00' + size)
-            if name.strip(b'\x00') == b'':
+            size, = cast(tuple[int],struct.unpack('>L', b'\x00' + sizeb))
+            if nameb.strip(b'\x00') == b'':
                 break
 
             framedata = data[6:6 + size]
@@ -627,7 +686,7 @@ def read_frames(id3, data, frames):
                 continue  # drop empty frames
 
             try:
-                name = name.decode('ascii')
+                name = nameb.decode('ascii')
             except UnicodeDecodeError:
                 continue
 

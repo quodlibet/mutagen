@@ -7,39 +7,44 @@
 
 """Pretend to be /usr/bin/id3v2 from id3lib, sort of."""
 
-import os
-import sys
 import codecs
 import mimetypes
+import os
+import sys
 import warnings
-
-from optparse import SUPPRESS_HELP
+from collections.abc import Callable, Sequence
+from optparse import SUPPRESS_HELP, Option, OptionParser
+from typing import Final, cast, override
 
 import mutagen
 import mutagen.id3
 from mutagen.id3 import Encoding, PictureType
 
-from ._util import split_escape, SignalHandler, OptionParser
-
+from ._util import SignalHandler, split_escape
 
 VERSION = (1, 3)
 _sig = SignalHandler()
 
+type EditList = list[tuple[str, str]]
+
 global verbose
-verbose = True
+verbose: bool = True
 
 
 class ID3OptionParser(OptionParser):
+    edits: EditList
+
     def __init__(self):
         mutagen_version = ".".join(map(str, mutagen.version))
         my_version = ".".join(map(str, VERSION))
-        version = "mid3v2 %s\nUses Mutagen %s" % (my_version, mutagen_version)
+        version = f"mid3v2 {my_version}\nUses Mutagen {mutagen_version}"
         self.edits = []
         OptionParser.__init__(
             self, version=version,
             usage="%prog [OPTION] [FILE]...",
             description="Mutagen-based replacement for id3lib's id3v2.")
 
+    @override
     def format_help(self, *args, **kwargs):
         text = OptionParser.format_help(self, *args, **kwargs)
         return text + """\
@@ -52,35 +57,37 @@ Any editing operation will cause the ID3 tag to be upgraded to ID3v2.4.
 """
 
 
-def list_frames(option, opt, value, parser):
+def list_frames(option: Option, opt: str, value: str | None, parser: ID3OptionParser) -> None:
     items = mutagen.id3.Frames.items()
     for name, frame in sorted(items):
-        print(u"    --%s    %s" % (name, frame.__doc__.split("\n")[0]))
+        assert frame.__doc__ is not None
+        print("    --{}    {}".format(name, frame.__doc__.split("\n")[0]))
     raise SystemExit
 
 
-def list_frames_2_2(option, opt, value, parser):
+def list_frames_2_2(option: Option, opt: str, value: str | None, parser: ID3OptionParser) -> None:
     items = mutagen.id3.Frames_2_2.items()
     for name, frame in sorted(items):
-        print(u"    --%s    %s" % (name, frame.__doc__.split("\n")[0]))
+        assert frame.__doc__ is not None
+        print("    --{}    {}".format(name, frame.__doc__.split("\n")[0]))
     raise SystemExit
 
 
-def list_genres(option, opt, value, parser):
+def list_genres(option: Option, opt: str, value: str | None, parser: ID3OptionParser) -> None:
     for i, genre in enumerate(mutagen.id3.TCON.GENRES):
-        print(u"%3d: %s" % (i, genre))
+        print("%3d: %s" % (i, genre))
     raise SystemExit
 
 
-def delete_tags(filenames, v1, v2):
+def delete_tags(filenames: Sequence[str], v1: bool, v2: bool) -> None:
     for filename in filenames:
         with _sig.block():
             if verbose:
-                print(u"deleting ID3 tag info in", filename, file=sys.stderr)
+                print("deleting ID3 tag info in", filename, file=sys.stderr)
             mutagen.id3.delete(filename, v1, v2)
 
 
-def delete_frames(deletes, filenames):
+def delete_frames(deletes: str, filenames: Sequence[str]) -> None:
 
     try:
         deletes = frame_from_fsnative(deletes)
@@ -92,23 +99,23 @@ def delete_frames(deletes, filenames):
     for filename in filenames:
         with _sig.block():
             if verbose:
-                print("deleting %s from" % deletes, filename,
+                print(f"deleting {deletes} from", filename,
                       file=sys.stderr)
             try:
                 id3 = mutagen.id3.ID3(filename)
             except mutagen.id3.ID3NoHeaderError:
                 if verbose:
-                    print(u"No ID3 header found; skipping.", file=sys.stderr)
+                    print("No ID3 header found; skipping.", file=sys.stderr)
             except Exception as err:
                 print(str(err), file=sys.stderr)
-                raise SystemExit(1)
+                raise SystemExit(1) from err
             else:
                 for frame in frames:
                     id3.delall(frame)
                 id3.save()
 
 
-def frame_from_fsnative(arg):
+def frame_from_fsnative(arg: str) -> str:
     """Takes item from argv and returns ascii native str
     or raises ValueError.
     """
@@ -117,7 +124,7 @@ def frame_from_fsnative(arg):
     return arg.encode("ascii").decode("ascii")
 
 
-def value_from_fsnative(arg, escape):
+def value_from_fsnative(arg: str, escape: bool) -> str:
     """Takes an item from argv and returns a str value without
     surrogate escapes or raises ValueError.
     """
@@ -125,24 +132,24 @@ def value_from_fsnative(arg, escape):
     assert isinstance(arg, str)
 
     if escape:
-        bytes_ = os.fsencode(arg)
+        bytes_b = os.fsencode(arg)
         # With py3.7 this has started to warn for invalid escapes, but we
         # don't control the input so ignore it.
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            bytes_ = codecs.escape_decode(bytes_)[0]
-        arg = os.fsdecode(bytes_)
+            bytes_s = codecs.escape_decode(bytes_b)[0]
+        arg = os.fsdecode(bytes_s)
 
     text = arg.encode("utf-8").decode("utf-8")
     return text
 
 
-def error(*args):
+def error(*args: object) -> None:
     print(*args, file=sys.stderr)
     raise SystemExit(1)
 
 
-def get_frame_encoding(frame_id, value):
+def get_frame_encoding(frame_id: str, value: str) -> Encoding:
     if frame_id == "APIC":
         # See https://github.com/beetbox/beets/issues/899#issuecomment-62437773
         return Encoding.UTF16 if value else Encoding.LATIN1
@@ -150,9 +157,9 @@ def get_frame_encoding(frame_id, value):
         return Encoding.UTF8
 
 
-def write_files(edits, filenames, escape):
+def write_files(edits: Sequence[tuple[str, str]], filenames: Sequence[str], escape: bool) -> None:
     # unescape escape sequences and decode values
-    encoded_edits = []
+    encoded_edits: EditList = []
     for frame, value in edits:
         if not value:
             continue
@@ -170,7 +177,7 @@ def write_files(edits, filenames, escape):
         try:
             value = value_from_fsnative(value, escape)
         except ValueError as err:
-            error(u"%s: %s" % (frame, str(err)))
+            error(f"{frame}: {str(err)}")
 
         assert isinstance(value, str)
 
@@ -180,30 +187,30 @@ def write_files(edits, filenames, escape):
     # preprocess:
     #   for all [frame,value] pairs in the edits list
     #      gather values for identical frames into a list
-    tmp = {}
+    tmp: dict[str, list[str]] = {}
     for frame, value in edits:
         if frame in tmp:
             tmp[frame].append(value)
         else:
             tmp[frame] = [value]
     # edits is now a dictionary of frame -> [list of values]
-    edits = tmp
+    edits: dict[str, list[str]] = tmp
 
     # escape also enables escaping of the split separator
-    if escape:
-        string_split = split_escape
-    else:
-        string_split = lambda s, *args, **kwargs: s.split(*args, **kwargs)
+    def __string_split(s: str, sep: str) -> list[str]:
+        return s.split(sep)
+
+    string_split: Final = split_escape if escape else __string_split
 
     for filename in filenames:
         with _sig.block():
             if verbose:
-                print(u"Writing", filename, file=sys.stderr)
+                print("Writing", filename, file=sys.stderr)
             try:
                 id3 = mutagen.id3.ID3(filename)
             except mutagen.id3.ID3NoHeaderError:
                 if verbose:
-                    print(u"No ID3 header found; creating a new tag",
+                    print("No ID3 header found; creating a new tag",
                           file=sys.stderr)
                 id3 = mutagen.id3.ID3()
             except Exception as err:
@@ -220,9 +227,7 @@ def write_files(edits, filenames, escape):
                         else:
                             email, rating, count = values
 
-                        frame = mutagen.id3.POPM(
-                            email=email, rating=int(rating), count=int(count))
-                        id3.add(frame)
+                        id3.add(mutagen.id3.POPM(email=email, rating=int(rating), count=int(count)))
                 elif frame == "APIC":
                     for value in vlist:
                         values = string_split(value, ":")
@@ -230,16 +235,13 @@ def write_files(edits, filenames, escape):
                         # encoding since we have already decoded at that point
                         fn = values[0]
 
-                        if len(values) >= 2:
-                            desc = values[1]
-                        else:
-                            desc = u"cover"
+                        desc = values[1] if len(values) >= 2 else "cover"
 
                         if len(values) >= 3:
                             try:
                                 picture_type = int(values[2])
                             except ValueError:
-                                error(u"Invalid picture type: %r" % values[1])
+                                error(f"Invalid picture type: {values[1]!r}")
                         else:
                             picture_type = PictureType.COVER_FRONT
 
@@ -256,13 +258,10 @@ def write_files(edits, filenames, escape):
                         try:
                             with open(fn, "rb") as h:
                                 data = h.read()
-                        except IOError as e:
+                        except OSError as e:
                             error(str(e))
 
-                        frame = mutagen.id3.APIC(encoding=encoding, mime=mime,
-                            desc=desc, type=picture_type, data=data)
-
-                        id3.add(frame)
+                        id3.add(mutagen.id3.APIC(encoding=encoding, mime=mime, desc=desc, type=picture_type, data=data))
                 elif frame == "COMM":
                     for value in vlist:
                         values = string_split(value, ":")
@@ -273,9 +272,7 @@ def write_files(edits, filenames, escape):
                         else:
                             value = ":".join(values[1:-1])
                             desc, lang = values[0], values[-1]
-                        frame = mutagen.id3.COMM(
-                            encoding=3, text=value, lang=lang, desc=desc)
-                        id3.add(frame)
+                        id3.add(mutagen.id3.COMM(encoding=3, text=value, lang=lang, desc=desc))
                 elif frame == "USLT":
                     for value in vlist:
                         values = string_split(value, ":")
@@ -286,18 +283,15 @@ def write_files(edits, filenames, escape):
                         else:
                             value = ":".join(values[1:-1])
                             desc, lang = values[0], values[-1]
-                        frame = mutagen.id3.USLT(
-                            encoding=3, text=value, lang=lang, desc=desc)
-                        id3.add(frame)
+                        id3.add(mutagen.id3.USLT(encoding=3, text=value, lang=lang, desc=desc))
                 elif frame == "UFID":
                     for value in vlist:
                         values = string_split(value, ":")
                         if len(values) != 2:
-                            error(u"Invalid value: %r" % values)
+                            error(f"Invalid value: {values!r}")
                         owner = values[0]
                         data = values[1].encode("utf-8")
-                        frame = mutagen.id3.UFID(owner=owner, data=data)
-                        id3.add(frame)
+                        id3.add(mutagen.id3.UFID(owner=owner, data=data))
                 elif frame == "TXXX":
                     for value in vlist:
                         values = string_split(value, ":", 1)
@@ -305,9 +299,7 @@ def write_files(edits, filenames, escape):
                             desc, value = "", values[0]
                         else:
                             desc, value = values[0], values[1]
-                        frame = mutagen.id3.TXXX(
-                            encoding=3, text=value, desc=desc)
-                        id3.add(frame)
+                        id3.add(mutagen.id3.TXXX(encoding=3, text=value, desc=desc))
                 elif frame == "WXXX":
                     for value in vlist:
                         values = string_split(value, ":", 1)
@@ -315,50 +307,45 @@ def write_files(edits, filenames, escape):
                             desc, value = "", values[0]
                         else:
                             desc, value = values[0], values[1]
-                        frame = mutagen.id3.WXXX(
-                            encoding=3, url=value, desc=desc)
-                        id3.add(frame)
+                        id3.add(mutagen.id3.WXXX(encoding=3, url=value, desc=desc))
                 elif issubclass(mutagen.id3.Frames[frame],
                                 mutagen.id3.UrlFrame):
-                    frame = mutagen.id3.Frames[frame](
-                        encoding=3, url=vlist[-1])
-                    id3.add(frame)
+                    id3.add(mutagen.id3.Frames[frame](encoding=3, url=vlist[-1]))
                 else:
-                    frame = mutagen.id3.Frames[frame](encoding=3, text=vlist)
-                    id3.add(frame)
+                    id3.add(mutagen.id3.Frames[frame](encoding=3, text=vlist))
             id3.save(filename)
 
 
-def list_tags(filenames):
+def list_tags(filenames: Sequence[str]) -> None:
     for filename in filenames:
         print("IDv2 tag info for", filename)
         try:
             id3 = mutagen.id3.ID3(filename, translate=False)
         except mutagen.id3.ID3NoHeaderError:
-            print(u"No ID3 header found; skipping.")
+            print("No ID3 header found; skipping.")
         except Exception as err:
             print(str(err), file=sys.stderr)
-            raise SystemExit(1)
+            raise SystemExit(1) from err
         else:
             print(id3.pprint())
 
 
-def list_tags_raw(filenames):
+def list_tags_raw(filenames: Sequence[str]) -> None:
     for filename in filenames:
         print("Raw IDv2 tag info for", filename)
         try:
             id3 = mutagen.id3.ID3(filename, translate=False)
         except mutagen.id3.ID3NoHeaderError:
-            print(u"No ID3 header found; skipping.")
+            print("No ID3 header found; skipping.")
         except Exception as err:
             print(str(err), file=sys.stderr)
-            raise SystemExit(1)
+            raise SystemExit(1) from err
         else:
             for frame in id3.values():
                 print(str(repr(frame)))
 
 
-def main(argv):
+def main(argv: Sequence[str]) -> None:
     parser = ID3OptionParser()
     parser.add_option(
         "-v", "--verbose", action="store_true", dest="verbose", default=False,
@@ -454,7 +441,13 @@ def main(argv):
                 type='string', metavar="value",  # optparse blows up with this
                 callback=lambda *args: args[3].edits.append(args[1:3]))
 
-    (options, args) = parser.parse_args(argv[1:])
+    (options, args) = parser.parse_args(list(argv[1:]))
+
+    options.verbose = cast(bool, options.verbose)
+    options.escape = cast(bool, options.escape)
+    options.deletes = cast(str, options.deletes)
+    options.action = cast(str | None, options.action)
+
     global verbose
     verbose = options.verbose
 
@@ -478,6 +471,6 @@ def main(argv):
         parser.print_help()
 
 
-def entry_point():
+def entry_point() -> None:
     _sig.init()
     return main(sys.argv)

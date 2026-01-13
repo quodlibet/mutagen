@@ -6,6 +6,8 @@
 # (at your option) any later version.
 
 import struct
+from io import BytesIO
+from typing import Self, override
 
 from mutagen._util import convert_error
 
@@ -20,7 +22,7 @@ class AtomError(Exception):
     pass
 
 
-class Atom(object):
+class Atom:
     """An individual atom.
 
     Attributes:
@@ -33,23 +35,27 @@ class Atom(object):
     This structure should only be used internally by Mutagen.
     """
 
-    children = None
+    children: list['Atom'] | None = None
+    offset: int
+    _dataoffset: int
+    length: int
+    name: bytes
 
     @convert_error(IOError, AtomError)
-    def __init__(self, fileobj, level=0):
+    def __init__(self, fileobj: BytesIO, level: int=0):
         """May raise AtomError"""
 
         self.offset = fileobj.tell()
         try:
             self.length, self.name = struct.unpack(">I4s", fileobj.read(8))
         except struct.error:
-            raise AtomError("truncated data")
+            raise AtomError("truncated data") from struct.error
         self._dataoffset = self.offset + 8
         if self.length == 1:
             try:
                 self.length, = struct.unpack(">Q", fileobj.read(8))
             except struct.error:
-                raise AtomError("truncated data")
+                raise AtomError("truncated data") from struct.error
             self._dataoffset += 8
             if self.length < 16:
                 raise AtomError(
@@ -60,34 +66,34 @@ class Atom(object):
                     "only a top-level atom can have zero length")
             # Only the last atom is supposed to have a zero-length, meaning it
             # extends to the end of file.
-            fileobj.seek(0, 2)
+            _ = fileobj.seek(0, 2)
             self.length = fileobj.tell() - self.offset
-            fileobj.seek(self.offset + 8, 0)
+            _ = fileobj.seek(self.offset + 8, 0)
         elif self.length < 8:
             raise AtomError(
                 "atom length can only be 0, 1 or 8 and higher")
 
         if self.name in _CONTAINERS:
             self.children = []
-            fileobj.seek(_SKIP_SIZE.get(self.name, 0), 1)
+            _ = fileobj.seek(_SKIP_SIZE.get(self.name, 0), 1)
             while fileobj.tell() < self.offset + self.length:
                 self.children.append(Atom(fileobj, level + 1))
         else:
-            fileobj.seek(self.offset + self.length, 0)
+            _ = fileobj.seek(self.offset + self.length, 0)
 
     @property
     def datalength(self):
         return self.length - (self._dataoffset - self.offset)
 
-    def read(self, fileobj):
+    def read(self, fileobj: BytesIO) -> tuple[bool, bytes]:
         """Return if all data could be read and the atom payload"""
 
-        fileobj.seek(self._dataoffset, 0)
+        _ = fileobj.seek(self._dataoffset, 0)
         data = fileobj.read(self.datalength)
         return len(data) == self.datalength, data
 
     @staticmethod
-    def render(name, data):
+    def render(name: bytes, data: bytes) -> bytes:
         """Render raw atom data."""
         # this raises OverflowError if Py_ssize_t can't handle the atom data
         size = len(data) + 8
@@ -96,17 +102,16 @@ class Atom(object):
         else:
             return struct.pack(">I4sQ", 1, name, size + 8) + data
 
-    def findall(self, name, recursive=False):
+    def findall(self, name: bytes, recursive: bool=False):
         """Recursively find all child atoms by specified name."""
         if self.children is not None:
             for child in self.children:
                 if child.name == name:
                     yield child
                 if recursive:
-                    for atom in child.findall(name, True):
-                        yield atom
+                    yield from child.findall(name, True)
 
-    def __getitem__(self, remaining):
+    def __getitem__(self, remaining: list[bytes]) -> Self:
         """Look up a child atom, potentially recursively.
 
         e.g. atom['udta', 'meta'] => <Atom name='meta' ...>
@@ -114,26 +119,25 @@ class Atom(object):
         if not remaining:
             return self
         elif self.children is None:
-            raise KeyError("%r is not a container" % self.name)
+            raise KeyError(f"{self.name!r} is not a container")
         for child in self.children:
             if child.name == remaining[0]:
                 return child[remaining[1:]]
         else:
-            raise KeyError("%r not found" % remaining[0])
+            raise KeyError(f"{remaining[0]!r} not found")
 
-    def __repr__(self):
+    @override
+    def __repr__(self) -> str:
         cls = self.__class__.__name__
         if self.children is None:
-            return "<%s name=%r length=%r offset=%r>" % (
-                cls, self.name, self.length, self.offset)
+            return f"<{cls} name={self.name!r} length={self.length!r} offset={self.offset!r}>"
         else:
             children = "\n".join([" " + line for child in self.children
                                   for line in repr(child).splitlines()])
-            return "<%s name=%r length=%r offset=%r\n%s>" % (
-                cls, self.name, self.length, self.offset, children)
+            return f"<{cls} name={self.name!r} length={self.length!r} offset={self.offset!r}\n{children}>"
 
 
-class Atoms(object):
+class Atoms:
     """Root atoms in a given file.
 
     Attributes:
@@ -142,16 +146,18 @@ class Atoms(object):
     This structure should only be used internally by Mutagen.
     """
 
+    atoms: list[Atom]
+
     @convert_error(IOError, AtomError)
-    def __init__(self, fileobj):
+    def __init__(self, fileobj: BytesIO):
         self.atoms = []
-        fileobj.seek(0, 2)
+        _ = fileobj.seek(0, 2)
         end = fileobj.tell()
-        fileobj.seek(0)
+        _ = fileobj.seek(0)
         while fileobj.tell() + 8 <= end:
             self.atoms.append(Atom(fileobj))
 
-    def path(self, *names):
+    def path(self, *names: bytes):
         """Look up and return the complete path of an atom.
 
         For example, atoms.path('moov', 'udta', 'meta') will return a
@@ -164,14 +170,14 @@ class Atoms(object):
             path.append(path[-1][name, ])
         return path[1:]
 
-    def __contains__(self, names):
+    def __contains__(self, names: list[bytes] | bytes):
         try:
             self[names]
         except KeyError:
             return False
         return True
 
-    def __getitem__(self, names):
+    def __getitem__(self, names: list[bytes] | bytes) -> Atom:
         """Look up a child atom.
 
         'names' may be a list of atoms (['moov', 'udta']) or a string
@@ -185,7 +191,8 @@ class Atoms(object):
             if child.name == names[0]:
                 return child[names[1:]]
         else:
-            raise KeyError("%r not found" % names[0])
+            raise KeyError(f"{names[0]!r} not found")
 
+    @override
     def __repr__(self):
         return "\n".join([repr(child) for child in self.atoms])

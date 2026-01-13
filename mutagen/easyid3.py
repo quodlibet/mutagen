@@ -11,14 +11,14 @@ EasyID3 is a wrapper around mutagen.id3.ID3 to make ID3 tags appear
 more like Vorbis or APEv2 tags.
 """
 
-from typing import Callable, Dict
+from collections.abc import Callable
+from typing import final, override
 
 import mutagen.id3
-
 from mutagen import Metadata
+from mutagen._filething import FileThing
 from mutagen._util import DictMixin, dict_match, loadfile
-from mutagen.id3 import ID3, error, delete, ID3FileType
-
+from mutagen.id3 import ID3, ID3FileType, delete, error
 
 __all__ = ['EasyID3', 'Open', 'delete']
 
@@ -31,6 +31,7 @@ class EasyID3KeyError(KeyError, ValueError, error):
     """
 
 
+@final
 class EasyID3(DictMixin, Metadata):
     """EasyID3(filething=None)
 
@@ -65,10 +66,10 @@ class EasyID3(DictMixin, Metadata):
 
     """
 
-    Set: Dict[str, Callable] = {}
-    Get: Dict[str, Callable] = {}
-    Delete: Dict[str, Callable] = {}
-    List: Dict[str, Callable] = {}
+    Set: dict[str, Callable] = {}
+    Get: dict[str, Callable] = {}
+    Delete: dict[str, Callable] = {}
+    List: dict[str, Callable] = {}
 
     # For compatibility.
     valid_keys = Get
@@ -79,7 +80,7 @@ class EasyID3(DictMixin, Metadata):
     ListFallback = None
 
     @classmethod
-    def RegisterKey(cls, key,
+    def RegisterKey(cls, key: str,
                     getter=None, setter=None, deleter=None, lister=None):
         """Register a new key mapping.
 
@@ -153,7 +154,7 @@ class EasyID3(DictMixin, Metadata):
             enc = 0
             # Store 8859-1 if we can, per MusicBrainz spec.
             for v in value:
-                if v and max(v) > u'\x7f':
+                if v and max(v) > '\x7f':
                     enc = 3
                     break
 
@@ -169,12 +170,19 @@ class EasyID3(DictMixin, Metadata):
         if filename is not None:
             self.load(filename)
 
-    load = property(lambda s: s.__id3.load,
-                    lambda s, v: setattr(s.__id3, 'load', v))
+
+    @property
+    @override
+    def load(self):
+        return self.__id3.load
+
+    @load.setter
+    def set_load(self, value: Callable):
+        self.__id3.load = value
 
     @loadfile(writable=True, create=True)
-    def save(self, filething=None, v1=1, v2_version=4, v23_sep='/',
-             padding=None):
+    def save(self, filething: FileThing | None =None, v1: int=1, v2_version: int=4, v23_sep: str='/',
+             padding=None, **kwargs):
         """save(filething=None, v1=1, v2_version=4, v23_sep='/', padding=None)
 
         Save changes to a file.
@@ -198,42 +206,52 @@ class EasyID3(DictMixin, Metadata):
             self.__id3.save(filething, v1=v1, v2_version=v2_version,
                             v23_sep=v23_sep, padding=padding)
 
-    delete = property(lambda s: s.__id3.delete,
-                      lambda s, v: setattr(s.__id3, 'delete', v))
+    @property
+    @override
+    def delete(self):
+        return self.__id3.delete
+    @delete.setter
+    @override
+    def delete(self, value: Callable):
+        self.__id3.delete = value
 
-    filename = property(lambda s: s.__id3.filename,
-                        lambda s, fn: setattr(s.__id3, 'filename', fn))
+    @property
+    def filename(self):
+        return self.__id3.filename
+    @filename.setter
+    def filename(self, fn: str):
+        self.__id3.filename = fn
 
     @property
     def size(self):
         return self.__id3.size
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> list[str]:
         func = dict_match(self.Get, key.lower(), self.GetFallback)
         if func is not None:
             return func(self.__id3, key)
         else:
-            raise EasyID3KeyError("%r is not a valid key" % key)
+            raise EasyID3KeyError(f"{key!r} is not a valid key")
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value) -> None:
         if isinstance(value, str):
             value = [value]
         func = dict_match(self.Set, key.lower(), self.SetFallback)
         if func is not None:
             return func(self.__id3, key, value)
         else:
-            raise EasyID3KeyError("%r is not a valid key" % key)
+            raise EasyID3KeyError(f"{key!r} is not a valid key")
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: str) -> None:
         func = dict_match(self.Delete, key.lower(), self.DeleteFallback)
         if func is not None:
             return func(self.__id3, key)
         else:
-            raise EasyID3KeyError("%r is not a valid key" % key)
+            raise EasyID3KeyError(f"{key!r} is not a valid key")
 
-    def keys(self):
-        keys = []
-        for key in self.Get.keys():
+    def keys(self) -> list[str]:
+        keys: list[str] = []
+        for key in self.Get:
             if key in self.List:
                 keys.extend(self.List[key](self.__id3, key))
             elif key in self:
@@ -242,13 +260,14 @@ class EasyID3(DictMixin, Metadata):
             keys.extend(self.ListFallback(self.__id3, ""))
         return keys
 
-    def pprint(self):
+    @override
+    def pprint(self) -> str:
         """Print tag key=value pairs."""
-        strings = []
+        strings: list[str] = []
         for key in sorted(self.keys()):
             values = self[key]
             for value in values:
-                strings.append("%s=%s" % (key, value))
+                strings.append(f"{key}={value}")
         return "\n".join(strings)
 
 
@@ -396,7 +415,7 @@ def gain_get(id3, key):
     except KeyError:
         raise EasyID3KeyError(key)
     else:
-        return [u"%+f dB" % frame.gain]
+        return [f"{frame.gain:+f} dB"]
 
 
 def gain_set(id3, key, value):
@@ -430,7 +449,7 @@ def peak_get(id3, key):
     except KeyError:
         raise EasyID3KeyError(key)
     else:
-        return [u"%f" % frame.peak]
+        return [f"{frame.peak:f}"]
 
 
 def peak_set(id3, key, value):
@@ -463,8 +482,8 @@ def peak_delete(id3, key):
 def peakgain_list(id3, key):
     keys = []
     for frame in id3.getall("RVA2"):
-        keys.append("replaygain_%s_gain" % frame.desc)
-        keys.append("replaygain_%s_peak" % frame.desc)
+        keys.append(f"replaygain_{frame.desc}_gain")
+        keys.append(f"replaygain_{frame.desc}_peak")
     return keys
 
 for frameid, key in {
@@ -519,26 +538,26 @@ EasyID3.RegisterKey("replaygain_*_peak", peak_get, peak_set, peak_delete)
 # http://bugs.musicbrainz.org/ticket/1383
 # http://musicbrainz.org/doc/MusicBrainzTag
 for desc, key in {
-    u"MusicBrainz Artist Id": "musicbrainz_artistid",
-    u"MusicBrainz Album Id": "musicbrainz_albumid",
-    u"MusicBrainz Album Artist Id": "musicbrainz_albumartistid",
-    u"MusicBrainz TRM Id": "musicbrainz_trmid",
-    u"MusicIP PUID": "musicip_puid",
-    u"MusicMagic Fingerprint": "musicip_fingerprint",
-    u"MusicBrainz Album Status": "musicbrainz_albumstatus",
-    u"MusicBrainz Album Type": "musicbrainz_albumtype",
-    u"MusicBrainz Album Release Country": "releasecountry",
-    u"MusicBrainz Disc Id": "musicbrainz_discid",
-    u"ASIN": "asin",
-    u"ALBUMARTISTSORT": "albumartistsort",
-    u"PERFORMER": "performer",
-    u"BARCODE": "barcode",
-    u"CATALOGNUMBER": "catalognumber",
-    u"MusicBrainz Release Track Id": "musicbrainz_releasetrackid",
-    u"MusicBrainz Release Group Id": "musicbrainz_releasegroupid",
-    u"MusicBrainz Work Id": "musicbrainz_workid",
-    u"Acoustid Fingerprint": "acoustid_fingerprint",
-    u"Acoustid Id": "acoustid_id",
+    "MusicBrainz Artist Id": "musicbrainz_artistid",
+    "MusicBrainz Album Id": "musicbrainz_albumid",
+    "MusicBrainz Album Artist Id": "musicbrainz_albumartistid",
+    "MusicBrainz TRM Id": "musicbrainz_trmid",
+    "MusicIP PUID": "musicip_puid",
+    "MusicMagic Fingerprint": "musicip_fingerprint",
+    "MusicBrainz Album Status": "musicbrainz_albumstatus",
+    "MusicBrainz Album Type": "musicbrainz_albumtype",
+    "MusicBrainz Album Release Country": "releasecountry",
+    "MusicBrainz Disc Id": "musicbrainz_discid",
+    "ASIN": "asin",
+    "ALBUMARTISTSORT": "albumartistsort",
+    "PERFORMER": "performer",
+    "BARCODE": "barcode",
+    "CATALOGNUMBER": "catalognumber",
+    "MusicBrainz Release Track Id": "musicbrainz_releasetrackid",
+    "MusicBrainz Release Group Id": "musicbrainz_releasegroupid",
+    "MusicBrainz Work Id": "musicbrainz_workid",
+    "Acoustid Fingerprint": "acoustid_fingerprint",
+    "Acoustid Id": "acoustid_id",
 }.items():
     EasyID3.RegisterTXXXKey(key, desc)
 

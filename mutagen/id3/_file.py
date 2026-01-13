@@ -7,21 +7,31 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
+from __future__ import annotations
+
 import struct
+from enum import IntEnum
+from io import BytesIO
+from typing import override
 
 import mutagen
-from mutagen._util import insert_bytes, delete_bytes, enum, \
-    loadfile, convert_error, read_full
-from mutagen._tags import PaddingInfo
+from mutagen._filething import FileThing
+from mutagen._tags import PaddingFunction, PaddingInfo
+from mutagen._util import (
+    convert_error,
+    delete_bytes,
+    insert_bytes,
+    loadfile,
+    read_full,
+)
+from mutagen.id3._frames import Frame
 
-from ._util import error, ID3NoHeaderError, ID3UnsupportedVersionError, \
-    BitPaddedInt
-from ._tags import ID3Tags, ID3Header, ID3SaveConfig
 from ._id3v1 import MakeID3v1, find_id3v1
+from ._tags import ID3Header, ID3Tags
+from ._util import BitPaddedInt, ID3NoHeaderError, ID3SaveConfig, ID3UnsupportedVersionError, error
 
 
-@enum
-class ID3v1SaveOptions(object):
+class ID3v1SaveOptions(IntEnum):
 
     REMOVE = 0
     """ID3v1 tags will be removed"""
@@ -60,20 +70,13 @@ class ID3(ID3Tags, mutagen.Metadata):
 
     __module__ = "mutagen.id3"
 
-    PEDANTIC = True
-    """`bool`:
+    _header: ID3Header | None = None
+    _version: tuple[int, int, int] | tuple[int, int] = (2, 4, 0)
 
-    .. deprecated:: 1.28
+    unknown_frames: list[bytes]
+    _padding: int | None = None
+    filename: str | None = None
 
-        Doesn't have any effect
-    """
-
-    filename = None
-
-    def __init__(self, *args, **kwargs):
-        self._header = None
-        self._version = (2, 4, 0)
-        super(ID3, self).__init__(*args, **kwargs)
 
     @property
     def version(self):
@@ -82,35 +85,35 @@ class ID3(ID3Tags, mutagen.Metadata):
         return self._version
 
     @version.setter
-    def version(self, value):
+    def version(self, value: tuple[int, int, int] | tuple[int, int]):
         self._version = value
 
     @property
-    def f_unsynch(self):
+    def f_unsynch(self) -> bool:
         if self._header is not None:
             return self._header.f_unsynch
         return False
 
     @property
-    def f_extended(self):
+    def f_extended(self) -> bool:
         if self._header is not None:
             return self._header.f_extended
         return False
 
     @property
-    def size(self):
+    def size(self) -> int:
         if self._header is not None:
             return self._header.size
         return 0
 
-    def _pre_load_header(self, fileobj):
+    def _pre_load_header(self, fileobj: BytesIO):
         # XXX: for aiff to adjust the offset..
         pass
 
     @convert_error(IOError, error)
     @loadfile()
-    def load(self, filething, known_frames=None, translate=True, v2_version=4,
-             load_v1=True):
+    def load(self, filething: FileThing, known_frames: dict[str, type[Frame]] | None=None, translate: bool=True, v2_version: int=4,
+             load_v1: bool=True, **kwargs: object):
         """Load tags from a filename.
 
         Args:
@@ -187,8 +190,8 @@ class ID3(ID3Tags, mutagen.Metadata):
             else:
                 self.update_to_v24()
 
-    def _prepare_data(self, fileobj, start, available, v2_version, v23_sep,
-                      pad_func):
+    def _prepare_data(self, fileobj: BytesIO, start: int, available: int, v2_version: int, v23_sep: str,
+                      pad_func: PaddingFunction | None):
 
         if v2_version not in (3, 4):
             raise ValueError("Only 3 or 4 allowed for v2_version")
@@ -198,7 +201,7 @@ class ID3(ID3Tags, mutagen.Metadata):
 
         needed = len(framedata) + 10
 
-        fileobj.seek(0, 2)
+        _ = fileobj.seek(0, 2)
         trailing_size = fileobj.tell() - start
 
         info = PaddingInfo(available - needed, trailing_size)
@@ -220,8 +223,8 @@ class ID3(ID3Tags, mutagen.Metadata):
 
     @convert_error(IOError, error)
     @loadfile(writable=True, create=True)
-    def save(self, filething=None, v1=1, v2_version=4, v23_sep='/',
-             padding=None):
+    def save(self, filething: FileThing | None=None, v1: int=1, v2_version: int=4, v23_sep: str='/',
+             padding: PaddingFunction | None=None, **kwargs):
         """save(filething=None, v1=1, v2_version=4, v23_sep='/', padding=None)
 
         Save changes to a file.
@@ -250,7 +253,7 @@ class ID3(ID3Tags, mutagen.Metadata):
 
         The lack of a way to update only an ID3v1 tag is intentional.
         """
-
+        assert filething is not None
         f = filething.fileobj
 
         try:
@@ -268,24 +271,23 @@ class ID3(ID3Tags, mutagen.Metadata):
             insert_bytes(f, new_size - old_size, old_size)
         elif (old_size > new_size):
             delete_bytes(f, old_size - new_size, new_size)
-        f.seek(0)
-        f.write(data)
+        _ = f.seek(0)
+        _ = f.write(data)
 
         self.__save_v1(f, v1)
 
-    def __save_v1(self, f, v1):
+    def __save_v1(self, f: BytesIO, v1: ID3v1SaveOptions):
         tag, offset = find_id3v1(f)
         has_v1 = tag is not None
 
-        f.seek(offset, 2)
-        if v1 == ID3v1SaveOptions.UPDATE and has_v1 or \
-                v1 == ID3v1SaveOptions.CREATE:
+        _ = f.seek(offset, 2)
+        if v1 == ID3v1SaveOptions.UPDATE and has_v1 or v1 == ID3v1SaveOptions.CREATE:
             f.write(MakeID3v1(self))
         else:
             f.truncate()
 
     @loadfile(writable=True)
-    def delete(self, filething=None, delete_v1=True, delete_v2=True):
+    def delete(self, filething: FileThing | None =None, delete_v1: bool=True, delete_v2: bool=True):
         """delete(filething=None, delete_v1=True, delete_v2=True)
 
         Remove tags from a file.
@@ -305,7 +307,7 @@ class ID3(ID3Tags, mutagen.Metadata):
 
 @convert_error(IOError, error)
 @loadfile(method=False, writable=True)
-def delete(filething, delete_v1=True, delete_v2=True):
+def delete(filething: FileThing, delete_v1: bool=True, delete_v2: bool=True):
     """Remove tags from a file.
 
     Args:
@@ -362,19 +364,23 @@ class ID3FileType(mutagen.FileType):
     ID3 = ID3
 
     class _Info(mutagen.StreamInfo):
-        length = 0
+        length: float = 0.0
 
-        def __init__(self, fileobj, offset):
+        def __init__(self, fileobj: BytesIO, offset: int | None =None):
             pass
 
         @staticmethod
         def pprint():
-            return u"Unknown format with ID3 tag"
+            return "Unknown format with ID3 tag"
+
+    info: type[mutagen.StreamInfo] | None = None
 
     @staticmethod
-    def score(filename, fileobj, header_data):
-        return header_data.startswith(b"ID3")
+    @override
+    def score(filename: str, fileobj: BytesIO, header: bytes) -> int:
+        return header.startswith(b"ID3")
 
+    @override
     def add_tags(self, ID3=None):
         """Add an empty ID3 tag to the file.
 
@@ -395,7 +401,7 @@ class ID3FileType(mutagen.FileType):
             raise error("an ID3 tag already exists")
 
     @loadfile()
-    def load(self, filething, ID3=None, **kwargs):
+    def load(self, filething: FileThing, ID3=None, **kwargs):
         # see __init__ for docs
 
         fileobj = filething.fileobj

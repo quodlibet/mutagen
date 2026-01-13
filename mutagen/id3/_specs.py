@@ -5,17 +5,34 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
-import struct
+from __future__ import annotations
+
 import codecs
-from struct import unpack, pack
+import struct
+from collections.abc import Iterator
+from enum import IntEnum, IntFlag
+from functools import total_ordering
+from re import Pattern
+from struct import pack, unpack
+from typing import TYPE_CHECKING, Final, Protocol, cast, final, override
 
-from .._util import total_ordering, decode_terminated, enum, flags, \
-    cdata, encode_endian, intround, bchr
-from ._util import BitPaddedInt, is_valid_frame_id
+from mutagen.id3._frames import ASPI
+from mutagen.id3._tags import ID3Header, ID3Tags
+
+if TYPE_CHECKING:
+    from mutagen.id3._frames import Frame
+
+from .._util import (
+    bchr,
+    cdata,
+    decode_terminated,
+    encode_endian,
+    intround,
+)
+from ._util import BitPaddedInt, ID3SaveConfig, is_valid_frame_id
 
 
-@enum
-class PictureType(object):
+class PictureType(IntEnum):
     """Enumeration of image types defined by the ID3 standard for the APIC
     frame, but also reused in WMA/FLAC/VorbisComment.
     """
@@ -83,12 +100,11 @@ class PictureType(object):
     PUBLISHER_LOGOTYPE = 20
     """Publisher/Studio logotype"""
 
-    def _pprint(self):
+    def _pprint(self) -> str:
         return str(self).split(".", 1)[-1].lower().replace("_", " ")
 
 
-@flags
-class CTOCFlags(object):
+class CTOCFlags(IntFlag):
 
     TOP_LEVEL = 0x2
     """Identifies the CTOC root frame"""
@@ -101,28 +117,31 @@ class SpecError(Exception):
     pass
 
 
-class Spec(object):
+class Spec[T](Protocol):
 
-    handle_nodata = False
+    handle_nodata: bool = False
     """If reading empty data is possible and writing it back will again
     result in no data.
     """
+    name: str
+    default: T
 
-    def __init__(self, name, default):
+    def __init__(self, name: str, default: T):
         self.name = name
         self.default = default
 
-    def __hash__(self):
+    @override
+    def __hash__(self) -> int:
         raise TypeError("Spec objects are unhashable")
 
-    def _validate23(self, frame, value, **kwargs):
+    def _validate23(self, frame: Frame, value, **kwargs):
         """Return a possibly modified value which, if written,
         results in valid id3v2.3 data.
         """
 
         return value
 
-    def read(self, header, frame, data):
+    def read(self, header: ID3Header, frame: Frame, data: bytes) -> tuple[object, bytes]:
         """
         Returns:
             (value: object, left_data: bytes)
@@ -132,7 +151,7 @@ class Spec(object):
 
         raise NotImplementedError
 
-    def write(self, config, frame, value):
+    def write(self, config: ID3SaveConfig, frame: Frame, value) -> bytes:
         """
         Returns:
             bytes: The serialized data
@@ -141,7 +160,7 @@ class Spec(object):
         """
         raise NotImplementedError
 
-    def validate(self, frame, value):
+    def validate(self, frame: Frame, value) -> object:
         """
         Returns:
             the validated value
@@ -153,33 +172,38 @@ class Spec(object):
         raise NotImplementedError
 
 
-class ByteSpec(Spec):
+class ByteSpec(Spec[int]):
 
-    def __init__(self, name, default=0):
-        super(ByteSpec, self).__init__(name, default)
+    def __init__(self, name: str, default: int=0):
+        super().__init__(name, default)
 
-    def read(self, header, frame, data):
+    @override
+    def read(self, header: ID3Header, frame: Frame, data: bytes) -> tuple[int, bytes]:
         return bytearray(data)[0], data[1:]
 
-    def write(self, config, frame, value):
+    @override
+    def write(self, config: ID3SaveConfig, frame: Frame, value: int) -> bytes:
         return bchr(value)
 
-    def validate(self, frame, value):
+    @override
+    def validate(self, frame: Frame, value: int | None):
         if value is not None:
-            bchr(value)
+            _ = bchr(value)
         return value
 
 
 class PictureTypeSpec(ByteSpec):
 
-    def __init__(self, name, default=PictureType.COVER_FRONT):
-        super(PictureTypeSpec, self).__init__(name, default)
+    def __init__(self, name: str, default: PictureType=PictureType.COVER_FRONT):
+        super().__init__(name, default)
 
-    def read(self, header, frame, data):
+    @override
+    def read(self, header: ID3Header, frame: Frame, data: bytes):
         value, data = ByteSpec.read(self, header, frame, data)
         return PictureType(value), data
 
-    def validate(self, frame, value):
+    @override
+    def validate(self, frame: Frame, value: int | None):
         value = ByteSpec.validate(self, frame, value)
         if value is not None:
             return PictureType(value)
@@ -188,46 +212,57 @@ class PictureTypeSpec(ByteSpec):
 
 class CTOCFlagsSpec(ByteSpec):
 
-    def read(self, header, frame, data):
+    @override
+    def read(self, header: ID3Header, frame: Frame, data: bytes):
         value, data = ByteSpec.read(self, header, frame, data)
         return CTOCFlags(value), data
 
-    def validate(self, frame, value):
+    @override
+    def validate(self, frame: Frame, value: int | None):
         value = ByteSpec.validate(self, frame, value)
         if value is not None:
             return CTOCFlags(value)
         return value
 
 
-class IntegerSpec(Spec):
-    def read(self, header, frame, data):
+class IntegerSpec(Spec[int]):
+    @override
+    def read(self, header: ID3Header, frame: Frame, data: bytes):
         return int(BitPaddedInt(data, bits=8)), b''
 
-    def write(self, config, frame, value):
+    @override
+    def write(self, config: ID3SaveConfig, frame: Frame, value: int):
         return BitPaddedInt.to_str(value, bits=8, width=-1)
 
-    def validate(self, frame, value):
+    @override
+    def validate(self, frame: Frame, value: int | None):
         return value
 
 
-class SizedIntegerSpec(Spec):
+class SizedIntegerSpec(Spec[int]):
 
-    def __init__(self, name, size, default):
+    name: str
+    __sz: int
+    default: int
+
+    def __init__(self, name: str, size: int, default: int):
         self.name, self.__sz = name, size
         self.default = default
 
-    def read(self, header, frame, data):
+    @override
+    def read(self, header: ID3Header, frame: Frame, data: bytes):
         return int(BitPaddedInt(data[:self.__sz], bits=8)), data[self.__sz:]
 
-    def write(self, config, frame, value):
+    @override
+    def write(self, config: ID3SaveConfig, frame: Frame, value: int):
         return BitPaddedInt.to_str(value, bits=8, width=self.__sz)
 
-    def validate(self, frame, value):
+    @override
+    def validate(self, frame: Frame, value: int | None):
         return value
 
 
-@enum
-class Encoding(object):
+class Encoding(IntEnum):
     """Text Encoding"""
 
     LATIN1 = 0
@@ -245,62 +280,68 @@ class Encoding(object):
 
 class EncodingSpec(ByteSpec):
 
-    def __init__(self, name, default=Encoding.UTF16):
-        super(EncodingSpec, self).__init__(name, default)
+    def __init__(self, name: str, default: Encoding=Encoding.UTF16):
+        super().__init__(name, default)
 
-    def read(self, header, frame, data):
-        enc, data = super(EncodingSpec, self).read(header, frame, data)
+    @override
+    def read(self, header: ID3Header, frame: Frame, data: bytes):
+        enc, data = super().read(header, frame, data)
         if enc not in (Encoding.LATIN1, Encoding.UTF16, Encoding.UTF16BE,
                        Encoding.UTF8):
-            raise SpecError('Invalid Encoding: %r' % enc)
+            raise SpecError(f'Invalid Encoding: {enc!r}')
         return Encoding(enc), data
 
-    def validate(self, frame, value):
+    @override
+    def validate(self, frame: Frame, value: int | None):
         if value is None:
             raise TypeError
         if value not in (Encoding.LATIN1, Encoding.UTF16, Encoding.UTF16BE,
                          Encoding.UTF8):
-            raise ValueError('Invalid Encoding: %r' % value)
+            raise ValueError(f'Invalid Encoding: {value!r}')
         return Encoding(value)
 
-    def _validate23(self, frame, value, **kwargs):
+    @override
+    def _validate23(self, frame: Frame, value: Encoding, **kwargs):
         # only 0, 1 are valid in v2.3, default to utf-16
         if value not in (Encoding.LATIN1, Encoding.UTF16):
             value = Encoding.UTF16
         return value
 
 
-class StringSpec(Spec):
+class StringSpec(Spec[str]):
     """A fixed size ASCII only payload."""
 
-    def __init__(self, name, length, default=None):
+    len: int
+
+    def __init__(self, name: str, length: int, default: str | None=None):
         if default is None:
-            default = u" " * length
-        super(StringSpec, self).__init__(name, default)
+            default = " " * length
+        super().__init__(name, default)
         self.len = length
 
-    def read(s, header, frame, data):
-        chunk = data[:s.len]
+    @override
+    def read(self, header: ID3Header, frame: Frame, data: bytes):
+        chunk = data[:self.len]
         try:
             ascii = chunk.decode("ascii")
         except UnicodeDecodeError:
-            raise SpecError("not ascii")
+            raise SpecError("not ascii") from None
         else:
             chunk = ascii
 
-        return chunk, data[s.len:]
+        return chunk, data[self.len:]
 
-    def write(self, config, frame, value):
+    @override
+    def write(self, config: ID3SaveConfig, frame: Frame, value: str):
+        return (bytes(value.encode("ascii")) + b'\x00' * self.len)[:self.len]
 
-        value = value.encode("ascii")
-        return (bytes(value) + b'\x00' * self.len)[:self.len]
-
-    def validate(self, frame, value):
+    @override
+    def validate(self, frame: Frame, value: str | None | object):
         if value is None:
             raise TypeError
 
         if not isinstance(value, str):
-            raise TypeError("%s has to be str" % self.name)
+            raise TypeError(f"{self.name} has to be str")
         value.encode("ascii")
 
         if len(value) == self.len:
@@ -309,14 +350,19 @@ class StringSpec(Spec):
         raise ValueError('Invalid StringSpec[%d] data: %r' % (self.len, value))
 
 
-class RVASpec(Spec):
+class RVASpec(Spec[list[int]]):
 
-    def __init__(self, name, stereo_only, default=[0, 0]):
+    _max_values: int
+
+    def __init__(self, name: str, stereo_only: bool, default: list[int] | None=None):
         # two_chan: RVA has only 2 channels, while RVAD has 6 channels
-        super(RVASpec, self).__init__(name, default)
+        if default is None:
+            default = [0, 0]
+        super().__init__(name, default)
         self._max_values = 4 if stereo_only else 12
 
-    def read(self, header, frame, data):
+    @override
+    def read(self, header: ID3Header, frame: Frame, data: bytes):
         # inc/dec flags
         spec = ByteSpec("flags", 0)
         flags, data = spec.read(header, frame, data)
@@ -330,7 +376,7 @@ class RVASpec(Spec):
             raise SpecError("bits used has to be > 0")
         bytes_per_value = (bits + 7) // 8
 
-        values = []
+        values: list[BitPaddedInt] = []
         while len(data) >= bytes_per_value and len(values) < self._max_values:
             v = BitPaddedInt(data[:bytes_per_value], bits=8)
             data = data[bytes_per_value:]
@@ -349,7 +395,8 @@ class RVASpec(Spec):
 
         return values, data
 
-    def write(self, config, frame, values):
+    @override
+    def write(self, config: ID3SaveConfig, frame: Frame, values: list[int]):
         if len(values) < 2 or len(values) > self._max_values:
             raise SpecError(
                 "at least two volume change values required, max %d" %
@@ -386,7 +433,8 @@ class RVASpec(Spec):
 
         return bytes(buffer_)
 
-    def validate(self, frame, values):
+    @override
+    def validate(self, frame: Frame, values: list[int] | object | None):
         if len(values) < 2 or len(values) > self._max_values:
             raise ValueError("needs list of length 2..%d" % self._max_values)
         return values
@@ -394,45 +442,46 @@ class RVASpec(Spec):
 
 class FrameIDSpec(StringSpec):
 
-    def __init__(self, name, length):
-        super(FrameIDSpec, self).__init__(name, length, u"X" * length)
+    def __init__(self, name: str, length: int):
+        super().__init__(name, length, "X" * length)
 
-    def validate(self, frame, value):
-        value = super(FrameIDSpec, self).validate(frame, value)
+    @override
+    def validate(self, frame: Frame, value: str | object | None):
+        value = super().validate(frame, value)
         if not is_valid_frame_id(value):
             raise ValueError("Invalid frame ID")
         return value
 
 
-class BinaryDataSpec(Spec):
+class BinaryDataSpec(Spec[bytes]):
 
-    handle_nodata = True
+    handle_nodata: bool = True
 
-    def __init__(self, name, default=b""):
-        super(BinaryDataSpec, self).__init__(name, default)
+    def __init__(self, name: str, default: bytes=b""):
+        super().__init__(name, default)
 
-    def read(self, header, frame, data):
+    @override
+    def read(self, header: ID3Header, frame: Frame, data: bytes):
         return data, b''
 
-    def write(self, config, frame, value):
+    @override
+    def write(self, config: ID3SaveConfig, frame: Frame, value: bytes | object):
         if isinstance(value, bytes):
             return value
         value = str(value).encode("ascii")
         return value
 
-    def validate(self, frame, value):
+    @override
+    def validate(self, frame: Frame, value: bytes | object | None) -> bytes:
         if value is None:
             raise TypeError
         if isinstance(value, bytes):
             return value
         else:
-            raise TypeError("%s has to be bytes" % self.name)
-
-        value = str(value).encode("ascii")
-        return value
+            raise TypeError(f"{self.name} has to be bytes")
 
 
-def iter_text_fixups(data, encoding):
+def iter_text_fixups(data: bytes, encoding: Encoding) -> Iterator[bytes]:
     """Yields a series of repaired text values for decoding"""
 
     yield data
@@ -448,19 +497,20 @@ def iter_text_fixups(data, encoding):
         yield codecs.BOM_UTF16_LE + data + b"\x00"
 
 
-class EncodedTextSpec(Spec):
+class EncodedTextSpec(Spec[str]):
 
-    _encodings = {
+    _encodings: Final = {
         Encoding.LATIN1: ('latin1', b'\x00'),
         Encoding.UTF16: ('utf16', b'\x00\x00'),
         Encoding.UTF16BE: ('utf_16_be', b'\x00\x00'),
         Encoding.UTF8: ('utf8', b'\x00'),
     }
 
-    def __init__(self, name, default=u""):
-        super(EncodedTextSpec, self).__init__(name, default)
+    def __init__(self, name: str, default: str=""):
+        super().__init__(name, default)
 
-    def read(self, header, frame, data):
+    @override
+    def read(self, header: ID3Header, frame: Frame, data: bytes):
         enc, term = self._encodings[frame.encoding]
         err = None
         for data in iter_text_fixups(data, frame.encoding):
@@ -478,27 +528,30 @@ class EncodedTextSpec(Spec):
                 return value, data
         raise SpecError(err)
 
-    def write(self, config, frame, value):
+    @override
+    def write(self, config: ID3SaveConfig, frame: Frame, value: str):
         enc, term = self._encodings[frame.encoding]
         try:
             return encode_endian(value, enc, le=True) + term
         except UnicodeEncodeError as e:
-            raise SpecError(e)
+            raise SpecError(e) from e
 
-    def validate(self, frame, value):
+    @override
+    def validate(self, frame: Frame, value: str | object | None):
         return str(value)
 
 
 class MultiSpec(Spec):
-    def __init__(self, name, *specs, **kw):
-        super(MultiSpec, self).__init__(name, default=kw.get('default'))
-        self.specs = specs
-        self.sep = kw.get('sep')
+    def __init__(self, name: str, *specs: Spec, **kw: str):
+        super().__init__(name, default=kw.get('default'))
+        self.specs: tuple[Spec, ...] = specs
+        self.sep: str | None = kw.get('sep')
 
-    def read(self, header, frame, data):
-        values = []
+    @override
+    def read(self, header: ID3Header, frame: Frame, data: bytes):
+        values: list[object] = []
         while data:
-            record = []
+            record: list[object] = []
             for spec in self.specs:
                 value, data = spec.read(header, frame, data)
                 record.append(value)
@@ -508,18 +561,20 @@ class MultiSpec(Spec):
                 values.append(record[0])
         return values, data
 
-    def write(self, config, frame, value):
-        data = []
+    @override
+    def write(self, config: ID3SaveConfig, frame: Frame, value: str | list):
+        data: list[bytes] = []
         if len(self.specs) == 1:
             for v in value:
                 data.append(self.specs[0].write(config, frame, v))
         else:
             for record in value:
-                for v, s in zip(record, self.specs):
+                for v, s in zip(record, self.specs, strict=False):
                     data.append(s.write(config, frame, v))
         return b''.join(data)
 
-    def validate(self, frame, value):
+    @override
+    def validate(self, frame: Frame, value: str | list):
         if self.sep and isinstance(value, str):
             value = value.split(self.sep)
         if isinstance(value, list):
@@ -527,14 +582,15 @@ class MultiSpec(Spec):
                 return [self.specs[0].validate(frame, v) for v in value]
             else:
                 return [
-                    [s.validate(frame, v) for (v, s) in zip(val, self.specs)]
+                    [s.validate(frame, v) for (v, s) in zip(val, self.specs, strict=False)]
                     for val in value]
-        raise ValueError('Invalid MultiSpec data: %r' % value)
+        raise ValueError(f'Invalid MultiSpec data: {value!r}')
 
-    def _validate23(self, frame, value, **kwargs):
+    @override
+    def _validate23(self, frame: Frame, value, **kwargs):
         if len(self.specs) != 1:
             return [[s._validate23(frame, v, **kwargs)
-                     for (v, s) in zip(val, self.specs)]
+                     for (v, s) in zip(val, self.specs, strict=False)]
                     for val in value]
 
         spec = self.specs[0]
@@ -559,52 +615,56 @@ class EncodedNumericPartTextSpec(EncodedTextSpec):
     pass
 
 
-class Latin1TextSpec(Spec):
+class Latin1TextSpec(Spec[str]):
 
-    def __init__(self, name, default=u""):
-        super(Latin1TextSpec, self).__init__(name, default)
+    def __init__(self, name: str, default: str=""):
+        super().__init__(name, default)
 
-    def read(self, header, frame, data):
+    @override
+    def read(self, header: ID3Header, frame: Frame, data: bytes) -> tuple[str, bytes]:
         if b'\x00' in data:
             data, ret = data.split(b'\x00', 1)
         else:
             ret = b''
         return data.decode('latin1'), ret
 
-    def write(self, config, data, value):
+    @override
+    def write(self, config: ID3SaveConfig, frame: Frame, value: str) -> bytes:
         return value.encode('latin1') + b'\x00'
 
-    def validate(self, frame, value):
+    @override
+    def validate(self, frame: Frame, value: str | object | None) -> str:
         return str(value)
 
-
-class ID3FramesSpec(Spec):
+@final
+class ID3FramesSpec(Spec[list[Frame]]):
 
     handle_nodata = True
 
-    def __init__(self, name, default=[]):
-        super(ID3FramesSpec, self).__init__(name, default)
+    def __init__(self, name: str, default: list[Frame] | None=None):
+        default = default or []
+        super().__init__(name, default)
 
-    def read(self, header, frame, data):
+    @override
+    def read(self, header: ID3Header, frame: Frame, data: bytes):
         from ._tags import ID3Tags
 
         tags = ID3Tags()
         return tags, tags._read(header, data)
 
-    def _validate23(self, frame, value, **kwargs):
-        from ._tags import ID3Tags
-
+    @override
+    def _validate23(self, frame: Frame, value: ID3Tags, **kwargs):
         v = ID3Tags()
         for frame in value.values():
             v.add(frame._get_v23_frame(**kwargs))
         return v
 
-    def write(self, config, frame, value):
+    @override
+    def write(self, config: ID3SaveConfig, frame: Frame, value: ID3Tags):
         return bytes(value._write(config))
 
-    def validate(self, frame, value):
-        from ._tags import ID3Tags
-
+    @override
+    def validate(self, frame: Frame, value: ID3Tags | object | None):
         if isinstance(value, ID3Tags):
             return value
 
@@ -614,34 +674,39 @@ class ID3FramesSpec(Spec):
 
         return tags
 
+@final
+class Latin1TextListSpec(Spec[list[str]]):
 
-class Latin1TextListSpec(Spec):
-
-    def __init__(self, name, default=[]):
-        super(Latin1TextListSpec, self).__init__(name, default)
+    def __init__(self, name: str, default: list[str] | None=None):
+        if default is None:
+            default = []
+        super().__init__(name, default)
         self._bspec = ByteSpec("entry_count", default=0)
         self._lspec = Latin1TextSpec("child_element_id")
 
-    def read(self, header, frame, data):
+    @override
+    def read(self, header: ID3Header, frame: Frame, data: bytes):
         count, data = self._bspec.read(header, frame, data)
-        entries = []
-        for i in range(count):
+        entries: list[str] = []
+        for _i in range(count):
             entry, data = self._lspec.read(header, frame, data)
             entries.append(entry)
         return entries, data
 
-    def write(self, config, frame, value):
+    @override
+    def write(self, config: ID3SaveConfig, frame: Frame, value: list[str]):
         b = self._bspec.write(config, frame, len(value))
         for v in value:
             b += self._lspec.write(config, frame, v)
         return b
 
-    def validate(self, frame, value):
+    @override
+    def validate(self, frame: Frame, value: list[str]):
         return [self._lspec.validate(frame, v) for v in value]
 
-
+@final
 @total_ordering
-class ID3TimeStamp(object):
+class ID3TimeStamp:
     """A time stamp in ID3v2 format.
 
     This is a restricted form of the ISO 8601 standard; time stamps
@@ -654,7 +719,14 @@ class ID3TimeStamp(object):
 
     import re
 
-    def __init__(self, text):
+    year: int | None
+    month: int | None
+    day: int | None
+    hour: int | None
+    minute: int | None
+    second: int | None
+
+    def __init__(self, text: str | ID3TimeStamp | object) -> None:
         if isinstance(text, ID3TimeStamp):
             text = text.text
         elif not isinstance(text, str):
@@ -665,93 +737,115 @@ class ID3TimeStamp(object):
     __formats = ['%04d'] + ['%02d'] * 5
     __seps = ['-', '-', ' ', ':', ':', 'x']
 
-    def get_text(self):
+    def get_text(self) -> str:
         parts = [self.year, self.month, self.day,
                  self.hour, self.minute, self.second]
-        pieces = []
+        pieces: list[str] = []
         for i, part in enumerate(parts):
             if part is None:
                 break
             pieces.append(self.__formats[i] % part + self.__seps[i])
-        return u''.join(pieces)[:-1]
+        return ''.join(pieces)[:-1]
 
-    def set_text(self, text, splitre=re.compile('[-T:/.]|\\s+')):
+    def set_text(self, text: str, splitre: Pattern[str] = re.compile('[-T:/.]|\\s+')):
         year, month, day, hour, minute, second = \
             splitre.split(text + ':::::')[:6]
-        for a in 'year month day hour minute second'.split():
+        for a in ['year', 'month', 'day', 'hour', 'minute', 'second']:
             try:
                 v = int(locals()[a])
             except ValueError:
                 v = None
             setattr(self, a, v)
 
-    text = property(get_text, set_text, doc="ID3v2.4 date and time.")
+    @property
+    def text(self) -> str:
+        """ID3v2.4 date and time."""
+        return self.get_text()
+    @text.setter
+    def text(self, value: str) -> None:
+        self.set_text(value)
 
-    def __str__(self):
+    @override
+    def __str__(self) -> str:
         return self.text
 
     def __bytes__(self):
         return self.text.encode("utf-8")
 
+    @override
     def __repr__(self):
         return repr(self.text)
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, ID3TimeStamp) and self.text == other.text
 
-    def __lt__(self, other):
+    def __lt__(self, other: ID3TimeStamp) -> bool:
         return self.text < other.text
 
-    __hash__ = object.__hash__
+    __hash__: Final = object.__hash__
 
-    def encode(self, *args):
+    def encode(self, *args: str) -> bytes:
         return self.text.encode(*args)
 
 
 class TimeStampSpec(EncodedTextSpec):
-    def read(self, header, frame, data):
-        value, data = super(TimeStampSpec, self).read(header, frame, data)
+    @override
+    def read(self, header: ID3Header, frame: Frame, data: bytes):
+        value, data = super().read(header, frame, data)
         return self.validate(frame, value), data
 
-    def write(self, config, frame, data):
-        return super(TimeStampSpec, self).write(config, frame,
-                                                data.text.replace(' ', 'T'))
+    @override
+    def write(self, config: ID3SaveConfig, frame: Frame, data: ID3TimeStamp):
+        return super().write(config, frame,data.text.replace(' ', 'T'))
 
-    def validate(self, frame, value):
+    @override
+    def validate(self, frame: Frame, value: str | ID3TimeStamp | object | None):
         try:
             return ID3TimeStamp(value)
-        except TypeError:
-            raise ValueError("Invalid ID3TimeStamp: %r" % value)
+        except TypeError as e:
+            raise ValueError(f"Invalid ID3TimeStamp: {value!r}") from e
 
-
+@final
 class ChannelSpec(ByteSpec):
-    (OTHER, MASTER, FRONTRIGHT, FRONTLEFT, BACKRIGHT, BACKLEFT, FRONTCENTRE,
-     BACKCENTRE, SUBWOOFER) = range(9)
+    OTHER = 0
+    MASTER = 1
+    FRONTRIGHT = 2
+    FRONTLEFT = 3
+    BACKRIGHT = 4
+    BACKLEFT = 5
+    FRONTCENTRE = 6
+    BACKCENTRE = 7
+    SUBWOOFER = 8
 
 
-class VolumeAdjustmentSpec(Spec):
-    def read(self, header, frame, data):
-        value, = unpack('>h', data[0:2])
+class VolumeAdjustmentSpec(Spec[float]):
+    @override
+    def read(self, header: ID3Header, frame: Frame, data: bytes):
+        value, = cast(tuple[int], unpack('>h', data[0:2]))
         return value / 512.0, data[2:]
 
-    def write(self, config, frame, value):
+    @override
+    def write(self, config: ID3SaveConfig, frame: Frame, value: float):
         number = intround(value * 512)
         # pack only fails in 2.7, do it manually in 2.6
         if not -32768 <= number <= 32767:
             raise SpecError("not in range")
         return pack('>h', number)
 
-    def validate(self, frame, value):
+    @override
+    def validate(self, frame: Frame, value: float | None):
         if value is not None:
             try:
                 self.write(None, frame, value)
-            except SpecError:
-                raise ValueError("out of range")
+            except SpecError as e:
+                raise ValueError("out of range") from e
         return value
 
 
-class VolumePeakSpec(Spec):
-    def read(self, header, frame, data):
+class VolumePeakSpec(Spec[float]):
+    @override
+    def read(self, header: ID3Header, frame: Frame, data: bytes):
         # http://bugs.xmms.org/attachment.cgi?id=113&action=view
         peak = 0
         data_array = bytearray(data)
@@ -767,7 +861,8 @@ class VolumePeakSpec(Spec):
         peak *= 2 ** shift
         return (float(peak) / (2 ** 31 - 1)), data[1 + vol_bytes:]
 
-    def write(self, config, frame, value):
+    @override
+    def write(self, config: ID3SaveConfig, frame: Frame, value: float):
         number = intround(value * 32768)
         # pack only fails in 2.7, do it manually in 2.6
         if not 0 <= number <= 65535:
@@ -775,88 +870,96 @@ class VolumePeakSpec(Spec):
         # always write as 16 bits for sanity.
         return b"\x10" + pack('>H', number)
 
-    def validate(self, frame, value):
+    @override
+    def validate(self, frame: Frame, value: float | None):
         if value is not None:
             try:
                 self.write(None, frame, value)
-            except SpecError:
-                raise ValueError("out of range")
+            except SpecError as e:
+                raise ValueError("out of range") from e
         return value
 
 
 class SynchronizedTextSpec(EncodedTextSpec):
-    def read(self, header, frame, data):
-        texts = []
+    @override
+    def read(self, header: ID3Header, frame: Frame, data: bytes):
+        texts: list[tuple[str, int]] = []
         encoding, term = self._encodings[frame.encoding]
         while data:
             try:
                 value, data = decode_terminated(data, encoding)
-            except ValueError:
-                raise SpecError("decoding error")
+            except ValueError as e:
+                raise SpecError("decoding error") from e
 
             if len(data) < 4:
                 raise SpecError("not enough data")
-            time, = struct.unpack(">I", data[:4])
+            time, = cast(tuple[int], struct.unpack(">I", data[:4]))
 
             texts.append((value, time))
             data = data[4:]
         return texts, b""
 
-    def write(self, config, frame, value):
-        data = []
+    @override
+    def write(self, config: ID3SaveConfig, frame: Frame, value: list[tuple[str, int]]):
+        data: list[bytes] = []
         encoding, term = self._encodings[frame.encoding]
         for text, time in value:
             try:
-                text = encode_endian(text, encoding, le=True) + term
+                textb = encode_endian(text, encoding, le=True) + term
             except UnicodeEncodeError as e:
-                raise SpecError(e)
-            data.append(text + struct.pack(">I", time))
+                raise SpecError(e) from e
+            data.append(textb + struct.pack(">I", time))
         return b"".join(data)
 
-    def validate(self, frame, value):
+    @override
+    def validate(self, frame: Frame, value: list[tuple[str, int]]):
         return value
 
 
-class KeyEventSpec(Spec):
-    def read(self, header, frame, data):
-        events = []
+class KeyEventSpec(Spec[list[tuple[int, int]]]):
+    @override
+    def read(self, header: ID3Header, frame: Frame, data: bytes):
+        events: list[tuple[int, int]] = []
         while len(data) >= 5:
             events.append(struct.unpack(">bI", data[:5]))
             data = data[5:]
         return events, data
 
-    def write(self, config, frame, value):
+    @override
+    def write(self, config: ID3SaveConfig, frame: Frame, value: list[tuple[int, int]]):
         return b"".join(struct.pack(">bI", *event) for event in value)
 
-    def validate(self, frame, value):
+    @override
+    def validate(self, frame: Frame, value: list[tuple[int, int]]):
         return list(value)
 
 
-class VolumeAdjustmentsSpec(Spec):
+class VolumeAdjustmentsSpec(Spec[list[tuple[float, float]]]):
     # Not to be confused with VolumeAdjustmentSpec.
-    def read(self, header, frame, data):
-        adjustments = {}
+    @override
+    def read(self, header: ID3Header, frame: Frame, data: bytes):
+        adjustments: dict[float, float] = {}
         while len(data) >= 4:
-            freq, adj = struct.unpack(">Hh", data[:4])
+            freq, adj = cast(tuple[int,int], struct.unpack(">Hh", data[:4]))
             data = data[4:]
-            freq /= 2.0
-            adj /= 512.0
-            adjustments[freq] = adj
-        adjustments = sorted(adjustments.items())
-        return adjustments, data
+            adjustments[freq / 2.0] = adj / 512.0
+        return sorted(adjustments.items()), data
 
-    def write(self, config, frame, value):
+    @override
+    def write(self, config: ID3SaveConfig, frame: Frame, value: list[tuple[float, float]]):
         value.sort()
         return b"".join(struct.pack(">Hh", int(freq * 2), int(adj * 512))
                         for (freq, adj) in value)
 
-    def validate(self, frame, value):
+    @override
+    def validate(self, frame: Frame, value: list[tuple[float, float]]):
         return list(value)
 
 
-class ASPIIndexSpec(Spec):
+class ASPIIndexSpec(Spec[list[int]]):
 
-    def read(self, header, frame, data):
+    @override
+    def read(self, header: ID3Header, frame: ASPI, data: bytes):
         if frame.b == 16:
             format = "H"
             size = 2
@@ -871,9 +974,10 @@ class ASPIIndexSpec(Spec):
         try:
             return list(struct.unpack(">" + format * frame.N, indexes)), data
         except struct.error as e:
-            raise SpecError(e)
+            raise SpecError(e) from e
 
-    def write(self, config, frame, values):
+    @override
+    def write(self, config: ID3SaveConfig, frame: ASPI, values: list[int]):
         if frame.b == 16:
             format = "H"
         elif frame.b == 8:
@@ -883,7 +987,8 @@ class ASPIIndexSpec(Spec):
         try:
             return struct.pack(">" + format * frame.N, *values)
         except struct.error as e:
-            raise SpecError(e)
+            raise SpecError(e) from e
 
-    def validate(self, frame, values):
+    @override
+    def validate(self, frame: Frame, values: list[int]):
         return list(values)

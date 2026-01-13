@@ -11,14 +11,24 @@
 * See ISO/IEC 13818-7 / 14496-03
 """
 
+import contextlib
+from io import BytesIO
+from typing import final, override
+
 from mutagen import StreamInfo
 from mutagen._file import FileType
-from mutagen._util import BitReader, BitReaderError, MutagenError, loadfile, \
-    convert_error, endswith
+from mutagen._filething import FileThing
+from mutagen._util import (
+    BitReader,
+    BitReaderError,
+    MutagenError,
+    convert_error,
+    endswith,
+    loadfile,
+)
 from mutagen.id3._util import BitPaddedInt
 
-
-_FREQS = [
+_FREQS: list[int] = [
     96000, 88200, 64000, 48000,
     44100, 32000, 24000, 22050,
     16000, 12000, 11025, 8000,
@@ -26,17 +36,24 @@ _FREQS = [
 ]
 
 
-class _ADTSStream(object):
+class _ADTSStream:
     """Represents a series of frames belonging to the same stream"""
 
-    parsed_frames = 0
+    parsed_frames: int = 0
     """Number of successfully parsed frames"""
 
-    offset = 0
+    offset: int = 0
     """offset in bytes at which the stream starts (the first sync word)"""
 
+    _fixed_header_key: tuple[int, ...] | None
+    _r: BitReader
+    _samples: int
+    _payload: int
+    _start: float
+    _last: float
+
     @classmethod
-    def find_stream(cls, fileobj, max_bytes):
+    def find_stream(cls, fileobj: BytesIO, max_bytes: int):
         """Returns a possibly valid _ADTSStream or None.
 
         Args:
@@ -48,8 +65,9 @@ class _ADTSStream(object):
         if stream.sync(max_bytes):
             stream.offset = (r.get_position() - 12) // 8
             return stream
+        return None
 
-    def sync(self, max_bytes):
+    def sync(self, max_bytes: int):
         """Find the next sync.
         Returns True if found."""
 
@@ -57,14 +75,14 @@ class _ADTSStream(object):
         max_bytes = max(max_bytes, 2)
 
         r = self._r
-        r.align()
+        _ = r.align()
         while max_bytes > 0:
             try:
                 b = r.bytes(1)
                 if b == b"\xff":
                     if r.bits(4) == 0xf:
                         return True
-                    r.align()
+                    _ = r.align()
                     max_bytes -= 2
                 else:
                     max_bytes -= 1
@@ -72,7 +90,7 @@ class _ADTSStream(object):
                 return False
         return False
 
-    def __init__(self, r):
+    def __init__(self, r: BitReader):
         """Use _ADTSStream.find_stream to create a stream"""
 
         self._fixed_header_key = None
@@ -113,10 +131,11 @@ class _ADTSStream(object):
         return self._last - self._start
 
     @property
-    def channels(self):
+    def channels(self) -> int:
         """0 means unknown"""
 
         assert self.parsed_frames, "no frame parsed yet"
+        assert self._fixed_header_key is not None
 
         b_index = self._fixed_header_key[6]
         if b_index == 7:
@@ -127,10 +146,11 @@ class _ADTSStream(object):
             return b_index
 
     @property
-    def frequency(self):
+    def frequency(self) -> int:
         """0 means unknown"""
 
         assert self.parsed_frames, "no frame parsed yet"
+        assert self._fixed_header_key is not None
 
         f_index = self._fixed_header_key[4]
         try:
@@ -197,22 +217,22 @@ class _ADTSStream(object):
         r.skip(left)
         assert r.is_aligned()
 
-        self._payload += (left - crc_overhead) / 8
+        self._payload += int((left - crc_overhead) / 8)
         self._samples += (nordbif + 1) * 1024
         self._last = r.get_position() / 8
 
         self.parsed_frames += 1
         return True
 
-
-class ProgramConfigElement(object):
+@final
+class ProgramConfigElement:
 
     element_instance_tag = None
     object_type = None
-    sampling_frequency_index = None
+    sampling_frequency_index: int | None = None
     channels = None
 
-    def __init__(self, r):
+    def __init__(self, r: BitReader):
         """Reads the program_config_element()
 
         Raises BitReaderError
@@ -241,7 +261,7 @@ class ProgramConfigElement(object):
         elms = num_front_channel_elements + num_side_channel_elements + \
             num_back_channel_elements
         channels = 0
-        for i in range(elms):
+        for _i in range(elms):
             channels += 1
             element_is_cpe = r.bits(1)
             if element_is_cpe:
@@ -253,7 +273,7 @@ class ProgramConfigElement(object):
         r.skip(4 * num_lfe_channel_elements)
         r.skip(4 * num_assoc_data_elements)
         r.skip(5 * num_valid_cc_elements)
-        r.align()
+        _ = r.align()
         comment_field_bytes = r.bits(8)
         r.skip(8 * comment_field_bytes)
 
@@ -262,6 +282,7 @@ class AACError(MutagenError):
     pass
 
 
+@final
 class AACInfo(StreamInfo):
     """AACInfo()
 
@@ -275,13 +296,13 @@ class AACInfo(StreamInfo):
         bitrate (`int`): audio bitrate, in bits per second
     """
 
-    channels = 0
-    length = 0
-    sample_rate = 0
-    bitrate = 0
+    channels: int = 0
+    length: float = 0
+    sample_rate: int = 0
+    bitrate: int = 0
 
     @convert_error(IOError, AACError)
-    def __init__(self, fileobj):
+    def __init__(self, fileobj: BytesIO):
         """Raises AACError"""
 
         # skip id3v2 header
@@ -291,7 +312,7 @@ class AACInfo(StreamInfo):
             size = BitPaddedInt(header[6:])
             start_offset = size + 10
 
-        fileobj.seek(start_offset)
+        _ = fileobj.seek(start_offset)
         adif = fileobj.read(4)
         if adif == b"ADIF":
             self._parse_adif(fileobj)
@@ -300,7 +321,7 @@ class AACInfo(StreamInfo):
             self._parse_adts(fileobj, start_offset)
             self._type = "ADTS"
 
-    def _parse_adif(self, fileobj):
+    def _parse_adif(self, fileobj: BytesIO):
         r = BitReader(fileobj)
         try:
             copyright_id_present = r.bits(1)
@@ -314,27 +335,27 @@ class AACInfo(StreamInfo):
                 r.skip(20)  # adif_buffer_fullness
 
             pce = ProgramConfigElement(r)
-            try:
+            with contextlib.suppress(IndexError):
+                assert pce.sampling_frequency_index is not None
                 self.sample_rate = _FREQS[pce.sampling_frequency_index]
-            except IndexError:
-                pass
+            assert pce.channels is not None
             self.channels = pce.channels
 
             # other pces..
-            for i in range(npce):
-                ProgramConfigElement(r)
-            r.align()
+            for _i in range(npce):
+                _ = ProgramConfigElement(r)
+            _ = r.align()
         except BitReaderError as e:
-            raise AACError(e)
+            raise AACError(e) from e
 
         # use bitrate + data size to guess length
         start = fileobj.tell()
-        fileobj.seek(0, 2)
+        _ = fileobj.seek(0, 2)
         length = fileobj.tell() - start
         if self.bitrate != 0:
-            self.length = (8.0 * length) / self.bitrate
+            self.length = float((8.0 * length) / self.bitrate)
 
-    def _parse_adts(self, fileobj, start_offset):
+    def _parse_adts(self, fileobj: BytesIO, start_offset: int):
         max_initial_read = 512
         max_resync_read = 10
         max_sync_tries = 10
@@ -345,15 +366,16 @@ class AACInfo(StreamInfo):
         # Try up to X times to find a sync word and read up to Y frames.
         # If more than Z frames are valid we assume a valid stream
         offset = start_offset
-        for i in range(max_sync_tries):
-            fileobj.seek(offset)
+        s: _ADTSStream | None = None
+        for _i in range(max_sync_tries):
+            _ = fileobj.seek(offset)
             s = _ADTSStream.find_stream(fileobj, max_initial_read)
             if s is None:
                 raise AACError("sync not found")
             # start right after the last found offset
             offset += s.offset + 1
 
-            for i in range(frames_max):
+            for _i in range(frames_max):
                 if not s.parse_frame():
                     break
                 if not s.sync(max_resync_read):
@@ -362,15 +384,15 @@ class AACInfo(StreamInfo):
             if s.parsed_frames >= frames_needed:
                 break
         else:
-            raise AACError(
-                "no valid stream found (only %d frames)" % s.parsed_frames)
+            assert s is not None
+            raise AACError(f"no valid stream found (only {s.parsed_frames} frames)")
 
         self.sample_rate = s.frequency
         self.channels = s.channels
         self.bitrate = s.bitrate
 
         # size from stream start to end of file
-        fileobj.seek(0, 2)
+        _ = fileobj.seek(0, 2)
         stream_size = fileobj.tell() - (offset + s.offset)
         # approx
         self.length = 0.0
@@ -378,10 +400,11 @@ class AACInfo(StreamInfo):
             self.length = \
                 float(s.samples * stream_size) / (s.size * s.frequency)
 
-    def pprint(self):
-        return u"AAC (%s), %d Hz, %.2f seconds, %d channel(s), %d bps" % (
-            self._type, self.sample_rate, self.length, self.channels,
-            self.bitrate)
+    @override
+    def pprint(self) -> str:
+        return f"AAC ({self._type}), {self.sample_rate} Hz, {
+            self.length:.2f} seconds, {self.channels} channel(s), {self.bitrate} bps"
+
 
 
 class AAC(FileType):
@@ -399,20 +422,23 @@ class AAC(FileType):
         info (`AACInfo`)
     """
 
-    _mimes = ["audio/x-aac"]
+    _mimes: list[str] = ["audio/x-aac"]
+    info: AACInfo | None
 
     @loadfile()
-    def load(self, filething):
+    def load(self, filething: FileThing):
         self.info = AACInfo(filething.fileobj)
 
+    @override
     def add_tags(self):
         raise AACError("doesn't support tags")
 
     @staticmethod
-    def score(filename, fileobj, header):
+    @override
+    def score(filename: str, fileobj: BytesIO, header: bytes):
         filename = filename.lower()
-        s = endswith(filename, ".aac") or endswith(filename, ".adts") or \
-            endswith(filename, ".adif")
+        s = int(endswith(filename, ".aac") or endswith(filename, ".adts") or \
+            endswith(filename, ".adif"))
         s += b"ADIF" in header
         return s
 

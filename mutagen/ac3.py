@@ -11,21 +11,24 @@
 
 __all__ = ["AC3", "Open"]
 
+from enum import IntEnum
+from io import BytesIO
+from typing import final, override
+
 from mutagen import StreamInfo
 from mutagen._file import FileType
+from mutagen._filething import FileThing
 from mutagen._util import (
     BitReader,
     BitReaderError,
     MutagenError,
     convert_error,
-    enum,
-    loadfile,
     endswith,
+    loadfile,
 )
 
 
-@enum
-class ChannelMode(object):
+class ChannelMode(IntEnum):
     DUALMONO = 0
     MONO = 1
     STEREO = 2
@@ -57,8 +60,7 @@ AC3_BITRATES = [
 ]
 
 
-@enum
-class EAC3FrameType(object):
+class EAC3FrameType(IntEnum):
     INDEPENDENT = 0
     DEPENDENT = 1
     AC3_CONVERT = 2
@@ -71,7 +73,7 @@ EAC3_BLOCKS = [1, 2, 3, 6]
 class AC3Error(MutagenError):
     pass
 
-
+@final
 class AC3Info(StreamInfo):
 
     """AC3 stream information.
@@ -85,14 +87,14 @@ class AC3Info(StreamInfo):
         codec (`str`): ac-3 or ec-3 (Enhanced AC-3)
     """
 
-    channels = 0
-    length = 0
-    sample_rate = 0
-    bitrate = 0
-    codec = 'ac-3'
+    channels: int = 0
+    length: float = 0.0
+    sample_rate: int = 0
+    bitrate: int = 0
+    codec: str = 'ac-3'
 
     @convert_error(IOError, AC3Error)
-    def __init__(self, fileobj):
+    def __init__(self, fileobj: BytesIO):
         """Raises AC3Error"""
         header = bytearray(fileobj.read(6))
 
@@ -104,12 +106,12 @@ class AC3Info(StreamInfo):
 
         bitstream_id = header[5] >> 3
         if bitstream_id > 16:
-            raise AC3Error("invalid bitstream_id %i" % bitstream_id)
+            raise AC3Error(f"invalid bitstream_id {bitstream_id}")
 
-        fileobj.seek(2)
+        _ = fileobj.seek(2)
         self._read_header(fileobj, bitstream_id)
 
-    def _read_header(self, fileobj, bitstream_id):
+    def _read_header(self, fileobj: BytesIO, bitstream_id: int):
         bitreader = BitReader(fileobj)
         try:
             # This is partially based on code from
@@ -119,20 +121,22 @@ class AC3Info(StreamInfo):
             else:  # Enhanced AC-3
                 self._read_header_enhanced(bitreader)
         except BitReaderError as e:
-            raise AC3Error(e)
+            raise AC3Error(e) from e
 
-        self.length = self._guess_length(fileobj)
+        TEMP = self._guess_length(fileobj)
+        assert TEMP is not None
+        self.length = TEMP
 
-    def _read_header_normal(self, bitreader, bitstream_id):
+    def _read_header_normal(self, bitreader: BitReader, bitstream_id: int):
         r = bitreader
         r.skip(16)  # 16 bit CRC
         sr_code = r.bits(2)
         if sr_code == 3:
-            raise AC3Error("invalid sample rate code %i" % sr_code)
+            raise AC3Error(f"invalid sample rate code {sr_code}")
 
         frame_size_code = r.bits(6)
         if frame_size_code > 37:
-            raise AC3Error("invalid frame size code %i" % frame_size_code)
+            raise AC3Error(f"invalid frame size code {frame_size_code}")
 
         r.skip(5)  # bitstream ID, already read
         r.skip(3)  # bitstream mode, not needed
@@ -146,29 +150,29 @@ class AC3Info(StreamInfo):
             self.bitrate = (AC3_BITRATES[frame_size_code >> 1] * 1000
                             ) >> sr_shift
         except KeyError as e:
-            raise AC3Error(e)
+            raise AC3Error(e) from e
         self.channels = self._get_channels(channel_mode, lfe_on)
         self._skip_unused_header_bits_normal(r, channel_mode)
 
-    def _read_header_enhanced(self, bitreader):
+    def _read_header_enhanced(self, bitreader: BitReader):
         r = bitreader
         self.codec = "ec-3"
         frame_type = r.bits(2)
         if frame_type == EAC3FrameType.RESERVED:
-            raise AC3Error("invalid frame type %i" % frame_type)
+            raise AC3Error(f"invalid frame type {frame_type}")
 
         r.skip(3)  # substream ID, not needed
 
         frame_size = (r.bits(11) + 1) << 1
         if frame_size < AC3_HEADER_SIZE:
-            raise AC3Error("invalid frame size %i" % frame_size)
+            raise AC3Error(f"invalid frame size {frame_size}")
 
         sr_code = r.bits(2)
         try:
             if sr_code == 3:
                 sr_code2 = r.bits(2)
                 if sr_code2 == 3:
-                    raise AC3Error("invalid sample rate code %i" % sr_code2)
+                    raise AC3Error(f"invalid sample rate code {sr_code2}")
 
                 numblocks_code = 3
                 self.sample_rate = AC3_SAMPLE_RATES[sr_code2] // 2
@@ -181,14 +185,14 @@ class AC3Info(StreamInfo):
             self.bitrate = 8 * frame_size * self.sample_rate // (
                 EAC3_BLOCKS[numblocks_code] * 256)
         except KeyError as e:
-            raise AC3Error(e)
+            raise AC3Error(e) from e
         r.skip(5)  # bitstream ID, already read
         self.channels = self._get_channels(channel_mode, lfe_on)
         self._skip_unused_header_bits_enhanced(
             r, frame_type, channel_mode, sr_code, numblocks_code)
 
     @staticmethod
-    def _skip_unused_header_bits_normal(bitreader, channel_mode):
+    def _skip_unused_header_bits_normal(bitreader: BitReader, channel_mode: ChannelMode):
         r = bitreader
         r.skip(5)  # Dialogue Normalization
         if r.bits(1):  # Compression Gain Word Exists
@@ -223,8 +227,11 @@ class AC3Info(StreamInfo):
             r.skip((addbsil + 1) * 8)
 
     @staticmethod
-    def _skip_unused_header_bits_enhanced(bitreader, frame_type, channel_mode,
-                                          sr_code, numblocks_code):
+    def _skip_unused_header_bits_enhanced(bitreader: BitReader,
+                                          frame_type: int,
+                                          channel_mode: ChannelMode,
+                                          sr_code: int,
+                                          numblocks_code: int):
         r = bitreader
         r.skip(5)  # Dialogue Normalization
         if r.bits(1):  # Compression Gain Word Exists
@@ -265,36 +272,36 @@ class AC3Info(StreamInfo):
                 r.skip(1)  # sourcefscod
         if frame_type == EAC3FrameType.INDEPENDENT and numblocks_code == 3:
             r.skip(1)  # convsync
-        if frame_type == EAC3FrameType.AC3_CONVERT:
-            if numblocks_code != 3:
-                if r.bits(1):  # blkid
-                    r.skip(6)  # frmsizecod
+        if frame_type == EAC3FrameType.AC3_CONVERT and numblocks_code != 3:
+            if r.bits(1):  # blkid
+                r.skip(6)  # frmsizecod
         if r.bits(1):  # Additional Bit Stream Information Exists
             addbsil = r.bits(6)  # Additional Bit Stream Information Length
             r.skip((addbsil + 1) * 8)
 
     @staticmethod
-    def _get_channels(channel_mode, lfe_on):
+    def _get_channels(channel_mode: ChannelMode, lfe_on: int) -> int:
         try:
             return AC3_CHANNELS[channel_mode] + lfe_on
         except KeyError as e:
-            raise AC3Error(e)
+            raise AC3Error(e) from e
 
-    def _guess_length(self, fileobj):
+    def _guess_length(self, fileobj: BytesIO) -> float | None:
         # use bitrate + data size to guess length
         if self.bitrate == 0:
-            return
+            return None
         start = fileobj.tell()
-        fileobj.seek(0, 2)
+        _ = fileobj.seek(0, 2)
         length = fileobj.tell() - start
         return 8.0 * length / self.bitrate
 
-    def pprint(self):
-        return u"%s, %d Hz, %.2f seconds, %d channel(s), %d bps" % (
+    @override
+    def pprint(self) -> str:
+        return "%s, %d Hz, %.2f seconds, %d channel(s), %d bps" % (
             self.codec, self.sample_rate, self.length, self.channels,
             self.bitrate)
 
-
+@final
 class AC3(FileType):
     """AC3(filething)
 
@@ -310,20 +317,23 @@ class AC3(FileType):
         info (`AC3Info`)
     """
 
-    _mimes = ["audio/ac3"]
+    _mimes: list[str] = ["audio/ac3"]
+    info: AC3Info | None
 
     @loadfile()
-    def load(self, filething):
+    def load(self, filething: FileThing):
         self.info = AC3Info(filething.fileobj)
 
+    @override
     def add_tags(self):
         raise AC3Error("doesn't support tags")
 
     @staticmethod
-    def score(filename, fileobj, header):
+    @override
+    def score(filename: str, fileobj: BytesIO, header: bytes):
         return header.startswith(b"\x0b\x77") * 2 \
             + (endswith(filename, ".ac3") or endswith(filename, ".eac3"))
 
 
-Open = AC3
-error = AC3Error
+type Open = AC3
+type error = AC3Error

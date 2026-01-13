@@ -1,36 +1,35 @@
+import contextlib
+from collections.abc import Callable
 from io import BytesIO
+from typing import Any
 
-from mutagen import File, Metadata
-from mutagen import MutagenError
+from mutagen import File, Metadata, MutagenError
+from mutagen.aac import AAC
+from mutagen.ac3 import AC3
+from mutagen.aiff import AIFF
+from mutagen.apev2 import APEv2, APEv2File
 from mutagen.asf import ASF
-from mutagen.apev2 import APEv2File, APEv2
+from mutagen.dsdiff import DSDIFF
+from mutagen.dsf import DSF
+from mutagen.easyid3 import EasyID3, EasyID3FileType
+from mutagen.easymp4 import EasyMP4
 from mutagen.flac import FLAC
-from mutagen.easyid3 import EasyID3FileType, EasyID3
-from mutagen.id3 import ID3FileType, ID3
-from mutagen.mp3 import MP3
-from mutagen.mp3 import EasyMP3
+from mutagen.id3 import ID3, ID3FileType
+from mutagen.monkeysaudio import MonkeysAudio
+from mutagen.mp3 import MP3, EasyMP3
+from mutagen.mp4 import MP4
+from mutagen.musepack import Musepack
 from mutagen.oggflac import OggFLAC
+from mutagen.oggopus import OggOpus
 from mutagen.oggspeex import OggSpeex
 from mutagen.oggtheora import OggTheora
 from mutagen.oggvorbis import OggVorbis
-from mutagen.oggopus import OggOpus
-from mutagen.trueaudio import EasyTrueAudio
-from mutagen.trueaudio import TrueAudio
-from mutagen.wavpack import WavPack
-from mutagen.easymp4 import EasyMP4
-from mutagen.mp4 import MP4
-from mutagen.musepack import Musepack
-from mutagen.monkeysaudio import MonkeysAudio
 from mutagen.optimfrog import OptimFROG
-from mutagen.aiff import AIFF
-from mutagen.aac import AAC
-from mutagen.ac3 import AC3
 from mutagen.smf import SMF
 from mutagen.tak import TAK
-from mutagen.dsf import DSF
+from mutagen.trueaudio import EasyTrueAudio, TrueAudio
 from mutagen.wave import WAVE
-from mutagen.dsdiff import DSDIFF
-
+from mutagen.wavpack import WavPack
 
 OPENERS = [
     MP3, TrueAudio, OggTheora, OggSpeex, OggVorbis, OggFLAC,
@@ -43,7 +42,7 @@ OPENERS = [
 # OPENERS = [AAC]
 
 
-def run(opener, f):
+def run(opener: Callable[[BytesIO], Any], f: BytesIO):
     try:
         res = opener(f)
     except MutagenError:
@@ -56,32 +55,28 @@ def run(opener, f):
     # These can still fail because we might need to parse more data
     # to rewrite the file
 
-    f.seek(0)
-    try:
+    _ = f.seek(0)
+    with contextlib.suppress(MutagenError):
         res.save(f)
-    except MutagenError:
-        pass
 
-    f.seek(0)
+    _ = f.seek(0)
     res = opener(f)
 
-    f.seek(0)
-    try:
+    _ = f.seek(0)
+    with contextlib.suppress(MutagenError):
         res.delete(f)
-    except MutagenError:
-        pass
 
     # These can also save to empty files
     if isinstance(res, Metadata):
         f = BytesIO()
         res.save(f)
-        f.seek(0)
+        _ = f.seek(0)
         opener(f)
-        f.seek(0)
+        _ = f.seek(0)
         res.delete(f)
 
 
-def run_all(data):
+def run_all(data: bytes):
     f = BytesIO(data)
     [run(opener, f) for opener in OPENERS]
 
@@ -91,7 +86,7 @@ def group_crashes(result_path):
     and error type.
     """
 
-    crash_paths = []
+    crash_paths: list[str] = []
     pattern = os.path.join(result_path, '**', 'crashes', '*')
     for path in glob.glob(pattern):
         if os.path.splitext(path)[-1] == ".txt":
@@ -133,9 +128,9 @@ def group_crashes(result_path):
 
 
 if __name__ == '__main__':
-    import sys
     import glob
     import os
-    import traceback
+    import sys
     import textwrap
+    import traceback
     group_crashes(sys.argv[1])

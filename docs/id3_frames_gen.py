@@ -10,14 +10,13 @@
 ./id3_frames_gen.py > api/id3_frames.rst
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.abspath('../'))
 
 import mutagen.id3
-from mutagen.id3 import Frames, Frames_2_2, Frame
-
+from mutagen.id3 import Frame, Frames, Frames_2_2
 
 BaseFrames = dict([(k, v) for (k, v) in vars(mutagen.id3).items()
                    if v not in Frames.values() and v not in Frames_2_2.values()
@@ -38,12 +37,12 @@ def print_frames(frames, sort_mro=False):
     else:
         sort_func = lambda x: x
 
-    for name, cls in sorted(frames.items(), key=sort_func):
-        print("""
-.. autoclass:: mutagen.id3.%s
+    for _name, cls in sorted(frames.items(), key=sort_func):
+        print(f"""
+.. autoclass:: mutagen.id3.{repr(cls())}
     :show-inheritance:
     :members:
-""" % repr(cls()))
+""")
 
 
 if __name__ == "__main__":

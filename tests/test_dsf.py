@@ -3,8 +3,7 @@ import os
 
 from mutagen.dsf import DSF, DSFFile, delete
 from mutagen.dsf import error as DSFError
-
-from tests import TestCase, DATA_DIR, get_temp_copy
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TDSF(TestCase):
@@ -25,35 +24,35 @@ class TDSF(TestCase):
         self.dsf_2 = DSF(self.silence_2)
 
     def test_channels(self):
-        self.failUnlessEqual(self.dsf_1.info.channels, 1)
-        self.failUnlessEqual(self.dsf_2.info.channels, 2)
+        self.assertEqual(self.dsf_1.info.channels, 1)
+        self.assertEqual(self.dsf_2.info.channels, 2)
 
     def test_length(self):
-        self.failUnlessEqual(self.dsf_1.info.length, 0)
-        self.failUnlessEqual(self.dsf_2.info.length, 0.01)
+        self.assertEqual(self.dsf_1.info.length, 0)
+        self.assertEqual(self.dsf_2.info.length, 0.01)
 
     def test_sampling_frequency(self):
-        self.failUnlessEqual(self.dsf_1.info.sample_rate, 2822400)
-        self.failUnlessEqual(self.dsf_2.info.sample_rate, 5644800)
+        self.assertEqual(self.dsf_1.info.sample_rate, 2822400)
+        self.assertEqual(self.dsf_2.info.sample_rate, 5644800)
 
     def test_bits_per_sample(self):
-        self.failUnlessEqual(self.dsf_1.info.bits_per_sample, 1)
+        self.assertEqual(self.dsf_1.info.bits_per_sample, 1)
 
     def test_notdsf(self):
-        self.failUnlessRaises(
+        self.assertRaises(
             DSFError, DSF, os.path.join(DATA_DIR, 'empty.ofr'))
 
     def test_pprint(self):
-        self.failUnless(self.dsf_tmp_id3.pprint())
+        self.assertTrue(self.dsf_tmp_id3.pprint())
 
     def test_delete(self):
         self.dsf_tmp_id3.delete()
-        self.failIf(self.dsf_tmp_id3.tags)
-        self.failUnless(DSF(self.filename_1).tags is None)
+        self.assertFalse(self.dsf_tmp_id3.tags)
+        self.assertTrue(DSF(self.filename_1).tags is None)
 
     def test_module_delete(self):
         delete(self.filename_1)
-        self.failUnless(DSF(self.filename_1).tags is None)
+        self.assertTrue(DSF(self.filename_1).tags is None)
 
     def test_module_double_delete(self):
         delete(self.filename_1)
@@ -61,7 +60,7 @@ class TDSF(TestCase):
 
     def test_pprint_no_tags(self):
         self.dsf_tmp_id3.tags = None
-        self.failUnless(self.dsf_tmp_id3.pprint())
+        self.assertTrue(self.dsf_tmp_id3.pprint())
 
     def test_save_no_tags(self):
         self.dsf_tmp_id3.tags = None
@@ -69,20 +68,20 @@ class TDSF(TestCase):
         self.assertTrue(self.dsf_tmp_id3.tags is None)
 
     def test_add_tags_already_there(self):
-        self.failUnless(self.dsf_tmp_id3.tags)
-        self.failUnlessRaises(Exception, self.dsf_tmp_id3.add_tags)
+        self.assertTrue(self.dsf_tmp_id3.tags)
+        self.assertRaises(Exception, self.dsf_tmp_id3.add_tags)
 
     def test_mime(self):
-        self.failUnless("audio/dsf" in self.dsf_tmp_id3.mime)
+        self.assertTrue("audio/dsf" in self.dsf_tmp_id3.mime)
 
     def test_loaded_tags(self):
-        self.failUnless(self.dsf_tmp_id3["TIT2"] == "DSF title")
+        self.assertTrue(self.dsf_tmp_id3["TIT2"] == "DSF title")
 
     def test_roundtrip(self):
-        self.failUnlessEqual(self.dsf_tmp_id3["TIT2"], ["DSF title"])
+        self.assertEqual(self.dsf_tmp_id3["TIT2"], ["DSF title"])
         self.dsf_tmp_id3.save()
         new = DSF(self.dsf_tmp_id3.filename)
-        self.failUnlessEqual(new["TIT2"], ["DSF title"])
+        self.assertEqual(new["TIT2"], ["DSF title"])
 
     def test_save_tags(self):
         from mutagen.id3 import TIT2
@@ -91,7 +90,7 @@ class TDSF(TestCase):
         tags.save()
 
         new = DSF(self.dsf_tmp_id3.filename)
-        self.failUnlessEqual(new["TIT2"], ["foobar"])
+        self.assertEqual(new["TIT2"], ["foobar"])
 
     def test_corrupt_tag(self):
         with open(self.filename_1, "r+b") as h:

@@ -16,12 +16,16 @@ Based on the specification at http://theora.org/doc/Theora_I_spec.pdf.
 __all__ = ["OggTheora", "Open", "delete"]
 
 import struct
+from io import BytesIO
+from typing import cast, override
 
 from mutagen import StreamInfo
+from mutagen._filething import FileThing
+from mutagen._tags import PaddingFunction, PaddingInfo
+from mutagen._util import cdata, convert_error, get_size, loadfile
 from mutagen._vorbis import VCommentDict
-from mutagen._util import cdata, get_size, loadfile, convert_error
-from mutagen._tags import PaddingInfo
-from mutagen.ogg import OggPage, OggFileType, error as OggError
+from mutagen.ogg import OggFileType, OggPage
+from mutagen.ogg import error as OggError
 
 
 class error(OggError):
@@ -43,11 +47,14 @@ class OggTheoraInfo(StreamInfo):
         bitrate (`int`): Bitrate in bps (int)
     """
 
-    length = 0
-    fps = 0
-    bitrate = 0
+    length: float = 0.0
+    fps: float = 0.0
+    bitrate: int = 0
 
-    def __init__(self, fileobj):
+    granule_shift: int
+    serial: int
+
+    def __init__(self, fileobj: BytesIO):
         page = OggPage(fileobj)
         while not page.packets or \
                 not page.packets[0].startswith(b"\x80theora"):
@@ -58,7 +65,7 @@ class OggTheoraInfo(StreamInfo):
         data = page.packets[0]
         if len(data) < 42:
             raise OggTheoraHeaderError("Truncated header")
-        vmaj, vmin = struct.unpack("2B", data[7:9])
+        vmaj, vmin = cast(tuple[int, int], struct.unpack("2B", data[7:9]))
         if (vmaj, vmin) != (3, 2):
             raise OggTheoraHeaderError(
                 "found Theora version %d.%d != 3.2" % (vmaj, vmin))
@@ -70,7 +77,7 @@ class OggTheoraInfo(StreamInfo):
         self.granule_shift = (cdata.ushort_be(data[40:42]) >> 5) & 0x1F
         self.serial = page.serial
 
-    def _post_tags(self, fileobj):
+    def _post_tags(self, fileobj: BytesIO):
         page = OggPage.find_last(fileobj, self.serial, finishing=True)
         if page is None:
             raise OggTheoraHeaderError
@@ -80,16 +87,19 @@ class OggTheoraInfo(StreamInfo):
         assert self.fps
         self.length = frames / float(self.fps)
 
+    @override
     def pprint(self):
-        return u"Ogg Theora, %.2f seconds, %d bps" % (self.length,
+        return "Ogg Theora, %.2f seconds, %d bps" % (self.length,
                                                       self.bitrate)
 
 
 class OggTheoraCommentDict(VCommentDict):
     """Theora comments embedded in an Ogg bitstream."""
 
-    def __init__(self, fileobj, info):
-        pages = []
+    _padding: int
+
+    def __init__(self, fileobj: BytesIO, info: OggTheoraInfo):
+        pages: list[OggPage] = []
         complete = False
         while not complete:
             page = OggPage(fileobj)
@@ -100,13 +110,13 @@ class OggTheoraCommentDict(VCommentDict):
         if not packets:
             raise error("Missing metadata packet")
         data = packets[0][7:]
-        super(OggTheoraCommentDict, self).__init__(data, framing=False)
+        super().__init__(data, framing=False)
         self._padding = len(data) - self._size
 
-    def _inject(self, fileobj, padding_func):
+    def _inject(self, fileobj: BytesIO, padding_func: PaddingFunction | None):
         """Write tag data into the Theora comment packet/page."""
 
-        fileobj.seek(0)
+        _ = fileobj.seek(0)
         page = OggPage(fileobj)
         while not page.packets or \
                 not page.packets[0].startswith(b"\x81theora"):
@@ -146,16 +156,17 @@ class OggTheora(OggFileType):
         tags (`mutagen._vorbis.VCommentDict`)
     """
 
-    _Info = OggTheoraInfo
+    _Info: type[StreamInfo] = OggTheoraInfo
     _Tags = OggTheoraCommentDict
     _Error = OggTheoraHeaderError
-    _mimes = ["video/x-theora"]
+    _mimes: list[str] = ["video/x-theora"]
 
-    info = None
-    tags = None
+    info: OggTheoraInfo | None = None
+    tags: OggTheoraCommentDict | None = None
 
     @staticmethod
-    def score(filename, fileobj, header):
+    @override
+    def score(filename: str, fileobj: BytesIO, header: bytes):
         return (header.startswith(b"OggS") *
                 ((b"\x80theora" in header) + (b"\x81theora" in header)) * 2)
 
@@ -165,7 +176,7 @@ Open = OggTheora
 
 @convert_error(IOError, error)
 @loadfile(method=False, writable=True)
-def delete(filething):
+def delete(filething: FileThing):
     """ delete(filething)
 
     Arguments:
@@ -177,5 +188,5 @@ def delete(filething):
     """
 
     t = OggTheora(filething)
-    filething.fileobj.seek(0)
+    _ = filething.fileobj.seek(0)
     t.delete(filething)

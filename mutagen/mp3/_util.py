@@ -10,98 +10,102 @@ http://www.codeproject.com/Articles/8295/MPEG-Audio-Frame-Header
 http://wiki.hydrogenaud.io/index.php?title=MP3
 """
 
-from __future__ import division
+
+from enum import IntFlag
 from functools import partial
 from io import BytesIO
-from typing import List
+from typing import TYPE_CHECKING, cast, final
 
-from mutagen._util import cdata, BitReader, iterbytes
+from mutagen._util import BitReader, cdata, iterbytes
+
+if TYPE_CHECKING:
+    from . import MPEGFrame
 
 
 class LAMEError(Exception):
     pass
 
 
-class LAMEHeader(object):
+class LAMEHeader:
     """http://gabriel.mp3-tech.org/mp3infotag.html"""
 
-    vbr_method = 0
+    vbr_method: int = 0
     """0: unknown, 1: CBR, 2: ABR, 3/4/5: VBR, others: see the docs"""
 
-    lowpass_filter = 0
+    lowpass_filter: int = 0
     """lowpass filter value in Hz. 0 means unknown"""
 
-    quality = -1
+    quality: int = -1
     """Encoding quality: 0..9"""
 
-    vbr_quality = -1
+    vbr_quality: int = -1
     """VBR quality: 0..9"""
 
-    track_peak = None
+    track_peak: float | None = None
     """Peak signal amplitude as float. 1.0 is maximal signal amplitude
     in decoded format. None if unknown.
     """
 
-    track_gain_origin = 0
+    track_gain_origin: int = 0
     """see the docs"""
 
-    track_gain_adjustment = None
+    track_gain_adjustment: float | None = None
     """Track gain adjustment as float (for 89db replay gain) or None"""
 
-    album_gain_origin = 0
+    album_gain_origin: int = 0
     """see the docs"""
 
-    album_gain_adjustment = None
+    album_gain_adjustment: float | None = None
     """Album gain adjustment as float (for 89db replay gain) or None"""
 
-    encoding_flags = 0
+    encoding_flags: int = 0
     """see docs"""
 
-    ath_type = -1
+    ath_type: int = -1
     """see docs"""
 
-    bitrate = -1
+    bitrate: int = -1
     """Bitrate in kbps. For VBR the minimum bitrate, for anything else
     (CBR, ABR, ..) the target bitrate.
     """
 
-    encoder_delay_start = 0
+    encoder_delay_start: int = 0
     """Encoder delay in samples"""
 
-    encoder_padding_end = 0
+    encoder_padding_end: int = 0
     """Padding in samples added at the end"""
 
-    source_sample_frequency_enum = -1
+    source_sample_frequency_enum: int = -1
     """see docs"""
 
-    unwise_setting_used = False
+    unwise_setting_used: bool = False
     """see docs"""
 
-    stereo_mode = 0
+    stereo_mode: int = 0
     """see docs"""
 
-    noise_shaping = 0
+    noise_shaping: int = 0
     """see docs"""
 
-    mp3_gain = 0
+    mp3_gain: int = 0
     """Applied MP3 gain -127..127. Factor is 2 ** (mp3_gain / 4)"""
 
-    surround_info = 0
+    surround_info: int = 0
     """see docs"""
 
-    preset_used = 0
+    preset_used: int = 0
     """lame preset"""
 
-    music_length = 0
+    music_length: int = 0
     """Length in bytes excluding any ID3 tags"""
 
-    music_crc = -1
+    music_crc: int = -1
     """CRC16 of the data specified by music_length"""
 
-    header_crc = -1
+    header_crc: int = -1
     """CRC16 of this header and everything before (not checked)"""
 
-    def __init__(self, xing, fileobj):
+    def __init__(self, xing: 'XingHeader', fileobj: BytesIO):
         """Raises LAMEError if parsing fails"""
 
         payload = fileobj.read(27)
@@ -112,7 +116,7 @@ class LAMEHeader(object):
         r = BitReader(BytesIO(payload))
         revision = r.bits(4)
         if revision != 0:
-            raise LAMEError("unsupported header revision %d" % revision)
+            raise LAMEError(f"unsupported header revision {revision}")
 
         self.vbr_method = r.bits(4)
         self.lowpass_filter = r.bits(8) * 100
@@ -176,7 +180,7 @@ class LAMEHeader(object):
         self.header_crc = r.bits(16)
         assert r.is_aligned()
 
-    def guess_settings(self, major, minor):
+    def guess_settings(self, major: int, minor: int):
         """Gives a guess about the encoder settings used. Returns an empty
         string if unknown.
 
@@ -196,64 +200,64 @@ class LAMEHeader(object):
         if self.vbr_method == 2:
             if version in ((3, 90), (3, 91), (3, 92)) and self.encoding_flags:
                 if self.bitrate < 255:
-                    return u"--alt-preset %d" % self.bitrate
+                    return f"--alt-preset {self.bitrate}"
                 else:
-                    return u"--alt-preset %d+" % self.bitrate
+                    return f"--alt-preset {self.bitrate}+"
             if self.preset_used != 0:
-                return u"--preset %d" % self.preset_used
+                return f"--preset {self.preset_used}"
             elif self.bitrate < 255:
-                return u"--abr %d" % self.bitrate
+                return f"--abr {self.bitrate}"
             else:
-                return u"--abr %d+" % self.bitrate
+                return f"--abr {self.bitrate}+"
         elif self.vbr_method == 1:
             if self.preset_used == 0:
                 if self.bitrate < 255:
-                    return u"-b %d" % self.bitrate
+                    return f"-b {self.bitrate}"
                 else:
-                    return u"-b 255+"
+                    return "-b 255+"
             elif self.preset_used == 1003:
-                return u"--preset insane"
-            return u"-b %d" % self.preset_used
+                return "--preset insane"
+            return f"-b {self.preset_used}"
         elif version in ((3, 90), (3, 91), (3, 92)):
             preset_key = (self.vbr_quality, self.quality, self.vbr_method,
                           self.lowpass_filter, self.ath_type)
             if preset_key == (1, 2, 4, 19500, 3):
-                return u"--preset r3mix"
+                return "--preset r3mix"
             if preset_key == (2, 2, 3, 19000, 4):
-                return u"--alt-preset standard"
+                return "--alt-preset standard"
             if preset_key == (2, 2, 3, 19500, 2):
-                return u"--alt-preset extreme"
+                return "--alt-preset extreme"
 
             if self.vbr_method == 3:
-                return u"-V %s" % self.vbr_quality
+                return f"-V {self.vbr_quality}"
             elif self.vbr_method in (4, 5):
-                return u"-V %s --vbr-new" % self.vbr_quality
+                return f"-V {self.vbr_quality} --vbr-new"
         elif version in ((3, 93), (3, 94), (3, 95), (3, 96), (3, 97)):
             if self.preset_used == 1001:
-                return u"--preset standard"
+                return "--preset standard"
             elif self.preset_used == 1002:
-                return u"--preset extreme"
+                return "--preset extreme"
             elif self.preset_used == 1004:
-                return u"--preset fast standard"
+                return "--preset fast standard"
             elif self.preset_used == 1005:
-                return u"--preset fast extreme"
+                return "--preset fast extreme"
             elif self.preset_used == 1006:
-                return u"--preset medium"
+                return "--preset medium"
             elif self.preset_used == 1007:
-                return u"--preset fast medium"
+                return "--preset fast medium"
 
             if self.vbr_method == 3:
-                return u"-V %s" % self.vbr_quality
+                return f"-V {self.vbr_quality}"
             elif self.vbr_method in (4, 5):
-                return u"-V %s --vbr-new" % self.vbr_quality
+                return f"-V {self.vbr_quality} --vbr-new"
         elif version == (3, 98):
             if self.vbr_method == 3:
-                return u"-V %s --vbr-old" % self.vbr_quality
+                return f"-V {self.vbr_quality} --vbr-old"
             elif self.vbr_method in (4, 5):
-                return u"-V %s" % self.vbr_quality
+                return f"-V {self.vbr_quality}"
         elif version >= (3, 99):
             if self.vbr_method == 3:
-                return u"-V %s --vbr-old" % self.vbr_quality
+                return f"-V {self.vbr_quality} --vbr-old"
             elif self.vbr_method in (4, 5):
                 p = self.vbr_quality
                 adjust_key = (p, self.bitrate, self.lowpass_filter)
@@ -263,12 +267,12 @@ class LAMEHeader(object):
                     (5, 8, 0): 8,
                     (6, 8, 0): 9,
                 }.get(adjust_key, p)
-                return u"-V %s" % p
+                return f"-V {p}"
 
-        return u""
+        return ""
 
     @classmethod
-    def parse_version(cls, fileobj):
+    def parse_version(cls, fileobj: BytesIO):
         """Returns a version string and True if a LAMEHeader follows.
         The passed file object will be positioned right before the
         lame header if True.
@@ -296,8 +300,8 @@ class LAMEHeader(object):
         try:
             major = int(major.decode("ascii"))
             minor = int(minor.decode("ascii"))
-        except ValueError:
-            raise LAMEError
+        except ValueError as e:
+            raise LAMEError from e
 
         # the extended header was added sometimes in the 3.90 cycle
         # e.g. "LAME3.90 (alpha)" should still stop here.
@@ -309,79 +313,75 @@ class LAMEHeader(object):
                 flag_string = flag.decode("ascii")
             except UnicodeDecodeError:
                 flag_string = " (?)"
-            return (major, minor), u"%d.%d%s" % (major, minor, flag_string), False
+            return (major, minor), f"{major}.{minor}{flag_string}", False
 
         if len(data) < 11:
             raise LAMEError("Invalid version: too long")
 
         flag = data[:-11].rstrip(b"\x00")
 
-        flag_string = u""
-        patch = u""
+        flag_string = ""
+        patch = ""
         if flag == b"a":
-            flag_string = u" (alpha)"
+            flag_string = " (alpha)"
         elif flag == b"b":
-            flag_string = u" (beta)"
+            flag_string = " (beta)"
         elif flag == b"r":
-            patch = u".1+"
+            patch = ".1+"
         elif flag == b" ":
-            if (major, minor) > (3, 96):
-                patch = u".0"
-            else:
-                patch = u".0+"
+            patch = ".0" if (major, minor) > (3, 96) else ".0+"
         elif flag == b"" or flag == b".":
-            patch = u".0+"
+            patch = ".0+"
         else:
-            flag_string = u" (?)"
+            flag_string = " (?)"
 
         # extended header, seek back to 9 bytes for the caller
-        fileobj.seek(-11, 1)
+        _ = fileobj.seek(-11, 1)
 
-        return (major, minor), \
-            u"%d.%d%s%s" % (major, minor, patch, flag_string), True
+        return (major, minor), f"{major}.{minor}{patch}{flag_string}", True
 
 
 class XingHeaderError(Exception):
     pass
 
 
-class XingHeaderFlags(object):
+class XingHeaderFlags(IntFlag):
     FRAMES = 0x1
     BYTES = 0x2
     TOC = 0x4
     VBR_SCALE = 0x8
 
 
-class XingHeader(object):
+class XingHeader:
 
-    frames = -1
+    frames: int = -1
     """Number of frames, -1 if unknown"""
 
-    bytes = -1
+    bytes: int = -1
     """Number of bytes, -1 if unknown"""
 
-    toc: List[int] = []
+    toc: list[int] = []
     """List of 100 file offsets in percent encoded as 0-255. E.g. entry
     50 contains the file offset in percent at 50% play time.
     Empty if unknown.
     """
 
-    vbr_scale = -1
+    vbr_scale: int = -1
     """VBR quality indicator 0-100. -1 if unknown"""
 
-    lame_header = None
+    lame_header: LAMEHeader | None = None
     """A LAMEHeader instance or None"""
 
-    lame_version = (0, 0)
+    lame_version: tuple[int, int] = (0, 0)
     """The LAME version as two element tuple (major, minor)"""
 
-    lame_version_desc = u""
+    lame_version_desc: str = ""
     """The version of the LAME encoder e.g. '3.99.0'. Empty if unknown"""
 
-    is_info = False
+    is_info: bool = False
     """If the header started with 'Info' and not 'Xing'"""
 
-    def __init__(self, fileobj):
+    def __init__(self, fileobj: BytesIO):
         """Parses the Xing header or raises XingHeaderError.
 
         The file position after this returns is undefined.
@@ -393,7 +393,7 @@ class XingHeader(object):
 
         self.is_info = (data[:4] == b"Info")
 
-        flags = cdata.uint32_be_from(data, 4)[0]
+        flags = cast(XingHeaderFlags, cdata.uint32_be_from(data, 4)[0])
 
         if flags & XingHeaderFlags.FRAMES:
             data = fileobj.read(4)
@@ -431,11 +431,11 @@ class XingHeader(object):
         """Returns the guessed encoder settings"""
 
         if self.lame_header is None:
-            return u""
+            return ""
         return self.lame_header.guess_settings(*self.lame_version)
 
     @classmethod
-    def get_offset(cls, info):
+    def get_offset(cls, info: MPEGFrame):
         """Calculate the offset to the Xing header from the start of the
         MPEG header including sync based on the MPEG header's content.
         """
@@ -458,7 +458,8 @@ class VBRIHeaderError(Exception):
     pass
 
 
-class VBRIHeader(object):
+@final
+class VBRIHeader:
 
     version = 0
     """VBRI header version"""
@@ -478,10 +479,10 @@ class VBRIHeader(object):
     toc_frames = 0
     """Number of frames per table entry"""
 
-    toc: List[int] = []
+    toc: list[int] = []
     """TOC"""
 
-    def __init__(self, fileobj):
+    def __init__(self, fileobj: BytesIO):
         """Reads the VBRI header or raises VBRIHeaderError.
 
         The file position is undefined after this returns
@@ -495,7 +496,7 @@ class VBRIHeader(object):
         self.version, offset = cdata.uint16_be_from(data, offset)
         if self.version != 1:
             raise VBRIHeaderError(
-                "Unsupported header version: %r" % self.version)
+                f"Unsupported header version: {self.version!r}")
 
         offset += 2  # float16.. can't do
         self.quality, offset = cdata.uint16_be_from(data, offset)
@@ -522,7 +523,7 @@ class VBRIHeader(object):
         self.toc = [unpack(i)[0] for i in range(0, toc_size, toc_entry_size)]
 
     @classmethod
-    def get_offset(cls, info):
+    def get_offset(cls, info: 'MPEGFrame'):
         """Offset in bytes from the start of the MPEG header including sync"""
 
         assert info.layer == 3

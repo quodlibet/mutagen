@@ -1,9 +1,9 @@
 
-import re
-import os
-import sys
-import shutil
 import contextlib
+import os
+import re
+import shutil
+import sys
 from io import StringIO
 from tempfile import mkstemp
 from unittest import TestCase as BaseTestCase
@@ -20,7 +20,7 @@ assert isinstance(DATA_DIR, str)
 
 
 _fs_enc = sys.getfilesystemencoding()
-if "öäü".encode(_fs_enc, "replace").decode(_fs_enc) != u"öäü":
+if "öäü".encode(_fs_enc, "replace").decode(_fs_enc) != "öäü":
     raise RuntimeError("This test suite needs a unicode locale encoding. "
                        "Try setting LANG=C.UTF-8")
 
@@ -72,9 +72,9 @@ class TestCase(BaseTestCase):
             try:
                 fun(*args, **kwargs)
             except Exception as e:
-                self.failUnless(re.search(re_, str(e)))
+                self.assertTrue(re.search(re_, str(e)))
                 raise
-        self.failUnlessRaises(exc, wrapped, *args, **kwargs)
+        self.assertRaises(exc, wrapped, *args, **kwargs)
 
     # silence deprec warnings about useless renames
     failUnless = BaseTestCase.assertTrue
@@ -105,7 +105,9 @@ class TestCase(BaseTestCase):
         self.assertTrue(b != a)
 
 
-def unit(run=[], exitfirst=False):
+def unit(run=None, exitfirst=False):
+    if run is None:
+        run = []
     args = []
 
     if run:

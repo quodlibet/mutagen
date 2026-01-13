@@ -24,18 +24,33 @@ were all consulted.
 
 import struct
 import sys
-from io import BytesIO
-from collections.abc import Sequence
+from collections.abc import Generator, Sequence
 from datetime import timedelta
+from enum import IntEnum
+from io import BytesIO
+from typing import Any, Final, cast, final, override
 
-from mutagen import FileType, Tags, StreamInfo, PaddingInfo
+from mutagen import FileType, PaddingInfo, StreamInfo, Tags
 from mutagen._constants import GENRES
-from mutagen._util import cdata, insert_bytes, DictProxy, MutagenError, \
-    hashable, enum, get_size, resize_bytes, loadfile, convert_error, bchr, \
-    reraise
-from ._atom import Atoms, Atom, AtomError
+from mutagen._filething import FileThing
+from mutagen._tags import PaddingFunction
+from mutagen._util import (
+    DictProxy,
+    MutagenError,
+    bchr,
+    cdata,
+    convert_error,
+    get_size,
+    hashable,
+    insert_bytes,
+    loadfile,
+    reraise,
+    resize_bytes,
+)
+
+from ._as_entry import ASEntryError, AudioSampleEntry
+from ._atom import Atom, AtomError, Atoms
 from ._util import parse_full_atom
-from ._as_entry import AudioSampleEntry, ASEntryError
 
 
 class error(MutagenError):
@@ -61,8 +76,7 @@ class MP4MetadataValueError(ValueError, MP4MetadataError):
 __all__ = ['MP4', 'Open', 'delete', 'MP4Cover', 'MP4FreeForm', 'AtomDataType']
 
 
-@enum
-class AtomDataType(object):
+class AtomDataType(IntEnum):
     """Enum for ``dataformat`` attribute of MP4FreeForm.
 
     .. versionadded:: 1.25
@@ -131,7 +145,7 @@ class AtomDataType(object):
     BMP = 27
     """Windows bitmap image"""
 
-
+@final
 @hashable
 class MP4Cover(bytes):
     """A cover artwork.
@@ -144,30 +158,33 @@ class MP4Cover(bytes):
     FORMAT_JPEG = AtomDataType.JPEG
     FORMAT_PNG = AtomDataType.PNG
 
-    def __new__(cls, data, *args, **kwargs):
+    imageformat: AtomDataType
+
+    def __new__(cls, data: bytes, *args, **kwargs):
         return bytes.__new__(cls, data)
 
-    def __init__(self, data, imageformat=FORMAT_JPEG):
+    def __init__(self, data: bytes, imageformat: AtomDataType =FORMAT_JPEG):
         self.imageformat = imageformat
 
-    __hash__ = bytes.__hash__
+    __hash__: Final = bytes.__hash__
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: 'MP4Cover | object') -> bool:
         if not isinstance(other, MP4Cover):
             return bytes(self) == other
 
         return (bytes(self) == bytes(other) and
                 self.imageformat == other.imageformat)
 
-    def __ne__(self, other):
+    @override
+    def __ne__(self, other: 'MP4Cover | object') -> bool:
         return not self.__eq__(other)
 
+    @override
     def __repr__(self):
-        return "%s(%r, %r)" % (
-            type(self).__name__, bytes(self),
-            AtomDataType(self.imageformat))
+        return f"{type(self).__name__}({bytes(self)!r}, {AtomDataType(self.imageformat)!r})"
 
-
+@final
 @hashable
 class MP4FreeForm(bytes):
     """A freeform value.
@@ -179,16 +196,20 @@ class MP4FreeForm(bytes):
     FORMAT_DATA = AtomDataType.IMPLICIT  # deprecated
     FORMAT_TEXT = AtomDataType.UTF8  # deprecated
 
-    def __new__(cls, data, *args, **kwargs):
+    dataformat: AtomDataType
+    version: int
+
+    def __new__(cls, data: bytes, *args, **kwargs):
         return bytes.__new__(cls, data)
 
-    def __init__(self, data, dataformat=AtomDataType.UTF8, version=0):
+    def __init__(self, data: bytes, dataformat: AtomDataType=AtomDataType.UTF8, version: int=0):
         self.dataformat = dataformat
         self.version = version
 
-    __hash__ = bytes.__hash__
+    __hash__: Final = bytes.__hash__
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: 'MP4FreeForm | object') -> bool:
         if not isinstance(other, MP4FreeForm):
             return bytes(self) == other
 
@@ -196,30 +217,31 @@ class MP4FreeForm(bytes):
                 self.dataformat == other.dataformat and
                 self.version == other.version)
 
-    def __ne__(self, other):
+    @override
+    def __ne__(self, other: 'MP4FreeForm | object') -> bool:
         return not self.__eq__(other)
 
+    @override
     def __repr__(self):
-        return "%s(%r, %r)" % (
-            type(self).__name__, bytes(self),
-            AtomDataType(self.dataformat))
+        return f"{type(self).__name__}({bytes(self)!r}, {AtomDataType(self.dataformat)!r})"
 
 
-def _name2key(name):
+def _name2key(name: bytes) -> str:
     return name.decode("latin-1")
 
 
-def _key2name(key):
+def _key2name(key: str) -> bytes:
     return key.encode("latin-1")
 
 
-def _find_padding(atom_path):
+def _find_padding(atom_path: Sequence[Atom]):
     # Check for padding "free" atom
     # XXX: we only use them if they are adjacent to ilst, and only one.
     # and there also is a top level free atom which we could use maybe..?
 
     meta, ilst = atom_path[-2:]
     assert meta.name == b"meta" and ilst.name == b"ilst"
+    assert meta.children is not None
     index = meta.children.index(ilst)
     try:
         prev = meta.children[index - 1]
@@ -236,22 +258,22 @@ def _find_padding(atom_path):
         pass
 
 
-def _item_sort_key(key, value):
+def _item_sort_key(key: str, value):
     # iTunes always writes the tags in order of "relevance", try
     # to copy it as closely as possible.
     order = ["\xa9nam", "\xa9ART", "\xa9wrt", "\xa9alb",
              "\xa9gen", "gnre", "trkn", "disk",
              "\xa9day", "cpil", "pgap", "pcst", "tmpo",
              "\xa9too", "----", "covr", "\xa9lyr"]
-    order = dict(zip(order, range(len(order))))
+    order = dict(zip(order, range(len(order)), strict=False))
     last = len(order)
     # If there's no key-based way to distinguish, order by length.
     # If there's still no way, go by string comparison on the
     # values, so we at least have something deterministic.
     return (order.get(key[:4], last), len(repr(value)), repr(value))
 
-
-class MP4Tags(DictProxy, Tags):
+@final
+class MP4Tags(DictProxy, Tags): # dict[str, Unknown], not sure what the value types are. fill in later
     r"""MP4Tags()
 
     Dictionary containing Apple iTunes metadata list key/values.
@@ -334,17 +356,19 @@ class MP4Tags(DictProxy, Tags):
     back as is.
     """
 
+    _padding: int | None = None
+
     def __init__(self, *args, **kwargs):
-        self._failed_atoms = {}
-        super(MP4Tags, self).__init__()
+        self._failed_atoms: dict[str, list[Atom]] = {}
+        super().__init__()
         if args or kwargs:
             self.load(*args, **kwargs)
 
-    def load(self, atoms, fileobj):
+    def load(self, atoms: Atoms, fileobj: BytesIO):
         try:
             path = atoms.path(b"moov", b"udta", b"meta", b"ilst")
         except KeyError as key:
-            raise MP4MetadataError(key)
+            raise MP4MetadataError(key) from key
 
         free = _find_padding(path)
         self._padding = free.datalength if free is not None else 0
@@ -366,17 +390,18 @@ class MP4Tags(DictProxy, Tags):
                 # parsing failed, save them so we can write them back
                 self._failed_atoms.setdefault(_name2key(atom.name), []).append(data)
 
-    def __setitem__(self, key, value):
+    @override
+    def __setitem__(self, key: str | object, value):
         if not isinstance(key, str):
             raise TypeError("key has to be str")
         self._render(key, value)
-        super(MP4Tags, self).__setitem__(key, value)
+        super().__setitem__(key, value)
 
     @classmethod
-    def _can_load(cls, atoms):
+    def _can_load(cls, atoms: Atoms) -> bool:
         return b"moov.udta.meta.ilst" in atoms
 
-    def _render(self, key, value):
+    def _render(self, key: str, value):
         atom_name = _key2name(key)[:4]
         if atom_name in self.__atoms:
             render_func = self.__atoms[atom_name][1]
@@ -385,13 +410,15 @@ class MP4Tags(DictProxy, Tags):
             render_func = type(self).__render_text
             render_args = []
 
+        assert render_func is not None
+
         return render_func(self, key, value, *render_args)
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
-    def save(self, filething=None, padding=None):
+    def save(self, filething: FileThing, padding: PaddingFunction | None =None):
 
-        values = []
+        values: list[bytes] = []
         items = sorted(self.items(), key=lambda kv: _item_sort_key(*kv))
         for key, value in items:
             try:
@@ -410,7 +437,7 @@ class MP4Tags(DictProxy, Tags):
             for data in failed:
                 values.append(Atom.render(_key2name(key), data))
 
-        data = Atom.render(b"ilst", b"".join(values))
+        datab = Atom.render(b"ilst", b"".join(values))
 
         # Find the old atoms.
         try:
@@ -418,9 +445,9 @@ class MP4Tags(DictProxy, Tags):
         except AtomError as err:
             reraise(error, err, sys.exc_info()[2])
 
-        self.__save(filething.fileobj, atoms, data, padding)
+        self.__save(filething.fileobj, atoms, datab, padding)
 
-    def __save(self, fileobj, atoms, data, padding):
+    def __save(self, fileobj: BytesIO, atoms: Atoms, data: bytes, padding: PaddingFunction | None):
         try:
             path = atoms.path(b"moov", b"udta", b"meta", b"ilst")
         except KeyError:
@@ -428,7 +455,7 @@ class MP4Tags(DictProxy, Tags):
         else:
             self.__save_existing(fileobj, atoms, path, data, padding)
 
-    def __save_new(self, fileobj, atoms, ilst_data, padding_func):
+    def __save_new(self, fileobj: BytesIO, atoms: Atoms, ilst_data: bytes, padding_func: PaddingFunction | None):
         hdlr = Atom.render(b"hdlr", b"\x00" * 8 + b"mdirappl" + b"\x00" * 9)
         meta_data = b"\x00\x00\x00\x00" + hdlr + ilst_data
 
@@ -462,7 +489,7 @@ class MP4Tags(DictProxy, Tags):
         self.__update_parents(fileobj, path, len(data))
         self.__update_offsets(fileobj, atoms, len(data), offset)
 
-    def __save_existing(self, fileobj, atoms, path, ilst_data, padding_func):
+    def __save_existing(self, fileobj: BytesIO, atoms: Atoms, path: list[Atoms], ilst_data: bytes, padding_func: PaddingFunction | None):
         # Replace the old ilst atom.
         ilst = path[-1]
         offset = ilst.offset
@@ -494,40 +521,40 @@ class MP4Tags(DictProxy, Tags):
         self.__update_parents(fileobj, path[:-1], delta)
         self.__update_offsets(fileobj, atoms, delta, offset)
 
-    def __update_parents(self, fileobj, path, delta):
+    def __update_parents(self, fileobj: BytesIO, path: list[Atom], delta: int):
         """Update all parent atoms with the new size."""
 
         if delta == 0:
             return
 
         for atom in path:
-            fileobj.seek(atom.offset)
+            _ = fileobj.seek(atom.offset)
             size = cdata.uint_be(fileobj.read(4))
             if size == 1:  # 64bit
                 # skip name (4B) and read size (8B)
                 size = cdata.ulonglong_be(fileobj.read(12)[4:])
-                fileobj.seek(atom.offset + 8)
-                fileobj.write(cdata.to_ulonglong_be(size + delta))
+                _ = fileobj.seek(atom.offset + 8)
+                _ = fileobj.write(cdata.to_ulonglong_be(size + delta))
             else:  # 32bit
-                fileobj.seek(atom.offset)
-                fileobj.write(cdata.to_uint_be(size + delta))
+                _= fileobj.seek(atom.offset)
+                _= fileobj.write(cdata.to_uint_be(size + delta))
 
-    def __update_offset_table(self, fileobj, fmt, atom, delta, offset):
+    def __update_offset_table(self, fileobj: BytesIO, fmt: str | bytes, atom: Atom, delta: int, offset: int):
         """Update offset table in the specified atom."""
         if atom.offset > offset:
             atom.offset += delta
-        fileobj.seek(atom.offset + 12)
+        _ = fileobj.seek(atom.offset + 12)
         data = fileobj.read(atom.length - 12)
         fmt = fmt % cdata.uint_be(data[:4])
         try:
             offsets = struct.unpack(fmt, data[4:])
             offsets = [o + (0, delta)[offset < o] for o in offsets]
-            fileobj.seek(atom.offset + 16)
-            fileobj.write(struct.pack(fmt, *offsets))
+            _ = fileobj.seek(atom.offset + 16)
+            _ = fileobj.write(struct.pack(fmt, *offsets))
         except struct.error:
-            raise MP4MetadataError("wrong offset inside %r" % atom.name)
+            raise MP4MetadataError(f"wrong offset inside {atom.name!r}") from None
 
-    def __update_tfhd(self, fileobj, atom, delta, offset):
+    def __update_tfhd(self, fileobj: BytesIO, atom: Atom, delta: int, offset: int):
         if atom.offset > offset:
             atom.offset += delta
         fileobj.seek(atom.offset + 9)
@@ -537,10 +564,10 @@ class MP4Tags(DictProxy, Tags):
             o = cdata.ulonglong_be(data[7:15])
             if o > offset:
                 o += delta
-            fileobj.seek(atom.offset + 16)
-            fileobj.write(cdata.to_ulonglong_be(o))
+            _ = fileobj.seek(atom.offset + 16)
+            _ = fileobj.write(cdata.to_ulonglong_be(o))
 
-    def __update_offsets(self, fileobj, atoms, delta, offset):
+    def __update_offsets(self, fileobj: BytesIO, atoms: Atoms, delta: int, offset: int):
         """Update offset tables in all 'stco' and 'co64' atoms."""
         if delta == 0:
             return
@@ -555,7 +582,7 @@ class MP4Tags(DictProxy, Tags):
         except KeyError:
             pass
 
-    def __parse_data(self, atom, data):
+    def __parse_data(self, atom: Atom, data: bytes) -> Generator[tuple[int, AtomDataType, bytes], Any, None]:
         pos = 0
         while pos < atom.length - 8:
             head = data[pos:pos + 12]
@@ -564,12 +591,12 @@ class MP4Tags(DictProxy, Tags):
             length, name = struct.unpack(">I4s", head[:8])
             if length < 1:
                 raise MP4MetadataError(
-                    "atom %r has a length of zero" % atom.name)
+                    f"atom {atom.name!r} has a length of zero")
             version = ord(head[8:9])
             flags = struct.unpack(">I", b"\x00" + head[9:12])[0]
             if name != b"data":
                 raise MP4MetadataError(
-                    "unexpected atom %r inside %r" % (name, atom.name))
+                    f"unexpected atom {name!r} inside {atom.name!r}")
 
             chunk = data[pos + 16:pos + length]
             if len(chunk) != length - 16:
@@ -577,7 +604,7 @@ class MP4Tags(DictProxy, Tags):
             yield version, flags, chunk
             pos += length
 
-    def __add(self, key, value, single=False):
+    def __add(self, key: str, value: object, single: bool=False):
         assert isinstance(key, str)
 
         if single:
@@ -585,13 +612,13 @@ class MP4Tags(DictProxy, Tags):
         else:
             self.setdefault(key, []).extend(value)
 
-    def __render_data(self, key, version, flags, value):
+    def __render_data(self, key: str, version: int, flags: AtomDataType, value: list[bytes]):
         return Atom.render(_key2name(key), b"".join([
             Atom.render(
                 b"data", struct.pack(">2I", version << 24 | flags, 0) + data)
             for data in value]))
 
-    def __parse_freeform(self, atom, data):
+    def __parse_freeform(self, atom: Atom, data: bytes):
         length = cdata.uint_be(data[:4])
         mean = data[12:length]
         pos = length
@@ -603,10 +630,10 @@ class MP4Tags(DictProxy, Tags):
             length, atom_name = struct.unpack(">I4s", data[pos:pos + 8])
             if atom_name != b"data":
                 raise MP4MetadataError(
-                    "unexpected atom %r inside %r" % (atom_name, atom.name))
+                    f"unexpected atom {atom_name!r} inside {atom.name!r}")
             if length < 1:
                 raise MP4MetadataError(
-                    "atom %r has a length of zero" % atom.name)
+                    f"atom {atom.name!r} has a length of zero")
             version = ord(data[pos + 8:pos + 8 + 1])
             flags = struct.unpack(">I", b"\x00" + data[pos + 9:pos + 12])[0]
             value.append(MP4FreeForm(data[pos + 16:pos + length],
@@ -616,7 +643,7 @@ class MP4Tags(DictProxy, Tags):
         key = _name2key(atom.name + b":" + mean + b":" + name)
         self.__add(key, value)
 
-    def __render_freeform(self, key, value):
+    def __render_freeform(self, key: str, value: list[MP4FreeForm]):
         if isinstance(value, bytes):
             value = [value]
 
@@ -638,55 +665,55 @@ class MP4Tags(DictProxy, Tags):
 
         return Atom.render(b"----", mean + name + data)
 
-    def __parse_pair(self, atom, data):
+    def __parse_pair(self, atom: Atom, data: bytes):
         key = _name2key(atom.name)
         values = [struct.unpack(">2H", d[2:6]) for
                   version, flags, d in self.__parse_data(atom, data)]
         self.__add(key, values)
 
-    def __render_pair(self, key, value):
-        data = []
+    def __render_pair(self, key: str, value: list[tuple[int, int]]):
+        data: list[bytes] = []
         for v in value:
             try:
                 track, total = v
             except TypeError:
-                raise ValueError
+                raise ValueError from None
             if 0 <= track < 1 << 16 and 0 <= total < 1 << 16:
                 data.append(struct.pack(">4H", 0, track, total, 0))
             else:
                 raise MP4MetadataValueError(
-                    "invalid numeric pair %r" % ((track, total),))
+                    f"invalid numeric pair {(track, total)!r}")
         return self.__render_data(key, 0, AtomDataType.IMPLICIT, data)
 
-    def __render_pair_no_trailing(self, key, value):
-        data = []
+    def __render_pair_no_trailing(self, key: str, value: list[tuple[int, int]]):
+        data: list[bytes] = []
         for (track, total) in value:
             if 0 <= track < 1 << 16 and 0 <= total < 1 << 16:
                 data.append(struct.pack(">3H", 0, track, total))
             else:
                 raise MP4MetadataValueError(
-                    "invalid numeric pair %r" % ((track, total),))
+                    f"invalid numeric pair {(track, total)!r}")
         return self.__render_data(key, 0, AtomDataType.IMPLICIT, data)
 
-    def __parse_genre(self, atom, data):
-        values = []
-        for version, flags, data in self.__parse_data(atom, data):
+    def __parse_genre(self, atom: Atom, data: bytes):
+        values: list[str] = []
+        for _version, _flags, data in self.__parse_data(atom, data):
             # version = 0, flags = 0
             if len(data) != 2:
                 raise MP4MetadataValueError("invalid genre")
-            genre = cdata.short_be(data)
+            genrei = cdata.short_be(data)
             # Translate to a freeform genre.
             try:
-                genre = GENRES[genre - 1]
+                genre = GENRES[genrei - 1]
             except IndexError:
                 # this will make us write it back at least
-                raise MP4MetadataValueError("unknown genre")
+                raise MP4MetadataValueError("unknown genre") from None
             values.append(genre)
         key = _name2key(b"\xa9gen")
         self.__add(key, values)
 
-    def __parse_integer(self, atom, data):
-        values = []
+    def __parse_integer(self, atom: Atom, data: bytes):
+        values: list[int] = []
         for version, flags, data in self.__parse_data(atom, data):
             if version != 0:
                 raise MP4MetadataValueError("unsupported version")
@@ -711,10 +738,10 @@ class MP4Tags(DictProxy, Tags):
         key = _name2key(atom.name)
         self.__add(key, values)
 
-    def __render_integer(self, key, value, min_bytes):
+    def __render_integer(self, key: str, value: list[int], min_bytes: int):
         assert min_bytes in (1, 2, 4, 8)
 
-        data_list = []
+        data_list: list[bytes] = []
         try:
             for v in value:
                 # We default to the int size of the usual values written
@@ -732,16 +759,16 @@ class MP4Tags(DictProxy, Tags):
                     data = cdata.to_int64_be(v)
                 else:
                     raise MP4MetadataValueError(
-                        "value out of range: %r" % value)
+                        f"value out of range: {value!r}")
                 data_list.append(data)
 
         except (TypeError, ValueError, cdata.error) as e:
-            raise MP4MetadataValueError(e)
+            raise MP4MetadataValueError(e) from e
 
         return self.__render_data(key, 0, AtomDataType.INTEGER, data_list)
 
-    def __parse_bool(self, atom, data):
-        for version, flags, data in self.__parse_data(atom, data):
+    def __parse_bool(self, atom: Atom, data: bytes):
+        for _version, _flags, data in self.__parse_data(atom, data):
             if len(data) != 1:
                 raise MP4MetadataValueError("invalid bool")
 
@@ -749,25 +776,24 @@ class MP4Tags(DictProxy, Tags):
             key = _name2key(atom.name)
             self.__add(key, value, single=True)
 
-    def __render_bool(self, key, value):
+    def __render_bool(self, key: str, value):
         return self.__render_data(
             key, 0, AtomDataType.INTEGER, [bchr(bool(value))])
 
-    def __parse_cover(self, atom, data):
-        values = []
-        pos = 0
+    def __parse_cover(self, atom: Atom, data: bytes):
+        values: list[MP4Cover] = []
+        pos: int = 0
         while pos < atom.length - 8:
-            length, name, imageformat = struct.unpack(">I4sI",
-                                                      data[pos:pos + 12])
+            length, name, imageformat = cast(tuple[int, bytes, int],struct.unpack(">I4sI", data[pos:pos + 12]))
             if name != b"data":
                 if name == b"name":
                     pos += length
                     continue
                 raise MP4MetadataError(
-                    "unexpected atom %r inside 'covr'" % name)
+                    f"unexpected atom {name!r} inside 'covr'")
             if length < 1:
                 raise MP4MetadataError(
-                    "atom %r has a length of zero" % atom.name)
+                    f"atom {atom.name!r} has a length of zero")
             if imageformat not in (MP4Cover.FORMAT_JPEG, MP4Cover.FORMAT_PNG):
                 # Sometimes AtomDataType.IMPLICIT or simply wrong.
                 # In all cases it was jpeg, so default to it
@@ -779,8 +805,8 @@ class MP4Tags(DictProxy, Tags):
         key = _name2key(atom.name)
         self.__add(key, values)
 
-    def __render_cover(self, key, value):
-        atom_data = []
+    def __render_cover(self, key: str, value: list[MP4Cover]):
+        atom_data: list[bytes] = []
         for cover in value:
             try:
                 imageformat = cover.imageformat
@@ -790,51 +816,52 @@ class MP4Tags(DictProxy, Tags):
                 b"data", struct.pack(">2I", imageformat, 0) + cover))
         return Atom.render(_key2name(key), b"".join(atom_data))
 
-    def __parse_text(self, atom, data, implicit=True):
+    def __parse_text(self, atom: Atom, data: bytes, implicit: bool=True):
         # implicit = False, for parsing unknown atoms only take utf8 ones.
         # For known ones we can assume the implicit are utf8 too.
-        values = []
-        for version, flags, atom_data in self.__parse_data(atom, data):
+        values: list[str] = []
+        for _version, flags, atom_data in self.__parse_data(atom, data):
             if implicit:
                 if flags not in (AtomDataType.IMPLICIT, AtomDataType.UTF8):
                     raise MP4MetadataError(
-                        "Unknown atom type %r for %r" % (flags, atom.name))
+                        f"Unknown atom type {flags!r} for {atom.name!r}")
             else:
                 if flags != AtomDataType.UTF8:
                     raise MP4MetadataError(
-                        "%r is not text, ignore" % atom.name)
+                        f"{atom.name!r} is not text, ignore")
 
             try:
                 text = atom_data.decode("utf-8")
             except UnicodeDecodeError as e:
-                raise MP4MetadataError("%s: %s" % (_name2key(atom.name), e))
+                raise MP4MetadataError(f"{_name2key(atom.name)}: {e}") from e
 
             values.append(text)
 
         key = _name2key(atom.name)
         self.__add(key, values)
 
-    def __render_text(self, key, value, flags=AtomDataType.UTF8):
+    def __render_text(self, key: str, value: list[str], flags: AtomDataType=AtomDataType.UTF8):
         if isinstance(value, str):
             value = [value]
 
-        encoded = []
+        encoded: list[bytes] = []
         for v in value:
             if not isinstance(v, str):
-                raise TypeError("%r not str" % v)
+                raise TypeError(f"{v!r} not str")
 
             encoded.append(v.encode("utf-8"))
 
         return self.__render_data(key, 0, flags, encoded)
 
-    def delete(self, filename):
+    @override
+    def delete(self, filename: str):
         """Remove the metadata from the given filename."""
 
         self._failed_atoms.clear()
         self.clear()
         self.save(filename, padding=lambda x: 0)
 
-    __atoms = {
+    __atoms: Final = {
         b"----": (__parse_freeform, __render_freeform),
         b"trkn": (__parse_pair, __render_pair),
         b"disk": (__parse_pair, __render_pair_no_trailing),
@@ -871,40 +898,45 @@ class MP4Tags(DictProxy, Tags):
                  b"sosn", b"tvsh"]:
         __atoms[name] = (__parse_text, __render_text)
 
+    @override
     def pprint(self):
 
-        def to_line(key, value):
+        def to_line(key: str, value: str | int | MP4Cover) -> str:
             assert isinstance(key, str)
             if isinstance(value, str):
-                return u"%s=%s" % (key, value)
-            return u"%s=%r" % (key, value)
+                return f"{key}={value}"
+            return f"{key}={value!r}"
 
-        values = []
+        values: list[str] = []
         for key, value in sorted(self.items()):
+            assert isinstance(key, str | bytes)
             if not isinstance(key, str):
                 key = key.decode("latin-1")
             if key == "covr":
-                values.append(u"%s=%s" % (key, u", ".join(
-                    [u"[%d bytes of data]" % len(data) for data in value])))
+                values.append("{}={}".format(key, ", ".join(
+                    ["[%d bytes of data]" % len(data) for data in value])))
             elif isinstance(value, list):
                 for v in value:
                     values.append(to_line(key, v))
             else:
                 values.append(to_line(key, value))
-        return u"\n".join(values)
+        return "\n".join(values)
 
 
-class Chapter(object):
+class Chapter:
     """Chapter()
 
     Chapter information container
     """
-    def __init__(self, start, title):
+    start: float
+    title: str
+
+    def __init__(self, start: float, title: str) -> None:
         self.start = start
         self.title = title
 
 
-class MP4Chapters(Sequence):
+class MP4Chapters(Sequence[Chapter]):
     """MP4Chapters()
 
     MPEG-4 Chapter information.
@@ -916,22 +948,28 @@ class MP4Chapters(Sequence):
         title (`str`): title of the chapter
 
     """
+    start: float
+    title: str
+
+    _timescale: int | None = None
+    _duration: int | None = None
+    _chapters: list[Chapter] = []
+
 
     def __init__(self, *args, **kwargs):
-        self._timescale = None
-        self._duration = None
-        self._chapters = []
-        super(MP4Chapters, self).__init__()
+        super().__init__()
         if args or kwargs:
             self.load(*args, **kwargs)
 
-    def __len__(self):
+    @override
+    def __len__(self) -> int:
         return self._chapters.__len__()
 
+    @override
     def __getitem__(self, key):
         return self._chapters.__getitem__(key)
 
-    def load(self, atoms, fileobj):
+    def load(self, atoms: Atoms, fileobj: BytesIO):
         try:
             mvhd = atoms.path(b"moov", b"mvhd")[-1]
         except KeyError as key:
@@ -950,10 +988,10 @@ class MP4Chapters(Sequence):
         self._parse_chpl(chpl, fileobj)
 
     @classmethod
-    def _can_load(cls, atoms):
+    def _can_load(cls, atoms: Atoms) -> bool:
         return b"moov.udta.chpl" in atoms and b"moov.mvhd" in atoms
 
-    def _parse_mvhd(self, atom, fileobj):
+    def _parse_mvhd(self, atom: Atom, fileobj: BytesIO):
         assert atom.name == b"mvhd"
 
         ok, data = atom.read(fileobj)
@@ -980,7 +1018,7 @@ class MP4Chapters(Sequence):
             self._duration = struct.unpack(">q", data[pos:pos + 8])[0]
             pos += 8
 
-    def _parse_chpl(self, atom, fileobj):
+    def _parse_chpl(self, atom: Atom, fileobj: BytesIO):
         assert atom.name == b"chpl"
 
         ok, data = atom.read(fileobj)
@@ -991,7 +1029,7 @@ class MP4Chapters(Sequence):
 
         pos = 9
         for i in range(chapters):
-            start = struct.unpack(">Q", data[pos:pos + 8])[0] / 10000
+            start = cast(int | float, struct.unpack(">Q", data[pos:pos + 8])[0] / 10000)
             pos += 8
 
             title_len = data[pos]
@@ -1000,15 +1038,16 @@ class MP4Chapters(Sequence):
             try:
                 title = data[pos:pos + title_len].decode()
             except UnicodeDecodeError as e:
-                raise MP4MetadataError("chapter %d title: %s" % (i, e))
+                raise MP4MetadataError(f"chapter {i} title: {e}") from e
             pos += title_len
 
+            assert self._timescale is not None
             self._chapters.append(Chapter(start / self._timescale, title))
 
     def pprint(self):
-        chapters = ["%s %s" % (timedelta(seconds=chapter.start), chapter.title)
+        chapters = [f"{timedelta(seconds=chapter.start)} {chapter.title}"
                     for chapter in self._chapters]
-        return "chapters=%s" % '\n  '.join(chapters)
+        return "chapters={}".format('\n  '.join(chapters))
 
 
 class MP4Info(StreamInfo):
@@ -1035,24 +1074,24 @@ class MP4Info(StreamInfo):
             change in the future, use for display purposes only.
     """
 
-    bitrate = 0
-    length = 0.0
-    channels = 0
-    sample_rate = 0
-    bits_per_sample = 0
-    codec = u""
-    codec_description = u""
+    bitrate: int = 0
+    length: float = 0.0
+    channels: int = 0
+    sample_rate: int = 0
+    bits_per_sample: int = 0
+    codec: str = ""
+    codec_description: str = ""
 
     def __init__(self, *args, **kwargs):
         if args or kwargs:
             self.load(*args, **kwargs)
 
     @convert_error(IOError, MP4StreamInfoError)
-    def load(self, atoms, fileobj):
+    def load(self, atoms: Atoms, fileobj: BytesIO):
         try:
             moov = atoms[b"moov"]
         except KeyError:
-            raise MP4StreamInfoError("not a MP4 file")
+            raise MP4StreamInfoError("not a MP4 file") from None
 
         for trak in moov.findall(b"trak"):
             hdlr = trak[b"mdia", b"hdlr"]
@@ -1072,7 +1111,7 @@ class MP4Info(StreamInfo):
         try:
             version, flags, data = parse_full_atom(data)
         except ValueError as e:
-            raise MP4StreamInfoError(e)
+            raise MP4StreamInfoError(e) from e
 
         if version == 0:
             offset = 8
@@ -1097,7 +1136,7 @@ class MP4Info(StreamInfo):
         else:
             self._parse_stsd(atom, fileobj)
 
-    def _parse_stsd(self, atom, fileobj):
+    def _parse_stsd(self, atom: Atom, fileobj: BytesIO):
         """Sets channels, bits_per_sample, sample_rate and optionally bitrate.
 
         Can raise MP4StreamInfoError.
@@ -1112,7 +1151,7 @@ class MP4Info(StreamInfo):
         try:
             version, flags, data = parse_full_atom(data)
         except ValueError as e:
-            raise MP4StreamInfoError(e)
+            raise MP4StreamInfoError(e) from e
 
         if version != 0:
             raise MP4StreamInfoError("Unsupported stsd version")
@@ -1120,7 +1159,7 @@ class MP4Info(StreamInfo):
         try:
             num_entries, offset = cdata.uint32_be_from(data, 0)
         except cdata.error as e:
-            raise MP4StreamInfoError(e)
+            raise MP4StreamInfoError(e) from e
 
         if num_entries == 0:
             return
@@ -1130,20 +1169,22 @@ class MP4Info(StreamInfo):
         try:
             entry_atom = Atom(entry_fileobj)
         except AtomError as e:
-            raise MP4StreamInfoError(e)
+            raise MP4StreamInfoError(e) from e
 
         try:
             entry = AudioSampleEntry(entry_atom, entry_fileobj)
         except ASEntryError as e:
-            raise MP4StreamInfoError(e)
+            raise MP4StreamInfoError(e) from e
         else:
             self.channels = entry.channels
             self.bits_per_sample = entry.sample_size
             self.sample_rate = entry.sample_rate
             self.bitrate = entry.bitrate
             self.codec = entry.codec
+            assert entry.codec_description is not None
             self.codec_description = entry.codec_description
 
+    @override
     def pprint(self):
         return "MPEG-4 audio (%s), %.2f seconds, %d bps" % (
             self.codec_description, self.length, self.bitrate)
@@ -1168,10 +1209,10 @@ class MP4(FileType):
     MP4Tags = MP4Tags
     MP4Chapters = MP4Chapters
 
-    _mimes = ["audio/mp4", "audio/x-m4a", "audio/mpeg4", "audio/aac"]
+    _mimes: list[str] = ["audio/mp4", "audio/x-m4a", "audio/mpeg4", "audio/aac"]
 
     @loadfile()
-    def load(self, filething):
+    def load(self, filething: FileThing):
         fileobj = filething.fileobj
 
         try:
@@ -1210,23 +1251,26 @@ class MP4(FileType):
                 reraise(MP4MetadataError, err, sys.exc_info()[2])
 
     @property
-    def _padding(self):
+    def _padding(self) -> int:
         if self.tags is None:
             return 0
         else:
             return self.tags._padding
 
+    @override
     def save(self, *args, **kwargs):
         """save(filething=None, padding=None)"""
 
-        super(MP4, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
+    @override
     def pprint(self):
         """
         Returns:
             text: stream information, comment key=value pairs and chapters.
         """
-        stream = "%s (%s)" % (self.info.pprint(), self.mime[0])
+        assert self.info is not None
+        stream = f"{self.info.pprint()} ({self.mime[0]})"
         try:
             tags = self.tags.pprint()
         except AttributeError:
@@ -1243,6 +1287,7 @@ class MP4(FileType):
 
         return stream
 
+    @override
     def add_tags(self):
         if self.tags is None:
             self.tags = self.MP4Tags()
@@ -1250,7 +1295,8 @@ class MP4(FileType):
             raise error("an MP4 tag already exists")
 
     @staticmethod
-    def score(filename, fileobj, header_data):
+    @override
+    def score(filename: str, fileobj: BytesIO, header_data: bytes):
         return (b"ftyp" in header_data) + (b"mp4" in header_data)
 
 
@@ -1259,7 +1305,7 @@ Open = MP4
 
 @convert_error(IOError, error)
 @loadfile(method=False, writable=True)
-def delete(filething):
+def delete(filething: FileThing) -> None:
     """ delete(filething)
 
     Arguments:
@@ -1271,5 +1317,5 @@ def delete(filething):
     """
 
     t = MP4(filething)
-    filething.fileobj.seek(0)
+    _ = filething.fileobj.seek(0)
     t.delete(filething)

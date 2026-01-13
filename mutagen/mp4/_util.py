@@ -8,7 +8,7 @@
 from mutagen._util import cdata
 
 
-def parse_full_atom(data):
+def parse_full_atom(data: bytes):
     """Some atoms are versioned. Split them up in (version, flags, payload).
     Can raise ValueError.
     """

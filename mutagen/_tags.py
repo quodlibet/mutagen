@@ -5,10 +5,14 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
+from collections.abc import Callable
+from typing import override
+
+from ._filething import FileThing
 from ._util import loadfile
 
 
-class PaddingInfo(object):
+class PaddingInfo:
     """PaddingInfo()
 
     Abstract padding information object.
@@ -37,8 +41,8 @@ class PaddingInfo(object):
     """
 
     def __init__(self, padding: int, size: int):
-        self.padding = padding
-        self.size = size
+        self.padding: int = padding
+        self.size: int = size
 
     def get_default_padding(self) -> int:
         """The default implementation which tries to select a reasonable
@@ -62,18 +66,19 @@ class PaddingInfo(object):
             # not enough padding, add some
             return low
 
-    def _get_padding(self, user_func):
+    def _get_padding(self, user_func: 'PaddingFunction | None') -> int:
         if user_func is None:
             return self.get_default_padding()
         else:
             return user_func(self)
 
+    @override
     def __repr__(self):
-        return "<%s size=%d padding=%d>" % (
-            type(self).__name__, self.size, self.padding)
+        return f"<{type(self).__name__} size={self.size} padding={self.padding}>"
 
+type PaddingFunction = Callable[[PaddingInfo], int]
 
-class Tags(object):
+class Tags:
     """`Tags` is the base class for many of the tag objects in Mutagen.
 
     In many cases it has a dict like interface.
@@ -81,12 +86,18 @@ class Tags(object):
 
     __module__ = "mutagen"
 
-    def pprint(self):
+    def pprint(self) -> str:
         """
         Returns:
             text: tag information
         """
 
+        raise NotImplementedError
+
+    def delete(self, filething: FileThing) -> None:
+        raise NotImplementedError
+
+    def save(self, filething: FileThing, **kwargs) -> None:
         raise NotImplementedError
 
 
@@ -110,11 +121,11 @@ class Metadata(Tags):
             self.load(*args, **kwargs)
 
     @loadfile()
-    def load(self, filething, **kwargs):
+    def load(self, filething: FileThing, **kwargs) -> None:
         raise NotImplementedError
 
     @loadfile(writable=False)
-    def save(self, filething=None, **kwargs):
+    def save(self, filething: FileThing | None = None, **kwargs) -> None:
         """save(filething=None, **kwargs)
 
         Save changes to a file.
@@ -128,7 +139,7 @@ class Metadata(Tags):
         raise NotImplementedError
 
     @loadfile(writable=False)
-    def delete(self, filething=None):
+    def delete(self, filething: FileThing | None = None) -> None:
         """delete(filething=None)
 
         Remove tags from a file.

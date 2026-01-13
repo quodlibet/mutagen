@@ -1,19 +1,69 @@
 
 import operator
 
-from tests import TestCase
-
 from mutagen._constants import GENRES
-from mutagen.id3._tags import read_frames, save_frame, ID3Header
-from mutagen.id3._util import ID3SaveConfig, is_valid_frame_id, \
-    ID3JunkFrameError
-from mutagen.id3 import APIC, CTOC, CHAP, TPE2, Frames, Frames_2_2, CRA, \
-    AENC, PIC, LNK, LINK, SIGN, PRIV, GRID, ENCR, COMR, USER, UFID, GEOB, \
-    POPM, EQU2, RVA2, COMM, SYLT, USLT, WXXX, TXXX, WCOM, TextFrame, \
-    UrlFrame, NumericTextFrame, NumericPartTextFrame, TPE1, TIT2, \
-    TimeStampTextFrame, TCON, ID3TimeStamp, Frame, RVRB, RBUF, CTOCFlags, \
-    PairedTextFrame, BinaryFrame, ETCO, MLLT, SYTC, PCNT, PCST, POSS, OWNE, \
-    SEEK, ASPI, PictureType, CRM, RVAD, RVA, ID3Tags
+from mutagen.id3 import (
+    AENC,
+    APIC,
+    ASPI,
+    CHAP,
+    COMM,
+    COMR,
+    CRA,
+    CRM,
+    CTOC,
+    ENCR,
+    EQU2,
+    ETCO,
+    GEOB,
+    GRID,
+    LINK,
+    LNK,
+    MLLT,
+    OWNE,
+    PCNT,
+    PCST,
+    PIC,
+    POPM,
+    POSS,
+    PRIV,
+    RBUF,
+    RVA,
+    RVA2,
+    RVAD,
+    RVRB,
+    SEEK,
+    SIGN,
+    SYLT,
+    SYTC,
+    TCON,
+    TIT2,
+    TPE1,
+    TPE2,
+    TXXX,
+    UFID,
+    USER,
+    USLT,
+    WCOM,
+    WXXX,
+    BinaryFrame,
+    CTOCFlags,
+    Frame,
+    Frames,
+    Frames_2_2,
+    ID3Tags,
+    ID3TimeStamp,
+    NumericPartTextFrame,
+    NumericTextFrame,
+    PairedTextFrame,
+    PictureType,
+    TextFrame,
+    TimeStampTextFrame,
+    UrlFrame,
+)
+from mutagen.id3._tags import ID3Header, read_frames, save_frame
+from mutagen.id3._util import ID3JunkFrameError, ID3SaveConfig, is_valid_frame_id
+from tests import TestCase
 
 _22 = ID3Header()
 _22.version = (2, 2, 0)
@@ -60,7 +110,7 @@ class TVariousFrames(TestCase):
         # TIT2 checks misaligned terminator '\x00\x00' across crosses utf16
         # chars
         [
-            'TIT2', b'\x01\xff\xfe\x38\x00\x00\x38', u'8\u3800', '',
+            'TIT2', b'\x01\xff\xfe\x38\x00\x00\x38', '8\u3800', '',
             dict(encoding=1)
         ],
         ['TIT3', b'\x00a/b', 'a/b', '', dict(encoding=0)],
@@ -298,22 +348,22 @@ class TVariousFrames(TestCase):
                  data=b'engfoo')
         ],
         # iTunes podcast frames
-        ['TGID', b'\x00i', u'i', '', dict(encoding=0)],
-        ['TDES', b'\x00ii', u'ii', '', dict(encoding=0)],
-        ['TKWD', b'\x00ii', u'ii', '', dict(encoding=0)],
-        ['TCAT', b'\x00ii', u'ii', '', dict(encoding=0)],
+        ['TGID', b'\x00i', 'i', '', dict(encoding=0)],
+        ['TDES', b'\x00ii', 'ii', '', dict(encoding=0)],
+        ['TKWD', b'\x00ii', 'ii', '', dict(encoding=0)],
+        ['TCAT', b'\x00ii', 'ii', '', dict(encoding=0)],
         ['WFED', b'http://zzz', 'http://zzz', '', {}],
         ['PCST', b'\x00\x00\x00\x00', 0, 0, dict(value=0)],
 
         # Chapter extension
         ['CHAP', (b'foo\x00\x11\x11\x11\x11\x22\x22\x22\x22'
                   b'\x33\x33\x33\x33\x44\x44\x44\x44'),
-         CHAP(element_id=u'foo', start_time=286331153, end_time=572662306,
+         CHAP(element_id='foo', start_time=286331153, end_time=572662306,
               start_offset=858993459, end_offset=1145324612), '', dict()],
         ['CTOC', b'foo\x00\x03\x01bla\x00',
-         CTOC(element_id=u'foo',
+         CTOC(element_id='foo',
               flags=CTOCFlags.ORDERED | CTOCFlags.TOP_LEVEL,
-              child_element_ids=[u'bla']),
+              child_element_ids=['bla']),
          '', dict()],
 
         ['RVAD', b'\x03\x10\x00\x00\x00\x00',
@@ -462,7 +512,7 @@ class TVariousFrames(TestCase):
     ]
 
     def _get_frame(self, id_):
-        return getattr(getattr(__import__('mutagen.id3'), "id3"), id_)
+        return getattr(__import__('mutagen.id3').id3, id_)
 
     def test_all_tested(self):
         check = dict.fromkeys(list(Frames.keys()) + list(Frames_2_2.keys()))
@@ -472,7 +522,7 @@ class TVariousFrames(TestCase):
         self.assertEqual(list(check.keys()), [])
 
     def test_tag_repr(self):
-        for frame_id, data, value, intval, info in self.DATA:
+        for frame_id, data, _value, _intval, _info in self.DATA:
             kind = self._get_frame(frame_id)
             tag = kind._fromData(_23, 0, data)
             self.assertTrue(isinstance(tag.__str__(), str))
@@ -481,22 +531,22 @@ class TVariousFrames(TestCase):
                 self.assertTrue(isinstance(tag.__bytes__(), bytes))
 
     def test_tag_write(self):
-        for frame_id, data, value, intval, info in self.DATA:
+        for frame_id, data, _value, _intval, _info in self.DATA:
             kind = self._get_frame(frame_id)
             tag = kind._fromData(_24, 0, data)
             towrite = tag._writeData()
             tag2 = kind._fromData(_24, 0, towrite)
             for spec in kind._framespec:
                 attr = spec.name
-                self.assertEquals(getattr(tag, attr), getattr(tag2, attr))
+                self.assertEqual(getattr(tag, attr), getattr(tag2, attr))
             for spec in kind._optionalspec:
                 attr = spec.name
                 other = object()
-                self.assertEquals(
+                self.assertEqual(
                     getattr(tag, attr, other), getattr(tag2, attr, other))
 
     def test_tag_write_v23(self):
-        for frame_id, data, value, intval, info in self.DATA:
+        for frame_id, data, _value, _intval, _info in self.DATA:
             kind = self._get_frame(frame_id)
             tag = kind._fromData(_24, 0, data)
             config = ID3SaveConfig(3, "/")
@@ -505,11 +555,11 @@ class TVariousFrames(TestCase):
             tag3 = kind._fromData(_23, 0, tag2._writeData(config))
             for spec in kind._framespec:
                 attr = spec.name
-                self.assertEquals(getattr(tag2, attr), getattr(tag3, attr))
+                self.assertEqual(getattr(tag2, attr), getattr(tag3, attr))
             for spec in kind._optionalspec:
                 attr = spec.name
                 other = object()
-                self.assertEquals(
+                self.assertEqual(
                     getattr(tag2, attr, other), getattr(tag3, attr, other))
                 self.assertEqual(hasattr(tag, attr), hasattr(tag2, attr))
 
@@ -517,9 +567,9 @@ class TVariousFrames(TestCase):
         for frame_id, data, value, intval, info in self.DATA:
             kind = self._get_frame(frame_id)
             tag = kind._fromData(_23, 0, data)
-            self.failUnless(tag.HashKey)
-            self.failUnless(tag.pprint())
-            self.assertEquals(value, tag)
+            self.assertTrue(tag.HashKey)
+            self.assertTrue(tag.pprint())
+            self.assertEqual(value, tag)
             if 'encoding' not in info:
                 self.assertRaises(AttributeError, getattr, tag, 'encoding')
             for attr, value in info.items():
@@ -527,14 +577,14 @@ class TVariousFrames(TestCase):
                 if not isinstance(value, list):
                     value = [value]
                     t = [t]
-                for value, t in zip(value, iter(t)):
+                for value, t in zip(value, iter(t), strict=False):
                     if isinstance(value, float):
-                        self.failUnlessAlmostEqual(value, getattr(t, attr), 5)
+                        self.assertAlmostEqual(value, getattr(t, attr), 5)
                     else:
-                        self.assertEquals(value, getattr(t, attr))
+                        self.assertEqual(value, getattr(t, attr))
 
                     if isinstance(intval, int):
-                        self.assertEquals(intval, operator.pos(t))
+                        self.assertEqual(intval, operator.pos(t))
                     else:
                         self.assertRaises(TypeError, operator.pos, t)
 
@@ -583,9 +633,9 @@ class TPIC(TestCase):
     def test_default(self):
         frame = PIC()
         self.assertEqual(frame.encoding, 1)
-        self.assertEqual(frame.mime, u"JPG")
+        self.assertEqual(frame.mime, "JPG")
         self.assertEqual(frame.type, PictureType.COVER_FRONT)
-        self.assertEqual(frame.desc, u"")
+        self.assertEqual(frame.desc, "")
         self.assertEqual(frame.data, b"")
 
     def test_upgrade(self):
@@ -607,8 +657,8 @@ class TLNK(TestCase):
 
     def test_default(self):
         frame = LNK()
-        self.assertEqual(frame.frameid, u"XXX")
-        self.assertEqual(frame.url, u"")
+        self.assertEqual(frame.frameid, "XXX")
+        self.assertEqual(frame.url, "")
 
     def test_upgrade(self):
         url = "http://foo.bar"
@@ -644,8 +694,8 @@ class TCRM(TestCase):
 
     def test_default(self):
         frame = CRM()
-        self.assertEqual(frame.owner, u"")
-        self.assertEqual(frame.desc, u"")
+        self.assertEqual(frame.owner, "")
+        self.assertEqual(frame.desc, "")
         self.assertEqual(frame.data, b"")
 
 
@@ -653,7 +703,7 @@ class TPRIV(TestCase):
 
     def test_default(self):
         frame = PRIV()
-        self.assertEqual(frame.owner, u"")
+        self.assertEqual(frame.owner, "")
         self.assertEqual(frame.data, b"")
 
     def test_hash(self):
@@ -662,7 +712,7 @@ class TPRIV(TestCase):
         frame._pprint()
 
         frame = PRIV(owner="foo", data=b"\x00\xff")
-        self.assertEqual(frame.HashKey, u"PRIV:foo:\x00\xff")
+        self.assertEqual(frame.HashKey, "PRIV:foo:\x00\xff")
         frame._pprint()
 
 
@@ -670,7 +720,7 @@ class TGRID(TestCase):
 
     def test_default(self):
         frame = GRID()
-        self.assertEqual(frame.owner, u"")
+        self.assertEqual(frame.owner, "")
         self.assertEqual(frame.group, 0x80)
 
     def test_hash(self):
@@ -683,7 +733,7 @@ class TENCR(TestCase):
 
     def test_default(self):
         frame = ENCR()
-        self.assertEqual(frame.owner, u"")
+        self.assertEqual(frame.owner, "")
         self.assertEqual(frame.method, 0x80)
         self.assertEqual(frame.data, b"")
 
@@ -698,9 +748,9 @@ class TOWNE(TestCase):
     def test_default(self):
         frame = OWNE()
         self.assertEqual(frame.encoding, 1)
-        self.assertEqual(frame.price, u"")
-        self.assertEqual(frame.date, u"19700101")
-        self.assertEqual(frame.seller, u"")
+        self.assertEqual(frame.price, "")
+        self.assertEqual(frame.date, "19700101")
+        self.assertEqual(frame.seller, "")
 
 
 class TCOMR(TestCase):
@@ -708,19 +758,19 @@ class TCOMR(TestCase):
     def test_default(self):
         frame = COMR()
         self.assertEqual(frame.encoding, 1)
-        self.assertEqual(frame.price, u"")
-        self.assertEqual(frame.valid_until, u"19700101")
-        self.assertEqual(frame.contact, u"")
+        self.assertEqual(frame.price, "")
+        self.assertEqual(frame.valid_until, "19700101")
+        self.assertEqual(frame.contact, "")
         self.assertEqual(frame.format, 0)
-        self.assertEqual(frame.seller, u"")
-        self.assertEqual(frame.desc, u"")
+        self.assertEqual(frame.seller, "")
+        self.assertEqual(frame.desc, "")
 
     def test_hash(self):
         frame = COMR(
             encoding=0, price="p", valid_until="v" * 8, contact="c",
             format=42, seller="s", desc="d", mime="m", logo=b"\xff")
         self.assertEqual(
-            frame.HashKey, u"COMR:\x00p\x00vvvvvvvvc\x00*s\x00d\x00m\x00\xff")
+            frame.HashKey, "COMR:\x00p\x00vvvvvvvvc\x00*s\x00d\x00m\x00\xff")
         frame._pprint()
 
 
@@ -736,16 +786,16 @@ class TUSER(TestCase):
     def test_default(self):
         frame = USER()
         self.assertEqual(frame.encoding, 1)
-        self.assertEqual(frame.lang, u"XXX")
-        self.assertEqual(frame.text, u"")
+        self.assertEqual(frame.lang, "XXX")
+        self.assertEqual(frame.text, "")
 
     def test_hash(self):
         frame = USER(encoding=0, lang="foo", text="bla")
         self.assertEqual(frame.HashKey, "USER:foo")
         frame._pprint()
 
-        self.assertEquals(USER(text="a").HashKey, USER(text="b").HashKey)
-        self.assertNotEquals(
+        self.assertEqual(USER(text="a").HashKey, USER(text="b").HashKey)
+        self.assertNotEqual(
             USER(lang="abc").HashKey, USER(lang="def").HashKey)
 
 
@@ -764,14 +814,14 @@ class TMLLT(TestCase):
 class TTIT2(TestCase):
 
     def test_hash(self):
-        self.assertEquals(TIT2(text="a").HashKey, TIT2(text="b").HashKey)
+        self.assertEqual(TIT2(text="a").HashKey, TIT2(text="b").HashKey)
 
 
 class TUFID(TestCase):
 
     def test_default(self):
         frame = UFID()
-        self.assertEqual(frame.owner, u"")
+        self.assertEqual(frame.owner, "")
         self.assertEqual(frame.data, b"")
 
     def test_hash(self):
@@ -779,8 +829,8 @@ class TUFID(TestCase):
         self.assertEqual(frame.HashKey, "UFID:foo")
         frame._pprint()
 
-        self.assertEquals(UFID(data=b"1").HashKey, UFID(data=b"2").HashKey)
-        self.assertNotEquals(UFID(owner="a").HashKey, UFID(owner="b").HashKey)
+        self.assertEqual(UFID(data=b"1").HashKey, UFID(data=b"2").HashKey)
+        self.assertNotEqual(UFID(owner="a").HashKey, UFID(owner="b").HashKey)
 
 
 class TPairedTextFrame(TestCase):
@@ -817,8 +867,8 @@ class TLINK(TestCase):
 
     def test_default(self):
         frame = LINK()
-        self.assertEqual(frame.frameid, u"XXXX")
-        self.assertEqual(frame.url, u"")
+        self.assertEqual(frame.frameid, "XXXX")
+        self.assertEqual(frame.url, "")
 
     def test_hash(self):
         frame = LINK(frameid="TPE1", url="http://foo.bar", data=b"\x42")
@@ -833,7 +883,7 @@ class TAENC(TestCase):
 
     def test_default(self):
         frame = AENC()
-        self.assertEqual(frame.owner, u"")
+        self.assertEqual(frame.owner, "")
         self.assertEqual(frame.preview_start, 0)
         self.assertEqual(frame.preview_length, 0)
 
@@ -849,9 +899,9 @@ class TGEOB(TestCase):
     def test_default(self):
         frame = GEOB()
         self.assertEqual(frame.encoding, 1)
-        self.assertEqual(frame.mime, u"")
-        self.assertEqual(frame.filename, u"")
-        self.assertEqual(frame.desc, u"")
+        self.assertEqual(frame.mime, "")
+        self.assertEqual(frame.filename, "")
+        self.assertEqual(frame.desc, "")
         self.assertEqual(frame.data, b"")
 
     def test_hash(self):
@@ -860,15 +910,15 @@ class TGEOB(TestCase):
         self.assertEqual(frame.HashKey, "GEOB:d")
         frame._pprint()
 
-        self.assertEquals(GEOB(data=b"1").HashKey, GEOB(data=b"2").HashKey)
-        self.assertNotEquals(GEOB(desc="a").HashKey, GEOB(desc="b").HashKey)
+        self.assertEqual(GEOB(data=b"1").HashKey, GEOB(data=b"2").HashKey)
+        self.assertNotEqual(GEOB(desc="a").HashKey, GEOB(desc="b").HashKey)
 
 
 class TPOPM(TestCase):
 
     def test_default(self):
         frame = POPM()
-        self.assertEqual(frame.email, u"")
+        self.assertEqual(frame.email, "")
         self.assertEqual(frame.rating, 0)
         self.assertFalse(hasattr(frame, "count"))
 
@@ -877,8 +927,8 @@ class TPOPM(TestCase):
         self.assertEqual(frame.HashKey, "POPM:e")
         frame._pprint()
 
-        self.assertEquals(POPM(count=1).HashKey, POPM(count=2).HashKey)
-        self.assertNotEquals(POPM(email="a").HashKey, POPM(email="b").HashKey)
+        self.assertEqual(POPM(count=1).HashKey, POPM(count=2).HashKey)
+        self.assertNotEqual(POPM(email="a").HashKey, POPM(email="b").HashKey)
 
 
 class TEQU2(TestCase):
@@ -886,7 +936,7 @@ class TEQU2(TestCase):
     def test_default(self):
         frame = EQU2()
         self.assertEqual(frame.method, 0)
-        self.assertEqual(frame.desc, u"")
+        self.assertEqual(frame.desc, "")
         self.assertEqual(frame.adjustments, [])
 
     def test_default_mutable(self):
@@ -920,8 +970,8 @@ class TCOMM(TestCase):
     def test_default(self):
         frame = COMM()
         self.assertEqual(frame.encoding, 1)
-        self.assertEqual(frame.lang, u"XXX")
-        self.assertEqual(frame.desc, u"")
+        self.assertEqual(frame.lang, "XXX")
+        self.assertEqual(frame.desc, "")
         self.assertEqual(frame.text, [])
 
     def test_hash(self):
@@ -929,9 +979,9 @@ class TCOMM(TestCase):
         self.assertEqual(frame.HashKey, "COMM:d:foo")
         frame._pprint()
 
-        self.assertEquals(COMM(text="a").HashKey, COMM(text="b").HashKey)
-        self.assertNotEquals(COMM(desc="a").HashKey, COMM(desc="b").HashKey)
-        self.assertNotEquals(
+        self.assertEqual(COMM(text="a").HashKey, COMM(text="b").HashKey)
+        self.assertNotEqual(COMM(desc="a").HashKey, COMM(desc="b").HashKey)
+        self.assertNotEqual(
             COMM(lang="abc").HashKey, COMM(lang="def").HashKey)
 
     def test_bad_unicodedecode(self):
@@ -945,11 +995,11 @@ class TSYLT(TestCase):
     def test_default(self):
         frame = SYLT()
         self.assertEqual(frame.encoding, 1)
-        self.assertEqual(frame.lang, u"XXX")
+        self.assertEqual(frame.lang, "XXX")
         self.assertEqual(frame.format, 1)
         self.assertEqual(frame.type, 0)
-        self.assertEqual(frame.desc, u"")
-        self.assertEqual(frame.text, u"")
+        self.assertEqual(frame.desc, "")
+        self.assertEqual(frame.text, "")
 
     def test_hash(self):
         frame = SYLT(encoding=0, lang="foo", format=1, type=2,
@@ -1004,9 +1054,9 @@ class TUSLT(TestCase):
     def test_default(self):
         frame = USLT()
         self.assertEqual(frame.encoding, 1)
-        self.assertEqual(frame.lang, u"XXX")
-        self.assertEqual(frame.desc, u"")
-        self.assertEqual(frame.text, u"")
+        self.assertEqual(frame.lang, "XXX")
+        self.assertEqual(frame.desc, "")
+        self.assertEqual(frame.text, "")
 
     def test_hash(self):
         frame = USLT(encoding=0, lang="foo", desc="d", text="t")
@@ -1019,32 +1069,32 @@ class TWXXX(TestCase):
     def test_default(self):
         frame = WXXX()
         self.assertEqual(frame.encoding, 1)
-        self.assertEqual(frame.desc, u"")
-        self.assertEqual(frame.url, u"")
+        self.assertEqual(frame.desc, "")
+        self.assertEqual(frame.url, "")
 
     def test_hash(self):
-        self.assert_(isinstance(WXXX(url='durl'), WXXX))
+        self.assertTrue(isinstance(WXXX(url='durl'), WXXX))
 
         frame = WXXX(encoding=0, desc="d", url="u")
         self.assertEqual(frame.HashKey, "WXXX:d")
         frame._pprint()
 
-        self.assertEquals(WXXX(text="a").HashKey, WXXX(text="b").HashKey)
-        self.assertNotEquals(WXXX(desc="a").HashKey, WXXX(desc="b").HashKey)
+        self.assertEqual(WXXX(text="a").HashKey, WXXX(text="b").HashKey)
+        self.assertNotEqual(WXXX(desc="a").HashKey, WXXX(desc="b").HashKey)
 
 
 class TTXXX(TestCase):
 
     def test_default(self):
-        self.assertEqual(TXXX(), TXXX(desc=u"", encoding=1, text=[]))
+        self.assertEqual(TXXX(), TXXX(desc="", encoding=1, text=[]))
 
     def test_hash(self):
         frame = TXXX(encoding=0, desc="d", text=[])
         self.assertEqual(frame.HashKey, "TXXX:d")
         frame._pprint()
 
-        self.assertEquals(TXXX(text="a").HashKey, TXXX(text="b").HashKey)
-        self.assertNotEquals(TXXX(desc="a").HashKey, TXXX(desc="b").HashKey)
+        self.assertEqual(TXXX(text="a").HashKey, TXXX(text="b").HashKey)
+        self.assertNotEqual(TXXX(desc="a").HashKey, TXXX(desc="b").HashKey)
 
 
 class TWCOM(TestCase):
@@ -1058,7 +1108,7 @@ class TWCOM(TestCase):
 class TUrlFrame(TestCase):
 
     def test_default(self):
-        self.assertEqual(UrlFrame(), UrlFrame(url=u""))
+        self.assertEqual(UrlFrame(), UrlFrame(url=""))
 
     def test_main(self):
         self.assertEqual(UrlFrame("url").url, "url")
@@ -1095,56 +1145,56 @@ class Tread_frames_load_frame(TestCase):
 
         tagsgood = read_frames(_24, head + b'a' * 127 + tail, Frames)[0]
         tagsbad = read_frames(_24, head + b'a' * 255 + tail, Frames)[0]
-        self.assertEquals(2, len(tagsgood))
-        self.assertEquals(2, len(tagsbad))
-        self.assertEquals('a' * 127, tagsgood[0])
-        self.assertEquals('a' * 255, tagsbad[0])
-        self.assertEquals('Yay!', tagsgood[1])
-        self.assertEquals('Yay!', tagsbad[1])
+        self.assertEqual(2, len(tagsgood))
+        self.assertEqual(2, len(tagsbad))
+        self.assertEqual('a' * 127, tagsgood[0])
+        self.assertEqual('a' * 255, tagsbad[0])
+        self.assertEqual('Yay!', tagsgood[1])
+        self.assertEqual('Yay!', tagsbad[1])
 
         tagsgood = read_frames(_24, head + b'a' * 127, Frames)[0]
         tagsbad = read_frames(_24, head + b'a' * 255, Frames)[0]
-        self.assertEquals(1, len(tagsgood))
-        self.assertEquals(1, len(tagsbad))
-        self.assertEquals('a' * 127, tagsgood[0])
-        self.assertEquals('a' * 255, tagsbad[0])
+        self.assertEqual(1, len(tagsgood))
+        self.assertEqual(1, len(tagsbad))
+        self.assertEqual('a' * 127, tagsgood[0])
+        self.assertEqual('a' * 255, tagsbad[0])
 
     def test_zerolength_framedata(self):
         tail = b'\x00' * 6
         for head in b'WOAR TENC TCOP TOPE WXXX'.split():
             data = head + tail
-            self.assertEquals(
+            self.assertEqual(
                 0, len(list(read_frames(_24, data, Frames)[1])))
 
     def test_drops_truncated_frames(self):
-        tail = b'\x00\x00\x00\x03\x00\x00' b'\x01\x02\x03'
+        tail = b'\x00\x00\x00\x03\x00\x00\x01\x02\x03'
         for head in b'RVA2 TXXX APIC'.split():
             data = head + tail
-            self.assertEquals(
+            self.assertEqual(
                 0, len(read_frames(_24, data, Frames)[1]))
 
     def test_drops_nonalphanum_frames(self):
-        tail = b'\x00\x00\x00\x03\x00\x00' b'\x01\x02\x03'
+        tail = b'\x00\x00\x00\x03\x00\x00\x01\x02\x03'
         for head in [b'\x06\xaf\xfe\x20', b'ABC\x00', b'A   ']:
             data = head + tail
-            self.assertEquals(
+            self.assertEqual(
                 0, len(read_frames(_24, data, Frames)[0]))
 
     def test_frame_too_small(self):
-        self.assertEquals([], read_frames(_24, b'012345678', Frames)[0])
-        self.assertEquals([], read_frames(_23, b'012345678', Frames)[0])
-        self.assertEquals([], read_frames(_22, b'01234', Frames_2_2)[0])
-        self.assertEquals(
+        self.assertEqual([], read_frames(_24, b'012345678', Frames)[0])
+        self.assertEqual([], read_frames(_23, b'012345678', Frames)[0])
+        self.assertEqual([], read_frames(_22, b'01234', Frames_2_2)[0])
+        self.assertEqual(
             [], read_frames(_22, b'TT1' + b'\x00' * 3, Frames_2_2)[0])
 
     def test_unknown_22_frame(self):
         data = b'XYZ\x00\x00\x01\x00'
-        self.assertEquals([data], read_frames(_22, data, {})[1])
+        self.assertEqual([data], read_frames(_22, data, {})[1])
 
     def test_22_uses_direct_ints(self):
         data = b'TT1\x00\x00\x83\x00' + (b'123456789abcdef' * 16)
         tag = read_frames(_22, data, Frames_2_2)[0][0]
-        self.assertEquals(data[7:7 + 0x82].decode('latin1'), tag.text[0])
+        self.assertEqual(data[7:7 + 0x82].decode('latin1'), tag.text[0])
 
     def test_load_write(self):
         artists = [s.decode('utf8') for s in
@@ -1152,8 +1202,8 @@ class Tread_frames_load_frame(TestCase):
         artist = TPE1(encoding=3, text=artists)
         config = ID3SaveConfig()
         tag = read_frames(_24, save_frame(artist, config=config), Frames)[0][0]
-        self.assertEquals('TPE1', type(tag).__name__)
-        self.assertEquals(artist.text, tag.text)
+        self.assertEqual('TPE1', type(tag).__name__)
+        self.assertEqual(artist.text, tag.text)
 
 
 class TTPE2(TestCase):
@@ -1164,13 +1214,13 @@ class TTPE2(TestCase):
         header._flags = 0x80
         badsync = b'\x00\xff\x00ab\x00'
 
-        self.assertEquals(TPE2._fromData(header, 0, badsync), [u"\xffab"])
+        self.assertEqual(TPE2._fromData(header, 0, badsync), ["\xffab"])
 
         header._flags = 0x00
-        self.assertEquals(TPE2._fromData(header, 0x02, badsync), [u"\xffab"])
+        self.assertEqual(TPE2._fromData(header, 0x02, badsync), ["\xffab"])
 
         tag = TPE2._fromData(header, 0, badsync)
-        self.assertEquals(tag, [u"\xff", u"ab"])
+        self.assertEqual(tag, ["\xff", "ab"])
 
 
 class TTPE1(TestCase):
@@ -1182,7 +1232,7 @@ class TTPE1(TestCase):
 
     def test_badsync(self):
         frame = TPE1._fromData(_24, 0x02, b"\x00\xff\xfe")
-        self.assertEqual(frame.text, [u'\xff\xfe'])
+        self.assertEqual(frame.text, ['\xff\xfe'])
 
     def test_noencrypt(self):
         self.assertRaises(
@@ -1206,40 +1256,40 @@ class TTPE1(TestCase):
 
     def test_lengthone_utf16(self):
         tpe1 = TPE1._fromData(_24, 0, b'\x01\x00')
-        self.assertEquals(u'', tpe1)
+        self.assertEqual('', tpe1)
         tpe1 = TPE1._fromData(_24, 0, b'\x01\x00\x00\x00\x00')
-        self.assertEquals([u'', u''], tpe1)
+        self.assertEqual(['', ''], tpe1)
 
     def test_utf16_wrongnullterm(self):
         # issue 169
         tpe1 = TPE1._fromData(
             _24, 0, b'\x01\xff\xfeH\x00e\x00l\x00l\x00o\x00\x00')
-        self.assertEquals(tpe1, [u'Hello'])
+        self.assertEqual(tpe1, ['Hello'])
 
         tpe1 = TPE1._fromData(
             _24, 0, b'\x02\x00H\x00e\x00l\x00l\x00o\x00')
-        self.assertEquals(tpe1, [u'Hello'])
+        self.assertEqual(tpe1, ['Hello'])
 
     def test_utf_16_missing_bom(self):
         tpe1 = TPE1._fromData(
             _24, 0, b'\x01H\x00e\x00l\x00l\x00o\x00\x00\x00')
-        self.assertEquals(tpe1, [u'Hello'])
+        self.assertEqual(tpe1, ['Hello'])
 
     def test_utf_16_missing_bom_wrong_nullterm(self):
         tpe1 = TPE1._fromData(
             _24, 0, b'\x01H\x00e\x00l\x00l\x00o\x00\x00')
-        self.assertEquals(tpe1, [u'Hello'])
+        self.assertEqual(tpe1, ['Hello'])
 
         tpe1 = TPE1._fromData(
             _24, 0, b'\x01f\x00o\x00o\x00\x00\x00b\x00a\x00r\x00\x00')
-        self.assertEquals(tpe1, [u"foo", u"bar"])
+        self.assertEqual(tpe1, ["foo", "bar"])
 
     def test_zlib_bpi(self):
         tpe1 = TPE1(encoding=0, text="a" * (0xFFFF - 2))
         data = save_frame(tpe1)
         datalen_size = data[4 + 4 + 2:4 + 4 + 2 + 4]
-        self.failIf(
-            max(datalen_size) >= b'\x80'[0], "data is not syncsafe: %r" % data)
+        self.assertFalse(
+            max(datalen_size) >= b'\x80'[0], f"data is not syncsafe: {data!r}")
 
     def test_ql_0_12_missing_uncompressed_size(self):
         tag = TPE1._fromData(
@@ -1247,8 +1297,8 @@ class TTPE1(TestCase):
             b'x\x9cc\xfc\xff\xaf\x84!\x83!\x93'
             b'\xa1\x98A\x01J&2\xe83\x940\xa4\x02\xd9%\x0c\x00\x87\xc6\x07#'
         )
-        self.assertEquals(tag.encoding, 1)
-        self.assertEquals(tag, ['this is a/test'])
+        self.assertEqual(tag.encoding, 1)
+        self.assertEqual(tag, ['this is a/test'])
 
     def test_zlib_latin1_missing_datalen(self):
         tag = TPE1._fromData(
@@ -1256,8 +1306,8 @@ class TTPE1(TestCase):
             b'\x00\x00\x00\x0f'
             b'x\x9cc(\xc9\xc8,V\x00\xa2D\xfd\x92\xd4\xe2\x12\x00&\x7f\x05%'
         )
-        self.assertEquals(tag.encoding, 0)
-        self.assertEquals(tag, ['this is a/test'])
+        self.assertEqual(tag.encoding, 0)
+        self.assertEqual(tag, ['this is a/test'])
 
 
 class TTCON(TestCase):
@@ -1266,151 +1316,151 @@ class TTCON(TestCase):
         return TCON(text=s).genres
 
     def test_empty(self):
-        self.assertEquals(self._g(""), [])
+        self.assertEqual(self._g(""), [])
 
     def test_num(self):
         for i in range(len(GENRES)):
-            self.assertEquals(self._g("%02d" % i), [GENRES[i]])
+            self.assertEqual(self._g("%02d" % i), [GENRES[i]])
 
     def test_parened_num(self):
         for i in range(len(GENRES)):
-            self.assertEquals(self._g("(%02d)" % i), [GENRES[i]])
+            self.assertEqual(self._g("(%02d)" % i), [GENRES[i]])
 
     def test_unknown(self):
-        self.assertEquals(self._g("(255)"), ["Unknown"])
-        self.assertEquals(self._g("199"), ["Unknown"])
+        self.assertEqual(self._g("(255)"), ["Unknown"])
+        self.assertEqual(self._g("199"), ["Unknown"])
         self.assertNotEqual(self._g("256"), ["Unknown"])
 
     def test_parened_multi(self):
-        self.assertEquals(self._g("(00)(02)"), ["Blues", "Country"])
+        self.assertEqual(self._g("(00)(02)"), ["Blues", "Country"])
 
     def test_coverremix(self):
-        self.assertEquals(self._g("CR"), ["Cover"])
-        self.assertEquals(self._g("(CR)"), ["Cover"])
-        self.assertEquals(self._g("RX"), ["Remix"])
-        self.assertEquals(self._g("(RX)"), ["Remix"])
+        self.assertEqual(self._g("CR"), ["Cover"])
+        self.assertEqual(self._g("(CR)"), ["Cover"])
+        self.assertEqual(self._g("RX"), ["Remix"])
+        self.assertEqual(self._g("(RX)"), ["Remix"])
 
     def test_parened_text(self):
-        self.assertEquals(
+        self.assertEqual(
             self._g("(00)(02)Real Folk Blues"),
             ["Blues", "Country", "Real Folk Blues"])
 
     def test_escape(self):
-        self.assertEquals(self._g("(0)((A genre)"), ["Blues", "(A genre)"])
-        self.assertEquals(self._g("(10)((20)"), ["New Age", "(20)"])
+        self.assertEqual(self._g("(0)((A genre)"), ["Blues", "(A genre)"])
+        self.assertEqual(self._g("(10)((20)"), ["New Age", "(20)"])
 
     def test_nullsep(self):
-        self.assertEquals(self._g("0\x00A genre"), ["Blues", "A genre"])
+        self.assertEqual(self._g("0\x00A genre"), ["Blues", "A genre"])
 
     def test_nullsep_empty(self):
-        self.assertEquals(self._g("\x000\x00A genre"), ["Blues", "A genre"])
+        self.assertEqual(self._g("\x000\x00A genre"), ["Blues", "A genre"])
 
     def test_crazy(self):
-        self.assertEquals(
+        self.assertEqual(
             self._g("(20)(CR)\x0030\x00\x00Another\x00(51)Hooray"),
             ['Alternative', 'Cover', 'Fusion', 'Another',
              'Techno-Industrial', 'Hooray'])
 
     def test_repeat(self):
-        self.assertEquals(self._g("(20)Alternative"), ["Alternative"])
-        self.assertEquals(
+        self.assertEqual(self._g("(20)Alternative"), ["Alternative"])
+        self.assertEqual(
             self._g("(20)\x00Alternative"), ["Alternative", "Alternative"])
 
     def test_set_genre(self):
         gen = TCON(encoding=0, text="")
-        self.assertEquals(gen.genres, [])
+        self.assertEqual(gen.genres, [])
         gen.genres = ["a genre", "another"]
-        self.assertEquals(gen.genres, ["a genre", "another"])
+        self.assertEqual(gen.genres, ["a genre", "another"])
 
     def test_set_string(self):
         gen = TCON(encoding=0, text="")
         gen.genres = "foo"
-        self.assertEquals(gen.genres, ["foo"])
+        self.assertEqual(gen.genres, ["foo"])
 
     def test_nodoubledecode(self):
-        gen = TCON(encoding=1, text=u"(255)genre")
+        gen = TCON(encoding=1, text="(255)genre")
         gen.genres = gen.genres
-        self.assertEquals(gen.genres, [u"Unknown", u"genre"])
+        self.assertEqual(gen.genres, ["Unknown", "genre"])
 
 
 class TID3TimeStamp(TestCase):
 
     def test_Y(self):
         s = ID3TimeStamp('1234')
-        self.assertEquals(s.year, 1234)
-        self.assertEquals(s.text, '1234')
+        self.assertEqual(s.year, 1234)
+        self.assertEqual(s.text, '1234')
 
     def test_yM(self):
         s = ID3TimeStamp('1234-56')
-        self.assertEquals(s.year, 1234)
-        self.assertEquals(s.month, 56)
-        self.assertEquals(s.text, '1234-56')
+        self.assertEqual(s.year, 1234)
+        self.assertEqual(s.month, 56)
+        self.assertEqual(s.text, '1234-56')
 
     def test_ymD(self):
         s = ID3TimeStamp('1234-56-78')
-        self.assertEquals(s.year, 1234)
-        self.assertEquals(s.month, 56)
-        self.assertEquals(s.day, 78)
-        self.assertEquals(s.text, '1234-56-78')
+        self.assertEqual(s.year, 1234)
+        self.assertEqual(s.month, 56)
+        self.assertEqual(s.day, 78)
+        self.assertEqual(s.text, '1234-56-78')
 
     def test_ymdH(self):
         s = ID3TimeStamp('1234-56-78T12')
-        self.assertEquals(s.year, 1234)
-        self.assertEquals(s.month, 56)
-        self.assertEquals(s.day, 78)
-        self.assertEquals(s.hour, 12)
-        self.assertEquals(s.text, '1234-56-78 12')
+        self.assertEqual(s.year, 1234)
+        self.assertEqual(s.month, 56)
+        self.assertEqual(s.day, 78)
+        self.assertEqual(s.hour, 12)
+        self.assertEqual(s.text, '1234-56-78 12')
 
     def test_ymdhM(self):
         s = ID3TimeStamp('1234-56-78T12:34')
-        self.assertEquals(s.year, 1234)
-        self.assertEquals(s.month, 56)
-        self.assertEquals(s.day, 78)
-        self.assertEquals(s.hour, 12)
-        self.assertEquals(s.minute, 34)
-        self.assertEquals(s.text, '1234-56-78 12:34')
+        self.assertEqual(s.year, 1234)
+        self.assertEqual(s.month, 56)
+        self.assertEqual(s.day, 78)
+        self.assertEqual(s.hour, 12)
+        self.assertEqual(s.minute, 34)
+        self.assertEqual(s.text, '1234-56-78 12:34')
 
     def test_ymdhmS(self):
         s = ID3TimeStamp('1234-56-78T12:34:56')
-        self.assertEquals(s.year, 1234)
-        self.assertEquals(s.month, 56)
-        self.assertEquals(s.day, 78)
-        self.assertEquals(s.hour, 12)
-        self.assertEquals(s.minute, 34)
-        self.assertEquals(s.second, 56)
-        self.assertEquals(s.text, '1234-56-78 12:34:56')
+        self.assertEqual(s.year, 1234)
+        self.assertEqual(s.month, 56)
+        self.assertEqual(s.day, 78)
+        self.assertEqual(s.hour, 12)
+        self.assertEqual(s.minute, 34)
+        self.assertEqual(s.second, 56)
+        self.assertEqual(s.text, '1234-56-78 12:34:56')
 
     def test_Ymdhms(self):
         s = ID3TimeStamp('1234-56-78T12:34:56')
         s.month = None
-        self.assertEquals(s.text, '1234')
+        self.assertEqual(s.text, '1234')
 
     def test_alternate_reprs(self):
         s = ID3TimeStamp('1234-56.78 12:34:56')
-        self.assertEquals(s.text, '1234-56-78 12:34:56')
+        self.assertEqual(s.text, '1234-56-78 12:34:56')
 
     def test_order(self):
         s = ID3TimeStamp('1234')
         t = ID3TimeStamp('1233-12')
         u = ID3TimeStamp('1234-01')
 
-        self.assert_(t < s < u)
-        self.assert_(u > s > t)
+        self.assertTrue(t < s < u)
+        self.assertTrue(u > s > t)
 
     def test_types(self):
         self.assertRaises(TypeError, ID3TimeStamp, b"blah")
-        self.assertEquals(
-            str(ID3TimeStamp(u"2000-01-01")), u"2000-01-01")
-        self.assertEquals(
-            bytes(ID3TimeStamp(u"2000-01-01")), b"2000-01-01")
+        self.assertEqual(
+            str(ID3TimeStamp("2000-01-01")), "2000-01-01")
+        self.assertEqual(
+            bytes(ID3TimeStamp("2000-01-01")), b"2000-01-01")
 
 
-class TFrameTest(object):
+class TFrameTest:
 
     FRAME = None
 
     def test_has_doc(self):
-        self.failUnless(self.FRAME.__doc__, "%s has no docstring" % self.FRAME)
+        self.assertTrue(self.FRAME.__doc__, f"{self.FRAME} has no docstring")
 
     def test_fake_zlib(self):
         header = ID3Header()
@@ -1419,7 +1469,7 @@ class TFrameTest(object):
                           Frame.FLAG24_COMPRESS, b'\x03abcdefg')
 
     def test_no_hash(self):
-        self.failUnlessRaises(
+        self.assertRaises(
             TypeError, {}.__setitem__, self.FRAME(), None)
 
     def test_is_valid_frame_id(self):
@@ -1429,7 +1479,7 @@ class TFrameTest(object):
         for spec in self.FRAME._framespec:
             self.assertTrue(
                 spec.default is not None,
-                msg="%r:%r" % (self.FRAME, spec.name))
+                msg=f"{self.FRAME!r}:{spec.name!r}")
 
     @classmethod
     def create_frame_tests(cls):
@@ -1449,12 +1499,12 @@ TFrameTest.create_frame_tests()
 class FrameIDValidate(TestCase):
 
     def test_valid(self):
-        self.failUnless(is_valid_frame_id("APIC"))
-        self.failUnless(is_valid_frame_id("TPE2"))
+        self.assertTrue(is_valid_frame_id("APIC"))
+        self.assertTrue(is_valid_frame_id("TPE2"))
 
     def test_invalid(self):
-        self.failIf(is_valid_frame_id("MP3e"))
-        self.failIf(is_valid_frame_id("+ABC"))
+        self.assertFalse(is_valid_frame_id("MP3e"))
+        self.assertFalse(is_valid_frame_id("+ABC"))
 
 
 class TTimeStampTextFrame(TestCase):
@@ -1464,8 +1514,8 @@ class TTimeStampTextFrame(TestCase):
             TimeStampTextFrame(), TimeStampTextFrame(encoding=1, text=[]))
 
     def test_compare_to_unicode(self):
-        frame = TimeStampTextFrame(encoding=0, text=[u'1987', u'1988'])
-        self.failUnlessEqual(frame, str(frame))
+        frame = TimeStampTextFrame(encoding=0, text=['1987', '1988'])
+        self.assertEqual(frame, str(frame))
 
 
 class TTextFrame(TestCase):
@@ -1484,16 +1534,16 @@ class TTextFrame(TestCase):
 
     def test_multi_value(self):
         frame = TextFrame(
-            text=[u"foo", u"", u"", u"bar", u"", u""], encoding=0)
+            text=["foo", "", "", "bar", "", ""], encoding=0)
         config = ID3SaveConfig(3, None)
         data = frame._writeData(config)
 
         frame = frame._fromData(_24, 0x0, data)
-        self.assertEqual(frame.text, [u"foo", u"", u"", u"bar", u"", u""])
+        self.assertEqual(frame.text, ["foo", "", "", "bar", "", ""])
         frame = frame._fromData(_23, 0x0, data)
-        self.assertEqual(frame.text, [u"foo", u"", u"", u"bar"])
+        self.assertEqual(frame.text, ["foo", "", "", "bar"])
         frame = frame._fromData(_22, 0x0, data)
-        self.assertEqual(frame.text, [u"foo", u"", u"", u"bar"])
+        self.assertEqual(frame.text, ["foo", "", "", "bar"])
 
     def test_list_iface(self):
         frame = TextFrame()
@@ -1506,36 +1556,36 @@ class TTextFrame(TestCase):
             _24, 0x9, b'\x00\x00\x00\x0f'
             b'x\x9cc(\xc9\xc8,V\x00\xa2D\xfd\x92\xd4\xe2\x12\x00&\x7f\x05%'
         )
-        self.assertEquals(tag.encoding, 0)
-        self.assertEquals(tag, ['this is a/test'])
+        self.assertEqual(tag.encoding, 0)
+        self.assertEqual(tag, ['this is a/test'])
 
     def test_datalen_but_not_compressed(self):
         tag = TextFrame._fromData(_24, 0x01, b'\x00\x00\x00\x06\x00A test')
-        self.assertEquals(tag.encoding, 0)
-        self.assertEquals(tag, ['A test'])
+        self.assertEqual(tag.encoding, 0)
+        self.assertEqual(tag, ['A test'])
 
     def test_utf8(self):
         tag = TextFrame._fromData(_23, 0x00, b'\x03this is a test')
-        self.assertEquals(tag.encoding, 3)
-        self.assertEquals(tag, 'this is a test')
+        self.assertEqual(tag.encoding, 3)
+        self.assertEqual(tag, 'this is a test')
 
     def test_zlib_utf16(self):
         data = (b'\x00\x00\x00\x1fx\x9cc\xfc\xff\xaf\x84!\x83!\x93\xa1\x98A'
                 b'\x01J&2\xe83\x940\xa4\x02\xd9%\x0c\x00\x87\xc6\x07#')
         tag = TextFrame._fromData(_23, 0x80, data)
-        self.assertEquals(tag.encoding, 1)
-        self.assertEquals(tag, ['this is a/test'])
+        self.assertEqual(tag.encoding, 1)
+        self.assertEqual(tag, ['this is a/test'])
 
         tag = TextFrame._fromData(_24, 0x08, data)
-        self.assertEquals(tag.encoding, 1)
-        self.assertEquals(tag, ['this is a/test'])
+        self.assertEqual(tag.encoding, 1)
+        self.assertEqual(tag, ['this is a/test'])
 
 
 class TRVA2(TestCase):
 
     def test_default(self):
         frame = RVA2()
-        self.assertEqual(frame.desc, u"")
+        self.assertEqual(frame.desc, "")
         self.assertEqual(frame.channel, 1)
         self.assertEqual(frame.gain, 1)
         self.assertEqual(frame.peak, 1)
@@ -1549,8 +1599,8 @@ class TRVA2(TestCase):
         frame = RVA2(method=42, desc="d", channel=1, gain=1, peak=1)
         self.assertEqual(frame.HashKey, "RVA2:d")
 
-        self.assertEquals(RVA2(gain=1).HashKey, RVA2(gain=2).HashKey)
-        self.assertNotEquals(RVA2(desc="a").HashKey, RVA2(desc="b").HashKey)
+        self.assertEqual(RVA2(gain=1).HashKey, RVA2(gain=2).HashKey)
+        self.assertNotEqual(RVA2(desc="a").HashKey, RVA2(desc="b").HashKey)
 
     def test_pprint(self):
         frame = RVA2(method=42, desc="d", channel=1, gain=1, peak=1)
@@ -1568,27 +1618,27 @@ class TRVA2(TestCase):
 class TCTOC(TestCase):
 
     def test_defaults(self):
-        self.assertEqual(CTOC(), CTOC(element_id=u"", flags=0,
+        self.assertEqual(CTOC(), CTOC(element_id="", flags=0,
                                       child_element_ids=[], sub_frames=[]))
 
     def test_hash(self):
-        frame = CTOC(element_id=u"foo", flags=3,
-                     child_element_ids=[u"ch0"],
-                     sub_frames=[TPE2(encoding=3, text=[u"foo"])])
+        frame = CTOC(element_id="foo", flags=3,
+                     child_element_ids=["ch0"],
+                     sub_frames=[TPE2(encoding=3, text=["foo"])])
         self.assertEqual(frame.HashKey, "CTOC:foo")
 
     def test_pprint(self):
-        frame = CTOC(element_id=u"foo", flags=3,
-                     child_element_ids=[u"ch0"],
-                     sub_frames=[TPE2(encoding=3, text=[u"foo"])])
+        frame = CTOC(element_id="foo", flags=3,
+                     child_element_ids=["ch0"],
+                     sub_frames=[TPE2(encoding=3, text=["foo"])])
         self.assertEqual(
             frame.pprint(),
             "CTOC=foo flags=3 child_element_ids=ch0\n    TPE2=foo")
 
     def test_write(self):
-        frame = CTOC(element_id=u"foo", flags=3,
-                     child_element_ids=[u"ch0"],
-                     sub_frames=[TPE2(encoding=3, text=[u"f", u"b"])])
+        frame = CTOC(element_id="foo", flags=3,
+                     child_element_ids=["ch0"],
+                     sub_frames=[TPE2(encoding=3, text=["f", "b"])])
         config = ID3SaveConfig(3, "/")
         data = (b"foo\x00\x03\x01ch0\x00TPE2\x00\x00\x00\x0b\x00\x00\x01"
                 b"\xff\xfef\x00/\x00b\x00\x00\x00")
@@ -1619,7 +1669,7 @@ class TCHAP(TestCase):
 
     def test_default(self):
         frame = CHAP()
-        self.assertEqual(frame.element_id, u"")
+        self.assertEqual(frame.element_id, "")
         self.assertEqual(frame.start_time, 0)
         self.assertEqual(frame.end_time, 0)
         self.assertEqual(frame.start_offset, 0xffffffff)
@@ -1627,15 +1677,15 @@ class TCHAP(TestCase):
         self.assertEqual(frame.sub_frames, ID3Tags())
 
     def test_hash(self):
-        frame = CHAP(element_id=u"foo", start_time=0, end_time=0,
+        frame = CHAP(element_id="foo", start_time=0, end_time=0,
                      start_offset=0, end_offset=0,
-                     sub_frames=[TPE2(encoding=3, text=[u"foo"])])
+                     sub_frames=[TPE2(encoding=3, text=["foo"])])
         self.assertEqual(frame.HashKey, "CHAP:foo")
 
     def test_pprint(self):
-        frame = CHAP(element_id=u"foo", start_time=0, end_time=0,
+        frame = CHAP(element_id="foo", start_time=0, end_time=0,
                      start_offset=0, end_offset=0,
-                     sub_frames=[TPE2(encoding=3, text=[u"foo"])])
+                     sub_frames=[TPE2(encoding=3, text=["foo"])])
         self.assertEqual(
             frame.pprint(), "CHAP=foo time=0..0 offset=0..0\n    TPE2=foo")
 
@@ -1656,26 +1706,26 @@ class TAPIC(TestCase):
     def test_default(self):
         frame = APIC()
         self.assertEqual(frame.encoding, 1)
-        self.assertEqual(frame.mime, u"")
+        self.assertEqual(frame.mime, "")
         self.assertEqual(frame.type, 3)
-        self.assertEqual(frame.desc, u"")
+        self.assertEqual(frame.desc, "")
         self.assertEqual(frame.data, b"")
 
     def test_hash(self):
-        frame = APIC(encoding=0, mime=u"m", type=3, desc=u"d", data=b"\x42")
+        frame = APIC(encoding=0, mime="m", type=3, desc="d", data=b"\x42")
         self.assertEqual(frame.HashKey, "APIC:d")
 
     def test_pprint(self):
         frame = APIC(
-            encoding=0, mime=u"mime", type=3, desc=u"desc", data=b"\x42")
-        self.assertEqual(frame._pprint(), u"cover front, desc (mime, 1 bytes)")
+            encoding=0, mime="mime", type=3, desc="desc", data=b"\x42")
+        self.assertEqual(frame._pprint(), "cover front, desc (mime, 1 bytes)")
 
     def test_multi(self):
-        self.assertEquals(APIC(data=b"1").HashKey, APIC(data=b"2").HashKey)
-        self.assertNotEquals(APIC(desc="a").HashKey, APIC(desc="b").HashKey)
+        self.assertEqual(APIC(data=b"1").HashKey, APIC(data=b"2").HashKey)
+        self.assertNotEqual(APIC(desc="a").HashKey, APIC(desc="b").HashKey)
 
     def test_repr(self):
-        frame = APIC(encoding=0, mime=u"m", type=3, desc=u"d", data=b"\x42")
+        frame = APIC(encoding=0, mime="m", type=3, desc="d", data=b"\x42")
         expected = (
             "APIC(encoding=<Encoding.LATIN1: 0>, mime='m', "
             "type=<PictureType.COVER_FRONT: 3>, desc='d', data=b'B')")

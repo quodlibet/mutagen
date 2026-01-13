@@ -1,13 +1,27 @@
 
-from tests import TestCase
-
-from mutagen.id3._specs import SpecError, Latin1TextListSpec, ID3FramesSpec, \
-    ASPIIndexSpec, ByteSpec, EncodingSpec, StringSpec, BinaryDataSpec, \
-    EncodedTextSpec, VolumePeakSpec, VolumeAdjustmentSpec, CTOCFlagsSpec, \
-    Spec, SynchronizedTextSpec, TimeStampSpec, FrameIDSpec, RVASpec
+from mutagen.id3 import ASPI, TIT3, CTOCFlags, ID3TimeStamp
 from mutagen.id3._frames import Frame
-from mutagen.id3._tags import ID3Header, ID3Tags, ID3SaveConfig
-from mutagen.id3 import TIT3, ASPI, CTOCFlags, ID3TimeStamp
+from mutagen.id3._specs import (
+    ASPIIndexSpec,
+    BinaryDataSpec,
+    ByteSpec,
+    CTOCFlagsSpec,
+    EncodedTextSpec,
+    EncodingSpec,
+    FrameIDSpec,
+    ID3FramesSpec,
+    Latin1TextListSpec,
+    RVASpec,
+    Spec,
+    SpecError,
+    StringSpec,
+    SynchronizedTextSpec,
+    TimeStampSpec,
+    VolumeAdjustmentSpec,
+    VolumePeakSpec,
+)
+from mutagen.id3._tags import ID3Header, ID3SaveConfig, ID3Tags
+from tests import TestCase
 
 
 class TSynchronizedTextSpec(TestCase):
@@ -16,28 +30,28 @@ class TSynchronizedTextSpec(TestCase):
         s = SynchronizedTextSpec('name')
         f = Frame()
 
-        values = [(u"A", 100), (u"\xe4xy", 0), (u"", 42), (u"", 0)]
+        values = [("A", 100), ("\xe4xy", 0), ("", 42), ("", 0)]
 
         # utf-16
         f.encoding = 1
         self.assertEqual(
             s.read(None, f, s.write(None, f, values)), (values, b""))
-        data = s.write(None, f, [(u"A", 100)])
-        self.assertEquals(data, b"\xff\xfeA\x00\x00\x00\x00\x00\x00d")
+        data = s.write(None, f, [("A", 100)])
+        self.assertEqual(data, b"\xff\xfeA\x00\x00\x00\x00\x00\x00d")
 
         # utf-16be
         f.encoding = 2
         self.assertEqual(
             s.read(None, f, s.write(None, f, values)), (values, b""))
-        self.assertEquals(
-            s.write(None, f, [(u"A", 100)]), b"\x00A\x00\x00\x00\x00\x00d")
+        self.assertEqual(
+            s.write(None, f, [("A", 100)]), b"\x00A\x00\x00\x00\x00\x00d")
 
         # utf-8
         f.encoding = 3
         self.assertEqual(
             s.read(None, f, s.write(None, f, values)), (values, b""))
-        self.assertEquals(
-            s.write(None, f, [(u"A", 100)]), b"A\x00\x00\x00\x00d")
+        self.assertEqual(
+            s.write(None, f, [("A", 100)]), b"A\x00\x00\x00\x00d")
 
 
 class TTimeStampSpec(TestCase):
@@ -48,16 +62,16 @@ class TTimeStampSpec(TestCase):
         f.encoding = 0
         header = ID3Header()
         header.version = (2, 4, 0)
-        self.assertEquals(
+        self.assertEqual(
             (ID3TimeStamp('ab'), b'fg'), s.read(header, f, b'ab\x00fg'))
-        self.assertEquals(
+        self.assertEqual(
             (ID3TimeStamp('1234'), b''), s.read(header, f, b'1234\x00'))
 
     def test_write(self):
         s = TimeStampSpec('name')
         f = Frame()
         f.encoding = 0
-        self.assertEquals(b'1234\x00', s.write(None, f, ID3TimeStamp('1234')))
+        self.assertEqual(b'1234\x00', s.write(None, f, ID3TimeStamp('1234')))
         self.assertRaises(AttributeError, s.write, None, f, None)
 
 
@@ -69,13 +83,13 @@ class TEncodedTextSpec(TestCase):
         f.encoding = 0
         header = ID3Header()
         header.version = (2, 4, 0)
-        self.assertEquals((u'abcd', b'fg'), s.read(header, f, b'abcd\x00fg'))
+        self.assertEqual(('abcd', b'fg'), s.read(header, f, b'abcd\x00fg'))
 
     def test_write(self):
         s = EncodedTextSpec('name')
         f = Frame()
         f.encoding = 0
-        self.assertEquals(b'abcdefg\x00', s.write(None, f, u'abcdefg'))
+        self.assertEqual(b'abcdefg\x00', s.write(None, f, 'abcdefg'))
         self.assertRaises(AttributeError, s.write, None, f, None)
 
 
@@ -83,12 +97,12 @@ class TEncodingSpec(TestCase):
 
     def test_read(self):
         s = EncodingSpec('name')
-        self.assertEquals((3, b'abcdefg'), s.read(None, None, b'\x03abcdefg'))
+        self.assertEqual((3, b'abcdefg'), s.read(None, None, b'\x03abcdefg'))
         self.assertRaises(SpecError, s.read, None, None, b'\x04abcdefg')
 
     def test_write(self):
         s = EncodingSpec('name')
-        self.assertEquals(b'\x00', s.write(None, None, 0))
+        self.assertEqual(b'\x00', s.write(None, None, 0))
         self.assertRaises(TypeError, s.write, None, None, b'abc')
         self.assertRaises(TypeError, s.write, None, None, None)
 
@@ -117,15 +131,15 @@ class TVolumeAdjustmentSpec(TestCase):
 
     def test_read(self):
         s = VolumeAdjustmentSpec('gain', 0)
-        self.assertEquals((0.0, b''), s.read(None, None, b'\x00\x00'))
-        self.assertEquals((2.0, b''), s.read(None, None, b'\x04\x00'))
-        self.assertEquals((-2.0, b''), s.read(None, None, b'\xfc\x00'))
+        self.assertEqual((0.0, b''), s.read(None, None, b'\x00\x00'))
+        self.assertEqual((2.0, b''), s.read(None, None, b'\x04\x00'))
+        self.assertEqual((-2.0, b''), s.read(None, None, b'\xfc\x00'))
 
     def test_write(self):
         s = VolumeAdjustmentSpec('gain', 0)
-        self.assertEquals(b'\x00\x00', s.write(None, None, 0.0))
-        self.assertEquals(b'\x04\x00', s.write(None, None, 2.0))
-        self.assertEquals(b'\xfc\x00', s.write(None, None, -2.0))
+        self.assertEqual(b'\x00\x00', s.write(None, None, 0.0))
+        self.assertEqual(b'\x04\x00', s.write(None, None, 2.0))
+        self.assertEqual(b'\xfc\x00', s.write(None, None, -2.0))
 
 
 class TByteSpec(TestCase):
@@ -136,11 +150,11 @@ class TByteSpec(TestCase):
 
     def test_read(self):
         s = ByteSpec('name')
-        self.assertEquals((97, b'bcdefg'), s.read(None, None, b'abcdefg'))
+        self.assertEqual((97, b'bcdefg'), s.read(None, None, b'abcdefg'))
 
     def test_write(self):
         s = ByteSpec('name')
-        self.assertEquals(b'a', s.write(None, None, 97))
+        self.assertEqual(b'a', s.write(None, None, 97))
         self.assertRaises(TypeError, s.write, None, None, b'abc')
         self.assertRaises(TypeError, s.write, None, None, None)
 
@@ -157,23 +171,23 @@ class TStringSpec(TestCase):
     def test_validate(self):
         s = StringSpec('byte', 3)
         self.assertEqual(s.validate(None, "ABC"), "ABC")
-        self.assertEqual(s.validate(None, u"ABC"), u"ABC")
+        self.assertEqual(s.validate(None, "ABC"), "ABC")
         self.assertRaises(ValueError, s.validate, None, "abc2")
         self.assertRaises(ValueError, s.validate, None, "ab")
         self.assertRaises(TypeError, s.validate, None, None)
         self.assertRaises(TypeError, s.validate, None, b"ABC")
-        self.assertRaises(ValueError, s.validate, None, u"\xf6\xe4\xfc")
+        self.assertRaises(ValueError, s.validate, None, "\xf6\xe4\xfc")
 
     def test_read(self):
         s = StringSpec('name', 3)
-        self.assertEquals(('abc', b'defg'), s.read(None, None, b'abcdefg'))
+        self.assertEqual(('abc', b'defg'), s.read(None, None, b'abcdefg'))
         self.assertRaises(SpecError, s.read, None, None, b'\xff')
 
     def test_write(self):
         s = StringSpec('name', 3)
-        self.assertEquals(b'abc', s.write(None, None, 'abcdefg'))
-        self.assertEquals(b'\x00\x00\x00', s.write(None, None, '\x00'))
-        self.assertEquals(b'a\x00\x00', s.write(None, None, 'a'))
+        self.assertEqual(b'abc', s.write(None, None, 'abcdefg'))
+        self.assertEqual(b'\x00\x00\x00', s.write(None, None, '\x00'))
+        self.assertEqual(b'a\x00\x00', s.write(None, None, 'a'))
 
 
 class TBinaryDataSpec(TestCase):
@@ -186,18 +200,18 @@ class TBinaryDataSpec(TestCase):
 
     def test_read(self):
         s = BinaryDataSpec('name')
-        self.assertEquals((b'abcdefg', b''), s.read(None, None, b'abcdefg'))
+        self.assertEqual((b'abcdefg', b''), s.read(None, None, b'abcdefg'))
 
     def test_write(self):
         s = BinaryDataSpec('name')
-        self.assertEquals(b'43', s.write(None, None, 43))
-        self.assertEquals(b'abc', s.write(None, None, b'abc'))
+        self.assertEqual(b'43', s.write(None, None, 43))
+        self.assertEqual(b'abc', s.write(None, None, b'abc'))
 
 
 class TSpec(TestCase):
 
     def test_no_hash(self):
-        self.failUnlessRaises(
+        self.assertRaises(
             TypeError, {}.__setitem__, Spec("foo", None), None)
 
 
@@ -240,16 +254,16 @@ class TFrameIDSpec(TestCase):
 
     def test_read(self):
         spec = FrameIDSpec("name", 3)
-        self.assertEqual(spec.read(None, None, b"FOOX"), (u"FOO", b"X"))
+        self.assertEqual(spec.read(None, None, b"FOOX"), ("FOO", b"X"))
 
     def test_validate(self):
         spec = FrameIDSpec("name", 3)
-        self.assertRaises(ValueError, spec.validate, None, u"123")
-        self.assertRaises(ValueError, spec.validate, None, u"TXXX")
-        self.assertEqual(spec.validate(None, u"TXX"), u"TXX")
+        self.assertRaises(ValueError, spec.validate, None, "123")
+        self.assertRaises(ValueError, spec.validate, None, "TXXX")
+        self.assertEqual(spec.validate(None, "TXX"), "TXX")
 
         spec = FrameIDSpec("name", 4)
-        self.assertEqual(spec.validate(None, u"TXXX"), u"TXXX")
+        self.assertEqual(spec.validate(None, "TXXX"), "TXXX")
 
 
 class TCTOCFlagsSpec(TestCase):
@@ -296,7 +310,7 @@ class TID3FramesSpec(TestCase):
         frames = value.getall("TIT3")
         self.assertEqual(len(frames), 1)
         self.assertEqual(frames[0].encoding, 3)
-        self.assertEqual(frames[0].text, [u"F"])
+        self.assertEqual(frames[0].text, ["F"])
 
     def test_write_empty(self):
         header = ID3Header()
@@ -312,7 +326,7 @@ class TID3FramesSpec(TestCase):
         config = ID3SaveConfig()
 
         tags = ID3Tags()
-        tags.add(TIT3(encoding=3, text=[u"F", u"B"]))
+        tags.add(TIT3(encoding=3, text=["F", "B"]))
         self.assertEqual(spec.write(config, None, tags),
             b"TIT3" + b"\x00\x00\x00\x05" + b"\x00\x00" +
             b"\x03" + b"F\x00" + b"B\x00")
@@ -322,7 +336,7 @@ class TID3FramesSpec(TestCase):
         config = ID3SaveConfig(3, "/")
 
         tags = ID3Tags()
-        tags.add(TIT3(encoding=3, text=[u"F", u"B"]))
+        tags.add(TIT3(encoding=3, text=["F", "B"]))
         self.assertEqual(spec.write(config, None, tags),
             b"TIT3" + b"\x00\x00\x00\x0B" + b"\x00\x00" +
             b"\x01" + b"\xff\xfeF\x00/\x00B\x00\x00\x00")
@@ -335,8 +349,8 @@ class TID3FramesSpec(TestCase):
         self.assertRaises(TypeError, spec.validate, None, None)
         self.assertTrue(isinstance(spec.validate(None, []), ID3Tags))
 
-        v = spec.validate(None, [TIT3(encoding=3, text=[u"foo"])])
-        self.assertEqual(v.getall("TIT3")[0].text, [u"foo"])
+        v = spec.validate(None, [TIT3(encoding=3, text=["foo"])])
+        self.assertEqual(v.getall("TIT3")[0].text, ["foo"])
 
 
 class TLatin1TextListSpec(TestCase):
@@ -345,20 +359,20 @@ class TLatin1TextListSpec(TestCase):
         spec = Latin1TextListSpec("name")
         self.assertEqual(spec.read(None, None, b"\x00xxx"), ([], b"xxx"))
         self.assertEqual(
-            spec.read(None, None, b"\x01foo\x00"), ([u"foo"], b""))
+            spec.read(None, None, b"\x01foo\x00"), (["foo"], b""))
         self.assertEqual(
-            spec.read(None, None, b"\x01\x00"), ([u""], b""))
+            spec.read(None, None, b"\x01\x00"), ([""], b""))
         self.assertEqual(
-            spec.read(None, None, b"\x02f\x00o\x00"), ([u"f", u"o"], b""))
+            spec.read(None, None, b"\x02f\x00o\x00"), (["f", "o"], b""))
 
     def test_write(self):
         spec = Latin1TextListSpec("name")
         self.assertEqual(spec.write(None, None, []), b"\x00")
-        self.assertEqual(spec.write(None, None, [u""]), b"\x01\x00")
+        self.assertEqual(spec.write(None, None, [""]), b"\x01\x00")
 
     def test_validate(self):
         spec = Latin1TextListSpec("name")
         self.assertRaises(TypeError, spec.validate, None, object())
         self.assertRaises(TypeError, spec.validate, None, None)
-        self.assertEqual(spec.validate(None, [u"foo"]), [u"foo"])
+        self.assertEqual(spec.validate(None, ["foo"]), ["foo"])
         self.assertEqual(spec.validate(None, []), [])

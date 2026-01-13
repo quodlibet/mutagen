@@ -5,12 +5,12 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
-from typing import Dict, Callable
+from collections.abc import Callable
+from typing import Final, override
 
 from mutagen import Tags
 from mutagen._util import DictMixin, dict_match
-from mutagen.mp4 import MP4, MP4Tags, error, delete
-
+from mutagen.mp4 import MP4, MP4Info, MP4Tags, delete, error
 
 __all__ = ["EasyMP4Tags", "EasyMP4", "delete", "error"]
 
@@ -18,6 +18,10 @@ __all__ = ["EasyMP4Tags", "EasyMP4", "delete", "error"]
 class EasyMP4KeyError(error, KeyError, ValueError):
     pass
 
+type Getter = Callable[[MP4Tags, str], list[str]]
+type Setter = Callable[[MP4Tags, str, list[str]], None]
+type Deleter = Callable[[MP4Tags, str], None]
+type Lister = Callable[[MP4Tags, str], list[str]]
 
 class EasyMP4Tags(DictMixin, Tags):
     """EasyMP4Tags()
@@ -32,10 +36,15 @@ class EasyMP4Tags(DictMixin, Tags):
     MP4, not EasyMP4.
     """
 
-    Set: Dict[str, Callable] = {}
-    Get: Dict[str, Callable] = {}
-    Delete: Dict[str, Callable] = {}
-    List: Dict[str, Callable] = {}
+    Set: dict[str, Setter] = {}
+    Get: dict[str, Getter] = {}
+    Delete: dict[str, Deleter] = {}
+    List: dict[str, Lister] = {}
+
+    __mp4: MP4Tags
+    load: Callable[..., None]
+    save: Callable[..., None]
+    delete: Callable[..., None]
 
     def __init__(self, *args, **kwargs):
         self.__mp4 = MP4Tags(*args, **kwargs)
@@ -43,16 +52,21 @@ class EasyMP4Tags(DictMixin, Tags):
         self.save = self.__mp4.save
         self.delete = self.__mp4.delete
 
-    filename = property(lambda s: s.__mp4.filename,
-                        lambda s, fn: setattr(s.__mp4, 'filename', fn))
+    @property
+    def filename(self) -> str | None:
+        return self.__mp4.filename
+
+    @filename.setter
+    def filename(self, fn: str):
+        self.__mp4.filename = fn
 
     @property
     def _padding(self):
         return self.__mp4._padding
 
     @classmethod
-    def RegisterKey(cls, key,
-                    getter=None, setter=None, deleter=None, lister=None):
+    def RegisterKey(cls, key: str,
+                    getter: Getter | None=None, setter: Setter | None=None, deleter: Deleter | None =None, lister: Lister | None=None):
         """Register a new key mapping.
 
         A key mapping is four functions, a getter, setter, deleter,
@@ -80,7 +94,7 @@ class EasyMP4Tags(DictMixin, Tags):
             cls.List[key] = lister
 
     @classmethod
-    def RegisterTextKey(cls, key, atomid):
+    def RegisterTextKey(cls, key: str, atomid: str):
         """Register a text key.
 
         If the key you need to register is a simple one-to-one mapping
@@ -89,67 +103,67 @@ class EasyMP4Tags(DictMixin, Tags):
 
             EasyMP4Tags.RegisterTextKey("artist", "\xa9ART")
         """
-        def getter(tags, key):
+        def getter(tags: MP4Tags, key: str) -> list[str]:
             return tags[atomid]
 
-        def setter(tags, key, value):
+        def setter(tags: MP4Tags, key: str, value: list[str]) -> None:
             tags[atomid] = value
 
-        def deleter(tags, key):
+        def deleter(tags: MP4Tags, key: str) -> None:
             del tags[atomid]
 
         cls.RegisterKey(key, getter, setter, deleter)
 
     @classmethod
-    def RegisterIntKey(cls, key, atomid, min_value=0, max_value=(2 ** 16) - 1):
+    def RegisterIntKey(cls, key: str, atomid: str, min_value: int=0, max_value: int=(2 ** 16) - 1):
         """Register a scalar integer key.
         """
 
-        def getter(tags, key):
+        def getter(tags: MP4Tags, key: str):
             return list(map(str, tags[atomid]))
 
-        def setter(tags, key, value):
+        def setter(tags: MP4Tags, key: str, value: list[str]):
             clamp = lambda x: int(min(max(min_value, x), max_value))
             tags[atomid] = [clamp(v) for v in map(int, value)]
 
-        def deleter(tags, key):
+        def deleter(tags: MP4Tags, key: str):
             del tags[atomid]
 
         cls.RegisterKey(key, getter, setter, deleter)
 
     @classmethod
-    def RegisterIntPairKey(cls, key, atomid, min_value=0,
-                           max_value=(2 ** 16) - 1):
-        def getter(tags, key):
-            ret = []
+    def RegisterIntPairKey(cls, key: str, atomid: str, min_value: int=0,
+                           max_value: int=(2 ** 16) - 1):
+        def getter(tags: MP4Tags, key: str):
+            ret: list[str] = []
             for (track, total) in tags[atomid]:
                 if total:
-                    ret.append(u"%d/%d" % (track, total))
+                    ret.append("%d/%d" % (track, total))
                 else:
                     ret.append(str(track))
             return ret
 
-        def setter(tags, key, value):
+        def setter(tags: MP4Tags, key: str, value: list[str]):
             clamp = lambda x: int(min(max(min_value, x), max_value))
-            data = []
+            data: list[tuple[int, int]] = []
             for v in value:
                 try:
-                    tracks, total = v.split("/")
-                    tracks = clamp(int(tracks))
-                    total = clamp(int(total))
+                    trackss, totals = v.split("/")
+                    tracks = clamp(int(trackss))
+                    total = clamp(int(totals))
                 except (ValueError, TypeError):
                     tracks = clamp(int(v))
                     total = min_value
                 data.append((tracks, total))
             tags[atomid] = data
 
-        def deleter(tags, key):
+        def deleter(tags: MP4Tags, key: str):
             del tags[atomid]
 
         cls.RegisterKey(key, getter, setter, deleter)
 
     @classmethod
-    def RegisterFreeformKey(cls, key, name, mean="com.apple.iTunes"):
+    def RegisterFreeformKey(cls, key: str, name: str, mean: str="com.apple.iTunes"):
         """Register a text key.
 
         If the key you need to register is a simple one-to-one mapping
@@ -161,31 +175,31 @@ class EasyMP4Tags(DictMixin, Tags):
         """
         atomid = "----:" + mean + ":" + name
 
-        def getter(tags, key):
+        def getter(tags: MP4Tags, key: str) -> list[str]:
             return [s.decode("utf-8", "replace") for s in tags[atomid]]
 
-        def setter(tags, key, value):
-            encoded = []
+        def setter(tags: MP4Tags, key: str, value: list[str]) -> None:
+            encoded: list[bytes] = []
             for v in value:
-                if not isinstance(v, str):
-                    raise TypeError("%r not str" % v)
+                if not isinstance(v, str):  # pyright: ignore[reportUnnecessaryIsInstance]
+                    raise TypeError(f"{v!r} not str")
                 encoded.append(v.encode("utf-8"))
             tags[atomid] = encoded
 
-        def deleter(tags, key):
+        def deleter(tags: MP4Tags, key: str):
             del tags[atomid]
 
         cls.RegisterKey(key, getter, setter, deleter)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str):
         key = key.lower()
         func = dict_match(self.Get, key)
         if func is not None:
             return func(self.__mp4, key)
         else:
-            raise EasyMP4KeyError("%r is not a valid key" % key)
+            raise EasyMP4KeyError(f"{key!r} is not a valid key")
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: list[str] | str):
         key = key.lower()
 
         if isinstance(value, str):
@@ -195,32 +209,33 @@ class EasyMP4Tags(DictMixin, Tags):
         if func is not None:
             return func(self.__mp4, key, value)
         else:
-            raise EasyMP4KeyError("%r is not a valid key" % key)
+            raise EasyMP4KeyError(f"{key!r} is not a valid key")
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: str):
         key = key.lower()
         func = dict_match(self.Delete, key)
         if func is not None:
             return func(self.__mp4, key)
         else:
-            raise EasyMP4KeyError("%r is not a valid key" % key)
+            raise EasyMP4KeyError(f"{key!r} is not a valid key")
 
     def keys(self):
-        keys = []
-        for key in self.Get.keys():
+        keys: list[str] = []
+        for key in self.Get:
             if key in self.List:
                 keys.extend(self.List[key](self.__mp4, key))
             elif key in self:
                 keys.append(key)
         return keys
 
+    @override
     def pprint(self):
         """Print tag key=value pairs."""
-        strings = []
+        strings: list[str] = []
         for key in sorted(self.keys()):
             values = self[key]
             for value in values:
-                strings.append("%s=%s" % (key, value))
+                strings.append(f"{key}={value}")
         return "\n".join(strings)
 
 for atomid, key in {
@@ -277,11 +292,14 @@ class EasyMP4(MP4):
         tags (`EasyMP4Tags`)
     """
 
-    MP4Tags = EasyMP4Tags  # type: ignore
+    MP4Tags: Final = EasyMP4Tags  # type: ignore
 
-    Get = EasyMP4Tags.Get
-    Set = EasyMP4Tags.Set
-    Delete = EasyMP4Tags.Delete
-    List = EasyMP4Tags.List
-    RegisterTextKey = EasyMP4Tags.RegisterTextKey
-    RegisterKey = EasyMP4Tags.RegisterKey
+    Get: Final = EasyMP4Tags.Get
+    Set: Final = EasyMP4Tags.Set
+    Delete: Final = EasyMP4Tags.Delete
+    List: Final = EasyMP4Tags.List
+    RegisterTextKey: Final = EasyMP4Tags.RegisterTextKey
+    RegisterKey: Final = EasyMP4Tags.RegisterKey
+
+    info: MP4Info
+    tags: EasyMP4Tags

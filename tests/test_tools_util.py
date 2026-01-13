@@ -1,6 +1,5 @@
 
 from mutagen._tools._util import split_escape
-
 from tests import TestCase
 
 
@@ -34,14 +33,14 @@ class Tsplit_escape(TestCase):
         self.assertEqual(parts, [b""])
         self.assertTrue(isinstance(parts[0], bytes))
 
-        parts = split_escape(u"a:b", u":")
-        self.assertEqual(parts, [u"a", u"b"])
+        parts = split_escape("a:b", ":")
+        self.assertEqual(parts, ["a", "b"])
         self.assertTrue(all(isinstance(p, str) for p in parts))
 
-        parts = split_escape(u"", u":")
-        self.assertEqual(parts, [u""])
+        parts = split_escape("", ":")
+        self.assertEqual(parts, [""])
         self.assertTrue(all(isinstance(p, str) for p in parts))
 
-        parts = split_escape(u":", u":")
-        self.assertEqual(parts, [u"", u""])
+        parts = split_escape(":", ":")
+        self.assertEqual(parts, ["", ""])
         self.assertTrue(all(isinstance(p, str) for p in parts))

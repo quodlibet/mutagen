@@ -9,25 +9,31 @@
 
 """AIFF audio stream information and tags."""
 
+import contextlib
 import struct
+from io import BytesIO
 from struct import pack
+from typing import cast, final, override
 
-from mutagen import StreamInfo, FileType
-
-from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
+from mutagen import FileType, StreamInfo
+from mutagen._filething import FileThing
 from mutagen._iff import (
     IffChunk,
     IffContainerChunkMixin,
     IffFile,
     IffID3,
     InvalidChunk,
+)
+from mutagen._iff import (
     error as IffError,
 )
 from mutagen._util import (
     convert_error,
-    loadfile,
     endswith,
+    loadfile,
 )
+from mutagen.id3._util import ID3NoHeaderError
+from mutagen.id3._util import error as ID3Error
 
 __all__ = ["AIFF", "Open", "delete"]
 
@@ -40,11 +46,11 @@ class error(IffError):
 _HUGE_VAL = 1.79769313486231e+308
 
 
-def read_float(data):
+def read_float(data: bytes) -> float:
     """Raises OverflowError"""
 
     assert len(data) == 10
-    expon, himant, lomant = struct.unpack('>hLL', data)
+    expon, himant, lomant = cast(tuple[int, int, int], struct.unpack('>hLL', data))
     sign = 1
     if expon < 0:
         sign = -1
@@ -64,32 +70,37 @@ class AIFFChunk(IffChunk):
     """Representation of a single IFF chunk"""
 
     @classmethod
-    def parse_header(cls, header):
+    @override
+    def parse_header(cls, header: bytes):
         return struct.unpack('>4sI', header)
 
     @classmethod
-    def get_class(cls, id):
+    @override
+    def get_class(cls, id: str):
         if id == 'FORM':
             return AIFFFormChunk
         else:
             return cls
 
-    def write_new_header(self, id_, size):
-        self._fileobj.write(pack('>4sI', id_, size))
+    @override
+    def write_new_header(self, id_: str, size: int) -> None:
+        _ = self._fileobj.write(pack('>4sI', id_, size))
 
-    def write_size(self):
-        self._fileobj.write(pack('>I', self.data_size))
+    @override
+    def write_size(self) -> None:
+        _ = self._fileobj.write(pack('>I', self.data_size))
 
 
 class AIFFFormChunk(AIFFChunk, IffContainerChunkMixin):
     """The  AIFF root chunk."""
 
-    def parse_next_subchunk(self):
+    @override
+    def parse_next_subchunk(self) -> IffChunk:
         return AIFFChunk.parse(self._fileobj, self)
 
-    def __init__(self, fileobj, id, data_size, parent_chunk):
-        if id != u'FORM':
-            raise InvalidChunk('Expected FORM chunk, got %s' % id)
+    def __init__(self, fileobj: BytesIO, id: str, data_size: int, parent_chunk: AIFFChunk | None) -> None:
+        if id != 'FORM':
+            raise InvalidChunk(f'Expected FORM chunk, got {id}')
 
         AIFFChunk.__init__(self, fileobj, id, data_size, parent_chunk)
         self.init_container()
@@ -98,26 +109,28 @@ class AIFFFormChunk(AIFFChunk, IffContainerChunkMixin):
 class AIFFFile(IffFile):
     """Representation of a AIFF file"""
 
-    def __init__(self, fileobj):
+    def __init__(self, fileobj: BytesIO) -> None:
         # AIFF Files always start with the FORM chunk which contains a 4 byte
         # ID before the start of other chunks
         super().__init__(AIFFChunk, fileobj)
 
-        if self.root.id != u'FORM':
-            raise InvalidChunk("Root chunk must be a FORM chunk, got %s"
-                               % self.root.id)
+        if self.root.id != 'FORM':
+            raise InvalidChunk(f"Root chunk must be a FORM chunk, got {self.root.id}")
 
-    def __contains__(self, id_):
+    @override
+    def __contains__(self, id_: str) -> bool:
         if id_ == 'FORM':  # For backwards compatibility
             return True
         return super().__contains__(id_)
 
-    def __getitem__(self, id_):
+    @override
+    def __getitem__(self, id_: str) -> IffChunk:
         if id_ == 'FORM':  # For backwards compatibility
             return self.root
         return super().__getitem__(id_)
 
 
+@final
 class AIFFInfo(StreamInfo):
     """AIFFInfo()
 
@@ -133,34 +146,35 @@ class AIFFInfo(StreamInfo):
         bits_per_sample (`int`): The audio sample size
     """
 
-    length = 0
-    bitrate = 0
-    channels = 0
-    sample_rate = 0
+    length: float = 0.0
+    bitrate: int = 0
+    channels: int = 0
+    sample_rate: int = 0
+    bits_per_sample: int
 
     @convert_error(IOError, error)
-    def __init__(self, fileobj):
+    def __init__(self, fileobj: BytesIO) -> None:
         """Raises error"""
 
         iff = AIFFFile(fileobj)
         try:
-            common_chunk = iff[u'COMM']
+            common_chunk = iff['COMM']
         except KeyError as e:
-            raise error(str(e))
+            raise error(str(e)) from e
 
         data = common_chunk.read()
         if len(data) < 18:
             raise error
 
-        info = struct.unpack('>hLh10s', data[:18])
+        info = cast(tuple[int, int, int, bytes], struct.unpack('>hLh10s', data[:18]))
         channels, frame_count, sample_size, sample_rate = info
 
         try:
             self.sample_rate = int(read_float(sample_rate))
         except OverflowError:
-            raise error("Invalid sample rate")
+            raise error("Invalid sample rate") from None
         if self.sample_rate < 0:
-            raise error("Invalid sample rate")
+            raise error("Invalid sample rate") from None
         if self.sample_rate != 0:
             self.length = frame_count / float(self.sample_rate)
 
@@ -169,29 +183,29 @@ class AIFFInfo(StreamInfo):
         self.channels = channels
         self.bitrate = channels * sample_size * self.sample_rate
 
-    def pprint(self):
-        return u"%d channel AIFF @ %d bps, %s Hz, %.2f seconds" % (
+    @override
+    def pprint(self) -> str:
+        return "%d channel AIFF @ %d bps, %s Hz, %.2f seconds" % (
             self.channels, self.bitrate, self.sample_rate, self.length)
 
 
 class _IFFID3(IffID3):
     """A AIFF file with ID3v2 tags"""
 
-    def _load_file(self, fileobj):
+    @override
+    def _load_file(self, fileobj: BytesIO):
         return AIFFFile(fileobj)
 
 
 @convert_error(IOError, error)
 @loadfile(method=False, writable=True)
-def delete(filething):
+def delete(filething: FileThing):
     """Completely removes the ID3 chunk from the AIFF file"""
 
-    try:
-        del AIFFFile(filething.fileobj)[u'ID3']
-    except KeyError:
-        pass
+    with contextlib.suppress(KeyError):
+        del AIFFFile(filething.fileobj)['ID3']
 
-
+@final
 class AIFF(FileType):
     """AIFF(filething)
 
@@ -205,15 +219,19 @@ class AIFF(FileType):
         info (`AIFFInfo`)
     """
 
-    _mimes = ["audio/aiff", "audio/x-aiff"]
+    _mimes: list[str] = ["audio/aiff", "audio/x-aiff"]
+    tags: _IFFID3 | None = None
+    info: AIFFInfo
 
     @staticmethod
-    def score(filename, fileobj, header):
+    @override
+    def score(filename: str, fileobj: BytesIO, header: bytes):
         filename = filename.lower()
 
         return (header.startswith(b"FORM") * 2 + endswith(filename, b".aif") +
                 endswith(filename, b".aiff") + endswith(filename, b".aifc"))
 
+    @override
     def add_tags(self):
         """Add an empty ID3 tag to the file."""
         if self.tags is None:
@@ -223,7 +241,7 @@ class AIFF(FileType):
 
     @convert_error(IOError, error)
     @loadfile()
-    def load(self, filething, **kwargs):
+    def load(self, filething: FileThing, **kwargs: object):
         """Load stream and tag information from a file."""
 
         fileobj = filething.fileobj
@@ -233,11 +251,11 @@ class AIFF(FileType):
         except ID3NoHeaderError:
             self.tags = None
         except ID3Error as e:
-            raise error(e)
+            raise error(e) from e
         else:
             self.tags.filename = self.filename
 
-        fileobj.seek(0, 0)
+        _ = fileobj.seek(0, 0)
         self.info = AIFFInfo(fileobj)
 
 

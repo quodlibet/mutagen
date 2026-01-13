@@ -5,61 +5,97 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
+from __future__ import annotations
+
 import zlib
+from collections.abc import Sequence
 from struct import unpack
-from typing import Sequence
+from typing import TYPE_CHECKING, Any, Final, Self, override
 
-from ._util import ID3JunkFrameError, ID3EncryptionUnsupportedError, unsynch, \
-    ID3SaveConfig, error
-from ._specs import BinaryDataSpec, StringSpec, Latin1TextSpec, \
-    EncodedTextSpec, ByteSpec, EncodingSpec, ASPIIndexSpec, SizedIntegerSpec, \
-    IntegerSpec, Encoding, VolumeAdjustmentsSpec, VolumePeakSpec, \
-    VolumeAdjustmentSpec, ChannelSpec, MultiSpec, SynchronizedTextSpec, \
-    KeyEventSpec, TimeStampSpec, EncodedNumericPartTextSpec, \
-    EncodedNumericTextSpec, SpecError, PictureTypeSpec, ID3FramesSpec, \
-    Latin1TextListSpec, CTOCFlagsSpec, FrameIDSpec, RVASpec, Spec
+if TYPE_CHECKING:
+    from ._tags import ID3Header
+
+from ._specs import (
+    ASPIIndexSpec,
+    BinaryDataSpec,
+    ByteSpec,
+    ChannelSpec,
+    CTOCFlagsSpec,
+    EncodedNumericPartTextSpec,
+    EncodedNumericTextSpec,
+    EncodedTextSpec,
+    Encoding,
+    EncodingSpec,
+    FrameIDSpec,
+    ID3FramesSpec,
+    ID3TimeStamp,
+    IntegerSpec,
+    KeyEventSpec,
+    Latin1TextListSpec,
+    Latin1TextSpec,
+    MultiSpec,
+    PictureType,
+    PictureTypeSpec,
+    RVASpec,
+    SizedIntegerSpec,
+    Spec,
+    SpecError,
+    StringSpec,
+    SynchronizedTextSpec,
+    TimeStampSpec,
+    VolumeAdjustmentSpec,
+    VolumeAdjustmentsSpec,
+    VolumePeakSpec,
+)
+from ._util import (
+    ID3EncryptionUnsupportedError,
+    ID3JunkFrameError,
+    ID3SaveConfig,
+    error,
+    unsynch,
+)
 
 
-def _bytes2key(b):
+def _bytes2key(b: bytes) -> str:
     assert isinstance(b, bytes)
 
     return b.decode("latin1")
 
 
-class Frame(object):
+class Frame:
     """Fundamental unit of ID3 data.
 
     ID3 tags are split into frames. Each frame has a potentially
     different structure, and so this base class is not very featureful.
     """
 
-    FLAG23_ALTERTAG = 0x8000
-    FLAG23_ALTERFILE = 0x4000
-    FLAG23_READONLY = 0x2000
-    FLAG23_COMPRESS = 0x0080
-    FLAG23_ENCRYPT = 0x0040
-    FLAG23_GROUP = 0x0020
+    FLAG23_ALTERTAG: int = 0x8000
+    FLAG23_ALTERFILE: int = 0x4000
+    FLAG23_READONLY: int = 0x2000
+    FLAG23_COMPRESS: int = 0x0080
+    FLAG23_ENCRYPT: int = 0x0040
+    FLAG23_GROUP: int = 0x0020
 
-    FLAG24_ALTERTAG = 0x4000
-    FLAG24_ALTERFILE = 0x2000
-    FLAG24_READONLY = 0x1000
-    FLAG24_GROUPID = 0x0040
-    FLAG24_COMPRESS = 0x0008
-    FLAG24_ENCRYPT = 0x0004
-    FLAG24_UNSYNCH = 0x0002
-    FLAG24_DATALEN = 0x0001
+    FLAG24_ALTERTAG: int = 0x4000
+    FLAG24_ALTERFILE: int = 0x2000
+    FLAG24_READONLY: int = 0x1000
+    FLAG24_GROUPID: int = 0x0040
+    FLAG24_COMPRESS: int = 0x0008
+    FLAG24_ENCRYPT: int = 0x0004
+    FLAG24_UNSYNCH: int = 0x0002
+    FLAG24_DATALEN: int = 0x0001
 
-    _framespec: Sequence[Spec] = []
-    _optionalspec: Sequence[Spec] = []
+    _framespec: Sequence[Spec[Any]] = []
+    _optionalspec: Sequence[Spec[Any]] = []
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Frame, **kwargs: object):
         if len(args) == 1 and len(kwargs) == 0 and \
                 isinstance(args[0], type(self)):
             other = args[0]
             # ask the sub class to fill in our data
             other._to_other(self)
         else:
-            for checker, val in zip(self._framespec, args):
+            for checker, val in zip(self._framespec, args, strict=False):
                 setattr(self, checker.name, val)
             for checker in self._framespec[len(args):]:
                 setattr(self, checker.name,
@@ -70,7 +106,8 @@ class Frame(object):
                 else:
                     break
 
-    def __setattr__(self, name, value):
+    @override
+    def __setattr__(self, name: str, value):
         for checker in self._framespec:
             if checker.name == name:
                 self._setattr(name, checker.validate(self, value))
@@ -79,12 +116,12 @@ class Frame(object):
             if checker.name == name:
                 self._setattr(name, checker.validate(self, value))
                 return
-        super(Frame, self).__setattr__(name, value)
+        super().__setattr__(name, value)
 
-    def _setattr(self, name, value):
+    def _setattr(self, name: str, value):
         self.__dict__[name] = value
 
-    def _to_other(self, other):
+    def _to_other(self, other: Frame) -> None:
         # this impl covers subclasses with the same framespec
         if other._framespec is not self._framespec:
             raise ValueError
@@ -100,11 +137,11 @@ class Frame(object):
             if hasattr(self, checker.name):
                 other._setattr(checker.name, getattr(self, checker.name))
 
-    def _merge_frame(self, other):
+    def _merge_frame(self, other: Self) -> Self:
         # default impl, use the new tag over the old one
         return other
 
-    def _upgrade_frame(self):
+    def _upgrade_frame(self) -> Frame | None:
         """Returns either this instance or a new instance if this is a v2.2
         frame and an upgrade to a v2.3/4 equivalent is viable.
 
@@ -115,7 +152,8 @@ class Frame(object):
         if len(type(self).__name__) == 3:
             base = type(self).__base__
             if base is Frame:
-                return
+                return None
+            assert base is not None and issubclass(base, Frame)
             return base(self)
         else:
             return self
@@ -141,34 +179,35 @@ class Frame(object):
         return type(self)(**new_kwargs)
 
     @property
-    def HashKey(self):
+    def HashKey(self) -> str:
         """An internal key used to ensure frame uniqueness in a tag"""
 
         return self.FrameID
 
     @property
-    def FrameID(self):
+    def FrameID(self) -> str:
         """ID3v2 three or four character frame ID"""
 
         return type(self).__name__
 
-    def __repr__(self):
+    @override
+    def __repr__(self) -> str:
         """Python representation of a frame.
 
         The string returned is a valid Python expression to construct
         a copy of this frame.
         """
-        kw = []
+        kw: list[str] = []
         for attr in self._framespec:
             # so repr works during __init__
             if hasattr(self, attr.name):
-                kw.append('%s=%r' % (attr.name, getattr(self, attr.name)))
+                kw.append(f'{attr.name}={getattr(self, attr.name)!r}')
         for attr in self._optionalspec:
             if hasattr(self, attr.name):
-                kw.append('%s=%r' % (attr.name, getattr(self, attr.name)))
-        return '%s(%s)' % (type(self).__name__, ', '.join(kw))
+                kw.append(f'{attr.name}={getattr(self, attr.name)!r}')
+        return '{}({})'.format(type(self).__name__, ', '.join(kw))
 
-    def _readData(self, id3, data):
+    def _readData(self, id3: ID3Header, data: bytes) -> bytes:
         """Raises ID3JunkFrameError; Returns leftover data"""
 
         for reader in self._framespec:
@@ -176,7 +215,7 @@ class Frame(object):
                 try:
                     value, data = reader.read(id3, self, data)
                 except SpecError as e:
-                    raise ID3JunkFrameError(e)
+                    raise ID3JunkFrameError(e) from e
             else:
                 raise ID3JunkFrameError("no data left")
             self._setattr(reader.name, value)
@@ -186,14 +225,14 @@ class Frame(object):
                 try:
                     value, data = reader.read(id3, self, data)
                 except SpecError as e:
-                    raise ID3JunkFrameError(e)
+                    raise ID3JunkFrameError(e) from e
             else:
                 break
             self._setattr(reader.name, value)
 
         return data
 
-    def _writeData(self, config=None):
+    def _writeData(self, config: ID3SaveConfig | None = None) -> bytes:
         """Raises error"""
 
         if config is None:
@@ -204,13 +243,13 @@ class Frame(object):
         else:
             frame = self
 
-        data = []
+        data: list[bytes] = []
         for writer in self._framespec:
             try:
                 data.append(
                     writer.write(config, frame, getattr(frame, writer.name)))
             except SpecError as e:
-                raise error(e)
+                raise error(e) from e
 
         for writer in self._optionalspec:
             try:
@@ -219,19 +258,19 @@ class Frame(object):
             except AttributeError:
                 break
             except SpecError as e:
-                raise error(e)
+                raise error(e) from e
 
         return b''.join(data)
 
-    def pprint(self):
+    def pprint(self) -> str:
         """Return a human-readable representation of the frame."""
-        return "%s=%s" % (type(self).__name__, self._pprint())
+        return f"{type(self).__name__}={self._pprint()}"
 
-    def _pprint(self):
+    def _pprint(self) -> str:
         return "[unrepresentable data]"
 
     @classmethod
-    def _fromData(cls, header, tflags, data):
+    def _fromData(cls, header: ID3Header, tflags: int, data: bytes):
         """Construct this ID3 frame from raw string data.
 
         Raises:
@@ -270,13 +309,12 @@ class Frame(object):
                     try:
                         data = zlib.decompress(data)
                     except zlib.error as err:
-                        raise ID3JunkFrameError(
-                            'zlib: %s: %r' % (err, data))
+                        raise ID3JunkFrameError(f'zlib: {err}: {data!r}') from err
 
         elif header.version >= header._V23:
             if tflags & Frame.FLAG23_COMPRESS:
                 if len(data) < 4:
-                    raise ID3JunkFrameError('frame too small: %r' % data)
+                    raise ID3JunkFrameError(f'frame too small: {data!r}')
                 usize, = unpack('>L', data[:4])
                 data = data[4:]
             if tflags & Frame.FLAG23_ENCRYPT:
@@ -285,18 +323,26 @@ class Frame(object):
                 try:
                     data = zlib.decompress(data)
                 except zlib.error as err:
-                    raise ID3JunkFrameError('zlib: %s: %r' % (err, data))
+                    raise ID3JunkFrameError(f'zlib: {err}: {data!r}') from err
 
         frame = cls()
         frame._readData(header, data)
         return frame
 
+    @override
     def __hash__(self: object):
         raise TypeError("Frame objects are unhashable")
 
 
 class CHAP(Frame):
     """Chapter"""
+
+    element_id: str
+    start_time: int = 0
+    end_time: int = 0
+    start_offset: int = 0xffffffff
+    end_offset: int = 0xffffffff
+    sub_frames: dict[str, Frame]
 
     _framespec = [
         Latin1TextSpec("element_id"),
@@ -308,10 +354,12 @@ class CHAP(Frame):
     ]
 
     @property
+    @override
     def HashKey(self):
-        return '%s:%s' % (self.FrameID, self.element_id)
+        return f'{self.FrameID}:{self.element_id}'
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: CHAP | object):
         if not isinstance(other, CHAP):
             return False
 
@@ -326,20 +374,26 @@ class CHAP(Frame):
             self.start_offset == other.start_offset and \
             self.end_offset == other.end_offset
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
+    @override
     def _pprint(self):
-        frame_pprint = u""
+        frame_pprint = ""
         for frame in self.sub_frames.values():
             for line in frame.pprint().splitlines():
                 frame_pprint += "\n" + " " * 4 + line
-        return u"%s time=%d..%d offset=%d..%d%s" % (
+        return "%s time=%d..%d offset=%d..%d%s" % (
             self.element_id, self.start_time, self.end_time,
             self.start_offset, self.end_offset, frame_pprint)
 
 
 class CTOC(Frame):
     """Table of contents"""
+
+    element_id: str
+    flags: int = 0
+    child_element_ids: list[str]
+    sub_frames: dict[str, Frame]
 
     _framespec = [
         Latin1TextSpec("element_id"),
@@ -349,12 +403,14 @@ class CTOC(Frame):
     ]
 
     @property
+    @override
     def HashKey(self):
-        return '%s:%s' % (self.FrameID, self.element_id)
+        return f'{self.FrameID}:{self.element_id}'
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: CTOC | object):
         if not isinstance(other, CTOC):
             return False
 
@@ -367,14 +423,15 @@ class CTOC(Frame):
             self.flags == other.flags and \
             self.child_element_ids == other.child_element_ids
 
+    @override
     def _pprint(self):
-        frame_pprint = u""
+        frame_pprint = ""
         if getattr(self, "sub_frames", None):
             frame_pprint += "\n" + "\n".join(
                 [" " * 4 + f.pprint() for f in self.sub_frames.values()])
-        return u"%s flags=%d child_element_ids=%s%s" % (
+        return "%s flags=%d child_element_ids=%s%s" % (
             self.element_id, int(self.flags),
-            u",".join(self.child_element_ids), frame_pprint)
+            ",".join(self.child_element_ids), frame_pprint)
 
 
 class TextFrame(Frame):
@@ -392,43 +449,49 @@ class TextFrame(Frame):
     encodings, just set it to 3.
     """
 
+    encoding: int = Encoding.UTF16
+    text: list[str] = []
+
     _framespec = [
         EncodingSpec('encoding', default=Encoding.UTF16),
-        MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000', default=[]),
+        MultiSpec('text', EncodedTextSpec('text'), sep='\u0000', default=[]),
     ]
 
     def __bytes__(self):
         return str(self).encode('utf-8')
 
+    @override
     def __str__(self):
-        return u'\u0000'.join(self.text)
+        return '\u0000'.join(self.text)
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: bytes | str | object):
         if isinstance(other, bytes):
             return bytes(self) == other
         elif isinstance(other, str):
             return str(self) == other
         return self.text == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: int):
         return self.text[item]
 
     def __iter__(self):
         return iter(self.text)
 
-    def append(self, value):
+    def append(self, value: str):
         """Append a string."""
 
         return self.text.append(value)
 
-    def extend(self, value):
+    def extend(self, value: Sequence[str]):
         """Extend the list by appending all strings from the given list."""
 
         return self.text.extend(value)
 
-    def _merge_frame(self, other):
+    @override
+    def _merge_frame(self, other: TextFrame) -> TextFrame:
         # merge in new values
         for val in other[:]:
             if val not in self:
@@ -436,6 +499,7 @@ class TextFrame(Frame):
                 self.encoding = max(self.encoding, other.encoding)
         return self
 
+    @override
     def _pprint(self):
         return " / ".join(self.text)
 
@@ -451,7 +515,7 @@ class NumericTextFrame(TextFrame):
 
     _framespec = [
         EncodingSpec('encoding', default=Encoding.UTF16),
-        MultiSpec('text', EncodedNumericTextSpec('text'), sep=u'\u0000',
+        MultiSpec('text', EncodedNumericTextSpec('text'), sep='\u0000',
                   default=[]),
     ]
 
@@ -472,7 +536,7 @@ class NumericPartTextFrame(TextFrame):
 
     _framespec = [
         EncodingSpec('encoding', default=Encoding.UTF16),
-        MultiSpec('text', EncodedNumericPartTextSpec('text'), sep=u'\u0000',
+        MultiSpec('text', EncodedNumericPartTextSpec('text'), sep='\u0000',
                   default=[]),
     ]
 
@@ -487,19 +551,24 @@ class TimeStampTextFrame(TextFrame):
     objects, not a list of strings.
     """
 
+    text: list[ID3TimeStamp] = []
+
     _framespec = [
         EncodingSpec('encoding', default=Encoding.UTF16),
-        MultiSpec('text', TimeStampSpec('stamp'), sep=u',', default=[]),
+        MultiSpec('text', TimeStampSpec('stamp'), sep=',', default=[]),
     ]
 
+    @override
     def __bytes__(self):
         return str(self).encode('utf-8')
 
+    @override
     def __str__(self):
-        return u','.join([stamp.text for stamp in self.text])
+        return ','.join([stamp.text for stamp in self.text])
 
+    @override
     def _pprint(self):
-        return u" / ".join([stamp.text for stamp in self.text])
+        return " / ".join([stamp.text for stamp in self.text])
 
 
 class UrlFrame(Frame):
@@ -514,30 +583,36 @@ class UrlFrame(Frame):
     ASCII.
     """
 
-    _framespec: Sequence[Spec] = [
+    _framespec = [
         Latin1TextSpec('url'),
     ]
+    url: str
 
     def __bytes__(self):
         return self.url.encode('utf-8')
 
+    @override
     def __str__(self):
         return self.url
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.url == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
-    def _pprint(self):
+
+    @override
+    def _pprint(self)-> str:
         return self.url
 
 
 class UrlFrameU(UrlFrame):
 
     @property
+    @override
     def HashKey(self):
-        return '%s:%s' % (self.FrameID, self.url)
+        return f'{self.FrameID}:{self.url}'
 
 
 class TALB(TextFrame):
@@ -562,8 +637,10 @@ class TCON(TextFrame):
     from mutagen._constants import GENRES
     GENRES = GENRES
 
-    def __get_genres(self):
-        genres = []
+    text: list[str]
+
+    def __get_genres(self) -> list[str]:
+        genres: list[str] = []
         import re
         genre_re = re.compile(r"((?:\((?P<id>[0-9]+|RX|CR)\))*)(?P<str>.+)?")
         for value in self.text:
@@ -572,13 +649,13 @@ class TCON(TextFrame):
                 try:
                     genres.append(self.GENRES[int(value)])
                 except IndexError:
-                    genres.append(u"Unknown")
+                    genres.append("Unknown")
             elif value == "CR":
-                genres.append(u"Cover")
+                genres.append("Cover")
             elif value == "RX":
-                genres.append(u"Remix")
+                genres.append("Remix")
             elif value:
-                newgenres = []
+                newgenres: list[str] = []
                 genreid, dummy, genrename = genre_re.match(value).groups()
 
                 if genreid:
@@ -587,11 +664,11 @@ class TCON(TextFrame):
                             gid = str(self.GENRES[int(gid)])
                             newgenres.append(gid)
                         elif gid == "CR":
-                            newgenres.append(u"Cover")
+                            newgenres.append("Cover")
                         elif gid == "RX":
-                            newgenres.append(u"Remix")
+                            newgenres.append("Remix")
                         else:
-                            newgenres.append(u"Unknown")
+                            newgenres.append("Unknown")
 
                 if genrename:
                     # "Unescaping" the first parenthesis
@@ -604,22 +681,29 @@ class TCON(TextFrame):
 
         return genres
 
-    def __set_genres(self, genres):
+    def __set_genres(self, genres: list[str] | str):
         if isinstance(genres, str):
             genres = [genres]
         self.text = [self.__decode(g) for g in genres]
 
-    def __decode(self, value):
+    def __decode(self, value: str):
         if isinstance(value, bytes):
             enc = EncodedTextSpec._encodings[self.encoding][0]
             return value.decode(enc)
         else:
             return value
 
-    genres = property(__get_genres, __set_genres, None,
-                      "A list of genres parsed from the raw text data.")
+    @property
+    def genres(self) -> list[str]:
+        """A list of genres parsed from the raw text data."""
+        return self.__get_genres()
 
-    def _pprint(self):
+    @genres.setter
+    def genres(self, value: list[str] | str):
+        self.__set_genres(value)
+
+    @override
+    def _pprint(self) -> str:
         return " / ".join(self.genres)
 
 
@@ -863,18 +947,24 @@ class TXXX(TextFrame):
     the same). Many taggers use this frame to store freeform keys.
     """
 
+    encoding: int
+    desc: str
+    text: list[str] = []
+
     _framespec = [
         EncodingSpec('encoding'),
         EncodedTextSpec('desc'),
-        MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000', default=[]),
+        MultiSpec('text', EncodedTextSpec('text'), sep='\u0000', default=[]),
     ]
 
     @property
-    def HashKey(self):
-        return '%s:%s' % (self.FrameID, self.desc)
+    @override
+    def HashKey(self) -> str:
+        return f'{self.FrameID}:{self.desc}'
 
+    @override
     def _pprint(self):
-        return "%s=%s" % (self.desc, " / ".join(self.text))
+        return "{}={}".format(self.desc, " / ".join(self.text))
 
 
 class WCOM(UrlFrameU):
@@ -919,6 +1009,10 @@ class WXXX(UrlFrame):
     Like TXXX, this has a freeform description associated with it.
     """
 
+    encoding: int = Encoding.UTF16
+    desc: str
+    url: str
+
     _framespec = [
         EncodingSpec('encoding', default=Encoding.UTF16),
         EncodedTextSpec('desc'),
@@ -926,8 +1020,9 @@ class WXXX(UrlFrame):
     ]
 
     @property
+    @override
     def HashKey(self):
-        return '%s:%s' % (self.FrameID, self.desc)
+        return f'{self.FrameID}:{self.desc}'
 
 
 class PairedTextFrame(Frame):
@@ -942,6 +1037,9 @@ class PairedTextFrame(Frame):
     Like text frames, these frames also have an encoding attribute.
     """
 
+    encoding: int = Encoding.UTF16
+    people: list[list[str]] = []
+
     _framespec = [
         EncodingSpec('encoding', default=Encoding.UTF16),
         MultiSpec('people',
@@ -949,10 +1047,11 @@ class PairedTextFrame(Frame):
                   EncodedTextSpec('person'), default=[])
     ]
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.people == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
 
 class TIPL(PairedTextFrame):
@@ -973,14 +1072,17 @@ class BinaryFrame(Frame):
     The 'data' attribute contains the raw byte string.
     """
 
+    data: bytes
+
     _framespec = [
         BinaryDataSpec('data'),
     ]
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.data == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
 
 class MCDI(BinaryFrame):
@@ -990,15 +1092,19 @@ class MCDI(BinaryFrame):
 class ETCO(Frame):
     """Event timing codes."""
 
+    format: int = 1
+    events: list[tuple[int, int]] = []
+
     _framespec = [
         ByteSpec("format", default=1),
         KeyEventSpec("events", default=[]),
     ]
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.events == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
 
 class MLLT(Frame):
@@ -1007,6 +1113,13 @@ class MLLT(Frame):
     This frame's attributes may be changed in the future based on
     feedback from real-world use.
     """
+
+    frames: int = 0
+    bytes: int = 0
+    milliseconds: int = 0
+    bits_for_bytes: int = 0
+    bits_for_milliseconds: int = 0
+    data: bytes
 
     _framespec = [
         SizedIntegerSpec('frames', size=2, default=0),
@@ -1017,10 +1130,11 @@ class MLLT(Frame):
         BinaryDataSpec('data'),
     ]
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.data == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
 
 class SYTC(Frame):
@@ -1030,15 +1144,19 @@ class SYTC(Frame):
     feedback from real-world use.
     """
 
+    format: int = 1
+    data: bytes
+
     _framespec = [
         ByteSpec("format", default=1),
         BinaryDataSpec("data"),
     ]
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.data == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
 
 class USLT(Frame):
@@ -1048,38 +1166,54 @@ class USLT(Frame):
     description ('desc'), and a block of plain text ('text').
     """
 
+    encoding: int = Encoding.UTF16
+    lang: str = "XXX"
+    desc: str
+    text: str
+
     _framespec = [
         EncodingSpec('encoding', default=Encoding.UTF16),
-        StringSpec('lang', length=3, default=u"XXX"),
+        StringSpec('lang', length=3, default="XXX"),
         EncodedTextSpec('desc'),
         EncodedTextSpec('text'),
     ]
 
     @property
+    @override
     def HashKey(self):
-        return '%s:%s:%s' % (self.FrameID, self.desc, self.lang)
+        return f'{self.FrameID}:{self.desc}:{self.lang}'
 
     def __bytes__(self):
         return self.text.encode('utf-8')
 
+    @override
     def __str__(self):
         return self.text
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.text == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
+    @override
     def _pprint(self):
-        return "%s=%s=%s" % (self.desc, self.lang, self.text)
+        return f"{self.desc}={self.lang}={self.text}"
 
 
 class SYLT(Frame):
     """Synchronised lyrics/text."""
 
+    encoding: int
+    lang: str = "XXX"
+    format: int = 1
+    type: int = 0
+    desc: str
+    text: list[tuple[str, int]]
+
     _framespec = [
         EncodingSpec('encoding'),
-        StringSpec('lang', length=3, default=u"XXX"),
+        StringSpec('lang', length=3, default="XXX"),
         ByteSpec('format', default=1),
         ByteSpec('type', default=0),
         EncodedTextSpec('desc'),
@@ -1087,20 +1221,24 @@ class SYLT(Frame):
     ]
 
     @property
+    @override
     def HashKey(self):
-        return '%s:%s:%s' % (self.FrameID, self.desc, self.lang)
+        return f'{self.FrameID}:{self.desc}:{self.lang}'
 
+    @override
     def _pprint(self):
         return str(self)
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return str(self) == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
+    @override
     def __str__(self):
         unit = 'fr' if self.format == 1 else 'ms'
-        return u"\n".join("[{0}{1}]: {2}".format(time, unit, text)
+        return "\n".join(f"[{time}{unit}]: {text}"
                           for (text, time) in self.text)
 
     def __bytes__(self):
@@ -1114,19 +1252,26 @@ class COMM(TextFrame):
     letter ISO language code in the 'lang' attribute.
     """
 
+    encoding: int
+    lang: str = "XXX"
+    desc: str
+    text: list[str] = []
+
     _framespec = [
         EncodingSpec('encoding'),
         StringSpec('lang', length=3, default="XXX"),
         EncodedTextSpec('desc'),
-        MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000', default=[]),
+        MultiSpec('text', EncodedTextSpec('text'), sep='\u0000', default=[]),
     ]
 
     @property
+    @override
     def HashKey(self):
-        return '%s:%s:%s' % (self.FrameID, self.desc, self.lang)
+        return f'{self.FrameID}:{self.desc}:{self.lang}'
 
+    @override
     def _pprint(self):
-        return "%s=%s=%s" % (self.desc, self.lang, " / ".join(self.text))
+        return "{}={}={}".format(self.desc, self.lang, " / ".join(self.text))
 
 
 class RVA2(Frame):
@@ -1146,6 +1291,11 @@ class RVA2(Frame):
     'track' on channel 1.
     """
 
+    desc: str
+    channel: int = 1
+    gain: float = 1
+    peak: float = 1
+
     _framespec = [
         Latin1TextSpec('desc'),
         ChannelSpec('channel', default=1),
@@ -1153,16 +1303,20 @@ class RVA2(Frame):
         VolumePeakSpec('peak', default=1),
     ]
 
-    _channels = ["Other", "Master volume", "Front right", "Front left",
+    _channels: list[str] = ["Other", "Master volume", "Front right", "Front left",
                  "Back right", "Back left", "Front centre", "Back centre",
                  "Subwoofer"]
 
     @property
+    @override
     def HashKey(self):
-        return '%s:%s' % (self.FrameID, self.desc)
+        return f'{self.FrameID}:{self.desc}'
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         try:
+            if not isinstance(other, RVA2):
+                return False
             return ((str(self) == other) or
                     (self.desc == other.desc and
                      self.channel == other.channel and
@@ -1171,11 +1325,11 @@ class RVA2(Frame):
         except AttributeError:
             return False
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
+    @override
     def __str__(self):
-        return "%s: %+0.4f dB/%0.4f" % (
-            self._channels[self.channel], self.gain, self.peak)
+        return f"{self._channels[self.channel]}: {self.gain:+0.4f} dB/{self.peak:0.4f}"
 
 
 class EQU2(Frame):
@@ -1187,32 +1341,41 @@ class EQU2(Frame):
     adjustments -- list of (frequency, vol_adjustment) pairs
     """
 
+    method: int = 0
+    desc: str
+    adjustments: list[tuple[int, float]] = []
+
     _framespec = [
         ByteSpec("method", default=0),
         Latin1TextSpec("desc"),
         VolumeAdjustmentsSpec("adjustments", default=[]),
     ]
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.adjustments == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
     @property
+    @override
     def HashKey(self):
-        return '%s:%s' % (self.FrameID, self.desc)
+        return f'{self.FrameID}:{self.desc}'
 
 
 class RVAD(Frame):
     """Relative volume adjustment"""
 
+    adjustments: list[object]
+
     _framespec = [
         RVASpec("adjustments", stereo_only=False),
     ]
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         if not isinstance(other, RVAD):
             return False
         return self.adjustments == other.adjustments
@@ -1223,6 +1386,17 @@ class RVAD(Frame):
 
 class RVRB(Frame):
     """Reverb."""
+
+    left: int = 0
+    right: int = 0
+    bounce_left: int = 0
+    bounce_right: int = 0
+    feedback_ltl: int = 0
+    feedback_ltr: int = 0
+    feedback_rtr: int = 0
+    feedback_rtl: int = 0
+    premix_ltr: int = 0
+    premix_rtl: int = 0
 
     _framespec = [
         SizedIntegerSpec('left', size=2, default=0),
@@ -1237,10 +1411,11 @@ class RVRB(Frame):
         ByteSpec('premix_rtl', default=0),
     ]
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return (self.left, self.right) == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
 
 class APIC(Frame):
@@ -1257,6 +1432,13 @@ class APIC(Frame):
       multiple `APIC` frames with the same description
     """
 
+    encoding: int
+    mime: str
+    type: PictureType
+    desc: str
+    data: bytes
+    salt: str = ''
+
     _framespec = [
         EncodingSpec('encoding'),
         Latin1TextSpec('mime'),
@@ -1265,28 +1447,29 @@ class APIC(Frame):
         BinaryDataSpec('data'),
     ]
 
-    salt = u''
-
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.data == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
     @property
+    @override
     def HashKey(self):
-        return '%s:%s%s' % (self.FrameID, self.desc, self.salt)
+        return f'{self.FrameID}:{self.desc}{self.salt}'
 
-    def _merge_frame(self, other):
-        other.salt += u' '
+    @override
+    def _merge_frame(self, other: APIC) -> APIC:
+        other.salt += ' '
         return other
 
+    @override
     def _pprint(self):
         type_desc = str(self.type)
         if hasattr(self.type, "_pprint"):
             type_desc = self.type._pprint()
 
-        return "%s, %s (%s, %d bytes)" % (
-            type_desc, self.desc, self.mime, len(self.data))
+        return f"{type_desc}, {self.desc} ({self.mime}, {len(self.data)} bytes)"
 
 
 class PCNT(Frame):
@@ -1298,18 +1481,22 @@ class PCNT(Frame):
     This frame is basically obsoleted by POPM.
     """
 
+    count: int = 0
+
     _framespec = [
         IntegerSpec('count', default=0),
     ]
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.count == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
     def __pos__(self):
         return self.count
 
+    @override
     def _pprint(self):
         return str(self.count)
 
@@ -1317,18 +1504,22 @@ class PCNT(Frame):
 class PCST(Frame):
     """iTunes Podcast Flag"""
 
+    value: int = 0
+
     _framespec = [
         IntegerSpec('value', default=0),
     ]
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.value == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
     def __pos__(self):
         return self.value
 
+    @override
     def _pprint(self):
         return str(self.value)
 
@@ -1346,29 +1537,36 @@ class POPM(Frame):
     * count -- number of times the files has been played (optional)
     """
 
+    email: str
+    rating: int = 0
+    count: int | None
+
     _framespec = [
         Latin1TextSpec('email'),
         ByteSpec('rating', default=0),
     ]
 
-    _optionalspec = [
+    _optionalspec: Sequence[Spec] = [
         IntegerSpec('count', default=0),
     ]
 
     @property
+    @override
     def HashKey(self):
-        return '%s:%s' % (self.FrameID, self.email)
+        return f'{self.FrameID}:{self.email}'
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.rating == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
     def __pos__(self):
         return self.rating
 
+    @override
     def _pprint(self):
-        return "%s=%r %r/255" % (
+        return "{}={!r} {!r}/255".format(
             self.email, getattr(self, 'count', None), self.rating)
 
 
@@ -1386,6 +1584,12 @@ class GEOB(Frame):
     * data -- raw data, as a byte string
     """
 
+    encoding: int
+    mime: str
+    filename: str
+    desc: str
+    data: bytes
+
     _framespec = [
         EncodingSpec('encoding'),
         Latin1TextSpec('mime'),
@@ -1395,13 +1599,15 @@ class GEOB(Frame):
     ]
 
     @property
+    @override
     def HashKey(self):
-        return '%s:%s' % (self.FrameID, self.desc)
+        return f'{self.FrameID}:{self.desc}'
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.data == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
 
 class RBUF(Frame):
@@ -1416,19 +1622,24 @@ class RBUF(Frame):
     Mutagen will not find the next tag itself.
     """
 
+    size: int = 0
+    info: int | None
+    offset: int | None
+
     _framespec = [
         SizedIntegerSpec('size', size=3, default=0),
     ]
 
-    _optionalspec = [
+    _optionalspec: Sequence[Spec] = [
         ByteSpec('info', default=0),
         SizedIntegerSpec('offset', size=4, default=0),
     ]
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.size == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
     def __pos__(self):
         return self.size
@@ -1447,6 +1658,11 @@ class AENC(Frame):
     Mutagen cannot decrypt files.
     """
 
+    owner: str
+    preview_start: int = 0
+    preview_length: int = 0
+    data: bytes | None
+
     _framespec = [
         Latin1TextSpec('owner'),
         SizedIntegerSpec('preview_start', size=2, default=0),
@@ -1455,8 +1671,9 @@ class AENC(Frame):
     ]
 
     @property
+    @override
     def HashKey(self):
-        return '%s:%s' % (self.FrameID, self.owner)
+        return f'{self.FrameID}:{self.owner}'
 
     def __bytes__(self):
         return self.owner.encode('utf-8')
@@ -1464,10 +1681,11 @@ class AENC(Frame):
     def __str__(self):
         return self.owner
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.owner == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
 
 class LINK(Frame):
@@ -1480,6 +1698,10 @@ class LINK(Frame):
     * data -- further ID information for the frame
     """
 
+    frameid: str
+    url: str
+    data: bytes
+
     _framespec = [
         FrameIDSpec('frameid', length=4),
         Latin1TextSpec('url'),
@@ -1487,14 +1709,15 @@ class LINK(Frame):
     ]
 
     @property
+    @override
     def HashKey(self):
-        return "%s:%s:%s:%s" % (
-            self.FrameID, self.frameid, self.url, _bytes2key(self.data))
+        return f"{self.FrameID}:{self.frameid}:{self.url}:{_bytes2key(self.data)}"
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return (self.frameid, self.url, self.data) == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
 
 class POSS(Frame):
@@ -1506,6 +1729,9 @@ class POSS(Frame):
     * position -- current position of the file
     """
 
+    format: int = 1
+    position: int = 0
+
     _framespec = [
         ByteSpec('format', default=1),
         IntegerSpec('position', default=0),
@@ -1514,10 +1740,11 @@ class POSS(Frame):
     def __pos__(self):
         return self.position
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.position == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
 
 class UFID(Frame):
@@ -1529,25 +1756,31 @@ class UFID(Frame):
     * data -- identifier
     """
 
+    owner: str
+    data: bytes
+
     _framespec = [
         Latin1TextSpec('owner'),
         BinaryDataSpec('data'),
     ]
 
     @property
+    @override
     def HashKey(self):
-        return '%s:%s' % (self.FrameID, self.owner)
+        return f'{self.FrameID}:{self.owner}'
 
-    def __eq__(s, o):
+    @override
+    def __eq__(self, o: object):
         if isinstance(o, UFI):
-            return s.owner == o.owner and s.data == o.data
+            return self.owner == o.owner and self.data == o.data
         else:
-            return s.data == o
+            return self.data == o
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
+    @override
     def _pprint(self):
-        return "%s=%r" % (self.owner, self.data)
+        return f"{self.owner}={self.data!r}"
 
 
 class USER(Frame):
@@ -1560,79 +1793,106 @@ class USER(Frame):
     * text -- licensing terms for the audio
     """
 
+    encoding: int
+    lang: str = "XXX"
+    text: str
+
     _framespec = [
         EncodingSpec('encoding'),
-        StringSpec('lang', length=3, default=u"XXX"),
+        StringSpec('lang', length=3, default="XXX"),
         EncodedTextSpec('text'),
     ]
 
     @property
+    @override
     def HashKey(self):
-        return '%s:%s' % (self.FrameID, self.lang)
+        return f'{self.FrameID}:{self.lang}'
 
     def __bytes__(self):
         return self.text.encode('utf-8')
 
+    @override
     def __str__(self):
         return self.text
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.text == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
+    @override
     def _pprint(self):
-        return "%r=%s" % (self.lang, self.text)
+        return f"{self.lang!r}={self.text}"
 
 
 class OWNE(Frame):
     """Ownership frame."""
+    encoding: int
+    price: str
+    date: str = "19700101"
+    seller: str
 
     _framespec = [
         EncodingSpec('encoding'),
         Latin1TextSpec('price'),
-        StringSpec('date', length=8, default=u"19700101"),
+        StringSpec('date', length=8, default="19700101"),
         EncodedTextSpec('seller'),
     ]
 
     def __bytes__(self):
         return self.seller.encode('utf-8')
 
+    @override
     def __str__(self):
         return self.seller
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.seller == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
 
 class COMR(Frame):
     """Commercial frame."""
 
+    encoding: int
+    price: str
+    valid_until: str = "19700101"
+    contact: str
+    format: int = 0
+    seller: str
+    desc: str
+
+    mime: str | None
+    logo: bytes | None
+
     _framespec = [
         EncodingSpec('encoding'),
         Latin1TextSpec('price'),
-        StringSpec('valid_until', length=8, default=u"19700101"),
+        StringSpec('valid_until', length=8, default="19700101"),
         Latin1TextSpec('contact'),
         ByteSpec('format', default=0),
         EncodedTextSpec('seller'),
         EncodedTextSpec('desc'),
     ]
 
-    _optionalspec = [
+    _optionalspec: Sequence[Spec] = [
         Latin1TextSpec('mime'),
         BinaryDataSpec('logo'),
     ]
 
     @property
+    @override
     def HashKey(self):
-        return '%s:%s' % (self.FrameID, _bytes2key(self._writeData()))
+        return f'{self.FrameID}:{_bytes2key(self._writeData())}'
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object) -> bool:
         return self._writeData() == other._writeData()
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
 
 class ENCR(Frame):
@@ -1642,6 +1902,10 @@ class ENCR(Frame):
     or the same method. Mutagen only verifies that the owner is unique.
     """
 
+    owner: str
+    method: int = 0x80
+    data: bytes
+
     _framespec = [
         Latin1TextSpec('owner'),
         ByteSpec('method', default=0x80),
@@ -1649,20 +1913,26 @@ class ENCR(Frame):
     ]
 
     @property
+    @override
     def HashKey(self):
-        return "%s:%s" % (self.FrameID, self.owner)
+        return f"{self.FrameID}:{self.owner}"
 
     def __bytes__(self):
         return self.data
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.data == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
 
 class GRID(Frame):
     """Group identification registration."""
+
+    owner: str
+    group: int = 0x80
+    data: bytes
 
     _framespec = [
         Latin1TextSpec('owner'),
@@ -1671,8 +1941,9 @@ class GRID(Frame):
     ]
 
     @property
+    @override
     def HashKey(self):
-        return '%s:%s' % (self.FrameID, self.group)
+        return f'{self.FrameID}:{self.group}'
 
     def __pos__(self):
         return self.group
@@ -1680,17 +1951,22 @@ class GRID(Frame):
     def __bytes__(self):
         return self.owner.encode('utf-8')
 
+    @override
     def __str__(self):
         return self.owner
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.owner == other or self.group == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
 
 class PRIV(Frame):
     """Private frame."""
+
+    owner: str
+    data: bytes
 
     _framespec = [
         Latin1TextSpec('owner'),
@@ -1698,24 +1974,29 @@ class PRIV(Frame):
     ]
 
     @property
+    @override
     def HashKey(self):
-        return '%s:%s:%s' % (
-            self.FrameID, self.owner, _bytes2key(self.data))
+        return f'{self.FrameID}:{self.owner}:{_bytes2key(self.data)}'
 
     def __bytes__(self):
         return self.data
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.data == other
 
+    @override
     def _pprint(self):
-        return "%s=%r" % (self.owner, self.data)
+        return f"{self.owner}={self.data!r}"
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
 
 class SIGN(Frame):
     """Signature frame."""
+
+    group: int = 0x80
+    sig: bytes
 
     _framespec = [
         ByteSpec('group', default=0x80),
@@ -1723,16 +2004,18 @@ class SIGN(Frame):
     ]
 
     @property
+    @override
     def HashKey(self):
-        return '%s:%s:%s' % (self.FrameID, self.group, _bytes2key(self.sig))
+        return f'{self.FrameID}:{self.group}:{_bytes2key(self.sig)}'
 
     def __bytes__(self):
         return self.sig
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.sig == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
 
 class SEEK(Frame):
@@ -1741,6 +2024,8 @@ class SEEK(Frame):
     Mutagen does not find tags at seek offsets.
     """
 
+    offset: int = 0
+
     _framespec = [
         IntegerSpec('offset', default=0),
     ]
@@ -1748,10 +2033,11 @@ class SEEK(Frame):
     def __pos__(self):
         return self.offset
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.offset == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
 
 class ASPI(Frame):
@@ -1761,6 +2047,12 @@ class ASPI(Frame):
     the ID3v2.4 specification. Fi is a list of integers.
     """
 
+    S: int = 0
+    L: int = 0
+    N: int = 0
+    b: int = 0
+    Fi: list[int] = []
+
     _framespec = [
         SizedIntegerSpec("S", size=4, default=0),
         SizedIntegerSpec("L", size=4, default=0),
@@ -1769,10 +2061,11 @@ class ASPI(Frame):
         ASPIIndexSpec("Fi", default=[]),
     ]
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.Fi == other
 
-    __hash__ = Frame.__hash__
+    __hash__: Final = Frame.__hash__
 
 
 # ID3v2.2 frames
@@ -2011,11 +2304,14 @@ class COM(COMM):
 class RVA(RVAD):
     "Relative volume adjustment"
 
+    adjustments: list[object]
+
     _framespec = [
         RVASpec("adjustments", stereo_only=True),
     ]
 
-    def _to_other(self, other):
+    @override
+    def _to_other(self, other: object):
         if not isinstance(other, RVAD):
             raise TypeError
 
@@ -2035,6 +2331,12 @@ class PIC(APIC):
     'PNG' or 'JPG'.
     """
 
+    encoding: int
+    mime: str = "JPG"
+    type: PictureType
+    desc: str
+    data: bytes
+
     _framespec = [
         EncodingSpec('encoding'),
         StringSpec('mime', length=3, default="JPG"),
@@ -2043,7 +2345,8 @@ class PIC(APIC):
         BinaryDataSpec('data'),
     ]
 
-    def _to_other(self, other):
+    @override
+    def _to_other(self, other: object):
         if not isinstance(other, APIC):
             raise TypeError
 
@@ -2073,15 +2376,21 @@ class BUF(RBUF):
 class CRM(Frame):
     """Encrypted meta frame"""
 
+    owner: str
+    desc: str
+    data: bytes
+
     _framespec = [
         Latin1TextSpec('owner'),
         Latin1TextSpec('desc'),
         BinaryDataSpec('data'),
     ]
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         return self.data == other
-    __hash__ = Frame.__hash__
+
+    __hash__: Final = Frame.__hash__
 
 
 class CRA(AENC):
@@ -2091,13 +2400,18 @@ class CRA(AENC):
 class LNK(LINK):
     """Linked information"""
 
+    frameid: str
+    url: str
+    data: bytes
+
     _framespec = [
         FrameIDSpec('frameid', length=3),
         Latin1TextSpec('url'),
         BinaryDataSpec('data'),
     ]
 
-    def _to_other(self, other):
+    @override
+    def _to_other(self, other: object):
         if not isinstance(other, LINK):
             raise TypeError
 
@@ -2116,11 +2430,11 @@ class LNK(LINK):
         other.data = self.data
 
 
-Frames = {}
+Frames: dict[str, type[Frame]] = {}
 """All supported ID3v2.3/4 frames, keyed by frame name."""
 
 
-Frames_2_2 = {}
+Frames_2_2: dict[str, type[Frame]] = {}
 """All supported ID3v2.2 frames, keyed by frame name."""
 
 

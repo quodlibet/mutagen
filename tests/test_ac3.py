@@ -1,10 +1,9 @@
 
-import os
 import io
+import os
 
 from mutagen.ac3 import AC3, AC3Error
-
-from tests import TestCase, DATA_DIR
+from tests import DATA_DIR, TestCase
 
 
 class TAC3(TestCase):
@@ -14,31 +13,31 @@ class TAC3(TestCase):
         self.eac3 = AC3(os.path.join(DATA_DIR, "silence-44-s.eac3"))
 
     def test_channels(self):
-        self.failUnlessEqual(self.ac3.info.channels, 2)
-        self.failUnlessEqual(self.eac3.info.channels, 2)
+        self.assertEqual(self.ac3.info.channels, 2)
+        self.assertEqual(self.eac3.info.channels, 2)
 
     def test_bitrate(self):
-        self.failUnlessEqual(self.ac3.info.bitrate, 192000)
-        self.failUnlessAlmostEqual(self.eac3.info.bitrate, 192000, delta=500)
+        self.assertEqual(self.ac3.info.bitrate, 192000)
+        self.assertAlmostEqual(self.eac3.info.bitrate, 192000, delta=500)
 
     def test_sample_rate(self):
-        self.failUnlessEqual(self.ac3.info.sample_rate, 44100)
-        self.failUnlessEqual(self.eac3.info.sample_rate, 44100)
+        self.assertEqual(self.ac3.info.sample_rate, 44100)
+        self.assertEqual(self.eac3.info.sample_rate, 44100)
 
     def test_length(self):
-        self.failUnlessAlmostEqual(self.ac3.info.length, 3.70, delta=0.009)
-        self.failUnlessAlmostEqual(self.eac3.info.length, 3.70, delta=0.009)
+        self.assertAlmostEqual(self.ac3.info.length, 3.70, delta=0.009)
+        self.assertAlmostEqual(self.eac3.info.length, 3.70, delta=0.009)
 
     def test_type(self):
-        self.failUnlessEqual(self.ac3.info.codec, "ac-3")
-        self.failUnlessEqual(self.eac3.info.codec, "ec-3")
+        self.assertEqual(self.ac3.info.codec, "ac-3")
+        self.assertEqual(self.eac3.info.codec, "ec-3")
 
     def test_not_my_file(self):
-        self.failUnlessRaises(
+        self.assertRaises(
             AC3Error, AC3,
             os.path.join(DATA_DIR, "empty.ogg"))
 
-        self.failUnlessRaises(
+        self.assertRaises(
             AC3Error, AC3,
             os.path.join(DATA_DIR, "silence-44-s.mp3"))
 

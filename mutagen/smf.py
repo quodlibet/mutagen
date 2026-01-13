@@ -8,43 +8,46 @@
 """Standard MIDI File (SMF)"""
 
 import struct
-from typing import Tuple
+from io import BytesIO
+from typing import cast, final, override
 
-from mutagen import StreamInfo, MutagenError
+from mutagen import MutagenError, StreamInfo
 from mutagen._file import FileType
-from mutagen._util import loadfile, endswith
+from mutagen._filething import FileThing
+from mutagen._util import endswith, loadfile
 
 
 class SMFError(MutagenError):
     pass
 
 
-def _var_int(data: bytearray, offset: int = 0) -> Tuple[int, int]:
+def _var_int(data: bytearray, offset: int = 0) -> tuple[int, int]:
     val = 0
     while 1:
         try:
             x = data[offset]
         except IndexError:
-            raise SMFError("Not enough data")
+            raise SMFError("Not enough data") from IndexError
         offset += 1
         val = (val << 7) + (x & 0x7F)
         if not (x & 0x80):
             return val, offset
+    raise AssertionError("unreachable")
 
-
-def _read_track(chunk):
+def _read_track(chunkb: bytes):
     """Returns a list of midi events and tempo change events"""
 
-    TEMPO, MIDI = range(2)
+    TEMPO = 0
+    MIDI = 1
 
     # Deviations: The running status should be reset on non midi events, but
     # some files contain meta events in between.
     # TODO: Offset and time signature are not considered.
 
-    tempos = []
-    events = []
+    tempos: list[tuple[int, int, int]] = []
+    events: list[tuple[int, int, int]] = []
 
-    chunk = bytearray(chunk)
+    chunk = bytearray(chunkb)
     deltasum = 0
     status = 0
     off = 0
@@ -62,7 +65,7 @@ def _read_track(chunk):
                 data = chunk[off:off + num]
                 if len(data) != 3:
                     raise SMFError
-                tempo = struct.unpack(">I", b"\x00" + bytes(data))[0]
+                tempo = cast(int, struct.unpack(">I", b"\x00" + bytes(data))[0])
                 tempos.append((deltasum, TEMPO, tempo))
             off += num
         elif event_type in (0xF0, 0xF7):
@@ -87,16 +90,17 @@ def _read_track(chunk):
     return events, tempos
 
 
-def _read_midi_length(fileobj):
+def _read_midi_length(fileobj: BytesIO) -> float:
     """Returns the duration in seconds. Can raise all kind of errors..."""
 
-    TEMPO, MIDI = range(2)
+    TEMPO = 0
+    MIDI = 1  # noqa: F841  # pyright: ignore[reportUnusedVariable]
 
-    def read_chunk(fileobj):
+    def read_chunk(fileobj: BytesIO) -> tuple[bytes, bytes]:
         info = fileobj.read(8)
         if len(info) != 8:
             raise SMFError("truncated")
-        chunklen = struct.unpack(">I", info[4:])[0]
+        chunklen = cast(int, struct.unpack(">I", info[4:])[0])
         data = fileobj.read(chunklen)
         if len(data) != chunklen:
             raise SMFError("truncated")
@@ -109,9 +113,9 @@ def _read_midi_length(fileobj):
     if len(chunk) != 6:
         raise SMFError("truncated")
 
-    format_, ntracks, tickdiv = struct.unpack(">HHH", chunk)
+    format_, ntracks, tickdiv = cast(tuple[int, int, int], struct.unpack(">HHH", chunk))
     if format_ > 1:
-        raise SMFError("Not supported format %d" % format_)
+        raise SMFError(f"Not supported format {format_}")
 
     if tickdiv >> 15:
         # fps = (-(tickdiv >> 8)) & 0xFF
@@ -120,9 +124,9 @@ def _read_midi_length(fileobj):
         raise SMFError("Not supported timing interval")
 
     # get a list of events and tempo changes for each track
-    tracks = []
+    tracks: list[list[tuple[int, int, int]]] = []
     first_tempos = None
-    for tracknum in range(ntracks):
+    for _tracknum in range(ntracks):
         identifier, chunk = read_chunk(fileobj)
         if identifier != b"MTrk":
             continue
@@ -137,12 +141,12 @@ def _read_midi_length(fileobj):
         tracks.append(events)
 
     # calculate the duration of each track
-    durations = []
+    durations: list[float] = []
     for events in tracks:
         tempo = 500000
-        parts = []
+        parts: list[tuple[int, int]] = []
         deltasum = 0
-        for (dummy, type_, data) in events:
+        for (_dummy, type_, data) in events:
             if type_ == TEMPO:
                 parts.append((deltasum, tempo))
                 tempo = data
@@ -151,7 +155,7 @@ def _read_midi_length(fileobj):
                 deltasum += data
         parts.append((deltasum, tempo))
 
-        duration = 0
+        duration = 0.0
         for (deltasum, tempo) in parts:
             quarter, tpq = deltasum / float(tickdiv), tempo
             duration += (quarter * tpq)
@@ -162,7 +166,7 @@ def _read_midi_length(fileobj):
     # return the longest one
     return max(durations)
 
-
+@final
 class SMFInfo(StreamInfo):
     """SMFInfo()
 
@@ -171,15 +175,18 @@ class SMFInfo(StreamInfo):
 
     """
 
-    def __init__(self, fileobj):
+    length: float
+
+    def __init__(self, fileobj: BytesIO):
         """Raises SMFError"""
 
         self.length = _read_midi_length(fileobj)
 
+    @override
     def pprint(self):
-        return u"SMF, %.2f seconds" % self.length
+        return f"SMF, {self.length:.2f} seconds"
 
-
+@final
 class SMF(FileType):
     """SMF(filething)
 
@@ -190,20 +197,25 @@ class SMF(FileType):
         tags: `None`
     """
 
-    _mimes = ["audio/midi", "audio/x-midi"]
+    _mimes: list[str] = ["audio/midi", "audio/x-midi"]
+
+    info: SMFInfo
+    tags = None
 
     @loadfile()
-    def load(self, filething):
+    def load(self, filething: FileThing):
         try:
             self.info = SMFInfo(filething.fileobj)
-        except IOError as e:
-            raise SMFError(e)
+        except OSError as e:
+            raise SMFError(e) from e
 
+    @override
     def add_tags(self):
         raise SMFError("doesn't support tags")
 
     @staticmethod
-    def score(filename, fileobj, header):
+    @override
+    def score(filename: str, fileobj: BytesIO, header: bytes):
         filename = filename.lower()
         return header.startswith(b"MThd") and (
             endswith(filename, ".mid") or endswith(filename, ".midi"))

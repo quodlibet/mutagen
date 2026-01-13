@@ -16,9 +16,12 @@ True Audio files use ID3 tags.
 
 __all__ = ["TrueAudio", "Open", "delete", "EasyTrueAudio"]
 
+from io import BytesIO
+from typing import final, override
+
 from mutagen import StreamInfo
+from mutagen._util import MutagenError, cdata, convert_error, endswith
 from mutagen.id3 import ID3FileType, delete
-from mutagen._util import cdata, MutagenError, convert_error, endswith
 
 
 class error(MutagenError):
@@ -28,7 +31,7 @@ class error(MutagenError):
 class TrueAudioHeaderError(error):
     pass
 
-
+@final
 class TrueAudioInfo(StreamInfo):
     """TrueAudioInfo()
 
@@ -40,10 +43,10 @@ class TrueAudioInfo(StreamInfo):
     """
 
     @convert_error(IOError, TrueAudioHeaderError)
-    def __init__(self, fileobj, offset):
+    def __init__(self, fileobj: BytesIO, offset: int):
         """Raises TrueAudioHeaderError"""
 
-        fileobj.seek(offset or 0)
+        _ = fileobj.seek(offset or 0)
         header = fileobj.read(18)
         if len(header) != 18 or not header.startswith(b"TTA"):
             raise TrueAudioHeaderError("TTA header not found")
@@ -53,8 +56,9 @@ class TrueAudioInfo(StreamInfo):
         if self.sample_rate != 0:
             self.length = float(samples) / self.sample_rate
 
+    @override
     def pprint(self):
-        return u"True Audio, %.2f seconds, %d Hz." % (
+        return "True Audio, %.2f seconds, %d Hz." % (
             self.length, self.sample_rate)
 
 
@@ -72,11 +76,12 @@ class TrueAudio(ID3FileType):
         tags (`mutagen.id3.ID3`)
     """
 
-    _Info = TrueAudioInfo
-    _mimes = ["audio/x-tta"]
+    _Info: type[StreamInfo] = TrueAudioInfo
+    _mimes: list[str] = ["audio/x-tta"]
 
     @staticmethod
-    def score(filename, fileobj, header):
+    @override
+    def score(filename: str, fileobj: BytesIO, header: bytes) -> int:
         return (header.startswith(b"ID3") + header.startswith(b"TTA") +
                 endswith(filename.lower(), b".tta") * 2)
 

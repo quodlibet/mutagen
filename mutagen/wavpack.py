@@ -18,9 +18,12 @@ for more information.
 
 __all__ = ["WavPack", "Open", "delete"]
 
+from io import BytesIO
+from typing import final, override
+
 from mutagen import StreamInfo
-from mutagen.apev2 import APEv2File, error, delete
 from mutagen._util import cdata, convert_error
+from mutagen.apev2 import APEv2File, delete, error
 
 
 class WavPackHeaderError(error):
@@ -30,10 +33,19 @@ RATES = [6000, 8000, 9600, 11025, 12000, 16000, 22050, 24000, 32000, 44100,
          48000, 64000, 88200, 96000, 192000]
 
 
-class _WavPackHeader(object):
+@final
+class _WavPackHeader:
 
-    def __init__(self, block_size, version, track_no, index_no, total_samples,
-                 block_index, block_samples, flags, crc):
+    def __init__(self,
+                 block_size: int,
+                 version: int,
+                 track_no: int,
+                 index_no: int,
+                 total_samples: int,
+                 block_index: int,
+                 block_samples: int,
+                 flags: int,
+                 crc: int):
 
         self.block_size = block_size
         self.version = version
@@ -47,12 +59,12 @@ class _WavPackHeader(object):
 
     @classmethod
     @convert_error(IOError, WavPackHeaderError)
-    def from_fileobj(cls, fileobj):
+    def from_fileobj(cls, fileobj: BytesIO) -> '_WavPackHeader':
         """A new _WavPackHeader or raises WavPackHeaderError"""
 
         header = fileobj.read(32)
         if len(header) != 32 or not header.startswith(b"wvpk"):
-            raise WavPackHeaderError("not a WavPack header: %r" % header)
+            raise WavPackHeaderError(f"not a WavPack header: {header!r}")
 
         block_size = cdata.uint_le(header[4:8])
         version = cdata.ushort_le(header[8:10])
@@ -69,7 +81,7 @@ class _WavPackHeader(object):
         return _WavPackHeader(block_size, version, track_no, index_no,
                               samples, block_index, block_samples, flags, crc)
 
-
+@final
 class WavPackInfo(StreamInfo):
     """WavPack stream information.
 
@@ -81,11 +93,17 @@ class WavPackInfo(StreamInfo):
         version (int): WavPack stream version
     """
 
-    def __init__(self, fileobj):
+    channels: int
+    length: float
+    sample_rate: int
+    bits_per_sample: int
+    version: int
+
+    def __init__(self, fileobj: BytesIO):
         try:
             header = _WavPackHeader.from_fileobj(fileobj)
         except WavPackHeaderError:
-            raise WavPackHeaderError("not a WavPack file")
+            raise WavPackHeaderError("not a WavPack file") from None
 
         self.version = header.version
         self.channels = bool(header.flags & 4) or 2
@@ -103,7 +121,7 @@ class WavPackInfo(StreamInfo):
             # last.block_index + last.block_samples - initial.block_index
             samples = header.block_samples
             while 1:
-                fileobj.seek(header.block_size - 32 + 8, 1)
+                _ = fileobj.seek(header.block_size - 32 + 8, 1)
                 try:
                     header = _WavPackHeader.from_fileobj(fileobj)
                 except WavPackHeaderError:
@@ -114,11 +132,11 @@ class WavPackInfo(StreamInfo):
 
         self.length = float(samples) / self.sample_rate
 
+    @override
     def pprint(self):
-        return u"WavPack, %.2f seconds, %d Hz" % (self.length,
-                                                  self.sample_rate)
+        return f"WavePack, {self.length:.2f} seconds, {self.sample_rate} Hz"
 
-
+@final
 class WavPack(APEv2File):
     """WavPack(filething)
 
@@ -129,11 +147,12 @@ class WavPack(APEv2File):
         info (`WavPackInfo`)
     """
 
-    _Info = WavPackInfo
+    _Info: type[StreamInfo] = WavPackInfo
     _mimes = ["audio/x-wavpack"]
 
     @staticmethod
-    def score(filename, fileobj, header):
+    @override
+    def score(filename: str, fileobj: BytesIO, header: bytes):
         return header.startswith(b"wvpk") * 2
 
 
