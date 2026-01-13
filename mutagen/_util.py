@@ -11,43 +11,48 @@ You should not rely on the interfaces here being stable. They are
 intended for internal use in Mutagen only.
 """
 
-import sys
-import struct
 import codecs
-import errno
 import decimal
-from io import BytesIO
-from typing import Tuple, List
-
-from collections import namedtuple
+import errno
+import struct
+from collections.abc import Callable, Generator, Iterator
 from contextlib import contextmanager
-from functools import wraps
 from fnmatch import fnmatchcase
+from functools import total_ordering, wraps
+from io import BytesIO
+from types import TracebackType
+from typing import (
+    Any,
+    Final,
+    Literal,
+    NoReturn,
+    cast,
+    final,
+    override,
+)
 
+from ._filething import FileThing
 
 _DEFAULT_BUFFER_SIZE = 2 ** 20
 
 
-def endswith(text, end):
+def endswith(text: str | bytes, end: str | bytes) -> bool:
     # useful for paths which can be both, str and bytes
     if isinstance(text, str):
         if not isinstance(end, str):
-            end = end.decode("ascii")
+            end = bytes(end).decode("ascii")
+        return text.endswith(end)
     else:
         if not isinstance(end, bytes):
-            end = end.encode("ascii")
-    return text.endswith(end)
+            end = str(end).encode("ascii")
+        return str(text).endswith(str(end))
 
 
-def reraise(tp, value, tb):
-    raise tp(value).with_traceback(tb)
-
-
-def bchr(x):
+def bchr(x: int) -> bytes:
     return bytes([x])
 
 
-def iterbytes(b):
+def iterbytes(b: bytes) -> Iterator[bytes]:
     return (bytes([v]) for v in b)
 
 
@@ -60,7 +65,7 @@ def intround(value: float) -> int:
         value).to_integral_value(decimal.ROUND_HALF_EVEN))
 
 
-def is_fileobj(fileobj) -> bool:
+def is_fileobj(fileobj: object) -> bool:
     """Returns:
         bool: if an argument passed ot mutagen should be treated as a
             file object
@@ -70,7 +75,7 @@ def is_fileobj(fileobj) -> bool:
                 hasattr(fileobj, "__fspath__"))
 
 
-def verify_fileobj(fileobj, writable=False):
+def verify_fileobj(fileobj: BytesIO, writable: bool = False) -> None:
     """Verifies that the passed fileobj is a file like object which
     we can use.
 
@@ -84,25 +89,25 @@ def verify_fileobj(fileobj, writable=False):
 
     try:
         data = fileobj.read(0)
-    except Exception:
+    except Exception as e:
         if not hasattr(fileobj, "read"):
-            raise ValueError("%r not a valid file object" % fileobj)
-        raise ValueError("Can't read from file object %r" % fileobj)
+            raise ValueError(f"{fileobj!r} not a valid file object") from e
+        raise ValueError(f"Can't read from file object {fileobj!r}") from e
 
-    if not isinstance(data, bytes):
+    if not isinstance(data, bytes):  # pyright: ignore[reportUnnecessaryIsInstance]
         raise ValueError(
-            "file object %r not opened in binary mode" % fileobj)
+            f"file object {fileobj!r} not opened in binary mode")
 
     if writable:
         try:
-            fileobj.write(b"")
-        except Exception:
+            _ = fileobj.write(b"")
+        except Exception as e:
             if not hasattr(fileobj, "write"):
-                raise ValueError("%r not a valid file object" % fileobj)
-            raise ValueError("Can't write to file object %r" % fileobj)
+                raise ValueError(f"{fileobj!r} not a valid file object") from e
+            raise ValueError(f"Can't write to file object {fileobj!r}") from e
 
 
-def verify_filename(filename):
+def verify_filename(filename: object) -> None:
     """Checks of the passed in filename has the correct type.
 
     Raises:
@@ -110,19 +115,18 @@ def verify_filename(filename):
     """
 
     if is_fileobj(filename):
-        raise ValueError("%r not a filename" % filename)
+        raise ValueError(f"{filename!r} not a filename")
 
 
-def fileobj_name(fileobj):
+def fileobj_name(fileobj: BytesIO) -> str:
     """
     Returns:
         text: A potential filename for a file object. Always a valid
             path type, but might be empty or non-existent.
     """
 
-    value = getattr(fileobj, "name", u"")
-    if not isinstance(value, (str, bytes)):
-        value = str(value)
+    value = getattr(fileobj, "name", "")
+    value = str(value)
     return value
 
 
@@ -168,39 +172,33 @@ def loadfile(method=True, writable=False, create=False):
     return wrap
 
 
-def convert_error(exc_src, exc_dest):
-    """A decorator for reraising exceptions with a different type.
-    Mostly useful for IOError.
-
-    Args:
-        exc_src (type): The source exception type
-        exc_dest (type): The target exception type.
+def convert_error[**P, R](
+    src: type[BaseException] | tuple[type[BaseException], ...],
+    dest: type[BaseException]
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    """
+    Decorator to catch specific source exceptions and re-raise them as a
+    destination exception type using modern exception chaining.
     """
 
-    def wrap(func):
-
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             try:
                 return func(*args, **kwargs)
-            except exc_dest:
+            except dest:
                 raise
-            except exc_src as err:
-                reraise(exc_dest, err, sys.exc_info()[2])
-
+            except src as err:
+                # Raise the new error, linking the original as the 'cause'
+                raise dest(str(err)) from err
         return wrapper
-
-    return wrap
-
-
-FileThing = namedtuple("FileThing", ["fileobj", "filename", "name"])
-"""filename is None if the source is not a filename. name is a filename which
-can be used for file type detection
-"""
+    return decorator
 
 
 @contextmanager
-def _openfile(instance, filething, filename, fileobj, writable, create):
+def _openfile(instance: object | None, filething: FileThing | str | None,
+              filename: str | bytes | None, fileobj: BytesIO | None,
+              writable: bool, create: bool) -> Generator[FileThing, None, None]:
     """yields a FileThing
 
     Args:
@@ -249,7 +247,7 @@ def _openfile(instance, filething, filename, fileobj, writable, create):
         inmemory_fileobj = False
         try:
             fileobj = open(filename, "rb+" if writable else "rb")
-        except IOError as e:
+        except OSError as e:
             if writable and e.errno == errno.EOPNOTSUPP:
                 # Some file systems (gvfs over fuse) don't support opening
                 # files read/write. To make things still work read the whole
@@ -259,18 +257,19 @@ def _openfile(instance, filething, filename, fileobj, writable, create):
                 try:
                     with open(filename, "rb") as fileobj:
                         fileobj = BytesIO(fileobj.read())
-                except IOError as e2:
-                    raise MutagenError(e2)
+                except OSError as e2:
+                    raise MutagenError(e2) from e2
                 inmemory_fileobj = True
             elif create and e.errno == errno.ENOENT:
                 assert writable
                 try:
                     fileobj = open(filename, "wb+")
-                except IOError as e2:
-                    raise MutagenError(e2)
+                except OSError as e2:
+                    raise MutagenError(e2) from e2
             else:
-                raise MutagenError(e)
+                raise MutagenError(e) from e
 
+        assert fileobj is not None
         with fileobj as fileobj:
             yield FileThing(fileobj, filename, filename)
 
@@ -279,9 +278,9 @@ def _openfile(instance, filething, filename, fileobj, writable, create):
                 data = fileobj.getvalue()
                 try:
                     with open(filename, "wb") as fileobj:
-                        fileobj.write(data)
-                except IOError as e:
-                    raise MutagenError(e)
+                        _ = fileobj.write(data)
+                except OSError as e:
+                    raise MutagenError(e) from e
     else:
         raise TypeError("Missing filename or fileobj argument")
 
@@ -295,142 +294,20 @@ class MutagenError(Exception):
     __module__ = "mutagen"
 
 
-def total_ordering(cls):
-    """Adds all possible ordering methods to a class.
-
-    Needs a working __eq__ and __lt__ and will supply the rest.
-    """
-
-    assert "__eq__" in cls.__dict__
-    assert "__lt__" in cls.__dict__
-
-    cls.__le__ = lambda self, other: self == other or self < other
-    cls.__gt__ = lambda self, other: not (self == other or self < other)
-    cls.__ge__ = lambda self, other: not self < other
-    cls.__ne__ = lambda self, other: not self.__eq__(other)
-
-    return cls
-
-
-def hashable(cls):
+def hashable[C: type[Any]](cls: C) -> C:
     """Makes sure the class is hashable.
 
-    Needs a working __eq__ and __hash__ and will add a __ne__.
+    Needs a working __eq__ and __hash__.
     """
 
     assert cls.__dict__["__hash__"] is not None
     assert "__eq__" in cls.__dict__
 
-    cls.__ne__ = lambda self, other: not self.__eq__(other)
-
     return cls
 
 
-def enum(cls):
-    """A decorator for creating an int enum class.
-
-    Makes the values a subclass of the type and implements repr/str.
-    The new class will be a subclass of int.
-
-    Args:
-        cls (type): The class to convert to an enum
-
-    Returns:
-        type: A new class
-
-    ::
-
-        @enum
-        class Foo(object):
-            FOO = 1
-            BAR = 2
-    """
-
-    assert cls.__bases__ == (object,)
-
-    d = dict(cls.__dict__)
-    new_type = type(cls.__name__, (int,), d)
-    new_type.__module__ = cls.__module__
-
-    map_ = {}
-    for key, value in d.items():
-        if key.upper() == key and isinstance(value, int):
-            value_instance = new_type(value)
-            setattr(new_type, key, value_instance)
-            map_[value] = key
-
-    def str_(self):
-        if self in map_:
-            return "%s.%s" % (type(self).__name__, map_[self])
-        return "%d" % int(self)
-
-    def repr_(self):
-        if self in map_:
-            return "<%s.%s: %d>" % (type(self).__name__, map_[self], int(self))
-        return "%d" % int(self)
-
-    setattr(new_type, "__repr__", repr_)
-    setattr(new_type, "__str__", str_)
-
-    return new_type
-
-
-def flags(cls):
-    """A decorator for creating an int flags class.
-
-    Makes the values a subclass of the type and implements repr/str.
-    The new class will be a subclass of int.
-
-    Args:
-        cls (type): The class to convert to an flags
-
-    Returns:
-        type: A new class
-
-    ::
-
-        @flags
-        class Foo(object):
-            FOO = 1
-            BAR = 2
-    """
-
-    assert cls.__bases__ == (object,)
-
-    d = dict(cls.__dict__)
-    new_type = type(cls.__name__, (int,), d)
-    new_type.__module__ = cls.__module__
-
-    map_ = {}
-    for key, value in d.items():
-        if key.upper() == key and isinstance(value, int):
-            value_instance = new_type(value)
-            setattr(new_type, key, value_instance)
-            map_[value] = key
-
-    def str_(self):
-        value = int(self)
-        matches = []
-        for k, v in map_.items():
-            if value & k:
-                matches.append("%s.%s" % (type(self).__name__, v))
-                value &= ~k
-        if value != 0 or not matches:
-            matches.append(str(value))
-
-        return " | ".join(matches)
-
-    def repr_(self):
-        return "<%s: %d>" % (str(self), int(self))
-
-    setattr(new_type, "__repr__", repr_)
-    setattr(new_type, "__str__", str_)
-
-    return new_type
-
-
 @total_ordering
-class DictMixin(object):
+class DictMixin:
     """Implement the dict API using keys() and __*item__ methods.
 
     Similar to UserDict.DictMixin, this takes a class that defines
@@ -456,7 +333,7 @@ class DictMixin(object):
         else:
             return True
 
-    __contains__ = __has_key
+    __contains__: Final = __has_key
 
     def values(self):
         return [self[k] for k in self.keys()]
@@ -464,11 +341,11 @@ class DictMixin(object):
     def items(self):
         return list(zip(self.keys(), self.values()))
 
-    def clear(self):
+    def clear(self) -> None:
         for key in list(self.keys()):
             self.__delitem__(key)
 
-    def pop(self, key, *args):
+    def pop(self, key: str, *args):
         if len(args) > 1:
             raise TypeError("pop takes at most two arguments")
         try:
@@ -488,7 +365,7 @@ class DictMixin(object):
             raise KeyError("dictionary is empty")
         return key, self.pop(key)
 
-    def update(self, other=None, **kwargs):
+    def update(self, other: dict[Any, Any] | None = None, **kwargs) -> None:
         if other is None:
             self.update(kwargs)
             other = {}
@@ -513,90 +390,43 @@ class DictMixin(object):
         except KeyError:
             return default
 
-    def __repr__(self):
+    @override
+    def __repr__(self) -> str:
         return repr(dict(self.items()))
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object) -> bool:
         return dict(self.items()) == other
 
-    def __lt__(self, other):
+    def __lt__(self, other: object) -> bool:
         return dict(self.items()) < other
 
-    __hash__ = object.__hash__
+    __hash__: Final = object.__hash__
 
     def __len__(self):
         return len(self.keys())
 
 
-class DictProxy(DictMixin):
-    def __init__(self, *args, **kwargs):
-        self.__dict = {}
-        super(DictProxy, self).__init__(*args, **kwargs)
+class DictProxy[K,V](DictMixin):
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        self.__dict: dict[K, V] = {}
+        super().__init__(*args, **kwargs)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: K) -> V:
         return self.__dict[key]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: K, value: V) -> None:
         self.__dict[key] = value
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: K) -> None:
         del self.__dict[key]
 
     def keys(self):
         return self.__dict.keys()
 
 
-def _fill_cdata(cls):
-    """Add struct pack/unpack functions"""
-
-    funcs = {}
-    for key, name in [("b", "char"), ("h", "short"),
-                      ("i", "int"), ("q", "longlong")]:
-        for echar, esuffix in [("<", "le"), (">", "be")]:
-            esuffix = "_" + esuffix
-            for unsigned in [True, False]:
-                s = struct.Struct(echar + (key.upper() if unsigned else key))
-                get_wrapper = lambda f: lambda *a, **k: f(*a, **k)[0]
-                unpack = get_wrapper(s.unpack)
-                unpack_from = get_wrapper(s.unpack_from)
-
-                def get_unpack_from(s):
-                    def unpack_from(data, offset=0):
-                        return s.unpack_from(data, offset)[0], offset + s.size
-                    return unpack_from
-
-                unpack_from = get_unpack_from(s)
-                pack = s.pack
-
-                prefix = "u" if unsigned else ""
-                if s.size == 1:
-                    esuffix = ""
-                bits = str(s.size * 8)
-
-                if unsigned:
-                    max_ = 2 ** (s.size * 8) - 1
-                    min_ = 0
-                else:
-                    max_ = 2 ** (s.size * 8 - 1) - 1
-                    min_ = - 2 ** (s.size * 8 - 1)
-
-                funcs["%s%s_min" % (prefix, name)] = min_
-                funcs["%s%s_max" % (prefix, name)] = max_
-                funcs["%sint%s_min" % (prefix, bits)] = min_
-                funcs["%sint%s_max" % (prefix, bits)] = max_
-
-                funcs["%s%s%s" % (prefix, name, esuffix)] = unpack
-                funcs["%sint%s%s" % (prefix, bits, esuffix)] = unpack
-                funcs["%s%s%s_from" % (prefix, name, esuffix)] = unpack_from
-                funcs["%sint%s%s_from" % (prefix, bits, esuffix)] = unpack_from
-                funcs["to_%s%s%s" % (prefix, name, esuffix)] = pack
-                funcs["to_%sint%s%s" % (prefix, bits, esuffix)] = pack
-
-    for key, func in funcs.items():
-        setattr(cls, key, staticmethod(func))
-
-
-class cdata(object):
+@final
+class cdata:
     """C character buffer to Python numeric type conversions.
 
     For each size/sign/endianness:
@@ -605,17 +435,237 @@ class cdata(object):
 
     error = struct.error
 
-    bitswap = b''.join(
-        bchr(sum(((val >> i) & 1) << (7 - i) for i in range(8)))
-        for val in range(256))
+    # =========================================================================
+    # Constants (Min/Max)
+    # =========================================================================
+    char_min: Literal[-128] = -128
+    char_max: Literal[127] = 127
+    u_char_min: Literal[0] = 0
+    u_char_max: Literal[255] = 255
+    int8_min: Literal[-128] = -128
+    int8_max: Literal[127] = 127
+    uint8_min: Literal[0] = 0
+    uint8_max: Literal[255] = 255
 
-    test_bit = staticmethod(lambda value, n: bool((value >> n) & 1))
+    short_min: Literal[-32768] = -32768
+    short_max: Literal[32767] = 32767
+    ushort_min: Literal[0] = 0
+    ushort_max: Literal[65535] = 65535
+    int16_min: Literal[-32768] = -32768
+    int16_max: Literal[32767] = 32767
+    uint16_min: Literal[0] = 0
+    uint16_max: Literal[65535] = 65535
+
+    int_min: Literal[-2147483648] = -2147483648
+    int_max: Literal[2147483647] = 2147483647
+    uint_min: Literal[0] = 0
+    uint_max: Literal[4294967295] = 4294967295
+    int32_min: Literal[-2147483648] = -2147483648
+    int32_max: Literal[2147483647] = 2147483647
+    uint32_min: Literal[0] = 0
+    uint32_max: Literal[4294967295] = 4294967295
+
+    longlong_min: Literal[-9223372036854775808] = -9223372036854775808
+    longlong_max: Literal[9223372036854775807] = 9223372036854775807
+    ulonglong_min: Literal[0] = 0
+    ulonglong_max: Literal[18446744073709551615] = 18446744073709551615
+    int64_min: Literal[-9223372036854775808] = -9223372036854775808
+    int64_max: Literal[9223372036854775807] = 9223372036854775807
+    uint64_min: Literal[0] = 0
+    uint64_max: Literal[18446744073709551615] = 18446744073709551615
 
 
-_fill_cdata(cdata)
+    # =========================================================================
+    # 8-bit (Char)
+    # =========================================================================
+    @staticmethod
+    def int8(data: bytes) -> int: return cast(int, struct.unpack('b', data)[0])
+    @staticmethod
+    def int8_from(data: bytes, offset: int = 0) -> tuple[int, int]: return struct.unpack_from('b', data, offset)[0], offset + 1
+    @staticmethod
+    def to_int8(data: int) -> bytes: return struct.pack('b', data)
+    @staticmethod
+    def uint8(data: bytes) -> int: return cast(int, struct.unpack('B', data)[0])
+    @staticmethod
+    def uint8_from(data: bytes, offset: int = 0) -> tuple[int, int]: return struct.unpack_from('B', data, offset)[0], offset + 1
+    @staticmethod
+    def to_uint8(data: int) -> bytes: return struct.pack('B', data)
+
+    # Aliases for 8-bit
+    char = int8
+    char_from = int8_from
+    to_char = to_int8
+    uchar = uint8
+    uchar_from = uint8_from
+    to_uchar = to_uint8
+
+    # =========================================================================
+    # 16-bit (Short)
+    # =========================================================================
+    @staticmethod
+    def int16_le(data: bytes) -> int: return cast(int, struct.unpack('<h', data)[0])
+
+    @staticmethod
+    def int16_le_from(data: bytes, offset: int = 0) -> tuple[int, int]: return struct.unpack_from('<h', data, offset)[0], offset + 2
+
+    @staticmethod
+    def to_int16_le(data: int) -> bytes: return struct.pack('<h', data)
+
+    @staticmethod
+    def int16_be(data: bytes) -> int: return cast(int, struct.unpack('>h', data)[0])
+
+    @staticmethod
+    def int16_be_from(data: bytes, offset: int = 0) -> tuple[int, int]: return struct.unpack_from('>h', data, offset)[0], offset + 2
+
+    @staticmethod
+    def to_int16_be(data: int) -> bytes: return struct.pack('>h', data)
+
+    @staticmethod
+    def uint16_le(data: bytes) -> int: return cast(int, struct.unpack('<H', data)[0])
+
+    @staticmethod
+    def uint16_le_from(data: bytes, offset: int = 0) -> tuple[int, int]: return struct.unpack_from('<H', data, offset)[0], offset + 2
+
+    @staticmethod
+    def to_uint16_le(data: int) -> bytes: return struct.pack('<H', data)
+
+    @staticmethod
+    def uint16_be(data: bytes) -> int: return cast(int, struct.unpack('>H', data)[0])
+
+    @staticmethod
+    def uint16_be_from(data: bytes, offset: int = 0) -> tuple[int, int]: return struct.unpack_from('>H', data, offset)[0], offset + 2
+
+    @staticmethod
+    def to_uint16_be(data: int) -> bytes: return struct.pack('>H', data)
+
+    # Aliases for 16-bit
+    short_le = int16_le
+    short_le_from = int16_le_from
+    to_short_le = to_int16_le
+    short_be = int16_be
+    short_be_from = int16_be_from
+    to_short_be = to_int16_be
+    ushort_le = uint16_le
+    ushort_le_from = uint16_le_from
+    to_ushort_le = to_uint16_le
+    ushort_be = uint16_be
+    ushort_be_from = uint16_be_from
+    to_ushort_be = to_uint16_be
+
+    # =========================================================================
+    # 32-bit (Int)
+    # =========================================================================
+    @staticmethod
+    def int32_le(data: bytes) -> int: return cast(int, struct.unpack('<i', data)[0])
+
+    @staticmethod
+    def int32_le_from(data: bytes, offset: int = 0) -> tuple[int, int]: return struct.unpack_from('<i', data, offset)[0], offset + 4
+
+    @staticmethod
+    def to_int32_le(data: int) -> bytes: return struct.pack('<i', data)
+
+    @staticmethod
+    def int32_be(data: bytes) -> int: return cast(int, struct.unpack('>i', data)[0])
+
+    @staticmethod
+    def int32_be_from(data: bytes, offset: int = 0) -> tuple[int, int]: return struct.unpack_from('>i', data, offset)[0], offset + 4
+
+    @staticmethod
+    def to_int32_be(data: int) -> bytes: return struct.pack('>i', data)
+
+    @staticmethod
+    def uint32_le(data: bytes) -> int: return cast(int, struct.unpack('<I', data)[0])
+
+    @staticmethod
+    def uint32_le_from(data: bytes, offset: int = 0) -> tuple[int, int]: return struct.unpack_from('<I', data, offset)[0], offset + 4
+
+    @staticmethod
+    def to_uint32_le(data: int) -> bytes: return struct.pack('<I', data)
+
+    @staticmethod
+    def uint32_be(data: bytes) -> int: return cast(int, struct.unpack('>I', data)[0])
+
+    @staticmethod
+    def uint32_be_from(data: bytes, offset: int = 0) -> tuple[int, int]: return struct.unpack_from('>I', data, offset)[0], offset + 4
+
+    @staticmethod
+    def to_uint32_be(data: int) -> bytes: return struct.pack('>I', data)
+
+    # Aliases for 32-bit
+    int_le = int32_le
+    int_le_from = int32_le_from
+    to_int_le = to_int32_le
+    int_be = int32_be
+    int_be_from = int32_be_from
+    to_int_be = to_int32_be
+    uint_le = uint32_le
+    uint_le_from = uint32_le_from
+    to_uint_le = to_uint32_le
+    uint_be = uint32_be
+    uint_be_from = uint32_be_from
+    to_uint_be = to_uint32_be
+
+    # =========================================================================
+    # 64-bit (LongLong)
+    # =========================================================================
+    @staticmethod
+    def int64_le(data: bytes) -> int: return cast(int, struct.unpack('<q', data)[0])
+
+    @staticmethod
+    def int64_le_from(data: bytes, offset: int = 0) -> tuple[int, int]: return struct.unpack_from('<q', data, offset)[0], offset + 8
+
+    @staticmethod
+    def to_int64_le(data: int) -> bytes: return struct.pack('<q', data)
+
+    @staticmethod
+    def int64_be(data: bytes) -> int: return cast(int, struct.unpack('>q', data)[0])
+
+    @staticmethod
+    def int64_be_from(data: bytes, offset: int = 0) -> tuple[int, int]: return struct.unpack_from('>q', data, offset)[0], offset + 8
+
+    @staticmethod
+    def to_int64_be(data: int) -> bytes: return struct.pack('>q', data)
+
+    @staticmethod
+    def uint64_le(data: bytes) -> int: return cast(int, struct.unpack('<Q', data)[0])
+
+    @staticmethod
+    def uint64_le_from(data: bytes, offset: int = 0) -> tuple[int, int]: return struct.unpack_from('<Q', data, offset)[0], offset + 8
+
+    @staticmethod
+    def to_uint64_le(data: int) -> bytes: return struct.pack('<Q', data)
+
+    @staticmethod
+    def uint64_be(data: bytes) -> int: return cast(int, struct.unpack('>Q', data)[0])
+
+    @staticmethod
+    def uint64_be_from(data: bytes, offset: int = 0) -> tuple[int, int]: return struct.unpack_from('>Q', data, offset)[0], offset + 8
+
+    @staticmethod
+    def to_uint64_be(data: int) -> bytes: return struct.pack('>Q', data)
+
+    # Aliases for 64-bit
+    longlong_le = int64_le
+    longlong_le_from = int64_le_from
+    to_longlong_le = to_int64_le
+    longlong_be = int64_be
+    longlong_be_from = int64_be_from
+    to_longlong_be = to_int64_be
+    ulonglong_le = uint64_le
+    ulonglong_le_from = uint64_le_from
+    to_ulonglong_le = to_uint64_le
+    ulonglong_be = uint64_be
+    ulonglong_be_from = uint64_be_from
+    to_ulonglong_be = to_uint64_be
+
+    bitswap: str = ''.join([chr(sum([((val >> i) & 1) << (7-i) for i in range(8)]))
+                       for val in range(256)])
+
+    @staticmethod
+    def test_bit(value: int, n: int) -> bool: return bool((value >> n) & 1)
 
 
-def get_size(fileobj) -> int:
+def get_size(fileobj: BytesIO) -> int:
     """Returns the size of the file.
     The position when passed in will be preserved if no error occurs.
 
@@ -629,13 +679,13 @@ def get_size(fileobj) -> int:
 
     old_pos = fileobj.tell()
     try:
-        fileobj.seek(0, 2)
+        _ = fileobj.seek(0, 2)
         return fileobj.tell()
     finally:
-        fileobj.seek(old_pos, 0)
+        _ = fileobj.seek(old_pos, 0)
 
 
-def read_full(fileobj, size: int) -> None:
+def read_full(fileobj: BytesIO, size: int) -> bytes:
     """Like fileobj.read but raises IOError if not all requested data is
     returned.
 
@@ -654,11 +704,11 @@ def read_full(fileobj, size: int) -> None:
 
     data = fileobj.read(size)
     if len(data) != size:
-        raise IOError
+        raise OSError
     return data
 
 
-def seek_end(fileobj, offset: int) -> None:
+def seek_end(fileobj: BytesIO, offset: int) -> None:
     """Like fileobj.seek(-offset, 2), but will not try to go beyond the start
 
     Needed since file objects from BytesIO will not raise IOError and
@@ -683,7 +733,8 @@ def seek_end(fileobj, offset: int) -> None:
         fileobj.seek(-offset, 2)
 
 
-def resize_file(fobj, diff: int, BUFFER_SIZE: int = _DEFAULT_BUFFER_SIZE) -> None:
+def resize_file(fobj: BytesIO, diff: int,
+                BUFFER_SIZE: int = _DEFAULT_BUFFER_SIZE) -> None:
     """Resize a file by `diff`.
 
     New space will be filled with zeros.
@@ -695,32 +746,32 @@ def resize_file(fobj, diff: int, BUFFER_SIZE: int = _DEFAULT_BUFFER_SIZE) -> Non
         IOError
     """
 
-    fobj.seek(0, 2)
+    _ = fobj.seek(0, 2)
     filesize = fobj.tell()
 
     if diff < 0:
         if filesize + diff < 0:
             raise ValueError
         # truncate flushes internally
-        fobj.truncate(filesize + diff)
+        _ = fobj.truncate(filesize + diff)
     elif diff > 0:
         try:
             while diff:
                 addsize = min(BUFFER_SIZE, diff)
-                fobj.write(b"\x00" * addsize)
+                _ = fobj.write(b"\x00" * addsize)
                 diff -= addsize
             fobj.flush()
-        except IOError as e:
+        except OSError as e:
             if e.errno == errno.ENOSPC:
                 # To reduce the chance of corrupt files in case of missing
                 # space try to revert the file expansion back. Of course
                 # in reality every in-file-write can also fail due to COW etc.
                 # Note: IOError gets also raised in flush() due to buffering
-                fobj.truncate(filesize)
+                _ = fobj.truncate(filesize)
             raise
 
 
-def move_bytes(fobj, dest: int, src: int, count: int,
+def move_bytes(fobj: BytesIO, dest: int, src: int, count: int,
                BUFFER_SIZE: int = _DEFAULT_BUFFER_SIZE) -> None:
     """Moves data around using read()/write().
 
@@ -737,7 +788,7 @@ def move_bytes(fobj, dest: int, src: int, count: int,
     if dest < 0 or src < 0 or count < 0:
         raise ValueError
 
-    fobj.seek(0, 2)
+    _ = fobj.seek(0, 2)
     filesize = fobj.tell()
 
     if max(dest, src) + count > filesize:
@@ -747,24 +798,24 @@ def move_bytes(fobj, dest: int, src: int, count: int,
         moved = 0
         while count - moved:
             this_move = min(BUFFER_SIZE, count - moved)
-            fobj.seek(src + moved)
+            _ = fobj.seek(src + moved)
             buf = fobj.read(this_move)
-            fobj.seek(dest + moved)
-            fobj.write(buf)
+            _ = fobj.seek(dest + moved)
+            _ = fobj.write(buf)
             moved += this_move
         fobj.flush()
     else:
         while count:
             this_move = min(BUFFER_SIZE, count)
-            fobj.seek(src + count - this_move)
+            _ = fobj.seek(src + count - this_move)
             buf = fobj.read(this_move)
-            fobj.seek(count + dest - this_move)
-            fobj.write(buf)
+            _ = fobj.seek(count + dest - this_move)
+            _ = fobj.write(buf)
             count -= this_move
         fobj.flush()
 
 
-def insert_bytes(fobj, size: int, offset: int,
+def insert_bytes(fobj: BytesIO, size: int, offset: int,
                  BUFFER_SIZE: int = _DEFAULT_BUFFER_SIZE) -> None:
     """Insert size bytes of empty space starting at offset.
 
@@ -782,7 +833,7 @@ def insert_bytes(fobj, size: int, offset: int,
     if size < 0 or offset < 0:
         raise ValueError
 
-    fobj.seek(0, 2)
+    _ = fobj.seek(0, 2)
     filesize = fobj.tell()
     movesize = filesize - offset
 
@@ -793,7 +844,7 @@ def insert_bytes(fobj, size: int, offset: int,
     move_bytes(fobj, offset + size, offset, movesize, BUFFER_SIZE)
 
 
-def delete_bytes(fobj, size: int, offset: int,
+def delete_bytes(fobj: BytesIO, size: int, offset: int,
                  BUFFER_SIZE: int = _DEFAULT_BUFFER_SIZE) -> None:
     """Delete size bytes of empty space starting at offset.
 
@@ -811,7 +862,7 @@ def delete_bytes(fobj, size: int, offset: int,
     if size < 0 or offset < 0:
         raise ValueError
 
-    fobj.seek(0, 2)
+    _ = fobj.seek(0, 2)
     filesize = fobj.tell()
     movesize = filesize - offset - size
 
@@ -822,7 +873,7 @@ def delete_bytes(fobj, size: int, offset: int,
     resize_file(fobj, -size, BUFFER_SIZE)
 
 
-def resize_bytes(fobj, old_size: int, new_size: int, offset: int) -> None:
+def resize_bytes(fobj: BytesIO, old_size: int, new_size: int, offset: int) -> None:
     """Resize an area in a file adding and deleting at the end of it.
     Does nothing if no resizing is needed.
 
@@ -845,7 +896,7 @@ def resize_bytes(fobj, old_size: int, new_size: int, offset: int) -> None:
         insert_bytes(fobj, insert_size, insert_at)
 
 
-def dict_match(d, key, default=None):
+def dict_match[T](d: dict[str, T], key: str, default: T | None = None) -> T | None:
     """Like __getitem__ but works as if the keys() are all filename patterns.
     Returns the value of any dict key that matches the passed key.
 
@@ -902,7 +953,7 @@ def encode_endian(text: str, encoding: str,
 
 
 def decode_terminated(data: bytes, encoding: str,
-                      strict: bool = True) -> Tuple[str, bytes]:
+                      strict: bool = True) -> tuple[str, bytes]:
     """Returns the decoded data until the first NULL terminator
     and all data after it.
 
@@ -942,31 +993,31 @@ def decode_terminated(data: bytes, encoding: str,
 
     # slow path
     decoder = codec_info.incrementaldecoder()
-    r: List[str] = []
+    r: list[str] = []
     for i, b in enumerate(iterbytes(data)):
         c = decoder.decode(b)
-        if c == u"\x00":
-            return u"".join(r), data[i + 1:]
+        if c == "\x00":
+            return "".join(r), data[i + 1:]
         r.append(c)
     else:
         # make sure the decoder is finished
         r.append(decoder.decode(b"", True))
         if strict:
             raise ValueError("not null terminated")
-        return u"".join(r), b""
+        return "".join(r), b""
 
 
 class BitReaderError(Exception):
     pass
 
 
-class BitReader(object):
+class BitReader:
 
-    def __init__(self, fileobj):
-        self._fileobj = fileobj
-        self._buffer = 0
-        self._bits = 0
-        self._pos = fileobj.tell()
+    def __init__(self, fileobj: BytesIO) -> None:
+        self._fileobj: BytesIO = fileobj
+        self._buffer: int = 0
+        self._bits: int = 0
+        self._pos: int = fileobj.tell()
 
     def bits(self, count: int) -> int:
         """Reads `count` bits and returns an uint, MSB read first.
@@ -1019,13 +1070,13 @@ class BitReader(object):
             raise ValueError
 
         if count <= self._bits:
-            self.bits(count)
+            _ = self.bits(count)
         else:
             count -= self.align()
             n_bytes = count // 8
-            self._fileobj.seek(n_bytes, 1)
+            _ = self._fileobj.seek(n_bytes, 1)
             count -= n_bytes * 8
-            self.bits(count)
+            _ = self.bits(count)
 
     def get_position(self) -> int:
         """Returns the amount of bits read or skipped so far"""

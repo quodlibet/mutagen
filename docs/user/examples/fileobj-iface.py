@@ -1,4 +1,4 @@
-class IOInterface(object):
+class IOInterface:
     """This is the interface mutagen expects from custom file-like
     objects.
 

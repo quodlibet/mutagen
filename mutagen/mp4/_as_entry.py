@@ -5,19 +5,23 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
+import contextlib
+from abc import ABC
 from io import BytesIO
+from typing import final
 
-from mutagen.aac import ProgramConfigElement
 from mutagen._util import BitReader, BitReaderError, cdata
-from ._util import parse_full_atom
+from mutagen.aac import ProgramConfigElement
+
 from ._atom import Atom, AtomError
+from ._util import parse_full_atom
 
 
 class ASEntryError(Exception):
     pass
 
 
-class AudioSampleEntry(object):
+class AudioSampleEntry:
     """Parses an AudioSampleEntry atom.
 
     Private API.
@@ -34,17 +38,17 @@ class AudioSampleEntry(object):
     Can raise ASEntryError.
     """
 
-    channels = 0
-    sample_size = 0
-    sample_rate = 0
-    bitrate = 0
-    codec = None
-    codec_description = None
+    channels: int = 0
+    sample_size: int = 0
+    sample_rate: int = 0
+    bitrate: int = 0
+    codec: str
+    codec_description: str | None = None
 
-    def __init__(self, atom, fileobj):
+    def __init__(self, atom: Atom, fileobj: BytesIO):
         ok, data = atom.read(fileobj)
         if not ok:
-            raise ASEntryError("too short %r atom" % atom.name)
+            raise ASEntryError(f"too short {atom.name!r} atom")
 
         fileobj = BytesIO(data)
         r = BitReader(fileobj)
@@ -62,14 +66,14 @@ class AudioSampleEntry(object):
             r.skip(2 * 8)  # reserved
             self.sample_rate = r.bits(32) >> 16
         except BitReaderError as e:
-            raise ASEntryError(e)
+            raise ASEntryError(e) from e
 
         assert r.is_aligned()
 
         try:
             extra = Atom(fileobj)
         except AtomError as e:
-            raise ASEntryError(e)
+            raise ASEntryError(e) from e
 
         self.codec = atom.name.decode("latin-1")
         self.codec_description = None
@@ -84,14 +88,14 @@ class AudioSampleEntry(object):
         if self.codec_description is None:
             self.codec_description = self.codec.upper()
 
-    def _parse_dac3(self, atom, fileobj):
+    def _parse_dac3(self, atom: Atom, fileobj: BytesIO):
         # ETSI TS 102 366
 
         assert atom.name == b"dac3"
 
         ok, data = atom.read(fileobj)
         if not ok:
-            raise ASEntryError("truncated %s atom" % atom.name)
+            raise ASEntryError(f"truncated {atom.name!r} atom")
         fileobj = BytesIO(data)
         r = BitReader(fileobj)
 
@@ -104,18 +108,16 @@ class AudioSampleEntry(object):
             bit_rate_code = r.bits(5)
             r.skip(5)  # reserved
         except BitReaderError as e:
-            raise ASEntryError(e)
+            raise ASEntryError(e) from e
 
         self.channels = [2, 1, 2, 3, 3, 4, 4, 5][acmod] + lfeon
 
-        try:
+        with contextlib.suppress(IndexError):
             self.bitrate = [
                 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192,
                 224, 256, 320, 384, 448, 512, 576, 640][bit_rate_code] * 1000
-        except IndexError:
-            pass
 
-    def _parse_alac(self, atom, fileobj):
+    def _parse_alac(self, atom: Atom, fileobj: BytesIO):
         # https://alac.macosforge.org/trac/browser/trunk/
         #    ALACMagicCookieDescription.txt
 
@@ -123,15 +125,15 @@ class AudioSampleEntry(object):
 
         ok, data = atom.read(fileobj)
         if not ok:
-            raise ASEntryError("truncated %s atom" % atom.name)
+            raise ASEntryError(f"truncated {atom.name!r} atom")
 
         try:
-            version, flags, data = parse_full_atom(data)
+            version, _, data = parse_full_atom(data)
         except ValueError as e:
-            raise ASEntryError(e)
+            raise ASEntryError(e) from e
 
         if version != 0:
-            raise ASEntryError("Unsupported version %d" % version)
+            raise ASEntryError(f"Unsupported version {version}")
 
         fileobj = BytesIO(data)
         r = BitReader(fileobj)
@@ -150,22 +152,22 @@ class AudioSampleEntry(object):
             self.bitrate = r.bits(32)
             self.sample_rate = r.bits(32)
         except BitReaderError as e:
-            raise ASEntryError(e)
+            raise ASEntryError(e) from e
 
-    def _parse_esds(self, esds, fileobj):
+    def _parse_esds(self, esds: Atom, fileobj: BytesIO):
         assert esds.name == b"esds"
 
         ok, data = esds.read(fileobj)
         if not ok:
-            raise ASEntryError("truncated %s atom" % esds.name)
+            raise ASEntryError(f"truncated {esds.name.decode()} atom")
 
         try:
-            version, flags, data = parse_full_atom(data)
+            version, _, data = parse_full_atom(data)
         except ValueError as e:
-            raise ASEntryError(e)
+            raise ASEntryError(e) from e
 
         if version != 0:
-            raise ASEntryError("Unsupported version %d" % version)
+            raise ASEntryError(f"Unsupported version {version}")
 
         fileobj = BytesIO(data)
         r = BitReader(fileobj)
@@ -173,15 +175,15 @@ class AudioSampleEntry(object):
         try:
             tag = r.bits(8)
             if tag != ES_Descriptor.TAG:
-                raise ASEntryError("unexpected descriptor: %d" % tag)
+                raise ASEntryError(f"unexpected descriptor: {tag}")
             assert r.is_aligned()
         except BitReaderError as e:
-            raise ASEntryError(e)
+            raise ASEntryError(e) from e
 
         try:
             decSpecificInfo = ES_Descriptor.parse(fileobj)
         except DescriptorError as e:
-            raise ASEntryError(e)
+            raise ASEntryError(e) from e
         dec_conf_desc = decSpecificInfo.decConfigDescr
 
         self.bitrate = dec_conf_desc.avgBitrate
@@ -201,20 +203,20 @@ class DescriptorError(Exception):
     pass
 
 
-class BaseDescriptor(object):
+class BaseDescriptor(ABC):
 
     TAG: int
 
     @classmethod
-    def _parse_desc_length_file(cls, fileobj):
+    def _parse_desc_length_file(cls, fileobj: BytesIO):
         """May raise ValueError"""
 
         value = 0
-        for i in range(4):
+        for _i in range(4):
             try:
                 b = cdata.uint8(fileobj.read(1))
             except cdata.error as e:
-                raise ValueError(e)
+                raise ValueError(e) from e
             value = (value << 7) | (b & 0x7f)
             if not b >> 7:
                 break
@@ -224,7 +226,7 @@ class BaseDescriptor(object):
         return value
 
     @classmethod
-    def parse(cls, fileobj):
+    def parse(cls, fileobj: BytesIO):
         """Returns a parsed instance of the called type.
         The file position is right after the descriptor after this returns.
 
@@ -234,12 +236,12 @@ class BaseDescriptor(object):
         try:
             length = cls._parse_desc_length_file(fileobj)
         except ValueError as e:
-            raise DescriptorError(e)
+            raise DescriptorError(e) from e
         pos = fileobj.tell()
         instance = cls(fileobj, length)
         left = length - (fileobj.tell() - pos)
         if left > 0:
-            fileobj.seek(left, 1)
+            _ = fileobj.seek(left, 1)
         else:
             # XXX: In case the instance length is shorted than the content
             # assume the size is wrong and just continue parsing
@@ -247,17 +249,27 @@ class BaseDescriptor(object):
             pass
         return instance
 
-
+@final
 class ES_Descriptor(BaseDescriptor):
 
     TAG = 0x3
 
-    def __init__(self, fileobj, length):
+    ES_ID: int
+    streamDependenceFlag: int
+    URL_Flag: int
+    OCRstreamFlag: int
+    streamPriority: int
+    dependsOn_ES_ID: int | None = None
+    URLstring: bytes | None = None
+    OCR_ES_Id: int | None = None
+
+
+    def __init__(self, fileobj: BytesIO, length: int):
         """Raises DescriptorError"""
 
         r = BitReader(fileobj)
         try:
-            self.ES_ID = r.bits(16)
+            self.ES_ID = r.bits(16)  # pyright: ignore[reportConstantRedefinition]
             self.streamDependenceFlag = r.bits(1)
             self.URL_Flag = r.bits(1)
             self.OCRstreamFlag = r.bits(1)
@@ -272,15 +284,15 @@ class ES_Descriptor(BaseDescriptor):
 
             tag = r.bits(8)
         except BitReaderError as e:
-            raise DescriptorError(e)
+            raise DescriptorError(e) from e
 
         if tag != DecoderConfigDescriptor.TAG:
-            raise DescriptorError("unexpected DecoderConfigDescrTag %d" % tag)
+            raise DescriptorError(f"unexpected DecoderConfigDescrTag {tag}")
 
         assert r.is_aligned()
         self.decConfigDescr = DecoderConfigDescriptor.parse(fileobj)
 
-
+@final
 class DecoderConfigDescriptor(BaseDescriptor):
 
     TAG = 0x4
@@ -288,7 +300,15 @@ class DecoderConfigDescriptor(BaseDescriptor):
     decSpecificInfo = None
     """A DecoderSpecificInfo, optional"""
 
-    def __init__(self, fileobj, length):
+    objectTypeIndication: int
+    streamType: int
+    upStream: int
+    reserved: int
+    bufferSizeDB: int
+    maxBitrate: int
+    avgBitrate: int
+
+    def __init__(self, fileobj: BytesIO, length: int):
         """Raises DescriptorError"""
 
         r = BitReader(fileobj)
@@ -311,20 +331,20 @@ class DecoderConfigDescriptor(BaseDescriptor):
 
             tag = r.bits(8)
         except BitReaderError as e:
-            raise DescriptorError(e)
+            raise DescriptorError(e) from e
 
         if tag == DecoderSpecificInfo.TAG:
             assert r.is_aligned()
             self.decSpecificInfo = DecoderSpecificInfo.parse(fileobj)
 
     @property
-    def codec_param(self):
+    def codec_param(self) -> str:
         """string"""
 
-        param = u".%X" % self.objectTypeIndication
+        param = f".{self.objectTypeIndication:X}"
         info = self.decSpecificInfo
         if info is not None:
-            param += u".%d" % info.audioObjectType
+            param += f".{info.audioObjectType}"
         return param
 
     @property
@@ -340,9 +360,20 @@ class DecoderConfigDescriptor(BaseDescriptor):
 
 class DecoderSpecificInfo(BaseDescriptor):
 
-    TAG = 0x5
+    TAG: int = 0x5
 
-    _TYPE_NAMES = [
+    audioObjectType: int
+    samplingFrequency: int
+    channelConfiguration: int
+    sbrPresentFlag: int
+    psPresentFlag: int
+    extensionAudioObjectType: int
+    extensionSamplingFrequency: int
+    extensionChannelConfiguration: int
+
+    pce_channels: int | None = None
+
+    _TYPE_NAMES: list[str | None] = [
         None, "AAC MAIN", "AAC LC", "AAC SSR", "AAC LTP", "SBR",
         "AAC scalable", "TwinVQ", "CELP", "HVXC", None, None, "TTSI",
         "Main synthetic", "Wavetable synthesis", "General MIDI",
@@ -354,7 +385,7 @@ class DecoderSpecificInfo(BaseDescriptor):
         "SAOC", "LD MPEG Surround", "USAC"
     ]
 
-    _FREQS = [
+    _FREQS: list[int] = [
         96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000,
         12000, 11025, 8000, 7350,
     ]
@@ -364,10 +395,8 @@ class DecoderSpecificInfo(BaseDescriptor):
         """string or None if unknown"""
 
         name = None
-        try:
+        with contextlib.suppress(IndexError):
             name = self._TYPE_NAMES[self.audioObjectType]
-        except IndexError:
-            pass
         if name is None:
             return
         if self.sbrPresentFlag == 1:
@@ -396,11 +425,11 @@ class DecoderSpecificInfo(BaseDescriptor):
             return 0
 
     @property
-    def channels(self):
+    def channels(self) -> int:
         """channel count or 0 for unknown"""
 
         # from ProgramConfigElement()
-        if hasattr(self, "pce_channels"):
+        if self.pce_channels is not None:
             return self.pce_channels
 
         conf = getattr(
@@ -420,7 +449,7 @@ class DecoderSpecificInfo(BaseDescriptor):
         else:
             return conf
 
-    def _get_audio_object_type(self, r):
+    def _get_audio_object_type(self, r: BitReader) -> int:
         """Raises BitReaderError"""
 
         audioObjectType = r.bits(5)
@@ -429,7 +458,7 @@ class DecoderSpecificInfo(BaseDescriptor):
             audioObjectType = 32 + audioObjectTypeExt
         return audioObjectType
 
-    def _get_sampling_freq(self, r):
+    def _get_sampling_freq(self, r: BitReader):
         """Raises BitReaderError"""
 
         samplingFrequencyIndex = r.bits(4)
@@ -442,16 +471,16 @@ class DecoderSpecificInfo(BaseDescriptor):
                 samplingFrequency = 0
         return samplingFrequency
 
-    def __init__(self, fileobj, length):
+    def __init__(self, fileobj: BytesIO, length: int):
         """Raises DescriptorError"""
 
         r = BitReader(fileobj)
         try:
             self._parse(r, length)
         except BitReaderError as e:
-            raise DescriptorError(e)
+            raise DescriptorError(e) from e
 
-    def _parse(self, r, length):
+    def _parse(self, r: BitReader, length: int):
         """Raises BitReaderError"""
 
         def bits_left():
@@ -515,7 +544,7 @@ class DecoderSpecificInfo(BaseDescriptor):
                     self.extensionChannelConfiguration = r.bits(4)
 
 
-def GASpecificConfig(r, info):
+def GASpecificConfig(r: BitReader, info: DecoderSpecificInfo):
     """Reads GASpecificConfig which is needed to get the data after that
     (there is no length defined to skip it) and to read program_config_element
     which can contain channel counts.

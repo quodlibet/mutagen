@@ -16,10 +16,12 @@ For more information, see http://www.monkeysaudio.com/.
 __all__ = ["MonkeysAudio", "Open", "delete"]
 
 import struct
+from io import BytesIO
+from typing import override
 
 from mutagen import StreamInfo
-from mutagen.apev2 import APEv2File, error, delete
 from mutagen._util import cdata, convert_error, endswith
+from mutagen.apev2 import APEv2File, delete, error
 
 
 class MonkeysAudioHeaderError(error):
@@ -39,8 +41,14 @@ class MonkeysAudioInfo(StreamInfo):
         version (`float`): Monkey's Audio stream version, as a float (eg: 3.99)
     """
 
+    channels: int
+    length: float
+    sample_rate: int
+    bits_per_sample: int
+    version: float
+
     @convert_error(IOError, MonkeysAudioHeaderError)
-    def __init__(self, fileobj):
+    def __init__(self, fileobj: BytesIO):
         """Raises MonkeysAudioHeaderError"""
 
         header = fileobj.read(76)
@@ -74,8 +82,9 @@ class MonkeysAudioInfo(StreamInfo):
                             final_frame_blocks)
             self.length = float(total_blocks) / self.sample_rate
 
+    @override
     def pprint(self):
-        return u"Monkey's Audio %.2f, %.2f seconds, %d Hz" % (
+        return "Monkey's Audio %.2f, %.2f seconds, %d Hz" % (
             self.version, self.length, self.sample_rate)
 
 
@@ -89,11 +98,12 @@ class MonkeysAudio(APEv2File):
         info (`MonkeysAudioInfo`)
     """
 
-    _Info = MonkeysAudioInfo
-    _mimes = ["audio/ape", "audio/x-ape"]
+    _Info: type[StreamInfo] = MonkeysAudioInfo
+    _mimes: list[str] = ["audio/ape", "audio/x-ape"]
 
     @staticmethod
-    def score(filename, fileobj, header):
+    @override
+    def score(filename: str, fileobj: BytesIO, header: bytes):
         return header.startswith(b"MAC ") + endswith(filename.lower(), ".ape")
 
 

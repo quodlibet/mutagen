@@ -1,10 +1,9 @@
-
 import os
 from io import BytesIO
 
-from mutagen.oggopus import OggOpus, OggOpusInfo, delete, error
 from mutagen.ogg import OggPage
-from tests import TestCase, DATA_DIR, get_temp_copy
+from mutagen.oggopus import OggOpus, OggOpusInfo, delete, error
+from tests import DATA_DIR, TestCase, get_temp_copy
 from tests.test_ogg import TOggFileTypeMixin
 
 
@@ -19,26 +18,26 @@ class TOggOpus(TestCase, TOggFileTypeMixin):
         os.unlink(self.filename)
 
     def test_length(self):
-        self.failUnlessAlmostEqual(self.audio.info.length, 11.35, 2)
+        self.assertAlmostEqual(self.audio.info.length, 11.35, 2)
 
     def test_misc(self):
-        self.failUnlessEqual(self.audio.info.channels, 1)
-        self.failUnless(self.audio.tags.vendor.startswith("libopus"))
+        self.assertEqual(self.audio.info.channels, 1)
+        self.assertTrue(self.audio.tags.vendor.startswith("libopus"))
 
     def test_module_delete(self):
         delete(self.filename)
         self.scan_file()
-        self.failIf(self.Kind(self.filename).tags)
+        self.assertFalse(self.Kind(self.filename).tags)
 
     def test_mime(self):
-        self.failUnless("audio/ogg" in self.audio.mime)
-        self.failUnless("audio/ogg; codecs=opus" in self.audio.mime)
+        self.assertTrue("audio/ogg" in self.audio.mime)
+        self.assertTrue("audio/ogg; codecs=opus" in self.audio.mime)
 
     def test_invalid_not_first(self):
         with open(self.filename, "rb") as h:
             page = OggPage(h)
         page.first = False
-        self.failUnlessRaises(error, OggOpusInfo, BytesIO(page.write()))
+        self.assertRaises(error, OggOpusInfo, BytesIO(page.write()))
 
     def test_unsupported_version(self):
         with open(self.filename, "rb") as h:
@@ -51,7 +50,7 @@ class TOggOpus(TestCase, TOggFileTypeMixin):
 
         data[8] = 0x10
         page.packets[0] = bytes(data)
-        self.failUnlessRaises(error, OggOpusInfo, BytesIO(page.write()))
+        self.assertRaises(error, OggOpusInfo, BytesIO(page.write()))
 
     def test_preserve_non_padding(self):
         self.audio["FOO"] = ["BAR"]

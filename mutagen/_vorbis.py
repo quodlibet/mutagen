@@ -15,11 +15,18 @@ multiple values.
 The specification is at http://www.xiph.org/vorbis/doc/v-comment.html.
 """
 
+import contextlib
 import sys
+from collections.abc import Callable
 from io import BytesIO
+from typing import Literal, SupportsIndex, override
 
 import mutagen
-from mutagen._util import DictMixin, cdata, MutagenError, reraise
+from mutagen._util import DictMixin, MutagenError, cdata, reraise
+
+type ErrorMode = Literal["strict", "replace", "ignore"]
+type EncodedValue = str | bytes
+type CommentPair = tuple[str, EncodedValue]
 
 
 def is_valid_key(key: str) -> bool:
@@ -41,7 +48,7 @@ def is_valid_key(key: str) -> bool:
         return bool(key)
 
 
-istag = is_valid_key
+istag: Callable[[str], bool] = is_valid_key
 
 
 class error(MutagenError):
@@ -56,7 +63,7 @@ class VorbisEncodingError(error):
     pass
 
 
-class VComment(mutagen.Tags, list):
+class VComment(mutagen.Tags, list[CommentPair]):
     """A Vorbis comment parser, accessor, and renderer.
 
     All comment ordering is preserved. A VComment is a list of
@@ -70,10 +77,15 @@ class VComment(mutagen.Tags, list):
         vendor (text): the stream 'vendor' (i.e. writer); default 'Mutagen'
     """
 
-    vendor = u"Mutagen " + mutagen.version_string
+    vendor: str = "Mutagen " + mutagen.version_string
+    _size: int = 0
 
-    def __init__(self, data=None, *args, **kwargs):
-        self._size = 0
+    def __init__(
+        self,
+        data: bytes | BytesIO | None = None,
+        *args: object,
+        **kwargs: object,
+    ) -> None:
         # Collect the args to pass to load, this lets child classes
         # override just load and get equivalent magic for the
         # constructor.
@@ -86,7 +98,12 @@ class VComment(mutagen.Tags, list):
             self.load(data, *args, **kwargs)
             self._size = data.tell() - start
 
-    def load(self, fileobj, errors='replace', framing=True):
+    def load(
+        self,
+        fileobj: BytesIO,
+        errors: ErrorMode = 'replace',
+        framing: bool = True,
+    ) -> None:
         """Parse a Vorbis comment from a file-like object.
 
         Arguments:
@@ -102,26 +119,26 @@ class VComment(mutagen.Tags, list):
         try:
             vendor_length = cdata.uint_le(fileobj.read(4))
             self.vendor = fileobj.read(vendor_length).decode('utf-8', errors)
-            count = cdata.uint_le(fileobj.read(4))
+            count: int = cdata.uint_le(fileobj.read(4))
             for i in range(count):
                 length = cdata.uint_le(fileobj.read(4))
                 try:
                     string = fileobj.read(length).decode('utf-8', errors)
                 except (OverflowError, MemoryError):
-                    raise error("cannot read %d bytes, too large" % length)
+                    raise error("cannot read %d bytes, too large" % length) from None
                 try:
                     tag, value = string.split('=', 1)
                 except ValueError as err:
                     if errors == "ignore":
                         continue
                     elif errors == "replace":
-                        tag, value = u"unknown%d" % i, string
+                        tag, value = f"unknown{i}", string
                     else:
                         reraise(VorbisEncodingError, err, sys.exc_info()[2])
                 try:
                     tag = tag.encode('ascii', errors)
                 except UnicodeEncodeError:
-                    raise VorbisEncodingError("invalid tag name %r" % tag)
+                    raise VorbisEncodingError(f"invalid tag name {tag!r}") from None
                 else:
                     tag = tag.decode("ascii")
                     if is_valid_key(tag):
@@ -130,9 +147,9 @@ class VComment(mutagen.Tags, list):
             if framing and not bytearray(fileobj.read(1))[0] & 0x01:
                 raise VorbisUnsetFrameError("framing bit was unset")
         except (cdata.error, TypeError):
-            raise error("file is not a valid Vorbis comment")
+            raise error("file is not a valid Vorbis comment") from None
 
-    def validate(self):
+    def validate(self) -> bool:
         """Validate keys and values.
 
         Check to make sure every key used is a valid Vorbis key, and
@@ -142,29 +159,30 @@ class VComment(mutagen.Tags, list):
         In Python 3 all keys and values have to be a string.
         """
 
-        if not isinstance(self.vendor, str):
+        if not isinstance(self.vendor, str):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise ValueError("vendor needs to be str")
 
         for key, value in self:
             try:
                 if not is_valid_key(key):
-                    raise ValueError("%r is not a valid key" % key)
+                    raise ValueError(f"{key!r} is not a valid key")
             except TypeError:
-                raise ValueError("%r is not a valid key" % key)
+                raise ValueError(f"{key!r} is not a valid key") from None
 
             if not isinstance(value, str):
-                err = "%r needs to be str for key %r" % (value, key)
+                err = f"{value!r} needs to be str for key {key!r}"
                 raise ValueError(err)
 
         return True
 
+    @override
     def clear(self) -> None:
         """Clear all keys from the comment."""
 
         for i in list(self):
             self.remove(i)
 
-    def write(self, framing=True):
+    def write(self, framing: bool = True) -> bytes:
         """Return a string representation of the data.
 
         Validation is always performed, so calling this function on
@@ -174,37 +192,38 @@ class VComment(mutagen.Tags, list):
             framing (bool): if true, append a framing bit (see load)
         """
 
-        self.validate()
+        _ = self.validate()
 
-        def _encode(value):
+        def _encode(value: EncodedValue) -> bytes:
             if not isinstance(value, bytes):
                 return value.encode('utf-8')
             return value
 
         f = BytesIO()
         vendor = _encode(self.vendor)
-        f.write(cdata.to_uint_le(len(vendor)))
-        f.write(vendor)
-        f.write(cdata.to_uint_le(len(self)))
+        _ = f.write(cdata.to_uint_le(len(vendor)))
+        _ = f.write(vendor)
+        _ = f.write(cdata.to_uint_le(len(self)))
         for tag, value in self:
             tag = _encode(tag)
             value = _encode(value)
             comment = tag + b"=" + value
-            f.write(cdata.to_uint_le(len(comment)))
-            f.write(comment)
+            _ =f.write(cdata.to_uint_le(len(comment)))
+            _ =f.write(comment)
         if framing:
-            f.write(b"\x01")
+            _ =f.write(b"\x01")
         return f.getvalue()
 
+    @override
     def pprint(self) -> str:
 
-        def _decode(value):
+        def _decode(value: EncodedValue) -> str:
             if not isinstance(value, str):
                 return value.decode('utf-8', 'replace')
             return value
 
-        tags = [u"%s=%s" % (_decode(k), _decode(v)) for k, v in self]
-        return u"\n".join(tags)
+        tags = [f"{_decode(k)}={_decode(v)}" for k, v in self]
+        return "\n".join(tags)
 
 
 class VCommentDict(VComment, DictMixin):  # type: ignore
@@ -221,7 +240,8 @@ class VCommentDict(VComment, DictMixin):  # type: ignore
     normalized to lowercase ASCII.
     """
 
-    def __getitem__(self, key):
+    @override
+    def __getitem__(self, key: SupportsIndex) -> list[EncodedValue] | VComment:
         """A list of values for the key.
 
         This is a copy, so comment['title'].append('a title') will not
@@ -242,7 +262,8 @@ class VCommentDict(VComment, DictMixin):  # type: ignore
         else:
             return values
 
-    def __delitem__(self, key):
+    @override
+    def __delitem__(self, key: str | slice) -> None:
         """Delete all values associated with the key."""
 
         if isinstance(key, slice):
@@ -259,20 +280,22 @@ class VCommentDict(VComment, DictMixin):  # type: ignore
             for item in to_delete:
                 self.remove(item)
 
-    def __contains__(self, key):
+    @override
+    def __contains__(self, key: str) -> bool:
         """Return true if the key has any values."""
 
         if not is_valid_key(key):
             raise ValueError
 
         key = key.lower()
-        for k, value in self:
-            if k.lower() == key:
-                return True
-        else:
-            return False
+        return any(k.lower() == key for k, value in self)
 
-    def __setitem__(self, key, values):
+    @override
+    def __setitem__(
+        self,
+        key: str | slice,
+        values: EncodedValue | list[EncodedValue],
+    ) -> None:
         """Set a key's value or values.
 
         Setting a value overwrites all old ones. The value may be a
@@ -288,20 +311,18 @@ class VCommentDict(VComment, DictMixin):  # type: ignore
 
         if not isinstance(values, list):
             values = [values]
-        try:
+        with contextlib.suppress(KeyError):
             del self[key]
-        except KeyError:
-            pass
 
         for value in values:
             self.append((key, value))
 
-    def keys(self):
+    def keys(self) -> list[str]:
         """Return all keys in the comment."""
 
         return list(set([k.lower() for k, v in self]))
 
-    def as_dict(self):
+    def as_dict(self) -> dict[str, list[EncodedValue]]:
         """Return a copy of the comment data in a real dict."""
 
         return dict([(key, self[key]) for key in self.keys()])

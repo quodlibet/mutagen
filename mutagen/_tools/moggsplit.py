@@ -7,48 +7,62 @@
 
 """Split a multiplex/chained Ogg file into its component parts."""
 
+from __future__ import annotations
+
 import os
 import sys
+from argparse import ArgumentParser, Namespace
+from collections.abc import Sequence
+from dataclasses import dataclass
+from io import BytesIO
+from typing import TextIO
 
-import mutagen.ogg
-
-from ._util import SignalHandler, OptionParser
-
+from ._util import SignalHandler
 
 _sig = SignalHandler()
 
+@dataclass
+class Args(Namespace):
+    extension: str
+    pattern: str
+    m3u: bool
+    filenames: list[str]
 
-def main(argv):
+def main(argv: Sequence[str]) -> None:
+    import mutagen
     from mutagen.ogg import OggPage
-    parser = OptionParser(
-        usage="%prog [options] filename.ogg ...",
+    parser = ArgumentParser(
+        usage="%(prog)s [options] filename.ogg ...",
         description="Split Ogg logical streams using Mutagen.",
-        version="Mutagen %s" % ".".join(map(str, mutagen.version))
     )
 
-    parser.add_option(
-        "--extension", dest="extension", default="ogg", metavar='ext',
+    _ = parser.add_argument(
+        "--version", action="version",
+        version="Mutagen {}".format(".".join(map(str, mutagen.version))))
+
+    _ = parser.add_argument(
+        "--extension", dest="extension", default="ogg", metavar='ext', type=str,
         help="use this extension (default 'ogg')")
-    parser.add_option(
-        "--pattern", dest="pattern", default="%(base)s-%(stream)d.%(ext)s",
+    _ = parser.add_argument(
+        "--pattern", dest="pattern", default="%(base)s-%(stream)d.%(ext)s", type=str,
         metavar='pattern', help="name files using this pattern")
-    parser.add_option(
-        "--m3u", dest="m3u", action="store_true", default=False,
+    _ = parser.add_argument(
+        "--m3u", dest="m3u", action="store_true", default=False, type=bool,
         help="generate an m3u (playlist) file")
+    _ = parser.add_argument(
+        "filenames", nargs="+", metavar="filename.ogg", type=str,
+        help="Ogg files to split")
 
-    (options, args) = parser.parse_args(argv[1:])
-    if not args:
-        raise SystemExit(parser.print_help() or 1)
+    args = parser.parse_args(argv[1:], namespace=Args())
 
-    format = {'ext': options.extension}
-    for filename in args:
+    fileobjs: dict[int | str, BytesIO | TextIO] = {}
+    format: dict[str, str | int] = {'ext': args.extension}
+    for filename in args.filenames:
         with _sig.block():
-            fileobjs = {}
             format["base"] = os.path.splitext(os.path.basename(filename))[0]
             with open(filename, "rb") as fileobj:
-                if options.m3u:
-                    m3u = open(format["base"] + ".m3u", "w")
-                    fileobjs["m3u"] = m3u
+                if args.m3u:
+                    m3u: TextIO | None = open(str(format["base"]) + ".m3u", "w")
                 else:
                     m3u = None
                 while True:
@@ -59,16 +73,16 @@ def main(argv):
                     else:
                         format["stream"] = page.serial
                         if page.serial not in fileobjs:
-                            new_filename = options.pattern % format
+                            new_filename = args.pattern % format
                             new_fileobj = open(new_filename, "wb")
                             fileobjs[page.serial] = new_fileobj
                             if m3u:
-                                m3u.write(new_filename + "\r\n")
-                        fileobjs[page.serial].write(page.write())
+                                _ = m3u.write(new_filename + "\r\n")
+                        _ = fileobjs[page.serial].write(page.write())
                 for f in fileobjs.values():
                     f.close()
 
 
-def entry_point():
+def entry_point() -> None:
     _sig.init()
     return main(sys.argv)

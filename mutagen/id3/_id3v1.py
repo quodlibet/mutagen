@@ -8,14 +8,21 @@
 # (at your option) any later version.
 
 import errno
-from struct import error as StructError, unpack
+from io import BytesIO
+from struct import error as StructError
+from struct import unpack
+from typing import cast
 
 from mutagen._util import bchr
 
-from ._frames import TCON, TRCK, COMM, TDRC, TYER, TALB, TPE1, TIT2
+from ._frames import COMM, TALB, TCON, TDRC, TIT2, TPE1, TRCK, TYER, Frame
 
 
-def find_id3v1(fileobj, v2_version=4, known_frames=None):
+def find_id3v1(
+    fileobj: BytesIO,
+    v2_version: int = 4,
+    known_frames: dict[str, type[Frame]] | None = None
+) -> tuple[dict[str, Frame] | None, int]:
     """Returns a tuple of (id3tag, offset_to_end) or (None, 0)
 
     offset mainly because we used to write too short tags in some cases and
@@ -37,17 +44,17 @@ def find_id3v1(fileobj, v2_version=4, known_frames=None):
 
     old_pos = fileobj.tell()
     try:
-        fileobj.seek(-128 - extra_read, 2)
-    except IOError as e:
+        _ = fileobj.seek(-128 - extra_read, 2)
+    except OSError as e:
         if e.errno == errno.EINVAL:
             # If the file is too small, might be ok since we wrote too small
             # tags at some point. let's see how the parsing goes..
-            fileobj.seek(0, 0)
+            _ = fileobj.seek(0, 0)
         else:
             raise
 
     data = fileobj.read(128 + extra_read)
-    fileobj.seek(old_pos, 0)
+    _ = fileobj.seek(old_pos, 0)
     try:
         idx = data.index(b"TAG")
     except ValueError:
@@ -72,7 +79,11 @@ def find_id3v1(fileobj, v2_version=4, known_frames=None):
 
 
 # ID3v1.1 support.
-def ParseID3v1(data, v2_version=4, known_frames=None):
+def ParseID3v1(
+    data: bytes,
+    v2_version: int = 4,
+    known_frames: dict[str, type[Frame]] | None = None
+) -> dict[str, Frame] | None:
     """Parse an ID3v1 tag, returning a list of ID3v2 frames
 
     Returns a {frame_name: frame} dict or None.
@@ -91,7 +102,7 @@ def ParseID3v1(data, v2_version=4, known_frames=None):
         data = data[data.index(b"TAG"):]
     except ValueError:
         return None
-    if 128 < len(data) or len(data) < 124:
+    if len(data) > 128 or len(data) < 124:
         return None
 
     # Issue #69 - Previous versions of Mutagen, when encountering
@@ -99,18 +110,17 @@ def ParseID3v1(data, v2_version=4, known_frames=None):
     # wrote only the characters available - e.g. "1" or "" - into the
     # year field. To parse those, reduce the size of the year field.
     # Amazingly, "0s" works as a struct format string.
-    unpack_fmt = "3s30s30s30s%ds29sBB" % (len(data) - 124)
+    unpack_fmt = f"3s30s30s30s{len(data) - 124}s29sBB"
 
     try:
-        tag, title, artist, album, year, comment, track, genre = unpack(
-            unpack_fmt, data)
+        tag, title, artist, album, year, comment, track, genre = cast(tuple[bytes, bytes, bytes, bytes, bytes, bytes, int, int], unpack(unpack_fmt, data))
     except StructError:
         return None
 
     if tag != b"TAG":
         return None
 
-    def fix(data):
+    def fix(data: bytes) -> str:
         return data.split(b"\x00")[0].strip().decode('latin1')
 
     title, artist, album, year, comment = map(
@@ -133,7 +143,7 @@ def ParseID3v1(data, v2_version=4, known_frames=None):
             else:
                 frame_class[key] = None
 
-    frames = {}
+    frames: dict[str, Frame] = {}
     if title and frame_class["TIT2"]:
         frames["TIT2"] = frame_class["TIT2"](encoding=0, text=title)
     if artist and frame_class["TPE1"]:
@@ -159,10 +169,10 @@ def ParseID3v1(data, v2_version=4, known_frames=None):
     return frames
 
 
-def MakeID3v1(id3):
+def MakeID3v1(id3: dict[str, Frame]) -> bytes:
     """Return an ID3v1.1 tag string from a dict of ID3v2.4 frames."""
 
-    v1 = {}
+    v1: dict[str, bytes] = {}
 
     for v2id, name in {"TIT2": "title", "TPE1": "artist",
                        "TALB": "album"}.items():

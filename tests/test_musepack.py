@@ -3,8 +3,8 @@ import os
 from io import BytesIO
 
 from mutagen.id3 import ID3, TIT2
-from mutagen.musepack import Musepack, MusepackInfo, MusepackHeaderError
-from tests import TestCase, DATA_DIR, get_temp_copy
+from mutagen.musepack import Musepack, MusepackHeaderError, MusepackInfo
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TMusepack(TestCase):
@@ -16,65 +16,65 @@ class TMusepack(TestCase):
         self.sv4 = Musepack(os.path.join(DATA_DIR, "sv4_header.mpc"))
 
     def test_bad_header(self):
-        self.failUnlessRaises(
+        self.assertRaises(
             MusepackHeaderError,
             Musepack, os.path.join(DATA_DIR, "almostempty.mpc"))
 
     def test_channels(self):
-        self.failUnlessEqual(self.sv8.info.channels, 2)
-        self.failUnlessEqual(self.sv7.info.channels, 2)
-        self.failUnlessEqual(self.sv5.info.channels, 2)
-        self.failUnlessEqual(self.sv4.info.channels, 2)
+        self.assertEqual(self.sv8.info.channels, 2)
+        self.assertEqual(self.sv7.info.channels, 2)
+        self.assertEqual(self.sv5.info.channels, 2)
+        self.assertEqual(self.sv4.info.channels, 2)
 
     def test_sample_rate(self):
-        self.failUnlessEqual(self.sv8.info.sample_rate, 44100)
-        self.failUnlessEqual(self.sv7.info.sample_rate, 44100)
-        self.failUnlessEqual(self.sv5.info.sample_rate, 44100)
-        self.failUnlessEqual(self.sv4.info.sample_rate, 44100)
+        self.assertEqual(self.sv8.info.sample_rate, 44100)
+        self.assertEqual(self.sv7.info.sample_rate, 44100)
+        self.assertEqual(self.sv5.info.sample_rate, 44100)
+        self.assertEqual(self.sv4.info.sample_rate, 44100)
 
     def test_bitrate(self):
-        self.failUnlessEqual(self.sv8.info.bitrate, 609)
-        self.failUnlessEqual(self.sv7.info.bitrate, 194530)
-        self.failUnlessEqual(self.sv5.info.bitrate, 39)
-        self.failUnlessEqual(self.sv4.info.bitrate, 39)
+        self.assertEqual(self.sv8.info.bitrate, 609)
+        self.assertEqual(self.sv7.info.bitrate, 194530)
+        self.assertEqual(self.sv5.info.bitrate, 39)
+        self.assertEqual(self.sv4.info.bitrate, 39)
 
     def test_length(self):
-        self.failUnlessAlmostEqual(self.sv8.info.length, 1.49, 1)
-        self.failUnlessAlmostEqual(self.sv7.info.length, 0.07, 2)
-        self.failUnlessAlmostEqual(self.sv5.info.length, 26.3, 1)
-        self.failUnlessAlmostEqual(self.sv4.info.length, 26.3, 1)
+        self.assertAlmostEqual(self.sv8.info.length, 1.49, 1)
+        self.assertAlmostEqual(self.sv7.info.length, 0.07, 2)
+        self.assertAlmostEqual(self.sv5.info.length, 26.3, 1)
+        self.assertAlmostEqual(self.sv4.info.length, 26.3, 1)
 
     def test_gain(self):
-        self.failUnlessAlmostEqual(self.sv8.info.title_gain, -4.668, 3)
-        self.failUnlessAlmostEqual(self.sv8.info.title_peak, 0.5288, 3)
-        self.failUnlessEqual(
+        self.assertAlmostEqual(self.sv8.info.title_gain, -4.668, 3)
+        self.assertAlmostEqual(self.sv8.info.title_peak, 0.5288, 3)
+        self.assertEqual(
             self.sv8.info.title_gain, self.sv8.info.album_gain)
-        self.failUnlessEqual(
+        self.assertEqual(
             self.sv8.info.title_peak, self.sv8.info.album_peak)
-        self.failUnlessAlmostEqual(self.sv7.info.title_gain, 9.27, 6)
-        self.failUnlessAlmostEqual(self.sv7.info.title_peak, 0.1149, 4)
-        self.failUnlessEqual(
+        self.assertAlmostEqual(self.sv7.info.title_gain, 9.27, 6)
+        self.assertAlmostEqual(self.sv7.info.title_peak, 0.1149, 4)
+        self.assertEqual(
             self.sv7.info.title_gain, self.sv7.info.album_gain)
-        self.failUnlessEqual(
+        self.assertEqual(
             self.sv7.info.title_peak, self.sv7.info.album_peak)
-        self.failUnlessRaises(AttributeError, getattr, self.sv5, 'title_gain')
+        self.assertRaises(AttributeError, getattr, self.sv5, 'title_gain')
 
     def test_not_my_file(self):
-        self.failUnlessRaises(
+        self.assertRaises(
             MusepackHeaderError, Musepack,
             os.path.join(DATA_DIR, "empty.ogg"))
-        self.failUnlessRaises(
+        self.assertRaises(
             MusepackHeaderError, Musepack,
             os.path.join(DATA_DIR, "emptyfile.mp3"))
 
     def test_almost_my_file(self):
-        self.failUnlessRaises(
+        self.assertRaises(
             MusepackHeaderError, MusepackInfo, BytesIO(b"MP+" + b"\x00" * 32))
-        self.failUnlessRaises(
+        self.assertRaises(
             MusepackHeaderError,
             MusepackInfo,
             BytesIO(b"MP+" + b"\x00" * 100))
-        self.failUnlessRaises(
+        self.assertRaises(
             MusepackHeaderError,
             MusepackInfo,
             BytesIO(b"MPCK" + b"\x00" * 100))
@@ -86,7 +86,7 @@ class TMusepack(TestCase):
         self.sv4.pprint()
 
     def test_mime(self):
-        self.failUnless("audio/x-musepack" in self.sv7.mime)
+        self.assertTrue("audio/x-musepack" in self.sv7.mime)
 
     def test_zero_padded_sh_packet(self):
         # https://github.com/quodlibet/mutagen/issues/198
@@ -115,6 +115,6 @@ class TMusepackWithID3(TestCase):
         f['title'] = 'apev2 title'
         f.save()
         id3 = ID3(self.filename)
-        self.failUnlessEqual(id3['TIT2'], 'id3 title')
+        self.assertEqual(id3['TIT2'], 'id3 title')
         f = Musepack(self.filename)
-        self.failUnlessEqual(f['title'], 'apev2 title')
+        self.assertEqual(f['title'], 'apev2 title')

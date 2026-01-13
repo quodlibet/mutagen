@@ -2,7 +2,7 @@
 import os
 
 from mutagen.wave import WAVE, InvalidChunk
-from tests import TestCase, DATA_DIR, get_temp_copy
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TWave(TestCase):
@@ -32,69 +32,69 @@ class TWave(TestCase):
         self.wav_pcm_2s_44100_16_ID3v23 = WAVE(fn_wav_pcm_2s_44100_16_id3v23)
 
     def test_channels(self):
-        self.failUnlessEqual(self.wav_pcm_2s_16000_08_ID3v23.info.channels, 2)
-        self.failUnlessEqual(self.wav_pcm_2s_44100_16_ID3v23.info.channels, 2)
+        self.assertEqual(self.wav_pcm_2s_16000_08_ID3v23.info.channels, 2)
+        self.assertEqual(self.wav_pcm_2s_44100_16_ID3v23.info.channels, 2)
 
     def test_sample_rate(self):
-        self.failUnlessEqual(self.wav_pcm_2s_16000_08_ID3v23.info.sample_rate,
+        self.assertEqual(self.wav_pcm_2s_16000_08_ID3v23.info.sample_rate,
                              16000)
-        self.failUnlessEqual(self.wav_pcm_2s_44100_16_ID3v23.info.sample_rate,
+        self.assertEqual(self.wav_pcm_2s_44100_16_ID3v23.info.sample_rate,
                              44100)
 
     def test_number_of_samples(self):
-        self.failUnlessEqual(self.wav_pcm_2s_16000_08_ID3v23.
+        self.assertEqual(self.wav_pcm_2s_16000_08_ID3v23.
                              info._number_of_samples, 32000)
-        self.failUnlessEqual(self.wav_pcm_2s_44100_16_ID3v23.
+        self.assertEqual(self.wav_pcm_2s_44100_16_ID3v23.
                              info._number_of_samples, 88200)
 
     def test_bits_per_sample(self):
-        self.failUnlessEqual(self.wav_pcm_2s_16000_08_ID3v23.
+        self.assertEqual(self.wav_pcm_2s_16000_08_ID3v23.
                              info.bits_per_sample, 8)
-        self.failUnlessEqual(self.wav_pcm_2s_44100_16_ID3v23.
+        self.assertEqual(self.wav_pcm_2s_44100_16_ID3v23.
                              info.bits_per_sample, 16)
 
     def test_bitrate(self):
-        self.failUnlessEqual(self.wav_pcm_2s_16000_08_ID3v23.
+        self.assertEqual(self.wav_pcm_2s_16000_08_ID3v23.
                              info.bitrate, 256000)
-        self.failUnlessEqual(self.wav_pcm_2s_44100_16_ID3v23.
+        self.assertEqual(self.wav_pcm_2s_44100_16_ID3v23.
                              info.bitrate, 1411200)
 
     def test_length(self):
-        self.failUnlessAlmostEqual(self.wav_pcm_2s_16000_08_ID3v23.info.length,
+        self.assertAlmostEqual(self.wav_pcm_2s_16000_08_ID3v23.info.length,
                                    2.0, 2)
-        self.failUnlessAlmostEqual(self.wav_pcm_2s_44100_16_ID3v23.info.length,
+        self.assertAlmostEqual(self.wav_pcm_2s_44100_16_ID3v23.info.length,
                                    2.0, 2)
 
     def test_not_my_file(self):
-        self.failUnlessRaises(
+        self.assertRaises(
             InvalidChunk, WAVE, os.path.join(DATA_DIR, "empty.ogg"))
 
     def test_pprint(self):
         self.wav_pcm_2s_44100_16_ID3v23.pprint()
 
     def test_mime(self):
-        self.failUnless("audio/wav" in self.wav_pcm_2s_44100_16_ID3v23.mime)
-        self.failUnless("audio/wave" in self.wav_pcm_2s_44100_16_ID3v23.mime)
+        self.assertTrue("audio/wav" in self.wav_pcm_2s_44100_16_ID3v23.mime)
+        self.assertTrue("audio/wave" in self.wav_pcm_2s_44100_16_ID3v23.mime)
 
     def test_id3_tags(self):
         id3 = self.wav_pcm_2s_44100_16_ID3v23.tags
-        self.assertEquals(id3["TALB"], "Quod Libet Test Data")
-        self.assertEquals(id3["TCON"], "Silence")
-        self.assertEquals(id3["TIT2"], "Silence")
-        self.assertEquals(id3["TPE1"], ["piman / jzig"])
+        self.assertEqual(id3["TALB"], "Quod Libet Test Data")
+        self.assertEqual(id3["TCON"], "Silence")
+        self.assertEqual(id3["TIT2"], "Silence")
+        self.assertEqual(id3["TPE1"], ["piman / jzig"])
 
     def test_id3_tags_uppercase_chunk(self):
         id3 = self.wav_pcm_2s_16000_08_ID3v23
-        self.assertEquals(id3["TALB"], "Quod Libet Test Data")
-        self.assertEquals(id3["TCON"], "Silence")
-        self.assertEquals(id3["TIT2"], "Silence")
-        self.assertEquals(id3["TPE1"], ["piman / jzig"])
+        self.assertEqual(id3["TALB"], "Quod Libet Test Data")
+        self.assertEqual(id3["TCON"], "Silence")
+        self.assertEqual(id3["TIT2"], "Silence")
+        self.assertEqual(id3["TPE1"], ["piman / jzig"])
 
     def test_delete(self):
         self.tmp_wav_pcm_2s_16000_08_ID3v23.delete()
 
-        self.failIf(self.tmp_wav_pcm_2s_16000_08_ID3v23.tags)
-        self.failUnless(WAVE(self.tmp_fn_pcm_2s_16000_08_ID3v23).tags is None)
+        self.assertFalse(self.tmp_wav_pcm_2s_16000_08_ID3v23.tags)
+        self.assertTrue(WAVE(self.tmp_fn_pcm_2s_16000_08_ID3v23).tags is None)
 
     def test_save_no_tags(self):
         self.tmp_wav_pcm_2s_16000_08_ID3v23.tags = None
@@ -102,16 +102,16 @@ class TWave(TestCase):
         self.assertTrue(self.tmp_wav_pcm_2s_16000_08_ID3v23.tags is None)
 
     def test_add_tags_already_there(self):
-        self.failUnless(self.tmp_wav_pcm_2s_16000_08_ID3v23.tags)
-        self.failUnlessRaises(Exception,
+        self.assertTrue(self.tmp_wav_pcm_2s_16000_08_ID3v23.tags)
+        self.assertRaises(Exception,
                               self.tmp_wav_pcm_2s_16000_08_ID3v23.add_tags)
 
     def test_roundtrip(self):
-        self.failUnlessEqual(self.tmp_wav_pcm_2s_16000_08_ID3v23["TIT2"],
+        self.assertEqual(self.tmp_wav_pcm_2s_16000_08_ID3v23["TIT2"],
                              ["Silence"])
         self.tmp_wav_pcm_2s_16000_08_ID3v23.save()
         new = WAVE(self.tmp_wav_pcm_2s_16000_08_ID3v23.filename)
-        self.failUnlessEqual(new["TIT2"], ["Silence"])
+        self.assertEqual(new["TIT2"], ["Silence"])
 
     def test_save_tags(self):
         from mutagen.id3 import TIT1
@@ -120,7 +120,7 @@ class TWave(TestCase):
         tags.save()
 
         new = WAVE(self.tmp_wav_pcm_2s_16000_08_ID3v23.filename)
-        self.failUnlessEqual(new["TIT1"], ["foobar"])
+        self.assertEqual(new["TIT1"], ["foobar"])
 
     """" Simulate the way Picard writes and update tags """
     def test_picard_lifecycle(self):
@@ -145,15 +145,15 @@ class TWave(TestCase):
         wav = WAVE(path_tmp_wav_file)
         id3 = wav.tags
         self.assertIsInstance(id3, ID3)
-        self.assertEquals(id3["TRCK"], "1/10")
-        self.assertEquals(id3["TPOS"], "1/1")
-        self.assertEquals(id3["TXXX:MusicBrainz Release Group Id"],
+        self.assertEqual(id3["TRCK"], "1/10")
+        self.assertEqual(id3["TPOS"], "1/1")
+        self.assertEqual(id3["TXXX:MusicBrainz Release Group Id"],
                           "e00305af-1c72-469b-9a7c-6dc665ca9adc")
-        self.assertEquals(id3["TXXX:MusicBrainz Album Artist Id"], [
+        self.assertEqual(id3["TXXX:MusicBrainz Album Artist Id"], [
                           "3fe817fc-966e-4ece-b00a-76be43e7e73c",
                           "984f8239-8fe1-4683-9c54-10ffb14439e9"])
-        self.assertEquals(id3["TXXX:CATALOGNUMBER"], ["PRAR931391"])
-        self.assertEquals(id3["TSRC"], ["NLB931100460", "USMH51100098"])
+        self.assertEqual(id3["TXXX:CATALOGNUMBER"], ["PRAR931391"])
+        self.assertEqual(id3["TSRC"], ["NLB931100460", "USMH51100098"])
 
     @staticmethod
     def __init_id3_tags(id3, major=3):
@@ -162,8 +162,24 @@ class TWave(TestCase):
             id3 ID3 Tag object
             major ID3 major version, e.g.: 3 for ID3v2.3
         """
-        from mutagen.id3 import TRCK, TPOS, TXXX, TPUB, TALB, UFID, TPE2, \
-            TSO2, TMED, TIT2, TPE1, TSRC, IPLS, TORY, TDAT, TYER
+        from mutagen.id3 import (
+            IPLS,
+            TALB,
+            TDAT,
+            TIT2,
+            TMED,
+            TORY,
+            TPE1,
+            TPE2,
+            TPOS,
+            TPUB,
+            TRCK,
+            TSO2,
+            TSRC,
+            TXXX,
+            TYER,
+            UFID,
+        )
         id3.add(TRCK(encoding=major, text="1/10"))
         id3.add(TPOS(encoding=major, text="1/1"))
         id3.add(TXXX(encoding=major, desc="MusicBrainz Release Group Id",

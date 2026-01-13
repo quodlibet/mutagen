@@ -18,11 +18,16 @@ http://lists.xiph.org/pipermail/speex-dev/2006-July/004676.html.
 
 __all__ = ["OggSpeex", "Open", "delete"]
 
+from io import BytesIO
+from typing import override
+
 from mutagen import StreamInfo
+from mutagen._filething import FileThing
+from mutagen._tags import PaddingFunction, PaddingInfo
+from mutagen._util import cdata, convert_error, get_size, loadfile
 from mutagen._vorbis import VCommentDict
-from mutagen.ogg import OggPage, OggFileType, error as OggError
-from mutagen._util import cdata, get_size, loadfile, convert_error
-from mutagen._tags import PaddingInfo
+from mutagen.ogg import OggFileType, OggPage
+from mutagen.ogg import error as OggError
 
 
 class error(OggError):
@@ -46,11 +51,14 @@ class OggSpeexInfo(StreamInfo):
             be 0.
     """
 
-    length = 0
-    channels = 0
-    bitrate = 0
+    length: float = 0
+    channels: int = 0
+    bitrate : int = 0
 
-    def __init__(self, fileobj):
+    sample_rate: int
+    serial: int
+
+    def __init__(self, fileobj: BytesIO):
         page = OggPage(fileobj)
         while not page.packets[0].startswith(b"Speex   "):
             page = OggPage(fileobj)
@@ -62,21 +70,22 @@ class OggSpeexInfo(StreamInfo):
         self.bitrate = max(0, cdata.int_le(page.packets[0][52:56]))
         self.serial = page.serial
 
-    def _post_tags(self, fileobj):
+    def _post_tags(self, fileobj: BytesIO):
         page = OggPage.find_last(fileobj, self.serial, finishing=True)
         if page is None:
             raise OggSpeexHeaderError
         self.length = page.position / float(self.sample_rate)
 
+    @override
     def pprint(self):
-        return u"Ogg Speex, %.2f seconds" % self.length
+        return f"Ogg Speex, {self.length:.2f} seconds"
 
 
 class OggSpeexVComment(VCommentDict):
     """Speex comments embedded in an Ogg bitstream."""
 
-    def __init__(self, fileobj, info):
-        pages = []
+    def __init__(self, fileobj: BytesIO, info: OggSpeexInfo):
+        pages: list[OggPage] = []
         complete = False
         while not complete:
             page = OggPage(fileobj)
@@ -84,10 +93,10 @@ class OggSpeexVComment(VCommentDict):
                 pages.append(page)
                 complete = page.complete or (len(page.packets) > 1)
         data = OggPage.to_packets(pages)[0]
-        super(OggSpeexVComment, self).__init__(data, framing=False)
+        super().__init__(data, framing=False)
         self._padding = len(data) - self._size
 
-    def _inject(self, fileobj, padding_func):
+    def _inject(self, fileobj: BytesIO, padding_func: PaddingFunction | None):
         """Write tag data into the Speex comment packet/page."""
 
         fileobj.seek(0)
@@ -141,16 +150,17 @@ class OggSpeex(OggFileType):
         tags (`mutagen._vorbis.VCommentDict`)
     """
 
-    _Info = OggSpeexInfo
+    _Info: type[StreamInfo] = OggSpeexInfo
     _Tags = OggSpeexVComment
     _Error = OggSpeexHeaderError
-    _mimes = ["audio/x-speex"]
+    _mimes: list[str] = ["audio/x-speex"]
 
-    info = None
-    tags = None
+    info: OggSpeexInfo | None = None
+    tags: VCommentDict | None = None
 
     @staticmethod
-    def score(filename, fileobj, header):
+    @override
+    def score(filename: str, fileobj: BytesIO, header: bytes):
         return (header.startswith(b"OggS") * (b"Speex   " in header))
 
 
@@ -159,7 +169,7 @@ Open = OggSpeex
 
 @convert_error(IOError, error)
 @loadfile(method=False, writable=True)
-def delete(filething):
+def delete(filething: FileThing):
     """ delete(filething)
 
     Arguments:
@@ -171,5 +181,5 @@ def delete(filething):
     """
 
     t = OggSpeex(filething)
-    filething.fileobj.seek(0)
+    _ = filething.fileobj.seek(0)
     t.delete(filething)

@@ -1,4 +1,5 @@
 
+import contextlib
 import os
 import struct
 import subprocess
@@ -6,13 +7,26 @@ from io import BytesIO
 
 import pytest
 
-from tests import TestCase, DATA_DIR, get_temp_copy
-from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
-                         MP4MetadataError, MP4FreeForm, error, AtomDataType,
-                         AtomError, _item_sort_key, MP4StreamInfoError)
-from mutagen.mp4._util import parse_full_atom
-from mutagen.mp4._as_entry import AudioSampleEntry, ASEntryError
 from mutagen._util import cdata
+from mutagen.mp4 import (
+    MP4,
+    Atom,
+    AtomDataType,
+    AtomError,
+    Atoms,
+    MP4Cover,
+    MP4FreeForm,
+    MP4Info,
+    MP4MetadataError,
+    MP4StreamInfoError,
+    MP4Tags,
+    _item_sort_key,
+    delete,
+    error,
+)
+from mutagen.mp4._as_entry import ASEntryError, AudioSampleEntry
+from mutagen.mp4._util import parse_full_atom
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TAtom(TestCase):
@@ -20,14 +34,14 @@ class TAtom(TestCase):
     def test_no_children(self):
         fileobj = BytesIO(b"\x00\x00\x00\x08atom")
         atom = Atom(fileobj)
-        self.failUnlessRaises(KeyError, atom.__getitem__, "test")
+        self.assertRaises(KeyError, atom.__getitem__, "test")
 
     def test_length_1(self):
         fileobj = BytesIO(b"\x00\x00\x00\x01atom"
                           b"\x00\x00\x00\x00\x00\x00\x00\x10" + b"\x00" * 16)
         atom = Atom(fileobj)
-        self.failUnlessEqual(atom.length, 16)
-        self.failUnlessEqual(atom.datalength, 0)
+        self.assertEqual(atom.length, 16)
+        self.assertEqual(atom.datalength, 0)
 
     def test_length_64bit_less_than_16(self):
         fileobj = BytesIO(b"\x00\x00\x00\x01atom"
@@ -51,10 +65,10 @@ class TAtom(TestCase):
             len(data)
         except OverflowError:
             # Py_ssize_t is still only 32 bits on this system.
-            self.failUnlessRaises(OverflowError, Atom.render, b"data", data)
+            self.assertRaises(OverflowError, Atom.render, b"data", data)
         else:
             data = Atom.render(b"data", data)
-            self.failUnlessEqual(len(data), 4 + 4 + 8 + 4)
+            self.assertEqual(len(data), 4 + 4 + 8 + 4)
 
     def test_non_top_level_length_0_is_invalid(self):
         data = BytesIO(struct.pack(">I4s", 0, b"whee"))
@@ -63,17 +77,17 @@ class TAtom(TestCase):
     def test_length_0(self):
         fileobj = BytesIO(b"\x00\x00\x00\x00atom" + 40 * b"\x00")
         atom = Atom(fileobj)
-        self.failUnlessEqual(fileobj.tell(), 48)
-        self.failUnlessEqual(atom.length, 48)
-        self.failUnlessEqual(atom.datalength, 40)
+        self.assertEqual(fileobj.tell(), 48)
+        self.assertEqual(atom.length, 48)
+        self.assertEqual(atom.datalength, 40)
 
     def test_length_0_container(self):
         data = BytesIO(struct.pack(">I4s", 0, b"moov") +
                        Atom.render(b"data", b"whee"))
         atom = Atom(data)
-        self.failUnlessEqual(len(atom.children), 1)
-        self.failUnlessEqual(atom.length, 20)
-        self.failUnlessEqual(atom.children[-1].length, 12)
+        self.assertEqual(len(atom.children), 1)
+        self.assertEqual(atom.length, 20)
+        self.assertEqual(atom.children[-1].length, 12)
 
     def test_read(self):
         payload = 8 * b"\xff"
@@ -99,27 +113,27 @@ class TAtoms(TestCase):
             self.atoms = Atoms(h)
 
     def test_getitem(self):
-        self.failUnless(self.atoms[b"moov"])
-        self.failUnless(self.atoms[b"moov.udta"])
-        self.failUnlessRaises(KeyError, self.atoms.__getitem__, b"whee")
+        self.assertTrue(self.atoms[b"moov"])
+        self.assertTrue(self.atoms[b"moov.udta"])
+        self.assertRaises(KeyError, self.atoms.__getitem__, b"whee")
 
     def test_contains(self):
-        self.failUnless(b"moov" in self.atoms)
-        self.failUnless(b"moov.udta" in self.atoms)
-        self.failUnless(b"whee" not in self.atoms)
+        self.assertTrue(b"moov" in self.atoms)
+        self.assertTrue(b"moov.udta" in self.atoms)
+        self.assertTrue(b"whee" not in self.atoms)
 
     def test_name(self):
-        self.failUnlessEqual(self.atoms.atoms[0].name, b"ftyp")
+        self.assertEqual(self.atoms.atoms[0].name, b"ftyp")
 
     def test_children(self):
-        self.failUnless(self.atoms.atoms[2].children)
+        self.assertTrue(self.atoms.atoms[2].children)
 
     def test_no_children(self):
-        self.failUnless(self.atoms.atoms[0].children is None)
+        self.assertTrue(self.atoms.atoms[0].children is None)
 
     def test_extra_trailing_data(self):
         data = BytesIO(Atom.render(b"data", b"whee") + b"\x00\x00")
-        self.failUnless(Atoms(data))
+        self.assertTrue(Atoms(data))
 
     def test_repr(self):
         repr(self.atoms)
@@ -128,7 +142,7 @@ class TAtoms(TestCase):
 class TMP4Info(TestCase):
 
     def test_no_soun(self):
-        self.failUnlessRaises(
+        self.assertRaises(
             error, self.test_mdhd_version_1, b"vide")
 
     def test_mdhd_version_1(self, soun=b"soun"):
@@ -142,7 +156,7 @@ class TMP4Info(TestCase):
         fileobj = BytesIO(moov)
         atoms = Atoms(fileobj)
         info = MP4Info(atoms, fileobj)
-        self.failUnlessEqual(info.length, 8)
+        self.assertEqual(info.length, 8)
 
     def test_multiple_tracks(self):
         hdlr = Atom.render(b"hdlr", b"\x00" * 8 + b"whee")
@@ -158,7 +172,7 @@ class TMP4Info(TestCase):
         fileobj = BytesIO(moov)
         atoms = Atoms(fileobj)
         info = MP4Info(atoms, fileobj)
-        self.failUnlessEqual(info.length, 8)
+        self.assertEqual(info.length, 8)
 
     def test_no_tracks(self):
         moov = Atom.render(b"moov", b"")
@@ -186,19 +200,19 @@ class TMP4Tags(TestCase):
         data = Atom.render(b"data", b"\x00\x00\x00\x01" + b"\x00" * 4 + b"bar")
         grp2 = Atom.render(b"\xa9grp", data)
         tags = self.wrap_ilst(grp1 + grp2)
-        self.assertEqual(tags["\xa9grp"], [u"foo", u"bar"])
+        self.assertEqual(tags["\xa9grp"], ["foo", "bar"])
 
     def test_purl(self):
         # purl can have 0 or 1 flags (implicit or utf8)
         data = Atom.render(b"data", b"\x00\x00\x00\x01" + b"\x00" * 4 + b"foo")
         purl = Atom.render(b"purl", data)
         tags = self.wrap_ilst(purl)
-        self.failUnlessEqual(tags["purl"], ["foo"])
+        self.assertEqual(tags["purl"], ["foo"])
 
         data = Atom.render(b"data", b"\x00\x00\x00\x00" + b"\x00" * 4 + b"foo")
         purl = Atom.render(b"purl", data)
         tags = self.wrap_ilst(purl)
-        self.failUnlessEqual(tags["purl"], ["foo"])
+        self.assertEqual(tags["purl"], ["foo"])
 
         # invalid flag
         data = Atom.render(b"data", b"\x00\x00\x00\x03" + b"\x00" * 4 + b"foo")
@@ -219,8 +233,8 @@ class TMP4Tags(TestCase):
         data = Atom.render(b"data", b"\x00" * 8 + b"\x00\x01")
         genre = Atom.render(b"gnre", data)
         tags = self.wrap_ilst(genre)
-        self.failIf("gnre" in tags)
-        self.failUnlessEqual(tags["\xa9gen"], ["Blues"])
+        self.assertFalse("gnre" in tags)
+        self.assertEqual(tags["\xa9gen"], ["Blues"])
 
     def test_empty_cpil(self):
         cpil = Atom.render(b"cpil", Atom.render(b"data", b"\x00" * 8))
@@ -231,20 +245,20 @@ class TMP4Tags(TestCase):
         data = Atom.render(b"data", b"\x00" * 8 + b"\x01\x00")
         genre = Atom.render(b"gnre", data)
         tags = self.wrap_ilst(genre)
-        self.failIf("gnre" in tags)
-        self.failIf("\xa9gen" in tags)
+        self.assertFalse("gnre" in tags)
+        self.assertFalse("\xa9gen" in tags)
 
     def test_strips_unknown_types(self):
         data = Atom.render(b"data", b"\x00" * 8 + b"whee")
         foob = Atom.render(b"foob", data)
         tags = self.wrap_ilst(foob)
-        self.failIf(tags)
+        self.assertFalse(tags)
 
     def test_strips_bad_unknown_types(self):
         data = Atom.render(b"datA", b"\x00" * 8 + b"whee")
         foob = Atom.render(b"foob", data)
         tags = self.wrap_ilst(foob)
-        self.failIf(tags)
+        self.assertFalse(tags)
 
     def test_bad_covr(self):
         data = Atom.render(
@@ -258,16 +272,16 @@ class TMP4Tags(TestCase):
             b"data", b"\x00\x00\x00\x00" + b"\x00" * 4 + b"whee")
         covr = Atom.render(b"covr", data)
         tags = self.wrap_ilst(covr)
-        self.failUnlessEqual(
+        self.assertEqual(
             MP4Cover.FORMAT_JPEG, tags["covr"][0].imageformat)
 
     def test_render_bool(self):
-        self.failUnlessEqual(
+        self.assertEqual(
             MP4Tags()._MP4Tags__render_bool('pgap', True),
             b"\x00\x00\x00\x19pgap\x00\x00\x00\x11data"
             b"\x00\x00\x00\x15\x00\x00\x00\x00\x01"
         )
-        self.failUnlessEqual(
+        self.assertEqual(
             MP4Tags()._MP4Tags__render_bool('pgap', False),
             b"\x00\x00\x00\x19pgap\x00\x00\x00\x11data"
             b"\x00\x00\x00\x15\x00\x00\x00\x00\x00"
@@ -285,33 +299,33 @@ class TMP4Tags(TestCase):
         assert len(render_int('stik', [42], 8)) == len(data) + 7
 
     def test_render_text(self):
-        self.failUnlessEqual(
+        self.assertEqual(
             MP4Tags()._MP4Tags__render_text(
                 'purl', ['http://foo/bar.xml'], 0),
             b"\x00\x00\x00*purl\x00\x00\x00\"data\x00\x00\x00\x00\x00\x00"
             b"\x00\x00http://foo/bar.xml"
         )
-        self.failUnlessEqual(
+        self.assertEqual(
             MP4Tags()._MP4Tags__render_text(
-                'aART', [u'\u0041lbum Artist']),
+                'aART', ['\u0041lbum Artist']),
             b"\x00\x00\x00$aART\x00\x00\x00\x1cdata\x00\x00\x00\x01\x00\x00"
             b"\x00\x00\x41lbum Artist"
         )
-        self.failUnlessEqual(
+        self.assertEqual(
             MP4Tags()._MP4Tags__render_text(
-                'aART', [u'Album Artist', u'Whee']),
+                'aART', ['Album Artist', 'Whee']),
             b"\x00\x00\x008aART\x00\x00\x00\x1cdata\x00\x00\x00\x01\x00\x00"
             b"\x00\x00Album Artist\x00\x00\x00\x14data\x00\x00\x00\x01\x00"
             b"\x00\x00\x00Whee"
         )
 
     def test_render_data(self):
-        self.failUnlessEqual(
+        self.assertEqual(
             MP4Tags()._MP4Tags__render_data('aART', 0, 1, [b'whee']),
             b"\x00\x00\x00\x1caART"
             b"\x00\x00\x00\x14data\x00\x00\x00\x01\x00\x00\x00\x00whee"
         )
-        self.failUnlessEqual(
+        self.assertEqual(
             MP4Tags()._MP4Tags__render_data('aART', 0, 2, [b'whee', b'wee']),
             b"\x00\x00\x00/aART"
             b"\x00\x00\x00\x14data\x00\x00\x00\x02\x00\x00\x00\x00whee"
@@ -385,7 +399,7 @@ class TMP4Tags(TestCase):
         )
 
         key = '----:net.sacredchao.Mutagen:test'
-        self.failUnlessEqual(
+        self.assertEqual(
             MP4Tags()._MP4Tags__render_freeform(key, [b'whee', b'wee']), data)
 
     def test_parse_freeform(self):
@@ -449,16 +463,16 @@ class TMP4Tags(TestCase):
 
         tags = self.wrap_ilst(Atom.render(b"----", data))
         v = tags[key][0]
-        self.failUnlessEqual(v, value)
-        self.failUnlessEqual(v.dataformat, AtomDataType.IMPLICIT)
+        self.assertEqual(v, value)
+        self.assertEqual(v.dataformat, AtomDataType.IMPLICIT)
 
         data = MP4Tags()._MP4Tags__render_freeform(key, v)
         v = self.wrap_ilst(data)[key][0]
-        self.failUnlessEqual(v.dataformat, AtomDataType.IMPLICIT)
+        self.assertEqual(v.dataformat, AtomDataType.IMPLICIT)
 
         data = MP4Tags()._MP4Tags__render_freeform(key, value)
         v = self.wrap_ilst(data)[key][0]
-        self.failUnlessEqual(v.dataformat, AtomDataType.UTF8)
+        self.assertEqual(v.dataformat, AtomDataType.UTF8)
 
 
 class TMP4(TestCase):
@@ -471,7 +485,7 @@ class TMP4(TestCase):
         os.unlink(self.filename)
 
 
-class TMP4Mixin(object):
+class TMP4Mixin:
 
     def faad(self):
         if not have_faad:
@@ -484,38 +498,38 @@ class TMP4Mixin(object):
     def test_score(self):
         fileobj = open(self.filename, "rb")
         header = fileobj.read(128)
-        self.failUnless(MP4.score(self.filename, fileobj, header))
+        self.assertTrue(MP4.score(self.filename, fileobj, header))
         fileobj.close()
 
     def test_channels(self):
-        self.failUnlessEqual(self.audio.info.channels, 2)
+        self.assertEqual(self.audio.info.channels, 2)
 
     def test_sample_rate(self):
-        self.failUnlessEqual(self.audio.info.sample_rate, 44100)
+        self.assertEqual(self.audio.info.sample_rate, 44100)
 
     def test_bits_per_sample(self):
-        self.failUnlessEqual(self.audio.info.bits_per_sample, 16)
+        self.assertEqual(self.audio.info.bits_per_sample, 16)
 
     def test_bitrate(self):
-        self.failUnlessEqual(self.audio.info.bitrate, 2914)
+        self.assertEqual(self.audio.info.bitrate, 2914)
 
     def test_length(self):
-        self.failUnlessAlmostEqual(3.7, self.audio.info.length, 1)
+        self.assertAlmostEqual(3.7, self.audio.info.length, 1)
 
     def test_kind(self):
-        self.assertEqual(self.audio.info.codec, u'mp4a.40.2')
+        self.assertEqual(self.audio.info.codec, 'mp4a.40.2')
 
     def test_padding(self):
-        self.audio["\xa9nam"] = u"wheeee" * 10
+        self.audio["\xa9nam"] = "wheeee" * 10
         self.audio.save()
         size1 = os.path.getsize(self.audio.filename)
-        self.audio["\xa9nam"] = u"wheeee" * 11
+        self.audio["\xa9nam"] = "wheeee" * 11
         self.audio.save()
         size2 = os.path.getsize(self.audio.filename)
-        self.failUnless(size1, size2)
+        self.assertTrue(size1, size2)
 
     def test_padding_2(self):
-        self.audio["\xa9nam"] = u"wheeee" * 10
+        self.audio["\xa9nam"] = "wheeee" * 10
         self.audio.save()
 
         # Reorder "free" and "ilst" atoms
@@ -525,7 +539,7 @@ class TMP4Mixin(object):
             meta_length1 = meta.length
             ilst = meta[b"ilst", ]
             free = meta[b"free", ]
-            self.failUnlessEqual(ilst.offset + ilst.length, free.offset)
+            self.assertEqual(ilst.offset + ilst.length, free.offset)
             fileobj.seek(ilst.offset)
             ilst_data = fileobj.read(ilst.length)
             fileobj.seek(free.offset)
@@ -538,10 +552,10 @@ class TMP4Mixin(object):
             meta = atoms[b"moov", b"udta", b"meta"]
             ilst = meta[b"ilst", ]
             free = meta[b"free", ]
-            self.failUnlessEqual(free.offset + free.length, ilst.offset)
+            self.assertEqual(free.offset + free.length, ilst.offset)
 
         # Save the file
-        self.audio["\xa9nam"] = u"wheeee" * 11
+        self.audio["\xa9nam"] = "wheeee" * 11
         self.audio.save()
 
         # Check the order of "free" and "ilst" atoms
@@ -551,24 +565,22 @@ class TMP4Mixin(object):
         meta = atoms[b"moov", b"udta", b"meta"]
         ilst = meta[b"ilst", ]
         free = meta[b"free", ]
-        self.failUnlessEqual(meta.length, meta_length1)
-        self.failUnlessEqual(ilst.offset + ilst.length, free.offset)
+        self.assertEqual(meta.length, meta_length1)
+        self.assertEqual(ilst.offset + ilst.length, free.offset)
 
     def set_key(self, key, value, result=None, faad=True):
         self.audio[key] = value
         self.audio.save()
         audio = MP4(self.audio.filename)
-        self.failUnless(key in audio)
-        self.failUnlessEqual(audio[key], result or value)
+        self.assertTrue(key in audio)
+        self.assertEqual(audio[key], result or value)
         if faad:
             self.faad()
 
     def test_unicode(self):
-        try:
+        with contextlib.suppress(TypeError):
             self.set_key('\xa9nam', [b'\xe3\x82\x8a\xe3\x81\x8b'],
-                         result=[u'\u308a\u304b'])
-        except TypeError:
-            pass
+                         result=['\u308a\u304b'])
 
     def test_preserve_freeform(self):
         self.set_key('----:net.sacredchao.Mutagen:test key',
@@ -579,10 +591,10 @@ class TMP4Mixin(object):
             TypeError, self.audio.__setitem__, '\xa9nam', [b'\xff'])
 
     def test_save_text(self):
-        self.set_key('\xa9nam', [u"Some test name"])
+        self.set_key('\xa9nam', ["Some test name"])
 
     def test_save_texts(self):
-        self.set_key('\xa9nam', [u"Some test name", u"One more name"])
+        self.set_key('\xa9nam', ["Some test name", "One more name"])
 
     def test_freeform(self):
         self.set_key('----:net.sacredchao.Mutagen:test key', [b"whee"])
@@ -613,24 +625,24 @@ class TMP4Mixin(object):
         self.set_key('disk', [])
 
     def test_tracknumber_too_small(self):
-        self.failUnlessRaises(ValueError, self.set_key, 'trkn', [(-1, 0)])
-        self.failUnlessRaises(
+        self.assertRaises(ValueError, self.set_key, 'trkn', [(-1, 0)])
+        self.assertRaises(
             ValueError, self.set_key, 'trkn', [(2 ** 18, 1)])
 
     def test_disk_too_small(self):
-        self.failUnlessRaises(ValueError, self.set_key, 'disk', [(-1, 0)])
-        self.failUnlessRaises(
+        self.assertRaises(ValueError, self.set_key, 'disk', [(-1, 0)])
+        self.assertRaises(
             ValueError, self.set_key, 'disk', [(2 ** 18, 1)])
 
     def test_tracknumber_wrong_size(self):
-        self.failUnlessRaises(ValueError, self.set_key, 'trkn', (1,))
-        self.failUnlessRaises(ValueError, self.set_key, 'trkn', (1, 2, 3,))
-        self.failUnlessRaises(ValueError, self.set_key, 'trkn', [(1,)])
-        self.failUnlessRaises(ValueError, self.set_key, 'trkn', [(1, 2, 3,)])
+        self.assertRaises(ValueError, self.set_key, 'trkn', (1,))
+        self.assertRaises(ValueError, self.set_key, 'trkn', (1, 2, 3,))
+        self.assertRaises(ValueError, self.set_key, 'trkn', [(1,)])
+        self.assertRaises(ValueError, self.set_key, 'trkn', [(1, 2, 3,)])
 
     def test_disk_wrong_size(self):
-        self.failUnlessRaises(ValueError, self.set_key, 'disk', [(1,)])
-        self.failUnlessRaises(ValueError, self.set_key, 'disk', [(1, 2, 3,)])
+        self.assertRaises(ValueError, self.set_key, 'disk', [(1,)])
+        self.assertRaises(ValueError, self.set_key, 'disk', [(1, 2, 3,)])
 
     def test_tempo(self):
         self.set_key('tmpo', [150])
@@ -659,8 +671,8 @@ class TMP4Mixin(object):
         self.set_key('shwm', [1])
         self.set_key('\xa9mvc', [42])
         self.set_key('\xa9mvi', [24])
-        self.set_key('\xa9mvn', [u"movement"])
-        self.set_key('\xa9wrk', [u"work"])
+        self.set_key('\xa9mvn', ["movement"])
+        self.set_key('\xa9wrk', ["work"])
 
     def test_tempos(self):
         self.set_key('tmpo', [160, 200], faad=False)
@@ -668,7 +680,7 @@ class TMP4Mixin(object):
     def test_tempo_invalid(self):
         for badvalue in [
                 [cdata.int64_max + 1], [cdata.int64_min - 1], 10, "foo"]:
-            self.failUnlessRaises(ValueError, self.set_key, 'tmpo', badvalue)
+            self.assertRaises(ValueError, self.set_key, 'tmpo', badvalue)
 
     def test_compilation(self):
         self.set_key('cpil', True)
@@ -705,31 +717,31 @@ class TMP4Mixin(object):
         self.set_key('catg', ['falling-star-episode-1'])
 
     def test_pprint(self):
-        self.failUnless(self.audio.pprint())
+        self.assertTrue(self.audio.pprint())
         self.assertTrue(isinstance(self.audio.pprint(), str))
 
     def test_pprint_binary(self):
         self.audio["covr"] = [b"\x00\xa9garbage"]
-        self.failUnless(self.audio.pprint())
+        self.assertTrue(self.audio.pprint())
 
     def test_pprint_pair(self):
         self.audio["cpil"] = (1, 10)
-        self.failUnless("cpil=(1, 10)" in self.audio.pprint())
+        self.assertTrue("cpil=(1, 10)" in self.audio.pprint())
 
     def test_delete(self):
         self.audio.delete()
         audio = MP4(self.audio.filename)
-        self.failIf(audio.tags)
+        self.assertFalse(audio.tags)
         self.faad()
 
     def test_module_delete(self):
         delete(self.filename)
         audio = MP4(self.audio.filename)
-        self.failIf(audio.tags)
+        self.assertFalse(audio.tags)
         self.faad()
 
     def test_reads_unknown_text(self):
-        self.set_key("foob", [u"A test"])
+        self.set_key("foob", ["A test"])
 
     def __read_offsets(self, filename):
         fileobj = open(filename, 'rb')
@@ -770,11 +782,11 @@ class TMP4Mixin(object):
         self.audio["\xa9nam"] = "wheeeeeeee"
         self.audio.save()
         bb = self.__read_offsets(self.filename)
-        for a, b in zip(aa, bb):
-            self.failUnlessEqual(a, b)
+        for a, b in zip(aa, bb, strict=False):
+            self.assertEqual(a, b)
 
     def test_mime(self):
-        self.failUnless("audio/mp4" in self.audio.mime)
+        self.assertTrue("audio/mp4" in self.audio.mime)
 
     def test_set_init_padding_zero(self):
         if self.audio.tags is None:
@@ -806,7 +818,7 @@ class TMP4HasTagsMixin(TMP4Mixin):
         self.audio.clear()
         self.audio.save()
         audio = MP4(self.audio.filename)
-        self.failIf(audio.tags)
+        self.assertFalse(audio.tags)
 
     def test_too_short(self):
         fileobj = open(self.audio.filename, "rb")
@@ -815,12 +827,12 @@ class TMP4HasTagsMixin(TMP4Mixin):
             ilst = atoms[b"moov.udta.meta.ilst"]
             # fake a too long atom length
             ilst.children[0].length += 10000000
-            self.failUnlessRaises(MP4MetadataError, MP4Tags, atoms, fileobj)
+            self.assertRaises(MP4MetadataError, MP4Tags, atoms, fileobj)
         finally:
             fileobj.close()
 
     def test_has_tags(self):
-        self.failUnless(self.audio.tags)
+        self.assertTrue(self.audio.tags)
 
     def test_not_my_file(self):
         # should raise something like "Not a MP4 file"
@@ -829,7 +841,7 @@ class TMP4HasTagsMixin(TMP4Mixin):
 
     def test_delete_remove_padding(self):
         self.audio.clear()
-        self.audio.tags['foob'] = u"foo"
+        self.audio.tags['foob'] = "foo"
         self.audio.save(padding=lambda x: 0)
         filesize = os.path.getsize(self.audio.filename)
         self.audio.delete()
@@ -841,21 +853,21 @@ class TMP4Datatypes(TMP4, TMP4HasTagsMixin):
 
     def test_has_freeform(self):
         key = "----:com.apple.iTunes:iTunNORM"
-        self.failUnless(key in self.audio.tags)
+        self.assertTrue(key in self.audio.tags)
         ff = self.audio.tags[key]
-        self.failUnlessEqual(ff[0].dataformat, AtomDataType.UTF8)
-        self.failUnlessEqual(ff[0].version, 0)
+        self.assertEqual(ff[0].dataformat, AtomDataType.UTF8)
+        self.assertEqual(ff[0].version, 0)
 
     def test_has_covr(self):
-        self.failUnless('covr' in self.audio.tags)
+        self.assertTrue('covr' in self.audio.tags)
         covr = self.audio.tags['covr']
-        self.failUnlessEqual(len(covr), 2)
-        self.failUnlessEqual(covr[0].imageformat, MP4Cover.FORMAT_PNG)
-        self.failUnlessEqual(covr[1].imageformat, MP4Cover.FORMAT_JPEG)
+        self.assertEqual(len(covr), 2)
+        self.assertEqual(covr[0].imageformat, MP4Cover.FORMAT_PNG)
+        self.assertEqual(covr[1].imageformat, MP4Cover.FORMAT_JPEG)
 
     def test_pprint(self):
         text = self.audio.tags.pprint().splitlines()
-        self.assertTrue(u"©ART=Test Artist" in text)
+        self.assertTrue("©ART=Test Artist" in text)
 
     def test_get_padding(self):
         self.assertEqual(self.audio._padding, 1634)
@@ -866,11 +878,11 @@ class TMP4CovrWithName(TMP4, TMP4Mixin):
     original = os.path.join(DATA_DIR, "covr-with-name.m4a")
 
     def test_has_covr(self):
-        self.failUnless('covr' in self.audio.tags)
+        self.assertTrue('covr' in self.audio.tags)
         covr = self.audio.tags['covr']
-        self.failUnlessEqual(len(covr), 2)
-        self.failUnlessEqual(covr[0].imageformat, MP4Cover.FORMAT_PNG)
-        self.failUnlessEqual(covr[1].imageformat, MP4Cover.FORMAT_JPEG)
+        self.assertEqual(len(covr), 2)
+        self.assertEqual(covr[0].imageformat, MP4Cover.FORMAT_PNG)
+        self.assertEqual(covr[1].imageformat, MP4Cover.FORMAT_JPEG)
 
 
 class TMP4HasTags64Bit(TMP4, TMP4HasTagsMixin):
@@ -880,10 +892,10 @@ class TMP4HasTags64Bit(TMP4, TMP4HasTagsMixin):
         pass
 
     def test_bitrate(self):
-        self.failUnlessEqual(self.audio.info.bitrate, 128000)
+        self.assertEqual(self.audio.info.bitrate, 128000)
 
     def test_length(self):
-        self.failUnlessAlmostEqual(0.325, self.audio.info.length, 3)
+        self.assertAlmostEqual(0.325, self.audio.info.length, 3)
 
     def faad(self):
         # This is only half a file, so FAAD segfaults. Can't test. :(
@@ -894,27 +906,27 @@ class TMP4NoTagsM4A(TMP4, TMP4Mixin):
     original = os.path.join(DATA_DIR, "no-tags.m4a")
 
     def test_no_tags(self):
-        self.failUnless(self.audio.tags is None)
+        self.assertTrue(self.audio.tags is None)
 
     def test_add_tags(self):
         self.audio.add_tags()
-        self.failUnlessRaises(error, self.audio.add_tags)
+        self.assertRaises(error, self.audio.add_tags)
 
 
 class TMP4NoTags3G2(TMP4, TMP4Mixin):
     original = os.path.join(DATA_DIR, "no-tags.3g2")
 
     def test_no_tags(self):
-        self.failUnless(self.audio.tags is None)
+        self.assertTrue(self.audio.tags is None)
 
     def test_sample_rate(self):
-        self.failUnlessEqual(self.audio.info.sample_rate, 22050)
+        self.assertEqual(self.audio.info.sample_rate, 22050)
 
     def test_bitrate(self):
-        self.failUnlessEqual(self.audio.info.bitrate, 32000)
+        self.assertEqual(self.audio.info.bitrate, 32000)
 
     def test_length(self):
-        self.failUnlessAlmostEqual(15, self.audio.info.length, 1)
+        self.assertAlmostEqual(15, self.audio.info.length, 1)
 
 
 class TMP4UpdateParents64Bit(TestCase):
@@ -949,22 +961,22 @@ class TMP4ALAC(TestCase):
         self.audio = MP4(self.original)
 
     def test_channels(self):
-        self.failUnlessEqual(self.audio.info.channels, 2)
+        self.assertEqual(self.audio.info.channels, 2)
 
     def test_sample_rate(self):
-        self.failUnlessEqual(self.audio.info.sample_rate, 44100)
+        self.assertEqual(self.audio.info.sample_rate, 44100)
 
     def test_bits_per_sample(self):
-        self.failUnlessEqual(self.audio.info.bits_per_sample, 16)
+        self.assertEqual(self.audio.info.bits_per_sample, 16)
 
     def test_length(self):
-        self.failUnlessAlmostEqual(3.7, self.audio.info.length, 1)
+        self.assertAlmostEqual(3.7, self.audio.info.length, 1)
 
     def test_bitrate(self):
         self.assertEqual(self.audio.info.bitrate, 2764)
 
     def test_kind(self):
-        self.assertEqual(self.audio.info.codec, u'alac')
+        self.assertEqual(self.audio.info.codec, 'alac')
 
 
 class TMP4Misc(TestCase):
@@ -1205,11 +1217,11 @@ class TMP4Chapters(TMP4):
     original = os.path.join(DATA_DIR, "nero-chapters.m4b")
 
     def test_has_chapters(self):
-        self.failUnless(hasattr(self.audio, 'chapters'))
+        self.assertTrue(hasattr(self.audio, 'chapters'))
         chapters = self.audio.chapters
-        self.failUnlessEqual(len(chapters), 112)
+        self.assertEqual(len(chapters), 112)
         for i, c in enumerate(chapters):
-            self.failUnlessEqual(c.title, str(i + 1).zfill(3))
+            self.assertEqual(c.title, str(i + 1).zfill(3))
 
 
 def call_faad(*args):

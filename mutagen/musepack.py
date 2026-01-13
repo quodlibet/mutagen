@@ -17,11 +17,13 @@ For more information, see http://www.musepack.net/.
 __all__ = ["Musepack", "Open", "delete"]
 
 import struct
+from io import BytesIO
+from typing import final, override
 
 from mutagen import StreamInfo
-from mutagen.apev2 import APEv2File, error, delete
+from mutagen._util import cdata, convert_error, endswith, intround
+from mutagen.apev2 import APEv2File, delete, error
 from mutagen.id3._util import BitPaddedInt
-from mutagen._util import cdata, convert_error, intround, endswith
 
 
 class MusepackHeaderError(error):
@@ -31,7 +33,7 @@ class MusepackHeaderError(error):
 RATES = [44100, 48000, 37800, 32000]
 
 
-def _parse_sv8_int(fileobj, limit=9):
+def _parse_sv8_int(fileobj: BytesIO, limit: int =9):
     """Reads (max limit) bytes from fileobj until the MSB is zero.
     All 7 LSB will be merged to a big endian uint.
 
@@ -55,12 +57,12 @@ def _parse_sv8_int(fileobj, limit=9):
     return 0, 0
 
 
-def _calc_sv8_gain(gain):
+def _calc_sv8_gain(gain: int) -> float:
     # 64.82 taken from mpcdec
     return 64.82 - gain / 256.0
 
 
-def _calc_sv8_peak(peak):
+def _calc_sv8_peak(peak: int) -> float:
     return (10 ** (peak / (256.0 * 20.0)) / 65535.0)
 
 
@@ -90,8 +92,22 @@ class MusepackInfo(StreamInfo):
     VorbisGain, you must multiply the peak by 2.
     """
 
+    channels: int
+    length: float
+    sample_rate: int
+    bitrate: int
+    version: int
+    samples: int
+
+    title_gain: float | None
+    title_peak: float | None
+    album_gain: float | None
+    album_peak: float | None
+
+
+
     @convert_error(IOError, MusepackHeaderError)
-    def __init__(self, fileobj):
+    def __init__(self, fileobj: BytesIO):
         """Raises MusepackHeaderError"""
 
         header = fileobj.read(4)
@@ -104,7 +120,7 @@ class MusepackInfo(StreamInfo):
             if len(header) != 6:
                 raise MusepackHeaderError("not a Musepack file")
             size = 10 + BitPaddedInt(header[2:6])
-            fileobj.seek(size)
+            _ = fileobj.seek(size)
             header = fileobj.read(4)
             if len(header) != 4:
                 raise MusepackHeaderError("not a Musepack file")
@@ -115,16 +131,16 @@ class MusepackInfo(StreamInfo):
             self.__parse_sv467(fileobj)
 
         if not self.bitrate and self.length != 0:
-            fileobj.seek(0, 2)
+            _ = fileobj.seek(0, 2)
             self.bitrate = intround(fileobj.tell() * 8 / self.length)
 
-    def __parse_sv8(self, fileobj):
+    def __parse_sv8(self, fileobj: BytesIO):
         # SV8 http://trac.musepack.net/trac/wiki/SV8Specification
 
         key_size = 2
         mandatory_packets = [b"SH", b"RG"]
 
-        def check_frame_key(key):
+        def check_frame_key(key: bytes):
             if ((len(frame_type) != key_size) or
                     (not b'AA' <= frame_type <= b'ZZ')):
                 raise MusepackHeaderError("Invalid frame key.")
@@ -136,7 +152,7 @@ class MusepackInfo(StreamInfo):
             try:
                 frame_size, slen = _parse_sv8_int(fileobj)
             except (EOFError, ValueError):
-                raise MusepackHeaderError("Invalid packet size.")
+                raise MusepackHeaderError("Invalid packet size.") from None
             data_size = frame_size - key_size - slen
             # packets can be at maximum data_size big and are padded with zeros
 
@@ -151,27 +167,26 @@ class MusepackInfo(StreamInfo):
                 mandatory_packets.remove(frame_type)
                 self.__parse_replaygain_packet(fileobj, data_size)
             else:
-                fileobj.seek(data_size, 1)
+                _ = fileobj.seek(data_size, 1)
 
             frame_type = fileobj.read(key_size)
             check_frame_key(frame_type)
 
         if mandatory_packets:
-            raise MusepackHeaderError("Missing mandatory packets: %s." %
-                                      ", ".join(map(repr, mandatory_packets)))
+            raise MusepackHeaderError("Missing mandatory packets: {}.".format(", ".join(map(repr, mandatory_packets))))
 
         self.length = float(self.samples) / self.sample_rate
         self.bitrate = 0
 
-    def __parse_stream_header(self, fileobj, data_size):
+    def __parse_stream_header(self, fileobj: BytesIO, data_size: int):
         # skip CRC
-        fileobj.seek(4, 1)
+        _ = fileobj.seek(4, 1)
         remaining_size = data_size - 4
 
         try:
             self.version = bytearray(fileobj.read(1))[0]
         except (TypeError, IndexError):
-            raise MusepackHeaderError("SH packet ended unexpectedly.")
+            raise MusepackHeaderError("SH packet ended unexpectedly.") from None
 
         remaining_size -= 1
 
@@ -180,7 +195,7 @@ class MusepackInfo(StreamInfo):
             samples_skip, l2 = _parse_sv8_int(fileobj)
         except (EOFError, ValueError):
             raise MusepackHeaderError(
-                "SH packet: Invalid sample counts.")
+                "SH packet: Invalid sample counts.") from None
 
         self.samples = samples - samples_skip
         remaining_size -= l1 + l2
@@ -192,10 +207,10 @@ class MusepackInfo(StreamInfo):
         try:
             self.sample_rate = RATES[rate_index]
         except IndexError:
-            raise MusepackHeaderError("Invalid sample rate")
+            raise MusepackHeaderError("Invalid sample rate") from None
         self.channels = (bytearray(data)[1] >> 4) + 1
 
-    def __parse_replaygain_packet(self, fileobj, data_size):
+    def __parse_replaygain_packet(self, fileobj: BytesIO, data_size: int):
         data = fileobj.read(data_size)
         if data_size < 9:
             raise MusepackHeaderError("Invalid RG packet size.")
@@ -214,8 +229,8 @@ class MusepackInfo(StreamInfo):
         if album_peak:
             self.album_peak = _calc_sv8_peak(album_peak)
 
-    def __parse_sv467(self, fileobj):
-        fileobj.seek(-4, 1)
+    def __parse_sv467(self, fileobj: BytesIO):
+        _ = fileobj.seek(-4, 1)
         header = fileobj.read(32)
         if len(header) != 32:
             raise MusepackHeaderError("not a Musepack file")
@@ -232,6 +247,11 @@ class MusepackInfo(StreamInfo):
                 "<Hh", header[12:16])
             self.album_peak, self.album_gain = struct.unpack(
                 "<Hh", header[16:20])
+
+            assert self.title_gain is not None
+            assert self.album_gain is not None
+            assert self.title_peak is not None
+            assert self.album_peak is not None
             self.title_gain /= 100.0
             self.album_gain /= 100.0
             self.title_peak /= 65535.0
@@ -256,18 +276,19 @@ class MusepackInfo(StreamInfo):
         self.channels = 2
         self.length = float(frames * 1152 - 576) / self.sample_rate
 
-    def pprint(self):
-        rg_data = []
+    @override
+    def pprint(self) -> str:
+        rg_data: list[str] = []
         if hasattr(self, "title_gain"):
-            rg_data.append(u"%+0.2f (title)" % self.title_gain)
+            rg_data.append(f"{self.title_gain:+0.2f} (title)")
         if hasattr(self, "album_gain"):
-            rg_data.append(u"%+0.2f (album)" % self.album_gain)
+            rg_data.append(f"{self.album_gain:+0.2f} (album)")
         rg_data = (rg_data and ", Gain: " + ", ".join(rg_data)) or ""
 
-        return u"Musepack SV%d, %.2f seconds, %d Hz, %d bps%s" % (
+        return "Musepack SV%d, %.2f seconds, %d Hz, %d bps%s" % (
             self.version, self.length, self.sample_rate, self.bitrate, rg_data)
 
-
+@final
 class Musepack(APEv2File):
     """Musepack(filething)
 
@@ -278,11 +299,12 @@ class Musepack(APEv2File):
         info (`MusepackInfo`)
     """
 
-    _Info = MusepackInfo
+    _Info: type[StreamInfo] = MusepackInfo
     _mimes = ["audio/x-musepack", "audio/x-mpc"]
 
     @staticmethod
-    def score(filename, fileobj, header):
+    @override
+    def score(filename: str, fileobj: BytesIO, header: bytes):
         filename = filename.lower()
 
         return (header.startswith(b"MP+") + header.startswith(b"MPCK") +

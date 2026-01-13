@@ -17,12 +17,16 @@ on the specification at http://www.xiph.org/vorbis/doc/Vorbis_I_spec.html.
 __all__ = ["OggVorbis", "Open", "delete"]
 
 import struct
+from io import BytesIO
+from typing import cast, final, override
 
 from mutagen import StreamInfo
+from mutagen._filething import FileThing
+from mutagen._tags import PaddingFunction, PaddingInfo
+from mutagen._util import convert_error, get_size, loadfile
 from mutagen._vorbis import VCommentDict
-from mutagen._util import get_size, loadfile, convert_error
-from mutagen._tags import PaddingInfo
-from mutagen.ogg import OggPage, OggFileType, error as OggError
+from mutagen.ogg import OggFileType, OggPage
+from mutagen.ogg import error as OggError
 
 
 class error(OggError):
@@ -32,7 +36,7 @@ class error(OggError):
 class OggVorbisHeaderError(error):
     pass
 
-
+@final
 class OggVorbisInfo(StreamInfo):
     """OggVorbisInfo()
 
@@ -46,12 +50,12 @@ class OggVorbisInfo(StreamInfo):
 
     """
 
-    length = 0.0
-    channels = 0
-    bitrate = 0
-    sample_rate = 0
+    length: float = 0.0
+    channels: int = 0
+    bitrate: int = 0
+    sample_rate: int = 0
 
-    def __init__(self, fileobj):
+    def __init__(self, fileobj: BytesIO):
         """Raises ogg.error, IOError"""
 
         page = OggPage(fileobj)
@@ -66,7 +70,7 @@ class OggVorbisInfo(StreamInfo):
             raise OggVorbisHeaderError(
                 "page contains a packet too short to be valid")
         (self.channels, self.sample_rate, max_bitrate, nominal_bitrate,
-         min_bitrate) = struct.unpack("<BI3i", page.packets[0][11:28])
+         min_bitrate) = cast(tuple[int, int, int, int, int],struct.unpack("<BI3i", page.packets[0][11:28]))
         if self.sample_rate == 0:
             raise OggVorbisHeaderError("sample rate can't be zero")
         self.serial = page.serial
@@ -86,7 +90,7 @@ class OggVorbisInfo(StreamInfo):
         else:
             self.bitrate = nominal_bitrate
 
-    def _post_tags(self, fileobj):
+    def _post_tags(self, fileobj: BytesIO):
         """Raises ogg.error"""
 
         page = OggPage.find_last(fileobj, self.serial, finishing=True)
@@ -94,16 +98,19 @@ class OggVorbisInfo(StreamInfo):
             raise OggVorbisHeaderError
         self.length = page.position / float(self.sample_rate)
 
+    @override
     def pprint(self):
-        return u"Ogg Vorbis, %.2f seconds, %d bps" % (
+        return "Ogg Vorbis, %.2f seconds, %d bps" % (
             self.length, self.bitrate)
 
 
 class OggVCommentDict(VCommentDict):
     """Vorbis comments embedded in an Ogg bitstream."""
 
-    def __init__(self, fileobj, info):
-        pages = []
+    _padding: int
+
+    def __init__(self, fileobj: BytesIO, info: OggVorbisInfo):
+        pages: list[OggPage] = []
         complete = False
         while not complete:
             page = OggPage(fileobj)
@@ -111,15 +118,15 @@ class OggVCommentDict(VCommentDict):
                 pages.append(page)
                 complete = page.complete or (len(page.packets) > 1)
         data = OggPage.to_packets(pages)[0][7:]  # Strip off "\x03vorbis".
-        super(OggVCommentDict, self).__init__(data)
+        super().__init__(data)
         self._padding = len(data) - self._size
 
-    def _inject(self, fileobj, padding_func):
+    def _inject(self, fileobj: BytesIO, padding_func: PaddingFunction | None):
         """Write tag data into the Vorbis comment packet/page."""
 
         # Find the old pages in the file; we'll need to remove them,
         # plus grab any stray setup packet data out of them.
-        fileobj.seek(0)
+        _ = fileobj.seek(0)
         page = OggPage(fileobj)
         while not page.packets[0].startswith(b"\x03vorbis"):
             page = OggPage(fileobj)
@@ -145,7 +152,7 @@ class OggVCommentDict(VCommentDict):
         new_pages = OggPage._from_packets_try_preserve(packets, old_pages)
         OggPage.replace(fileobj, old_pages, new_pages)
 
-
+@final
 class OggVorbis(OggFileType):
     """OggVorbis(filething)
 
@@ -159,16 +166,17 @@ class OggVorbis(OggFileType):
         tags (`mutagen._vorbis.VCommentDict`)
     """
 
-    _Info = OggVorbisInfo
+    _Info: type[StreamInfo] = OggVorbisInfo
     _Tags = OggVCommentDict
     _Error = OggVorbisHeaderError
-    _mimes = ["audio/vorbis", "audio/x-vorbis"]
+    _mimes: list[str] = ["audio/vorbis", "audio/x-vorbis"]
 
     info = None
     tags = None
 
     @staticmethod
-    def score(filename, fileobj, header):
+    @override
+    def score(filename: str, fileobj: BytesIO, header: bytes):
         return (header.startswith(b"OggS") * (b"\x01vorbis" in header))
 
 
@@ -177,7 +185,7 @@ Open = OggVorbis
 
 @convert_error(IOError, error)
 @loadfile(method=False, writable=True)
-def delete(filething):
+def delete(filething: FileThing):
     """ delete(filething)
 
     Arguments:
@@ -189,5 +197,5 @@ def delete(filething):
     """
 
     t = OggVorbis(filething)
-    filething.fileobj.seek(0)
+    _ = filething.fileobj.seek(0)
     t.delete(filething)

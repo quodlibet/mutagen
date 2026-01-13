@@ -9,7 +9,11 @@
 """Resource Interchange File Format (RIFF)."""
 
 import struct
+from io import BytesIO
 from struct import pack
+from typing import override
+
+from _typeshed import ReadableBuffer
 
 from mutagen._iff import (
     IffChunk,
@@ -22,22 +26,28 @@ from mutagen._iff import (
 class RiffChunk(IffChunk):
     """Generic RIFF chunk"""
 
+    name: str
+
     @classmethod
-    def parse_header(cls, header):
+    @override
+    def parse_header(cls, header: ReadableBuffer):
         return struct.unpack('<4sI', header)
 
     @classmethod
-    def get_class(cls, id):
-        if id in (u'LIST', u'RIFF'):
+    @override
+    def get_class(cls, id: str):
+        if id in ('LIST', 'RIFF'):
             return RiffListChunk
         else:
             return cls
 
-    def write_new_header(self, id_, size):
-        self._fileobj.write(pack('<4sI', id_, size))
+    @override
+    def write_new_header(self, id_: bytes | str, size: int) -> None:
+        _ = self._fileobj.write(pack('<4sI', id_, size))
 
-    def write_size(self):
-        self._fileobj.write(pack('<I', self.data_size))
+    @override
+    def write_size(self) -> None:
+        _ = self._fileobj.write(pack('<I', self.data_size))
 
 
 class RiffListChunk(RiffChunk, IffContainerChunkMixin):
@@ -45,12 +55,13 @@ class RiffListChunk(RiffChunk, IffContainerChunkMixin):
     This is either a 'LIST' or 'RIFF'
     """
 
-    def parse_next_subchunk(self):
+    @override
+    def parse_next_subchunk(self) -> RiffChunk:
         return RiffChunk.parse(self._fileobj, self)
 
-    def __init__(self, fileobj, id, data_size, parent_chunk):
-        if id not in (u'RIFF', u'LIST'):
-            raise InvalidChunk('Expected RIFF or LIST chunk, got %s' % id)
+    def __init__(self, fileobj: BytesIO, id: str, data_size: int, parent_chunk: RiffChunk | None) -> None:
+        if id not in ('RIFF', 'LIST'):
+            raise InvalidChunk(f'Expected RIFF or LIST chunk, got {id}')
 
         RiffChunk.__init__(self, fileobj, id, data_size, parent_chunk)
         self.init_container()
@@ -59,11 +70,14 @@ class RiffListChunk(RiffChunk, IffContainerChunkMixin):
 class RiffFile(IffFile):
     """Representation of a RIFF file"""
 
-    def __init__(self, fileobj):
+    file_type: str
+
+    def __init__(self, fileobj: BytesIO) -> None:
         super().__init__(RiffChunk, fileobj)
 
-        if self.root.id != u'RIFF':
-            raise InvalidChunk("Root chunk must be a RIFF chunk, got %s"
-                               % self.root.id)
+        if self.root.id != 'RIFF':
+            raise InvalidChunk(f"Root chunk must be a RIFF chunk, got {self.root.id}")
+
+        assert isinstance(self.root, RiffListChunk)
 
         self.file_type = self.root.name

@@ -8,12 +8,27 @@
 import os
 import sys
 import traceback
+from collections.abc import Sequence
+from types import TracebackType
+from typing import override
+
+from mutagen.id3 import ID3
 
 from ._util import SignalHandler
 
+ErrorEntry = tuple[str, type[BaseException] | None, BaseException | None, TracebackType | None]
 
-class Report(object):
-    def __init__(self, pathname):
+
+class Report:
+    name: str
+    files: int
+    unsync: int
+    missings: int
+    errors: list[ErrorEntry]
+    exceptions: dict[type[BaseException], int]
+    versions: dict[tuple[int, ...], int]
+
+    def __init__(self, pathname: str):
         self.name = pathname
         self.files = 0
         self.unsync = 0
@@ -22,26 +37,27 @@ class Report(object):
         self.exceptions = {}
         self.versions = {}
 
-    def missing(self, filename):
+    def missing(self, filename: str) -> None:
         self.missings += 1
         self.files += 1
 
-    def error(self, filename):
+    def error(self, filename: str) -> None:
         Ex, value, trace = sys.exc_info()
-        self.exceptions.setdefault(Ex, 0)
+        _ = self.exceptions.setdefault(Ex, 0)
         self.exceptions[Ex] += 1
         self.errors.append((filename, Ex, value, trace))
         self.files += 1
 
-    def success(self, id3):
+    def success(self, id3: ID3) -> None:
         self.versions.setdefault(id3.version, 0)
         self.versions[id3.version] += 1
         self.files += 1
         if id3.f_unsynch:
             self.unsync += 1
 
-    def __str__(self):
-        strings = ["-- Report for %s --" % self.name]
+    @override
+    def __str__(self) -> str:
+        strings = [f"-- Report for {self.name} --"]
         if self.files == 0:
             return strings[0] + "\n" + "No MP3 files found.\n"
 
@@ -67,7 +83,7 @@ class Report(object):
         if self.errors:
             strings.append("\nERRORS:\n")
             for filename, Ex, value, trace in self.errors:
-                strings.append("\nReading %s:" % filename)
+                strings.append(f"\nReading {filename}:")
                 strings.append(
                     "".join(traceback.format_exception(Ex, value, trace)[1:]))
         else:
@@ -76,12 +92,12 @@ class Report(object):
         return "\n".join(strings)
 
 
-def check_dir(path):
+def check_dir(path: str) -> None:
     from mutagen.mp3 import MP3
 
     rep = Report(path)
-    print(u"Scanning", path)
-    for path, dirs, files in os.walk(path):
+    print("Scanning", path)
+    for path, _dirs, files in os.walk(path):
         files.sort()
         for fn in files:
             if not fn.lower().endswith('.mp3'):
@@ -100,14 +116,14 @@ def check_dir(path):
     print(str(rep))
 
 
-def main(argv):
+def main(argv: Sequence[str]) -> None:
     if len(argv) == 1:
-        print(u"Usage:", argv[0], u"directory ...")
+        print("Usage:", argv[0], "directory ...")
     else:
         for path in argv[1:]:
             check_dir(path)
 
 
-def entry_point():
+def entry_point() -> None:
     SignalHandler().init()
     return main(sys.argv)

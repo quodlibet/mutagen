@@ -1,16 +1,35 @@
 
-from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes, \
-    decode_terminated, dict_match, enum, get_size, BitReader, BitReaderError, \
-    resize_bytes, seek_end, verify_fileobj, fileobj_name, \
-    read_full, flags, resize_file, move_bytes, encode_endian, loadfile, \
-    intround, verify_filename
-from tests import TestCase, get_temp_empty
+import builtins
+import errno
 import os
 import random
 import tempfile
-import errno
-import builtins
+from enum import Flag, IntEnum
 from io import BytesIO
+
+from mutagen._util import (
+    BitReader,
+    BitReaderError,
+    DictMixin,
+    cdata,
+    decode_terminated,
+    delete_bytes,
+    dict_match,
+    encode_endian,
+    fileobj_name,
+    get_size,
+    insert_bytes,
+    intround,
+    loadfile,
+    move_bytes,
+    read_full,
+    resize_bytes,
+    resize_file,
+    seek_end,
+    verify_filename,
+    verify_fileobj,
+)
+from tests import TestCase, get_temp_empty
 
 try:
     import fcntl
@@ -50,48 +69,48 @@ class TDictMixin(TestCase):
         self.fdict["foo"] = self.rdict["foo"] = "bar"
 
     def test_getsetitem(self):
-        self.failUnlessEqual(self.fdict["foo"], "bar")
-        self.failUnlessRaises(KeyError, self.fdict.__getitem__, "bar")
+        self.assertEqual(self.fdict["foo"], "bar")
+        self.assertRaises(KeyError, self.fdict.__getitem__, "bar")
 
     def test_has_key_contains(self):
-        self.failUnless("foo" in self.fdict)
-        self.failIf("bar" in self.fdict)
+        self.assertTrue("foo" in self.fdict)
+        self.assertFalse("bar" in self.fdict)
 
     def test_iter(self):
-        self.failUnlessEqual(list(iter(self.fdict)), ["foo"])
+        self.assertEqual(list(iter(self.fdict)), ["foo"])
 
     def test_clear(self):
         self.fdict.clear()
         self.rdict.clear()
-        self.failIf(self.fdict)
+        self.assertFalse(self.fdict)
 
     def test_keys(self):
-        self.failUnlessEqual(list(self.fdict.keys()), list(self.rdict.keys()))
-        self.failUnlessEqual(
+        self.assertEqual(list(self.fdict.keys()), list(self.rdict.keys()))
+        self.assertEqual(
             list(self.fdict.keys()), list(self.rdict.keys()))
 
     def test_values(self):
-        self.failUnlessEqual(
+        self.assertEqual(
             list(self.fdict.values()), list(self.rdict.values()))
-        self.failUnlessEqual(
+        self.assertEqual(
             list(self.fdict.values()), list(self.rdict.values()))
 
     def test_items(self):
-        self.failUnlessEqual(
+        self.assertEqual(
             list(self.fdict.items()), list(self.rdict.items()))
-        self.failUnlessEqual(
+        self.assertEqual(
             list(self.fdict.items()), list(self.rdict.items()))
 
     def test_pop(self):
-        self.failUnlessEqual(self.fdict.pop("foo"), self.rdict.pop("foo"))
-        self.failUnlessRaises(KeyError, self.fdict.pop, "woo")
+        self.assertEqual(self.fdict.pop("foo"), self.rdict.pop("foo"))
+        self.assertRaises(KeyError, self.fdict.pop, "woo")
 
     def test_pop_bad(self):
-        self.failUnlessRaises(TypeError, self.fdict.pop, "foo", 1, 2)
+        self.assertRaises(TypeError, self.fdict.pop, "foo", 1, 2)
 
     def test_popitem(self):
-        self.failUnlessEqual(self.fdict.popitem(), self.rdict.popitem())
-        self.failUnlessRaises(KeyError, self.fdict.popitem)
+        self.assertEqual(self.fdict.popitem(), self.rdict.popitem())
+        self.assertRaises(KeyError, self.fdict.popitem)
 
     def test_update_other(self):
         other = {"a": 1, "b": 2}
@@ -116,34 +135,38 @@ class TDictMixin(TestCase):
         self.rdict.setdefault("bar", "baz")
 
     def test_get(self):
-        self.failUnlessEqual(self.rdict.get("a"), self.fdict.get("a"))
-        self.failUnlessEqual(
+        self.assertEqual(self.rdict.get("a"), self.fdict.get("a"))
+        self.assertEqual(
             self.rdict.get("a", "b"), self.fdict.get("a", "b"))
-        self.failUnlessEqual(self.rdict.get("foo"), self.fdict.get("foo"))
+        self.assertEqual(self.rdict.get("foo"), self.fdict.get("foo"))
 
     def test_repr(self):
-        self.failUnlessEqual(repr(self.rdict), repr(self.fdict))
+        self.assertEqual(repr(self.rdict), repr(self.fdict))
 
     def test_len(self):
-        self.failUnlessEqual(len(self.rdict), len(self.fdict))
+        self.assertEqual(len(self.rdict), len(self.fdict))
 
     def tearDown(self):
-        self.failUnlessEqual(self.fdict, self.rdict)
-        self.failUnlessEqual(self.rdict, self.fdict)
+        self.assertEqual(self.fdict, self.rdict)
+        self.assertEqual(self.rdict, self.fdict)
 
 
 class Tcdata(TestCase):
+    @staticmethod
+    def ZERO(s: int): return b"\x00" * s
+    @staticmethod
+    def LEONE(s: int): return b"\x01" + b"\x00" * (s - 1)
+    @staticmethod
+    def BEONE(s: int): return b"\x00" * (s - 1) + b"\x01"
+    @staticmethod
+    def NEGONE(s: int): return b"\xff" * s
 
-    ZERO = staticmethod(lambda s: b"\x00" * s)
-    LEONE = staticmethod(lambda s: b"\x01" + b"\x00" * (s - 1))
-    BEONE = staticmethod(lambda s: b"\x00" * (s - 1) + b"\x01")
-    NEGONE = staticmethod(lambda s: b"\xff" * s)
 
     def test_char(self):
-        self.failUnlessEqual(cdata.char(self.ZERO(1)), 0)
-        self.failUnlessEqual(cdata.char(self.LEONE(1)), 1)
-        self.failUnlessEqual(cdata.char(self.BEONE(1)), 1)
-        self.failUnlessEqual(cdata.char(self.NEGONE(1)), -1)
+        self.assertEqual(cdata.char(self.ZERO(1)), 0)
+        self.assertEqual(cdata.char(self.LEONE(1)), 1)
+        self.assertEqual(cdata.char(self.BEONE(1)), 1)
+        self.assertEqual(cdata.char(self.NEGONE(1)), -1)
         self.assertTrue(cdata.char is cdata.int8)
         self.assertTrue(cdata.to_char is cdata.to_int8)
         self.assertTrue(cdata.char_from is cdata.int8_from)
@@ -159,10 +182,10 @@ class Tcdata(TestCase):
         self.assertRaises(cdata.error, cdata.char_from, b"\x00\xfe", 3)
 
     def test_uchar(self):
-        self.failUnlessEqual(cdata.uchar(self.ZERO(1)), 0)
-        self.failUnlessEqual(cdata.uchar(self.LEONE(1)), 1)
-        self.failUnlessEqual(cdata.uchar(self.BEONE(1)), 1)
-        self.failUnlessEqual(cdata.uchar(self.NEGONE(1)), 255)
+        self.assertEqual(cdata.uchar(self.ZERO(1)), 0)
+        self.assertEqual(cdata.uchar(self.LEONE(1)), 1)
+        self.assertEqual(cdata.uchar(self.BEONE(1)), 1)
+        self.assertEqual(cdata.uchar(self.NEGONE(1)), 255)
         self.assertTrue(cdata.uchar is cdata.uint8)
         self.assertTrue(cdata.to_uchar is cdata.to_uint8)
         self.assertTrue(cdata.uchar_from is cdata.uint8_from)
@@ -172,109 +195,109 @@ class Tcdata(TestCase):
         assert cdata.uint8_min == cdata.uchar_min
 
     def test_short(self):
-        self.failUnlessEqual(cdata.short_le(self.ZERO(2)), 0)
-        self.failUnlessEqual(cdata.short_le(self.LEONE(2)), 1)
-        self.failUnlessEqual(cdata.short_le(self.BEONE(2)), 256)
-        self.failUnlessEqual(cdata.short_le(self.NEGONE(2)), -1)
+        self.assertEqual(cdata.short_le(self.ZERO(2)), 0)
+        self.assertEqual(cdata.short_le(self.LEONE(2)), 1)
+        self.assertEqual(cdata.short_le(self.BEONE(2)), 256)
+        self.assertEqual(cdata.short_le(self.NEGONE(2)), -1)
         self.assertTrue(cdata.short_le is cdata.int16_le)
 
-        self.failUnlessEqual(cdata.short_be(self.ZERO(2)), 0)
-        self.failUnlessEqual(cdata.short_be(self.LEONE(2)), 256)
-        self.failUnlessEqual(cdata.short_be(self.BEONE(2)), 1)
-        self.failUnlessEqual(cdata.short_be(self.NEGONE(2)), -1)
+        self.assertEqual(cdata.short_be(self.ZERO(2)), 0)
+        self.assertEqual(cdata.short_be(self.LEONE(2)), 256)
+        self.assertEqual(cdata.short_be(self.BEONE(2)), 1)
+        self.assertEqual(cdata.short_be(self.NEGONE(2)), -1)
         self.assertTrue(cdata.short_be is cdata.int16_be)
 
     def test_ushort(self):
-        self.failUnlessEqual(cdata.ushort_le(self.ZERO(2)), 0)
-        self.failUnlessEqual(cdata.ushort_le(self.LEONE(2)), 1)
-        self.failUnlessEqual(cdata.ushort_le(self.BEONE(2)), 2 ** 16 >> 8)
-        self.failUnlessEqual(cdata.ushort_le(self.NEGONE(2)), 65535)
+        self.assertEqual(cdata.ushort_le(self.ZERO(2)), 0)
+        self.assertEqual(cdata.ushort_le(self.LEONE(2)), 1)
+        self.assertEqual(cdata.ushort_le(self.BEONE(2)), 2 ** 16 >> 8)
+        self.assertEqual(cdata.ushort_le(self.NEGONE(2)), 65535)
         self.assertTrue(cdata.ushort_le is cdata.uint16_le)
 
-        self.failUnlessEqual(cdata.ushort_be(self.ZERO(2)), 0)
-        self.failUnlessEqual(cdata.ushort_be(self.LEONE(2)), 2 ** 16 >> 8)
-        self.failUnlessEqual(cdata.ushort_be(self.BEONE(2)), 1)
-        self.failUnlessEqual(cdata.ushort_be(self.NEGONE(2)), 65535)
+        self.assertEqual(cdata.ushort_be(self.ZERO(2)), 0)
+        self.assertEqual(cdata.ushort_be(self.LEONE(2)), 2 ** 16 >> 8)
+        self.assertEqual(cdata.ushort_be(self.BEONE(2)), 1)
+        self.assertEqual(cdata.ushort_be(self.NEGONE(2)), 65535)
         self.assertTrue(cdata.ushort_be is cdata.uint16_be)
 
     def test_int(self):
-        self.failUnlessEqual(cdata.int_le(self.ZERO(4)), 0)
-        self.failUnlessEqual(cdata.int_le(self.LEONE(4)), 1)
-        self.failUnlessEqual(cdata.int_le(self.BEONE(4)), 2 ** 32 >> 8)
-        self.failUnlessEqual(cdata.int_le(self.NEGONE(4)), -1)
+        self.assertEqual(cdata.int_le(self.ZERO(4)), 0)
+        self.assertEqual(cdata.int_le(self.LEONE(4)), 1)
+        self.assertEqual(cdata.int_le(self.BEONE(4)), 2 ** 32 >> 8)
+        self.assertEqual(cdata.int_le(self.NEGONE(4)), -1)
         self.assertTrue(cdata.int_le is cdata.int32_le)
 
-        self.failUnlessEqual(cdata.int_be(self.ZERO(4)), 0)
-        self.failUnlessEqual(cdata.int_be(self.LEONE(4)), 2 ** 32 >> 8)
-        self.failUnlessEqual(cdata.int_be(self.BEONE(4)), 1)
-        self.failUnlessEqual(cdata.int_be(self.NEGONE(4)), -1)
+        self.assertEqual(cdata.int_be(self.ZERO(4)), 0)
+        self.assertEqual(cdata.int_be(self.LEONE(4)), 2 ** 32 >> 8)
+        self.assertEqual(cdata.int_be(self.BEONE(4)), 1)
+        self.assertEqual(cdata.int_be(self.NEGONE(4)), -1)
         self.assertTrue(cdata.int_be is cdata.int32_be)
 
     def test_uint(self):
-        self.failUnlessEqual(cdata.uint_le(self.ZERO(4)), 0)
-        self.failUnlessEqual(cdata.uint_le(self.LEONE(4)), 1)
-        self.failUnlessEqual(cdata.uint_le(self.BEONE(4)), 2 ** 32 >> 8)
-        self.failUnlessEqual(cdata.uint_le(self.NEGONE(4)), 2 ** 32 - 1)
+        self.assertEqual(cdata.uint_le(self.ZERO(4)), 0)
+        self.assertEqual(cdata.uint_le(self.LEONE(4)), 1)
+        self.assertEqual(cdata.uint_le(self.BEONE(4)), 2 ** 32 >> 8)
+        self.assertEqual(cdata.uint_le(self.NEGONE(4)), 2 ** 32 - 1)
         self.assertTrue(cdata.uint_le is cdata.uint32_le)
 
-        self.failUnlessEqual(cdata.uint_be(self.ZERO(4)), 0)
-        self.failUnlessEqual(cdata.uint_be(self.LEONE(4)), 2 ** 32 >> 8)
-        self.failUnlessEqual(cdata.uint_be(self.BEONE(4)), 1)
-        self.failUnlessEqual(cdata.uint_be(self.NEGONE(4)), 2 ** 32 - 1)
+        self.assertEqual(cdata.uint_be(self.ZERO(4)), 0)
+        self.assertEqual(cdata.uint_be(self.LEONE(4)), 2 ** 32 >> 8)
+        self.assertEqual(cdata.uint_be(self.BEONE(4)), 1)
+        self.assertEqual(cdata.uint_be(self.NEGONE(4)), 2 ** 32 - 1)
         self.assertTrue(cdata.uint_be is cdata.uint32_be)
 
     def test_longlong(self):
-        self.failUnlessEqual(cdata.longlong_le(self.ZERO(8)), 0)
-        self.failUnlessEqual(cdata.longlong_le(self.LEONE(8)), 1)
-        self.failUnlessEqual(cdata.longlong_le(self.BEONE(8)), 2 ** 64 >> 8)
-        self.failUnlessEqual(cdata.longlong_le(self.NEGONE(8)), -1)
+        self.assertEqual(cdata.longlong_le(self.ZERO(8)), 0)
+        self.assertEqual(cdata.longlong_le(self.LEONE(8)), 1)
+        self.assertEqual(cdata.longlong_le(self.BEONE(8)), 2 ** 64 >> 8)
+        self.assertEqual(cdata.longlong_le(self.NEGONE(8)), -1)
         self.assertTrue(cdata.longlong_le is cdata.int64_le)
 
-        self.failUnlessEqual(cdata.longlong_be(self.ZERO(8)), 0)
-        self.failUnlessEqual(cdata.longlong_be(self.LEONE(8)), 2 ** 64 >> 8)
-        self.failUnlessEqual(cdata.longlong_be(self.BEONE(8)), 1)
-        self.failUnlessEqual(cdata.longlong_be(self.NEGONE(8)), -1)
+        self.assertEqual(cdata.longlong_be(self.ZERO(8)), 0)
+        self.assertEqual(cdata.longlong_be(self.LEONE(8)), 2 ** 64 >> 8)
+        self.assertEqual(cdata.longlong_be(self.BEONE(8)), 1)
+        self.assertEqual(cdata.longlong_be(self.NEGONE(8)), -1)
         self.assertTrue(cdata.longlong_be is cdata.int64_be)
 
     def test_ulonglong(self):
-        self.failUnlessEqual(cdata.ulonglong_le(self.ZERO(8)), 0)
-        self.failUnlessEqual(cdata.ulonglong_le(self.LEONE(8)), 1)
-        self.failUnlessEqual(cdata.longlong_le(self.BEONE(8)), 2 ** 64 >> 8)
-        self.failUnlessEqual(cdata.ulonglong_le(self.NEGONE(8)), 2 ** 64 - 1)
+        self.assertEqual(cdata.ulonglong_le(self.ZERO(8)), 0)
+        self.assertEqual(cdata.ulonglong_le(self.LEONE(8)), 1)
+        self.assertEqual(cdata.longlong_le(self.BEONE(8)), 2 ** 64 >> 8)
+        self.assertEqual(cdata.ulonglong_le(self.NEGONE(8)), 2 ** 64 - 1)
         self.assertTrue(cdata.ulonglong_le is cdata.uint64_le)
 
-        self.failUnlessEqual(cdata.ulonglong_be(self.ZERO(8)), 0)
-        self.failUnlessEqual(cdata.ulonglong_be(self.LEONE(8)), 2 ** 64 >> 8)
-        self.failUnlessEqual(cdata.longlong_be(self.BEONE(8)), 1)
-        self.failUnlessEqual(cdata.ulonglong_be(self.NEGONE(8)), 2 ** 64 - 1)
+        self.assertEqual(cdata.ulonglong_be(self.ZERO(8)), 0)
+        self.assertEqual(cdata.ulonglong_be(self.LEONE(8)), 2 ** 64 >> 8)
+        self.assertEqual(cdata.longlong_be(self.BEONE(8)), 1)
+        self.assertEqual(cdata.ulonglong_be(self.NEGONE(8)), 2 ** 64 - 1)
         self.assertTrue(cdata.ulonglong_be is cdata.uint64_be)
 
     def test_invalid_lengths(self):
-        self.failUnlessRaises(cdata.error, cdata.char, b"")
-        self.failUnlessRaises(cdata.error, cdata.uchar, b"")
-        self.failUnlessRaises(cdata.error, cdata.int_le, b"")
-        self.failUnlessRaises(cdata.error, cdata.longlong_le, b"")
-        self.failUnlessRaises(cdata.error, cdata.uint_le, b"")
-        self.failUnlessRaises(cdata.error, cdata.ulonglong_le, b"")
-        self.failUnlessRaises(cdata.error, cdata.int_be, b"")
-        self.failUnlessRaises(cdata.error, cdata.longlong_be, b"")
-        self.failUnlessRaises(cdata.error, cdata.uint_be, b"")
-        self.failUnlessRaises(cdata.error, cdata.ulonglong_be, b"")
+        self.assertRaises(cdata.error, cdata.char, b"")
+        self.assertRaises(cdata.error, cdata.uchar, b"")
+        self.assertRaises(cdata.error, cdata.int_le, b"")
+        self.assertRaises(cdata.error, cdata.longlong_le, b"")
+        self.assertRaises(cdata.error, cdata.uint_le, b"")
+        self.assertRaises(cdata.error, cdata.ulonglong_le, b"")
+        self.assertRaises(cdata.error, cdata.int_be, b"")
+        self.assertRaises(cdata.error, cdata.longlong_be, b"")
+        self.assertRaises(cdata.error, cdata.uint_be, b"")
+        self.assertRaises(cdata.error, cdata.ulonglong_be, b"")
 
     def test_test(self):
-        self.failUnless(cdata.test_bit((1), 0))
-        self.failIf(cdata.test_bit(1, 1))
+        self.assertTrue(cdata.test_bit((1), 0))
+        self.assertFalse(cdata.test_bit(1, 1))
 
-        self.failUnless(cdata.test_bit(2, 1))
-        self.failIf(cdata.test_bit(2, 0))
+        self.assertTrue(cdata.test_bit(2, 1))
+        self.assertFalse(cdata.test_bit(2, 0))
 
         v = (1 << 12) + (1 << 5) + 1
-        self.failUnless(cdata.test_bit(v, 0))
-        self.failUnless(cdata.test_bit(v, 5))
-        self.failUnless(cdata.test_bit(v, 12))
-        self.failIf(cdata.test_bit(v, 3))
-        self.failIf(cdata.test_bit(v, 8))
-        self.failIf(cdata.test_bit(v, 13))
+        self.assertTrue(cdata.test_bit(v, 0))
+        self.assertTrue(cdata.test_bit(v, 5))
+        self.assertTrue(cdata.test_bit(v, 12))
+        self.assertFalse(cdata.test_bit(v, 3))
+        self.assertFalse(cdata.test_bit(v, 8))
+        self.assertFalse(cdata.test_bit(v, 13))
 
 
 class Tresize_file(TestCase):
@@ -313,7 +336,7 @@ class Tresize_file(TestCase):
     def test_resize_dev_full(self):
 
         def raise_no_space(*args):
-            raise IOError(errno.ENOSPC, os.strerror(errno.ENOSPC))
+            raise OSError(errno.ENOSPC, os.strerror(errno.ENOSPC))
 
         # fail on first write
         h = BytesIO(b"abc")
@@ -492,20 +515,20 @@ class FileHandling(TestCase):
     def test_insert_6106_79_51760(self):
         # This appears to be due to ANSI C limitations in read/write on rb+
         # files.
-        data = u''.join(map(str, range(12574)))  # 51760 bytes
+        data = ''.join(map(str, range(12574)))  # 51760 bytes
         data = data.encode("ascii")
         with self.file(data) as o:
             insert_bytes(o, 6106, 79)
-            self.failUnless(data[:6106 + 79] + data[79:] == self.read(o))
+            self.assertTrue(data[:6106 + 79] + data[79:] == self.read(o))
 
     def test_delete_6106_79_51760(self):
         # This appears to be due to ANSI C limitations in read/write on rb+
         # files.
-        data = u''.join(map(str, range(12574)))  # 51760 bytes
+        data = ''.join(map(str, range(12574)))  # 51760 bytes
         data = data.encode("ascii")
         with self.file(data[:6106 + 79] + data[79:]) as o:
             delete_bytes(o, 6106, 79)
-            self.failUnless(data == self.read(o))
+            self.assertTrue(data == self.read(o))
 
     # Generate a bunch of random insertions, apply them, delete them,
     # and make sure everything is still correct.
@@ -517,18 +540,18 @@ class FileHandling(TestCase):
     def test_many_changes(self, num_runs=5, num_changes=300,
                           min_change_size=500, max_change_size=1000,
                           min_buffer_size=1, max_buffer_size=2000):
-        self.failUnless(min_buffer_size < min_change_size and
+        self.assertTrue(min_buffer_size < min_change_size and
                         max_buffer_size > max_change_size and
                         min_change_size < max_change_size and
                         min_buffer_size < max_buffer_size,
                         "Given testing parameters make this test useless")
-        for j in range(num_runs):
+        for _j in range(num_runs):
             data = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ" * 1024
             with self.file(data) as fobj:
                 filesize = len(data)
                 # Generate the list of changes to apply
                 changes = []
-                for i in range(num_changes):
+                for _i in range(num_changes):
                     change_size = random.randrange(
                         min_change_size, max_change_size)
                     change_offset = random.randrange(0, filesize)
@@ -541,9 +564,9 @@ class FileHandling(TestCase):
                         min_buffer_size, max_buffer_size)
                     insert_bytes(fobj, size, offset, BUFFER_SIZE=buffer_size)
                 fobj.seek(0)
-                self.failIfEqual(fobj.read(len(data)), data)
+                self.assertNotEqual(fobj.read(len(data)), data)
                 fobj.seek(0, 2)
-                self.failUnlessEqual(fobj.tell(), filesize)
+                self.assertEqual(fobj.tell(), filesize)
 
                 # Then, undo them.
                 changes.reverse()
@@ -552,7 +575,7 @@ class FileHandling(TestCase):
                         min_buffer_size, max_buffer_size)
                     delete_bytes(fobj, size, offset, BUFFER_SIZE=buffer_size)
                 fobj.seek(0)
-                self.failUnless(fobj.read() == data)
+                self.assertTrue(fobj.read() == data)
 
 
 class Tdict_match(TestCase):
@@ -574,8 +597,7 @@ class Tdict_match(TestCase):
 class Tenum(TestCase):
 
     def test_enum(self):
-        @enum
-        class Foo(object):
+        class Foo(IntEnum):
             FOO = 1
             BAR = 3
 
@@ -596,8 +618,7 @@ class Tenum(TestCase):
 class Tflags(TestCase):
 
     def test_enum(self):
-        @flags
-        class Foo(object):
+        class Foo(Flag):
             FOO = 1
             BAR = 2
 
@@ -635,7 +656,7 @@ class Tfileobj_name(TestCase):
 
     def test_fileobj_name_other_type(self):
 
-        class Foo(object):
+        class Foo:
             name = 123
 
         self.assertEqual(fileobj_name(Foo()), "123")
@@ -703,7 +724,7 @@ class Tloadfile(TestCase):
         def mock_open(name, mode, *args):
             if "+" in mode:
                 raised.append(True)
-                raise IOError(errno.EOPNOTSUPP, "nope")
+                raise OSError(errno.EOPNOTSUPP, "nope")
             return old_open(name, mode, *args)
 
         builtins.open = mock_open
@@ -724,7 +745,7 @@ class Tloadfile(TestCase):
 
     def test_filename_from_fspath(self):
 
-        class FilePath(object):
+        class FilePath:
             def __init__(self, filename):
                 self.filename = filename
 
@@ -773,38 +794,38 @@ class Tget_size(TestCase):
 class Tencode_endian(TestCase):
 
     def test_other(self):
-        assert encode_endian(u"\xe4", "latin-1") == b"\xe4"
-        assert encode_endian(u"\xe4", "utf-8") == b"\xc3\xa4"
+        assert encode_endian("\xe4", "latin-1") == b"\xe4"
+        assert encode_endian("\xe4", "utf-8") == b"\xc3\xa4"
         with self.assertRaises(LookupError):
-            encode_endian(u"", "nopenope")
+            encode_endian("", "nopenope")
         with self.assertRaises(UnicodeEncodeError):
-            assert encode_endian(u"\u2714", "latin-1")
-        assert encode_endian(u"\u2714", "latin-1", "replace") == b"?"
+            assert encode_endian("\u2714", "latin-1")
+        assert encode_endian("\u2714", "latin-1", "replace") == b"?"
 
     def test_utf_16(self):
-        assert encode_endian(u"\xe4", "utf-16", le=True) == b"\xff\xfe\xe4\x00"
-        assert encode_endian(u"\xe4", "utf-16-le") == b"\xe4\x00"
+        assert encode_endian("\xe4", "utf-16", le=True) == b"\xff\xfe\xe4\x00"
+        assert encode_endian("\xe4", "utf-16-le") == b"\xe4\x00"
         assert encode_endian(
-            u"\xe4", "utf-16", le=False) == b"\xfe\xff\x00\xe4"
-        assert encode_endian(u"\xe4", "utf-16-be") == b"\x00\xe4"
+            "\xe4", "utf-16", le=False) == b"\xfe\xff\x00\xe4"
+        assert encode_endian("\xe4", "utf-16-be") == b"\x00\xe4"
 
     def test_utf_32(self):
-        assert encode_endian(u"\xe4", "utf-32", le=True) == \
+        assert encode_endian("\xe4", "utf-32", le=True) == \
             b"\xff\xfe\x00\x00\xe4\x00\x00\x00"
-        assert encode_endian(u"\xe4", "utf-32-le") == b"\xe4\x00\x00\x00"
+        assert encode_endian("\xe4", "utf-32-le") == b"\xe4\x00\x00\x00"
         assert encode_endian(
-            u"\xe4", "utf-32", le=False) == b"\x00\x00\xfe\xff\x00\x00\x00\xe4"
-        assert encode_endian(u"\xe4", "utf-32-be") == b"\x00\x00\x00\xe4"
+            "\xe4", "utf-32", le=False) == b"\x00\x00\xfe\xff\x00\x00\x00\xe4"
+        assert encode_endian("\xe4", "utf-32-be") == b"\x00\x00\x00\xe4"
 
 
 class Tdecode_terminated(TestCase):
 
     def test_all(self):
-        values = [u"", u"", u"\xe4", u"abc", u"", u""]
+        values = ["", "", "\xe4", "abc", "", ""]
 
         for codec in ["utf8", "utf-8", "utf-16", "latin-1", "utf-16be"]:
             # NULL without the BOM
-            term = u"\x00".encode(codec)[-2:]
+            term = "\x00".encode(codec)[-2:]
             data = b"".join(v.encode(codec) + term for v in values)
 
             for v in values:
@@ -829,10 +850,10 @@ class Tdecode_terminated(TestCase):
     def test_lax(self):
         # missing termination
         self.assertEqual(
-            decode_terminated(b"abc", "utf-8", strict=False), (u"abc", b""))
+            decode_terminated(b"abc", "utf-8", strict=False), ("abc", b""))
 
         # missing termination and truncated data
-        truncated = u"\xe4\xe4".encode("utf-8")[:-1]
+        truncated = "\xe4\xe4".encode()[:-1]
         self.assertRaises(
             UnicodeDecodeError, decode_terminated,
             truncated, "utf-8", strict=False)
@@ -938,7 +959,7 @@ class Tverify_filename(TestCase):
 
     def test_verify_filename(self):
 
-        class FilePath(object):
+        class FilePath:
             def __init__(self, filename):
                 self.filename = filename
 

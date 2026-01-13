@@ -18,12 +18,17 @@ __all__ = ["OggFLAC", "Open", "delete"]
 
 import struct
 from io import BytesIO
+from typing import override
 
 from mutagen import StreamInfo
-from mutagen.flac import StreamInfo as FLACStreamInfo, error as FLACError
+from mutagen._filething import FileThing
+from mutagen._tags import PaddingFunction
+from mutagen._util import convert_error, loadfile
 from mutagen._vorbis import VCommentDict
-from mutagen._util import loadfile, convert_error
-from mutagen.ogg import OggPage, OggFileType, error as OggError
+from mutagen.flac import StreamInfo as FLACStreamInfo
+from mutagen.flac import error as FLACError
+from mutagen.ogg import OggFileType, OggPage
+from mutagen.ogg import error as OggError
 
 
 class error(OggError):
@@ -45,18 +50,18 @@ class OggFLACStreamInfo(StreamInfo):
         sample_rate (`int`): Sample rate in Hz"
     """
 
-    length = 0
-    channels = 0
-    sample_rate = 0
+    length: int = 0
+    channels: int = 0
+    sample_rate: int = 0
 
-    def __init__(self, fileobj):
+    def __init__(self, fileobj: BytesIO):
         page = OggPage(fileobj)
         while not page.packets[0].startswith(b"\x7FFLAC"):
             page = OggPage(fileobj)
         major, minor, self.packets, flac = struct.unpack(
             ">BBH4s", page.packets[0][5:13])
         if flac != b"fLaC":
-            raise OggFLACHeaderError("invalid FLAC marker (%r)" % flac)
+            raise OggFLACHeaderError(f"invalid FLAC marker ({flac!r})")
         elif (major, minor) != (1, 0):
             raise OggFLACHeaderError(
                 "unknown mapping version: %d.%d" % (major, minor))
@@ -68,13 +73,13 @@ class OggFLACStreamInfo(StreamInfo):
         try:
             flac_info = FLACStreamInfo(stringobj)
         except FLACError as e:
-            raise OggFLACHeaderError(e)
+            raise OggFLACHeaderError(e) from e
 
         for attr in ["min_blocksize", "max_blocksize", "sample_rate",
                      "channels", "bits_per_sample", "total_samples", "length"]:
             setattr(self, attr, getattr(flac_info, attr))
 
-    def _post_tags(self, fileobj):
+    def _post_tags(self, fileobj: BytesIO):
         if self.length:
             return
         page = OggPage.find_last(fileobj, self.serial, finishing=True)
@@ -82,17 +87,18 @@ class OggFLACStreamInfo(StreamInfo):
             raise OggFLACHeaderError
         self.length = page.position / float(self.sample_rate)
 
+    @override
     def pprint(self):
-        return u"Ogg FLAC, %.2f seconds, %d Hz" % (
+        return "Ogg FLAC, %.2f seconds, %d Hz" % (
             self.length, self.sample_rate)
 
 
 class OggFLACVComment(VCommentDict):
 
-    def __init__(self, fileobj, info):
+    def __init__(self, fileobj: BytesIO, info):
         # data should be pointing at the start of an Ogg page, after
         # the first FLAC page.
-        pages = []
+        pages: list[OggPage] = []
         complete = False
         while not complete:
             page = OggPage(fileobj)
@@ -100,14 +106,14 @@ class OggFLACVComment(VCommentDict):
                 pages.append(page)
                 complete = page.complete or (len(page.packets) > 1)
         comment = BytesIO(OggPage.to_packets(pages)[0][4:])
-        super(OggFLACVComment, self).__init__(comment, framing=False)
+        super().__init__(comment, framing=False)
 
-    def _inject(self, fileobj, padding_func):
+    def _inject(self, fileobj: BytesIO, padding_func: PaddingFunction | None):
         """Write tag data into the FLAC Vorbis comment packet/page."""
 
         # Ogg FLAC has no convenient data marker like Vorbis, but the
         # second packet - and second page - must be the comment data.
-        fileobj.seek(0)
+        _ = fileobj.seek(0)
         page = OggPage(fileobj)
         while not page.packets[0].startswith(b"\x7FFLAC"):
             page = OggPage(fileobj)
@@ -146,7 +152,7 @@ class OggFLAC(OggFileType):
         tags (`mutagen._vorbis.VCommentDict`)
     """
 
-    _Info = OggFLACStreamInfo
+    _Info: type[StreamInfo] = OggFLACStreamInfo
     _Tags = OggFLACVComment
     _Error = OggFLACHeaderError
     _mimes = ["audio/x-oggflac"]
@@ -155,7 +161,8 @@ class OggFLAC(OggFileType):
     tags = None
 
     @staticmethod
-    def score(filename, fileobj, header):
+    @override
+    def score(filename: str, fileobj: BytesIO, header: bytes):
         return (header.startswith(b"OggS") * (
             (b"FLAC" in header) + (b"fLaC" in header)))
 
@@ -165,7 +172,7 @@ Open = OggFLAC
 
 @convert_error(IOError, error)
 @loadfile(method=False, writable=True)
-def delete(filething):
+def delete(filething: FileThing):
     """ delete(filething)
 
     Arguments:
@@ -177,5 +184,5 @@ def delete(filething):
     """
 
     t = OggFLAC(filething)
-    filething.fileobj.seek(0)
+    _ = filething.fileobj.seek(0)
     t.delete(filething)

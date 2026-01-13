@@ -19,24 +19,25 @@ For more information, see:
 __all__ = ["TAK", "Open", "delete"]
 
 import struct
+from enum import IntEnum
+from io import BytesIO
+from typing import cast, final, override
 
 from mutagen import StreamInfo
+from mutagen._util import (
+    BitReader,
+    BitReaderError,
+    convert_error,
+    endswith,
+)
 from mutagen.apev2 import (
     APEv2File,
     delete,
     error,
 )
-from mutagen._util import (
-    BitReader,
-    BitReaderError,
-    convert_error,
-    enum,
-    endswith,
-)
 
 
-@enum
-class TAKMetadata(object):
+class TAKMetadata(IntEnum):
     END = 0
     STREAM_INFO = 1
     SEEK_TABLE = 2  # Removed in TAK 1.1.1
@@ -84,13 +85,17 @@ class _LSBBitReader(BitReader):
     """BitReader implementation which reads bits starting at LSB in each byte.
     """
 
-    def _lsb(self, count):
+    _buffer: int
+    _bits: int
+
+    def _lsb(self, count: int):
         value = self._buffer & 0xff >> (8 - count)
         self._buffer = self._buffer >> count
         self._bits -= count
         return value
 
-    def bits(self, count):
+    @override
+    def bits(self, count: int):
         """Reads `count` bits and returns an uint, LSB read first.
 
         May raise BitReaderError if not enough data could be read or
@@ -135,7 +140,7 @@ class _LSBBitReader(BitReader):
 class TAKHeaderError(error):
     pass
 
-
+@final
 class TAKInfo(StreamInfo):
 
     """TAK stream information.
@@ -148,15 +153,17 @@ class TAKInfo(StreamInfo):
       encoder_info (`mutagen.text`): encoder version
     """
 
-    channels = 0
-    length = 0
-    sample_rate = 0
-    bitrate = 0
-    encoder_info = ""
+    channels: int = 0
+    length: float = 0.0
+    sample_rate: int = 0
+    bitrate: int = 0
+    encoder_info: str = ""
+    number_of_samples: int | None = None
+    bits_per_sample: int | None = None
 
     @convert_error(IOError, TAKHeaderError)
     @convert_error(BitReaderError, TAKHeaderError)
-    def __init__(self, fileobj):
+    def __init__(self, fileobj: BytesIO):
         stream_id = fileobj.read(4)
         if len(stream_id) != 4 or not stream_id == b"tBaK":
             raise TAKHeaderError("not a TAK file")
@@ -166,7 +173,7 @@ class TAKInfo(StreamInfo):
         while True:
             type = TAKMetadata(bitreader.bits(7))
             bitreader.skip(1)  # Unused
-            size = struct.unpack("<I", bitreader.bytes(3) + b'\0')[0]
+            size = cast(int, struct.unpack("<I", bitreader.bytes(3) + b'\0')[0])
             data_size = size - CRC_SIZE
             pos = fileobj.tell()
 
@@ -179,15 +186,16 @@ class TAKInfo(StreamInfo):
                 self._parse_encoder_info(bitreader, data_size)
 
             assert bitreader.is_aligned()
-            fileobj.seek(pos + size)
+            _ = fileobj.seek(pos + size)
 
         if not found_stream_info:
             raise TAKHeaderError("missing stream info")
 
         if self.sample_rate > 0:
+            assert self.number_of_samples is not None
             self.length = self.number_of_samples / float(self.sample_rate)
 
-    def _parse_stream_info(self, bitreader, size):
+    def _parse_stream_info(self, bitreader: BitReader, size: int | float):
         if size < STREAM_INFO_SIZE_MIN or size > STREAM_INFO_SIZE_MAX:
             raise TAKHeaderError("stream info has invalid length")
 
@@ -209,18 +217,21 @@ class TAKInfo(StreamInfo):
                          + CHANNEL_NUM_MIN)
         bitreader.skip(AUDIO_FORMAT_HAS_EXTENSION_BITS)
 
-    def _parse_encoder_info(self, bitreader, size):
+    def _parse_encoder_info(self, bitreader: BitReader, size: int) -> None:
         patch = bitreader.bits(8)
         minor = bitreader.bits(8)
         major = bitreader.bits(8)
-        self.encoder_info = "TAK %d.%d.%d" % (major, minor, patch)
+        self.encoder_info = f"TAK {major}.{minor}.{patch}"
 
+    @override
     def pprint(self):
-        return u"%s, %d Hz, %d bits, %.2f seconds, %d channel(s)" % (
+        assert self.bits_per_sample is not None
+        assert self.sample_rate is not None
+        return "%s, %d Hz, %d bits, %.2f seconds, %d channel(s)" % (
             self.encoder_info or "TAK", self.sample_rate, self.bits_per_sample,
             self.length, self.channels)
 
-
+@final
 class TAK(APEv2File):
     """TAK(filething)
 
@@ -231,11 +242,12 @@ class TAK(APEv2File):
         info (`TAKInfo`)
     """
 
-    _Info = TAKInfo
+    _Info: type[StreamInfo] = TAKInfo
     _mimes = ["audio/x-tak"]
 
     @staticmethod
-    def score(filename, fileobj, header):
+    @override
+    def score(filename: str, fileobj: BytesIO, header: bytes):
         return header.startswith(b"tBaK") + endswith(filename.lower(), ".tak")
 
 

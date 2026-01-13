@@ -10,22 +10,37 @@
 
 __all__ = ["ASF", "Open"]
 
-from mutagen import FileType, Tags, StreamInfo
-from mutagen._util import resize_bytes, DictMixin, loadfile, convert_error
+import contextlib
+from io import BytesIO
+from typing import final, override
 
-from ._util import error, ASFError, ASFHeaderError
-from ._objects import HeaderObject, MetadataLibraryObject, MetadataObject, \
-    ExtendedContentDescriptionObject, HeaderExtensionObject, \
-    ContentDescriptionObject
-from ._attrs import ASFGUIDAttribute, ASFWordAttribute, ASFQWordAttribute, \
-    ASFDWordAttribute, ASFBoolAttribute, ASFByteArrayAttribute, \
-    ASFUnicodeAttribute, ASFBaseAttribute, ASFValue
+from mutagen import FileType, StreamInfo, Tags
+from mutagen._filething import FileThing
+from mutagen._tags import PaddingFunction
+from mutagen._util import DictMixin, convert_error, loadfile, resize_bytes
+
+from ._attrs import (
+    ASFBaseAttribute,
+    ASFBoolAttribute,
+    ASFByteArrayAttribute,
+    ASFDWordAttribute,
+    ASFGUIDAttribute,
+    ASFQWordAttribute,
+    ASFUnicodeAttribute,
+    ASFWordAttribute,
+)
+from ._objects import (
+    ContentDescriptionObject,
+    ExtendedContentDescriptionObject,
+    HeaderExtensionObject,
+    HeaderObject,
+    MetadataLibraryObject,
+    MetadataObject,
+)
+from ._util import ASFError, error
 
 
-# flake8
-error, ASFError, ASFHeaderError, ASFValue
-
-
+@final
 class ASFInfo(StreamInfo):
     """ASFInfo()
 
@@ -45,30 +60,22 @@ class ASFInfo(StreamInfo):
             used. Example: ``64 kbps, 48 kHz, stereo 2-pass CBR``
     """
 
-    length = 0.0
-    sample_rate = 0
-    bitrate = 0
-    channels = 0
-    codec_type = u""
-    codec_name = u""
-    codec_description = u""
+    length: float = 0.0
+    sample_rate: int = 0
+    bitrate: int = 0
+    channels: int = 0
+    codec_type: str = ""
+    codec_name: str = ""
+    codec_description: str = ""
 
-    def __init__(self):
-        self.length = 0.0
-        self.sample_rate = 0
-        self.bitrate = 0
-        self.channels = 0
-        self.codec_type = u""
-        self.codec_name = u""
-        self.codec_description = u""
-
+    @override
     def pprint(self):
         """Returns:
             text: a stream information text summary
         """
 
-        s = u"ASF (%s) %d bps, %s Hz, %d channels, %.2f seconds" % (
-            self.codec_type or self.codec_name or u"???", self.bitrate,
+        s = "ASF (%s) %d bps, %s Hz, %d channels, %.2f seconds" % (
+            self.codec_type or self.codec_name or "???", self.bitrate,
             self.sample_rate, self.channels, self.length)
         return s
 
@@ -79,6 +86,7 @@ class ASFTags(list, DictMixin, Tags):  # type: ignore
     Dictionary containing ASF attributes.
     """
 
+    @override
     def __getitem__(self, key):
         """A list of values for the key.
 
@@ -96,6 +104,7 @@ class ASFTags(list, DictMixin, Tags):  # type: ignore
         else:
             return values
 
+    @override
     def __delitem__(self, key):
         """Delete all values associated with the key."""
 
@@ -109,14 +118,12 @@ class ASFTags(list, DictMixin, Tags):  # type: ignore
             for k in to_delete:
                 self.remove(k)
 
+    @override
     def __contains__(self, key):
         """Return true if the key has any values."""
-        for k, value in self:
-            if k == key:
-                return True
-        else:
-            return False
+        return any(k == key for k, value in self)
 
+    @override
     def __setitem__(self, key, values):
         """Set a key's value or values.
 
@@ -143,36 +150,35 @@ class ASFTags(list, DictMixin, Tags):  # type: ignore
                 elif isinstance(value, int):
                     value = ASFDWordAttribute(value)
                 else:
-                    raise TypeError("Invalid type %r" % type(value))
+                    raise TypeError(f"Invalid type {type(value)!r}")
             to_append.append((key, value))
 
-        try:
+        with contextlib.suppress(KeyError):
             del self[key]
-        except KeyError:
-            pass
 
         self.extend(to_append)
 
     def keys(self):
         """Return a sequence of all keys in the comment."""
 
-        return self and set(next(zip(*self)))
+        return self and set(next(zip(*self, strict=False)))
 
     def as_dict(self):
         """Return a copy of the comment data in a real dict."""
 
-        d = {}
+        d: dict[str, list[ASFBaseAttribute]] = {}
         for key, value in self:
             d.setdefault(key, []).append(value)
         return d
 
-    def pprint(self):
+    @override
+    def pprint(self) -> str:
         """Returns a string containing all key, value pairs.
 
         :rtype: text
         """
 
-        return "\n".join("%s=%s" % (k, v) for k, v in self)
+        return "\n".join(f"{k}={v}" for k, v in self)
 
 
 UNICODE = ASFUnicodeAttribute.TYPE
@@ -209,16 +215,24 @@ class ASF(FileType):
         info (`ASFInfo`)
         tags (`ASFTags`)
     """
+    _tags: dict[bytes, list[tuple[str, ASFBaseAttribute]]]
+    _header: HeaderObject
 
-    _mimes = ["audio/x-ms-wma", "audio/x-ms-wmv", "video/x-ms-asf",
+    to_content_description: dict[str, ASFBaseAttribute]
+    to_extended_content_description: dict[str, ASFBaseAttribute]
+    to_metadata: dict[str, ASFBaseAttribute]
+    to_metadata_library: list[tuple[str, ASFBaseAttribute]]
+
+
+    _mimes: list[str] = ["audio/x-ms-wma", "audio/x-ms-wmv", "video/x-ms-asf",
               "audio/x-wma", "video/x-wmv"]
 
-    info = None
-    tags = None
+    info: ASFInfo | None = None
+    tags: ASFTags | None = None
 
     @convert_error(IOError, error)
     @loadfile()
-    def load(self, filething):
+    def load(self, filething: FileThing):
         """load(filething)
 
         Args:
@@ -245,7 +259,7 @@ class ASF(FileType):
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
-    def save(self, filething=None, padding=None):
+    def save(self, filething: FileThing | None =None, padding: PaddingFunction | None=None, **kwargs):
         """save(filething=None, padding=None)
 
         Save tag changes back to the loaded file.
@@ -262,6 +276,8 @@ class ASF(FileType):
         self.to_extended_content_description = {}
         self.to_metadata = {}
         self.to_metadata_library = []
+
+        assert self.tags is not None
         for name, value in self.tags:
             library_only = (value.data_size() > 0xFFFF or value.TYPE == GUID)
             can_cont_desc = value.TYPE == UNICODE
@@ -312,7 +328,7 @@ class ASF(FileType):
         raise ASFError
 
     @loadfile(writable=True)
-    def delete(self, filething=None):
+    def delete(self, filething: FileThing | None =None):
         """delete(filething=None)
 
         Args:
@@ -325,7 +341,8 @@ class ASF(FileType):
         self.save(filething, padding=lambda x: 0)
 
     @staticmethod
-    def score(filename, fileobj, header):
+    @override
+    def score(filename: str, fileobj: BytesIO, header: bytes):
         return header.startswith(HeaderObject.GUID) * 2
 
 Open = ASF

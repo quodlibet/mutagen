@@ -1,8 +1,8 @@
 
-import sys
-import afl
 import os
+import sys
 
+import afl
 from fuzztools import run_all
 
 
@@ -15,7 +15,7 @@ def main():
         try:
             run_all(data)
         finally:
-            buffer.seek(0)
+            _ = buffer.seek(0)
 
 
 if __name__ == '__main__':

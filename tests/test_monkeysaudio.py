@@ -2,7 +2,7 @@
 import os
 
 from mutagen.monkeysaudio import MonkeysAudio, MonkeysAudioHeaderError
-from tests import TestCase, DATA_DIR
+from tests import DATA_DIR, TestCase
 
 
 class TMonkeysAudio(TestCase):
@@ -13,19 +13,19 @@ class TMonkeysAudio(TestCase):
         self.mac390 = MonkeysAudio(os.path.join(DATA_DIR, "mac-390-hdr.ape"))
 
     def test_channels(self):
-        self.failUnlessEqual(self.mac399.info.channels, 2)
-        self.failUnlessEqual(self.mac396.info.channels, 2)
-        self.failUnlessEqual(self.mac390.info.channels, 2)
+        self.assertEqual(self.mac399.info.channels, 2)
+        self.assertEqual(self.mac396.info.channels, 2)
+        self.assertEqual(self.mac390.info.channels, 2)
 
     def test_sample_rate(self):
-        self.failUnlessEqual(self.mac399.info.sample_rate, 44100)
-        self.failUnlessEqual(self.mac396.info.sample_rate, 44100)
-        self.failUnlessEqual(self.mac390.info.sample_rate, 44100)
+        self.assertEqual(self.mac399.info.sample_rate, 44100)
+        self.assertEqual(self.mac396.info.sample_rate, 44100)
+        self.assertEqual(self.mac390.info.sample_rate, 44100)
 
     def test_length(self):
-        self.failUnlessAlmostEqual(self.mac399.info.length, 3.68, 2)
-        self.failUnlessAlmostEqual(self.mac396.info.length, 3.68, 2)
-        self.failUnlessAlmostEqual(self.mac390.info.length, 15.63, 2)
+        self.assertAlmostEqual(self.mac399.info.length, 3.68, 2)
+        self.assertAlmostEqual(self.mac396.info.length, 3.68, 2)
+        self.assertAlmostEqual(self.mac390.info.length, 15.63, 2)
 
     def test_bits_per_sample(self):
         assert self.mac399.info.bits_per_sample == 16
@@ -33,21 +33,21 @@ class TMonkeysAudio(TestCase):
         assert self.mac390.info.bits_per_sample == 16
 
     def test_version(self):
-        self.failUnlessEqual(self.mac399.info.version, 3.99)
-        self.failUnlessEqual(self.mac396.info.version, 3.96)
-        self.failUnlessEqual(self.mac390.info.version, 3.90)
+        self.assertEqual(self.mac399.info.version, 3.99)
+        self.assertEqual(self.mac396.info.version, 3.96)
+        self.assertEqual(self.mac390.info.version, 3.90)
 
     def test_not_my_file(self):
-        self.failUnlessRaises(
+        self.assertRaises(
             MonkeysAudioHeaderError, MonkeysAudio,
             os.path.join(DATA_DIR, "empty.ogg"))
-        self.failUnlessRaises(
+        self.assertRaises(
             MonkeysAudioHeaderError, MonkeysAudio,
             os.path.join(DATA_DIR, "click.mpc"))
 
     def test_mime(self):
-        self.failUnless("audio/x-ape" in self.mac399.mime)
+        self.assertTrue("audio/x-ape" in self.mac399.mime)
 
     def test_pprint(self):
-        self.failUnless(self.mac399.pprint())
-        self.failUnless(self.mac396.pprint())
+        self.assertTrue(self.mac399.pprint())
+        self.assertTrue(self.mac396.pprint())

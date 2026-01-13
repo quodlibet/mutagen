@@ -7,37 +7,42 @@
 
 """Full tag list for any given file."""
 
+from __future__ import annotations
+
+import argparse
 import sys
 
-from ._util import SignalHandler, OptionParser
-
+from ._util import SignalHandler
 
 _sig = SignalHandler()
 
 
-def main(argv):
+class Arguments(argparse.Namespace):
+    files: list[str] = []
+
+
+def main(argv: list[str]) -> None:
     from mutagen import File
 
-    parser = OptionParser(usage="usage: %prog [options] FILE [FILE...]")
-    parser.add_option("--no-flac", help="Compatibility; does nothing.")
-    parser.add_option("--no-mp3", help="Compatibility; does nothing.")
-    parser.add_option("--no-apev2", help="Compatibility; does nothing.")
+    parser = argparse.ArgumentParser(usage="%(prog)s [options] FILE [FILE...]")
+    parser.add_argument("--no-flac", help="Compatibility; does nothing.")
+    parser.add_argument("--no-mp3", help="Compatibility; does nothing.")
+    parser.add_argument("--no-apev2", help="Compatibility; does nothing.")
+    parser.add_argument("files", nargs="+", metavar="FILE", help="Files to inspect")
 
-    (options, args) = parser.parse_args(argv[1:])
-    if not args:
-        raise SystemExit(parser.print_help() or 1)
+    args = parser.parse_args(argv[1:], namespace=Arguments())
 
-    for filename in args:
-        print(u"--", filename)
+    for filename in args.files:
+        print("--", filename)
         try:
-            print(u"-", File(filename).pprint())
+            print("-", File(filename).pprint())
         except AttributeError:
-            print(u"- Unknown file type")
+            print("- Unknown file type")
         except Exception as err:
             print(str(err))
-        print(u"")
+        print("")
 
 
-def entry_point():
+def entry_point() -> None:
     _sig.init()
     return main(sys.argv)

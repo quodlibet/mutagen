@@ -9,24 +9,29 @@
 ID3iconv is a Java based ID3 encoding converter, here's the Python version.
 """
 
-import sys
+from __future__ import annotations
+
 import locale
+import sys
+from collections.abc import Sequence
+from dataclasses import dataclass
+from optparse import OptionParser, Values
+from typing import override
 
 import mutagen
 import mutagen.id3
 
-from ._util import SignalHandler, OptionParser
-
+from ._util import SignalHandler
 
 VERSION = (0, 3)
 _sig = SignalHandler()
 
 
-def getpreferredencoding():
+def getpreferredencoding() -> str:
     return locale.getpreferredencoding() or "utf-8"
 
 
-def isascii(string):
+def isascii(string: str) -> bool:
     """Checks whether a unicode string is non-empty and contains only ASCII
     characters.
     """
@@ -34,7 +39,7 @@ def isascii(string):
         return False
 
     try:
-        string.encode('ascii')
+        _ = string.encode('ascii')
     except UnicodeEncodeError:
         return False
 
@@ -45,8 +50,7 @@ class ID3OptionParser(OptionParser):
     def __init__(self):
         mutagen_version = ".".join(map(str, mutagen.version))
         my_version = ".".join(map(str, VERSION))
-        version = "mid3iconv %s\nUses Mutagen %s" % (
-            my_version, mutagen_version)
+        version = f"mid3iconv {my_version}\nUses Mutagen {mutagen_version}"
         return OptionParser.__init__(
             self, version=version,
             usage="%prog [OPTION] [FILE]...",
@@ -54,25 +58,33 @@ class ID3OptionParser(OptionParser):
                          "which converts ID3 tags from legacy encodings "
                          "to Unicode and stores them using the ID3v2 format."))
 
+    @override
     def format_help(self, *args, **kwargs):
         text = OptionParser.format_help(self, *args, **kwargs)
         return text + "\nFiles are updated in-place, so use --dry-run first.\n"
 
+@dataclass
+class Options(Values):
+    encoding: str | None
+    noupdate: bool
+    force_v1: bool
+    remove_v1: bool
+    verbose: str
 
-def update(options, filenames):
-    encoding = options.encoding or getpreferredencoding()
-    verbose = options.verbose
+def update(options: Options, filenames: Sequence[str]) -> None:
+    encoding: str = options.encoding or getpreferredencoding()
+    verbose: str = options.verbose
     noupdate = options.noupdate
     force_v1 = options.force_v1
     remove_v1 = options.remove_v1
 
-    def conv(uni):
+    def conv(uni: str) -> str:
         return uni.encode('iso-8859-1').decode(encoding)
 
     for filename in filenames:
         with _sig.block():
             if verbose != "quiet":
-                print(u"Updating", filename)
+                print("Updating", filename)
 
             if has_id3v1(filename) and not noupdate and force_v1:
                 mutagen.id3.delete(filename, False, True)
@@ -81,7 +93,7 @@ def update(options, filenames):
                 id3 = mutagen.id3.ID3(filename)
             except mutagen.id3.ID3NoHeaderError:
                 if verbose != "quiet":
-                    print(u"No ID3 header found; skipping...")
+                    print("No ID3 header found; skipping...")
                 continue
             except Exception as err:
                 print(str(err), file=sys.stderr)
@@ -117,35 +129,34 @@ def update(options, filenames):
                     id3.save(filename)
 
 
-def has_id3v1(filename):
+def has_id3v1(filename: str) -> bool:
     try:
         with open(filename, 'rb') as f:
-            f.seek(-128, 2)
+            _ = f.seek(-128, 2)
             return f.read(3) == b"TAG"
-    except IOError:
+    except OSError:
         return False
 
 
-def main(argv):
+def main(argv: list[str]) -> None:
     parser = ID3OptionParser()
-    parser.add_option(
+    _ = parser.add_option(
         "-e", "--encoding", metavar="ENCODING", action="store",
         type="string", dest="encoding",
-        help=("Specify original tag encoding (default is %s)" % (
-              getpreferredencoding())))
-    parser.add_option(
+        help=(f"Specify original tag encoding (default is {getpreferredencoding()})"))
+    _ = parser.add_option(
         "-p", "--dry-run", action="store_true", dest="noupdate",
         help="Do not actually modify files")
-    parser.add_option(
+    _ = parser.add_option(
         "--force-v1", action="store_true", dest="force_v1",
         help="Use an ID3v1 tag even if an ID3v2 tag is present")
-    parser.add_option(
+    _ = parser.add_option(
         "--remove-v1", action="store_true", dest="remove_v1",
         help="Remove v1 tag after processing the files")
-    parser.add_option(
+    _ = parser.add_option(
         "-q", "--quiet", action="store_const", dest="verbose",
         const="quiet", help="Only output errors")
-    parser.add_option(
+    _ = parser.add_option(
         "-d", "--debug", action="store_const", dest="verbose",
         const="debug", help="Output updated tags")
 
@@ -163,6 +174,6 @@ def main(argv):
         parser.print_help()
 
 
-def entry_point():
+def entry_point() -> None:
     _sig.init()
     return main(sys.argv)

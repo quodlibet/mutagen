@@ -2,12 +2,18 @@
 import os
 from io import BytesIO
 
-from tests import TestCase, DATA_DIR, get_temp_copy
-from mutagen.mp3 import MP3, error as MP3Error, delete, MPEGInfo, EasyMP3, \
-    BitrateMode, iter_sync
-from mutagen.mp3._util import XingHeader, XingHeaderError, VBRIHeader, \
-    VBRIHeaderError, LAMEHeader, LAMEError
 from mutagen.id3 import ID3
+from mutagen.mp3 import MP3, BitrateMode, EasyMP3, MPEGInfo, delete, iter_sync
+from mutagen.mp3 import error as MP3Error
+from mutagen.mp3._util import (
+    LAMEError,
+    LAMEHeader,
+    VBRIHeader,
+    VBRIHeaderError,
+    XingHeader,
+    XingHeaderError,
+)
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TMP3Util(TestCase):
@@ -17,7 +23,7 @@ class TMP3Util(TestCase):
         def get_syncs(fileobj, max_read):
             start = fileobj.tell()
             pos = []
-            for i in iter_sync(fileobj, max_read):
+            for _i in iter_sync(fileobj, max_read):
                 pos.append(fileobj.tell() - start)
             return pos
 
@@ -66,10 +72,10 @@ class TMP3(TestCase):
 
     def test_mode(self):
         from mutagen.mp3 import JOINTSTEREO
-        self.failUnlessEqual(self.mp3.info.mode, JOINTSTEREO)
-        self.failUnlessEqual(self.mp3_2.info.mode, JOINTSTEREO)
-        self.failUnlessEqual(self.mp3_3.info.mode, JOINTSTEREO)
-        self.failUnlessEqual(self.mp3_4.info.mode, JOINTSTEREO)
+        self.assertEqual(self.mp3.info.mode, JOINTSTEREO)
+        self.assertEqual(self.mp3_2.info.mode, JOINTSTEREO)
+        self.assertEqual(self.mp3_3.info.mode, JOINTSTEREO)
+        self.assertEqual(self.mp3_4.info.mode, JOINTSTEREO)
 
     def test_replaygain(self):
         self.assertEqual(self.mp3_3.info.track_gain, 51.0)
@@ -89,22 +95,22 @@ class TMP3(TestCase):
         self.assertEqual(self.mp3_4.info.channels, 2)
 
     def test_encoder_info(self):
-        self.assertEqual(self.mp3.info.encoder_info, u"")
+        self.assertEqual(self.mp3.info.encoder_info, "")
         self.assertTrue(isinstance(self.mp3.info.encoder_info, str))
-        self.assertEqual(self.mp3_2.info.encoder_info, u"")
-        self.assertEqual(self.mp3_3.info.encoder_info, u"LAME 3.98.1+")
-        self.assertEqual(self.mp3_4.info.encoder_info, u"LAME 3.98.1+")
+        self.assertEqual(self.mp3_2.info.encoder_info, "")
+        self.assertEqual(self.mp3_3.info.encoder_info, "LAME 3.98.1+")
+        self.assertEqual(self.mp3_4.info.encoder_info, "LAME 3.98.1+")
         self.assertTrue(isinstance(self.mp3_4.info.encoder_info, str))
 
     def test_bitrate_mode(self):
-        self.failUnlessEqual(self.mp3.info.bitrate_mode, BitrateMode.UNKNOWN)
-        self.failUnlessEqual(self.mp3_2.info.bitrate_mode, BitrateMode.UNKNOWN)
-        self.failUnlessEqual(self.mp3_3.info.bitrate_mode, BitrateMode.VBR)
-        self.failUnlessEqual(self.mp3_4.info.bitrate_mode, BitrateMode.VBR)
+        self.assertEqual(self.mp3.info.bitrate_mode, BitrateMode.UNKNOWN)
+        self.assertEqual(self.mp3_2.info.bitrate_mode, BitrateMode.UNKNOWN)
+        self.assertEqual(self.mp3_3.info.bitrate_mode, BitrateMode.VBR)
+        self.assertEqual(self.mp3_4.info.bitrate_mode, BitrateMode.VBR)
 
     def test_id3(self):
-        self.failUnlessEqual(self.mp3.tags, ID3(self.silence))
-        self.failUnlessEqual(self.mp3_2.tags, ID3(self.silence_nov2))
+        self.assertEqual(self.mp3.tags, ID3(self.silence))
+        self.assertEqual(self.mp3_2.tags, ID3(self.silence_nov2))
 
     def test_length(self):
         self.assertAlmostEqual(self.mp3.info.length, 3.77, 2)
@@ -113,57 +119,57 @@ class TMP3(TestCase):
         self.assertAlmostEqual(self.mp3_4.info.length, 3.68475, 4)
 
     def test_version(self):
-        self.failUnlessEqual(self.mp3.info.version, 1)
-        self.failUnlessEqual(self.mp3_2.info.version, 1)
-        self.failUnlessEqual(self.mp3_3.info.version, 2)
-        self.failUnlessEqual(self.mp3_4.info.version, 2.5)
+        self.assertEqual(self.mp3.info.version, 1)
+        self.assertEqual(self.mp3_2.info.version, 1)
+        self.assertEqual(self.mp3_3.info.version, 2)
+        self.assertEqual(self.mp3_4.info.version, 2.5)
 
     def test_layer(self):
-        self.failUnlessEqual(self.mp3.info.layer, 3)
-        self.failUnlessEqual(self.mp3_2.info.layer, 3)
-        self.failUnlessEqual(self.mp3_3.info.layer, 3)
-        self.failUnlessEqual(self.mp3_4.info.layer, 3)
+        self.assertEqual(self.mp3.info.layer, 3)
+        self.assertEqual(self.mp3_2.info.layer, 3)
+        self.assertEqual(self.mp3_3.info.layer, 3)
+        self.assertEqual(self.mp3_4.info.layer, 3)
 
     def test_bitrate(self):
-        self.failUnlessEqual(self.mp3.info.bitrate, 32000)
-        self.failUnlessEqual(self.mp3_2.info.bitrate, 32000)
-        self.failUnlessEqual(self.mp3_3.info.bitrate, 17783)
-        self.failUnlessEqual(self.mp3_4.info.bitrate, 8900)
+        self.assertEqual(self.mp3.info.bitrate, 32000)
+        self.assertEqual(self.mp3_2.info.bitrate, 32000)
+        self.assertEqual(self.mp3_3.info.bitrate, 17783)
+        self.assertEqual(self.mp3_4.info.bitrate, 8900)
 
     def test_notmp3(self):
-        self.failUnlessRaises(
+        self.assertRaises(
             MP3Error, MP3, os.path.join(DATA_DIR, 'empty.ofr'))
 
-        self.failUnlessRaises(
+        self.assertRaises(
             MP3Error, MP3, os.path.join(DATA_DIR, 'emptyfile.mp3'))
 
     def test_too_short(self):
-        self.failUnlessRaises(
+        self.assertRaises(
             MP3Error, MP3, os.path.join(DATA_DIR, 'too-short.mp3'))
 
     def test_sketchy(self):
-        self.failIf(self.mp3.info.sketchy)
-        self.failIf(self.mp3_2.info.sketchy)
-        self.failIf(self.mp3_3.info.sketchy)
-        self.failIf(self.mp3_4.info.sketchy)
+        self.assertFalse(self.mp3.info.sketchy)
+        self.assertFalse(self.mp3_2.info.sketchy)
+        self.assertFalse(self.mp3_3.info.sketchy)
+        self.assertFalse(self.mp3_4.info.sketchy)
 
     def test_sketchy_notmp3(self):
         notmp3 = MP3(os.path.join(DATA_DIR, "silence-44-s.flac"))
-        self.failUnless(notmp3.info.sketchy)
-        self.assertTrue(u"sketchy" in notmp3.info.pprint())
+        self.assertTrue(notmp3.info.sketchy)
+        self.assertTrue("sketchy" in notmp3.info.pprint())
 
     def test_pprint(self):
-        self.failUnless(self.mp3.pprint())
+        self.assertTrue(self.mp3.pprint())
 
     def test_info_pprint(self):
         res = self.mp3.info.pprint()
         self.assertTrue(res)
         self.assertTrue(isinstance(res, str))
-        self.assertTrue(res.startswith(u"MPEG 1 layer 3"))
+        self.assertTrue(res.startswith("MPEG 1 layer 3"))
 
     def test_pprint_no_tags(self):
         self.mp3.tags = None
-        self.failUnless(self.mp3.pprint())
+        self.assertTrue(self.mp3.pprint())
 
     def test_xing(self):
         mp3 = MP3(os.path.join(DATA_DIR, "xing.mp3"))
@@ -182,17 +188,17 @@ class TMP3(TestCase):
 
     def test_delete(self):
         self.mp3.delete()
-        self.failIf(self.mp3.tags)
-        self.failUnless(MP3(self.filename).tags is None)
+        self.assertFalse(self.mp3.tags)
+        self.assertTrue(MP3(self.filename).tags is None)
 
     def test_module_delete(self):
         delete(self.filename)
-        self.failUnless(MP3(self.filename).tags is None)
+        self.assertTrue(MP3(self.filename).tags is None)
 
     def test_save(self):
         self.mp3["TIT1"].text = ["foobar"]
         self.mp3.save()
-        self.failUnless(MP3(self.filename)["TIT1"] == "foobar")
+        self.assertTrue(MP3(self.filename)["TIT1"] == "foobar")
 
     def test_save_padding(self):
         self.mp3.save(padding=lambda x: 42)
@@ -202,18 +208,18 @@ class TMP3(TestCase):
         filename = os.path.join(DATA_DIR, "apev2-lyricsv2.mp3")
         from mutagen.apev2 import APEv2
         mp3 = MP3(filename, ID3=APEv2)
-        self.failUnless("replaygain_track_peak" in mp3.tags)
+        self.assertTrue("replaygain_track_peak" in mp3.tags)
 
     def test_add_tags(self):
         mp3 = MP3(os.path.join(DATA_DIR, "xing.mp3"))
-        self.failIf(mp3.tags)
+        self.assertFalse(mp3.tags)
         mp3.add_tags()
-        self.failUnless(isinstance(mp3.tags, ID3))
+        self.assertTrue(isinstance(mp3.tags, ID3))
 
     def test_add_tags_already_there(self):
         mp3 = MP3(os.path.join(DATA_DIR, "silence-44-s.mp3"))
-        self.failUnless(mp3.tags)
-        self.failUnlessRaises(Exception, mp3.add_tags)
+        self.assertTrue(mp3.tags)
+        self.assertRaises(Exception, mp3.add_tags)
 
     def test_save_no_tags(self):
         self.mp3.tags = None
@@ -221,11 +227,11 @@ class TMP3(TestCase):
         self.assertTrue(self.mp3.tags is None)
 
     def test_mime(self):
-        self.failUnless("audio/mp3" in self.mp3.mime)
+        self.assertTrue("audio/mp3" in self.mp3.mime)
         # XXX
         self.mp3.info.layer = 2
-        self.failIf("audio/mp3" in self.mp3.mime)
-        self.failUnless("audio/mp2" in self.mp3.mime)
+        self.assertFalse("audio/mp3" in self.mp3.mime)
+        self.assertTrue("audio/mp2" in self.mp3.mime)
 
     def tearDown(self):
         os.unlink(self.filename)
@@ -237,11 +243,11 @@ class TMPEGInfo(TestCase):
         filename = os.path.join(DATA_DIR, "silence-44-s-v1.mp3")
         with open(filename, "rb") as h:
             fileobj = BytesIO(h.read(20))
-        self.failUnlessRaises(MP3Error, MPEGInfo, fileobj)
+        self.assertRaises(MP3Error, MPEGInfo, fileobj)
 
     def test_empty(self):
         fileobj = BytesIO(b"")
-        self.failUnlessRaises(MP3Error, MPEGInfo, fileobj)
+        self.assertRaises(MP3Error, MPEGInfo, fileobj)
 
     def test_xing_unknown_framecount(self):
         frame = (
@@ -264,10 +270,10 @@ class TEasyMP3(TestCase):
         self.mp3 = EasyMP3(self.filename)
 
     def test_artist(self):
-        self.failUnless("artist" in self.mp3)
+        self.assertTrue("artist" in self.mp3)
 
     def test_no_composer(self):
-        self.failIf("composer" in self.mp3)
+        self.assertFalse("composer" in self.mp3)
 
     def test_length(self):
         # https://github.com/quodlibet/mutagen/issues/125
@@ -278,8 +284,8 @@ class TEasyMP3(TestCase):
         with open(self.filename, "rb") as h:
             nonid3 = MPEGInfo(h)
 
-        self.failUnlessEqual(easy.length, noneasy.length)
-        self.failUnlessEqual(noneasy.length, nonid3.length)
+        self.assertEqual(easy.length, noneasy.length)
+        self.assertEqual(noneasy.length, nonid3.length)
 
     def tearDown(self):
         os.unlink(self.filename)
@@ -354,21 +360,21 @@ class TLAMEHeader(TestCase):
             data = BytesIO(data + b"\x00" * (20 - len(data)))
             return tuple(LAMEHeader.parse_version(data)[1:])
 
-        self.assertEqual(parse(b"LAME3.80"), (u"3.80", False))
-        self.assertEqual(parse(b"LAME3.80 "), (u"3.80", False))
-        self.assertEqual(parse(b"LAME3.88 (beta)"), (u"3.88 (beta)", False))
-        self.assertEqual(parse(b"LAME3.90 (alpha)"), (u"3.90 (alpha)", False))
-        self.assertEqual(parse(b"LAME3.80 (no-ascii-\xff)"), (u"3.80 (?)", False))
-        self.assertEqual(parse(b"LAME3.90 "), (u"3.90.0+", True))
-        self.assertEqual(parse(b"LAME3.96a"), (u"3.96 (alpha)", True))
-        self.assertEqual(parse(b"LAME3.96b"), (u"3.96 (beta)", True))
-        self.assertEqual(parse(b"LAME3.96x"), (u"3.96 (?)", True))
-        self.assertEqual(parse(b"LAME3.98 "), (u"3.98.0", True))
-        self.assertEqual(parse(b"LAME3.96r"), (u"3.96.1+", True))
-        self.assertEqual(parse(b"L3.99r"), (u"3.99.1+", True))
-        self.assertEqual(parse(b"LAME3100r"), (u"3.100.1+", True))
-        self.assertEqual(parse(b"LAME3.90.\x03\xbe\x00"), (u"3.90.0+", True))
-        self.assertEqual(parse(b"LAME3.100"), (u"3.100.0+", True))
+        self.assertEqual(parse(b"LAME3.80"), ("3.80", False))
+        self.assertEqual(parse(b"LAME3.80 "), ("3.80", False))
+        self.assertEqual(parse(b"LAME3.88 (beta)"), ("3.88 (beta)", False))
+        self.assertEqual(parse(b"LAME3.90 (alpha)"), ("3.90 (alpha)", False))
+        self.assertEqual(parse(b"LAME3.80 (no-ascii-\xff)"), ("3.80 (?)", False))
+        self.assertEqual(parse(b"LAME3.90 "), ("3.90.0+", True))
+        self.assertEqual(parse(b"LAME3.96a"), ("3.96 (alpha)", True))
+        self.assertEqual(parse(b"LAME3.96b"), ("3.96 (beta)", True))
+        self.assertEqual(parse(b"LAME3.96x"), ("3.96 (?)", True))
+        self.assertEqual(parse(b"LAME3.98 "), ("3.98.0", True))
+        self.assertEqual(parse(b"LAME3.96r"), ("3.96.1+", True))
+        self.assertEqual(parse(b"L3.99r"), ("3.99.1+", True))
+        self.assertEqual(parse(b"LAME3100r"), ("3.100.1+", True))
+        self.assertEqual(parse(b"LAME3.90.\x03\xbe\x00"), ("3.90.0+", True))
+        self.assertEqual(parse(b"LAME3.100"), ("3.100.0+", True))
 
     def test_invalid(self):
 
@@ -384,10 +390,10 @@ class TLAMEHeader(TestCase):
         with open(os.path.join(DATA_DIR, "lame.mp3"), "rb") as h:
             h.seek(36, 0)
             xing = XingHeader(h)
-            self.assertEqual(xing.lame_version_desc, u"3.99.1+")
+            self.assertEqual(xing.lame_version_desc, "3.99.1+")
             self.assertTrue(xing.lame_header)
             self.assertEqual(xing.lame_header.track_gain_adjustment, 6.0)
-            assert xing.get_encoder_settings() == u"-V 2"
+            assert xing.get_encoder_settings() == "-V 2"
 
     def test_settings(self):
         with open(os.path.join(DATA_DIR, "lame.mp3"), "rb") as h:
@@ -441,7 +447,7 @@ class TLAMEHeader(TestCase):
         def skey(major, minor, args):
             keys = ["vbr_quality", "quality", "vbr_method", "lowpass_filter",
                     "ath_type"]
-            return s(major, minor, **dict(zip(keys, args)))
+            return s(major, minor, **dict(zip(keys, args, strict=False)))
 
         assert skey(3, 91, (1, 2, 4, 19500, 3)) == "--preset r3mix"
         assert skey(3, 91, (2, 2, 3, 19000, 4)) == "--alt-preset standard"

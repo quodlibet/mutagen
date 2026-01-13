@@ -1,42 +1,44 @@
 
+import contextlib
 import os
-import sys
-from tempfile import mkstemp
 import shutil
+import sys
 import warnings
 from io import BytesIO
+from os import devnull
+from tempfile import mkstemp
 
-from hypothesis.strategies import composite, integers, one_of
 from hypothesis import given
+from hypothesis.strategies import composite, integers, one_of
 
-from tests import TestCase, DATA_DIR, get_temp_copy
-from mutagen import File, Metadata, FileType, MutagenError, PaddingInfo
-from mutagen._util import loadfile, get_size
-from mutagen.oggvorbis import OggVorbis
-from mutagen.oggflac import OggFLAC
-from mutagen.oggspeex import OggSpeex
-from mutagen.oggtheora import OggTheora
-from mutagen.oggopus import OggOpus
-from mutagen.mp3 import MP3, EasyMP3
-from mutagen.id3 import ID3FileType
-from mutagen.apev2 import APEv2File
-from mutagen.flac import FLAC
-from mutagen.wavpack import WavPack
-from mutagen.trueaudio import TrueAudio, EasyTrueAudio
-from mutagen.mp4 import MP4
-from mutagen.musepack import Musepack
-from mutagen.monkeysaudio import MonkeysAudio
-from mutagen.optimfrog import OptimFROG
-from mutagen.asf import ASF
-from mutagen.aiff import AIFF
+from mutagen import File, FileType, Metadata, MutagenError, PaddingInfo
+from mutagen._filething import FileThing
+from mutagen._util import get_size, loadfile
 from mutagen.aac import AAC
 from mutagen.ac3 import AC3
-from mutagen.smf import SMF
-from mutagen.tak import TAK
+from mutagen.aiff import AIFF
+from mutagen.apev2 import APEv2File
+from mutagen.asf import ASF
 from mutagen.dsdiff import DSDIFF
 from mutagen.dsf import DSF
+from mutagen.flac import FLAC
+from mutagen.id3 import ID3FileType
+from mutagen.monkeysaudio import MonkeysAudio
+from mutagen.mp3 import MP3, EasyMP3
+from mutagen.mp4 import MP4
+from mutagen.musepack import Musepack
+from mutagen.oggflac import OggFLAC
+from mutagen.oggopus import OggOpus
+from mutagen.oggspeex import OggSpeex
+from mutagen.oggtheora import OggTheora
+from mutagen.oggvorbis import OggVorbis
+from mutagen.optimfrog import OptimFROG
+from mutagen.smf import SMF
+from mutagen.tak import TAK
+from mutagen.trueaudio import EasyTrueAudio, TrueAudio
 from mutagen.wave import WAVE
-from os import devnull
+from mutagen.wavpack import WavPack
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TMetadata(TestCase):
@@ -46,22 +48,22 @@ class TMetadata(TestCase):
             pass
 
     def test_virtual_constructor(self):
-        self.failUnlessRaises(NotImplementedError, Metadata, BytesIO())
+        self.assertRaises(NotImplementedError, Metadata, BytesIO())
 
     def test_load(self):
         m = Metadata()
-        self.failUnlessRaises(NotImplementedError, m.load, BytesIO())
+        self.assertRaises(NotImplementedError, m.load, BytesIO())
 
     def test_virtual_save(self):
-        self.failUnlessRaises(
+        self.assertRaises(
             NotImplementedError, self.FakeMeta().save, BytesIO())
-        self.failUnlessRaises(
+        self.assertRaises(
             NotImplementedError, self.FakeMeta().save, BytesIO())
 
     def test_virtual_delete(self):
-        self.failUnlessRaises(
+        self.assertRaises(
             NotImplementedError, self.FakeMeta().delete, BytesIO())
-        self.failUnlessRaises(
+        self.assertRaises(
             NotImplementedError, self.FakeMeta().delete, BytesIO())
 
 
@@ -96,7 +98,7 @@ class TPaddingInfo(TestCase):
 class MyFileType(FileType):
 
     @loadfile()
-    def load(self, filething, arg=1):
+    def load(self, filething: FileThing, arg=1):
         self.filename = filething.filename
         self.fileobj = filething.fileobj
         self.arg = arg
@@ -113,17 +115,17 @@ class TFileTypeLoad(TestCase):
         self.assertFalse(hasattr(f, "a"))
 
         f = MyFileType(self.filename)
-        self.assertEquals(f.arg, 1)
+        self.assertEqual(f.arg, 1)
 
         f = MyFileType(self.filename, 42)
-        self.assertEquals(f.arg, 42)
-        self.assertEquals(f.filename, self.filename)
+        self.assertEqual(f.arg, 42)
+        self.assertEqual(f.filename, self.filename)
 
         f = MyFileType(self.filename, arg=42)
-        self.assertEquals(f.arg, 42)
+        self.assertEqual(f.arg, 42)
 
         f = MyFileType(filename=self.filename, arg=42)
-        self.assertEquals(f.arg, 42)
+        self.assertEqual(f.arg, 42)
 
         self.assertRaises(TypeError, MyFileType, self.filename, nope=42)
         self.assertRaises(TypeError, MyFileType, nope=42)
@@ -134,7 +136,7 @@ class TFileTypeLoad(TestCase):
         x = BytesIO()
         f = MyFileType(filename="foo", fileobj=x)
         self.assertTrue(f.fileobj is x)
-        self.assertEquals(f.filename, "foo")
+        self.assertEqual(f.filename, "foo")
 
     def test_fileobj(self):
         x = BytesIO()
@@ -172,17 +174,17 @@ class TFileType(TestCase):
         os.remove(self.mp3_filename)
 
     def test_delitem_not_there(self):
-        self.failUnlessRaises(KeyError, self.vorbis.__delitem__, "foobar")
+        self.assertRaises(KeyError, self.vorbis.__delitem__, "foobar")
 
     def test_add_tags(self):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            self.failUnlessRaises(NotImplementedError, FileType().add_tags)
+            self.assertRaises(NotImplementedError, FileType().add_tags)
 
     def test_delitem(self):
         self.vorbis["foobar"] = "quux"
         del self.vorbis["foobar"]
-        self.failIf("quux" in self.vorbis)
+        self.assertFalse("quux" in self.vorbis)
 
     def test_save_no_tags(self):
         self.assertTrue(self.mp3_notags.tags is None)
@@ -191,10 +193,10 @@ class TFileType(TestCase):
         self.assertTrue(self.mp3_notags.tags is None)
 
 
-class _TestFileObj(object):
+class _TestFileObj:
     """A file-like object which fails in various ways"""
 
-    def __init__(self, fileobj, stop_after=-1, fail_after=-1):
+    def __init__(self, fileobj: BytesIO, stop_after=-1, fail_after=-1):
         """
         Args:
             stop_after (int): size of data to return on read in total
@@ -213,9 +215,8 @@ class _TestFileObj(object):
 
     def _check_fail(self):
         self.operations += 1
-        if self._fail_after != -1:
-            if self.operations > self._fail_after:
-                raise IOError("fail")
+        if self._fail_after != -1 and self.operations > self._fail_after:
+            raise OSError("fail")
 
     def tell(self):
         self._check_fail()
@@ -224,7 +225,7 @@ class _TestFileObj(object):
     def write(self, data):
         try:
             self._check_fail()
-        except IOError:
+        except OSError:
             # we use write(b"") to check if the fileobj is writable
             if len(data):
                 raise
@@ -240,7 +241,7 @@ class _TestFileObj(object):
     def read(self, size=-1):
         try:
             self._check_fail()
-        except IOError:
+        except OSError:
             # we use read(0) to test for the file object type, so don't error
             # out in that case
             if size != 0:
@@ -294,7 +295,7 @@ def generate_test_file_objects(fileobj, func):
     return strategy()
 
 
-class TAbstractFileType(object):
+class TAbstractFileType:
 
     PATH = None
     KIND = None
@@ -304,10 +305,8 @@ class TAbstractFileType(object):
         self.audio = self.KIND(self.filename)
 
     def tearDown(self):
-        try:
+        with contextlib.suppress(OSError):
             os.remove(self.filename)
-        except OSError:
-            pass
 
     def test_fileobj_load(self):
         with open(self.filename, "rb") as h:
@@ -343,10 +342,8 @@ class TAbstractFileType(object):
 
             @given(generate_test_file_objects(h, self.KIND))
             def run(t):
-                try:
+                with contextlib.suppress(MutagenError):
                     self.KIND(t)
-                except MutagenError:
-                    pass
 
             run()
 
@@ -356,10 +353,8 @@ class TAbstractFileType(object):
 
             @given(generate_test_file_objects(h, lambda t: o.save(fileobj=t)))
             def run(t):
-                try:
+                with contextlib.suppress(MutagenError):
                     o.save(fileobj=t)
-                except MutagenError:
-                    pass
 
             run()
 
@@ -370,10 +365,8 @@ class TAbstractFileType(object):
             @given(generate_test_file_objects(
                 h, lambda t: o.delete(fileobj=t)))
             def run(t):
-                try:
+                with contextlib.suppress(MutagenError):
                     o.delete(fileobj=t)
-                except MutagenError:
-                    pass
 
             run()
 
@@ -384,7 +377,7 @@ class TAbstractFileType(object):
         self.assertTrue(isinstance(File(self.PATH), self.KIND))
 
     def test_not_file(self):
-        self.failUnlessRaises(MutagenError, self.KIND, "/dev/doesnotexist")
+        self.assertRaises(MutagenError, self.KIND, "/dev/doesnotexist")
 
     def test_pprint(self):
         res = self.audio.pprint()
@@ -425,20 +418,16 @@ class TAbstractFileType(object):
                 self.audio.save()
 
         os.remove(self.filename)
-        try:
+        with contextlib.suppress(MutagenError):
             self.audio.delete()
-        except MutagenError:
-            pass
 
     def test_save_nonexisting(self):
         os.remove(self.filename)
         tags = self.audio.tags
         # Metadata creates a new file
         if not isinstance(tags, Metadata):
-            try:
+            with contextlib.suppress(MutagenError):
                 self.audio.save()
-            except MutagenError:
-                pass
 
     def test_save(self):
         self.audio.save(self.filename)
@@ -574,32 +563,31 @@ class TFile(TestCase):
 
     @property
     def filenames(self):
-        for kind, paths in _FILETYPES.items():
-            for path in paths:
-                yield path
+        for _kind, paths in _FILETYPES.items():
+            yield from paths
 
     def test_bad(self):
         try:
-            self.failUnless(File(devnull) is None)
-        except (OSError, IOError):
-            print("WARNING: Unable to open %s." % devnull)
-        self.failUnless(File(__file__) is None)
+            self.assertTrue(File(devnull) is None)
+        except OSError:
+            print(f"WARNING: Unable to open {devnull}.")
+        self.assertTrue(File(__file__) is None)
 
     def test_empty(self):
         filename = os.path.join(DATA_DIR, "empty")
         open(filename, "wb").close()
         try:
-            self.failUnless(File(filename) is None)
+            self.assertTrue(File(filename) is None)
         finally:
             os.unlink(filename)
 
     def test_not_file(self):
-        self.failUnlessRaises(MutagenError, File, "/dev/doesnotexist")
+        self.assertRaises(MutagenError, File, "/dev/doesnotexist")
 
     def test_no_options(self):
         for filename in self.filenames:
             filename = os.path.join(DATA_DIR, filename)
-            self.failIf(File(filename, options=[]))
+            self.assertFalse(File(filename, options=[]))
 
     def test_fileobj(self):
         for filename in self.filenames:
@@ -615,24 +603,22 @@ class TFile(TestCase):
 
                 @given(generate_test_file_objects(h, File))
                 def run(t):
-                    try:
+                    with contextlib.suppress(MutagenError):
                         File(t)
-                    except MutagenError:
-                        pass
 
                 run()
 
     def test_easy_mp3(self):
-        self.failUnless(isinstance(
+        self.assertTrue(isinstance(
             File(os.path.join(DATA_DIR, "silence-44-s.mp3"), easy=True),
             EasyMP3))
 
     def test_apev2(self):
-        self.failUnless(isinstance(
+        self.assertTrue(isinstance(
             File(os.path.join(DATA_DIR, "oldtag.apev2")), APEv2File))
 
     def test_easy_tta(self):
-        self.failUnless(isinstance(
+        self.assertTrue(isinstance(
             File(os.path.join(DATA_DIR, "empty.tta"), easy=True),
             EasyTrueAudio))
 
@@ -640,7 +626,7 @@ class TFile(TestCase):
         header = b"ID3 the rest of this is garbage"
         fileobj = BytesIO(header)
         filename = "not-identifiable.ext"
-        self.failUnless(TrueAudio.score(filename, fileobj, header) <
+        self.assertTrue(TrueAudio.score(filename, fileobj, header) <
                         MP3.score(filename, fileobj, header))
 
     def test_prefer_theora_over_vorbis(self):
@@ -654,7 +640,7 @@ class TFile(TestCase):
             b"\x00\x00\x00\xee\x02\x00\x00\x00\x00\x00\xb8\x01")
         fileobj = BytesIO(header)
         filename = "not-identifiable.ext"
-        self.failUnless(OggVorbis.score(filename, fileobj, header) <
+        self.assertTrue(OggVorbis.score(filename, fileobj, header) <
                         OggTheora.score(filename, fileobj, header))
 
 
@@ -681,14 +667,14 @@ class TFileUpperExt(TestCase):
         for (path, instance) in self.checks:
             if isinstance(path, bytes):
                 path = path.decode("ascii")
-            self.failUnless(
+            self.assertTrue(
                 isinstance(File(path, options=[instance]), instance))
             path = path.encode("ascii")
-            self.failUnless(
+            self.assertTrue(
                 isinstance(File(path, options=[instance]), instance))
 
     def tearDown(self):
-        for (path, instance) in self.checks:
+        for (path, _instance) in self.checks:
             os.unlink(path)
 
 
