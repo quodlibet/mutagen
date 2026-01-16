@@ -293,7 +293,6 @@ class TAPEv2WithLyrics2(TestCase):
 class TAPEBinaryValue(TestCase):
 
     from mutagen.apev2 import APEBinaryValue as BV
-    BV = BV
 
     def setUp(self):
         self.sample = b"\x12\x45\xde"
@@ -319,7 +318,6 @@ class TAPEBinaryValue(TestCase):
 class TAPETextValue(TestCase):
 
     from mutagen.apev2 import APETextValue as TV
-    TV = TV
 
     def setUp(self):
         self.sample = ["foo", "bar", "baz"]
@@ -378,7 +376,6 @@ class TAPETextValue(TestCase):
 class TAPEExtValue(TestCase):
 
     from mutagen.apev2 import APEExtValue as EV
-    EV = EV
 
     def setUp(self):
         self.sample = "http://foo"

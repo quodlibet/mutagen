@@ -13,7 +13,7 @@ def get_var(tool_name, entry="main"):
 
 
 class _TTools(TestCase):
-    TOOL_NAME = None
+    TOOL_NAME: str | None = None
 
     def setUp(self):
         self.assertTrue(isinstance(self.TOOL_NAME, str))

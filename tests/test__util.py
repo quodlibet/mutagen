@@ -12,10 +12,6 @@ import errno
 import builtins
 from io import BytesIO
 
-try:
-    import fcntl
-except ImportError:
-    fcntl = None
 
 import pytest
 
