@@ -17,7 +17,7 @@ import mutagen.id3
 
 from mutagen import Metadata
 from mutagen._util import DictMixin, dict_match, loadfile
-from mutagen.id3 import ID3, error, delete, ID3FileType
+from mutagen.id3 import ID3, error as error, delete, ID3FileType
 
 
 __all__ = ['EasyID3', 'Open', 'delete']

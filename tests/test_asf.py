@@ -3,14 +3,14 @@ import os
 import warnings
 from io import BytesIO
 
-from mutagen.asf import ASF, ASFHeaderError, ASFValue, UNICODE, DWORD, QWORD
+from mutagen.asf import ASF, UNICODE, DWORD, QWORD
 from mutagen.asf import BOOL, WORD, BYTEARRAY, GUID
-from mutagen.asf._util import guid2bytes, bytes2guid
+from mutagen.asf._util import guid2bytes, bytes2guid, ASFHeaderError, ASFError
 from mutagen.asf._objects import ContentDescriptionObject, \
     ExtendedContentDescriptionObject, HeaderExtensionObject, \
     MetadataObject, MetadataLibraryObject, CodecListObject, PaddingObject, \
     HeaderObject
-from mutagen.asf import ASFUnicodeAttribute, ASFError, ASFByteArrayAttribute, \
+from mutagen.asf._attrs import ASFValue, ASFUnicodeAttribute, ASFByteArrayAttribute, \
     ASFBoolAttribute, ASFDWordAttribute, ASFQWordAttribute, ASFWordAttribute, \
     ASFGUIDAttribute
 
