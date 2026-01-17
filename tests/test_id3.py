@@ -10,9 +10,8 @@ from mutagen.id3 import ID3, Frames, ID3UnsupportedVersionError, TIT2, \
     TDAT, TIME, LNK, IPLS, TPE1, BinaryFrame, TIT3, POPM, APIC, CRM, \
     TALB, TPE2, TSOT, TDEN, TIPL, ParseID3v1, Encoding, ID3Tags, RVAD, \
     ID3NoHeaderError, Frames_2_2
-from mutagen.id3._util import BitPaddedInt, error as ID3Error
-from mutagen.id3._tags import determine_bpi, ID3Header, \
-    save_frame, ID3SaveConfig
+from mutagen.id3._util import BitPaddedInt, error as ID3Error, ID3SaveConfig
+from mutagen.id3._tags import determine_bpi, ID3Header, save_frame
 from mutagen.id3._id3v1 import find_id3v1
 
 from tests import TestCase, DATA_DIR, get_temp_copy, get_temp_empty

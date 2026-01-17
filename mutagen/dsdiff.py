@@ -17,7 +17,7 @@ from mutagen._iff import (
     IffID3,
     IffFile,
     InvalidChunk,
-    error as IffError,
+    error as _IffError,
 )
 from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
 from mutagen._util import (
@@ -30,7 +30,7 @@ from mutagen._util import (
 __all__ = ["DSDIFF", "Open", "delete"]
 
 
-class error(IffError):
+class error(_IffError):
     pass
 
 

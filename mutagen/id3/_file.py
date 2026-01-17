@@ -16,7 +16,8 @@ from mutagen._tags import PaddingInfo
 
 from ._util import error, ID3NoHeaderError, ID3UnsupportedVersionError, \
     BitPaddedInt
-from ._tags import ID3Tags, ID3Header, ID3SaveConfig
+from ._util import ID3SaveConfig
+from ._tags import ID3Tags, ID3Header
 from ._id3v1 import MakeID3v1, find_id3v1
 
 

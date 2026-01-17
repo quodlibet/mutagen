@@ -1,7 +1,8 @@
 
 import os
 
-from mutagen.wave import WAVE, InvalidChunk
+from mutagen.wave import WAVE
+from mutagen._iff import InvalidChunk
 from tests import TestCase, DATA_DIR, get_temp_copy
 
 

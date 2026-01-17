@@ -1,7 +1,8 @@
 
 import os
 
-from mutagen.dsdiff import DSDIFF, IffError
+from mutagen.dsdiff import DSDIFF
+from mutagen._iff import error
 
 from tests import TestCase, DATA_DIR, get_temp_copy
 
@@ -43,7 +44,7 @@ class TDSDIFF(TestCase):
         self.failUnlessEqual(self.dff_dst.info.bitrate, 0)
 
     def test_notdsf(self):
-        self.failUnlessRaises(IffError, DSDIFF, os.path.join(
+        self.failUnlessRaises(error, DSDIFF, os.path.join(
             DATA_DIR, '2822400-1ch-0s-silence.dsf'))
 
     def test_pprint(self):
