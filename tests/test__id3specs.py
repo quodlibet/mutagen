@@ -6,7 +6,8 @@ from mutagen.id3._specs import SpecError, Latin1TextListSpec, ID3FramesSpec, \
     EncodedTextSpec, VolumePeakSpec, VolumeAdjustmentSpec, CTOCFlagsSpec, \
     Spec, SynchronizedTextSpec, TimeStampSpec, FrameIDSpec, RVASpec
 from mutagen.id3._frames import Frame
-from mutagen.id3._tags import ID3Header, ID3Tags, ID3SaveConfig
+from mutagen.id3._tags import ID3Header, ID3Tags
+from mutagen.id3._util import ID3SaveConfig
 from mutagen.id3 import TIT3, ASPI, CTOCFlags, ID3TimeStamp
 
 

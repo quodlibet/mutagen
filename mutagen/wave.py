@@ -14,8 +14,8 @@ import struct
 from mutagen import StreamInfo, FileType
 
 from mutagen.id3 import ID3
-from mutagen._riff import RiffFile, InvalidChunk
-from mutagen._iff import error as IffError
+from mutagen._riff import RiffFile
+from mutagen._iff import error as _IffError, InvalidChunk
 from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
 from mutagen._util import (
     convert_error,
@@ -27,7 +27,7 @@ from mutagen._util import (
 __all__ = ["WAVE", "Open", "delete"]
 
 
-class error(IffError):
+class error(_IffError):
     """WAVE stream parsing errors."""
 
 

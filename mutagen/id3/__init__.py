@@ -29,59 +29,59 @@ Since this file's documentation is a little unwieldy, you are probably
 interested in the :class:`ID3` class to start with.
 """
 
-from ._file import ID3, ID3FileType, delete, ID3v1SaveOptions
-from ._specs import Encoding, PictureType, CTOCFlags, ID3TimeStamp
-from ._frames import Frames, Frames_2_2, Frame, TextFrame, UrlFrame, \
-    UrlFrameU, TimeStampTextFrame, BinaryFrame, NumericPartTextFrame, \
-    NumericTextFrame, PairedTextFrame
-from ._util import ID3NoHeaderError, error, ID3UnsupportedVersionError
-from ._id3v1 import ParseID3v1, MakeID3v1
-from ._tags import ID3Tags
-from ._frames import (AENC, APIC, ASPI, BUF, CHAP, CNT, COM, COMM, COMR, CRA,
-    CRM, CTOC, ENCR, EQU2, ETC, ETCO, GEO, GEOB, GP1, GRID, GRP1, IPL, IPLS,
-    LINK, LNK, MCDI, MCI, MLL, MLLT, MVI, MVIN, MVN, MVNM, OWNE, PCNT, PCST,
-    PIC, POP, POPM, POSS, PRIV, RBUF, REV, RVA, RVA2, RVAD, RVRB, SEEK, SIGN,
-    SLT, STC, SYLT, SYTC, TAL, TALB, TBP, TBPM, TCAT, TCM, TCMP, TCO, TCOM,
-    TCON, TCOP, TCP, TCR, TDA, TDAT, TDEN, TDES, TDLY, TDOR, TDRC, TDRL, TDTG,
-    TDY, TEN, TENC, TEXT, TFLT, TFT, TGID, TIM, TIME, TIPL, TIT1, TIT2, TIT3,
-    TKE, TKEY, TKWD, TLA, TLAN, TLE, TLEN, TMCL, TMED, TMOO, TMT, TOA, TOAL,
-    TOF, TOFN, TOL, TOLY, TOPE, TOR, TORY, TOT, TOWN, TP1, TP2, TP3, TP4, TPA,
-    TPB, TPE1, TPE2, TPE3, TPE4, TPOS, TPRO, TPUB, TRC, TRCK, TRD, TRDA, TRK,
-    TRSN, TRSO, TS2, TSA, TSC, TSI, TSIZ, TSO2, TSOA, TSOC, TSOP, TSOT, TSP,
-    TSRC, TSS, TSSE, TSST, TST, TT1, TT2, TT3, TXT, TXX, TXXX, TYE, TYER, UFI,
-    UFID, ULT, USER, USLT, WAF, WAR, WAS, WCM, WCOM, WCOP, WCP, WFED, WOAF,
-    WOAR, WOAS, WORS, WPAY, WPB, WPUB, WXX, WXXX)
+from ._file import ID3, ID3FileType, delete, ID3v1SaveOptions as ID3v1SaveOptions
+from ._specs import Encoding as Encoding, PictureType as PictureType, \
+    CTOCFlags as CTOCFlags, ID3TimeStamp as ID3TimeStamp
+from ._frames import Frames, Frames_2_2 as Frames_2_2, Frame as Frame, \
+    TextFrame as TextFrame, UrlFrame as UrlFrame, UrlFrameU as UrlFrameU, \
+    TimeStampTextFrame as TimeStampTextFrame, BinaryFrame as BinaryFrame, \
+    NumericPartTextFrame as NumericPartTextFrame, \
+    NumericTextFrame as NumericTextFrame, PairedTextFrame as PairedTextFrame
+from ._util import ID3NoHeaderError as ID3NoHeaderError, error as error, \
+    ID3UnsupportedVersionError as ID3UnsupportedVersionError
+from ._id3v1 import ParseID3v1 as ParseID3v1, MakeID3v1 as MakeID3v1
+from ._tags import ID3Tags as ID3Tags
+from ._frames import AENC as AENC, APIC as APIC, ASPI as ASPI, BUF as BUF, \
+    CHAP as CHAP, CNT as CNT, COM as COM, COMM as COMM, COMR as COMR, \
+    CRA as CRA, CRM as CRM, CTOC as CTOC, ENCR as ENCR, EQU2 as EQU2, \
+    ETC as ETC, ETCO as ETCO, GEO as GEO, GEOB as GEOB, GP1 as GP1, \
+    GRID as GRID, GRP1 as GRP1, IPL as IPL, IPLS as IPLS, LINK as LINK, \
+    LNK as LNK, MCDI as MCDI, MCI as MCI, MLL as MLL, MLLT as MLLT, MVI as MVI, \
+    MVIN as MVIN, MVN as MVN, MVNM as MVNM, OWNE as OWNE, PCNT as PCNT, \
+    PCST as PCST, PIC as PIC, POP as POP, POPM as POPM, \
+    POSS as POSS, PRIV as PRIV, RBUF as RBUF, REV as REV, RVA as RVA, RVA2 as RVA2, \
+    RVAD as RVAD, RVRB as RVRB, SEEK as SEEK, SIGN as SIGN, SLT as SLT, STC as STC, \
+    SYLT as SYLT, SYTC as SYTC, TAL as TAL, TALB as TALB, TBP as TBP, TBPM as TBPM, \
+    TCAT as TCAT, TCM as TCM, TCMP as TCMP, TCO as TCO, TCOM as TCOM, TCON as TCON, \
+    TCOP as TCOP, TCP as TCP, TCR as TCR, TDA as TDA, TDAT as TDAT, TDEN as TDEN, \
+    TDES as TDES, TDLY as TDLY, TDOR as TDOR, TDRC as TDRC, TDRL as TDRL, \
+    TDTG as TDTG, TDY as TDY, TEN as TEN, TENC as TENC, TEXT as TEXT, TFLT as TFLT, \
+    TFT as TFT, TGID as TGID, TIM as TIM, TIME as TIME, TIPL as TIPL, TIT1 as TIT1, \
+    TIT2 as TIT2, TIT3 as TIT3, TKE as TKE, TKEY as TKEY, TKWD as TKWD, TLA as TLA, \
+    TLAN as TLAN, TLE as TLE, TLEN as TLEN, TMCL as TMCL, TMED as TMED, \
+    TMOO as TMOO, TMT as TMT, TOA as TOA, TOAL as TOAL, TOF as TOF, TOFN as TOFN, \
+    TOL as TOL, TOLY as TOLY, TOPE as TOPE, TOR as TOR, TORY as TORY, TOT as TOT, \
+    TOWN as TOWN, TP1 as TP1, TP2 as TP2, TP3 as TP3, TP4 as TP4, TPA as TPA, \
+    TPB as TPB, TPE1 as TPE1, TPE2 as TPE2, TPE3 as TPE3, TPE4 as TPE4, \
+    TPOS as TPOS, TPRO as TPRO, TPUB as TPUB, TRC as TRC, TRCK as TRCK, TRD as TRD, \
+    TRDA as TRDA, TRK as TRK, TRSN as TRSN, TRSO as TRSO, TS2 as TS2, TSA as TSA, \
+    TSC as TSC, TSI as TSI, TSIZ as TSIZ, TSO2 as TSO2, TSOA as TSOA, TSOC as TSOC, \
+    TSOP as TSOP, TSOT as TSOT, TSP as TSP, TSRC as TSRC, TSS as TSS, TSSE as TSSE, \
+    TSST as TSST, TST as TST, TT1 as TT1, TT2 as TT2, TT3 as TT3, TXT as TXT, \
+    TXX as TXX, TXXX as TXXX, TYE as TYE, TYER as TYER, UFI as UFI, UFID as UFID, \
+    ULT as ULT, USER as USER, USLT as USLT, WAF as WAF, WAR as WAR, WAS as WAS, \
+    WCM as WCM, WCOM as WCOM, WCOP as WCOP, WCP as WCP, WFED as WFED, WOAF as WOAF, \
+    WOAR as WOAR, WOAS as WOAS, WORS as WORS, WPAY as WPAY, WPB as WPB, WPUB as WPUB, \
+    WXX as WXX, WXXX as WXXX
 
 # deprecated
-from ._util import ID3EncryptionUnsupportedError, ID3JunkFrameError, \
-    ID3BadUnsynchData, ID3BadCompressedData, ID3TagError, ID3Warning, \
-    BitPaddedInt as _BitPaddedIntForPicard
+from ._util import ID3EncryptionUnsupportedError as ID3EncryptionUnsupportedError, \
+    ID3JunkFrameError as ID3JunkFrameError, ID3BadUnsynchData as ID3BadUnsynchData, \
+    ID3BadCompressedData as ID3BadCompressedData, ID3TagError as ID3TagError, \
+    ID3Warning as ID3Warning, BitPaddedInt as _BitPaddedIntForPicard
 
 # support open(filename) as interface
 Open = ID3
-
-# flake8
-ID3, ID3FileType, delete, ID3v1SaveOptions, Encoding, PictureType, CTOCFlags,
-ID3TimeStamp, Frames, Frames_2_2, Frame, TextFrame, UrlFrame, UrlFrameU,
-TimeStampTextFrame, BinaryFrame, NumericPartTextFrame, NumericTextFrame,
-PairedTextFrame, ID3NoHeaderError, error, ID3UnsupportedVersionError,
-ParseID3v1, MakeID3v1, ID3Tags, ID3EncryptionUnsupportedError,
-ID3JunkFrameError, ID3BadUnsynchData, ID3BadCompressedData, ID3TagError,
-ID3Warning
-
-AENC, APIC, ASPI, BUF, CHAP, CNT, COM, COMM, COMR, CRA, CRM, CTOC, ENCR, EQU2,
-ETC, ETCO, GEO, GEOB, GP1, GRID, GRP1, IPL, IPLS, LINK, LNK, MCDI, MCI, MLL,
-MLLT, MVI, MVIN, MVN, MVNM, OWNE, PCNT, PCST, PIC, POP, POPM, POSS, PRIV,
-RBUF, REV, RVA, RVA2, RVAD, RVRB, SEEK, SIGN, SLT, STC, SYLT, SYTC, TAL, TALB,
-TBP, TBPM, TCAT, TCM, TCMP, TCO, TCOM, TCON, TCOP, TCP, TCR, TDA, TDAT, TDEN,
-TDES, TDLY, TDOR, TDRC, TDRL, TDTG, TDY, TEN, TENC, TEXT, TFLT, TFT, TGID,
-TIM, TIME, TIPL, TIT1, TIT2, TIT3, TKE, TKEY, TKWD, TLA, TLAN, TLE, TLEN,
-TMCL, TMED, TMOO, TMT, TOA, TOAL, TOF, TOFN, TOL, TOLY, TOPE, TOR, TORY, TOT,
-TOWN, TP1, TP2, TP3, TP4, TPA, TPB, TPE1, TPE2, TPE3, TPE4, TPOS, TPRO, TPUB,
-TRC, TRCK, TRD, TRDA, TRK, TRSN, TRSO, TS2, TSA, TSC, TSI, TSIZ, TSO2, TSOA,
-TSOC, TSOP, TSOT, TSP, TSRC, TSS, TSSE, TSST, TST, TT1, TT2, TT3, TXT, TXX,
-TXXX, TYE, TYER, UFI, UFID, ULT, USER, USLT, WAF, WAR, WAS, WCM, WCOM, WCOP,
-WCP, WFED, WOAF, WOAR, WOAS, WORS, WPAY, WPB, WPUB, WXX, WXXX
 
 
 # Workaround for http://tickets.musicbrainz.org/browse/PICARD-833

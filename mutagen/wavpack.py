@@ -19,7 +19,7 @@ for more information.
 __all__ = ["WavPack", "Open", "delete"]
 
 from mutagen import StreamInfo
-from mutagen.apev2 import APEv2File, error, delete
+from mutagen.apev2 import APEv2File, error as error, delete
 from mutagen._util import cdata, convert_error
 
 

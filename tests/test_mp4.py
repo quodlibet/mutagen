@@ -7,9 +7,10 @@ from io import BytesIO
 import pytest
 
 from tests import TestCase, DATA_DIR, get_temp_copy
-from mutagen.mp4 import (MP4, Atom, Atoms, MP4Tags, MP4Info, delete, MP4Cover,
+from mutagen.mp4 import (MP4, MP4Tags, MP4Info, delete, MP4Cover,
                          MP4MetadataError, MP4FreeForm, error, AtomDataType,
-                         AtomError, _item_sort_key, MP4StreamInfoError)
+                         _item_sort_key, MP4StreamInfoError)
+from mutagen.mp4._atom import Atom, Atoms, AtomError
 from mutagen.mp4._util import parse_full_atom
 from mutagen.mp4._as_entry import AudioSampleEntry, ASEntryError
 from mutagen._util import cdata
