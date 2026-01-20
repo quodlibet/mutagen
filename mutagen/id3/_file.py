@@ -11,7 +11,7 @@ import struct
 
 import mutagen
 from mutagen._util import insert_bytes, delete_bytes, enum, \
-    loadfile, convert_error, read_full
+    loadfile, convert_error, read_full, set_restore_mtime
 from mutagen._tags import PaddingInfo
 
 from ._util import error, ID3NoHeaderError, ID3UnsupportedVersionError, \
@@ -221,8 +221,9 @@ class ID3(ID3Tags, mutagen.Metadata):
     @convert_error(IOError, error)
     @loadfile(writable=True, create=True)
     def save(self, filething=None, v1=1, v2_version=4, v23_sep='/',
-             padding=None):
-        """save(filething=None, v1=1, v2_version=4, v23_sep='/', padding=None)
+             padding=None, preserve_mtime=False):
+        """save(filething=None, v1=1, v2_version=4, v23_sep='/', padding=None,
+                preserve_mtime=False)
 
         Save changes to a file.
 
@@ -241,6 +242,8 @@ class ID3(ID3Tags, mutagen.Metadata):
                 if v2_version == 3. Defaults to '/' but if it's None
                 will be the ID3v2v2.4 null separator.
             padding (:obj:`mutagen.PaddingFunction`)
+            preserve_mtime:
+                Keep the original file modified time as it was before saving.
 
         Raises:
             mutagen.MutagenError
@@ -252,6 +255,9 @@ class ID3(ID3Tags, mutagen.Metadata):
         """
 
         f = filething.fileobj
+
+        if preserve_mtime:
+            set_restore_mtime(f)
 
         try:
             header = ID3Header(filething.fileobj)

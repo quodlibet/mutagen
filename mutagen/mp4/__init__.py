@@ -32,7 +32,7 @@ from mutagen import FileType, Tags, StreamInfo, PaddingInfo
 from mutagen._constants import GENRES
 from mutagen._util import cdata, insert_bytes, DictProxy, MutagenError, \
     hashable, enum, get_size, resize_bytes, loadfile, convert_error, bchr, \
-    reraise
+    reraise, set_restore_mtime
 from ._atom import Atoms, Atom, AtomError
 from ._util import parse_full_atom
 from ._as_entry import AudioSampleEntry, ASEntryError
@@ -389,7 +389,7 @@ class MP4Tags(DictProxy, Tags):
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
-    def save(self, filething=None, padding=None):
+    def save(self, filething=None, padding=None, preserve_mtime=False):
 
         values = []
         items = sorted(self.items(), key=lambda kv: _item_sort_key(*kv))
@@ -418,7 +418,10 @@ class MP4Tags(DictProxy, Tags):
         except AtomError as err:
             reraise(error, err, sys.exc_info()[2])
 
-        self.__save(filething.fileobj, atoms, data, padding)
+        fileobj = filething.fileobj
+        if preserve_mtime:
+            set_restore_mtime(fileobj)
+        self.__save(fileobj, atoms, data, padding)
 
     def __save(self, fileobj, atoms, data, padding):
         try:
