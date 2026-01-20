@@ -3,7 +3,7 @@ import os
 import pickle
 
 from mutagen import MutagenError
-from mutagen.id3 import ID3FileType, ID3, RVA2, CHAP, TDRC, CTOC
+from mutagen.id3 import ID3FileType, ID3, RVA2, CHAP, TDRC, CTOC, TSO2, TXXX
 from mutagen.easyid3 import EasyID3, error as ID3Error
 
 from tests import TestCase, DATA_DIR, get_temp_copy
@@ -428,3 +428,45 @@ class TEasyID3(TestCase):
             self.id3.save(self.filename)
             id3 = EasyID3(self.filename)
             self.failUnlessEqual(id3[tag], [u"foo"])
+
+    def test_albumartistsort(self):
+        self.realid3.add(TSO2(text=u"someartist"))
+        self.id3.save(self.filename)
+        id3 = EasyID3(self.filename)
+        self.failUnlessEqual(id3["albumartistsort"], [u"someartist"])
+
+        self.id3["albumartistsort"] = [u"otherartist"]
+        self.assertEqual(self.realid3["TSO2"], [u"otherartist"])
+
+        del self.id3["albumartistsort"]
+        self.assertEqual(len(self.id3), 0)
+
+    def test_albumartistsort_from_TXXX(self):
+        self.realid3.add(TXXX(desc="ALBUMARTISTSORT", text=u"someartist"))
+        self.id3.save(self.filename)
+        id3 = EasyID3(self.filename)
+        self.failUnlessEqual(id3["albumartistsort"], [u"someartist"])
+
+        self.id3["albumartistsort"] = [u"otherartist"]
+        self.assertEqual(self.realid3["TSO2"], [u"otherartist"])
+
+        del self.id3["albumartistsort"]
+        self.assertEqual(len(self.id3), 0)
+
+    def test_albumartistsort_with_both_frames(self):
+        self.realid3.add(TSO2(text=u"someartist"))
+        self.realid3.add(TXXX(desc="ALBUMARTISTSORT", text=u"someotherartist"))
+        self.id3.save(self.filename)
+        id3 = EasyID3(self.filename)
+        self.failUnlessEqual(id3["albumartistsort"], [u"someartist"])
+        self.assertEqual(len(self.id3), 1)
+        self.assertEqual(len(self.realid3), 2)
+
+        self.id3["albumartistsort"] = [u"otherartist"]
+        self.assertEqual(self.realid3["TSO2"], [u"otherartist"])
+
+        del self.id3["albumartistsort"]
+        self.assertEqual(len(self.id3), 0)
+        self.assertEqual(len(self.realid3), 0)
+
+        self.failUnlessRaises(KeyError, self.id3.__delitem__, "albumartistsort")
