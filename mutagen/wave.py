@@ -13,7 +13,7 @@ import struct
 
 from mutagen import StreamInfo, FileType
 
-from mutagen.id3 import ID3
+from mutagen.id3 import Encoding, ID3, TIT2, TPE1, TORY, TCON, TALB, TRCK
 from mutagen._riff import RiffFile, InvalidChunk
 from mutagen._iff import error as IffError
 from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
@@ -25,6 +25,15 @@ from mutagen._util import (
 )
 
 __all__ = ["WAVE", "Open", "delete"]
+
+_INFO_TO_ID3_MAP = {
+    "INAM": TIT2,  # Title
+    "IART": TPE1,  # Artist
+    "ICRD": TORY,  # Original release year
+    "IGNR": TCON,  # Genre
+    "IPRD": TALB,  # Album name
+    "IPRT": TRCK,  # Track
+}
 
 
 class error(IffError):
@@ -151,10 +160,38 @@ class _WaveID3(ID3):
 def delete(filething):
     """Completely removes the ID3 chunk from the RIFF/WAVE file"""
 
-    try:
-        _WaveFile(filething.fileobj).delete_chunk(u'id3')
-    except KeyError:
-        pass
+    for chunk in [u'id3', u'LIST']:
+        try:
+            _WaveFile(filething.fileobj).delete_chunk(chunk)
+        except KeyError:
+            pass
+
+
+def _read_tags_from_riff_list(fileobj):
+    """Read metadata tags from RIFF LIST tag and convert to ID3 format."""
+    wave_file = _WaveFile(fileobj)
+
+    if u"LIST" not in wave_file:
+        return None
+
+    list_chunk = wave_file[u"LIST"]
+    if list_chunk.name != u"INFO":
+        return None
+
+    wave_id3 = _WaveID3()
+    for chunk in list_chunk.subchunks():
+        try:
+            # Value is null-terminated and supposed to be ASCII, but not everyone
+            # respects that and puts unicode in there anyway
+            value = chunk.read()[:-1].decode("utf-8")
+        except UnicodeDecodeError:
+            continue
+        else:
+            id3_tag = _INFO_TO_ID3_MAP.get(chunk.id)
+            if id3_tag:
+                wave_id3.add(id3_tag(encoding=Encoding.UTF8, text=value))
+
+    return wave_id3
 
 
 class WAVE(FileType):
@@ -199,11 +236,11 @@ class WAVE(FileType):
         try:
             self.tags = _WaveID3(fileobj, **kwargs)
         except ID3NoHeaderError:
-            self.tags = None
+            self.tags = _read_tags_from_riff_list(fileobj)
         except ID3Error as e:
             raise error(e)
-        else:
-            self.tags.filename = self.filename
 
+        if self.tags:
+            self.tags.filename = self.filename
 
 Open = WAVE
