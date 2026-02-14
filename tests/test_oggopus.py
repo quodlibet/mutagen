@@ -79,3 +79,45 @@ class TOggOpus(TestCase, TOggFileTypeMixin):
 
     def test_init_padding(self):
         self.assertEqual(self.audio.tags._padding, 196)
+
+    def test_pprint(self):
+        assert self.audio.info.pprint() == "Ogg Opus, 11.35 seconds, 45243 bps"
+
+    def test_bitrate(self):
+        assert self.audio.info.bitrate == 45243
+
+    def test_bitrate_stable_after_tag_change(self):
+        bitrate_before = self.audio.info.bitrate
+        assert bitrate_before != 0
+
+        self.audio["ARTIST"] = ["Test Artist"]
+        self.audio["ALBUM"] = ["Test Album"]
+        self.audio["TITLE"] = ["Test Title"]
+        self.audio.save(padding=lambda x: 0)
+
+        audio_after = self.Kind(self.filename)
+        bitrate_after = audio_after.info.bitrate
+        assert bitrate_before == bitrate_after
+
+    def test_bitrate_stable_with_large_metadata(self):
+        bitrate_initial = self.audio.info.bitrate
+        assert bitrate_initial != 0
+
+        large_comment = "x" * 50000
+        self.audio["COMMENT"] = [large_comment]
+        self.audio["DESCRIPTION"] = [large_comment]
+        self.audio["CUSTOM"] = [large_comment]
+        self.audio.save(padding=lambda x: 0)
+
+        audio_large = self.Kind(self.filename)
+        bitrate_after_large = audio_large.info.bitrate
+        assert bitrate_initial == bitrate_after_large
+
+        audio_large["COMMENT"] = ["small"]
+        del audio_large["DESCRIPTION"]
+        del audio_large["CUSTOM"]
+        audio_large.save(padding=lambda x: 0)
+
+        audio_small = self.Kind(self.filename)
+        bitrate_after_small = audio_small.info.bitrate
+        assert bitrate_initial == bitrate_after_small
