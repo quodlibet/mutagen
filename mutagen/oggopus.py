@@ -41,10 +41,12 @@ class OggOpusInfo(StreamInfo):
     Attributes:
         length (`float`): File length in seconds, as a float
         channels (`int`): Number of channels
+        bitrate (`int`): Bitrate in bits per second, as an int
     """
 
     length = 0
     channels = 0
+    bitrate = 0
 
     def __init__(self, fileobj):
         page = OggPage(fileobj)
@@ -68,13 +70,20 @@ class OggOpusInfo(StreamInfo):
             raise OggOpusHeaderError("version %r unsupported" % major)
 
     def _post_tags(self, fileobj):
+        audio_size = get_size(fileobj) - fileobj.tell()
+
         page = OggPage.find_last(fileobj, self.serial, finishing=True)
         if page is None:
             raise OggOpusHeaderError
         self.length = (page.position - self.__pre_skip) / float(48000)
 
+        if self.length:
+            self.bitrate = round(audio_size * 8 / self.length)
+        else:
+            self.bitrate = 0
+
     def pprint(self):
-        return u"Ogg Opus, %.2f seconds" % (self.length)
+        return u"Ogg Opus, %.2f seconds, %d bps" % (self.length, self.bitrate)
 
 
 class OggOpusVComment(VCommentDict):
