@@ -23,7 +23,7 @@ from typing import Type
 
 from mutagen import FileType
 from mutagen._util import cdata, resize_bytes, MutagenError, loadfile, \
-    seek_end, bchr, reraise
+    seek_end, bchr, reraise, set_restore_mtime
 from mutagen._file import StreamInfo
 from mutagen._tags import Tags
 
@@ -577,8 +577,8 @@ class OggFileType(FileType):
         raise self._Error
 
     @loadfile(writable=True)
-    def save(self, filething=None, padding=None):
-        """save(filething=None, padding=None)
+    def save(self, filething=None, padding=None, preserve_mtime=False):
+        """save(filething=None, padding=None. preserve_mtime=False))
 
         Save a tag to a file.
 
@@ -587,11 +587,15 @@ class OggFileType(FileType):
         Args:
             filething (filething)
             padding (:obj:`mutagen.PaddingFunction`)
+            preserve_mtime (bool)
         Raises:
             mutagen.MutagenError
         """
 
         try:
+            if preserve_mtime:
+                set_restore_mtime(filething.fileobj)
+
             self.tags._inject(filething.fileobj, padding)
         except (IOError, error) as e:
             reraise(self._Error, e, sys.exc_info()[2])

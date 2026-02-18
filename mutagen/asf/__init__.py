@@ -11,7 +11,8 @@
 __all__ = ["ASF", "Open"]
 
 from mutagen import FileType, Tags, StreamInfo
-from mutagen._util import resize_bytes, DictMixin, loadfile, convert_error
+from mutagen._util import resize_bytes, DictMixin, loadfile, convert_error, \
+    set_restore_mtime
 
 from ._util import error, ASFError, ASFHeaderError
 from ._objects import HeaderObject, MetadataLibraryObject, MetadataObject, \
@@ -245,7 +246,7 @@ class ASF(FileType):
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
-    def save(self, filething=None, padding=None):
+    def save(self, filething=None, padding=None, preserve_mtime=False):
         """save(filething=None, padding=None)
 
         Save tag changes back to the loaded file.
@@ -300,6 +301,9 @@ class ASF(FileType):
             header_ext.objects.append(MetadataLibraryObject())
 
         fileobj = filething.fileobj
+        if preserve_mtime:
+            set_restore_mtime(fileobj)
+
         # Render to file
         old_size = header.parse_size(fileobj)[0]
         data = header.render_full(self, fileobj, old_size, padding)

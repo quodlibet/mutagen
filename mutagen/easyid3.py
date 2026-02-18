@@ -174,8 +174,9 @@ class EasyID3(DictMixin, Metadata):
 
     @loadfile(writable=True, create=True)
     def save(self, filething=None, v1=1, v2_version=4, v23_sep='/',
-             padding=None):
-        """save(filething=None, v1=1, v2_version=4, v23_sep='/', padding=None)
+             padding=None, preserve_mtime=False):
+        """save(filething=None, v1=1, v2_version=4, v23_sep='/', padding=None,
+                preserve_mtime=False)
 
         Save changes to a file.
         See :meth:`mutagen.id3.ID3.save` for more info.
@@ -191,12 +192,13 @@ class EasyID3(DictMixin, Metadata):
                 self.__id3.update_to_v23()
                 self.__id3.save(
                     filething, v1=v1, v2_version=v2_version, v23_sep=v23_sep,
-                    padding=padding)
+                    padding=padding, preserve_mtime=preserve_mtime)
             finally:
                 self.__id3._restore(backup)
         else:
             self.__id3.save(filething, v1=v1, v2_version=v2_version,
-                            v23_sep=v23_sep, padding=padding)
+                            v23_sep=v23_sep, padding=padding,
+                            preserve_mtime=preserve_mtime)
 
     delete = property(lambda s: s.__id3.delete,
                       lambda s, v: setattr(s.__id3, 'delete', v))
