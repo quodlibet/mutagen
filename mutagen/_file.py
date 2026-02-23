@@ -138,7 +138,7 @@ class FileType(DictMixin):
         """
 
         assert self.info is not None
-        stream = "%s (%s)" % (self.info.pprint(), self.mime[0])
+        stream = "{} ({})".format(self.info.pprint(), self.mime[0])
         try:
             tags = self.tags.pprint()
         except AttributeError:
@@ -157,7 +157,7 @@ class FileType(DictMixin):
         raise NotImplementedError
 
     @property
-    def mime(self) -> List[str]:
+    def mime(self) -> list[str]:
         """A list of mime types (:class:`mutagen.text`)"""
 
         mimes = []
@@ -186,7 +186,7 @@ class FileType(DictMixin):
         raise NotImplementedError
 
 
-class StreamInfo(object):
+class StreamInfo:
     """Abstract stream information object.
 
     Provides attributes for length, bitrate, sample rate etc.
@@ -282,7 +282,7 @@ def File(filething, options=None, easy=False):
 
     try:
         header = fileobj.read(128)
-    except IOError:
+    except OSError:
         header = b""
 
     # Sort by name after score. Otherwise import order affects
@@ -297,7 +297,7 @@ def File(filething, options=None, easy=False):
     if score > 0:
         try:
             fileobj.seek(0, 0)
-        except IOError:
+        except OSError:
             pass
         return Kind(fileobj, filename=filething.filename)
     else:

@@ -30,7 +30,7 @@ RATES = [6000, 8000, 9600, 11025, 12000, 16000, 22050, 24000, 32000, 44100,
          48000, 64000, 88200, 96000, 192000]
 
 
-class _WavPackHeader(object):
+class _WavPackHeader:
 
     def __init__(self, block_size, version, track_no, index_no, total_samples,
                  block_index, block_samples, flags, crc):
@@ -115,7 +115,7 @@ class WavPackInfo(StreamInfo):
         self.length = float(samples) / self.sample_rate
 
     def pprint(self):
-        return u"WavPack, %.2f seconds, %d Hz" % (self.length,
+        return "WavPack, %.2f seconds, %d Hz" % (self.length,
                                                   self.sample_rate)
 
 

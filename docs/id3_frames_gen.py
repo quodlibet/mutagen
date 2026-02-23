@@ -10,19 +10,18 @@
 ./id3_frames_gen.py > api/id3_frames.rst
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.abspath('../'))
 
 import mutagen.id3
-from mutagen.id3 import Frames, Frames_2_2, Frame
+from mutagen.id3 import Frame, Frames, Frames_2_2
 
-
-BaseFrames = dict([(k, v) for (k, v) in vars(mutagen.id3).items()
+BaseFrames = {k: v for (k, v) in vars(mutagen.id3).items()
                    if v not in Frames.values() and v not in Frames_2_2.values()
                    and isinstance(v, type) and
-                   (issubclass(v, Frame) or v is Frame)])
+                   (issubclass(v, Frame) or v is Frame)}
 
 
 def print_header(header, type_="-"):

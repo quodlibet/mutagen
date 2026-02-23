@@ -26,7 +26,7 @@ class ID3OptionParser(OptionParser):
     def __init__(self):
         mutagen_version = mutagen.version_string
         my_version = ".".join(map(str, VERSION))
-        version = "mid3cp %s\nUses Mutagen %s" % (my_version, mutagen_version)
+        version = "mid3cp {}\nUses Mutagen {}".format(my_version, mutagen_version)
         self.disable_interspersed_args()
         OptionParser.__init__(
             self, version=version,
@@ -44,14 +44,14 @@ def copy(src, dst, merge, write_v1=True, excluded_tags=None, verbose=False):
     try:
         id3 = mutagen.id3.ID3(src, translate=False)
     except mutagen.id3.ID3NoHeaderError:
-        print(u"No ID3 header found in ", src, file=sys.stderr)
+        print("No ID3 header found in ", src, file=sys.stderr)
         return 1
     except Exception as err:
         print(str(err), file=sys.stderr)
         return 1
 
     if verbose:
-        print(u"File", src, u"contains:", file=sys.stderr)
+        print("File", src, "contains:", file=sys.stderr)
         print(id3.pprint(), file=sys.stderr)
 
     for tag in excluded_tags:
@@ -83,12 +83,12 @@ def copy(src, dst, merge, write_v1=True, excluded_tags=None, verbose=False):
     try:
         id3.save(dst, v1=(2 if write_v1 else 0), v2_version=v2_version)
     except Exception as err:
-        print(u"Error saving", dst, u":\n%s" % str(err),
+        print("Error saving", dst, ":\n%s" % str(err),
               file=sys.stderr)
         return 1
     else:
         if verbose:
-            print(u"Successfully saved", dst, file=sys.stderr)
+            print("Successfully saved", dst, file=sys.stderr)
         return 0
 
 
@@ -112,12 +112,12 @@ def main(argv):
     (src, dst) = args
 
     if not os.path.isfile(src):
-        print(u"File not found:", src, file=sys.stderr)
+        print("File not found:", src, file=sys.stderr)
         parser.print_help(file=sys.stderr)
         return 1
 
     if not os.path.isfile(dst):
-        print(u"File not found:", dst, file=sys.stderr)
+        print("File not found:", dst, file=sys.stderr)
         parser.print_help(file=sys.stderr)
         return 1
 

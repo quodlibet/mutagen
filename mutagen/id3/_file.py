@@ -22,7 +22,7 @@ from ._id3v1 import MakeID3v1, find_id3v1
 
 
 @enum
-class ID3v1SaveOptions(object):
+class ID3v1SaveOptions:
 
     REMOVE = 0
     """ID3v1 tags will be removed"""
@@ -74,7 +74,7 @@ class ID3(ID3Tags, mutagen.Metadata):
     def __init__(self, *args, **kwargs):
         self._header = None
         self._version = (2, 4, 0)
-        super(ID3, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @property
     def version(self):
@@ -370,7 +370,7 @@ class ID3FileType(mutagen.FileType):
 
         @staticmethod
         def pprint():
-            return u"Unknown format with ID3 tag"
+            return "Unknown format with ID3 tag"
 
     @staticmethod
     def score(filename, fileobj, header_data):

@@ -83,7 +83,7 @@ class OggFLACStreamInfo(StreamInfo):
         self.length = page.position / float(self.sample_rate)
 
     def pprint(self):
-        return u"Ogg FLAC, %.2f seconds, %d Hz" % (
+        return "Ogg FLAC, %.2f seconds, %d Hz" % (
             self.length, self.sample_rate)
 
 
@@ -100,7 +100,7 @@ class OggFLACVComment(VCommentDict):
                 pages.append(page)
                 complete = page.complete or (len(page.packets) > 1)
         comment = BytesIO(OggPage.to_packets(pages)[0][4:])
-        super(OggFLACVComment, self).__init__(comment, framing=False)
+        super().__init__(comment, framing=False)
 
     def _inject(self, fileobj, padding_func):
         """Write tag data into the FLAC Vorbis comment packet/page."""

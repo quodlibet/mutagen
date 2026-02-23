@@ -38,7 +38,7 @@ def find_id3v1(fileobj, v2_version=4, known_frames=None):
     old_pos = fileobj.tell()
     try:
         fileobj.seek(-128 - extra_read, 2)
-    except IOError as e:
+    except OSError as e:
         if e.errno == errno.EINVAL:
             # If the file is too small, might be ok since we wrote too small
             # tags at some point. let's see how the parsing goes..

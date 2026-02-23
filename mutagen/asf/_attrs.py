@@ -6,21 +6,20 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
-import sys
 import struct
-from typing import Dict, Type
+import sys
 
-from mutagen._util import total_ordering, reraise
+from mutagen._util import reraise, total_ordering
 
 from ._util import ASFError
 
 
-class ASFBaseAttribute(object):
+class ASFBaseAttribute:
     """Generic attribute."""
 
     TYPE: int
 
-    _TYPES: "Dict[int, Type[ASFBaseAttribute]]" = {}
+    _TYPES: "dict[int, type[ASFBaseAttribute]]" = {}
 
     value = None
     """The Python value of this attribute (type depends on the class)"""
@@ -67,7 +66,7 @@ class ASFBaseAttribute(object):
         raise NotImplementedError
 
     def __repr__(self):
-        name = "%s(%r" % (type(self).__name__, self.value)
+        name = "{}({!r}".format(type(self).__name__, self.value)
         if self.language:
             name += ", language=%d" % self.language
         if self.stream:

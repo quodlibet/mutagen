@@ -95,7 +95,7 @@ class OggVorbisInfo(StreamInfo):
         self.length = page.position / float(self.sample_rate)
 
     def pprint(self):
-        return u"Ogg Vorbis, %.2f seconds, %d bps" % (
+        return "Ogg Vorbis, %.2f seconds, %d bps" % (
             self.length, self.bitrate)
 
 
@@ -111,7 +111,7 @@ class OggVCommentDict(VCommentDict):
                 pages.append(page)
                 complete = page.complete or (len(page.packets) > 1)
         data = OggPage.to_packets(pages)[0][7:]  # Strip off "\x03vorbis".
-        super(OggVCommentDict, self).__init__(data)
+        super().__init__(data)
         self._padding = len(data) - self._size
 
     def _inject(self, fileobj, padding_func):

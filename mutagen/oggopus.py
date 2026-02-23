@@ -83,7 +83,7 @@ class OggOpusInfo(StreamInfo):
             self.bitrate = 0
 
     def pprint(self):
-        return u"Ogg Opus, %.2f seconds, %d bps" % (self.length, self.bitrate)
+        return "Ogg Opus, %.2f seconds, %d bps" % (self.length, self.bitrate)
 
 
 class OggOpusVComment(VCommentDict):
@@ -109,7 +109,7 @@ class OggOpusVComment(VCommentDict):
         pages = self.__get_comment_pages(fileobj, info)
         data = OggPage.to_packets(pages)[0][8:]  # Strip OpusTags
         fileobj = BytesIO(data)
-        super(OggOpusVComment, self).__init__(fileobj, framing=False)
+        super().__init__(fileobj, framing=False)
         self._padding = len(data) - self._size
 
         # in case the LSB of the first byte after v-comment is 1, preserve the
