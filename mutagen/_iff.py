@@ -49,7 +49,7 @@ def is_valid_chunk_id(id: str) -> bool:
     """
 
     assert isinstance(id, str), \
-        'id is of type %s, must be str: %r' % (type(id), id)
+        'id is of type {}, must be str: {!r}'.format(type(id), id)
 
     return ((0 < len(id) <= 4) and (min(id) >= ' ') and
             (max(id) <= '~'))
@@ -61,7 +61,7 @@ def assert_valid_chunk_id(id: str) -> None:
         raise ValueError("IFF chunk ID must be four ASCII characters.")
 
 
-class IffChunk(object):
+class IffChunk:
     """Generic representation of a single IFF chunk.
 
     IFF chunks always consist of an ID followed by the chunk size. The exact

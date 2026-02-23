@@ -6,14 +6,15 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
+import contextlib
 import os
 import shutil
-import sys
 import subprocess
+import sys
 import tarfile
 import warnings
 
-from setuptools import setup, Command, Distribution
+from setuptools import Command, Distribution, setup
 
 
 def get_command_class(name):
@@ -41,13 +42,11 @@ class clean(distutils_clean):
             for filename in filter(should_remove, files):
                 try:
                     os.unlink(os.path.join(pathname, filename))
-                except EnvironmentError as err:
+                except OSError as err:
                     print(str(err))
 
-        try:
+        with contextlib.suppress(OSError):
             os.unlink("MANIFEST")
-        except OSError:
-            pass
 
         for base in ["coverage", "build", "dist"]:
             path = os.path.join(os.path.dirname(__file__), base)

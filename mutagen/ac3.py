@@ -25,7 +25,7 @@ from mutagen._util import (
 
 
 @enum
-class ChannelMode(object):
+class ChannelMode:
     DUALMONO = 0
     MONO = 1
     STEREO = 2
@@ -58,7 +58,7 @@ AC3_BITRATES = [
 
 
 @enum
-class EAC3FrameType(object):
+class EAC3FrameType:
     INDEPENDENT = 0
     DEPENDENT = 1
     AC3_CONVERT = 2
@@ -290,7 +290,7 @@ class AC3Info(StreamInfo):
         return 8.0 * length / self.bitrate
 
     def pprint(self):
-        return u"%s, %d Hz, %.2f seconds, %d channel(s), %d bps" % (
+        return "%s, %d Hz, %.2f seconds, %d channel(s), %d bps" % (
             self.codec, self.sample_rate, self.length, self.channels,
             self.bitrate)
 

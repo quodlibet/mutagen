@@ -8,7 +8,7 @@
 from ._util import loadfile
 
 
-class PaddingInfo(object):
+class PaddingInfo:
     """PaddingInfo()
 
     Abstract padding information object.
@@ -73,7 +73,7 @@ class PaddingInfo(object):
             type(self).__name__, self.size, self.padding)
 
 
-class Tags(object):
+class Tags:
     """`Tags` is the base class for many of the tag objects in Mutagen.
 
     In many cases it has a dict like interface.

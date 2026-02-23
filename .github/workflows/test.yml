@@ -62,7 +62,7 @@ jobs:
     - name: Install dependencies
       run: |
         pipx install uv build
-        uv sync
+        uv sync --extra dev --extra fuzzing --extra docs
     - name: Run tests
       run: |
         uv run coverage run --branch setup.py test

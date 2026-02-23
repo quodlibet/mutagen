@@ -12,7 +12,7 @@ import traceback
 from ._util import SignalHandler
 
 
-class Report(object):
+class Report:
     def __init__(self, pathname):
         self.name = pathname
         self.files = 0
@@ -80,7 +80,7 @@ def check_dir(path):
     from mutagen.mp3 import MP3
 
     rep = Report(path)
-    print(u"Scanning", path)
+    print("Scanning", path)
     for path, dirs, files in os.walk(path):
         files.sort()
         for fn in files:
@@ -102,7 +102,7 @@ def check_dir(path):
 
 def main(argv):
     if len(argv) == 1:
-        print(u"Usage:", argv[0], u"directory ...")
+        print("Usage:", argv[0], "directory ...")
     else:
         for path in argv[1:]:
             check_dir(path)

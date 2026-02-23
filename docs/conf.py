@@ -1,4 +1,3 @@
-
 import os
 import sys
 
@@ -20,8 +19,7 @@ intersphinx_mapping = {
 source_suffix = '.rst'
 master_doc = 'index'
 project = 'mutagen'
-copyright = u'2016, Joe Wreschnig, Michael Urman, Lukáš Lalinský, ' \
-            u'Christoph Reiter, Ben Ockmore & others'
+copyright = '2016, Joe Wreschnig, Michael Urman, Lukáš Lalinský, Christoph Reiter, Ben Ockmore & others'
 html_title = project
 exclude_patterns = ['_build']
 

@@ -1,4 +1,3 @@
-
 import os
 from io import BytesIO
 
@@ -22,26 +21,26 @@ class TOggFLAC(TestCase, TOggFileTypeMixin):
         os.unlink(self.filename)
 
     def test_vendor(self):
-        self.failUnless(
+        self.assertTrue(
             self.audio.tags.vendor.startswith("reference libFLAC"))
-        self.failUnlessRaises(KeyError, self.audio.tags.__getitem__, "vendor")
+        self.assertRaises(KeyError, self.audio.tags.__getitem__, "vendor")
 
     def test_streaminfo_bad_marker(self):
         with open(self.filename, "rb") as h:
             page = OggPage(h).write()
         page = page.replace(b"fLaC", b"!fLa", 1)
-        self.failUnlessRaises(error, OggFLACStreamInfo, BytesIO(page))
+        self.assertRaises(error, OggFLACStreamInfo, BytesIO(page))
 
     def test_streaminfo_too_short(self):
         with open(self.filename, "rb") as h:
             page = OggPage(h).write()
-        self.failUnlessRaises(OggError, OggFLACStreamInfo, BytesIO(page[:10]))
+        self.assertRaises(OggError, OggFLACStreamInfo, BytesIO(page[:10]))
 
     def test_streaminfo_bad_version(self):
         with open(self.filename, "rb") as h:
             page = OggPage(h).write()
         page = page.replace(b"\x01\x00", b"\x02\x00", 1)
-        self.failUnlessRaises(error, OggFLACStreamInfo, BytesIO(page))
+        self.assertRaises(error, OggFLACStreamInfo, BytesIO(page))
 
     def test_flac_reference_simple_save(self):
         if not have_flac:
@@ -61,7 +60,7 @@ class TOggFLAC(TestCase, TOggFileTypeMixin):
     def test_module_delete(self):
         delete(self.filename)
         self.scan_file()
-        self.failIf(OggFLAC(self.filename).tags)
+        self.assertFalse(OggFLAC(self.filename).tags)
 
     def test_flac_reference_delete(self):
         if not have_flac:
@@ -90,12 +89,12 @@ class TOggFLAC(TestCase, TOggFileTypeMixin):
 
     def test_not_my_ogg(self):
         fn = os.path.join(DATA_DIR, 'empty.ogg')
-        self.failUnlessRaises(error, type(self.audio), fn)
-        self.failUnlessRaises(error, self.audio.save, fn)
-        self.failUnlessRaises(error, self.audio.delete, fn)
+        self.assertRaises(error, type(self.audio), fn)
+        self.assertRaises(error, self.audio.save, fn)
+        self.assertRaises(error, self.audio.delete, fn)
 
     def test_mime(self):
-        self.failUnless("audio/x-oggflac" in self.audio.mime)
+        self.assertTrue("audio/x-oggflac" in self.audio.mime)
 
     def test_info_pprint(self):
-        self.assertTrue(self.audio.info.pprint().startswith(u"Ogg FLAC"))
+        self.assertTrue(self.audio.info.pprint().startswith("Ogg FLAC"))

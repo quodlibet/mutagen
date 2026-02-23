@@ -85,7 +85,7 @@ Open = ID3
 
 
 # Workaround for http://tickets.musicbrainz.org/browse/PICARD-833
-class _DummySpecForPicard(object):
+class _DummySpecForPicard:
     write = None
 
 EncodedTextSpec = MultiSpec = _DummySpecForPicard

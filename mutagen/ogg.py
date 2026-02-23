@@ -34,7 +34,7 @@ class error(MutagenError):
     pass
 
 
-class OggPage(object):
+class OggPage:
     """A single Ogg page (not necessarily a single encoded packet).
 
     A page is a header of 26 bytes, followed by the length of the
@@ -98,7 +98,7 @@ class OggPage(object):
             raise error("unable to read full header; got %r" % header)
 
         if oggs != b"OggS":
-            raise error("read %r, expected %r, at 0x%x" % (
+            raise error("read {!r}, expected {!r}, at 0x{:x}".format(
                 oggs, b"OggS", fileobj.tell() - 27))
 
         if self.version != 0:
@@ -134,7 +134,7 @@ class OggPage(object):
     def __repr__(self):
         attrs = ['version', 'position', 'serial', 'sequence', 'offset',
                  'complete', 'continued', 'first', 'last']
-        values = ["%s=%r" % (attr, getattr(self, attr)) for attr in attrs]
+        values = ["{}={!r}".format(attr, getattr(self, attr)) for attr in attrs]
         return "<%s %s, %d bytes in %d packets>" % (
             type(self).__name__, " ".join(values), sum(map(len, self.packets)),
             len(self.packets))
@@ -516,9 +516,9 @@ class OggFileType(FileType):
         filething (filething)
     """
 
-    _Info: Type[StreamInfo]
-    _Tags: Type[Tags]
-    _Error: Type[error]
+    _Info: type[StreamInfo]
+    _Tags: type[Tags]
+    _Error: type[error]
     _mimes = ["application/ogg", "application/x-ogg"]
 
     @loadfile()
@@ -539,7 +539,7 @@ class OggFileType(FileType):
             self.info = self._Info(fileobj)
             self.tags = self._Tags(fileobj, self.info)
             self.info._post_tags(fileobj)
-        except (error, IOError) as e:
+        except (error, OSError) as e:
             reraise(self._Error, e, sys.exc_info()[2])
         except EOFError:
             raise self._Error("no appropriate stream found")
@@ -570,7 +570,7 @@ class OggFileType(FileType):
                 reraise(self._Error, e, sys.exc_info()[2])
             except EOFError:
                 raise self._Error("no appropriate stream found")
-        except IOError as e:
+        except OSError as e:
             reraise(self._Error, e, sys.exc_info()[2])
 
     def add_tags(self):
@@ -593,7 +593,7 @@ class OggFileType(FileType):
 
         try:
             self.tags._inject(filething.fileobj, padding)
-        except (IOError, error) as e:
+        except (OSError, error) as e:
             reraise(self._Error, e, sys.exc_info()[2])
         except EOFError:
             raise self._Error("no appropriate stream found")

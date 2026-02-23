@@ -26,7 +26,7 @@ class error(MutagenError):
     pass
 
 
-class DSFChunk(object):
+class DSFChunk:
     """A generic chunk of a DSFFile."""
 
     chunk_offset = 0
@@ -56,7 +56,7 @@ class DSDChunk(DSFChunk):
     offset_metdata_chunk = 0
 
     def __init__(self, fileobj, create=False):
-        super(DSDChunk, self).__init__(fileobj, create)
+        super().__init__(fileobj, create)
 
         if create:
             self.chunk_header = b"DSD "
@@ -89,8 +89,8 @@ class DSDChunk(DSFChunk):
         self.fileobj.write(f.getvalue())
 
     def pprint(self):
-        return (u"DSD Chunk (Total file size = %d, "
-                u"Pointer to Metadata chunk = %d)" % (
+        return ("DSD Chunk (Total file size = %d, "
+                "Pointer to Metadata chunk = %d)" % (
                     self.total_size, self.offset_metdata_chunk))
 
 
@@ -113,7 +113,7 @@ class FormatChunk(DSFChunk):
     block_size_per_channel = 4096
 
     def __init__(self, fileobj, create=False):
-        super(FormatChunk, self).__init__(fileobj, create)
+        super().__init__(fileobj, create)
 
         if create:
             self.chunk_header = b"fmt "
@@ -147,8 +147,8 @@ class FormatChunk(DSFChunk):
         self.sample_count = cdata.ulonglong_le(data[36:44])
 
     def pprint(self):
-        return u"fmt Chunk (Channel Type = %d, Channel Num = %d, " \
-               u"Sampling Frequency = %d, %.2f seconds)" % \
+        return "fmt Chunk (Channel Type = %d, Channel Num = %d, " \
+               "Sampling Frequency = %d, %.2f seconds)" % \
                (self.channel_type, self.channel_num, self.sampling_frequency,
                 self.length)
 
@@ -160,7 +160,7 @@ class DataChunk(DSFChunk):
     data = ""
 
     def __init__(self, fileobj, create=False):
-        super(DataChunk, self).__init__(fileobj, create)
+        super().__init__(fileobj, create)
 
         if create:
             self.chunk_header = b"data"
@@ -180,7 +180,7 @@ class DataChunk(DSFChunk):
             raise error("DSF data header size mismatch")
 
     def pprint(self):
-        return u"data Chunk (Chunk Offset = %d, Chunk Size = %d)" % (
+        return "data Chunk (Chunk Offset = %d, Chunk Size = %d)" % (
             self.chunk_offset, self.chunk_size)
 
 
@@ -268,11 +268,11 @@ class DSFInfo(StreamInfo):
         return self.sample_rate * self.bits_per_sample * self.channels
 
     def pprint(self):
-        return u"%d channel DSF @ %d bits, %s Hz, %.2f seconds" % (
+        return "%d channel DSF @ %d bits, %s Hz, %.2f seconds" % (
             self.channels, self.bits_per_sample, self.sample_rate, self.length)
 
 
-class DSFFile(object):
+class DSFFile:
 
     dsd_chunk = None
     fmt_chunk = None

@@ -28,14 +28,14 @@ def main(argv):
         raise SystemExit(parser.print_help() or 1)
 
     for filename in args:
-        print(u"--", filename)
+        print("--", filename)
         try:
-            print(u"-", File(filename).pprint())
+            print("-", File(filename).pprint())
         except AttributeError:
-            print(u"- Unknown file type")
+            print("- Unknown file type")
         except Exception as err:
             print(str(err))
-        print(u"")
+        print("")
 
 
 def entry_point():

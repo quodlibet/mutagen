@@ -1,4 +1,3 @@
-
 import os
 import sys
 from tempfile import mkstemp
@@ -46,22 +45,22 @@ class TMetadata(TestCase):
             pass
 
     def test_virtual_constructor(self):
-        self.failUnlessRaises(NotImplementedError, Metadata, BytesIO())
+        self.assertRaises(NotImplementedError, Metadata, BytesIO())
 
     def test_load(self):
         m = Metadata()
-        self.failUnlessRaises(NotImplementedError, m.load, BytesIO())
+        self.assertRaises(NotImplementedError, m.load, BytesIO())
 
     def test_virtual_save(self):
-        self.failUnlessRaises(
+        self.assertRaises(
             NotImplementedError, self.FakeMeta().save, BytesIO())
-        self.failUnlessRaises(
+        self.assertRaises(
             NotImplementedError, self.FakeMeta().save, BytesIO())
 
     def test_virtual_delete(self):
-        self.failUnlessRaises(
+        self.assertRaises(
             NotImplementedError, self.FakeMeta().delete, BytesIO())
-        self.failUnlessRaises(
+        self.assertRaises(
             NotImplementedError, self.FakeMeta().delete, BytesIO())
 
 
@@ -113,17 +112,17 @@ class TFileTypeLoad(TestCase):
         self.assertFalse(hasattr(f, "a"))
 
         f = MyFileType(self.filename)
-        self.assertEquals(f.arg, 1)
+        self.assertEqual(f.arg, 1)
 
         f = MyFileType(self.filename, 42)
-        self.assertEquals(f.arg, 42)
-        self.assertEquals(f.filename, self.filename)
+        self.assertEqual(f.arg, 42)
+        self.assertEqual(f.filename, self.filename)
 
         f = MyFileType(self.filename, arg=42)
-        self.assertEquals(f.arg, 42)
+        self.assertEqual(f.arg, 42)
 
         f = MyFileType(filename=self.filename, arg=42)
-        self.assertEquals(f.arg, 42)
+        self.assertEqual(f.arg, 42)
 
         self.assertRaises(TypeError, MyFileType, self.filename, nope=42)
         self.assertRaises(TypeError, MyFileType, nope=42)
@@ -134,7 +133,7 @@ class TFileTypeLoad(TestCase):
         x = BytesIO()
         f = MyFileType(filename="foo", fileobj=x)
         self.assertTrue(f.fileobj is x)
-        self.assertEquals(f.filename, "foo")
+        self.assertEqual(f.filename, "foo")
 
     def test_fileobj(self):
         x = BytesIO()
@@ -172,17 +171,17 @@ class TFileType(TestCase):
         os.remove(self.mp3_filename)
 
     def test_delitem_not_there(self):
-        self.failUnlessRaises(KeyError, self.vorbis.__delitem__, "foobar")
+        self.assertRaises(KeyError, self.vorbis.__delitem__, "foobar")
 
     def test_add_tags(self):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            self.failUnlessRaises(NotImplementedError, FileType().add_tags)
+            self.assertRaises(NotImplementedError, FileType().add_tags)
 
     def test_delitem(self):
         self.vorbis["foobar"] = "quux"
         del self.vorbis["foobar"]
-        self.failIf("quux" in self.vorbis)
+        self.assertFalse("quux" in self.vorbis)
 
     def test_save_no_tags(self):
         self.assertTrue(self.mp3_notags.tags is None)
@@ -191,7 +190,7 @@ class TFileType(TestCase):
         self.assertTrue(self.mp3_notags.tags is None)
 
 
-class _TestFileObj(object):
+class _TestFileObj:
     """A file-like object which fails in various ways"""
 
     def __init__(self, fileobj, stop_after=-1, fail_after=-1):
@@ -215,7 +214,7 @@ class _TestFileObj(object):
         self.operations += 1
         if self._fail_after != -1:
             if self.operations > self._fail_after:
-                raise IOError("fail")
+                raise OSError("fail")
 
     def tell(self):
         self._check_fail()
@@ -224,7 +223,7 @@ class _TestFileObj(object):
     def write(self, data):
         try:
             self._check_fail()
-        except IOError:
+        except OSError:
             # we use write(b"") to check if the fileobj is writable
             if len(data):
                 raise
@@ -240,7 +239,7 @@ class _TestFileObj(object):
     def read(self, size=-1):
         try:
             self._check_fail()
-        except IOError:
+        except OSError:
             # we use read(0) to test for the file object type, so don't error
             # out in that case
             if size != 0:
@@ -294,7 +293,7 @@ def generate_test_file_objects(fileobj, func):
     return strategy()
 
 
-class TAbstractFileType(object):
+class TAbstractFileType:
 
     PATH = None
     KIND = None
@@ -384,7 +383,7 @@ class TAbstractFileType(object):
         self.assertTrue(isinstance(File(self.PATH), self.KIND))
 
     def test_not_file(self):
-        self.failUnlessRaises(MutagenError, self.KIND, "/dev/doesnotexist")
+        self.assertRaises(MutagenError, self.KIND, "/dev/doesnotexist")
 
     def test_pprint(self):
         res = self.audio.pprint()
@@ -575,31 +574,30 @@ class TFile(TestCase):
     @property
     def filenames(self):
         for kind, paths in _FILETYPES.items():
-            for path in paths:
-                yield path
+            yield from paths
 
     def test_bad(self):
         try:
-            self.failUnless(File(devnull) is None)
-        except (OSError, IOError):
+            self.assertTrue(File(devnull) is None)
+        except OSError:
             print("WARNING: Unable to open %s." % devnull)
-        self.failUnless(File(__file__) is None)
+        self.assertTrue(File(__file__) is None)
 
     def test_empty(self):
         filename = os.path.join(DATA_DIR, "empty")
         open(filename, "wb").close()
         try:
-            self.failUnless(File(filename) is None)
+            self.assertTrue(File(filename) is None)
         finally:
             os.unlink(filename)
 
     def test_not_file(self):
-        self.failUnlessRaises(MutagenError, File, "/dev/doesnotexist")
+        self.assertRaises(MutagenError, File, "/dev/doesnotexist")
 
     def test_no_options(self):
         for filename in self.filenames:
             filename = os.path.join(DATA_DIR, filename)
-            self.failIf(File(filename, options=[]))
+            self.assertFalse(File(filename, options=[]))
 
     def test_fileobj(self):
         for filename in self.filenames:
@@ -623,16 +621,16 @@ class TFile(TestCase):
                 run()
 
     def test_easy_mp3(self):
-        self.failUnless(isinstance(
+        self.assertTrue(isinstance(
             File(os.path.join(DATA_DIR, "silence-44-s.mp3"), easy=True),
             EasyMP3))
 
     def test_apev2(self):
-        self.failUnless(isinstance(
+        self.assertTrue(isinstance(
             File(os.path.join(DATA_DIR, "oldtag.apev2")), APEv2File))
 
     def test_easy_tta(self):
-        self.failUnless(isinstance(
+        self.assertTrue(isinstance(
             File(os.path.join(DATA_DIR, "empty.tta"), easy=True),
             EasyTrueAudio))
 
@@ -640,7 +638,7 @@ class TFile(TestCase):
         header = b"ID3 the rest of this is garbage"
         fileobj = BytesIO(header)
         filename = "not-identifiable.ext"
-        self.failUnless(TrueAudio.score(filename, fileobj, header) <
+        self.assertTrue(TrueAudio.score(filename, fileobj, header) <
                         MP3.score(filename, fileobj, header))
 
     def test_prefer_theora_over_vorbis(self):
@@ -654,7 +652,7 @@ class TFile(TestCase):
             b"\x00\x00\x00\xee\x02\x00\x00\x00\x00\x00\xb8\x01")
         fileobj = BytesIO(header)
         filename = "not-identifiable.ext"
-        self.failUnless(OggVorbis.score(filename, fileobj, header) <
+        self.assertTrue(OggVorbis.score(filename, fileobj, header) <
                         OggTheora.score(filename, fileobj, header))
 
 
@@ -681,10 +679,10 @@ class TFileUpperExt(TestCase):
         for (path, instance) in self.checks:
             if isinstance(path, bytes):
                 path = path.decode("ascii")
-            self.failUnless(
+            self.assertTrue(
                 isinstance(File(path, options=[instance]), instance))
             path = path.encode("ascii")
-            self.failUnless(
+            self.assertTrue(
                 isinstance(File(path, options=[instance]), instance))
 
     def tearDown(self):
@@ -697,7 +695,7 @@ class TModuleImportAll(TestCase):
     def setUp(self):
         import mutagen
         files = os.listdir(mutagen.__path__[0])
-        modules = set(os.path.splitext(f)[0] for f in files if f not in ['py.typed'])
+        modules = {os.path.splitext(f)[0] for f in files if f not in ['py.typed']}
         modules = [f for f in modules if not f.startswith(("_", "."))]
 
         self.modules = []

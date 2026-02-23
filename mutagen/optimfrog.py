@@ -78,12 +78,12 @@ class OptimFROGInfo(StreamInfo):
         if data_size >= 15:
             encoder_id = struct.unpack("<H", header[20:22])[0]
             version = str((encoder_id >> 4) + 4500)
-            self.encoder_info = "%s.%s" % (version[0], version[1:])
+            self.encoder_info = "{}.{}".format(version[0], version[1:])
         else:
             self.encoder_info = ""
 
     def pprint(self):
-        return u"OptimFROG, %.2f seconds, %d Hz" % (self.length,
+        return "OptimFROG, %.2f seconds, %d Hz" % (self.length,
                                                     self.sample_rate)
 
 

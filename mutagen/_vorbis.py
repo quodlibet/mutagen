@@ -70,7 +70,7 @@ class VComment(mutagen.Tags, list):
         vendor (text): the stream 'vendor' (i.e. writer); default 'Mutagen'
     """
 
-    vendor = u"Mutagen " + mutagen.version_string
+    vendor = "Mutagen " + mutagen.version_string
 
     def __init__(self, data=None, *args, **kwargs):
         self._size = 0
@@ -115,7 +115,7 @@ class VComment(mutagen.Tags, list):
                     if errors == "ignore":
                         continue
                     elif errors == "replace":
-                        tag, value = u"unknown%d" % i, string
+                        tag, value = "unknown%d" % i, string
                     else:
                         reraise(VorbisEncodingError, err, sys.exc_info()[2])
                 try:
@@ -153,7 +153,7 @@ class VComment(mutagen.Tags, list):
                 raise ValueError("%r is not a valid key" % key)
 
             if not isinstance(value, str):
-                err = "%r needs to be str for key %r" % (value, key)
+                err = "{!r} needs to be str for key {!r}".format(value, key)
                 raise ValueError(err)
 
         return True
@@ -203,8 +203,8 @@ class VComment(mutagen.Tags, list):
                 return value.decode('utf-8', 'replace')
             return value
 
-        tags = [u"%s=%s" % (_decode(k), _decode(v)) for k, v in self]
-        return u"\n".join(tags)
+        tags = ["{}={}".format(_decode(k), _decode(v)) for k, v in self]
+        return "\n".join(tags)
 
 
 class VCommentDict(VComment, DictMixin):  # type: ignore
@@ -299,9 +299,9 @@ class VCommentDict(VComment, DictMixin):  # type: ignore
     def keys(self):
         """Return all keys in the comment."""
 
-        return list(set([k.lower() for k, v in self]))
+        return list({k.lower() for k, v in self})
 
     def as_dict(self):
         """Return a copy of the comment data in a real dict."""
 
-        return dict([(key, self[key]) for key in self.keys()])
+        return {key: self[key] for key in self.keys()}

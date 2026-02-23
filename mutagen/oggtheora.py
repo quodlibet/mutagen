@@ -81,7 +81,7 @@ class OggTheoraInfo(StreamInfo):
         self.length = frames / float(self.fps)
 
     def pprint(self):
-        return u"Ogg Theora, %.2f seconds, %d bps" % (self.length,
+        return "Ogg Theora, %.2f seconds, %d bps" % (self.length,
                                                       self.bitrate)
 
 
@@ -100,7 +100,7 @@ class OggTheoraCommentDict(VCommentDict):
         if not packets:
             raise error("Missing metadata packet")
         data = packets[0][7:]
-        super(OggTheoraCommentDict, self).__init__(data, framing=False)
+        super().__init__(data, framing=False)
         self._padding = len(data) - self._size
 
     def _inject(self, fileobj, padding_func):

@@ -51,7 +51,7 @@ def to_int_be(data):
     return reduce(lambda a, b: (a << 8) + b, bytearray(data), 0)
 
 
-class StrictFileObject(object):
+class StrictFileObject:
     """Wraps a file-like object and raises an exception if the requested
     amount of data to read isn't returned."""
 
@@ -73,7 +73,7 @@ class StrictFileObject(object):
         return self._fileobj.read(*args)
 
 
-class MetadataBlock(object):
+class MetadataBlock:
     """A generic block of FLAC metadata.
 
     This class is extended by specific used as an ancestor for more specific
@@ -258,7 +258,7 @@ class StreamInfo(MetadataBlock, mutagen.StreamInfo):
         return f.getvalue()
 
     def pprint(self):
-        return u"FLAC, %.2f seconds, %d Hz" % (self.length, self.sample_rate)
+        return "FLAC, %.2f seconds, %d Hz" % (self.length, self.sample_rate)
 
 
 class SeekPoint(tuple):
@@ -280,7 +280,7 @@ class SeekPoint(tuple):
     """
 
     def __new__(cls, first_sample, byte_offset, num_samples):
-        return super(SeekPoint, cls).__new__(
+        return super().__new__(
             cls, (first_sample, byte_offset, num_samples))
 
     def __getnewargs__(self):
@@ -305,7 +305,7 @@ class SeekTable(MetadataBlock):
 
     def __init__(self, data):
         self.seekpoints = []
-        super(SeekTable, self).__init__(data)
+        super().__init__(data)
 
     def __eq__(self, other):
         try:
@@ -334,7 +334,7 @@ class SeekTable(MetadataBlock):
         return f.getvalue()
 
     def __repr__(self):
-        return "<%s seekpoints=%r>" % (type(self).__name__, self.seekpoints)
+        return "<{} seekpoints={!r}>".format(type(self).__name__, self.seekpoints)
 
 
 class VCFLACDict(VCommentDict):
@@ -350,10 +350,10 @@ class VCFLACDict(VCommentDict):
     _distrust_size = True
 
     def load(self, data, errors='replace', framing=False):
-        super(VCFLACDict, self).load(data, errors=errors, framing=framing)
+        super().load(data, errors=errors, framing=framing)
 
     def write(self, framing=False):
-        return super(VCFLACDict, self).write(framing=framing)
+        return super().write(framing=framing)
 
 
 class CueSheetTrackIndex(tuple):
@@ -373,14 +373,14 @@ class CueSheetTrackIndex(tuple):
     """
 
     def __new__(cls, index_number, index_offset):
-        return super(CueSheetTrackIndex, cls).__new__(
+        return super().__new__(
             cls, (index_number, index_offset))
 
     index_number = property(lambda self: self[0])
     index_offset = property(lambda self: self[1])
 
 
-class CueSheetTrack(object):
+class CueSheetTrack:
     """CueSheetTrack()
 
     A track in a cuesheet.
@@ -465,7 +465,7 @@ class CueSheet(MetadataBlock):
 
     def __init__(self, data):
         self.tracks = []
-        super(CueSheet, self).__init__(data)
+        super().__init__(data)
 
     def __eq__(self, other):
         try:
@@ -576,14 +576,14 @@ class Picture(MetadataBlock):
 
     def __init__(self, data=None):
         self.type = 0
-        self.mime = u''
-        self.desc = u''
+        self.mime = ''
+        self.desc = ''
         self.width = 0
         self.height = 0
         self.depth = 0
         self.colors = 0
         self.data = b''
-        super(Picture, self).__init__(data)
+        super().__init__(data)
 
     def __eq__(self, other):
         try:
@@ -643,7 +643,7 @@ class Padding(MetadataBlock):
     code = 1
 
     def __init__(self, data=b""):
-        super(Padding, self).__init__(data)
+        super().__init__(data)
 
     def load(self, data):
         self.length = len(data.read())
@@ -885,7 +885,7 @@ class FLAC(mutagen.FileType):
         if deleteid3:
             try:
                 f.seek(-128, 2)
-            except IOError:
+            except OSError:
                 pass
             else:
                 if f.read(3) == b"TAG":
