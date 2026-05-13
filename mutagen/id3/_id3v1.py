@@ -172,10 +172,14 @@ def MakeID3v1(id3):
             text = b""
         v1[name] = text + (b"\x00" * (30 - len(text)))
 
+    cmnt = b""
     if "COMM" in id3:
         cmnt = id3["COMM"].text[0].encode('latin1', 'replace')[:28]
     else:
-        cmnt = b""
+        for key, frame in id3.items():
+            if key.startswith("COMM:"):
+                cmnt = frame.text[0].encode('latin1', 'replace')[:28]
+                break
     v1["comment"] = cmnt + (b"\x00" * (29 - len(cmnt)))
 
     if "TRCK" in id3:
