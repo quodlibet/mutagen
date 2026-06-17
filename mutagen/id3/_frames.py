@@ -1868,10 +1868,6 @@ class TBP(TBPM):
     "Beats per minute"
 
 
-class TCP(TCMP):
-    "iTunes Compilation Flag"
-
-
 class TCR(TCOP):
     "Copyright (C)"
 
@@ -1883,6 +1879,36 @@ class TPB(TPUB):
 class TEN(TENC):
     "Encoder"
 
+# unofficial Apple frames
+
+class TDR(TDRL):
+    "Release Time"
+
+
+class TCP(TCMP):
+    "iTunes Compilation Flag"
+
+
+class TID(TGID):
+    "iTunes Podcast Identifier"
+
+
+class PCS(PCST):
+    "iTunes Podcast Flag"
+
+
+class WFD(WFED):
+    "iTunes Podcast Feed"
+
+
+class TCT(TCAT):
+    "iTunes Podcast Category"
+
+
+class TDS(TDES):
+    "iTunes Podcast Description"
+
+# end unofficial Apple frames
 
 class TST(TSOT):
     "Title Sort Order key"
