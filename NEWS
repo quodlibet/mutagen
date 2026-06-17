@@ -10,16 +10,18 @@
 * ID3: Fix reading/writing v1.0 and v1.1 comment/track fields :bug:`668` :pr:`686`
 * ID3: Fix saving ID3v2 comment fields from ``COMM:desc:lang`` tags :bug:`660` :pr:`709`
 * ID3: Consider size of extended header when reading ID3 data :bug:`630` :pr:`631`
-* MP3: don not fail on non-ASCII lame header version flags :pr:`664`
+* EasyID3: Fix handling of ``albumartistsort`` as ``TSO2`` with ``TXXX:ALBUMARTISTSORT``
+  fallback for reading :pr:`649`
+* MP3: do not fail on non-ASCII lame header version flags :pr:`664`
 * OggOpus: Provide a bitrate property :bug:`475` :pr:`704`
 * MP4: Fall back to parsing length from ``mvhd`` if there is no ``trak`` info :pr:`682`
 * MP4: Fix chapter timestamp parsing :bug:`639` :pr:`640`
 * OGG: Fix saving files with trailing null bytes :bug:`591` :pr:`674`
 * mid3v2: Fix ``--list-frames-v2.2`` option :bug:`669` :pr:`683`
 * Set ``__cause__`` on ``MutagenError`` to preserve exception chain :bug:`703` :pr:`710`
-* Explicitly define exports with ``__all__`` in ``mutagen/__init__.py`` :pr:`696`
-* docs: fix code example for :class:`flac.Picture` :pr:`673`
-* docs: initial :doc:`dev/index` with implementation notes for ID3 :pr:`633`
+* Explicitly define exports with ``__all__`` in ``mutagen/__init__.py`` :bug:`647` :pr:`696`
+* docs: Fix code example for :class:`flac.Picture` :pr:`673`
+* docs: Initial :doc:`dev/index` with implementation notes for ID3 :pr:`633`
 * Switch from poetry to uv for development :pr:`687`
 * Changed the default branch from master to main
 
