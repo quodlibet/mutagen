@@ -18,7 +18,7 @@
 * mid3v2: Fix ``--list-frames-v2.2`` option :bug:`669` :pr:`683`
 * Set ``__cause__`` on ``MutagenError`` to preserve exception chain :bug:`703` :pr:`710`
 * Explicitly define exports with ``__all__`` in ``mutagen/__init__.py`` :pr:`696`
-* docs: fix code example for ``Picture`` in ``flac.py``
+* docs: fix code example for :class:`flac.Picture` :pr:`673`
 * docs: initial :doc:`dev/index` with implementation notes for ID3 :pr:`633`
 * Switch from poetry to uv for development :pr:`687`
 * Changed the default branch from master to main
