@@ -260,16 +260,16 @@ def _openfile(instance, filething, filename, fileobj, writable, create):
                     with open(filename, "rb") as fileobj:
                         fileobj = BytesIO(fileobj.read())
                 except IOError as e2:
-                    raise MutagenError(e2)
+                    raise MutagenError(e2) from e2
                 inmemory_fileobj = True
             elif create and e.errno == errno.ENOENT:
                 assert writable
                 try:
                     fileobj = open(filename, "wb+")
                 except IOError as e2:
-                    raise MutagenError(e2)
+                    raise MutagenError(e2) from e2
             else:
-                raise MutagenError(e)
+                raise MutagenError(e) from e
 
         with fileobj as fileobj:
             yield FileThing(fileobj, filename, filename)
@@ -281,7 +281,7 @@ def _openfile(instance, filething, filename, fileobj, writable, create):
                     with open(filename, "wb") as fileobj:
                         fileobj.write(data)
                 except IOError as e:
-                    raise MutagenError(e)
+                    raise MutagenError(e) from e
     else:
         raise TypeError("Missing filename or fileobj argument")
 
