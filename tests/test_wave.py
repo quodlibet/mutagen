@@ -17,6 +17,11 @@ class TWave(TestCase):
         self.tmp_wav_pcm_2s_16000_08_ID3v23 = \
             WAVE(self.tmp_fn_pcm_2s_16000_08_ID3v23)
 
+        fn_wav_pcm_2s_16000_08_info = \
+            os.path.join(DATA_DIR, "silence-2s-PCM-16000-08-INFO.wav")
+        self.wav_pcm_2s_16000_08_INFO = \
+            WAVE(fn_wav_pcm_2s_16000_08_info)
+
         self.fn_wav_pcm_2s_16000_08_notags = \
             os.path.join(DATA_DIR, "silence-2s-PCM-16000-08-notags.wav")
         self.wav_pcm_2s_16000_08_notags = \
@@ -89,6 +94,15 @@ class TWave(TestCase):
         self.assertEquals(id3["TCON"], "Silence")
         self.assertEquals(id3["TIT2"], "Silence")
         self.assertEquals(id3["TPE1"], ["piman / jzig"])
+
+    def test_riff_info_tags(self):
+        id3 = self.wav_pcm_2s_16000_08_INFO.tags
+        self.assertEquals(id3["TALB"], "Quod Libet Test Data")
+        self.assertEquals(id3["TCON"], "Silence")
+        self.assertEquals(id3["TIT2"], "Silence")
+        self.assertEquals(id3["TPE1"], ["piman, jzig"])
+        self.assertEquals(id3["TORY"], "2004")
+        self.assertEquals(id3["TRCK"], ["02"])
 
     def test_delete(self):
         self.tmp_wav_pcm_2s_16000_08_ID3v23.delete()
