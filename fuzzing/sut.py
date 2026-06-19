@@ -1,7 +1,7 @@
-import sys
-import afl
 import os
+import sys
 
+import afl
 from fuzztools import run_all
 
 

@@ -1,13 +1,9 @@
-from tests import TestCase
-
-from mutagen.id3._specs import SpecError, Latin1TextListSpec, ID3FramesSpec, \
-    ASPIIndexSpec, ByteSpec, EncodingSpec, StringSpec, BinaryDataSpec, \
-    EncodedTextSpec, VolumePeakSpec, VolumeAdjustmentSpec, CTOCFlagsSpec, \
-    Spec, SynchronizedTextSpec, TimeStampSpec, FrameIDSpec, RVASpec
+from mutagen.id3 import ASPI, TIT3, CTOCFlags, ID3TimeStamp
 from mutagen.id3._frames import Frame
+from mutagen.id3._specs import ASPIIndexSpec, BinaryDataSpec, ByteSpec, CTOCFlagsSpec, EncodedTextSpec, EncodingSpec, FrameIDSpec, ID3FramesSpec, Latin1TextListSpec, RVASpec, Spec, SpecError, StringSpec, SynchronizedTextSpec, TimeStampSpec, VolumeAdjustmentSpec, VolumePeakSpec
 from mutagen.id3._tags import ID3Header, ID3Tags
 from mutagen.id3._util import ID3SaveConfig
-from mutagen.id3 import TIT3, ASPI, CTOCFlags, ID3TimeStamp
+from tests import TestCase
 
 
 class TSynchronizedTextSpec(TestCase):

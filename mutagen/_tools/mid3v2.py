@@ -7,20 +7,18 @@
 
 """Pretend to be /usr/bin/id3v2 from id3lib, sort of."""
 
-import os
-import sys
 import codecs
 import mimetypes
+import os
+import sys
 import warnings
-
 from optparse import SUPPRESS_HELP
 
 import mutagen
 import mutagen.id3
 from mutagen.id3 import Encoding, PictureType
 
-from ._util import split_escape, SignalHandler, OptionParser
-
+from ._util import OptionParser, SignalHandler, split_escape
 
 VERSION = (1, 3)
 _sig = SignalHandler()

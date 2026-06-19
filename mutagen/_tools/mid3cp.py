@@ -9,14 +9,13 @@
 tag loading and saving.
 """
 
-import sys
 import os.path
+import sys
 
 import mutagen
 import mutagen.id3
 
-from ._util import SignalHandler, OptionParser
-
+from ._util import OptionParser, SignalHandler
 
 VERSION = (0, 1)
 _sig = SignalHandler()

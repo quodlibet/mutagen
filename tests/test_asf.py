@@ -2,18 +2,11 @@ import os
 import warnings
 from io import BytesIO
 
-from mutagen.asf import ASF, UNICODE, DWORD, QWORD
-from mutagen.asf import BOOL, WORD, BYTEARRAY, GUID
-from mutagen.asf._util import guid2bytes, bytes2guid, ASFHeaderError, ASFError
-from mutagen.asf._objects import ContentDescriptionObject, \
-    ExtendedContentDescriptionObject, HeaderExtensionObject, \
-    MetadataObject, MetadataLibraryObject, CodecListObject, PaddingObject, \
-    HeaderObject
-from mutagen.asf._attrs import ASFValue, ASFUnicodeAttribute, ASFByteArrayAttribute, \
-    ASFBoolAttribute, ASFDWordAttribute, ASFQWordAttribute, ASFWordAttribute, \
-    ASFGUIDAttribute
-
-from tests import TestCase, DATA_DIR, get_temp_copy
+from mutagen.asf import ASF, BOOL, BYTEARRAY, DWORD, GUID, QWORD, UNICODE, WORD
+from mutagen.asf._attrs import ASFBoolAttribute, ASFByteArrayAttribute, ASFDWordAttribute, ASFGUIDAttribute, ASFQWordAttribute, ASFUnicodeAttribute, ASFValue, ASFWordAttribute
+from mutagen.asf._objects import CodecListObject, ContentDescriptionObject, ExtendedContentDescriptionObject, HeaderExtensionObject, HeaderObject, MetadataLibraryObject, MetadataObject, PaddingObject
+from mutagen.asf._util import ASFError, ASFHeaderError, bytes2guid, guid2bytes
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TASFFile(TestCase):

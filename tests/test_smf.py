@@ -1,7 +1,7 @@
 import os
 
 from mutagen.smf import SMF, SMFError
-from tests import TestCase, DATA_DIR
+from tests import DATA_DIR, TestCase
 
 
 class TSMF(TestCase):

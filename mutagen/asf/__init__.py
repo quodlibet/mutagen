@@ -10,17 +10,12 @@
 
 __all__ = ["ASF", "Open"]
 
-from mutagen import FileType, Tags, StreamInfo
-from mutagen._util import resize_bytes, DictMixin, loadfile, convert_error
+from mutagen import FileType, StreamInfo, Tags
+from mutagen._util import DictMixin, convert_error, loadfile, resize_bytes
 
-from ._util import error, ASFError, ASFHeaderError
-from ._objects import HeaderObject, MetadataLibraryObject, MetadataObject, \
-    ExtendedContentDescriptionObject, HeaderExtensionObject, \
-    ContentDescriptionObject
-from ._attrs import ASFGUIDAttribute, ASFWordAttribute, ASFQWordAttribute, \
-    ASFDWordAttribute, ASFBoolAttribute, ASFByteArrayAttribute, \
-    ASFUnicodeAttribute, ASFBaseAttribute, ASFValue
-
+from ._attrs import ASFBaseAttribute, ASFBoolAttribute, ASFByteArrayAttribute, ASFDWordAttribute, ASFGUIDAttribute, ASFQWordAttribute, ASFUnicodeAttribute, ASFValue, ASFWordAttribute
+from ._objects import ContentDescriptionObject, ExtendedContentDescriptionObject, HeaderExtensionObject, HeaderObject, MetadataLibraryObject, MetadataObject
+from ._util import ASFError, ASFHeaderError, error
 
 # flake8
 error, ASFError, ASFHeaderError, ASFValue

@@ -1,10 +1,9 @@
-import os
 import io
+import os
 
-from mutagen.trueaudio import TrueAudio, delete, error
 from mutagen.id3 import TIT1
-
-from tests import TestCase, DATA_DIR, get_temp_copy
+from mutagen.trueaudio import TrueAudio, delete, error
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TTrueAudio(TestCase):

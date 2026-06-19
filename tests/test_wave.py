@@ -1,8 +1,8 @@
 import os
 
-from mutagen.wave import WAVE
 from mutagen._iff import InvalidChunk
-from tests import TestCase, DATA_DIR, get_temp_copy
+from mutagen.wave import WAVE
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TWave(TestCase):
@@ -162,8 +162,7 @@ class TWave(TestCase):
             id3 ID3 Tag object
             major ID3 major version, e.g.: 3 for ID3v2.3
         """
-        from mutagen.id3 import TRCK, TPOS, TXXX, TPUB, TALB, UFID, TPE2, \
-            TSO2, TMED, TIT2, TPE1, TSRC, IPLS, TORY, TDAT, TYER
+        from mutagen.id3 import IPLS, TALB, TDAT, TIT2, TMED, TORY, TPE1, TPE2, TPOS, TPUB, TRCK, TSO2, TSRC, TXXX, TYER, UFID
         id3.add(TRCK(encoding=major, text="1/10"))
         id3.add(TPOS(encoding=major, text="1/1"))
         id3.add(TXXX(encoding=major, desc="MusicBrainz Release Group Id",

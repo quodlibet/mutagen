@@ -2,8 +2,8 @@ import os
 from io import BytesIO
 
 from mutagen.id3 import ID3, TIT2
-from mutagen.musepack import Musepack, MusepackInfo, MusepackHeaderError
-from tests import TestCase, DATA_DIR, get_temp_copy
+from mutagen.musepack import Musepack, MusepackHeaderError, MusepackInfo
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TMusepack(TestCase):

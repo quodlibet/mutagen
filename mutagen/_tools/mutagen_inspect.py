@@ -9,8 +9,7 @@
 
 import sys
 
-from ._util import SignalHandler, OptionParser
-
+from ._util import OptionParser, SignalHandler
 
 _sig = SignalHandler()
 

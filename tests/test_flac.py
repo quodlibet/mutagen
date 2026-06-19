@@ -4,12 +4,10 @@ import subprocess
 import pytest
 
 from mutagen import MutagenError
-from mutagen.id3 import ID3, TIT2, ID3NoHeaderError
-from mutagen.flac import to_int_be, Padding, VCFLACDict, MetadataBlock, error
-from mutagen.flac import StreamInfo, SeekTable, CueSheet, FLAC, delete, Picture
 from mutagen._vorbis import VComment
-
-from tests import TestCase, DATA_DIR, get_temp_copy
+from mutagen.flac import FLAC, CueSheet, MetadataBlock, Padding, Picture, SeekTable, StreamInfo, VCFLACDict, delete, error, to_int_be
+from mutagen.id3 import ID3, TIT2, ID3NoHeaderError
+from tests import DATA_DIR, TestCase, get_temp_copy
 from tests.test__vorbis import TVCommentDict
 
 

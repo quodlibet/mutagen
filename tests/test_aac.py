@@ -1,9 +1,8 @@
 import os
 
-from mutagen.id3 import ID3, TIT1
 from mutagen.aac import AAC, AACError
-
-from tests import TestCase, DATA_DIR, get_temp_copy
+from mutagen.id3 import ID3, TIT1
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TADTS(TestCase):

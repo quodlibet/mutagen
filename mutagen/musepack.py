@@ -19,9 +19,9 @@ __all__ = ["Musepack", "Open", "delete"]
 import struct
 
 from mutagen import StreamInfo
-from mutagen.apev2 import APEv2File, error, delete
+from mutagen._util import cdata, convert_error, endswith, intround
+from mutagen.apev2 import APEv2File, delete, error
 from mutagen.id3._util import BitPaddedInt
-from mutagen._util import cdata, convert_error, intround, endswith
 
 
 class MusepackHeaderError(error):

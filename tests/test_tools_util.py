@@ -1,5 +1,4 @@
 from mutagen._tools._util import split_escape
-
 from tests import TestCase
 
 

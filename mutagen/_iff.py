@@ -12,8 +12,6 @@
 
 import sys
 
-from mutagen.id3 import ID3
-from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
 from mutagen._util import (
     MutagenError,
     convert_error,
@@ -23,6 +21,9 @@ from mutagen._util import (
     reraise,
     resize_bytes,
 )
+from mutagen.id3 import ID3
+from mutagen.id3._util import ID3NoHeaderError
+from mutagen.id3._util import error as ID3Error
 
 
 class error(MutagenError):

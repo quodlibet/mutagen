@@ -1,7 +1,8 @@
 import os
 
-from mutagen.wavpack import WavPack, error as WavPackError
-from tests import TestCase, DATA_DIR
+from mutagen.wavpack import WavPack
+from mutagen.wavpack import error as WavPackError
+from tests import DATA_DIR, TestCase
 
 
 class TWavPack(TestCase):

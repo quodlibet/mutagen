@@ -1,10 +1,8 @@
 import os
 
 from mutagen.id3 import ID3
-
-from tests.test_tools import _TTools
 from tests import DATA_DIR, get_temp_copy
-
+from tests.test_tools import _TTools
 
 AMBIGUOUS = b"\xc3\xae\xc3\xa5\xc3\xb4\xc3\xb2 \xc3\xa0\xc3\xa9\xc3\xa7\xc3" \
             b"\xa5\xc3\xa3 \xc3\xb9\xc3\xac \xc3\xab\xc3\xa5\xc3\xa5\xc3\xb8" \

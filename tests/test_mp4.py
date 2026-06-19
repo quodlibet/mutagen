@@ -5,14 +5,12 @@ from io import BytesIO
 
 import pytest
 
-from tests import TestCase, DATA_DIR, get_temp_copy
-from mutagen.mp4 import (MP4, MP4Tags, MP4Info, delete, MP4Cover,
-                         MP4MetadataError, MP4FreeForm, error, AtomDataType,
-                         _item_sort_key, MP4StreamInfoError)
-from mutagen.mp4._atom import Atom, Atoms, AtomError
-from mutagen.mp4._util import parse_full_atom
-from mutagen.mp4._as_entry import AudioSampleEntry, ASEntryError
 from mutagen._util import cdata
+from mutagen.mp4 import MP4, AtomDataType, MP4Cover, MP4FreeForm, MP4Info, MP4MetadataError, MP4StreamInfoError, MP4Tags, _item_sort_key, delete, error
+from mutagen.mp4._as_entry import ASEntryError, AudioSampleEntry
+from mutagen.mp4._atom import Atom, AtomError, Atoms
+from mutagen.mp4._util import parse_full_atom
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TAtom(TestCase):

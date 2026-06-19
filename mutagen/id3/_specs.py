@@ -5,12 +5,11 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
-import struct
 import codecs
-from struct import unpack, pack
+import struct
+from struct import pack, unpack
 
-from .._util import total_ordering, decode_terminated, enum, flags, \
-    cdata, encode_endian, intround, bchr
+from .._util import bchr, cdata, decode_terminated, encode_endian, enum, flags, intround, total_ordering
 from ._util import BitPaddedInt, is_valid_frame_id
 
 

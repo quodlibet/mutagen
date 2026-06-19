@@ -1,12 +1,10 @@
 import os
 
-from tests import TestCase, DATA_DIR, get_temp_copy, get_temp_empty
-
 import mutagen.apev2
 from mutagen import MutagenError
-from mutagen.apev2 import APEv2File, APEv2, is_valid_apev2_key, \
-    APEBadItemError, error as APEv2Error
-
+from mutagen.apev2 import APEBadItemError, APEv2, APEv2File, is_valid_apev2_key
+from mutagen.apev2 import error as APEv2Error
+from tests import DATA_DIR, TestCase, get_temp_copy, get_temp_empty
 
 SAMPLE = os.path.join(DATA_DIR, "click.mpc")
 OLD = os.path.join(DATA_DIR, "oldtag.apev2")

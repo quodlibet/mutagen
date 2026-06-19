@@ -13,11 +13,8 @@ from itertools import zip_longest
 from mutagen._tags import Tags
 from mutagen._util import DictProxy, convert_error, read_full
 
-from ._util import BitPaddedInt, unsynch, ID3JunkFrameError, \
-    ID3EncryptionUnsupportedError, is_valid_frame_id, error, \
-    ID3NoHeaderError, ID3UnsupportedVersionError, ID3SaveConfig
-from ._frames import TDRC, APIC, TDOR, TIME, TIPL, TORY, TDAT, Frames_2_2, \
-    TextFrame, TYER, Frame, IPLS, Frames
+from ._frames import APIC, IPLS, TDAT, TDOR, TDRC, TIME, TIPL, TORY, TYER, Frame, Frames, Frames_2_2, TextFrame
+from ._util import BitPaddedInt, ID3EncryptionUnsupportedError, ID3JunkFrameError, ID3NoHeaderError, ID3SaveConfig, ID3UnsupportedVersionError, error, is_valid_frame_id, unsynch
 
 
 class ID3Header:

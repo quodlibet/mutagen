@@ -21,10 +21,10 @@ __all__ = ["OptimFROG", "Open", "delete"]
 
 import struct
 
-from ._util import convert_error, endswith
 from mutagen import StreamInfo
-from mutagen.apev2 import APEv2File, error, delete
+from mutagen.apev2 import APEv2File, delete, error
 
+from ._util import convert_error, endswith
 
 SAMPLE_TYPE_BITS = {
     0: 8,
