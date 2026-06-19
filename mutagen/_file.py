@@ -6,7 +6,6 @@
 # (at your option) any later version.
 
 import warnings
-from typing import List
 
 from mutagen._util import DictMixin, loadfile
 

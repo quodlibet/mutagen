@@ -5,17 +5,13 @@ description = "read and write audio tags for many formats"
 readme = { file = "README.rst", content-type = "text/x-rst" }
 authors = [{ name = "Christoph Reiter", email = "reiter.christoph@gmail.com" }]
 license = "GPL-2.0-or-later"
-requires-python = ">=3.12, <4"
+requires-python = ">=3.10, <4"
 classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
   "Topic :: Multimedia :: Sound/Audio",
-  "Typing :: Typed",
-]
-dependencies = [
-    "pyupgrade>=3.21.2",
 ]
 
 [project.urls]

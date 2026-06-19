@@ -19,7 +19,6 @@ import struct
 import sys
 import zlib
 from io import BytesIO
-from typing import Type
 
 from mutagen import FileType
 from mutagen._util import cdata, resize_bytes, MutagenError, loadfile, \

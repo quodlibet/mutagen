@@ -7,7 +7,6 @@
 # (at your option) any later version.
 
 import struct
-from typing import List
 
 from mutagen._util import MutagenError
 
@@ -47,7 +46,7 @@ def bytes2guid(s: bytes) -> str:
     v: list[int] = []
     v.extend(u("<IHH", s[:8]))
     v.extend(u(">HQ", s[8:10] + b"\x00\x00" + s[10:]))
-    return "%08X-%04X-%04X-%04X-%012X" % tuple(v)
+    return "{:08X}-{:04X}-{:04X}-{:04X}-{:012X}".format(*tuple(v))
 
 
 # Names from http://windows.microsoft.com/en-za/windows7/c00d10d1-[0-9A-F]{1,4}

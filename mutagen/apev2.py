@@ -31,7 +31,6 @@ __all__ = ["APEv2", "APEv2File", "Open", "delete"]
 
 import sys
 import struct
-from typing import Type
 from io import BytesIO
 from collections.abc import MutableSequence
 
