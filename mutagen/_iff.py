@@ -203,7 +203,7 @@ class IffChunk:
         return min(expected_size, max_size_possible)
 
 
-class IffContainerChunkMixin():
+class IffContainerChunkMixin:
     """A IFF chunk containing other chunks.
 
     A container chunk can have an additional name as the first 4 bytes of the

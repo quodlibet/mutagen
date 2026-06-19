@@ -426,46 +426,46 @@ class TEasyID3(TestCase):
             self.id3[tag] = "foo"
             self.id3.save(self.filename)
             id3 = EasyID3(self.filename)
-            self.failUnlessEqual(id3[tag], [u"foo"])
+            self.assertEqual(id3[tag], ["foo"])
 
     def test_albumartistsort(self):
-        self.realid3.add(TSO2(text=u"someartist"))
+        self.realid3.add(TSO2(text="someartist"))
         self.id3.save(self.filename)
         id3 = EasyID3(self.filename)
-        self.failUnlessEqual(id3["albumartistsort"], [u"someartist"])
+        self.assertEqual(id3["albumartistsort"], ["someartist"])
 
-        self.id3["albumartistsort"] = [u"otherartist"]
-        self.assertEqual(self.realid3["TSO2"], [u"otherartist"])
+        self.id3["albumartistsort"] = ["otherartist"]
+        self.assertEqual(self.realid3["TSO2"], ["otherartist"])
 
         del self.id3["albumartistsort"]
         self.assertEqual(len(self.id3), 0)
 
     def test_albumartistsort_from_TXXX(self):
-        self.realid3.add(TXXX(desc="ALBUMARTISTSORT", text=u"someartist"))
+        self.realid3.add(TXXX(desc="ALBUMARTISTSORT", text="someartist"))
         self.id3.save(self.filename)
         id3 = EasyID3(self.filename)
-        self.failUnlessEqual(id3["albumartistsort"], [u"someartist"])
+        self.assertEqual(id3["albumartistsort"], ["someartist"])
 
-        self.id3["albumartistsort"] = [u"otherartist"]
-        self.assertEqual(self.realid3["TSO2"], [u"otherartist"])
+        self.id3["albumartistsort"] = ["otherartist"]
+        self.assertEqual(self.realid3["TSO2"], ["otherartist"])
 
         del self.id3["albumartistsort"]
         self.assertEqual(len(self.id3), 0)
 
     def test_albumartistsort_with_both_frames(self):
-        self.realid3.add(TSO2(text=u"someartist"))
-        self.realid3.add(TXXX(desc="ALBUMARTISTSORT", text=u"someotherartist"))
+        self.realid3.add(TSO2(text="someartist"))
+        self.realid3.add(TXXX(desc="ALBUMARTISTSORT", text="someotherartist"))
         self.id3.save(self.filename)
         id3 = EasyID3(self.filename)
-        self.failUnlessEqual(id3["albumartistsort"], [u"someartist"])
+        self.assertEqual(id3["albumartistsort"], ["someartist"])
         self.assertEqual(len(self.id3), 1)
         self.assertEqual(len(self.realid3), 2)
 
-        self.id3["albumartistsort"] = [u"otherartist"]
-        self.assertEqual(self.realid3["TSO2"], [u"otherartist"])
+        self.id3["albumartistsort"] = ["otherartist"]
+        self.assertEqual(self.realid3["TSO2"], ["otherartist"])
 
         del self.id3["albumartistsort"]
         self.assertEqual(len(self.id3), 0)
         self.assertEqual(len(self.realid3), 0)
 
-        self.failUnlessRaises(KeyError, self.id3.__delitem__, "albumartistsort")
+        self.assertRaises(KeyError, self.id3.__delitem__, "albumartistsort")

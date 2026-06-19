@@ -42,7 +42,7 @@ class TDSDIFF(TestCase):
         self.assertEqual(self.dff_dst.info.bitrate, 0)
 
     def test_notdsf(self):
-        self.failUnlessRaises(error, DSDIFF, os.path.join(
+        self.assertRaises(error, DSDIFF, os.path.join(
             DATA_DIR, '2822400-1ch-0s-silence.dsf'))
 
     def test_pprint(self):
