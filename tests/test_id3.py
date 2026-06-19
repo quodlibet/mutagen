@@ -636,9 +636,9 @@ class ID3v1Tags(TestCase):
         self.assertEqual(b'qrst'.decode('latin1'), tags['TALB'])
 
     def test_nonascii(self):
-        s = u'TAG%(title)30s%(artist)30s%(album)30s%(year)4s%(cmt)28s\x00\x03\x01'
-        s = s % dict(artist=u'abcd\xe9fg', title=u'hijklmn\xf3p',
-                     album=u'qrst\xfcv', cmt=u'wxyz', year=u'1234')
+        s = 'TAG%(title)30s%(artist)30s%(album)30s%(year)4s%(cmt)28s\x00\x03\x01'
+        s = s % dict(artist='abcd\xe9fg', title='hijklmn\xf3p',
+                     album='qrst\xfcv', cmt='wxyz', year='1234')
         tags = ParseID3v1(s.encode("latin-1"))
         self.assertEqual(b'abcd\xe9fg'.decode('latin1'), tags['TPE1'])
         self.assertEqual(b'hijklmn\xf3p'.decode('latin1'), tags['TIT2'])
@@ -681,13 +681,13 @@ class ID3v1Tags(TestCase):
         tag = {}
         tag["TCON"] = TCON(encoding=0, text="Pop")
         v1tag = MakeID3v1(tag)
-        self.failUnlessEqual(ParseID3v1(v1tag)["TCON"].genres, ["Pop"])
+        self.assertEqual(ParseID3v1(v1tag)["TCON"].genres, ["Pop"])
 
     def test_make_comm_from_hashkey(self):
         frame = COMM(encoding=0, lang="eng",
                      desc="ID3v1 Comment", text="hello")
         tag = {frame.HashKey: frame}
-        self.failUnlessEqual(ParseID3v1(MakeID3v1(tag))["COMM"], "hello")
+        self.assertEqual(ParseID3v1(MakeID3v1(tag))["COMM"], "hello")
 
     def test_v1_comment(self):
         written = MakeID3v1({"COMM": COMM(encoding=0,

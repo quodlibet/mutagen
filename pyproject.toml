@@ -34,7 +34,7 @@ dev = [
     "mypy==1.19.1",
     "coverage>=7.13.4,<8",
     "setuptools>=82.0.0",
-    "ruff>=0.15.2",
+    "ruff>=0.15.18",
 ]
 fuzzing = ["python-afl>=0.7.3,<0.8"]
 docs = [
