@@ -13,15 +13,11 @@ intended for internal use in Mutagen only.
 
 import codecs
 import decimal
-import errno
-import struct
-import sys
 from collections import namedtuple
 from contextlib import contextmanager
 from fnmatch import fnmatchcase
 from functools import wraps
 from io import BytesIO
-from typing import List, Tuple
 
 _DEFAULT_BUFFER_SIZE = 2 ** 20
 
