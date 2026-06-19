@@ -26,7 +26,7 @@ class ID3OptionParser(OptionParser):
     def __init__(self):
         mutagen_version = mutagen.version_string
         my_version = ".".join(map(str, VERSION))
-        version = "mid3cp {}\nUses Mutagen {}".format(my_version, mutagen_version)
+        version = f"mid3cp {my_version}\nUses Mutagen {mutagen_version}"
         self.disable_interspersed_args()
         OptionParser.__init__(
             self, version=version,

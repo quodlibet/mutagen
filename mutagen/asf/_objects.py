@@ -51,12 +51,11 @@ class BaseObject:
             return UnknownObject(guid)
 
     def __repr__(self):
-        return "<{} GUID={} objects={!r}>".format(
-            type(self).__name__, bytes2guid(self.GUID), self.objects)
+        return f"<{type(self).__name__} GUID={bytes2guid(self.GUID)} objects={self.objects!r}>"
 
     def pprint(self):
         l = []
-        l.append("{}({})".format(type(self).__name__, bytes2guid(self.GUID)))
+        l.append(f"{type(self).__name__}({bytes2guid(self.GUID)})")
         for o in self.objects:
             for e in o.pprint().splitlines():
                 l.append("  " + e)

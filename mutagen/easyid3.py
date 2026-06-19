@@ -247,7 +247,7 @@ class EasyID3(DictMixin, Metadata):
         for key in sorted(self.keys()):
             values = self[key]
             for value in values:
-                strings.append("{}={}".format(key, value))
+                strings.append(f"{key}={value}")
         return "\n".join(strings)
 
 

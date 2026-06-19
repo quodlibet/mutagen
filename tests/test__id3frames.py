@@ -1428,7 +1428,7 @@ class TFrameTest:
         for spec in self.FRAME._framespec:
             self.assertTrue(
                 spec.default is not None,
-                msg="{!r}:{!r}".format(self.FRAME, spec.name))
+                msg=f"{self.FRAME!r}:{spec.name!r}")
 
     @classmethod
     def create_frame_tests(cls):

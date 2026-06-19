@@ -172,7 +172,7 @@ class ASFTags(list, DictMixin, Tags):  # type: ignore
         :rtype: text
         """
 
-        return "\n".join("{}={}".format(k, v) for k, v in self)
+        return "\n".join(f"{k}={v}" for k, v in self)
 
 
 UNICODE = ASFUnicodeAttribute.TYPE

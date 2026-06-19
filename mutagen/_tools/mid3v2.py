@@ -33,7 +33,7 @@ class ID3OptionParser(OptionParser):
     def __init__(self):
         mutagen_version = ".".join(map(str, mutagen.version))
         my_version = ".".join(map(str, VERSION))
-        version = "mid3v2 {}\nUses Mutagen {}".format(my_version, mutagen_version)
+        version = f"mid3v2 {my_version}\nUses Mutagen {mutagen_version}"
         self.edits = []
         OptionParser.__init__(
             self, version=version,
@@ -170,7 +170,7 @@ def write_files(edits, filenames, escape):
         try:
             value = value_from_fsnative(value, escape)
         except ValueError as err:
-            error("{}: {}".format(frame, str(err)))
+            error(f"{frame}: {str(err)}")
 
         assert isinstance(value, str)
 

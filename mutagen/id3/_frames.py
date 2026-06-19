@@ -184,10 +184,10 @@ class Frame:
         for attr in self._framespec:
             # so repr works during __init__
             if hasattr(self, attr.name):
-                kw.append('{}={!r}'.format(attr.name, getattr(self, attr.name)))
+                kw.append(f'{attr.name}={getattr(self, attr.name)!r}')
         for attr in self._optionalspec:
             if hasattr(self, attr.name):
-                kw.append('{}={!r}'.format(attr.name, getattr(self, attr.name)))
+                kw.append(f'{attr.name}={getattr(self, attr.name)!r}')
         return '{}({})'.format(type(self).__name__, ', '.join(kw))
 
     def _readData(self, id3, data):
@@ -247,7 +247,7 @@ class Frame:
 
     def pprint(self):
         """Return a human-readable representation of the frame."""
-        return "{}={}".format(type(self).__name__, self._pprint())
+        return f"{type(self).__name__}={self._pprint()}"
 
     def _pprint(self):
         return "[unrepresentable data]"
@@ -293,7 +293,7 @@ class Frame:
                         data = zlib.decompress(data)
                     except zlib.error as err:
                         raise ID3JunkFrameError(
-                            'zlib: {}: {!r}'.format(err, data))
+                            f'zlib: {err}: {data!r}')
 
         elif header.version >= header._V23:
             if tflags & Frame.FLAG23_COMPRESS:
@@ -307,7 +307,7 @@ class Frame:
                 try:
                     data = zlib.decompress(data)
                 except zlib.error as err:
-                    raise ID3JunkFrameError('zlib: {}: {!r}'.format(err, data))
+                    raise ID3JunkFrameError(f'zlib: {err}: {data!r}')
 
         frame = cls()
         frame._readData(header, data)
@@ -331,7 +331,7 @@ class CHAP(Frame):
 
     @property
     def HashKey(self):
-        return '{}:{}'.format(self.FrameID, self.element_id)
+        return f'{self.FrameID}:{self.element_id}'
 
     def __eq__(self, other):
         if not isinstance(other, CHAP):
@@ -372,7 +372,7 @@ class CTOC(Frame):
 
     @property
     def HashKey(self):
-        return '{}:{}'.format(self.FrameID, self.element_id)
+        return f'{self.FrameID}:{self.element_id}'
 
     __hash__ = Frame.__hash__
 
@@ -559,7 +559,7 @@ class UrlFrameU(UrlFrame):
 
     @property
     def HashKey(self):
-        return '{}:{}'.format(self.FrameID, self.url)
+        return f'{self.FrameID}:{self.url}'
 
 
 class TALB(TextFrame):
@@ -893,7 +893,7 @@ class TXXX(TextFrame):
 
     @property
     def HashKey(self):
-        return '{}:{}'.format(self.FrameID, self.desc)
+        return f'{self.FrameID}:{self.desc}'
 
     def _pprint(self):
         return "{}={}".format(self.desc, " / ".join(self.text))
@@ -949,7 +949,7 @@ class WXXX(UrlFrame):
 
     @property
     def HashKey(self):
-        return '{}:{}'.format(self.FrameID, self.desc)
+        return f'{self.FrameID}:{self.desc}'
 
 
 class PairedTextFrame(Frame):
@@ -1079,7 +1079,7 @@ class USLT(Frame):
 
     @property
     def HashKey(self):
-        return '{}:{}:{}'.format(self.FrameID, self.desc, self.lang)
+        return f'{self.FrameID}:{self.desc}:{self.lang}'
 
     def __bytes__(self):
         return self.text.encode('utf-8')
@@ -1093,7 +1093,7 @@ class USLT(Frame):
     __hash__ = Frame.__hash__
 
     def _pprint(self):
-        return "{}={}={}".format(self.desc, self.lang, self.text)
+        return f"{self.desc}={self.lang}={self.text}"
 
 
 class SYLT(Frame):
@@ -1110,7 +1110,7 @@ class SYLT(Frame):
 
     @property
     def HashKey(self):
-        return '{}:{}:{}'.format(self.FrameID, self.desc, self.lang)
+        return f'{self.FrameID}:{self.desc}:{self.lang}'
 
     def _pprint(self):
         return str(self)
@@ -1145,7 +1145,7 @@ class COMM(TextFrame):
 
     @property
     def HashKey(self):
-        return '{}:{}:{}'.format(self.FrameID, self.desc, self.lang)
+        return f'{self.FrameID}:{self.desc}:{self.lang}'
 
     def _pprint(self):
         return "{}={}={}".format(self.desc, self.lang, " / ".join(self.text))
@@ -1181,7 +1181,7 @@ class RVA2(Frame):
 
     @property
     def HashKey(self):
-        return '{}:{}'.format(self.FrameID, self.desc)
+        return f'{self.FrameID}:{self.desc}'
 
     def __eq__(self, other):
         try:
@@ -1196,8 +1196,7 @@ class RVA2(Frame):
     __hash__ = Frame.__hash__
 
     def __str__(self):
-        return "{}: {:+0.4f} dB/{:0.4f}".format(
-            self._channels[self.channel], self.gain, self.peak)
+        return f"{self._channels[self.channel]}: {self.gain:+0.4f} dB/{self.peak:0.4f}"
 
 
 class EQU2(Frame):
@@ -1222,7 +1221,7 @@ class EQU2(Frame):
 
     @property
     def HashKey(self):
-        return '{}:{}'.format(self.FrameID, self.desc)
+        return f'{self.FrameID}:{self.desc}'
 
 
 class RVAD(Frame):
@@ -1296,7 +1295,7 @@ class APIC(Frame):
 
     @property
     def HashKey(self):
-        return '{}:{}{}'.format(self.FrameID, self.desc, self.salt)
+        return f'{self.FrameID}:{self.desc}{self.salt}'
 
     def _merge_frame(self, other):
         other.salt += ' '
@@ -1379,7 +1378,7 @@ class POPM(Frame):
 
     @property
     def HashKey(self):
-        return '{}:{}'.format(self.FrameID, self.email)
+        return f'{self.FrameID}:{self.email}'
 
     def __eq__(self, other):
         return self.rating == other
@@ -1418,7 +1417,7 @@ class GEOB(Frame):
 
     @property
     def HashKey(self):
-        return '{}:{}'.format(self.FrameID, self.desc)
+        return f'{self.FrameID}:{self.desc}'
 
     def __eq__(self, other):
         return self.data == other
@@ -1478,7 +1477,7 @@ class AENC(Frame):
 
     @property
     def HashKey(self):
-        return '{}:{}'.format(self.FrameID, self.owner)
+        return f'{self.FrameID}:{self.owner}'
 
     def __bytes__(self):
         return self.owner.encode('utf-8')
@@ -1510,8 +1509,7 @@ class LINK(Frame):
 
     @property
     def HashKey(self):
-        return "{}:{}:{}:{}".format(
-            self.FrameID, self.frameid, self.url, _bytes2key(self.data))
+        return f"{self.FrameID}:{self.frameid}:{self.url}:{_bytes2key(self.data)}"
 
     def __eq__(self, other):
         return (self.frameid, self.url, self.data) == other
@@ -1558,7 +1556,7 @@ class UFID(Frame):
 
     @property
     def HashKey(self):
-        return '{}:{}'.format(self.FrameID, self.owner)
+        return f'{self.FrameID}:{self.owner}'
 
     def __eq__(s, o):
         if isinstance(o, UFI):
@@ -1569,7 +1567,7 @@ class UFID(Frame):
     __hash__ = Frame.__hash__
 
     def _pprint(self):
-        return "{}={!r}".format(self.owner, self.data)
+        return f"{self.owner}={self.data!r}"
 
 
 class USER(Frame):
@@ -1590,7 +1588,7 @@ class USER(Frame):
 
     @property
     def HashKey(self):
-        return '{}:{}'.format(self.FrameID, self.lang)
+        return f'{self.FrameID}:{self.lang}'
 
     def __bytes__(self):
         return self.text.encode('utf-8')
@@ -1604,7 +1602,7 @@ class USER(Frame):
     __hash__ = Frame.__hash__
 
     def _pprint(self):
-        return "{!r}={}".format(self.lang, self.text)
+        return f"{self.lang!r}={self.text}"
 
 
 class OWNE(Frame):
@@ -1649,7 +1647,7 @@ class COMR(Frame):
 
     @property
     def HashKey(self):
-        return '{}:{}'.format(self.FrameID, _bytes2key(self._writeData()))
+        return f'{self.FrameID}:{_bytes2key(self._writeData())}'
 
     def __eq__(self, other):
         return self._writeData() == other._writeData()
@@ -1672,7 +1670,7 @@ class ENCR(Frame):
 
     @property
     def HashKey(self):
-        return "{}:{}".format(self.FrameID, self.owner)
+        return f"{self.FrameID}:{self.owner}"
 
     def __bytes__(self):
         return self.data
@@ -1694,7 +1692,7 @@ class GRID(Frame):
 
     @property
     def HashKey(self):
-        return '{}:{}'.format(self.FrameID, self.group)
+        return f'{self.FrameID}:{self.group}'
 
     def __pos__(self):
         return self.group
@@ -1721,8 +1719,7 @@ class PRIV(Frame):
 
     @property
     def HashKey(self):
-        return '{}:{}:{}'.format(
-            self.FrameID, self.owner, _bytes2key(self.data))
+        return f'{self.FrameID}:{self.owner}:{_bytes2key(self.data)}'
 
     def __bytes__(self):
         return self.data
@@ -1731,7 +1728,7 @@ class PRIV(Frame):
         return self.data == other
 
     def _pprint(self):
-        return "{}={!r}".format(self.owner, self.data)
+        return f"{self.owner}={self.data!r}"
 
     __hash__ = Frame.__hash__
 
@@ -1746,7 +1743,7 @@ class SIGN(Frame):
 
     @property
     def HashKey(self):
-        return '{}:{}:{}'.format(self.FrameID, self.group, _bytes2key(self.sig))
+        return f'{self.FrameID}:{self.group}:{_bytes2key(self.sig)}'
 
     def __bytes__(self):
         return self.sig

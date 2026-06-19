@@ -66,7 +66,7 @@ class ASFBaseAttribute:
         raise NotImplementedError
 
     def __repr__(self):
-        name = "{}({!r}".format(type(self).__name__, self.value)
+        name = f"{type(self).__name__}({self.value!r}"
         if self.language:
             name += ", language=%d" % self.language
         if self.stream:
