@@ -355,7 +355,7 @@ def enum(cls):
 
     def str_(self):
         if self in map_:
-            return "{}.{}".format(type(self).__name__, map_[self])
+            return f"{type(self).__name__}.{map_[self]}"
         return "%d" % int(self)
 
     def repr_(self):
@@ -407,7 +407,7 @@ def flags(cls):
         matches = []
         for k, v in map_.items():
             if value & k:
-                matches.append("{}.{}".format(type(self).__name__, v))
+                matches.append(f"{type(self).__name__}.{v}")
                 value &= ~k
         if value != 0 or not matches:
             matches.append(str(value))
@@ -543,7 +543,7 @@ class DictProxy(DictMixin):
 def _fill_cdata(cls):
     """Add struct pack/unpack functions"""
 
-    funcs = {}
+    funcs: dict[str, Any] = {}
     for key, name in [("b", "char"), ("h", "short"),
                       ("i", "int"), ("q", "longlong")]:
         for echar, esuffix in [("<", "le"), (">", "be")]:
@@ -574,17 +574,17 @@ def _fill_cdata(cls):
                     max_ = 2 ** (s.size * 8 - 1) - 1
                     min_ = - 2 ** (s.size * 8 - 1)
 
-                funcs["{}{}_min".format(prefix, name)] = min_
-                funcs["{}{}_max".format(prefix, name)] = max_
-                funcs["{}int{}_min".format(prefix, bits)] = min_
-                funcs["{}int{}_max".format(prefix, bits)] = max_
+                funcs[f"{prefix}{name}_min"] = min_
+                funcs[f"{prefix}{name}_max"] = max_
+                funcs[f"{prefix}int{bits}_min"] = min_
+                funcs[f"{prefix}int{bits}_max"] = max_
 
-                funcs["{}{}{}".format(prefix, name, esuffix)] = unpack
-                funcs["{}int{}{}".format(prefix, bits, esuffix)] = unpack
-                funcs["{}{}{}_from".format(prefix, name, esuffix)] = unpack_from
-                funcs["{}int{}{}_from".format(prefix, bits, esuffix)] = unpack_from
-                funcs["to_{}{}{}".format(prefix, name, esuffix)] = pack
-                funcs["to_{}int{}{}".format(prefix, bits, esuffix)] = pack
+                funcs[f"{prefix}{name}{esuffix}"] = unpack
+                funcs[f"{prefix}int{bits}{esuffix}"] = unpack
+                funcs[f"{prefix}{name}{esuffix}_from"] = unpack_from
+                funcs[f"{prefix}int{bits}{esuffix}_from"] = unpack_from
+                funcs[f"to_{prefix}{name}{esuffix}"] = pack
+                funcs[f"to_{prefix}int{bits}{esuffix}"] = pack
 
     for key, func in funcs.items():
         setattr(cls, key, staticmethod(func))

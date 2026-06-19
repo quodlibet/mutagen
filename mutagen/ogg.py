@@ -133,7 +133,7 @@ class OggPage:
     def __repr__(self):
         attrs = ['version', 'position', 'serial', 'sequence', 'offset',
                  'complete', 'continued', 'first', 'last']
-        values = ["{}={!r}".format(attr, getattr(self, attr)) for attr in attrs]
+        values = [f"{attr}={getattr(self, attr)!r}" for attr in attrs]
         return "<%s %s, %d bytes in %d packets>" % (
             type(self).__name__, " ".join(values), sum(map(len, self.packets)),
             len(self.packets))

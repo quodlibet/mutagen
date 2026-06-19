@@ -334,7 +334,7 @@ class SeekTable(MetadataBlock):
         return f.getvalue()
 
     def __repr__(self):
-        return "<{} seekpoints={!r}>".format(type(self).__name__, self.seekpoints)
+        return f"<{type(self).__name__} seekpoints={self.seekpoints!r}>"
 
 
 class VCFLACDict(VCommentDict):

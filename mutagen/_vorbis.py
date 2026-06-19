@@ -153,7 +153,7 @@ class VComment(mutagen.Tags, list):
                 raise ValueError("%r is not a valid key" % key)
 
             if not isinstance(value, str):
-                err = "{!r} needs to be str for key {!r}".format(value, key)
+                err = f"{value!r} needs to be str for key {key!r}"
                 raise ValueError(err)
 
         return True
@@ -203,7 +203,7 @@ class VComment(mutagen.Tags, list):
                 return value.decode('utf-8', 'replace')
             return value
 
-        tags = ["{}={}".format(_decode(k), _decode(v)) for k, v in self]
+        tags = [f"{_decode(k)}={_decode(v)}" for k, v in self]
         return "\n".join(tags)
 
 

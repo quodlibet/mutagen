@@ -45,8 +45,7 @@ class ID3OptionParser(OptionParser):
     def __init__(self):
         mutagen_version = ".".join(map(str, mutagen.version))
         my_version = ".".join(map(str, VERSION))
-        version = "mid3iconv {}\nUses Mutagen {}".format(
-            my_version, mutagen_version)
+        version = f"mid3iconv {my_version}\nUses Mutagen {mutagen_version}"
         return OptionParser.__init__(
             self, version=version,
             usage="%prog [OPTION] [FILE]...",

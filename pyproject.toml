@@ -73,7 +73,7 @@ include = ["mutagen/**/*.py", "tests/**/*.py", "fuzzing/**/*.py", "docs/**/*.py"
 line-length = 320
 
 [tool.ruff.lint]
-select = [
+extend-select = [
     "E", # pycodestyles
     "F", # pyflakes
     "G", # flake8-logging-format

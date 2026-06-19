@@ -137,7 +137,7 @@ class FileType(DictMixin):
         """
 
         assert self.info is not None
-        stream = "{} ({})".format(self.info.pprint(), self.mime[0])
+        stream = f"{self.info.pprint()} ({self.mime[0]})"
         try:
             tags = self.tags.pprint()
         except AttributeError:

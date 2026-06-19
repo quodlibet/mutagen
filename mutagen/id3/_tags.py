@@ -74,10 +74,10 @@ class ID3Header:
 
         if (self.version >= self._V24) and (flags & 0x0f):
             raise error(
-                "{!r} has invalid flags {:#02x}".format(fn, flags))
+                f"{fn!r} has invalid flags {flags:#02x}")
         elif (self._V23 <= self.version < self._V24) and (flags & 0x1f):
             raise error(
-                "{!r} has invalid flags {:#02x}".format(fn, flags))
+                f"{fn!r} has invalid flags {flags:#02x}")
 
         if self.f_extended:
             extsize_data = read_full(fileobj, 4)

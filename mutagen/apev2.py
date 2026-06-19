@@ -273,7 +273,7 @@ class APEv2(_CIDictProxy, Metadata):
         """Return tag key=value pairs in a human-readable format."""
 
         items = sorted(self.items())
-        return "\n".join("{}={}".format(k, v.pprint()) for k, v in items)
+        return "\n".join(f"{k}={v.pprint()}" for k, v in items)
 
     @convert_error(IOError, error)
     @loadfile()
@@ -721,7 +721,7 @@ class APEv2File(FileType):
         if self.tags is None:
             self.tags = APEv2()
         else:
-            raise error("{!r} already has tags: {!r}".format(self, self.tags))
+            raise error(f"{self!r} already has tags: {self.tags!r}")
 
     @staticmethod
     def score(filename, fileobj, header):
