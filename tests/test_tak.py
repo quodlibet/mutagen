@@ -1,8 +1,8 @@
-import os
 import io
+import os
 
 from mutagen.tak import TAK, TAKHeaderError
-from tests import TestCase, DATA_DIR
+from tests import DATA_DIR, TestCase
 
 
 class TTAK(TestCase):

@@ -22,15 +22,15 @@ http://flac.sourceforge.net/format.html
 __all__ = ["FLAC", "Open", "delete"]
 
 import struct
-from io import BytesIO
-from ._vorbis import VCommentDict
-import mutagen
-
-from mutagen._util import resize_bytes, MutagenError, get_size, loadfile, \
-    convert_error, bchr, endswith
-from mutagen._tags import PaddingInfo
-from mutagen.id3._util import BitPaddedInt
 from functools import reduce
+from io import BytesIO
+
+import mutagen
+from mutagen._tags import PaddingInfo
+from mutagen._util import MutagenError, bchr, convert_error, endswith, get_size, loadfile, resize_bytes
+from mutagen.id3._util import BitPaddedInt
+
+from ._vorbis import VCommentDict
 
 
 class error(MutagenError):

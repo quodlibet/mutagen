@@ -8,11 +8,12 @@
 # (at your option) any later version.
 
 import errno
-from struct import error as StructError, unpack
+from struct import error as StructError
+from struct import unpack
 
 from mutagen._util import bchr
 
-from ._frames import TCON, TRCK, COMM, TDRC, TYER, TALB, TPE1, TIT2
+from ._frames import COMM, TALB, TCON, TDRC, TIT2, TPE1, TRCK, TYER
 
 
 def find_id3v1(fileobj, v2_version=4, known_frames=None):

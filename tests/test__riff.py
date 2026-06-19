@@ -1,8 +1,7 @@
 import os
 
-from mutagen._riff import RiffFile, RiffChunk
-
-from tests import TestCase, DATA_DIR, get_temp_copy
+from mutagen._riff import RiffChunk, RiffFile
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TRiffFile(TestCase):

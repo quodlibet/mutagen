@@ -3,10 +3,11 @@ import random
 import subprocess
 from io import BytesIO
 
-from tests import TestCase, DATA_DIR, get_temp_copy
-from mutagen.ogg import OggPage, error as OggError
-from mutagen._util import cdata
 from mutagen import _util
+from mutagen._util import cdata
+from mutagen.ogg import OggPage
+from mutagen.ogg import error as OggError
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TOggPage(TestCase):

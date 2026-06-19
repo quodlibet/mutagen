@@ -10,13 +10,11 @@
 import struct
 
 from mutagen import StreamInfo
-from mutagen._util import MutagenError, enum, BitReader, BitReaderError, \
-    convert_error, intround, endswith
+from mutagen._util import BitReader, BitReaderError, MutagenError, convert_error, endswith, enum, intround
 from mutagen.id3 import ID3FileType, delete
 from mutagen.id3._util import BitPaddedInt
 
-from ._util import XingHeader, XingHeaderError, VBRIHeader, VBRIHeaderError
-
+from ._util import VBRIHeader, VBRIHeaderError, XingHeader, XingHeaderError
 
 __all__ = ["MP3", "Open", "delete", "MP3"]
 

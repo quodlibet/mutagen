@@ -126,7 +126,7 @@ exclude = [
 [tool.mypy]
 check_untyped_defs = true
 allow_redefinition = true
-follow_imports = "silent"
+# follow_imports = "silent"
 strict = true
 disallow_untyped_defs = false
 disallow_incomplete_defs = false

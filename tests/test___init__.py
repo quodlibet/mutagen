@@ -1,41 +1,41 @@
 import os
-import sys
-from tempfile import mkstemp
 import shutil
+import sys
 import warnings
 from io import BytesIO
+from os import devnull
+from tempfile import mkstemp
 
-from hypothesis.strategies import composite, integers, one_of
 from hypothesis import given
+from hypothesis.strategies import composite, integers, one_of
 
-from tests import TestCase, DATA_DIR, get_temp_copy
-from mutagen import File, Metadata, FileType, MutagenError, PaddingInfo
-from mutagen._util import loadfile, get_size
-from mutagen.oggvorbis import OggVorbis
-from mutagen.oggflac import OggFLAC
-from mutagen.oggspeex import OggSpeex
-from mutagen.oggtheora import OggTheora
-from mutagen.oggopus import OggOpus
-from mutagen.mp3 import MP3, EasyMP3
-from mutagen.id3 import ID3FileType
-from mutagen.apev2 import APEv2File
-from mutagen.flac import FLAC
-from mutagen.wavpack import WavPack
-from mutagen.trueaudio import TrueAudio, EasyTrueAudio
-from mutagen.mp4 import MP4
-from mutagen.musepack import Musepack
-from mutagen.monkeysaudio import MonkeysAudio
-from mutagen.optimfrog import OptimFROG
-from mutagen.asf import ASF
-from mutagen.aiff import AIFF
+from mutagen import File, FileType, Metadata, MutagenError, PaddingInfo
+from mutagen._util import get_size, loadfile
 from mutagen.aac import AAC
 from mutagen.ac3 import AC3
-from mutagen.smf import SMF
-from mutagen.tak import TAK
+from mutagen.aiff import AIFF
+from mutagen.apev2 import APEv2File
+from mutagen.asf import ASF
 from mutagen.dsdiff import DSDIFF
 from mutagen.dsf import DSF
+from mutagen.flac import FLAC
+from mutagen.id3 import ID3FileType
+from mutagen.monkeysaudio import MonkeysAudio
+from mutagen.mp3 import MP3, EasyMP3
+from mutagen.mp4 import MP4
+from mutagen.musepack import Musepack
+from mutagen.oggflac import OggFLAC
+from mutagen.oggopus import OggOpus
+from mutagen.oggspeex import OggSpeex
+from mutagen.oggtheora import OggTheora
+from mutagen.oggvorbis import OggVorbis
+from mutagen.optimfrog import OptimFROG
+from mutagen.smf import SMF
+from mutagen.tak import TAK
+from mutagen.trueaudio import EasyTrueAudio, TrueAudio
 from mutagen.wave import WAVE
-from os import devnull
+from mutagen.wavpack import WavPack
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TMetadata(TestCase):

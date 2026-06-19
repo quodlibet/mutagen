@@ -1,9 +1,8 @@
-import os
 import io
+import os
 
 from mutagen.ac3 import AC3, AC3Error
-
-from tests import TestCase, DATA_DIR
+from tests import DATA_DIR, TestCase
 
 
 class TAC3(TestCase):

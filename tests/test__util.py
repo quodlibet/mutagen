@@ -1,18 +1,14 @@
-from mutagen._util import DictMixin, cdata, insert_bytes, delete_bytes, \
-    decode_terminated, dict_match, enum, get_size, BitReader, BitReaderError, \
-    resize_bytes, seek_end, verify_fileobj, fileobj_name, \
-    read_full, flags, resize_file, move_bytes, encode_endian, loadfile, \
-    intround, verify_filename
-from tests import TestCase, get_temp_empty
+import builtins
+import errno
 import os
 import random
 import tempfile
-import errno
-import builtins
 from io import BytesIO
 
-
 import pytest
+
+from mutagen._util import BitReader, BitReaderError, DictMixin, cdata, decode_terminated, delete_bytes, dict_match, encode_endian, enum, fileobj_name, flags, get_size, insert_bytes, intround, loadfile, move_bytes, read_full, resize_bytes, resize_file, seek_end, verify_filename, verify_fileobj
+from tests import TestCase, get_temp_empty
 
 
 def test_intround():

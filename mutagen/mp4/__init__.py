@@ -24,18 +24,17 @@ were all consulted.
 
 import struct
 import sys
-from io import BytesIO
 from collections.abc import Sequence
 from datetime import timedelta
+from io import BytesIO
 
-from mutagen import FileType, Tags, StreamInfo, PaddingInfo
+from mutagen import FileType, PaddingInfo, StreamInfo, Tags
 from mutagen._constants import GENRES
-from mutagen._util import cdata, insert_bytes, DictProxy, MutagenError, \
-    hashable, enum, get_size, resize_bytes, loadfile, convert_error, bchr, \
-    reraise
-from ._atom import Atoms, Atom, AtomError
+from mutagen._util import DictProxy, MutagenError, bchr, cdata, convert_error, enum, get_size, hashable, insert_bytes, loadfile, reraise, resize_bytes
+
+from ._as_entry import ASEntryError, AudioSampleEntry
+from ._atom import Atom, AtomError, Atoms
 from ._util import parse_full_atom
-from ._as_entry import AudioSampleEntry, ASEntryError
 
 
 class error(MutagenError):

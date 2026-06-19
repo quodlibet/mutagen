@@ -8,16 +8,15 @@
 """Read and write DSF audio stream information and tags."""
 
 
-import sys
 import struct
+import sys
 from io import BytesIO
 
 from mutagen import FileType, StreamInfo
-from mutagen._util import cdata, MutagenError, loadfile, \
-    convert_error, reraise, endswith
+from mutagen._util import MutagenError, cdata, convert_error, endswith, loadfile, reraise
 from mutagen.id3 import ID3
-from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
-
+from mutagen.id3._util import ID3NoHeaderError
+from mutagen.id3._util import error as ID3Error
 
 __all__ = ["DSF", "Open", "delete"]
 

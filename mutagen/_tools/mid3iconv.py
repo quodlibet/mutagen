@@ -9,14 +9,13 @@
 ID3iconv is a Java based ID3 encoding converter, here's the Python version.
 """
 
-import sys
 import locale
+import sys
 
 import mutagen
 import mutagen.id3
 
-from ._util import SignalHandler, OptionParser
-
+from ._util import OptionParser, SignalHandler
 
 VERSION = (0, 3)
 _sig = SignalHandler()
@@ -58,7 +57,7 @@ class ID3OptionParser(OptionParser):
         return text + "\nFiles are updated in-place, so use --dry-run first.\n"
 
 
-def update(options, filenames):
+def update(options, filenames: list[str]):
     encoding = options.encoding or getpreferredencoding()
     verbose = options.verbose
     noupdate = options.noupdate

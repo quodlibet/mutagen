@@ -1,13 +1,12 @@
 import os
 from io import BytesIO
 
-from mutagen.aiff import AIFF, AIFFInfo, delete, AIFFFile, AIFFChunk
-from mutagen.aiff import error as AIFFError, read_float
-from mutagen._iff import error as IffError
-
-from tests import TestCase, DATA_DIR, get_temp_copy
-
 import pytest
+
+from mutagen._iff import error as IffError
+from mutagen.aiff import AIFF, AIFFChunk, AIFFFile, AIFFInfo, delete, read_float
+from mutagen.aiff import error as AIFFError
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TAIFF(TestCase):

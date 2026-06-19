@@ -1,12 +1,11 @@
 import os
 import warnings
 
-from tests import TestCase, DATA_DIR
+from tests import DATA_DIR, TestCase
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", DeprecationWarning)
-    from mutagen.m4a import (M4A, M4ATags, M4AInfo, delete, M4ACover,
-                             error)
+    from mutagen.m4a import M4A, M4ACover, M4AInfo, M4ATags, delete, error
 
 
 class TM4ADeprecation(TestCase):

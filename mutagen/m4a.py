@@ -13,7 +13,8 @@ since 1.31: mutagen.m4a will no longer work; any operation that could fail
 
 import warnings
 
-from mutagen import FileType, Tags, StreamInfo
+from mutagen import FileType, StreamInfo, Tags
+
 from ._util import DictProxy, MutagenError, loadfile
 
 warnings.warn(

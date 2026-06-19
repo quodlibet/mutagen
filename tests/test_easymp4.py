@@ -1,9 +1,9 @@
 import os
 
 from mutagen import MutagenError
-from mutagen.easymp4 import EasyMP4, error as MP4Error
-
-from tests import TestCase, DATA_DIR, get_temp_copy
+from mutagen.easymp4 import EasyMP4
+from mutagen.easymp4 import error as MP4Error
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TEasyMP4(TestCase):

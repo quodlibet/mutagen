@@ -7,10 +7,11 @@
 
 from io import BytesIO
 
-from mutagen.aac import ProgramConfigElement
 from mutagen._util import BitReader, BitReaderError, cdata
-from ._util import parse_full_atom
+from mutagen.aac import ProgramConfigElement
+
 from ._atom import Atom, AtomError
+from ._util import parse_full_atom
 
 
 class ASEntryError(Exception):

@@ -4,8 +4,7 @@ from io import BytesIO
 
 from mutagen.ogg import OggPage
 from mutagen.oggvorbis import OggVorbis, OggVorbisInfo, delete, error
-
-from tests import TestCase, DATA_DIR, get_temp_copy
+from tests import DATA_DIR, TestCase, get_temp_copy
 from tests.test_ogg import TOggFileTypeMixin
 
 

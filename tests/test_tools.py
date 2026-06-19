@@ -1,5 +1,5 @@
-import sys
 import importlib
+import sys
 from io import StringIO
 
 from tests import TestCase

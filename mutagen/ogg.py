@@ -21,10 +21,9 @@ import zlib
 from io import BytesIO
 
 from mutagen import FileType
-from mutagen._util import cdata, resize_bytes, MutagenError, loadfile, \
-    seek_end, bchr, reraise
 from mutagen._file import StreamInfo
 from mutagen._tags import Tags
+from mutagen._util import MutagenError, bchr, cdata, loadfile, reraise, resize_bytes, seek_end
 
 
 class error(MutagenError):

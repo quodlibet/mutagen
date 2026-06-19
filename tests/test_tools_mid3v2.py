@@ -1,13 +1,12 @@
-import os
-from tempfile import mkstemp
-import shutil
 import locale
+import os
+import shutil
+from tempfile import mkstemp
 
 import mutagen
 from mutagen.id3 import ID3
-
-from tests.test_tools import _TTools
 from tests import DATA_DIR
+from tests.test_tools import _TTools
 
 
 class TMid3v2(_TTools):

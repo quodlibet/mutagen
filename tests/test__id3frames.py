@@ -1,18 +1,68 @@
 import operator
 
-from tests import TestCase
-
 from mutagen._constants import GENRES
-from mutagen.id3._tags import read_frames, save_frame, ID3Header
-from mutagen.id3._util import ID3SaveConfig, is_valid_frame_id, \
-    ID3JunkFrameError
-from mutagen.id3 import APIC, CTOC, CHAP, TPE2, Frames, Frames_2_2, CRA, \
-    AENC, PIC, LNK, LINK, SIGN, PRIV, GRID, ENCR, COMR, USER, UFID, GEOB, \
-    POPM, EQU2, RVA2, COMM, SYLT, USLT, WXXX, TXXX, WCOM, TextFrame, \
-    UrlFrame, NumericTextFrame, NumericPartTextFrame, TPE1, TIT2, \
-    TimeStampTextFrame, TCON, ID3TimeStamp, Frame, RVRB, RBUF, CTOCFlags, \
-    PairedTextFrame, BinaryFrame, ETCO, MLLT, SYTC, PCNT, PCST, POSS, OWNE, \
-    SEEK, ASPI, PictureType, CRM, RVAD, RVA, ID3Tags
+from mutagen.id3 import (
+    AENC,
+    APIC,
+    ASPI,
+    CHAP,
+    COMM,
+    COMR,
+    CRA,
+    CRM,
+    CTOC,
+    ENCR,
+    EQU2,
+    ETCO,
+    GEOB,
+    GRID,
+    LINK,
+    LNK,
+    MLLT,
+    OWNE,
+    PCNT,
+    PCST,
+    PIC,
+    POPM,
+    POSS,
+    PRIV,
+    RBUF,
+    RVA,
+    RVA2,
+    RVAD,
+    RVRB,
+    SEEK,
+    SIGN,
+    SYLT,
+    SYTC,
+    TCON,
+    TIT2,
+    TPE1,
+    TPE2,
+    TXXX,
+    UFID,
+    USER,
+    USLT,
+    WCOM,
+    WXXX,
+    BinaryFrame,
+    CTOCFlags,
+    Frame,
+    Frames,
+    Frames_2_2,
+    ID3Tags,
+    ID3TimeStamp,
+    NumericPartTextFrame,
+    NumericTextFrame,
+    PairedTextFrame,
+    PictureType,
+    TextFrame,
+    TimeStampTextFrame,
+    UrlFrame,
+)
+from mutagen.id3._tags import ID3Header, read_frames, save_frame
+from mutagen.id3._util import ID3JunkFrameError, ID3SaveConfig, is_valid_frame_id
+from tests import TestCase
 
 _22 = ID3Header()
 _22.version = (2, 2, 0)

@@ -10,15 +10,12 @@
 import struct
 
 import mutagen
-from mutagen._util import insert_bytes, delete_bytes, enum, \
-    loadfile, convert_error, read_full
 from mutagen._tags import PaddingInfo
+from mutagen._util import convert_error, delete_bytes, enum, insert_bytes, loadfile, read_full
 
-from ._util import error, ID3NoHeaderError, ID3UnsupportedVersionError, \
-    BitPaddedInt
-from ._util import ID3SaveConfig
-from ._tags import ID3Tags, ID3Header
 from ._id3v1 import MakeID3v1, find_id3v1
+from ._tags import ID3Header, ID3Tags
+from ._util import BitPaddedInt, ID3NoHeaderError, ID3SaveConfig, ID3UnsupportedVersionError, error
 
 
 @enum

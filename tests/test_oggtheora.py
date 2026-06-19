@@ -1,10 +1,9 @@
 import os
 from io import BytesIO
 
-from mutagen.oggtheora import OggTheora, OggTheoraInfo, delete, error
 from mutagen.ogg import OggPage
-
-from tests import TestCase, DATA_DIR, get_temp_copy
+from mutagen.oggtheora import OggTheora, OggTheoraInfo, delete, error
+from tests import DATA_DIR, TestCase, get_temp_copy
 from tests.test_ogg import TOggFileTypeMixin
 
 

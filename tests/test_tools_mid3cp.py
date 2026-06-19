@@ -11,14 +11,13 @@ usage.
 """
 
 import os
-from tempfile import mkstemp
 import shutil
+from tempfile import mkstemp
 
 import mutagen.id3
 from mutagen.id3 import ID3, ParseID3v1
-
-from tests.test_tools import _TTools
 from tests import DATA_DIR
+from tests.test_tools import _TTools
 
 
 class TMid3cp(_TTools):

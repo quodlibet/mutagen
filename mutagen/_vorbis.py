@@ -19,7 +19,7 @@ import sys
 from io import BytesIO
 
 import mutagen
-from mutagen._util import DictMixin, cdata, MutagenError, reraise
+from mutagen._util import DictMixin, MutagenError, cdata, reraise
 
 
 def is_valid_key(key: str) -> bool:

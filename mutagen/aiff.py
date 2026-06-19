@@ -12,22 +12,24 @@
 import struct
 from struct import pack
 
-from mutagen import StreamInfo, FileType
-
-from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
+from mutagen import FileType, StreamInfo
 from mutagen._iff import (
     IffChunk,
     IffContainerChunkMixin,
     IffFile,
     IffID3,
     InvalidChunk,
+)
+from mutagen._iff import (
     error as IffError,
 )
 from mutagen._util import (
     convert_error,
-    loadfile,
     endswith,
+    loadfile,
 )
+from mutagen.id3._util import ID3NoHeaderError
+from mutagen.id3._util import error as ID3Error
 
 __all__ = ["AIFF", "Open", "delete"]
 

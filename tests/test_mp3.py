@@ -1,12 +1,11 @@
 import os
 from io import BytesIO
 
-from tests import TestCase, DATA_DIR, get_temp_copy
-from mutagen.mp3 import MP3, error as MP3Error, delete, MPEGInfo, EasyMP3, \
-    BitrateMode, iter_sync
-from mutagen.mp3._util import XingHeader, XingHeaderError, VBRIHeader, \
-    VBRIHeaderError, LAMEHeader, LAMEError
 from mutagen.id3 import ID3
+from mutagen.mp3 import MP3, BitrateMode, EasyMP3, MPEGInfo, delete, iter_sync
+from mutagen.mp3 import error as MP3Error
+from mutagen.mp3._util import LAMEError, LAMEHeader, VBRIHeader, VBRIHeaderError, XingHeader, XingHeaderError
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TMP3Util(TestCase):

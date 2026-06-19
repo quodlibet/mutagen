@@ -14,18 +14,20 @@ from mutagen._file import FileType
 from mutagen._iff import (
     IffChunk,
     IffContainerChunkMixin,
-    IffID3,
     IffFile,
+    IffID3,
     InvalidChunk,
+)
+from mutagen._iff import (
     error as _IffError,
 )
-from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
 from mutagen._util import (
     convert_error,
-    loadfile,
     endswith,
+    loadfile,
 )
-
+from mutagen.id3._util import ID3NoHeaderError
+from mutagen.id3._util import error as ID3Error
 
 __all__ = ["DSDIFF", "Open", "delete"]
 

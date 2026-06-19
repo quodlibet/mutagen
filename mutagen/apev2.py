@@ -29,14 +29,13 @@ http://wiki.hydrogenaudio.org/index.php?title=APEv2_specification.
 
 __all__ = ["APEv2", "APEv2File", "Open", "delete"]
 
-import sys
 import struct
-from io import BytesIO
+import sys
 from collections.abc import MutableSequence
+from io import BytesIO
 
-from mutagen import Metadata, FileType, StreamInfo
-from mutagen._util import DictMixin, cdata, delete_bytes, total_ordering, \
-    MutagenError, loadfile, convert_error, seek_end, get_size, reraise
+from mutagen import FileType, Metadata, StreamInfo
+from mutagen._util import DictMixin, MutagenError, cdata, convert_error, delete_bytes, get_size, loadfile, reraise, seek_end, total_ordering
 
 
 def is_valid_apev2_key(key):

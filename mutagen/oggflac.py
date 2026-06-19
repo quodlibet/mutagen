@@ -20,10 +20,12 @@ import struct
 from io import BytesIO
 
 from mutagen import StreamInfo
-from mutagen.flac import StreamInfo as FLACStreamInfo, error as FLACError
+from mutagen._util import convert_error, loadfile
 from mutagen._vorbis import VCommentDict
-from mutagen._util import loadfile, convert_error
-from mutagen.ogg import OggPage, OggFileType, error as OggError
+from mutagen.flac import StreamInfo as FLACStreamInfo
+from mutagen.flac import error as FLACError
+from mutagen.ogg import OggFileType, OggPage
+from mutagen.ogg import error as OggError
 
 
 class error(OggError):

@@ -1,7 +1,7 @@
 import os
 
-from tests.test_tools import _TTools
 from tests import DATA_DIR, get_temp_copy
+from tests.test_tools import _TTools
 
 
 class TMOggSPlit(_TTools):

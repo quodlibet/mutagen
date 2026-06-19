@@ -1,8 +1,7 @@
 import struct
 
-from tests import TestCase
-
 from mutagen.id3._util import BitPaddedInt, unsynch
+from tests import TestCase
 
 
 class BitPaddedIntTest(TestCase):

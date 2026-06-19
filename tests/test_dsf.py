@@ -2,8 +2,7 @@ import os
 
 from mutagen.dsf import DSF, DSFFile, delete
 from mutagen.dsf import error as DSFError
-
-from tests import TestCase, DATA_DIR, get_temp_copy
+from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TDSF(TestCase):

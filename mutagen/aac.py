@@ -13,10 +13,8 @@
 
 from mutagen import StreamInfo
 from mutagen._file import FileType
-from mutagen._util import BitReader, BitReaderError, MutagenError, loadfile, \
-    convert_error, endswith
+from mutagen._util import BitReader, BitReaderError, MutagenError, convert_error, endswith, loadfile
 from mutagen.id3._util import BitPaddedInt
-
 
 _FREQS = [
     96000, 88200, 64000, 48000,

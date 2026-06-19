@@ -1,5 +1,5 @@
-import os
 import glob
+import os
 
 from tests.test_tools import _TTools
 

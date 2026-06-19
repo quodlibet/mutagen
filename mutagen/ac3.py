@@ -18,9 +18,9 @@ from mutagen._util import (
     BitReaderError,
     MutagenError,
     convert_error,
+    endswith,
     enum,
     loadfile,
-    endswith,
 )
 
 

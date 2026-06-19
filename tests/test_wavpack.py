@@ -1,7 +1,7 @@
 import os
 
 from mutagen.wavpack import WavPack, WavPackHeaderError
-from tests import TestCase, DATA_DIR
+from tests import DATA_DIR, TestCase
 
 
 class TWavPack(TestCase):
