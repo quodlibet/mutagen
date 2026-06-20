@@ -27,7 +27,15 @@ from io import BytesIO
 
 import mutagen
 from mutagen._tags import PaddingInfo
-from mutagen._util import MutagenError, bchr, convert_error, endswith, get_size, loadfile, resize_bytes
+from mutagen._util import (
+    MutagenError,
+    bchr,
+    convert_error,
+    endswith,
+    get_size,
+    loadfile,
+    resize_bytes,
+)
 from mutagen.id3._util import BitPaddedInt
 
 from ._vorbis import VCommentDict

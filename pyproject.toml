@@ -26,17 +26,19 @@ moggsplit = "mutagen._tools.moggsplit:entry_point"
 mutagen-inspect = "mutagen._tools.mutagen_inspect:entry_point"
 mutagen-pony = "mutagen._tools.mutagen_pony:entry_point"
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "pytest>=8.2,<10",
     "hypothesis>=6.148.8,<7",
     "flake8>=7.1.0,<8",
-    "mypy==1.19.1",
+    "mypy==2.1.0",
     "coverage>=7.13.4,<8",
     "setuptools>=82.0.0",
     "ruff>=0.15.18",
 ]
-fuzzing = ["python-afl>=0.7.3,<0.8"]
+fuzzing = [
+    "python-afl>=0.7.3,<0.8 ; platform_system != 'Windows'", # AFL is not supported on Windows
+]
 docs = [
     "Sphinx~=7.1",
     "sphinx-rtd-theme>=2.0.0,<3",
@@ -66,11 +68,11 @@ include=["mutagen/*", "tests/*"]
 [tool.pyright]
 reportPrivateUsage = false
 reportUnusedVariable = false
+reportUnusedCallResult = false
+reportImplicitOverride = false
 
 [tool.ruff]
-target-version = "py312"
-include = ["mutagen/**/*.py", "tests/**/*.py", "fuzzing/**/*.py", "docs/**/*.py"]
-line-length = 320
+line-length = 88
 
 [tool.ruff.lint]
 extend-select = [
@@ -126,7 +128,7 @@ exclude = [
 [tool.mypy]
 check_untyped_defs = true
 allow_redefinition = true
-# follow_imports = "silent"
+follow_imports = "silent"
 strict = true
 disallow_untyped_defs = false
 disallow_incomplete_defs = false
@@ -134,4 +136,4 @@ disallow_untyped_calls = false
 disallow_any_generics = false
 disallow_subclassing_any = false
 follow_untyped_imports = true
-# ignore_missing_imports = false
+ignore_missing_imports = false

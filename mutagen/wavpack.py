@@ -33,8 +33,10 @@ RATES = [6000, 8000, 9600, 11025, 12000, 16000, 22050, 24000, 32000, 44100,
 
 class _WavPackHeader:
 
-    def __init__(self, block_size, version, track_no, index_no, total_samples,
-                 block_index, block_samples, flags, crc):
+    def __init__(
+        self, block_size: int, version, track_no: int, index_no: int,
+        total_samples: int, block_index: int, block_samples: int, flags, crc,
+    ):
 
         self.block_size = block_size
         self.version = version
@@ -116,8 +118,7 @@ class WavPackInfo(StreamInfo):
         self.length = float(samples) / self.sample_rate
 
     def pprint(self):
-        return "WavPack, %.2f seconds, %d Hz" % (self.length,
-                                                  self.sample_rate)
+        return f"WavPack, {self.length:.2f} seconds, {self.sample_rate} Hz"
 
 
 class WavPack(APEv2File):

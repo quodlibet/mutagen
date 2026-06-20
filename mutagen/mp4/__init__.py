@@ -30,7 +30,20 @@ from io import BytesIO
 
 from mutagen import FileType, PaddingInfo, StreamInfo, Tags
 from mutagen._constants import GENRES
-from mutagen._util import DictProxy, MutagenError, bchr, cdata, convert_error, enum, get_size, hashable, insert_bytes, loadfile, reraise, resize_bytes
+from mutagen._util import (
+    DictProxy,
+    MutagenError,
+    bchr,
+    cdata,
+    convert_error,
+    enum,
+    get_size,
+    hashable,
+    insert_bytes,
+    loadfile,
+    reraise,
+    resize_bytes,
+)
 
 from ._as_entry import ASEntryError, AudioSampleEntry
 from ._atom import Atom, AtomError, Atoms
@@ -162,7 +175,10 @@ class MP4Cover(bytes):
         return not self.__eq__(other)
 
     def __repr__(self):
-        return f"{type(self).__name__}({bytes(self)!r}, {AtomDataType(self.imageformat)!r})"
+        return (
+            f"{type(self).__name__}({bytes(self)!r},"
+            f" {AtomDataType(self.imageformat)!r})"
+        )
 
 
 @hashable
@@ -197,7 +213,10 @@ class MP4FreeForm(bytes):
         return not self.__eq__(other)
 
     def __repr__(self):
-        return f"{type(self).__name__}({bytes(self)!r}, {AtomDataType(self.dataformat)!r})"
+        return (
+            f"{type(self).__name__}({bytes(self)!r},"
+            f" {AtomDataType(self.dataformat)!r})"
+        )
 
 
 def _name2key(name):

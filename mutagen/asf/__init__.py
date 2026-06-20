@@ -13,8 +13,25 @@ __all__ = ["ASF", "Open"]
 from mutagen import FileType, StreamInfo, Tags
 from mutagen._util import DictMixin, convert_error, loadfile, resize_bytes
 
-from ._attrs import ASFBaseAttribute, ASFBoolAttribute, ASFByteArrayAttribute, ASFDWordAttribute, ASFGUIDAttribute, ASFQWordAttribute, ASFUnicodeAttribute, ASFValue, ASFWordAttribute
-from ._objects import ContentDescriptionObject, ExtendedContentDescriptionObject, HeaderExtensionObject, HeaderObject, MetadataLibraryObject, MetadataObject
+from ._attrs import (
+    ASFBaseAttribute,
+    ASFBoolAttribute,
+    ASFByteArrayAttribute,
+    ASFDWordAttribute,
+    ASFGUIDAttribute,
+    ASFQWordAttribute,
+    ASFUnicodeAttribute,
+    ASFValue,
+    ASFWordAttribute,
+)
+from ._objects import (
+    ContentDescriptionObject,
+    ExtendedContentDescriptionObject,
+    HeaderExtensionObject,
+    HeaderObject,
+    MetadataLibraryObject,
+    MetadataObject,
+)
 from ._util import ASFError, ASFHeaderError, error
 
 # flake8
@@ -240,7 +257,10 @@ class ASF(FileType):
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
-    def save(self, filething=None, padding=None):
+    def save(
+        self, filething=None,
+        padding=None,
+    ):
         """save(filething=None, padding=None)
 
         Save tag changes back to the loaded file.

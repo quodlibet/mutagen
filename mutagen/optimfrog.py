@@ -83,8 +83,7 @@ class OptimFROGInfo(StreamInfo):
             self.encoder_info = ""
 
     def pprint(self):
-        return "OptimFROG, %.2f seconds, %d Hz" % (self.length,
-                                                    self.sample_rate)
+        return f"OptimFROG, {self.length:.2f} seconds, {self.sample_rate} Hz"
 
 
 class OptimFROG(APEv2File):

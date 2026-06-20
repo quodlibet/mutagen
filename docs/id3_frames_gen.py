@@ -19,9 +19,9 @@ import mutagen.id3
 from mutagen.id3 import Frame, Frames, Frames_2_2
 
 BaseFrames = {k: v for (k, v) in vars(mutagen.id3).items()
-                   if v not in Frames.values() and v not in Frames_2_2.values()
-                   and isinstance(v, type) and
-                   (issubclass(v, Frame) or v is Frame)}
+              if v not in Frames.values() and v not in Frames_2_2.values()
+              and isinstance(v, type) and
+              (issubclass(v, Frame) or v is Frame)}
 
 
 def print_header(header, type_="-"):

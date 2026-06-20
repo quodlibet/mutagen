@@ -4,7 +4,14 @@ from io import BytesIO
 from mutagen.id3 import ID3
 from mutagen.mp3 import MP3, BitrateMode, EasyMP3, MPEGInfo, delete, iter_sync
 from mutagen.mp3 import error as MP3Error
-from mutagen.mp3._util import LAMEError, LAMEHeader, VBRIHeader, VBRIHeaderError, XingHeader, XingHeaderError
+from mutagen.mp3._util import (
+    LAMEError,
+    LAMEHeader,
+    VBRIHeader,
+    VBRIHeaderError,
+    XingHeader,
+    XingHeaderError,
+)
 from tests import DATA_DIR, TestCase, get_temp_copy
 
 

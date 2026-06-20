@@ -3,7 +3,44 @@ from io import BytesIO
 
 from mutagen import MutagenError, id3
 from mutagen.apev2 import APEv2
-from mutagen.id3 import APIC, CHAP, COMM, CRM, CTOC, ID3, IPLS, LNK, PIC, POPM, RVAD, TALB, TCON, TDAT, TDEN, TDRC, TIME, TIPL, TIT2, TIT3, TORY, TPE1, TPE2, TRCK, TSOT, TT1, TYER, BinaryFrame, Encoding, Frames, Frames_2_2, ID3NoHeaderError, ID3Tags, ID3UnsupportedVersionError, MakeID3v1, ParseID3v1
+from mutagen.id3 import (
+    APIC,
+    CHAP,
+    COMM,
+    CRM,
+    CTOC,
+    ID3,
+    IPLS,
+    LNK,
+    PIC,
+    POPM,
+    RVAD,
+    TALB,
+    TCON,
+    TDAT,
+    TDEN,
+    TDRC,
+    TIME,
+    TIPL,
+    TIT2,
+    TIT3,
+    TORY,
+    TPE1,
+    TPE2,
+    TRCK,
+    TSOT,
+    TT1,
+    TYER,
+    BinaryFrame,
+    Encoding,
+    Frames,
+    Frames_2_2,
+    ID3NoHeaderError,
+    ID3Tags,
+    ID3UnsupportedVersionError,
+    MakeID3v1,
+    ParseID3v1,
+)
 from mutagen.id3._id3v1 import find_id3v1
 from mutagen.id3._tags import ID3Header, determine_bpi, save_frame
 from mutagen.id3._util import BitPaddedInt, ID3SaveConfig
@@ -115,7 +152,7 @@ class TID3Read(TestCase):
         tags.add(id3.TMCL(encoding=0, people=[["e", "f"], ["g", "h"]]))
         tags.update_to_v23()
         self.assertEqual(tags["IPLS"], [["a", "b"], ["c", "d"],
-                                            ["e", "f"], ["g", "h"]])
+            ["e", "f"], ["g", "h"]])
 
     def test_tags(self):
         tags = ID3(self.v22)

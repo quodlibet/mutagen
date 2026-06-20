@@ -39,7 +39,13 @@ from ._specs import (
     VolumeAdjustmentsSpec,
     VolumePeakSpec,
 )
-from ._util import ID3EncryptionUnsupportedError, ID3JunkFrameError, ID3SaveConfig, error, unsynch
+from ._util import (
+    ID3EncryptionUnsupportedError,
+    ID3JunkFrameError,
+    ID3SaveConfig,
+    error,
+    unsynch,
+)
 
 
 def _bytes2key(b):
@@ -1122,8 +1128,8 @@ class SYLT(Frame):
 
     def __str__(self):
         unit = 'fr' if self.format == 1 else 'ms'
-        return "\n".join(f"[{time}{unit}]: {text}"
-                          for (text, time) in self.text)
+        return "\n".join(
+            f"[{time}{unit}]: {text}" for (text, time) in self.text)
 
     def __bytes__(self):
         return str(self).encode("utf-8")

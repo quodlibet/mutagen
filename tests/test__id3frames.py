@@ -511,7 +511,7 @@ class TVariousFrames(TestCase):
     ]
 
     def _get_frame(self, id_):
-        return getattr(getattr(__import__('mutagen.id3'), "id3"), id_)
+        return getattr(__import__('mutagen.id3').id3, id_)
 
     def test_all_tested(self):
         check = dict.fromkeys(list(Frames.keys()) + list(Frames_2_2.keys()))
@@ -1166,14 +1166,14 @@ class Tread_frames_load_frame(TestCase):
                 0, len(list(read_frames(_24, data, Frames)[1])))
 
     def test_drops_truncated_frames(self):
-        tail = b'\x00\x00\x00\x03\x00\x00' b'\x01\x02\x03'
+        tail = b'\x00\x00\x00\x03\x00\x00\x01\x02\x03'
         for head in b'RVA2 TXXX APIC'.split():
             data = head + tail
             self.assertEqual(
                 0, len(read_frames(_24, data, Frames)[1]))
 
     def test_drops_nonalphanum_frames(self):
-        tail = b'\x00\x00\x00\x03\x00\x00' b'\x01\x02\x03'
+        tail = b'\x00\x00\x00\x03\x00\x00\x01\x02\x03'
         for head in [b'\x06\xaf\xfe\x20', b'ABC\x00', b'A   ']:
             data = head + tail
             self.assertEqual(

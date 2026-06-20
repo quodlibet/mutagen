@@ -123,11 +123,17 @@ class Atom:
     def __repr__(self):
         cls = self.__class__.__name__
         if self.children is None:
-            return f"<{cls} name={self.name!r} length={self.length!r} offset={self.offset!r}>"
+            return (
+                f"<{cls} name={self.name!r} length={self.length!r}"
+                f" offset={self.offset!r}>"
+            )
         else:
             children = "\n".join([" " + line for child in self.children
                                   for line in repr(child).splitlines()])
-            return f"<{cls} name={self.name!r} length={self.length!r} offset={self.offset!r}\n{children}>"
+            return (
+                f"<{cls} name={self.name!r} length={self.length!r}"
+                f" offset={self.offset!r}\n{children}>"
+            )
 
 
 class Atoms:

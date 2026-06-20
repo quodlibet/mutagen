@@ -5,6 +5,7 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
+from collections.abc import Sequence
 import warnings
 
 from mutagen._util import DictMixin, loadfile
@@ -205,7 +206,11 @@ class StreamInfo:
 
 
 @loadfile(method=False)
-def File(filething, options=None, easy=False):
+def File(
+    filething,
+    options: Sequence[type[FileType]] | None = None,
+    easy=False,
+):
     """File(filething, options=None, easy=False)
 
     Guess the type of the file and try to open it.

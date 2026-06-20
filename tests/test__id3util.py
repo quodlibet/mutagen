@@ -30,14 +30,14 @@ class BitPaddedIntTest(TestCase):
 
     def test_32b(self):
         self.assertEqual(BitPaddedInt(b'\xFF\xFF\xFF\xFF', bits=8),
-                          0xFFFFFFFF)
+            0xFFFFFFFF)
 
     def test_32bi(self):
         self.assertEqual(BitPaddedInt(0xFFFFFFFF, bits=8), 0xFFFFFFFF)
 
     def test_s32b(self):
         self.assertEqual(BitPaddedInt(b'\xFF\xFF\xFF\xFF', bits=8).as_str(),
-                          b'\xFF\xFF\xFF\xFF')
+            b'\xFF\xFF\xFF\xFF')
 
     def test_s0(self):
         self.assertEqual(BitPaddedInt.to_str(0), b'\x00\x00\x00\x00')
@@ -67,7 +67,7 @@ class BitPaddedIntTest(TestCase):
 
     def test_str_int_init(self):
         self.assertEqual(BitPaddedInt(238).as_str(),
-                          BitPaddedInt(struct.pack('>L', 238)).as_str())
+            BitPaddedInt(struct.pack('>L', 238)).as_str())
 
     def test_varwidth(self):
         self.assertEqual(len(BitPaddedInt.to_str(100)), 4)

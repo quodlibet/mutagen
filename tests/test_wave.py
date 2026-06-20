@@ -37,33 +37,33 @@ class TWave(TestCase):
 
     def test_sample_rate(self):
         self.assertEqual(self.wav_pcm_2s_16000_08_ID3v23.info.sample_rate,
-                             16000)
+            16000)
         self.assertEqual(self.wav_pcm_2s_44100_16_ID3v23.info.sample_rate,
-                             44100)
+            44100)
 
     def test_number_of_samples(self):
         self.assertEqual(self.wav_pcm_2s_16000_08_ID3v23.
-                             info._number_of_samples, 32000)
+            info._number_of_samples, 32000)
         self.assertEqual(self.wav_pcm_2s_44100_16_ID3v23.
-                             info._number_of_samples, 88200)
+            info._number_of_samples, 88200)
 
     def test_bits_per_sample(self):
         self.assertEqual(self.wav_pcm_2s_16000_08_ID3v23.
-                             info.bits_per_sample, 8)
+            info.bits_per_sample, 8)
         self.assertEqual(self.wav_pcm_2s_44100_16_ID3v23.
-                             info.bits_per_sample, 16)
+            info.bits_per_sample, 16)
 
     def test_bitrate(self):
         self.assertEqual(self.wav_pcm_2s_16000_08_ID3v23.
-                             info.bitrate, 256000)
+            info.bitrate, 256000)
         self.assertEqual(self.wav_pcm_2s_44100_16_ID3v23.
-                             info.bitrate, 1411200)
+            info.bitrate, 1411200)
 
     def test_length(self):
         self.assertAlmostEqual(self.wav_pcm_2s_16000_08_ID3v23.info.length,
-                                   2.0, 2)
+            2.0, 2)
         self.assertAlmostEqual(self.wav_pcm_2s_44100_16_ID3v23.info.length,
-                                   2.0, 2)
+            2.0, 2)
 
     def test_not_my_file(self):
         self.assertRaises(
@@ -78,6 +78,7 @@ class TWave(TestCase):
 
     def test_id3_tags(self):
         id3 = self.wav_pcm_2s_44100_16_ID3v23.tags
+        assert id3 is not None
         self.assertEqual(id3["TALB"], "Quod Libet Test Data")
         self.assertEqual(id3["TCON"], "Silence")
         self.assertEqual(id3["TIT2"], "Silence")
@@ -104,11 +105,11 @@ class TWave(TestCase):
     def test_add_tags_already_there(self):
         self.assertTrue(self.tmp_wav_pcm_2s_16000_08_ID3v23.tags)
         self.assertRaises(Exception,
-                              self.tmp_wav_pcm_2s_16000_08_ID3v23.add_tags)
+            self.tmp_wav_pcm_2s_16000_08_ID3v23.add_tags)
 
     def test_roundtrip(self):
         self.assertEqual(self.tmp_wav_pcm_2s_16000_08_ID3v23["TIT2"],
-                             ["Silence"])
+        ["Silence"])
         self.tmp_wav_pcm_2s_16000_08_ID3v23.save()
         new = WAVE(self.tmp_wav_pcm_2s_16000_08_ID3v23.filename)
         self.assertEqual(new["TIT2"], ["Silence"])
@@ -145,13 +146,14 @@ class TWave(TestCase):
         wav = WAVE(path_tmp_wav_file)
         id3 = wav.tags
         self.assertIsInstance(id3, ID3)
+        assert id3 is not None
         self.assertEqual(id3["TRCK"], "1/10")
         self.assertEqual(id3["TPOS"], "1/1")
         self.assertEqual(id3["TXXX:MusicBrainz Release Group Id"],
-                          "e00305af-1c72-469b-9a7c-6dc665ca9adc")
+         "e00305af-1c72-469b-9a7c-6dc665ca9adc")
         self.assertEqual(id3["TXXX:MusicBrainz Album Artist Id"], [
-                          "3fe817fc-966e-4ece-b00a-76be43e7e73c",
-                          "984f8239-8fe1-4683-9c54-10ffb14439e9"])
+         "3fe817fc-966e-4ece-b00a-76be43e7e73c",
+         "984f8239-8fe1-4683-9c54-10ffb14439e9"])
         self.assertEqual(id3["TXXX:CATALOGNUMBER"], ["PRAR931391"])
         self.assertEqual(id3["TSRC"], ["NLB931100460", "USMH51100098"])
 
@@ -162,7 +164,24 @@ class TWave(TestCase):
             id3 ID3 Tag object
             major ID3 major version, e.g.: 3 for ID3v2.3
         """
-        from mutagen.id3 import IPLS, TALB, TDAT, TIT2, TMED, TORY, TPE1, TPE2, TPOS, TPUB, TRCK, TSO2, TSRC, TXXX, TYER, UFID
+        from mutagen.id3 import (
+            IPLS,
+            TALB,
+            TDAT,
+            TIT2,
+            TMED,
+            TORY,
+            TPE1,
+            TPE2,
+            TPOS,
+            TPUB,
+            TRCK,
+            TSO2,
+            TSRC,
+            TXXX,
+            TYER,
+            UFID,
+        )
         id3.add(TRCK(encoding=major, text="1/10"))
         id3.add(TPOS(encoding=major, text="1/1"))
         id3.add(TXXX(encoding=major, desc="MusicBrainz Release Group Id",

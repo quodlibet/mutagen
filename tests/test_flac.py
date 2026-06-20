@@ -5,7 +5,19 @@ import pytest
 
 from mutagen import MutagenError
 from mutagen._vorbis import VComment
-from mutagen.flac import FLAC, CueSheet, MetadataBlock, Padding, Picture, SeekTable, StreamInfo, VCFLACDict, delete, error, to_int_be
+from mutagen.flac import (
+    FLAC,
+    CueSheet,
+    MetadataBlock,
+    Padding,
+    Picture,
+    SeekTable,
+    StreamInfo,
+    VCFLACDict,
+    delete,
+    error,
+    to_int_be,
+)
 from mutagen.id3 import ID3, TIT2, ID3NoHeaderError
 from tests import DATA_DIR, TestCase, get_temp_copy
 from tests.test__vorbis import TVCommentDict
@@ -130,7 +142,7 @@ class TStreamInfo(TestCase):
 
     def test_md5_signature(self):
         self.assertEqual(self.i.md5_signature,
-                             int("2890f9e129321301d4a7a9112138ab91", 16))
+            int("2890f9e129321301d4a7a9112138ab91", 16))
 
     def test_eq(self):
         self.assertEqual(self.i, self.i)
@@ -148,12 +160,12 @@ class TSeekTable(TestCase):
 
     def test_seektable(self):
         self.assertEqual(self.st.seekpoints,
-                             [(0, 0, 4608),
-                              (41472, 11852, 4608),
-                              (50688, 14484, 4608),
-                              (87552, 25022, 4608),
-                              (105984, 30284, 4608),
-                              (0xFFFFFFFFFFFFFFFF, 0, 0)])
+            [(0, 0, 4608),
+            (41472, 11852, 4608),
+            (50688, 14484, 4608),
+            (87552, 25022, 4608),
+            (105984, 30284, 4608),
+            (0xFFFFFFFFFFFFFFFF, 0, 0)])
 
     def test_eq(self):
         self.assertEqual(self.st, self.st)
@@ -196,7 +208,7 @@ class TCueSheet(TestCase):
         self.assertEqual(self.cs.tracks[1].type, 1)
         self.assertEqual(self.cs.tracks[1].pre_emphasis, True)
         self.assertEqual(self.cs.tracks[1].indexes, [(1, 0),
-                                                         (2, 588)])
+            (2, 588)])
 
     def test_lead_out(self):
         self.assertEqual(self.cs.tracks[-1].track_number, 170)
@@ -392,9 +404,8 @@ class TFLAC(TestCase):
     def test_write_nochange(self):
         f = FLAC(self.NEW)
         f.save()
-        with open(self.SAMPLE, "rb") as a:
-            with open(self.NEW, "rb") as b:
-                self.assertEqual(a.read(), b.read())
+        with open(self.SAMPLE, "rb") as a, open(self.NEW, "rb") as b:
+            self.assertEqual(a.read(), b.read())
 
     def test_write_changetitle(self):
         f = FLAC(self.NEW)

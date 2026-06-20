@@ -35,7 +35,18 @@ from collections.abc import MutableSequence
 from io import BytesIO
 
 from mutagen import FileType, Metadata, StreamInfo
-from mutagen._util import DictMixin, MutagenError, cdata, convert_error, delete_bytes, get_size, loadfile, reraise, seek_end, total_ordering
+from mutagen._util import (
+    DictMixin,
+    MutagenError,
+    cdata,
+    convert_error,
+    delete_bytes,
+    get_size,
+    loadfile,
+    reraise,
+    seek_end,
+    total_ordering,
+)
 
 
 def is_valid_apev2_key(key):

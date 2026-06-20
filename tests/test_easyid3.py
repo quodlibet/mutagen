@@ -107,9 +107,8 @@ class TEasyID3(TestCase):
 
     def test_write_single(self):
         for key in EasyID3.valid_keys:
-            if (key == "date") or (key == "originaldate"):
-                continue
-            elif key.startswith("replaygain_"):
+            if (key == "date") or (key == "originaldate") or key.startswith(
+                    "replaygain_"):
                 continue
 
             # Test creation
@@ -130,11 +129,8 @@ class TEasyID3(TestCase):
 
     def test_write_double(self):
         for key in EasyID3.valid_keys:
-            if (key == "date") or (key == "originaldate"):
-                continue
-            elif key.startswith("replaygain_"):
-                continue
-            elif key == "musicbrainz_trackid":
+            if (key == "date") or (key == "originaldate") or key.startswith(
+                    "replaygain_") or key == "musicbrainz_trackid":
                 continue
 
             self.id3[key] = ["a test", "value"]
@@ -274,7 +270,7 @@ class TEasyID3(TestCase):
 
     def test_bad_trackid(self):
         self.assertRaises(ValueError, self.id3.__setitem__,
-                              "musicbrainz_trackid", ["a", "b"])
+            "musicbrainz_trackid", ["a", "b"])
         self.assertFalse(self.realid3.getall("RVA2"))
 
     def test_gain_bad_key(self):

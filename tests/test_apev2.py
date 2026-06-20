@@ -93,7 +93,7 @@ class TAPEWriter(TestCase):
         tag.delete()
         self.assertEqual(os.path.getsize(self.just_tag), self.offset)
         self.assertEqual(os.path.getsize(SAMPLE) + self.offset,
-                             os.path.getsize(self.sample_new))
+            os.path.getsize(self.sample_new))
         self.assertFalse(tag)
 
     def test_empty(self):
@@ -215,7 +215,7 @@ class TAPEv2(TestCase):
 
     def test_no_tag(self):
         self.assertRaises(MutagenError, mutagen.apev2.APEv2,
-                              os.path.join(DATA_DIR, "empty.mp3"))
+            os.path.join(DATA_DIR, "empty.mp3"))
 
     def test_cases(self):
         self.assertEqual(self.audio["artist"], self.audio["ARTIST"])

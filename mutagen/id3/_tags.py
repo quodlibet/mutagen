@@ -13,8 +13,32 @@ from itertools import zip_longest
 from mutagen._tags import Tags
 from mutagen._util import DictProxy, convert_error, read_full
 
-from ._frames import APIC, IPLS, TDAT, TDOR, TDRC, TIME, TIPL, TORY, TYER, Frame, Frames, Frames_2_2, TextFrame
-from ._util import BitPaddedInt, ID3EncryptionUnsupportedError, ID3JunkFrameError, ID3NoHeaderError, ID3SaveConfig, ID3UnsupportedVersionError, error, is_valid_frame_id, unsynch
+from ._frames import (
+    APIC,
+    IPLS,
+    TDAT,
+    TDOR,
+    TDRC,
+    TIME,
+    TIPL,
+    TORY,
+    TYER,
+    Frame,
+    Frames,
+    Frames_2_2,
+    TextFrame,
+)
+from ._util import (
+    BitPaddedInt,
+    ID3EncryptionUnsupportedError,
+    ID3JunkFrameError,
+    ID3NoHeaderError,
+    ID3SaveConfig,
+    ID3UnsupportedVersionError,
+    error,
+    is_valid_frame_id,
+    unsynch,
+)
 
 
 class ID3Header:
@@ -69,10 +93,8 @@ class ID3Header:
         if not BitPaddedInt.has_valid_padding(size):
             raise error("Header size not synchsafe")
 
-        if (self.version >= self._V24) and (flags & 0x0f):
-            raise error(
-                f"{fn!r} has invalid flags {flags:#02x}")
-        elif (self._V23 <= self.version < self._V24) and (flags & 0x1f):
+        if (self.version >= self._V24) and (flags & 0x0f) or \
+                (self._V23 <= self.version < self._V24) and (flags & 0x1f):
             raise error(
                 f"{fn!r} has invalid flags {flags:#02x}")
 

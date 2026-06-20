@@ -13,6 +13,9 @@ intended for internal use in Mutagen only.
 
 import codecs
 import decimal
+import errno
+import struct
+import sys
 from collections import namedtuple
 from contextlib import contextmanager
 from fnmatch import fnmatchcase
@@ -194,7 +197,10 @@ can be used for file type detection
 
 
 @contextmanager
-def _openfile(instance, filething, filename, fileobj, writable, create):
+def _openfile(
+    instance, filething, filename: str | None,
+    fileobj: BytesIO, writable: bool, create: bool,
+):
     """yields a FileThing
 
     Args:
@@ -363,8 +369,8 @@ def enum(cls):
             return "<%s.%s: %d>" % (type(self).__name__, map_[self], int(self))
         return "%d" % int(self)
 
-    setattr(new_type, "__repr__", repr_)
-    setattr(new_type, "__str__", str_)
+    new_type.__repr__ = repr_
+    new_type.__str__ = str_
 
     return new_type
 
@@ -417,8 +423,8 @@ def flags(cls):
     def repr_(self):
         return "<%s: %d>" % (str(self), int(self))
 
-    setattr(new_type, "__repr__", repr_)
-    setattr(new_type, "__str__", str_)
+    new_type.__repr__ = repr_
+    new_type.__str__ = str_
 
     return new_type
 
@@ -677,7 +683,9 @@ def seek_end(fileobj, offset: int) -> None:
         fileobj.seek(-offset, 2)
 
 
-def resize_file(fobj, diff: int, BUFFER_SIZE: int = _DEFAULT_BUFFER_SIZE) -> None:
+def resize_file(
+    fobj: BytesIO, diff: int, BUFFER_SIZE: int = _DEFAULT_BUFFER_SIZE,
+) -> None:
     """Resize a file by `diff`.
 
     New space will be filled with zeros.

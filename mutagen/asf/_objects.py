@@ -7,6 +7,8 @@
 # (at your option) any later version.
 
 import struct
+from collections.abc import Callable
+from io import BytesIO
 
 from mutagen._tags import PaddingInfo
 from mutagen._util import cdata, get_size
@@ -28,13 +30,13 @@ class BaseObject:
     def parse(self, asf, data):
         self.data = data
 
-    def render(self, asf):
+    def render(self, asf) -> bytes:
         data = self.GUID + struct.pack("<Q", len(self.data) + 24) + self.data
         return data
 
     def get_child(self, guid):
         for obj in self.objects:
-            if obj.GUID == guid:
+            if guid == obj.GUID:
                 return obj
         return None
 
@@ -51,7 +53,10 @@ class BaseObject:
             return UnknownObject(guid)
 
     def __repr__(self):
-        return f"<{type(self).__name__} GUID={bytes2guid(self.GUID)} objects={self.objects!r}>"
+        return (
+            f"<{type(self).__name__} GUID={bytes2guid(self.GUID)}"
+            f" objects={self.objects!r}>"
+        )
 
     def pprint(self):
         l = []
@@ -132,7 +137,9 @@ class HeaderObject(BaseObject):
 
         return struct.unpack("<QL", header[16:28])
 
-    def render_full(self, asf, fileobj, available, padding_func):
+    def render_full(
+        self, asf, fileobj: BytesIO, available: int, padding_func: Callable,
+    ) -> bytes:
         # Render everything except padding
         num_objects = 0
         data = bytearray()
