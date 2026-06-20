@@ -21,6 +21,7 @@ from contextlib import contextmanager
 from fnmatch import fnmatchcase
 from functools import wraps
 from io import BytesIO
+from typing import Any
 
 _DEFAULT_BUFFER_SIZE = 2 ** 20
 
