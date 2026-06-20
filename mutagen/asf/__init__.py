@@ -10,17 +10,29 @@
 
 __all__ = ["ASF", "Open"]
 
-from mutagen import FileType, Tags, StreamInfo
-from mutagen._util import resize_bytes, DictMixin, loadfile, convert_error
+from mutagen import FileType, StreamInfo, Tags
+from mutagen._util import DictMixin, convert_error, loadfile, resize_bytes
 
-from ._util import error, ASFError, ASFHeaderError
-from ._objects import HeaderObject, MetadataLibraryObject, MetadataObject, \
-    ExtendedContentDescriptionObject, HeaderExtensionObject, \
-    ContentDescriptionObject
-from ._attrs import ASFGUIDAttribute, ASFWordAttribute, ASFQWordAttribute, \
-    ASFDWordAttribute, ASFBoolAttribute, ASFByteArrayAttribute, \
-    ASFUnicodeAttribute, ASFBaseAttribute, ASFValue
-
+from ._attrs import (
+    ASFBaseAttribute,
+    ASFBoolAttribute,
+    ASFByteArrayAttribute,
+    ASFDWordAttribute,
+    ASFGUIDAttribute,
+    ASFQWordAttribute,
+    ASFUnicodeAttribute,
+    ASFValue,
+    ASFWordAttribute,
+)
+from ._objects import (
+    ContentDescriptionObject,
+    ExtendedContentDescriptionObject,
+    HeaderExtensionObject,
+    HeaderObject,
+    MetadataLibraryObject,
+    MetadataObject,
+)
+from ._util import ASFError, ASFHeaderError, error
 
 # flake8
 error, ASFError, ASFHeaderError, ASFValue
@@ -49,26 +61,26 @@ class ASFInfo(StreamInfo):
     sample_rate = 0
     bitrate = 0
     channels = 0
-    codec_type = u""
-    codec_name = u""
-    codec_description = u""
+    codec_type = ""
+    codec_name = ""
+    codec_description = ""
 
     def __init__(self):
         self.length = 0.0
         self.sample_rate = 0
         self.bitrate = 0
         self.channels = 0
-        self.codec_type = u""
-        self.codec_name = u""
-        self.codec_description = u""
+        self.codec_type = ""
+        self.codec_name = ""
+        self.codec_description = ""
 
     def pprint(self):
         """Returns:
             text: a stream information text summary
         """
 
-        s = u"ASF (%s) %d bps, %s Hz, %d channels, %.2f seconds" % (
-            self.codec_type or self.codec_name or u"???", self.bitrate,
+        s = "ASF (%s) %d bps, %s Hz, %d channels, %.2f seconds" % (
+            self.codec_type or self.codec_name or "???", self.bitrate,
             self.sample_rate, self.channels, self.length)
         return s
 
@@ -172,7 +184,7 @@ class ASFTags(list, DictMixin, Tags):  # type: ignore
         :rtype: text
         """
 
-        return "\n".join("%s=%s" % (k, v) for k, v in self)
+        return "\n".join(f"{k}={v}" for k, v in self)
 
 
 UNICODE = ASFUnicodeAttribute.TYPE
@@ -245,7 +257,10 @@ class ASF(FileType):
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
-    def save(self, filething=None, padding=None):
+    def save(
+        self, filething=None,
+        padding=None,
+    ):
         """save(filething=None, padding=None)
 
         Save tag changes back to the loaded file.

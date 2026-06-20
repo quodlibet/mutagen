@@ -20,10 +20,12 @@ import struct
 from io import BytesIO
 
 from mutagen import StreamInfo
-from mutagen.flac import StreamInfo as FLACStreamInfo, error as FLACError
+from mutagen._util import convert_error, loadfile
 from mutagen._vorbis import VCommentDict
-from mutagen._util import loadfile, convert_error
-from mutagen.ogg import OggPage, OggFileType, error as OggError
+from mutagen.flac import StreamInfo as FLACStreamInfo
+from mutagen.flac import error as FLACError
+from mutagen.ogg import OggFileType, OggPage
+from mutagen.ogg import error as OggError
 
 
 class error(OggError):
@@ -83,7 +85,7 @@ class OggFLACStreamInfo(StreamInfo):
         self.length = page.position / float(self.sample_rate)
 
     def pprint(self):
-        return u"Ogg FLAC, %.2f seconds, %d Hz" % (
+        return "Ogg FLAC, %.2f seconds, %d Hz" % (
             self.length, self.sample_rate)
 
 
@@ -100,7 +102,7 @@ class OggFLACVComment(VCommentDict):
                 pages.append(page)
                 complete = page.complete or (len(page.packets) > 1)
         comment = BytesIO(OggPage.to_packets(pages)[0][4:])
-        super(OggFLACVComment, self).__init__(comment, framing=False)
+        super().__init__(comment, framing=False)
 
     def _inject(self, fileobj, padding_func):
         """Write tag data into the FLAC Vorbis comment packet/page."""

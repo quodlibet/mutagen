@@ -12,8 +12,6 @@
 
 import sys
 
-from mutagen.id3 import ID3
-from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
 from mutagen._util import (
     MutagenError,
     convert_error,
@@ -23,6 +21,9 @@ from mutagen._util import (
     reraise,
     resize_bytes,
 )
+from mutagen.id3 import ID3
+from mutagen.id3._util import ID3NoHeaderError
+from mutagen.id3._util import error as ID3Error
 
 
 class error(MutagenError):
@@ -49,7 +50,7 @@ def is_valid_chunk_id(id: str) -> bool:
     """
 
     assert isinstance(id, str), \
-        'id is of type %s, must be str: %r' % (type(id), id)
+        f'id is of type {type(id)}, must be str: {id!r}'
 
     return ((0 < len(id) <= 4) and (min(id) >= ' ') and
             (max(id) <= '~'))
@@ -61,7 +62,7 @@ def assert_valid_chunk_id(id: str) -> None:
         raise ValueError("IFF chunk ID must be four ASCII characters.")
 
 
-class IffChunk(object):
+class IffChunk:
     """Generic representation of a single IFF chunk.
 
     IFF chunks always consist of an ID followed by the chunk size. The exact
@@ -203,7 +204,7 @@ class IffChunk(object):
         return min(expected_size, max_size_possible)
 
 
-class IffContainerChunkMixin():
+class IffContainerChunkMixin:
     """A IFF chunk containing other chunks.
 
     A container chunk can have an additional name as the first 4 bytes of the

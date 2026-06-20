@@ -13,14 +13,35 @@ from itertools import zip_longest
 from mutagen._tags import Tags
 from mutagen._util import DictProxy, convert_error, read_full
 
-from ._util import BitPaddedInt, unsynch, ID3JunkFrameError, \
-    ID3EncryptionUnsupportedError, is_valid_frame_id, error, \
-    ID3NoHeaderError, ID3UnsupportedVersionError, ID3SaveConfig
-from ._frames import TDRC, APIC, TDOR, TIME, TIPL, TORY, TDAT, Frames_2_2, \
-    TextFrame, TYER, Frame, IPLS, Frames
+from ._frames import (
+    APIC,
+    IPLS,
+    TDAT,
+    TDOR,
+    TDRC,
+    TIME,
+    TIPL,
+    TORY,
+    TYER,
+    Frame,
+    Frames,
+    Frames_2_2,
+    TextFrame,
+)
+from ._util import (
+    BitPaddedInt,
+    ID3EncryptionUnsupportedError,
+    ID3JunkFrameError,
+    ID3NoHeaderError,
+    ID3SaveConfig,
+    ID3UnsupportedVersionError,
+    error,
+    is_valid_frame_id,
+    unsynch,
+)
 
 
-class ID3Header(object):
+class ID3Header:
 
     _V24 = (2, 4, 0)
     _V23 = (2, 3, 0)
@@ -72,12 +93,10 @@ class ID3Header(object):
         if not BitPaddedInt.has_valid_padding(size):
             raise error("Header size not synchsafe")
 
-        if (self.version >= self._V24) and (flags & 0x0f):
+        if (self.version >= self._V24) and (flags & 0x0f) or \
+                (self._V23 <= self.version < self._V24) and (flags & 0x1f):
             raise error(
-                "%r has invalid flags %#02x" % (fn, flags))
-        elif (self._V23 <= self.version < self._V24) and (flags & 0x1f):
-            raise error(
-                "%r has invalid flags %#02x" % (fn, flags))
+                f"{fn!r} has invalid flags {flags:#02x}")
 
         if self.f_extended:
             extsize_data = read_full(fileobj, 4)
@@ -172,7 +191,7 @@ class ID3Tags(DictProxy, Tags):
     def __init__(self, *args, **kwargs):
         self.unknown_frames = []
         self._unknown_v2_version = 4
-        super(ID3Tags, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def _read(self, header, data):
         frames, unknown_frames, data = read_frames(
@@ -353,7 +372,7 @@ class ID3Tags(DictProxy, Tags):
     def __setitem__(self, key, tag):
         if not isinstance(tag, Frame):
             raise TypeError("%r not a Frame instance" % tag)
-        super(ID3Tags, self).__setitem__(key, tag)
+        super().__setitem__(key, tag)
 
     def __update_common(self):
         """Updates done by both v23 and v24 update"""

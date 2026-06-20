@@ -21,22 +21,22 @@ __all__ = ["TAK", "Open", "delete"]
 import struct
 
 from mutagen import StreamInfo
+from mutagen._util import (
+    BitReader,
+    BitReaderError,
+    convert_error,
+    endswith,
+    enum,
+)
 from mutagen.apev2 import (
     APEv2File,
     delete,
     error,
 )
-from mutagen._util import (
-    BitReader,
-    BitReaderError,
-    convert_error,
-    enum,
-    endswith,
-)
 
 
 @enum
-class TAKMetadata(object):
+class TAKMetadata:
     END = 0
     STREAM_INFO = 1
     SEEK_TABLE = 2  # Removed in TAK 1.1.1
@@ -216,7 +216,7 @@ class TAKInfo(StreamInfo):
         self.encoder_info = "TAK %d.%d.%d" % (major, minor, patch)
 
     def pprint(self):
-        return u"%s, %d Hz, %d bits, %.2f seconds, %d channel(s)" % (
+        return "%s, %d Hz, %d bits, %.2f seconds, %d channel(s)" % (
             self.encoder_info or "TAK", self.sample_rate, self.bits_per_sample,
             self.length, self.channels)
 

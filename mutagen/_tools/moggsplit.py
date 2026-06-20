@@ -12,8 +12,7 @@ import sys
 
 import mutagen.ogg
 
-from ._util import SignalHandler, OptionParser
-
+from ._util import OptionParser, SignalHandler
 
 _sig = SignalHandler()
 

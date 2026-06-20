@@ -14,18 +14,20 @@ from mutagen._file import FileType
 from mutagen._iff import (
     IffChunk,
     IffContainerChunkMixin,
-    IffID3,
     IffFile,
+    IffID3,
     InvalidChunk,
+)
+from mutagen._iff import (
     error as _IffError,
 )
-from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
 from mutagen._util import (
     convert_error,
-    loadfile,
     endswith,
+    loadfile,
 )
-
+from mutagen.id3._util import ID3NoHeaderError
+from mutagen.id3._util import error as ID3Error
 
 __all__ = ["DSDIFF", "Open", "delete"]
 
@@ -99,7 +101,7 @@ class DSDIFFFile(IffFile):
     def __init__(self, fileobj):
         super().__init__(DSDIFFChunk, fileobj)
 
-        if self.root.id != u'FRM8':
+        if self.root.id != 'FRM8':
             raise InvalidChunk("Root chunk must be a FRM8 chunk, got %r"
                                % self.root)
 
@@ -194,7 +196,7 @@ class DSDIFFInfo(StreamInfo):
                     self.bitrate = avg_frame_size * 8 * frame_rate
 
     def pprint(self):
-        return u"%d channel DSDIFF (%s) @ %d bps, %s Hz, %.2f seconds" % (
+        return "%d channel DSDIFF (%s) @ %d bps, %s Hz, %.2f seconds" % (
             self.channels, self.compression, self.bitrate, self.sample_rate,
             self.length)
 
@@ -212,7 +214,7 @@ def delete(filething):
     """Completely removes the ID3 chunk from the DSDIFF file"""
 
     try:
-        del DSDIFFFile(filething.fileobj)[u'ID3']
+        del DSDIFFFile(filething.fileobj)['ID3']
     except KeyError:
         pass
 

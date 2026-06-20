@@ -18,10 +18,11 @@ __all__ = ["OggTheora", "Open", "delete"]
 import struct
 
 from mutagen import StreamInfo
-from mutagen._vorbis import VCommentDict
-from mutagen._util import cdata, get_size, loadfile, convert_error
 from mutagen._tags import PaddingInfo
-from mutagen.ogg import OggPage, OggFileType, error as OggError
+from mutagen._util import cdata, convert_error, get_size, loadfile
+from mutagen._vorbis import VCommentDict
+from mutagen.ogg import OggFileType, OggPage
+from mutagen.ogg import error as OggError
 
 
 class error(OggError):
@@ -81,8 +82,7 @@ class OggTheoraInfo(StreamInfo):
         self.length = frames / float(self.fps)
 
     def pprint(self):
-        return u"Ogg Theora, %.2f seconds, %d bps" % (self.length,
-                                                      self.bitrate)
+        return f"Ogg Theora, {self.length:.2f} seconds, {self.bitrate} bps"
 
 
 class OggTheoraCommentDict(VCommentDict):
@@ -100,7 +100,7 @@ class OggTheoraCommentDict(VCommentDict):
         if not packets:
             raise error("Missing metadata packet")
         data = packets[0][7:]
-        super(OggTheoraCommentDict, self).__init__(data, framing=False)
+        super().__init__(data, framing=False)
         self._padding = len(data) - self._size
 
     def _inject(self, fileobj, padding_func):
