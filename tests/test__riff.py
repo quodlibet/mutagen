@@ -119,7 +119,7 @@ class TRiffFile(TestCase):
         # Reloading the file should give the same results
         new_riff_file = RiffFile(self.file_2_tmp)
         self.assertEqual(new_riff_file.root.size,
-                             riff_file.root.size)
+            riff_file.root.size)
         self.assertEqual(new_riff_file['TST2'].size,
             riff_file['TST2'].size)
         self.assertEqual(new_riff_file['TST2'].data_size,

@@ -11,11 +11,24 @@ import struct
 
 import mutagen
 from mutagen._tags import PaddingInfo
-from mutagen._util import convert_error, delete_bytes, enum, insert_bytes, loadfile, read_full
+from mutagen._util import (
+    convert_error,
+    delete_bytes,
+    enum,
+    insert_bytes,
+    loadfile,
+    read_full,
+)
 
 from ._id3v1 import MakeID3v1, find_id3v1
 from ._tags import ID3Header, ID3Tags
-from ._util import BitPaddedInt, ID3NoHeaderError, ID3SaveConfig, ID3UnsupportedVersionError, error
+from ._util import (
+    BitPaddedInt,
+    ID3NoHeaderError,
+    ID3SaveConfig,
+    ID3UnsupportedVersionError,
+    error,
+)
 
 
 @enum
@@ -107,8 +120,10 @@ class ID3(ID3Tags, mutagen.Metadata):
 
     @convert_error(IOError, error)
     @loadfile()
-    def load(self, filething, known_frames=None, translate=True, v2_version=4,
-             load_v1=True):
+    def load(
+        self, filething, known_frames=None, translate=True,
+        v2_version=4, load_v1=True,
+    ):
         """Load tags from a filename.
 
         Args:
@@ -185,8 +200,8 @@ class ID3(ID3Tags, mutagen.Metadata):
             else:
                 self.update_to_v24()
 
-    def _prepare_data(self, fileobj, start, available, v2_version, v23_sep,
-                      pad_func):
+    def _prepare_data(self, fileobj, start,
+                      available, v2_version, v23_sep, pad_func) -> bytes:
 
         if v2_version not in (3, 4):
             raise ValueError("Only 3 or 4 allowed for v2_version")
@@ -283,7 +298,10 @@ class ID3(ID3Tags, mutagen.Metadata):
             f.truncate()
 
     @loadfile(writable=True)
-    def delete(self, filething=None, delete_v1=True, delete_v2=True):
+    def delete(
+        self, filething=None,
+        delete_v1=True, delete_v2=True,
+    ):
         """delete(filething=None, delete_v1=True, delete_v2=True)
 
         Remove tags from a file.

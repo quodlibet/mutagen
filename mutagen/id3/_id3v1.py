@@ -92,7 +92,7 @@ def ParseID3v1(data, v2_version=4, known_frames=None):
         data = data[data.index(b"TAG"):]
     except ValueError:
         return None
-    if 128 < len(data) or len(data) < 124:
+    if len(data) > 128 or len(data) < 124:
         return None
 
     # Issue #69 - Previous versions of Mutagen, when encountering

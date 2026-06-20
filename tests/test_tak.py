@@ -17,9 +17,9 @@ class TTAK(TestCase):
 
     def test_length(self):
         self.assertAlmostEqual(self.tak_no_tags.info.length, 3.68,
-                                   delta=0.009)
+            delta=0.009)
         self.assertAlmostEqual(self.tak_tags.info.length, 0.08,
-                                   delta=0.009)
+            delta=0.009)
 
     def test_sample_rate(self):
         self.assertEqual(self.tak_no_tags.info.sample_rate, 44100)

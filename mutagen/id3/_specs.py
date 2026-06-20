@@ -9,7 +9,16 @@ import codecs
 import struct
 from struct import pack, unpack
 
-from .._util import bchr, cdata, decode_terminated, encode_endian, enum, flags, intround, total_ordering
+from .._util import (
+    bchr,
+    cdata,
+    decode_terminated,
+    encode_endian,
+    enum,
+    flags,
+    intround,
+    total_ordering,
+)
 from ._util import BitPaddedInt, is_valid_frame_id
 
 
@@ -677,7 +686,7 @@ class ID3TimeStamp:
     def set_text(self, text, splitre=re.compile('[-T:/.]|\\s+')):
         year, month, day, hour, minute, second = \
             splitre.split(text + ':::::')[:6]
-        for a in 'year month day hour minute second'.split():
+        for a in ['year', 'month', 'day', 'hour', 'minute', 'second']:
             try:
                 v = int(locals()[a])
             except ValueError:
@@ -713,8 +722,8 @@ class TimeStampSpec(EncodedTextSpec):
         return self.validate(frame, value), data
 
     def write(self, config, frame, data):
-        return super().write(config, frame,
-                                                data.text.replace(' ', 'T'))
+        return super().write(
+            config, frame, data.text.replace(' ', 'T'))
 
     def validate(self, frame, value):
         try:

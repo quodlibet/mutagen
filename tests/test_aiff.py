@@ -325,7 +325,7 @@ class TAIFFFile(TestCase):
         # Reloading the file should give the same results
         new_iff_file = AIFFFile(self.file_2_tmp)
         self.assertEqual(new_iff_file['FORM'].size,
-                             iff_file['FORM'].size)
+            iff_file['FORM'].size)
         self.assertEqual(new_iff_file['TST2'].size,
             iff_file['TST2'].size)
         self.assertEqual(new_iff_file['TST2'].data_size,
