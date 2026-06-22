@@ -1,6 +1,6 @@
 [project]
 name = "mutagen"
-version = "1.47.1"
+version = "1.48.0"
 description = "read and write audio tags for many formats"
 readme = { file = "README.rst", content-type = "text/x-rst" }
 authors = [{ name = "Christoph Reiter", email = "reiter.christoph@gmail.com" }]
