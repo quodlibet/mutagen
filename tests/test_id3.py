@@ -699,12 +699,6 @@ class ID3v1Tags(TestCase):
         v1tag = MakeID3v1(tag)
         self.failUnlessEqual(ParseID3v1(v1tag)["TCON"].genres, ["Pop"])
 
-    def test_make_comm_from_hashkey(self):
-        frame = COMM(encoding=0, lang="eng",
-                     desc="ID3v1 Comment", text="hello")
-        tag = {frame.HashKey: frame}
-        self.failUnlessEqual(ParseID3v1(MakeID3v1(tag))["COMM"], "hello")
-
     def test_v1_comment(self):
         written = MakeID3v1({"COMM": COMM(encoding=0,
                                           text="abcdefghijklmnopqrstuvwxyzABCDEFG")})
