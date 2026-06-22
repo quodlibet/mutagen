@@ -56,6 +56,16 @@ class TID3Read(TestCase):
         finally:
             os.remove(filename)
 
+    def test_comm_roundtip(self):
+        audio = ID3(self.silence)
+        filename = get_temp_empty(".mp3")
+        audio.add(COMM(encoding=0, desc="FOO::quux", text="bar"))
+        assert len(audio.getall("COMM")) == 1
+        audio.save(filename, v1=2)
+        new = ID3(filename)
+        assert new.getall("COMM")[0].desc == "FOO::quux"
+        assert len(new.getall("COMM")) == 1
+
     def test_bad_tyer(self):
         audio = ID3(self.bad_tyer)
         self.failIf("TYER" in audio)
