@@ -56,7 +56,7 @@ class TID3Read(TestCase):
         finally:
             os.remove(filename)
 
-    def test_comm_roundtip(self):
+    def test_comm_roundtrip(self):
         audio = ID3(self.silence)
         filename = get_temp_empty(".mp3")
         audio.add(COMM(encoding=0, desc="FOO::quux", text="bar"))
