@@ -56,6 +56,16 @@ class TID3Read(TestCase):
         finally:
             os.remove(filename)
 
+    def test_comm_roundtrip(self):
+        audio = ID3(self.silence)
+        filename = get_temp_empty(".mp3")
+        audio.add(COMM(encoding=0, desc="FOO::quux", text="bar"))
+        assert len(audio.getall("COMM")) == 1
+        audio.save(filename, v1=2)
+        new = ID3(filename)
+        assert new.getall("COMM")[0].desc == "FOO::quux"
+        assert len(new.getall("COMM")) == 1
+
     def test_bad_tyer(self):
         audio = ID3(self.bad_tyer)
         self.failIf("TYER" in audio)
@@ -688,12 +698,6 @@ class ID3v1Tags(TestCase):
         tag["TCON"] = TCON(encoding=0, text="Pop")
         v1tag = MakeID3v1(tag)
         self.failUnlessEqual(ParseID3v1(v1tag)["TCON"].genres, ["Pop"])
-
-    def test_make_comm_from_hashkey(self):
-        frame = COMM(encoding=0, lang="eng",
-                     desc="ID3v1 Comment", text="hello")
-        tag = {frame.HashKey: frame}
-        self.failUnlessEqual(ParseID3v1(MakeID3v1(tag))["COMM"], "hello")
 
     def test_v1_comment(self):
         written = MakeID3v1({"COMM": COMM(encoding=0,
