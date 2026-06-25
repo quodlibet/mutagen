@@ -1,3 +1,11 @@
+.. _release-1.48.1:
+
+1.48.1 - 2026-06-25
+-------------------
+
+* Revert: ``ID3: Fix saving ID3v2 comment fields from COMM:desc:lang tags``
+  to fix duplicated COMM frames in some cases. :pr:`713`
+
 .. _release-1.48.0:
 
 1.48.0 - 2026-06-22
