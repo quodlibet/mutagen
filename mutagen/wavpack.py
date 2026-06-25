@@ -138,8 +138,8 @@ def _extract_md5_from_metadata(fileobj, block_size):
         id_byte = metadata_data[offset]
         offset += 1
 
-        is_large  = bool(id_byte & _ID_LARGE)
-        is_odd    = bool(id_byte & _ID_ODD_SIZE)
+        is_large = bool(id_byte & _ID_LARGE)
+        is_odd = bool(id_byte & _ID_ODD_SIZE)
         unique_id = id_byte & _ID_UNIQUE
 
         # Size is stored in 16-bit words (not bytes).
