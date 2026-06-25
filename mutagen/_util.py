@@ -522,7 +522,11 @@ class DictMixin(object):
     def __lt__(self, other):
         return dict(self.items()) < other
 
-    __hash__ = object.__hash__
+    # DictMixin overrides __eq__ with content comparison, so objects with
+    # equal content but different identities would compare equal but hash
+    # differently when using object.__hash__. Since these tag objects are
+    # mutable, make them explicitly unhashable (like Python's built-in dict).
+    __hash__ = None  # type: ignore[assignment]
 
     def __len__(self):
         return len(self.keys())

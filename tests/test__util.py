@@ -123,6 +123,12 @@ class TDictMixin(TestCase):
     def test_len(self):
         self.failUnlessEqual(len(self.rdict), len(self.fdict))
 
+    def test_unhashable(self):
+        # DictMixin defines __eq__ by content, so objects with equal content
+        # would hash differently under object.__hash__ (identity).  The class
+        # must be unhashable to respect Python's hash/equality invariant.
+        self.failUnlessRaises(TypeError, hash, self.fdict)
+
     def tearDown(self):
         self.failUnlessEqual(self.fdict, self.rdict)
         self.failUnlessEqual(self.rdict, self.fdict)
