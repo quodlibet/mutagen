@@ -65,7 +65,7 @@ jobs:
         uv sync
     - name: Run tests
       run: |
-        uv run coverage run --branch setup.py test
+        uv run coverage run --branch -m pytest
         uv run coverage xml -i
     - name: Run mypy
       if: matrix.run-mypy
