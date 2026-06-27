@@ -11,7 +11,6 @@ import shutil
 import sys
 import subprocess
 import tarfile
-import warnings
 
 from setuptools import setup, Command, Distribution
 
@@ -146,78 +145,6 @@ class build_sphinx(Command):
             sys.executable, "-m", "sphinx", "-b", "html", "-n", docs, target])
 
 
-class test_cmd(Command):
-    description = "run automated tests"
-    user_options = [
-        ("to-run=", None, "list of tests to run (default all)"),
-        ("exitfirst", "x", "stop after first failing test"),
-        ("no-quality", None, "skip code quality tests"),
-    ]
-
-    def initialize_options(self):
-        self.to_run = []
-        self.exitfirst = False
-        self.no_quality = False
-
-    def finalize_options(self):
-        if self.to_run:
-            self.to_run = self.to_run.split(",")
-        self.exitfirst = bool(self.exitfirst)
-        self.no_quality = bool(self.no_quality)
-        if self.no_quality:
-            warnings.warn(
-                "--no-quality is deprecated and doesn't do anything anymore",
-                DeprecationWarning)
-
-    def run(self):
-        import tests
-
-        status = tests.unit(self.to_run, self.exitfirst)
-        if status != 0:
-            raise SystemExit(status)
-
-
-class coverage_cmd(Command):
-    description = "generate test coverage data"
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        try:
-            from coverage import coverage
-        except ImportError:
-            raise SystemExit(
-                "Missing 'coverage' module. See "
-                "https://pypi.python.org/pypi/coverage or try "
-                "`apt-get install python-coverage python3-coverage`")
-
-        for key in list(sys.modules.keys()):
-            if key.startswith('mutagen'):
-                del sys.modules[key]
-
-        cov = coverage()
-        cov.start()
-
-        cmd = self.reinitialize_command("test")
-        cmd.ensure_finalized()
-        cmd.run()
-
-        dest = os.path.join(os.getcwd(), "coverage")
-
-        cov.stop()
-        cov.html_report(
-            directory=dest,
-            ignore_errors=True,
-            include=["mutagen/*"])
-
-        print("Coverage summary: file://%s/index.html" % dest)
-
-
 if __name__ == "__main__":
     if sys.version_info[0] < 3:
         raise Exception("Python 2 no longer supported")
@@ -235,8 +162,6 @@ if __name__ == "__main__":
 
     cmd_classes = {
         "clean": clean,
-        "test": test_cmd,
-        "coverage": coverage_cmd,
         "distcheck": distcheck,
         "build_sphinx": build_sphinx,
     }
