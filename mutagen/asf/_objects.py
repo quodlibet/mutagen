@@ -7,20 +7,21 @@
 # (at your option) any later version.
 
 import struct
-from typing import Dict, Type
+from collections.abc import Callable
+from io import BytesIO
 
-from mutagen._util import cdata, get_size
 from mutagen._tags import PaddingInfo
+from mutagen._util import cdata, get_size
 
-from ._util import guid2bytes, bytes2guid, CODECS, ASFError, ASFHeaderError
 from ._attrs import ASFBaseAttribute, ASFUnicodeAttribute
+from ._util import CODECS, ASFError, ASFHeaderError, bytes2guid, guid2bytes
 
 
-class BaseObject(object):
+class BaseObject:
     """Base ASF object."""
 
     GUID: bytes
-    _TYPES: "Dict[bytes, Type[BaseObject]]" = {}
+    _TYPES: "dict[bytes, type[BaseObject]]" = {}
 
     def __init__(self):
         self.objects = []
@@ -29,13 +30,13 @@ class BaseObject(object):
     def parse(self, asf, data):
         self.data = data
 
-    def render(self, asf):
+    def render(self, asf) -> bytes:
         data = self.GUID + struct.pack("<Q", len(self.data) + 24) + self.data
         return data
 
     def get_child(self, guid):
         for obj in self.objects:
-            if obj.GUID == guid:
+            if guid == obj.GUID:
                 return obj
         return None
 
@@ -52,12 +53,14 @@ class BaseObject(object):
             return UnknownObject(guid)
 
     def __repr__(self):
-        return "<%s GUID=%s objects=%r>" % (
-            type(self).__name__, bytes2guid(self.GUID), self.objects)
+        return (
+            f"<{type(self).__name__} GUID={bytes2guid(self.GUID)}"
+            f" objects={self.objects!r}>"
+        )
 
     def pprint(self):
         l = []
-        l.append("%s(%s)" % (type(self).__name__, bytes2guid(self.GUID)))
+        l.append(f"{type(self).__name__}({bytes2guid(self.GUID)})")
         for o in self.objects:
             for e in o.pprint().splitlines():
                 l.append("  " + e)
@@ -68,7 +71,7 @@ class UnknownObject(BaseObject):
     """Unknown ASF object."""
 
     def __init__(self, guid):
-        super(UnknownObject, self).__init__()
+        super().__init__()
         assert isinstance(guid, bytes)
         self.GUID = guid
 
@@ -134,7 +137,9 @@ class HeaderObject(BaseObject):
 
         return struct.unpack("<QL", header[16:28])
 
-    def render_full(self, asf, fileobj, available, padding_func):
+    def render_full(
+        self, asf, fileobj: BytesIO, available: int, padding_func: Callable,
+    ) -> bytes:
         # Render everything except padding
         num_objects = 0
         data = bytearray()
@@ -183,22 +188,22 @@ class ContentDescriptionObject(BaseObject):
     GUID = guid2bytes("75B22633-668E-11CF-A6D9-00AA0062CE6C")
 
     NAMES = [
-        u"Title",
-        u"Author",
-        u"Copyright",
-        u"Description",
-        u"Rating",
+        "Title",
+        "Author",
+        "Copyright",
+        "Description",
+        "Rating",
     ]
 
     def parse(self, asf, data):
-        super(ContentDescriptionObject, self).parse(asf, data)
+        super().parse(asf, data)
         lengths = struct.unpack("<HHHHH", data[:10])
         texts = []
         pos = 10
         for length in lengths:
             end = pos + length
             if length > 0:
-                texts.append(data[pos:end].decode("utf-16-le").strip(u"\x00"))
+                texts.append(data[pos:end].decode("utf-16-le").strip("\x00"))
             else:
                 texts.append(None)
             pos = end
@@ -228,7 +233,7 @@ class ExtendedContentDescriptionObject(BaseObject):
     GUID = guid2bytes("D2D0A440-E307-11D2-97F0-00A0C95EA850")
 
     def parse(self, asf, data):
-        super(ExtendedContentDescriptionObject, self).parse(asf, data)
+        super().parse(asf, data)
         num_attributes, = struct.unpack("<H", data[0:2])
         pos = 2
         for i in range(num_attributes):
@@ -258,7 +263,7 @@ class FilePropertiesObject(BaseObject):
     GUID = guid2bytes("8CABDCA1-A947-11CF-8EE4-00C00C205365")
 
     def parse(self, asf, data):
-        super(FilePropertiesObject, self).parse(asf, data)
+        super().parse(asf, data)
         if len(data) < 64:
             raise ASFError("invalid field property entry")
         length, _, preroll = struct.unpack("<QQQ", data[40:64])
@@ -273,7 +278,7 @@ class StreamPropertiesObject(BaseObject):
     GUID = guid2bytes("B7DC0791-A9B7-11CF-8EE6-00C00C205365")
 
     def parse(self, asf, data):
-        super(StreamPropertiesObject, self).parse(asf, data)
+        super().parse(asf, data)
         channels, sample_rate, bitrate = struct.unpack("<HII", data[56:66])
         asf.info.channels = channels
         asf.info.sample_rate = sample_rate
@@ -297,7 +302,7 @@ class CodecListObject(BaseObject):
         try:
             name = data[offset:next_offset].decode("utf-16-le").strip("\x00")
         except UnicodeDecodeError:
-            name = u""
+            name = ""
         offset = next_offset
 
         units, offset = cdata.uint16_le_from(data, offset)
@@ -305,12 +310,12 @@ class CodecListObject(BaseObject):
         try:
             desc = data[offset:next_offset].decode("utf-16-le").strip("\x00")
         except UnicodeDecodeError:
-            desc = u""
+            desc = ""
         offset = next_offset
 
         bytes_, offset = cdata.uint16_le_from(data, offset)
         next_offset = offset + bytes_
-        codec = u""
+        codec = ""
         if bytes_ == 2:
             codec_id = cdata.uint16_le_from(data, offset)[0]
             if codec_id in CODECS:
@@ -320,7 +325,7 @@ class CodecListObject(BaseObject):
         return offset, type_, name, desc, codec
 
     def parse(self, asf, data):
-        super(CodecListObject, self).parse(asf, data)
+        super().parse(asf, data)
 
         offset = 16
         count, offset = cdata.uint32_le_from(data, offset)
@@ -376,7 +381,7 @@ class HeaderExtensionObject(BaseObject):
     GUID = guid2bytes("5FBF03B5-A92E-11CF-8EE3-00C00C205365")
 
     def parse(self, asf, data):
-        super(HeaderExtensionObject, self).parse(asf, data)
+        super().parse(asf, data)
         datasize, = struct.unpack("<I", data[18:22])
         datapos = 0
         while datapos < datasize:
@@ -411,7 +416,7 @@ class MetadataObject(BaseObject):
     GUID = guid2bytes("C5F8CBEA-5BAF-4877-8467-AA8C44FA4CCA")
 
     def parse(self, asf, data):
-        super(MetadataObject, self).parse(asf, data)
+        super().parse(asf, data)
         num_attributes, = struct.unpack("<H", data[0:2])
         pos = 2
         for i in range(num_attributes):
@@ -443,7 +448,7 @@ class MetadataLibraryObject(BaseObject):
     GUID = guid2bytes("44231C94-9498-49D1-A141-1D134E457054")
 
     def parse(self, asf, data):
-        super(MetadataLibraryObject, self).parse(asf, data)
+        super().parse(asf, data)
         num_attributes, = struct.unpack("<H", data[0:2])
         pos = 2
         for i in range(num_attributes):

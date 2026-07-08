@@ -29,24 +29,21 @@ mutagen-pony = "mutagen._tools.mutagen_pony:entry_point"
 [dependency-groups]
 dev = [
     "pytest>=8.2,<10",
-    "hypothesis>=6.50.1,<7",
+    "hypothesis>=6.148.8,<7",
     "flake8>=7.1.0,<8",
-    "mypy==1.18.2",
-    "coverage>=7.2.5,<8",
-    "setuptools>=77.0.0,<78",
+    "mypy==2.1.0",
+    "coverage>=7.13.4,<8",
+    "setuptools>=82.0.0",
+    "ruff>=0.15.18",
 ]
-fuzzing = ["python-afl>=0.7.3,<0.8"]
+fuzzing = [
+    "python-afl>=0.7.3,<0.8 ; platform_system != 'Windows'", # AFL is not supported on Windows
+]
 docs = [
     "Sphinx~=7.1",
     "sphinx-rtd-theme>=2.0.0,<3",
     "sphinx-autobuild>=2021.3.14,<2022",
 ]
-
-[tool.poetry.group.fuzzing]
-optional = true
-
-[tool.poetry.group.docs]
-optional = true
 
 [tool.setuptools]
 packages = [
@@ -58,15 +55,85 @@ packages = [
   "mutagen._tools",
 ]
 
-[tool.setuptools.package-data]
-mutagen = ["py.typed"]
-
 [tool.setuptools.data-files]
 "share/man/man1" = ["man/*.1"]
 
 [build-system]
-requires = ["setuptools>=77"]
+requires = ["setuptools>=80"]
 build-backend = "setuptools.build_meta"
 
 [tool.coverage.run]
 include=["mutagen/*", "tests/*"]
+
+[tool.pyright]
+reportPrivateUsage = false
+reportUnusedVariable = false
+reportUnusedCallResult = false
+reportImplicitOverride = false
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+extend-select = [
+    "E", # pycodestyles
+    "F", # pyflakes
+    "G", # flake8-logging-format
+    "I", # isort
+    "ISC", # flake8-implicit-str-concat
+    "N", # pep8-naming
+    "W", # pycodestyle
+    "UP",
+    "B",
+    "SIM",
+]
+ignore = [
+    # Todo: We should consider fixing these in the future.
+    "N801",  # Class name CapWords convention
+    "N802",  # Function name lowercase
+    "N806",  # Argument name lowercase
+    "N803",  # Variable in function lowercase
+    "N812",  # imported as non-lowercase
+    "N814",  # Consistent naming
+    "N815",  # MixedCase variable in function
+    "N818",  # Error suffix
+    "E741",  # ambiguous variable name
+    "E731",  # lambda assigned to variable
+]
+
+[tool.ruff.format]
+quote-style = 'single'
+
+[tool.flake8]
+max-line-length = 88
+ignore = [
+    "E128",
+    "W601",
+    "E402",
+    "E731",
+    "W503",
+    "E741",
+    "E305",
+    "E121",
+    "E124",
+    "W504",
+]
+exclude = [
+    "build",
+    "dist",
+    ".venv",
+]
+
+
+[tool.mypy]
+check_untyped_defs = true
+allow_redefinition = true
+follow_imports = "silent"
+strict = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
+disallow_any_generics = false
+disallow_subclassing_any = false
+follow_untyped_imports = true
+ignore_missing_imports = false

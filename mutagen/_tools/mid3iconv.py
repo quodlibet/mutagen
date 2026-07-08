@@ -9,14 +9,13 @@
 ID3iconv is a Java based ID3 encoding converter, here's the Python version.
 """
 
-import sys
 import locale
+import sys
 
 import mutagen
 import mutagen.id3
 
-from ._util import SignalHandler, OptionParser
-
+from ._util import OptionParser, SignalHandler
 
 VERSION = (0, 3)
 _sig = SignalHandler()
@@ -45,8 +44,7 @@ class ID3OptionParser(OptionParser):
     def __init__(self):
         mutagen_version = ".".join(map(str, mutagen.version))
         my_version = ".".join(map(str, VERSION))
-        version = "mid3iconv %s\nUses Mutagen %s" % (
-            my_version, mutagen_version)
+        version = f"mid3iconv {my_version}\nUses Mutagen {mutagen_version}"
         return OptionParser.__init__(
             self, version=version,
             usage="%prog [OPTION] [FILE]...",
@@ -59,7 +57,7 @@ class ID3OptionParser(OptionParser):
         return text + "\nFiles are updated in-place, so use --dry-run first.\n"
 
 
-def update(options, filenames):
+def update(options, filenames: list[str]):
     encoding = options.encoding or getpreferredencoding()
     verbose = options.verbose
     noupdate = options.noupdate
@@ -72,7 +70,7 @@ def update(options, filenames):
     for filename in filenames:
         with _sig.block():
             if verbose != "quiet":
-                print(u"Updating", filename)
+                print("Updating", filename)
 
             if has_id3v1(filename) and not noupdate and force_v1:
                 mutagen.id3.delete(filename, False, True)
@@ -81,7 +79,7 @@ def update(options, filenames):
                 id3 = mutagen.id3.ID3(filename)
             except mutagen.id3.ID3NoHeaderError:
                 if verbose != "quiet":
-                    print(u"No ID3 header found; skipping...")
+                    print("No ID3 header found; skipping...")
                 continue
             except Exception as err:
                 print(str(err), file=sys.stderr)
@@ -122,7 +120,7 @@ def has_id3v1(filename):
         with open(filename, 'rb') as f:
             f.seek(-128, 2)
             return f.read(3) == b"TAG"
-    except IOError:
+    except OSError:
         return False
 
 

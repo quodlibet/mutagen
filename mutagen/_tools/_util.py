@@ -5,15 +5,18 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
-import os
-import signal
 import contextlib
 import optparse
+import os
+import signal
 
 from mutagen._util import iterbytes
 
 
-def split_escape(string, sep, maxsplit=None, escape_char="\\"):
+def split_escape(
+    string: str | bytes, sep: str | bytes,
+    maxsplit: int | None = None, escape_char: str | bytes = "\\",
+):
     """Like unicode/str/bytes.split but allows for the separator to be escaped
 
     If passed unicode/str/bytes will only return list of unicode/str/bytes.
@@ -33,7 +36,7 @@ def split_escape(string, sep, maxsplit=None, escape_char="\\"):
         maxsplit = len(string)
 
     empty = string[:0]
-    result = []
+    result: list[bytes | str] = []
     current = empty
     escaped = False
     for char in iter_(string):
@@ -54,7 +57,7 @@ def split_escape(string, sep, maxsplit=None, escape_char="\\"):
     return result
 
 
-class SignalHandler(object):
+class SignalHandler:
 
     def __init__(self):
         self._interrupted = False

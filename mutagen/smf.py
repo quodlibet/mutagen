@@ -8,18 +8,17 @@
 """Standard MIDI File (SMF)"""
 
 import struct
-from typing import Tuple
 
-from mutagen import StreamInfo, MutagenError
+from mutagen import MutagenError, StreamInfo
 from mutagen._file import FileType
-from mutagen._util import loadfile, endswith
+from mutagen._util import endswith, loadfile
 
 
 class SMFError(MutagenError):
     pass
 
 
-def _var_int(data: bytearray, offset: int = 0) -> Tuple[int, int]:
+def _var_int(data: bytearray, offset: int = 0) -> tuple[int, int]:
     val = 0
     while 1:
         try:
@@ -177,7 +176,7 @@ class SMFInfo(StreamInfo):
         self.length = _read_midi_length(fileobj)
 
     def pprint(self):
-        return u"SMF, %.2f seconds" % self.length
+        return "SMF, %.2f seconds" % self.length
 
 
 class SMF(FileType):
@@ -196,7 +195,7 @@ class SMF(FileType):
     def load(self, filething):
         try:
             self.info = SMFInfo(filething.fileobj)
-        except IOError as e:
+        except OSError as e:
             raise SMFError(e)
 
     def add_tags(self):

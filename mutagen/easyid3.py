@@ -11,15 +11,13 @@ EasyID3 is a wrapper around mutagen.id3.ID3 to make ID3 tags appear
 more like Vorbis or APEv2 tags.
 """
 
-from typing import Callable, Dict
+from collections.abc import Callable
 from functools import partial
 
 import mutagen.id3
-
 from mutagen import Metadata
 from mutagen._util import DictMixin, dict_match, loadfile
-from mutagen.id3 import ID3, error as error, delete, ID3FileType
-
+from mutagen.id3 import ID3, ID3FileType, delete, error
 
 __all__ = ['EasyID3', 'Open', 'delete']
 
@@ -66,10 +64,10 @@ class EasyID3(DictMixin, Metadata):
 
     """
 
-    Set: Dict[str, Callable] = {}
-    Get: Dict[str, Callable] = {}
-    Delete: Dict[str, Callable] = {}
-    List: Dict[str, Callable] = {}
+    Set: dict[str, Callable] = {}
+    Get: dict[str, Callable] = {}
+    Delete: dict[str, Callable] = {}
+    List: dict[str, Callable] = {}
 
     # For compatibility.
     valid_keys = Get
@@ -154,7 +152,7 @@ class EasyID3(DictMixin, Metadata):
             enc = 0
             # Store 8859-1 if we can, per MusicBrainz spec.
             for v in value:
-                if v and max(v) > u'\x7f':
+                if v and max(v) > '\x7f':
                     enc = 3
                     break
 
@@ -249,7 +247,7 @@ class EasyID3(DictMixin, Metadata):
         for key in sorted(self.keys()):
             values = self[key]
             for value in values:
-                strings.append("%s=%s" % (key, value))
+                strings.append(f"{key}={value}")
         return "\n".join(strings)
 
 
@@ -349,7 +347,7 @@ def performer_list(id3, key):
     except KeyError:
         return []
     else:
-        return list(set("performer:" + p[0] for p in mcl.people))
+        return list({"performer:" + p[0] for p in mcl.people})
 
 
 def musicbrainz_trackid_get(id3, key):
@@ -397,7 +395,7 @@ def gain_get(id3, key):
     except KeyError:
         raise EasyID3KeyError(key)
     else:
-        return [u"%+f dB" % frame.gain]
+        return ["%+f dB" % frame.gain]
 
 
 def gain_set(id3, key, value):
@@ -431,7 +429,7 @@ def peak_get(id3, key):
     except KeyError:
         raise EasyID3KeyError(key)
     else:
-        return [u"%f" % frame.peak]
+        return ["%f" % frame.peak]
 
 
 def peak_set(id3, key, value):
@@ -520,25 +518,25 @@ EasyID3.RegisterKey("replaygain_*_peak", peak_get, peak_set, peak_delete)
 # http://bugs.musicbrainz.org/ticket/1383
 # http://musicbrainz.org/doc/MusicBrainzTag
 for desc, key in {
-    u"MusicBrainz Artist Id": "musicbrainz_artistid",
-    u"MusicBrainz Album Id": "musicbrainz_albumid",
-    u"MusicBrainz Album Artist Id": "musicbrainz_albumartistid",
-    u"MusicBrainz TRM Id": "musicbrainz_trmid",
-    u"MusicIP PUID": "musicip_puid",
-    u"MusicMagic Fingerprint": "musicip_fingerprint",
-    u"MusicBrainz Album Status": "musicbrainz_albumstatus",
-    u"MusicBrainz Album Type": "musicbrainz_albumtype",
-    u"MusicBrainz Album Release Country": "releasecountry",
-    u"MusicBrainz Disc Id": "musicbrainz_discid",
-    u"ASIN": "asin",
-    u"PERFORMER": "performer",
-    u"BARCODE": "barcode",
-    u"CATALOGNUMBER": "catalognumber",
-    u"MusicBrainz Release Track Id": "musicbrainz_releasetrackid",
-    u"MusicBrainz Release Group Id": "musicbrainz_releasegroupid",
-    u"MusicBrainz Work Id": "musicbrainz_workid",
-    u"Acoustid Fingerprint": "acoustid_fingerprint",
-    u"Acoustid Id": "acoustid_id",
+    "MusicBrainz Artist Id": "musicbrainz_artistid",
+    "MusicBrainz Album Id": "musicbrainz_albumid",
+    "MusicBrainz Album Artist Id": "musicbrainz_albumartistid",
+    "MusicBrainz TRM Id": "musicbrainz_trmid",
+    "MusicIP PUID": "musicip_puid",
+    "MusicMagic Fingerprint": "musicip_fingerprint",
+    "MusicBrainz Album Status": "musicbrainz_albumstatus",
+    "MusicBrainz Album Type": "musicbrainz_albumtype",
+    "MusicBrainz Album Release Country": "releasecountry",
+    "MusicBrainz Disc Id": "musicbrainz_discid",
+    "ASIN": "asin",
+    "PERFORMER": "performer",
+    "BARCODE": "barcode",
+    "CATALOGNUMBER": "catalognumber",
+    "MusicBrainz Release Track Id": "musicbrainz_releasetrackid",
+    "MusicBrainz Release Group Id": "musicbrainz_releasegroupid",
+    "MusicBrainz Work Id": "musicbrainz_workid",
+    "Acoustid Fingerprint": "acoustid_fingerprint",
+    "Acoustid Id": "acoustid_id",
 }.items():
     EasyID3.RegisterTXXXKey(key, desc)
 

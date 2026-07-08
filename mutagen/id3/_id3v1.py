@@ -8,11 +8,12 @@
 # (at your option) any later version.
 
 import errno
-from struct import error as StructError, unpack
+from struct import error as StructError
+from struct import unpack
 
 from mutagen._util import bchr
 
-from ._frames import TCON, TRCK, COMM, TDRC, TYER, TALB, TPE1, TIT2
+from ._frames import COMM, TALB, TCON, TDRC, TIT2, TPE1, TRCK, TYER
 
 
 def find_id3v1(fileobj, v2_version=4, known_frames=None):
@@ -38,7 +39,7 @@ def find_id3v1(fileobj, v2_version=4, known_frames=None):
     old_pos = fileobj.tell()
     try:
         fileobj.seek(-128 - extra_read, 2)
-    except IOError as e:
+    except OSError as e:
         if e.errno == errno.EINVAL:
             # If the file is too small, might be ok since we wrote too small
             # tags at some point. let's see how the parsing goes..
@@ -91,7 +92,7 @@ def ParseID3v1(data, v2_version=4, known_frames=None):
         data = data[data.index(b"TAG"):]
     except ValueError:
         return None
-    if 128 < len(data) or len(data) < 124:
+    if len(data) > 128 or len(data) < 124:
         return None
 
     # Issue #69 - Previous versions of Mutagen, when encountering

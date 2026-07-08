@@ -7,17 +7,18 @@
 
 from io import BytesIO
 
-from mutagen.aac import ProgramConfigElement
 from mutagen._util import BitReader, BitReaderError, cdata
-from ._util import parse_full_atom
+from mutagen.aac import ProgramConfigElement
+
 from ._atom import Atom, AtomError
+from ._util import parse_full_atom
 
 
 class ASEntryError(Exception):
     pass
 
 
-class AudioSampleEntry(object):
+class AudioSampleEntry:
     """Parses an AudioSampleEntry atom.
 
     Private API.
@@ -201,7 +202,7 @@ class DescriptorError(Exception):
     pass
 
 
-class BaseDescriptor(object):
+class BaseDescriptor:
 
     TAG: int
 
@@ -321,10 +322,10 @@ class DecoderConfigDescriptor(BaseDescriptor):
     def codec_param(self):
         """string"""
 
-        param = u".%X" % self.objectTypeIndication
+        param = ".%X" % self.objectTypeIndication
         info = self.decSpecificInfo
         if info is not None:
-            param += u".%d" % info.audioObjectType
+            param += ".%d" % info.audioObjectType
         return param
 
     @property

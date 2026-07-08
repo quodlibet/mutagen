@@ -12,22 +12,24 @@
 import struct
 from struct import pack
 
-from mutagen import StreamInfo, FileType
-
-from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
+from mutagen import FileType, StreamInfo
 from mutagen._iff import (
     IffChunk,
     IffContainerChunkMixin,
     IffFile,
     IffID3,
     InvalidChunk,
+)
+from mutagen._iff import (
     error as IffError,
 )
 from mutagen._util import (
     convert_error,
-    loadfile,
     endswith,
+    loadfile,
 )
+from mutagen.id3._util import ID3NoHeaderError
+from mutagen.id3._util import error as ID3Error
 
 __all__ = ["AIFF", "Open", "delete"]
 
@@ -88,7 +90,7 @@ class AIFFFormChunk(AIFFChunk, IffContainerChunkMixin):
         return AIFFChunk.parse(self._fileobj, self)
 
     def __init__(self, fileobj, id, data_size, parent_chunk):
-        if id != u'FORM':
+        if id != 'FORM':
             raise InvalidChunk('Expected FORM chunk, got %s' % id)
 
         AIFFChunk.__init__(self, fileobj, id, data_size, parent_chunk)
@@ -103,7 +105,7 @@ class AIFFFile(IffFile):
         # ID before the start of other chunks
         super().__init__(AIFFChunk, fileobj)
 
-        if self.root.id != u'FORM':
+        if self.root.id != 'FORM':
             raise InvalidChunk("Root chunk must be a FORM chunk, got %s"
                                % self.root.id)
 
@@ -144,7 +146,7 @@ class AIFFInfo(StreamInfo):
 
         iff = AIFFFile(fileobj)
         try:
-            common_chunk = iff[u'COMM']
+            common_chunk = iff['COMM']
         except KeyError as e:
             raise error(str(e))
 
@@ -170,7 +172,7 @@ class AIFFInfo(StreamInfo):
         self.bitrate = channels * sample_size * self.sample_rate
 
     def pprint(self):
-        return u"%d channel AIFF @ %d bps, %s Hz, %.2f seconds" % (
+        return "%d channel AIFF @ %d bps, %s Hz, %.2f seconds" % (
             self.channels, self.bitrate, self.sample_rate, self.length)
 
 
@@ -187,7 +189,7 @@ def delete(filething):
     """Completely removes the ID3 chunk from the AIFF file"""
 
     try:
-        del AIFFFile(filething.fileobj)[u'ID3']
+        del AIFFFile(filething.fileobj)['ID3']
     except KeyError:
         pass
 

@@ -19,10 +19,11 @@ http://lists.xiph.org/pipermail/speex-dev/2006-July/004676.html.
 __all__ = ["OggSpeex", "Open", "delete"]
 
 from mutagen import StreamInfo
-from mutagen._vorbis import VCommentDict
-from mutagen.ogg import OggPage, OggFileType, error as OggError
-from mutagen._util import cdata, get_size, loadfile, convert_error
 from mutagen._tags import PaddingInfo
+from mutagen._util import cdata, convert_error, get_size, loadfile
+from mutagen._vorbis import VCommentDict
+from mutagen.ogg import OggFileType, OggPage
+from mutagen.ogg import error as OggError
 
 
 class error(OggError):
@@ -69,7 +70,7 @@ class OggSpeexInfo(StreamInfo):
         self.length = page.position / float(self.sample_rate)
 
     def pprint(self):
-        return u"Ogg Speex, %.2f seconds" % self.length
+        return "Ogg Speex, %.2f seconds" % self.length
 
 
 class OggSpeexVComment(VCommentDict):
@@ -84,7 +85,7 @@ class OggSpeexVComment(VCommentDict):
                 pages.append(page)
                 complete = page.complete or (len(page.packets) > 1)
         data = OggPage.to_packets(pages)[0]
-        super(OggSpeexVComment, self).__init__(data, framing=False)
+        super().__init__(data, framing=False)
         self._padding = len(data) - self._size
 
     def _inject(self, fileobj, padding_func):
