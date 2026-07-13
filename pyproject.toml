@@ -33,7 +33,7 @@ dev = [
     "flake8>=7.1.0,<8",
     "mypy==1.18.2",
     "coverage>=7.2.5,<8",
-    "setuptools>=77.0.0,<78",
+    "setuptools>=77.0.0,<84",
 ]
 fuzzing = ["python-afl>=0.7.3,<0.8"]
 docs = [
