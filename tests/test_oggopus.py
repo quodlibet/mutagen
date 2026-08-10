@@ -121,3 +121,8 @@ class TOggOpus(TestCase, TOggFileTypeMixin):
         audio_small = self.Kind(self.filename)
         bitrate_after_small = audio_small.info.bitrate
         assert bitrate_initial == bitrate_after_small
+
+    def test_page_with_no_packets_raises_error(self):
+        # A page with no complete packets must surface as a mutagen error,
+        # not IndexError from page.packets[0].
+        self.failUnlessRaises(error, self.Kind, BytesIO(b"OggS" + b"\x00" * 24))

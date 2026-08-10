@@ -52,7 +52,7 @@ class OggSpeexInfo(StreamInfo):
 
     def __init__(self, fileobj):
         page = OggPage(fileobj)
-        while not page.packets[0].startswith(b"Speex   "):
+        while not page.packets or not page.packets[0].startswith(b"Speex   "):
             page = OggPage(fileobj)
         if not page.first:
             raise OggSpeexHeaderError(
@@ -95,7 +95,7 @@ class OggSpeexVComment(VCommentDict):
         # Find the first header page, with the stream info.
         # Use it to get the serial number.
         page = OggPage(fileobj)
-        while not page.packets[0].startswith(b"Speex   "):
+        while not page.packets or not page.packets[0].startswith(b"Speex   "):
             page = OggPage(fileobj)
 
         # Look for the next page with that serial number, it'll start

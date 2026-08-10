@@ -50,7 +50,7 @@ class OggOpusInfo(StreamInfo):
 
     def __init__(self, fileobj):
         page = OggPage(fileobj)
-        while not page.packets[0].startswith(b"OpusHead"):
+        while not page.packets or not page.packets[0].startswith(b"OpusHead"):
             page = OggPage(fileobj)
 
         self.serial = page.serial
@@ -93,6 +93,7 @@ class OggOpusVComment(VCommentDict):
         # find the first tags page with the right serial
         page = OggPage(fileobj)
         while ((info.serial != page.serial) or
+                not page.packets or
                 not page.packets[0].startswith(b"OpusTags")):
             page = OggPage(fileobj)
 

@@ -99,3 +99,8 @@ class TOggFLAC(TestCase, TOggFileTypeMixin):
 
     def test_info_pprint(self):
         self.assertTrue(self.audio.info.pprint().startswith(u"Ogg FLAC"))
+
+    def test_page_with_no_packets_raises_error(self):
+        # A page with no complete packets must surface as a mutagen error,
+        # not IndexError from page.packets[0].
+        self.failUnlessRaises(error, self.Kind, BytesIO(b"OggS" + b"\x00" * 24))
