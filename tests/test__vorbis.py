@@ -57,6 +57,11 @@ class TVComment(TestCase):
         self.failUnlessRaises(
             error, VComment, b"\x00\x00\x00\x00" * 2 + b"\x00")
 
+    def test_truncated_before_framing_bit(self):
+        # ends right before the required framing byte; this used to raise
+        # IndexError instead of a mutagen error
+        self.failUnlessRaises(error, VComment, b"\x00\x00\x00\x00" * 2)
+
     def test_empty_valid(self):
         self.failIf(VComment(b"\x00\x00\x00\x00" * 2 + b"\x01"))
 
