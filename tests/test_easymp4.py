@@ -3,6 +3,7 @@ import os
 
 from mutagen import MutagenError
 from mutagen.easymp4 import EasyMP4, error as MP4Error
+from mutagen.mp4 import MP4
 
 from tests import TestCase, DATA_DIR, get_temp_copy
 
@@ -45,7 +46,8 @@ class TEasyMP4(TestCase):
 
     def test_write_single(self):
         for key in EasyMP4.Get:
-            if key in ["tracknumber", "discnumber", "date", "bpm"]:
+            if key in ["tracknumber", "discnumber", "date", "bpm",
+                       "movementnumber", "movementtotal"]:
                 continue
 
             # Test creation
@@ -66,7 +68,8 @@ class TEasyMP4(TestCase):
 
     def test_write_double(self):
         for key in EasyMP4.Get:
-            if key in ["tracknumber", "discnumber", "date", "bpm"]:
+            if key in ["tracknumber", "discnumber", "date", "bpm",
+                       "movementnumber", "movementtotal"]:
                 continue
 
             self.mp4[key] = ["a test", "value"]
@@ -118,7 +121,7 @@ class TEasyMP4(TestCase):
             ValueError, self.mp4.__setitem__, "notvalid", "tests")
 
     def test_numeric(self):
-        for tag in ["bpm"]:
+        for tag in ["bpm", "movementnumber", "movementtotal"]:
             self.mp4[tag] = "3"
             self.failUnlessEqual(self.mp4[tag], ["3"])
             self.mp4.save()
@@ -156,3 +159,26 @@ class TEasyMP4(TestCase):
 
             self.failUnlessRaises(
                 ValueError, self.mp4.__setitem__, tag, "hello")
+
+    def test_extra_text_keys(self):
+        # keys mapping straight to a standard text atom (see #606)
+        mapping = {
+            "composer": "\xa9wrt",
+            "work": "\xa9wrk",
+            "movementname": "\xa9mvn",
+            "show": "tvsh",
+            "showsort": "sosn",
+        }
+        for key, atomid in mapping.items():
+            self.mp4[key] = "a test value"
+            self.mp4.save(self.filename)
+
+            mp4 = EasyMP4(self.filename)
+            self.failUnlessEqual(mp4[key], ["a test value"])
+
+            raw = MP4(self.filename)
+            self.failUnlessEqual(raw[atomid], ["a test value"])
+
+            del self.mp4[key]
+            self.mp4.save(self.filename)
+            self.failIf(key in EasyMP4(self.filename))
