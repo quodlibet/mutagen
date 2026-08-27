@@ -10,14 +10,14 @@ from tests import TestCase, DATA_DIR, get_temp_copy
 class TADTS(TestCase):
 
     def setUp(self):
-        original = os.path.join(DATA_DIR, "empty.aac")
-        self.filename = get_temp_copy(original)
+        self.original = os.path.join(DATA_DIR, "empty.aac")
+        self.filename = get_temp_copy(self.original)
 
         tag = ID3()
         tag.add(TIT1(text=[u"a" * 5000], encoding=3))
         tag.save(self.filename)
 
-        self.aac = AAC(original)
+        self.aac = AAC(self.original)
         self.aac_id3 = AAC(self.filename)
 
     def tearDown(self):
@@ -51,6 +51,11 @@ class TADTS(TestCase):
     def test_pprint(self):
         self.assertEqual(self.aac.pprint(), self.aac_id3.pprint())
         self.assertTrue("ADTS" in self.aac.pprint())
+
+    def test_score_no_ext(self):
+        with open(self.original, "rb") as fileobj:
+            header = fileobj.read(128)
+            self.failUnless(AAC.score("empty", fileobj, header))
 
 
 class TADIF(TestCase):
