@@ -43,6 +43,15 @@ class TOggFLAC(TestCase, TOggFileTypeMixin):
         page = page.replace(b"\x01\x00", b"\x02\x00", 1)
         self.failUnlessRaises(error, OggFLACStreamInfo, BytesIO(page))
 
+    def test_truncated_header(self):
+        # a valid page whose id header packet starts with the magic but is too
+        # short to hold the fixed header should raise a mutagen error, not
+        # a raw struct.error
+        with open(self.filename, "rb") as h:
+            page = OggPage(h)
+        page.packets[0] = page.packets[0][:8]
+        self.failUnlessRaises(error, OggFLACStreamInfo, BytesIO(page.write()))
+
     def test_flac_reference_simple_save(self):
         if not have_flac:
             return

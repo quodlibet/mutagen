@@ -40,6 +40,14 @@ class TOggOpus(TestCase, TOggFileTypeMixin):
         page.first = False
         self.failUnlessRaises(error, OggOpusInfo, BytesIO(page.write()))
 
+    def test_truncated_header(self):
+        # an id header page that starts with the magic but is too short to
+        # hold the fixed header should raise a mutagen error, not struct.error
+        with open(self.filename, "rb") as h:
+            page = OggPage(h)
+        page.packets[0] = page.packets[0][:10]
+        self.failUnlessRaises(error, OggOpusInfo, BytesIO(page.write()))
+
     def test_unsupported_version(self):
         with open(self.filename, "rb") as h:
             page = OggPage(h)
