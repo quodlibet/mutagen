@@ -57,6 +57,8 @@ class OggSpeexInfo(StreamInfo):
         if not page.first:
             raise OggSpeexHeaderError(
                 "page has ID header, but doesn't start a stream")
+        if len(page.packets[0]) < 56:
+            raise OggSpeexHeaderError("Truncated header")
         self.sample_rate = cdata.uint_le(page.packets[0][36:40])
         self.channels = cdata.uint_le(page.packets[0][48:52])
         self.bitrate = max(0, cdata.int_le(page.packets[0][52:56]))
