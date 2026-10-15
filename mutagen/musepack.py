@@ -139,6 +139,11 @@ class MusepackInfo(StreamInfo):
                 raise MusepackHeaderError("Invalid packet size.")
             data_size = frame_size - key_size - slen
             # packets can be at maximum data_size big and are padded with zeros
+            # the size counts the key and the size field, so a smaller value
+            # would make the seek below go backwards (a size of 0 lands on the
+            # same key again)
+            if data_size < 0:
+                raise MusepackHeaderError("Invalid packet size.")
 
             if frame_type == b"SH":
                 if frame_type not in mandatory_packets:
