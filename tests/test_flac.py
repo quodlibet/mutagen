@@ -356,9 +356,11 @@ class TFLAC(TestCase):
         flac[u"title"] = [u"Memory Save Test"]
         flac.save(memory_bytes)
 
-        memory_bytes.seek(0)
+        flac[u"title"] = [u"Memory Save Test 2"]
+        flac.save(memory_bytes)
+
         reloaded = FLAC(memory_bytes)
-        self.assertEqual(reloaded[u"title"], [u"Memory Save Test"])
+        self.assertEqual(reloaded[u"title"], [u"Memory Save Test 2"])
 
     def test_delete_fileobj(self):
         with open(self.NEW, "rb") as fh:
@@ -369,7 +371,6 @@ class TFLAC(TestCase):
         self.assertTrue(flac.tags is not None)
         self.assertFalse(flac.tags)
 
-        memory_bytes.seek(0)
         reloaded = FLAC(memory_bytes)
         self.assertTrue(reloaded.tags is None)
 
