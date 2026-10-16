@@ -1,4 +1,5 @@
 
+import io
 import os
 import subprocess
 
@@ -347,6 +348,30 @@ class TFLAC(TestCase):
         new = FLAC(self.NEW)
         self.assertEqual(new.metadata_blocks[-1].length, 2752)
         self.assertEqual(new[u"foo"], [value])
+
+    def test_save_fileobj(self):
+        with open(self.NEW, "rb") as fh:
+            memory_bytes = io.BytesIO(fh.read())
+        flac = FLAC(memory_bytes)
+        flac[u"title"] = [u"Memory Save Test"]
+        flac.save(memory_bytes)
+
+        memory_bytes.seek(0)
+        reloaded = FLAC(memory_bytes)
+        self.assertEqual(reloaded[u"title"], [u"Memory Save Test"])
+
+    def test_delete_fileobj(self):
+        with open(self.NEW, "rb") as fh:
+            memory_bytes = io.BytesIO(fh.read())
+        flac = FLAC(memory_bytes)
+        self.failUnless(flac.tags)
+        flac.delete(memory_bytes)
+        self.assertTrue(flac.tags is not None)
+        self.assertFalse(flac.tags)
+
+        memory_bytes.seek(0)
+        reloaded = FLAC(memory_bytes)
+        self.assertTrue(reloaded.tags is None)
 
     def test_delete(self):
         self.failUnless(self.flac.tags)
