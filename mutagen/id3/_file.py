@@ -178,6 +178,24 @@ class ID3(ID3Tags, mutagen.Metadata):
                 v1v2_ver = 4 if self.version[1] == 4 else 3
                 frames, offset = find_id3v1(fileobj, v1v2_ver, known_frames)
                 if frames:
+                    # Do not re-import a lossy ID3v1 copy of a v2 comment.
+                    # Other, independent ID3v1 comments must still be kept.
+                    comments = self.getall("COMM")
+                    if "COMM" in frames and comments:
+                        old_pos = fileobj.tell()
+                        try:
+                            fileobj.seek(-3, 2)
+                            limit = 28 if fileobj.read(1) == b"\x00" else 30
+                        finally:
+                            fileobj.seek(old_pos)
+                        for comment in comments:
+                            if not comment.text:
+                                continue
+                            text = comment.text[0].encode('latin1', 'replace')
+                            text = text[:limit].split(b"\x00")[0].strip()
+                            if frames["COMM"].text == [text.decode('latin1')]:
+                                del frames["COMM"]
+                                break
                     for v in frames.values():
                         if len(self.getall(v.HashKey)) == 0:
                             self.add(v)
