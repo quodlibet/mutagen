@@ -12,6 +12,7 @@ import sys
 import codecs
 import mimetypes
 import warnings
+import io
 
 from optparse import SUPPRESS_HELP
 
@@ -479,5 +480,7 @@ def main(argv):
 
 
 def entry_point():
+    if isinstance(sys.stdout, io.TextIOWrapper) and sys.stdout.errors == "strict":
+        sys.stdout.reconfigure(errors="surrogateescape")
     _sig.init()
     return main(sys.argv)

@@ -3,6 +3,9 @@ import os
 from tempfile import mkstemp
 import shutil
 import locale
+import io
+import sys
+from unittest.mock import patch
 
 import mutagen
 from mutagen.id3 import ID3
@@ -60,6 +63,48 @@ class TMid3v2(_TTools):
         res, out = self.call("--list-raw", self.filename)
         self.failUnlessEqual(res, 0)
         self.failUnless(repr(f["TALB"]) in out)
+
+    def test_entry_point_surrogate_filename(self):
+        filename = os.fsdecode(b"mod\x85 - la notte.mp3")
+        if "\udc85" not in filename:
+            self.skipTest("filesystem encoding does not use surrogateescape")
+        tags = ID3(self.filename)
+        tags["TALB"].text = ["été"]
+        for action in ["-l", "--list-raw"]:
+            with self.subTest(action=action):
+                buffer = io.BytesIO()
+                stdout = io.TextIOWrapper(buffer, encoding="utf-8")
+                with patch.object(sys, "stdout", stdout), \
+                        patch.object(sys, "argv", ["mid3v2", action, filename]), \
+                        patch("mutagen.id3.ID3", return_value=tags) as load, \
+                        patch.object(self.get_var("_sig"), "init"):
+                    self.get_var("entry_point")()
+                    stdout.flush()
+                load.assert_called_once_with(filename, translate=False)
+                self.assertIn(b"mod\x85 - la notte.mp3", buffer.getvalue())
+                self.assertIn(tags["TALB"].text[0].encode("utf-8"),
+                              buffer.getvalue())
+
+    def test_entry_point_stringio(self):
+        stdout = io.StringIO()
+        with patch.object(sys, "stdout", stdout), \
+                patch.object(sys, "argv", ["mid3v2", "-l", self.filename]), \
+                patch.object(self.get_var("_sig"), "init"):
+            self.get_var("entry_point")()
+        self.assertIn(self.filename, stdout.getvalue())
+
+    def test_entry_point_preserves_output_error_handler(self):
+        buffer = io.BytesIO()
+        stdout = io.TextIOWrapper(buffer, encoding="ascii",
+                                  errors="backslashreplace")
+        with patch.object(sys, "stdout", stdout), \
+                patch.object(sys, "argv", ["mid3v2", "-l", self.filename]), \
+                patch.object(self.get_var("_sig"), "init"):
+            self.get_var("entry_point")()
+            stdout.flush()
+        self.assertEqual(stdout.errors, "backslashreplace")
+        self.assertIn(self.filename.encode("ascii", "backslashreplace"),
+                      buffer.getvalue())
 
     def _test_text_frame(self, short, longer, frame):
         new_value = "TEST"
