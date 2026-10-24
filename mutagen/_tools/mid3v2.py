@@ -320,9 +320,8 @@ def write_files(edits, filenames, escape):
                         id3.add(frame)
                 elif issubclass(mutagen.id3.Frames[frame],
                                 mutagen.id3.UrlFrame):
-                    frame = mutagen.id3.Frames[frame](
-                        encoding=3, url=vlist[-1])
-                    id3.add(frame)
+                    for value in vlist:
+                        id3.add(mutagen.id3.Frames[frame](encoding=3, url=value))
                 else:
                     frame = mutagen.id3.Frames[frame](encoding=3, text=vlist)
                     id3.add(frame)
