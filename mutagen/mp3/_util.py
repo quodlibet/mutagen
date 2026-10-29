@@ -281,6 +281,12 @@ class LAMEHeader(object):
         data = fileobj.read(20)
         if len(data) != 20:
             raise LAMEError("Not a lame header")
+        if data.startswith((b"Lavc", b"Lavf")):
+            # ffmpeg writes its own 9 byte encoder string into the same
+            # extension, see mp3_write_xing() in libavformat/mp3enc.c
+            desc = data[:9].rstrip(b"\x00").decode("ascii", "replace")
+            fileobj.seek(-11, 1)
+            return (0, 0), desc, True
         if not data.startswith((b"LAME", b"L3.99")):
             raise LAMEError("Not a lame header")
 
@@ -430,7 +436,7 @@ class XingHeader(object):
     def get_encoder_settings(self):
         """Returns the guessed encoder settings"""
 
-        if self.lame_header is None:
+        if self.lame_header is None or self.lame_version == (0, 0):
             return u""
         return self.lame_header.guess_settings(*self.lame_version)
 
