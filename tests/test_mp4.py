@@ -178,6 +178,37 @@ class TMP4Tags(TestCase):
         fileobj = BytesIO(data)
         return MP4Tags(Atoms(fileobj), fileobj)
 
+    def test_save_updates_all_fragment_base_offsets(self):
+        fileobj = BytesIO()
+        # With an empty udta, new tags are inserted exactly where the first
+        # fragment starts.
+        fileobj.write(Atom.render(b"moov", Atom.render(b"udta", b"")))
+        relative = struct.pack(">II", 0x020000, 2)  # default-base-is-moof
+        for extended in (False, True):
+            absolute = struct.pack(">IIQ", 1, 1, fileobj.tell())
+            if extended:
+                tfhd = struct.pack(">I4sQ", 1, b"tfhd", 16 + len(absolute))
+                tfhd += absolute
+            else:
+                tfhd = Atom.render(b"tfhd", absolute)
+            tracks = (Atom.render(b"traf", tfhd) +
+                      Atom.render(b"traf", Atom.render(b"tfhd", relative)))
+            fileobj.write(Atom.render(b"moof", tracks))
+            fileobj.write(Atom.render(b"mdat", b"audio"))
+
+        tags = MP4Tags()
+        for title in ("long album title" * 20, "short"):
+            tags["\xa9alb"] = [title]
+            tags.save(fileobj, padding=lambda _: 0)
+            moofs = [atom for atom in Atoms(fileobj).atoms
+                     if atom.name == b"moof"]
+            self.assertEqual(len(moofs), 2)
+            for moof in moofs:
+                absolute_tfhd, relative_tfhd = moof.findall(b"tfhd", True)
+                self.assertEqual(absolute_tfhd.read(fileobj),
+                                 (True, struct.pack(">IIQ", 1, 1, moof.offset)))
+                self.assertEqual(relative_tfhd.read(fileobj), (True, relative))
+
     def test_parse_multiple_atoms(self):
         # while we don't write multiple values as multiple atoms
         # still read them
