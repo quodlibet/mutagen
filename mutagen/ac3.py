@@ -137,7 +137,15 @@ class AC3Info(StreamInfo):
         r.skip(5)  # bitstream ID, already read
         r.skip(3)  # bitstream mode, not needed
         channel_mode = ChannelMode(r.bits(3))
-        r.skip(2)  # dolby surround mode or surround mix level
+        # Which of the mix level fields are present depends on the channel
+        # mode, so this is 0, 2 or 4 bits (ATSC A/52 5.3.2 "bsi").
+        if channel_mode == ChannelMode.STEREO:
+            r.skip(2)  # dolby surround mode
+        else:
+            if channel_mode & 1 and channel_mode != ChannelMode.MONO:
+                r.skip(2)  # center mix level
+            if channel_mode & 4:
+                r.skip(2)  # surround mix level
         lfe_on = r.bits(1)
 
         sr_shift = max(bitstream_id, 8) - 8
