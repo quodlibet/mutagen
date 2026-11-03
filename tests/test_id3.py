@@ -66,6 +66,115 @@ class TID3Read(TestCase):
         assert new.getall("COMM")[0].desc == "FOO::quux"
         assert len(new.getall("COMM")) == 1
 
+    def test_comm_v1_saved_without_duplicate(self):
+        for version in (3, 4):
+            for track in (None, "0", "5"):
+                with self.subTest(version=version, track=track):
+                    audio = ID3()
+                    comment = COMM(encoding=0, lang="eng", desc="FOO::quux",
+                                   text="abcdefghijklmnopqrstuvwxyzABCDEFG")
+                    audio.add(comment)
+                    if track is not None:
+                        audio.add(TRCK(encoding=0, text=track))
+                    stream = BytesIO()
+                    audio.save(stream, v1=2, v2_version=version)
+                    expected = b"abcdefghijklmnopqrstuvwxyzAB"
+                    expected += b"CD" if track is None else bytes((0, int(track)))
+                    self.assertEqual(stream.getvalue()[-31:-1], expected)
+                    stream.seek(0)
+                    loaded = ID3(stream)
+                    self.assertEqual(len(loaded.getall("COMM")), 1)
+                    self.assertEqual(loaded.getall("COMM")[0].desc, comment.desc)
+                    self.assertEqual(loaded.getall("COMM")[0].text, comment.text)
+
+    def test_comm_independent_v1_preserved(self):
+        for version in (3, 4):
+            with self.subTest(version=version):
+                audio = ID3()
+                audio.add(COMM(encoding=0, lang="eng", desc="custom", text="v2"))
+                audio.add(COMM(encoding=0, lang="deu", desc="other", text="zweite"))
+                stream = BytesIO()
+                audio.save(stream, v1=0, v2_version=version)
+                stream.seek(0, 2)
+                stream.write(MakeID3v1({"COMM": COMM(encoding=0, text="v1")}))
+                stream.seek(0)
+                loaded = ID3(stream)
+                self.assertEqual({c.desc: c.text for c in loaded.getall("COMM")},
+                                 {"custom": ["v2"], "other": ["zweite"],
+                                  "ID3v1 Comment": ["v1"]})
+
+    def test_comm_v1_stable_selection(self):
+        audio = ID3()
+        audio.add(COMM(encoding=0, desc="z", text="short"))
+        audio.add(COMM(encoding=0, desc="a", text="a much longer comment"))
+        audio.add(COMM(encoding=0, desc="0-empty"))
+        for _ in range(3):
+            stream = BytesIO()
+            audio.save(stream, v1=2)
+            self.assertEqual(stream.getvalue()[-31:-1],
+                             b"a much longer comment".ljust(30, b"\x00"))
+            stream.seek(0)
+            audio = ID3(stream)
+            self.assertEqual(len(audio.getall("COMM")), 2)
+
+    def test_comm_v1_independent_prefix(self):
+        prefix = "abcdefghijklmnopqrstuvwxyzAB"
+        audio = ID3()
+        audio.add(COMM(encoding=0, desc="custom", text=prefix + "CD"))
+        stream = BytesIO()
+        audio.save(stream, v1=0)
+        stream.seek(0, 2)
+        stream.write(MakeID3v1({"COMM": COMM(encoding=0, text=prefix + "  ")}))
+        stream.seek(0)
+        comments = ID3(stream).getall("COMM")
+        self.assertEqual(len(comments), 2)
+        self.assertIn(prefix, comments)
+        self.assertIn(prefix + "CD", comments)
+
+    def test_comm_v1_uses_actual_track_marker(self):
+        text = "abcdefghijklmnopqrstuvwxyzABCD"
+        audio = ID3()
+        audio.add(COMM(encoding=0, desc="custom", text=text))
+        audio.add(TRCK(encoding=0, text="5"))
+        stream = BytesIO()
+        audio.save(stream, v1=0)
+        stream.seek(0, 2)
+        stream.write(MakeID3v1({"COMM": COMM(encoding=0, text=text)}))
+        stream.seek(0)
+        self.assertEqual(len(ID3(stream).getall("COMM")), 1)
+
+    def test_comm_v1_empty(self):
+        audio = ID3()
+        audio.add(COMM(encoding=0, desc="empty"))
+        stream = BytesIO()
+        audio.save(stream, v1=2)
+        self.assertEqual(stream.getvalue()[-31:-1], b"\x00" * 30)
+
+    def test_comm_v1_normalization(self):
+        for text in ("  padded  ", "before\x00after", "snowman \u2603"):
+            with self.subTest(text=text):
+                audio = ID3()
+                audio.add(COMM(encoding=3, desc="custom", text=text))
+                stream = BytesIO()
+                audio.save(stream, v1=2)
+                stream.seek(0)
+                self.assertEqual(len(ID3(stream).getall("COMM")), 1)
+
+    def test_comm_v1_fallback(self):
+        for with_v2 in (False, True):
+            with self.subTest(with_v2=with_v2):
+                stream = BytesIO()
+                if with_v2:
+                    audio = ID3()
+                    audio.add(TIT2(encoding=0, text="title"))
+                    audio.save(stream, v1=0)
+                stream.seek(0, 2)
+                stream.write(MakeID3v1({"COMM": COMM(encoding=0, text="v1")}))
+                stream.seek(0)
+                loaded = ID3(stream)
+                self.assertEqual(len(loaded.getall("COMM")), 1)
+                self.assertEqual(loaded.getall("COMM")[0].text, ["v1"])
+
     def test_bad_tyer(self):
         audio = ID3(self.bad_tyer)
         self.failIf("TYER" in audio)

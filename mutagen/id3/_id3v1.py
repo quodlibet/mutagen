@@ -175,10 +175,13 @@ def MakeID3v1(id3):
             text = b""
         v1[name] = text + (b"\x00" * (30 - len(text)))
 
-    if "COMM" in id3:
-        cmnt = id3["COMM"].text[0].encode('latin1', 'replace')[:30]
-    else:
-        cmnt = b""
+    comment = id3.get("COMM")
+    if comment is None:
+        # Stable across save/load, which may reorder the ID3v2 frames.
+        comment = next((id3[key] for key in sorted(id3)
+                        if key.startswith("COMM:") and id3[key].text), None)
+    cmnt = (comment.text[0].encode('latin1', 'replace')[:30]
+            if comment is not None and comment.text else b"")
     v1["comment"] = cmnt.ljust(30, b"\x00")
 
     if "TRCK" in id3:
