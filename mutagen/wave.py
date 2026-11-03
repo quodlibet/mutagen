@@ -177,7 +177,8 @@ class WAVE(FileType):
     def score(filename, fileobj, header):
         filename = filename.lower()
 
-        return (header.startswith(b"RIFF") + (header[8:12] == b'WAVE')
+        riff_wave = header.startswith(b"RIFF") and header[8:12] == b"WAVE"
+        return (2 * riff_wave
                 + endswith(filename, b".wav") + endswith(filename, b".wave"))
 
     def add_tags(self):
