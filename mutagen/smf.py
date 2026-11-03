@@ -33,16 +33,13 @@ def _var_int(data: bytearray, offset: int = 0) -> Tuple[int, int]:
 
 
 def _read_track(chunk):
-    """Returns a list of midi events and tempo change events"""
-
-    TEMPO, MIDI = range(2)
+    """Returns the ending tick and tempo change events."""
 
     # Deviations: The running status should be reset on non midi events, but
     # some files contain meta events in between.
     # TODO: Offset and time signature are not considered.
 
     tempos = []
-    events = []
 
     chunk = bytearray(chunk)
     deltasum = 0
@@ -63,7 +60,7 @@ def _read_track(chunk):
                 if len(data) != 3:
                     raise SMFError
                 tempo = struct.unpack(">I", b"\x00" + bytes(data))[0]
-                tempos.append((deltasum, TEMPO, tempo))
+                tempos.append((deltasum, tempo))
             off += num
         elif event_type in (0xF0, 0xF7):
             val, off = _var_int(chunk, off)
@@ -82,15 +79,11 @@ def _read_track(chunk):
             if event_type >> 4 in (0xD, 0xC):
                 off -= 1
 
-            events.append((deltasum, MIDI, delta))
-
-    return events, tempos
+    return deltasum, tempos
 
 
 def _read_midi_length(fileobj):
     """Returns the duration in seconds. Can raise all kind of errors..."""
-
-    TEMPO, MIDI = range(2)
 
     def read_chunk(fileobj):
         info = fileobj.read(8)
@@ -119,43 +112,35 @@ def _read_midi_length(fileobj):
         # never saw one of those
         raise SMFError("Not supported timing interval")
 
-    # get a list of events and tempo changes for each track
+    # get the ending tick and tempo changes for each track
     tracks = []
     first_tempos = None
     for tracknum in range(ntracks):
         identifier, chunk = read_chunk(fileobj)
         if identifier != b"MTrk":
             continue
-        events, tempos = _read_track(chunk)
+        end_tick, tempos = _read_track(chunk)
 
         # In case of format == 1, copy the first tempo list to all tracks
         first_tempos = first_tempos or tempos
         if format_ == 1:
             tempos = list(first_tempos)
-        events += tempos
-        events.sort()
-        tracks.append(events)
+        tracks.append((end_tick, tempos))
 
     # calculate the duration of each track
     durations = []
-    for events in tracks:
+    for end_tick, tempos in tracks:
         tempo = 500000
-        parts = []
-        deltasum = 0
-        for (dummy, type_, data) in events:
-            if type_ == TEMPO:
-                parts.append((deltasum, tempo))
-                tempo = data
-                deltasum = 0
-            else:
-                deltasum += data
-        parts.append((deltasum, tempo))
-
+        previous_tick = 0
         duration = 0
-        for (deltasum, tempo) in parts:
-            quarter, tpq = deltasum / float(tickdiv), tempo
-            duration += (quarter * tpq)
-        duration /= 10 ** 6
+        for tick, new_tempo in tempos:
+            if tick > end_tick:
+                break
+            duration += (tick - previous_tick) * tempo
+            tempo = new_tempo
+            previous_tick = tick
+        duration += (end_tick - previous_tick) * tempo
+        duration /= float(tickdiv) * 10 ** 6
 
         durations.append(duration)
 
