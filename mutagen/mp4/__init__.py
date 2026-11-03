@@ -528,20 +528,24 @@ class MP4Tags(DictProxy, Tags):
             raise MP4MetadataError("wrong offset inside %r" % atom.name)
 
     def __update_tfhd(self, fileobj, atom, delta, offset):
-        if atom.offset > offset:
-            atom.offset += delta
-        fileobj.seek(atom.offset + 9)
-        data = fileobj.read(atom.length - 9)
-        flags = cdata.uint_be(b"\x00" + data[:3])
-        if flags & 1:
-            o = cdata.ulonglong_be(data[7:15])
-            if o > offset:
-                o += delta
-            fileobj.seek(atom.offset + 16)
-            fileobj.write(cdata.to_ulonglong_be(o))
+        data_offset = atom._dataoffset
+        if atom.offset >= offset:
+            data_offset += delta
+        fileobj.seek(data_offset)
+        data = fileobj.read(min(atom.datalength, 16))
+        try:
+            _, flags, fields = parse_full_atom(data)
+            if not flags & 1:  # no absolute base-data-offset
+                return
+            base_offset = cdata.ulonglong_be(fields[4:12])
+        except (ValueError, struct.error) as exc:
+            raise MP4MetadataError("truncated tfhd atom") from exc
+        if base_offset >= offset:
+            fileobj.seek(data_offset + 8)  # past flags and track ID
+            fileobj.write(cdata.to_ulonglong_be(base_offset + delta))
 
     def __update_offsets(self, fileobj, atoms, delta, offset):
-        """Update offset tables in all 'stco' and 'co64' atoms."""
+        """Update chunk offsets and absolute fragment base offsets."""
         if delta == 0:
             return
         moov = atoms[b"moov"]
@@ -549,11 +553,10 @@ class MP4Tags(DictProxy, Tags):
             self.__update_offset_table(fileobj, ">%dI", atom, delta, offset)
         for atom in moov.findall(b'co64', True):
             self.__update_offset_table(fileobj, ">%dQ", atom, delta, offset)
-        try:
-            for atom in atoms[b"moof"].findall(b'tfhd', True):
-                self.__update_tfhd(fileobj, atom, delta, offset)
-        except KeyError:
-            pass
+        for moof in atoms.atoms:
+            if moof.name == b"moof":
+                for atom in moof.findall(b'tfhd', True):
+                    self.__update_tfhd(fileobj, atom, delta, offset)
 
     def __parse_data(self, atom, data):
         pos = 0
