@@ -53,6 +53,8 @@ class OggFLACStreamInfo(StreamInfo):
         page = OggPage(fileobj)
         while not page.packets or not page.packets[0].startswith(b"\x7FFLAC"):
             page = OggPage(fileobj)
+        if len(page.packets[0]) < 13:
+            raise OggFLACHeaderError("Truncated header")
         major, minor, self.packets, flac = struct.unpack(
             ">BBH4s", page.packets[0][5:13])
         if flac != b"fLaC":

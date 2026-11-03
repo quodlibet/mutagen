@@ -59,6 +59,9 @@ class OggOpusInfo(StreamInfo):
             raise OggOpusHeaderError(
                 "page has ID header, but doesn't start a stream")
 
+        if len(page.packets[0]) < 19:
+            raise OggOpusHeaderError("Truncated header")
+
         (version, self.channels, pre_skip, orig_sample_rate, output_gain,
          channel_map) = struct.unpack("<BBHIhB", page.packets[0][8:19])
 

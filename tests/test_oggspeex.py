@@ -39,6 +39,14 @@ class TOggSpeex(TestCase, TOggFileTypeMixin):
         page.first = False
         self.failUnlessRaises(error, OggSpeexInfo, BytesIO(page.write()))
 
+    def test_truncated_header(self):
+        # an id header page that starts with the magic but is too short to
+        # hold the fixed header should raise a mutagen error, not struct.error
+        with open(self.filename, "rb") as h:
+            page = OggPage(h)
+        page.packets[0] = page.packets[0][:40]
+        self.failUnlessRaises(error, OggSpeexInfo, BytesIO(page.write()))
+
     def test_vendor(self):
         self.failUnless(
             self.audio.tags.vendor.startswith("Encoded with Speex 1.1.12"))
