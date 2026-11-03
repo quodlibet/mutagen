@@ -4,7 +4,7 @@ from tests import TestCase
 from mutagen.id3._specs import SpecError, Latin1TextListSpec, ID3FramesSpec, \
     ASPIIndexSpec, ByteSpec, EncodingSpec, StringSpec, BinaryDataSpec, \
     EncodedTextSpec, VolumePeakSpec, VolumeAdjustmentSpec, CTOCFlagsSpec, \
-    Spec, SynchronizedTextSpec, TimeStampSpec, FrameIDSpec, RVASpec
+    Spec, SynchronizedTextSpec, TimeStampSpec, FrameIDSpec, RVASpec, MultiSpec
 from mutagen.id3._frames import Frame
 from mutagen.id3._tags import ID3Header, ID3Tags
 from mutagen.id3._util import ID3SaveConfig
@@ -78,6 +78,54 @@ class TEncodedTextSpec(TestCase):
         f.encoding = 0
         self.assertEquals(b'abcdefg\x00', s.write(None, f, u'abcdefg'))
         self.assertRaises(AttributeError, s.write, None, f, None)
+
+
+class TMultiSpec(TestCase):
+
+    def test_empty(self):
+        spec = MultiSpec('text', EncodedTextSpec('text'))
+        self.assertEqual(spec.read(None, Frame(), b''), ([], b''))
+
+    def test_text_boundaries(self):
+        spec = MultiSpec('text', EncodedTextSpec('text'))
+        frame = Frame()
+        header = ID3Header()
+        values = [u'', u'a', u'\xe4', u'', u'last']
+        for version in ((2, 3, 0), (2, 4, 0)):
+            header.version = version
+            for encoding in range(4):
+                frame.encoding = encoding
+                data = spec.write(None, frame, values)
+                term_size = len(spec.specs[0]._encodings[encoding][1])
+                with self.subTest(version=version, encoding=encoding):
+                    self.assertEqual(spec.read(header, frame, b''), ([], b''))
+                    self.assertEqual(spec.read(header, frame, data),
+                                     (values, b''))
+                    self.assertEqual(
+                        spec.read(header, frame, data[:-term_size]),
+                        (values, b''))
+                    expected = values
+                    if version == (2, 4, 0):
+                        expected = values + [u''] * (6 // term_size)
+                    self.assertEqual(spec.read(header, frame, data + b'\0' * 6),
+                                     (expected, b''))
+
+    def test_utf16_endian_and_repair(self):
+        spec = MultiSpec('text', EncodedTextSpec('text'))
+        frame = Frame()
+        frame.encoding = 1
+        header = ID3Header()
+        header.version = (2, 4, 0)
+        data = b'\xff\xfeA\x00\x00\x00\xfe\xff\x00B\x00\x00'
+        self.assertEqual(spec.read(header, frame, data), ([u'A', u'B'], b''))
+        self.assertEqual(spec.read(header, frame, b'A\x00\x00'),
+                         ([u'A'], b''))
+
+    def test_large_text_frame(self):
+        header = ID3Header()
+        header.version = (2, 4, 0)
+        frame = TIT3._fromData(header, 0, b'\x03' + b'a\0' * 10000)
+        self.assertEqual(frame.text, [u'a'] * 10000)
 
 
 class TEncodingSpec(TestCase):

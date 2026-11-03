@@ -496,6 +496,9 @@ class MultiSpec(Spec):
         self.sep = kw.get('sep')
 
     def read(self, header, frame, data):
+        if (len(self.specs) == 1 and
+                type(self.specs[0]).read is EncodedTextSpec.read):
+            return self._read_text(header, frame, data)
         values = []
         while data:
             record = []
@@ -507,6 +510,30 @@ class MultiSpec(Spec):
             else:
                 values.append(record[0])
         return values, data
+
+    def _read_text(self, header, frame, data):
+        if not data:
+            return [], data
+        spec = self.specs[0]
+        term = spec._encodings[frame.encoding][1]
+        limit = len(data)
+        if header.version < header._V24:
+            limit = max(1, len(data.rstrip(b"\x00")))
+        values = []
+        offset = 0
+        while offset < limit:
+            end = data.find(term, offset)
+            # UTF-16 terminators must start at a code unit boundary.
+            while end >= 0 and (end - offset) % len(term):
+                end = data.find(term, end + 1)
+            if end < 0:
+                end = len(data)
+            else:
+                end += len(term)
+            value, _ = spec.read(header, frame, data[offset:end])
+            values.append(value)
+            offset = end
+        return values, b""
 
     def write(self, config, frame, value):
         data = []
