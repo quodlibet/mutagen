@@ -98,6 +98,25 @@ class TMusepack(TestCase):
         self.assertEqual(info.channels, 2)
         self.assertEqual(info.samples, 3024084)
 
+    def test_packet_size_smaller_than_header(self):
+        # https://github.com/quodlibet/mutagen/issues/433
+        # a packet size of 0 used to seek back to the same packet key and
+        # loop forever
+        for size in [b"\x00", b"\x80\x00"]:
+            self.failUnlessRaises(
+                MusepackHeaderError,
+                MusepackInfo,
+                BytesIO(b"MPCK" + b"XX" + size))
+
+    def test_packet_with_empty_payload(self):
+        # a size that only covers the key and the size field is still valid
+        data = (b"MPCKXX\x03SH\x10\x95 Q\xa2\x08\x81\xb8\xc9T\x00\x1e\x1b"
+                b"\x00RG\x0c\x01A\xcdY\x06?\x80Z\x06EI")
+
+        info = MusepackInfo(BytesIO(data))
+        self.assertEqual(info.channels, 2)
+        self.assertEqual(info.samples, 3024084)
+
 
 class TMusepackWithID3(TestCase):
 
