@@ -129,6 +129,44 @@ class TMid3v2(_TTools):
         f = ID3(self.filename)
         assert len(f.getall("TXXX")) == 2
 
+    def test_txxx_multiple_values(self):
+        tags = ID3(self.filename)
+        tags.add(mutagen.id3.TXXX(encoding=3, desc="A", text=["old"]))
+        tags.add(mutagen.id3.TXXX(encoding=3, desc="C", text=["untouched"]))
+        tags.save()
+
+        res, out = self.call(
+            "--TXXX", "A:first", "--TXXX", "B:other",
+            "--TXXX", "A:second:with:colons", "--TXXX", "A:first",
+            self.filename)
+        self.assertEqual((res, out), (0, ""))
+        tags = ID3(self.filename)
+        self.assertEqual(tags["TXXX:A"].text,
+                         ["first", "second:with:colons", "first"])
+        self.assertEqual(tags["TXXX:B"].text, ["other"])
+        self.assertEqual(tags["TXXX:C"].text, ["untouched"])
+
+        res, out = self.call("--TXXX", "A:replacement", self.filename)
+        self.assertEqual((res, out), (0, ""))
+        tags = ID3(self.filename)
+        self.assertEqual(tags["TXXX:A"].text, ["replacement"])
+        self.assertEqual(tags["TXXX:B"].text, ["other"])
+
+    def test_txxx_multiple_values_without_description(self):
+        res, out = self.call(
+            "--TXXX", "first", "--TXXX", ":second", self.filename)
+        self.assertEqual((res, out), (0, ""))
+        self.assertEqual(ID3(self.filename)["TXXX:"].text,
+                         ["first", "second"])
+
+    def test_txxx_multiple_values_escaped(self):
+        res, out = self.call(
+            "-e", "--TXXX", r"A\\:B:first\\:part",
+            "--TXXX", r"A\\:B:second\nline", self.filename)
+        self.assertEqual((res, out), (0, ""))
+        self.assertEqual(ID3(self.filename)["TXXX:A:B"].text,
+                         ["first:part", "second\nline"])
+
     def test_wcom(self):
         res, out = self.call("--WCOM", "foo", self.filename)
         self.failUnlessEqual((res, out), (0, ""))

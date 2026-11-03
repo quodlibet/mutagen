@@ -113,6 +113,11 @@ separate the text with a colon, e.g. ``--TXXX "ALBUMARTISTSORT:Examples,
 The"``. The description can be omitted in which case it defaults to an empty
 string.
 
+To set multiple text values for one TXXX description, repeat the option:
+``--TXXX "OCCASION:Relax" --TXXX "OCCASION:Sleep"``. Values with the same
+description are stored in command-line order, replacing any previous values
+for that description in the file.
+
 The WXXX frame has the same format as TXXX but since URLs usually contain a
 ":" you have provide a description or enable escaping (-e):
 ``--WXXX "desc:http://foo.bar"`` or ``-e --WXXX "http\\://foo.bar"``

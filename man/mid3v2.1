@@ -129,6 +129,11 @@ separate the text with a colon, e.g. \fB\-\-TXXX "ALBUMARTISTSORT:Examples,
 The"\fP\&. The description can be omitted in which case it defaults to an empty
 string.
 .sp
+To set multiple text values for one TXXX description, repeat the option:
+\fB\-\-TXXX "OCCASION:Relax" \-\-TXXX "OCCASION:Sleep"\fP\&. Values with the same
+description are stored in command-line order, replacing any previous values
+for that description in the file.
+.sp
 The WXXX frame has the same format as TXXX but since URLs usually contain a
 ":" you have provide a description or enable escaping (\-e):
 \fB\-\-WXXX "desc:http://foo.bar"\fP or \fB\-e \-\-WXXX "http\e\e://foo.bar"\fP

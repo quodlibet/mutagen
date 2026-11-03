@@ -299,14 +299,17 @@ def write_files(edits, filenames, escape):
                         frame = mutagen.id3.UFID(owner=owner, data=data)
                         id3.add(frame)
                 elif frame == "TXXX":
+                    text_by_desc = {}
                     for value in vlist:
                         values = string_split(value, ":", 1)
                         if len(values) == 1:
                             desc, value = "", values[0]
                         else:
                             desc, value = values[0], values[1]
+                        text_by_desc.setdefault(desc, []).append(value)
+                    for desc, text in text_by_desc.items():
                         frame = mutagen.id3.TXXX(
-                            encoding=3, text=value, desc=desc)
+                            encoding=3, text=text, desc=desc)
                         id3.add(frame)
                 elif frame == "WXXX":
                     for value in vlist:
