@@ -30,6 +30,53 @@ RATES = [6000, 8000, 9600, 11025, 12000, 16000, 22050, 24000, 32000, 44100,
          48000, 64000, 88200, 96000, 192000]
 
 
+@convert_error(IOError, WavPackHeaderError)
+def _read_sample_rate(fileobj, block_size):
+    """Read ID_SAMPLE_RATE metadata without changing the header scan position."""
+
+    position = fileobj.tell()
+    remaining = block_size - 24  # ckSize excludes the first eight header bytes
+    try:
+        if remaining < 0:
+            raise WavPackHeaderError("invalid block size")
+        while remaining:
+            if remaining < 2:
+                raise WavPackHeaderError("truncated metadata header")
+            data = fileobj.read(2)
+            if len(data) != 2:
+                raise WavPackHeaderError("truncated metadata header")
+            id_, size = data[0], data[1] * 2
+            remaining -= 2
+            if id_ & 0x80:  # ID_LARGE: a 24-bit size measured in words
+                if remaining < 2:
+                    raise WavPackHeaderError("truncated metadata size")
+                data = fileobj.read(2)
+                if len(data) != 2:
+                    raise WavPackHeaderError("truncated metadata size")
+                size += int.from_bytes(data, "little") << 9
+                remaining -= 2
+            odd = bool(id_ & 0x40)
+            if size > remaining or (odd and not size):
+                raise WavPackHeaderError("invalid metadata size")
+            if id_ & 0x3f == 0x27:  # ID_SAMPLE_RATE
+                if size - odd not in (3, 4):
+                    raise WavPackHeaderError("invalid sample rate metadata")
+                data = fileobj.read(size)
+                if len(data) != size:
+                    raise WavPackHeaderError("truncated sample rate metadata")
+                return (int.from_bytes(data[:size - odd], "little") &
+                        0x7fffffff) or 44100
+            if size:
+                fileobj.seek(size - 1, 1)
+                if len(fileobj.read(1)) != 1:
+                    raise WavPackHeaderError("truncated metadata")
+            remaining -= size
+        # Match the reference decoder when no nonzero rate is specified.
+        return 44100
+    finally:
+        fileobj.seek(position)
+
+
 class _WavPackHeader(object):
 
     def __init__(self, block_size, version, track_no, index_no, total_samples,
@@ -89,7 +136,11 @@ class WavPackInfo(StreamInfo):
 
         self.version = header.version
         self.channels = bool(header.flags & 4) or 2
-        self.sample_rate = RATES[(header.flags >> 23) & 0xF]
+        rate_index = (header.flags >> 23) & 0xF
+        if rate_index == 0xF:
+            self.sample_rate = _read_sample_rate(fileobj, header.block_size)
+        else:
+            self.sample_rate = RATES[rate_index]
         self.bits_per_sample = ((header.flags & 3) + 1) * 8
 
         # most common multiplier (DSD64)
