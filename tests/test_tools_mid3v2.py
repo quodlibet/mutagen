@@ -145,8 +145,41 @@ class TMid3v2(_TTools):
         self.failUnlessEqual((res, out), (0, ""))
         f = ID3(self.filename)
         frames = f.getall("WCOM")
-        assert len(frames) == 1
-        assert frames[0].url == "bar"
+        self.assertEqual(sorted(frame.url for frame in frames), ["bar", "foo"])
+
+    def test_woar_multiple(self):
+        res, out = self.call(
+            "--WOAR", "https://artist.example/first",
+            "--WOAR", "https://artist.example/second",
+            self.filename)
+        self.assertEqual((res, out), (0, ""))
+        frames = ID3(self.filename).getall("WOAR")
+        self.assertEqual(sorted(frame.url for frame in frames), [
+            "https://artist.example/first", "https://artist.example/second"])
+
+    def test_url_duplicates(self):
+        for frame_id in ("WOAR", "WCOM"):
+            with self.subTest(frame_id=frame_id):
+                res, out = self.call(
+                    "--" + frame_id, "foo",
+                    "--" + frame_id, "bar",
+                    "--" + frame_id, "foo",
+                    self.filename)
+                self.assertEqual((res, out), (0, ""))
+                frames = ID3(self.filename).getall(frame_id)
+                self.assertEqual(sorted(frame.url for frame in frames),
+                                 ["bar", "foo"])
+
+    def test_url_single_value(self):
+        for frame_id in ("WCOP", "WFED", "WOAF", "WOAS", "WORS", "WPAY", "WPUB"):
+            with self.subTest(frame_id=frame_id):
+                res, out = self.call(
+                    "--" + frame_id, "foo",
+                    "--" + frame_id, "bar",
+                    self.filename)
+                self.assertEqual((res, out), (0, ""))
+                frames = ID3(self.filename).getall(frame_id)
+                self.assertEqual([frame.url for frame in frames], ["bar"])
 
     def test_wxxx(self):
         res, out = self.call("--WXXX", "foobar", self.filename)

@@ -107,6 +107,11 @@ Any text or URL frame (those beginning with T or W) can be modified or
 added by prefixing the name of the frame with "--". For example, ``--TIT3
 "Monkey!"`` will set the TIT3 (subtitle) frame to ``Monkey!``.
 
+WOAR and WCOM can be repeated to store several distinct URLs in one command,
+e.g. ``--WOAR "https://artist.example/first" --WOAR
+"https://artist.example/second"``. Repeated identical URLs are stored once.
+For URL frames that allow only a single value, the last supplied value is used.
+
 The TXXX frame has the format <DESCRIPTION:TEXT>; many TXXX frames may be
 set in the file as long as they have different keys. To set this key, just
 separate the text with a colon, e.g. ``--TXXX "ALBUMARTISTSORT:Examples,
