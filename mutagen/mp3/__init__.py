@@ -201,7 +201,10 @@ class MPEGFrame(object):
                     samples = 0
                 self.length = float(samples) / self.sample_rate
             if xing.lame_version_desc:
-                self.encoder_info = u"LAME %s" % xing.lame_version_desc
+                if xing.lame_version == (0, 0):
+                    self.encoder_info = xing.lame_version_desc
+                else:
+                    self.encoder_info = u"LAME %s" % xing.lame_version_desc
             if lame is not None:
                 self.track_gain = lame.track_gain_adjustment
                 self.track_peak = lame.track_peak

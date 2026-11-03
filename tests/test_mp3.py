@@ -42,6 +42,7 @@ class TMP3(TestCase):
     lame = os.path.join(DATA_DIR, 'lame.mp3')
     lame_peak = os.path.join(DATA_DIR, 'lame-peak.mp3')
     lame_broken_short = os.path.join(DATA_DIR, 'lame397v9short.mp3')
+    lavc_info = os.path.join(DATA_DIR, 'lavc-info.mp3')
 
     def setUp(self):
         self.filename = get_temp_copy(
@@ -53,6 +54,16 @@ class TMP3(TestCase):
         self.mp3_4 = MP3(self.silence_mpeg25)
         self.mp3_lame = MP3(self.lame)
         self.mp3_lame_peak = MP3(self.lame_peak)
+
+    def test_lavc_info_tag(self):
+        # ffmpeg writes "Lavc"/"Lavf" instead of "LAME" into the same
+        # extension, with encoder delay/padding set. The file holds exactly
+        # 44100 samples, which is what ffprobe reports.
+        f = MP3(self.lavc_info)
+        assert f.info.length == 1.0
+        assert f.info.encoder_info == "Lavc61.19"
+        assert f.info.encoder_settings == ""
+        assert f.info.bitrate_mode == BitrateMode.CBR
 
     def test_lame_broken_short(self):
         # lame <=3.97 wrote broken files
@@ -369,6 +380,9 @@ class TLAMEHeader(TestCase):
         self.assertEqual(parse(b"LAME3100r"), (u"3.100.1+", True))
         self.assertEqual(parse(b"LAME3.90.\x03\xbe\x00"), (u"3.90.0+", True))
         self.assertEqual(parse(b"LAME3.100"), (u"3.100.0+", True))
+        self.assertEqual(parse(b"Lavc61.19"), (u"Lavc61.19", True))
+        self.assertEqual(parse(b"Lavf lame"), (u"Lavf lame", True))
+        self.assertEqual(parse(b"Lavf"), (u"Lavf", True))
 
     def test_invalid(self):
 
