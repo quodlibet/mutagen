@@ -17,7 +17,7 @@ from ._util import BitPaddedInt, unsynch, ID3JunkFrameError, \
     ID3EncryptionUnsupportedError, is_valid_frame_id, error, \
     ID3NoHeaderError, ID3UnsupportedVersionError, ID3SaveConfig
 from ._frames import TDRC, APIC, TDOR, TIME, TIPL, TORY, TDAT, Frames_2_2, \
-    TextFrame, TYER, Frame, IPLS, Frames
+    TextFrame, TYER, Frame, IPLS, Frames, MAX_DECOMPRESSED_SIZE
 
 
 class ID3Header(object):
@@ -557,6 +557,10 @@ def read_frames(id3, data, frames):
     """Does not error out"""
 
     assert id3.version >= ID3Header._V22
+
+    # Reset the per-tag decompression budget shared by all compressed frames,
+    # so a bounded total is enforced even if this header object is reused.
+    id3._decompress_budget = MAX_DECOMPRESSED_SIZE
 
     result = []
     unsupported_frames = []
