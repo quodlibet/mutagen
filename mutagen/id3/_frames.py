@@ -10,7 +10,7 @@ from struct import unpack
 from typing import Sequence
 
 from ._util import ID3JunkFrameError, ID3EncryptionUnsupportedError, unsynch, \
-    ID3SaveConfig, error
+    ID3SaveConfig, error, BitPaddedInt
 from ._specs import BinaryDataSpec, StringSpec, Latin1TextSpec, \
     EncodedTextSpec, ByteSpec, EncodingSpec, ASPIIndexSpec, SizedIntegerSpec, \
     IntegerSpec, Encoding, VolumeAdjustmentsSpec, VolumePeakSpec, \
@@ -24,6 +24,56 @@ def _bytes2key(b):
     assert isinstance(b, bytes)
 
     return b.decode("latin1")
+
+
+# The maximum number of bytes an ID3 tag may inflate to across all of its
+# compressed frames. Frame-level compression is rare and the payloads are small
+# in practice, so this generous aggregate cap leaves real files untouched while
+# preventing a tiny compressed frame from inflating without bound (a zlib
+# "decompression bomb") and exhausting memory when an untrusted file is parsed.
+MAX_DECOMPRESSED_SIZE = 64 * 1024 * 1024
+
+
+def _inflate_bounded(data, header):
+    """zlib-inflate ``data`` while enforcing an aggregate decompression budget.
+
+    The budget is tracked on ``header`` so that it spans every compressed frame
+    of the tag -- many small compressed frames (e.g. several ``APIC`` frames)
+    could otherwise each stay under a per-frame limit yet sum to an unbounded
+    total. Returns the inflated bytes.
+
+    Raises:
+        zlib.error: ``data`` is malformed or truncated. Callers keep their
+            existing fallback/compatibility handling for this case.
+        ID3JunkFrameError: inflating ``data`` would exceed the tag's remaining
+            decompression budget (a decompression bomb).
+    """
+    budget = getattr(header, "_decompress_budget", None)
+    if budget is None:
+        budget = MAX_DECOMPRESSED_SIZE
+    if budget <= 0:
+        raise ID3JunkFrameError(
+            "compressed frames exceed the %d byte decompression budget"
+            % MAX_DECOMPRESSED_SIZE)
+
+    dobj = zlib.decompressobj()
+    # Inflate at most one byte beyond the budget: a stream that fits exactly at
+    # the budget still reaches its end marker (eof is set), while a larger one
+    # yields budget + 1 bytes and is rejected below.
+    out = dobj.decompress(data, budget + 1)
+    if len(out) > budget:
+        # Inflating fully would produce more than the budget allows.
+        raise ID3JunkFrameError(
+            "compressed frame exceeds the %d byte decompression budget"
+            % MAX_DECOMPRESSED_SIZE)
+    if not dobj.eof:
+        # All input was consumed without reaching the end of the zlib stream:
+        # the stream is truncated or not zlib. Mirror zlib.decompress() by
+        # raising zlib.error so callers' existing fallback paths run unchanged.
+        raise zlib.error("incomplete or truncated stream")
+
+    header._decompress_budget = budget - len(out)
+    return out
 
 
 class Frame(object):
@@ -260,15 +310,22 @@ class Frame(object):
                     pass
             if tflags & Frame.FLAG24_ENCRYPT:
                 raise ID3EncryptionUnsupportedError
+            if tflags & Frame.FLAG24_DATALEN:
+                # The data length indicator is advisory (early mutagen wrote it
+                # wrong), so it is only an early-out, never the sole bound.
+                if BitPaddedInt(datalen_bytes) > MAX_DECOMPRESSED_SIZE:
+                    raise ID3JunkFrameError(
+                        'declared uncompressed size exceeds the '
+                        'decompression budget')
             if tflags & Frame.FLAG24_COMPRESS:
                 try:
-                    data = zlib.decompress(data)
+                    data = _inflate_bounded(data, header)
                 except zlib.error:
                     # the initial mutagen that went out with QL 0.12 did not
                     # write the 4 bytes of uncompressed size. Compensate.
                     data = datalen_bytes + data
                     try:
-                        data = zlib.decompress(data)
+                        data = _inflate_bounded(data, header)
                     except zlib.error as err:
                         raise ID3JunkFrameError(
                             'zlib: %s: %r' % (err, data))
@@ -279,11 +336,17 @@ class Frame(object):
                     raise ID3JunkFrameError('frame too small: %r' % data)
                 usize, = unpack('>L', data[:4])
                 data = data[4:]
+                # The declared uncompressed size is advisory, so it is only an
+                # early-out; _inflate_bounded() is the real bound.
+                if usize > MAX_DECOMPRESSED_SIZE:
+                    raise ID3JunkFrameError(
+                        'declared uncompressed size exceeds the '
+                        'decompression budget')
             if tflags & Frame.FLAG23_ENCRYPT:
                 raise ID3EncryptionUnsupportedError
             if tflags & Frame.FLAG23_COMPRESS:
                 try:
-                    data = zlib.decompress(data)
+                    data = _inflate_bounded(data, header)
                 except zlib.error as err:
                     raise ID3JunkFrameError('zlib: %s: %r' % (err, data))
 
