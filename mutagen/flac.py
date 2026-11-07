@@ -784,6 +784,7 @@ class FLAC(mutagen.FileType):
         """Load file information from a filename."""
 
         fileobj = filething.fileobj
+        fileobj.seek(0)
 
         self.metadata_blocks = []
         self.tags = None
@@ -859,6 +860,7 @@ class FLAC(mutagen.FileType):
         self._save(filething, self.metadata_blocks, deleteid3, padding)
 
     def _save(self, filething, metadata_blocks, deleteid3, padding):
+        filething.fileobj.seek(0)
         f = StrictFileObject(filething.fileobj)
         header = self.__check_header(f, filething.name)
         audio_offset = self.__find_audio_offset(f)
