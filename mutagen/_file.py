@@ -206,7 +206,7 @@ class StreamInfo(object):
 
 
 @loadfile(method=False)
-def File(filething, options=None, easy=False):
+def File(filething, options=None, easy=False) -> FileType | None:
     """File(filething, options=None, easy=False)
 
     Guess the type of the file and try to open it.
