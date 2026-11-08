@@ -339,6 +339,30 @@ class TFLAC(TestCase):
         self.assertEqual(num_padding(new), 1)
         self.assertTrue(isinstance(new.metadata_blocks[-1], Padding))
 
+    def test_empty_vorbiscomment_before_populated(self):
+        # https://github.com/quodlibet/mutagen/issues/692
+        # An empty VORBIS_COMMENT block before a populated one must not hide
+        # the tags in the populated block (FFmpeg and the reference
+        # implementation read the populated block in this case).
+        self.flac["title"] = [u"A Title"]
+        self.flac.save()
+
+        # inject an empty VORBIS_COMMENT block before the populated one
+        f = FLAC(self.NEW)
+        populated = f.tags
+        assert populated
+        f.metadata_blocks.insert(
+            f.metadata_blocks.index(populated), VCFLACDict())
+        f.save()
+
+        f = FLAC(self.NEW)
+        assert f.tags
+        assert f["title"] == [u"A Title"]
+        # the empty leading block is dropped, leaving a single comment block
+        vc_blocks = [b for b in f.metadata_blocks
+                     if b.code == VCFLACDict.code]
+        assert len(vc_blocks) == 1
+
     def test_increase_size_new_padding(self):
         self.assertEqual(self.flac.metadata_blocks[-1].length, 3060)
         value = u"foo" * 100

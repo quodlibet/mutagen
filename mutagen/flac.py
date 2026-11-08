@@ -732,6 +732,13 @@ class FLAC(mutagen.FileType):
         if block.code == VCFLACDict.code:
             if self.tags is None:
                 self.tags = block
+            elif not self.tags:
+                # https://github.com/quodlibet/mutagen/issues/692
+                # Some files have an empty first VORBIS_COMMENT block
+                # followed by a populated one; prefer the populated block,
+                # as FFmpeg and the reference implementation do.
+                self.metadata_blocks.remove(self.tags)
+                self.tags = block
             else:
                 # https://github.com/quodlibet/mutagen/issues/377
                 # Something writes multiple and metaflac doesn't care
