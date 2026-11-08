@@ -594,6 +594,10 @@ class Tenum(TestCase):
         self.assertTrue(isinstance(str(Foo.FOO), str))
         self.assertTrue(isinstance(repr(Foo.FOO), str))
 
+        self.assertTrue(hasattr(Foo.FOO, "__dict__"))
+        self.assertEqual(vars(Foo.FOO), {})
+        self.assertIsNone(getattr(Foo.FOO, "__weakref__", None))
+
 
 class Tflags(TestCase):
 
@@ -616,6 +620,10 @@ class Tflags(TestCase):
 
         self.assertTrue(isinstance(str(Foo.FOO), str))
         self.assertTrue(isinstance(repr(Foo.FOO), str))
+
+        self.assertTrue(hasattr(Foo.FOO, "__dict__"))
+        self.assertEqual(vars(Foo.FOO), {})
+        self.assertIsNone(getattr(Foo.FOO, "__weakref__", None))
 
 
 class Tverify_fileobj(TestCase):

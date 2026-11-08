@@ -348,7 +348,8 @@ def enum(cls):
 
     assert cls.__bases__ == (object,)
 
-    d = dict(cls.__dict__)
+    d = {key: value for key, value in cls.__dict__.items()
+         if key not in ("__dict__", "__weakref__")}
     new_type = type(cls.__name__, (int,), d)
     new_type.__module__ = cls.__module__
 
@@ -397,7 +398,8 @@ def flags(cls):
 
     assert cls.__bases__ == (object,)
 
-    d = dict(cls.__dict__)
+    d = {key: value for key, value in cls.__dict__.items()
+         if key not in ("__dict__", "__weakref__")}
     new_type = type(cls.__name__, (int,), d)
     new_type.__module__ = cls.__module__
 
