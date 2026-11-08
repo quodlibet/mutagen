@@ -239,6 +239,11 @@ for atomid, key in {
     'soar': 'artistsort',
     'sonm': 'titlesort',
     'soco': 'composersort',
+    '\xa9wrt': 'composer',
+    '\xa9wrk': 'work',
+    '\xa9mvn': 'movementname',
+    'tvsh': 'show',
+    'sosn': 'showsort',
 }.items():
     EasyMP4Tags.RegisterTextKey(key, atomid)
 
@@ -256,6 +261,8 @@ for name, key in {
 
 for name, key in {
     "tmpo": "bpm",
+    "\xa9mvi": "movementnumber",
+    "\xa9mvc": "movementtotal",
 }.items():
     EasyMP4Tags.RegisterIntKey(key, name)
 
