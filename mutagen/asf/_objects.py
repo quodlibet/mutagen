@@ -272,8 +272,15 @@ class StreamPropertiesObject(BaseObject):
 
     GUID = guid2bytes("B7DC0791-A9B7-11CF-8EE6-00C00C205365")
 
+    # Only the audio stream carries a WAVEFORMATEX type-specific block; for
+    # any other stream type bytes 56:66 are not channels/sample rate/bitrate
+    # and decoding them clobbers the values from the audio stream.
+    AUDIO_MEDIA = guid2bytes("F8699E40-5B4D-11CF-A8FD-00805F5C442B")
+
     def parse(self, asf, data):
         super(StreamPropertiesObject, self).parse(asf, data)
+        if data[:16] != self.AUDIO_MEDIA:
+            return
         channels, sample_rate, bitrate = struct.unpack("<HII", data[56:66])
         asf.info.channels = channels
         asf.info.sample_rate = sample_rate

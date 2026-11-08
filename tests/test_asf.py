@@ -1,5 +1,6 @@
 
 import os
+import struct
 import warnings
 from io import BytesIO
 
@@ -36,6 +37,58 @@ class TASFMisc(TestCase):
         self.assertEqual(len(b), 16)
         self.assertTrue(isinstance(b, bytes))
         self.assertEqual(bytes2guid(b), ex)
+
+
+class TASFVideoStream(TestCase):
+    """A video stream must not clobber the audio stream's info (#732)"""
+
+    def _build(self, with_video):
+        stream_props = guid2bytes("B7DC0791-A9B7-11CF-8EE6-00C00C205365")
+        audio_media = guid2bytes("F8699E40-5B4D-11CF-A8FD-00805F5C442B")
+        video_media = guid2bytes("BC19EFC0-5B4D-11CF-A8FD-00805F5C442B")
+        no_error_correction = guid2bytes("20FB5700-5B55-11CF-A8FD-00805F5C442B")
+
+        def obj(guid, data):
+            return guid + struct.pack("<Q", len(data) + 24) + data
+
+        def stream_properties(stream_type, type_specific):
+            data = (stream_type + no_error_correction + struct.pack("<Q", 0) +
+                    struct.pack("<II", len(type_specific), 0) +
+                    struct.pack("<IH", 0, 1) + type_specific)
+            return obj(stream_props, data)
+
+        # wFormatTag=none, 2 channels, 44100 Hz, 16000 bytes/sec
+        audio = stream_properties(audio_media,
+                                  struct.pack("<HHIIHH", 0x0161, 2, 44100,
+                                              16000, 0, 16))
+        if with_video:
+            # not a WAVEFORMATEX: 320x240 then an ASCII fourcc
+            video = stream_properties(
+                video_media,
+                struct.pack("<II", 320, 240) + b"WMV3" + b"\x00" * 4 + b"XXXX")
+        else:
+            video = b""
+
+        props = obj(guid2bytes("8CABDCA1-A947-11CF-8EE4-00C00C205365"),
+                    struct.pack("<16sQQQQQQQII", b"\x00" * 16, 0, 0, 1,
+                                10000000, 0, 0, 1, 0, 0)) + audio + video
+        num_objects = 2 + int(with_video)
+        hdr = (guid2bytes("75B22630-668E-11CF-A6D9-00AA0062CE6C") +
+               struct.pack("<QL", len(props) + 30, num_objects) +
+               b"\x01\x02" + props)
+        return BytesIO(hdr + b"\x00" * 4096)
+
+    def test_audio_only(self):
+        info = ASF(self._build(False)).info
+        self.assertEqual(info.channels, 2)
+        self.assertEqual(info.sample_rate, 44100)
+        self.assertEqual(info.bitrate, 128000)
+
+    def test_video_stream_does_not_clobber_audio(self):
+        info = ASF(self._build(True)).info
+        self.assertEqual(info.channels, 2)
+        self.assertEqual(info.sample_rate, 44100)
+        self.assertEqual(info.bitrate, 128000)
 
 
 class TASFInfo(TestCase):
