@@ -765,7 +765,13 @@ class FLAC(mutagen.FileType):
         """Remove Vorbis comments from a file.
 
         If no filename is given, the one most recently loaded is used.
+        An unloaded instance (``FLAC().delete(file)``) loads the file first,
+        matching :func:`delete` and ``ID3().delete(file)``.
         """
+
+        if not hasattr(self, "metadata_blocks"):
+            self.load(filething)
+            filething.fileobj.seek(0)
 
         if self.tags is not None:
             temp_blocks = [

@@ -374,6 +374,20 @@ class TFLAC(TestCase):
         flac = FLAC(self.NEW)
         self.failIf(flac.tags)
 
+    def test_delete_unloaded_instance(self):
+        # FLAC().delete(path) used to no-op because tags is None until load.
+        self.failUnless(FLAC(self.NEW).tags)
+        with pytest.warns(DeprecationWarning):
+            FLAC().delete(self.NEW)
+        self.assertTrue(FLAC(self.NEW).tags is None)
+
+    def test_delete_unloaded_fileobj(self):
+        self.failUnless(FLAC(self.NEW).tags)
+        with open(self.NEW, "rb+") as fileobj:
+            with pytest.warns(DeprecationWarning):
+                FLAC().delete(fileobj)
+        self.assertTrue(FLAC(self.NEW).tags is None)
+
     def test_info(self):
         self.failUnlessAlmostEqual(FLAC(self.NEW).info.length, 3.7, 1)
 
