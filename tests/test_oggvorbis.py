@@ -137,6 +137,25 @@ class TOggVorbis(TestCase, TOggFileTypeMixin):
         self.failUnlessRaises(error, self.audio.save, fn)
         self.failUnlessRaises(error, self.audio.delete, fn)
 
+    def test_page_with_no_packets_raises_error(self):
+        # A page with no complete packets must surface as a mutagen error,
+        # not IndexError from page.packets[0] while scanning for the ID header.
+        first = OggPage()
+        first.serial = 1
+        first.sequence = 0
+        first.first = True
+        first.position = 0
+        first.packets = [b"\x02vorbisjunk" + b"\x00" * 30]
+
+        empty = OggPage()
+        empty.serial = 1
+        empty.sequence = 1
+        empty.first = False
+        empty.position = -1
+        empty.packets = []
+
+        self.failUnlessRaises(error, self.Kind, BytesIO(first.write() + empty.write()))
+
     def test_save_split_setup_packet(self):
         fn = os.path.join(DATA_DIR, "multipage-setup.ogg")
         shutil.copy(fn, self.filename)
