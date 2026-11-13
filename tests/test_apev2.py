@@ -1,12 +1,14 @@
 
 import os
+import struct
+from io import BytesIO
 
 from tests import TestCase, DATA_DIR, get_temp_copy, get_temp_empty
 
 import mutagen.apev2
 from mutagen import MutagenError
 from mutagen.apev2 import APEv2File, APEv2, is_valid_apev2_key, \
-    APEBadItemError, error as APEv2Error
+    APEBadItemError, error as APEv2Error, HAS_HEADER
 
 
 SAMPLE = os.path.join(DATA_DIR, "click.mpc")
@@ -418,3 +420,27 @@ class TAPEv2File(TestCase):
     def test_unknown_info(self):
         info = self.audio.info
         info.pprint()
+
+
+def _ape_footer(size, items=0, flags=0, version=2000):
+    return (b"APETAGEX" + struct.pack("<I", version) + struct.pack("<I", size)
+            + struct.pack("<I", items) + struct.pack("<I", flags)
+            + b"\x00" * 8)
+
+
+class TAPEv2InvalidSize(TestCase):
+    # A tag whose size field points before the start of the file or past its
+    # end used to leak a ValueError (negative seek while loading, or
+    # delete_bytes while saving/deleting) instead of an apev2.error.
+
+    def test_footer_size_before_start(self):
+        data = _ape_footer(0xFFFFFFFF)
+        self.failUnlessRaises(APEv2Error, APEv2, BytesIO(data))
+
+    def test_footer_with_header_flag_before_start(self):
+        data = _ape_footer(10, flags=HAS_HEADER)
+        self.failUnlessRaises(APEv2Error, APEv2, BytesIO(data))
+
+    def test_header_size_past_end(self):
+        data = _ape_footer(0xFFFFFFF0, flags=HAS_HEADER)
+        self.failUnlessRaises(APEv2Error, APEv2, BytesIO(data))
