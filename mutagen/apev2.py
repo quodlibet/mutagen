@@ -202,6 +202,14 @@ class _APEv2Data(object):
         else:
             raise APENoHeaderError("No APE tag found")
 
+        # A size field that places the tag before the start of the file or
+        # past its end is corrupt. Reject it here, otherwise the bogus
+        # offsets leak out as a ValueError (a negative seek in
+        # __fix_brokenness when loading, or delete_bytes when saving or
+        # deleting) instead of an apev2.error.
+        if self.data < 0 or self.header < 0 or self.end > get_size(fileobj):
+            raise error("invalid tag size")
+
         # exclude the footer from size
         if self.footer is not None:
             self.size -= 32
