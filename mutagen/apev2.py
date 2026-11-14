@@ -317,6 +317,10 @@ class APEv2(_CIDictProxy, Metadata):
             if not key:
                 raise APEBadItemError
             while key[-1:] != b'\x00' and value:
+                # valid keys are at most 255 bytes, don't keep reading
+                # (and copying) an overlong one byte by byte
+                if len(key) > 255:
+                    raise APEBadItemError("key too long")
                 value = fileobj.read(1)
                 if not value:
                     raise APEBadItemError
