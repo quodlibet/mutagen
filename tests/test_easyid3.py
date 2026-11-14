@@ -242,6 +242,27 @@ class TEasyID3(TestCase):
         self.id3["performer:foo"] = "Joe"
         self.failUnlessRaises(KeyError, self.id3.__delitem__, "performer:bar")
 
+    def test_artists_from_txxx(self):
+        self.realid3.add(TXXX(desc="ARTISTS", text=["First Artist", "Second Artist"]))
+        self.realid3.save(self.filename)
+        id3 = EasyID3(self.filename)
+        self.assertEqual(id3["artists"], ["First Artist", "Second Artist"])
+        self.assertIn("artists", id3.keys())
+
+    def test_artists_roundtrip(self):
+        artists = [u"First Artist", u"Beyonc\u00e9"]
+        self.id3["artist"] = "First Artist feat. Second Artist"
+        self.id3["artists"] = artists
+        self.id3.save(self.filename)
+        self.assertEqual(ID3(self.filename)["TXXX:ARTISTS"].text, artists)
+        id3 = EasyID3(self.filename)
+        self.assertEqual(id3["artists"], artists)
+        del id3["artists"]
+        id3.save(self.filename)
+        self.assertNotIn("TXXX:ARTISTS", ID3(self.filename))
+        self.assertEqual(EasyID3(self.filename)["artist"],
+                         ["First Artist feat. Second Artist"])
+
     def test_txxx_empty(self):
         # https://github.com/quodlibet/mutagen/issues/135
         self.id3["asin"] = ""
