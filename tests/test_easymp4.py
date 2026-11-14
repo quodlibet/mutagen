@@ -2,6 +2,7 @@
 import os
 
 from mutagen import MutagenError
+from mutagen.mp4 import MP4
 from mutagen.easymp4 import EasyMP4, error as MP4Error
 
 from tests import TestCase, DATA_DIR, get_temp_copy
@@ -82,6 +83,26 @@ class TEasyMP4(TestCase):
             self.failUnlessEqual(mp4.keys(), [key])
 
             del self.mp4[key]
+
+    def test_lyrics_from_native_mp4(self):
+        native = MP4(self.filename)
+        lyrics = u"First line\nDeuxi\u00e8me ligne"
+        native["\xa9lyr"] = [lyrics]
+        native.save()
+        self.assertEqual(EasyMP4(self.filename)["lyrics"], [lyrics])
+
+    def test_lyrics_roundtrip(self):
+        lyrics = u"First line\nDeuxi\u00e8me ligne"
+        self.mp4["title"] = "Song title"
+        self.mp4["lyrics"] = lyrics
+        self.mp4.save()
+        self.assertEqual(MP4(self.filename)["\xa9lyr"], [lyrics])
+        mp4 = EasyMP4(self.filename)
+        self.assertEqual(mp4["lyrics"], [lyrics])
+        del mp4["lyrics"]
+        mp4.save()
+        self.assertNotIn("\xa9lyr", MP4(self.filename))
+        self.assertEqual(EasyMP4(self.filename)["title"], ["Song title"])
 
     def test_write_date(self):
         self.mp4["date"] = "2004"
