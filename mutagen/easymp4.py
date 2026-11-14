@@ -230,6 +230,7 @@ for atomid, key in {
     'aART': 'albumartist',
     '\xa9day': 'date',
     '\xa9cmt': 'comment',
+    '\xa9lyr': 'lyrics',
     'desc': 'description',
     '\xa9grp': 'grouping',
     '\xa9gen': 'genre',
