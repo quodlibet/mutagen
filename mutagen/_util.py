@@ -199,8 +199,12 @@ can be used for file type detection
 
 @contextmanager
 def _openfile(
-    instance: FileThing | None, filething: FileThing | str | bytes | None, filename: str | None,
-    fileobj: BytesIO, writable: bool, create: bool,
+    instance: Any,
+    filething: FileThing | str | bytes | None,
+    filename: str | bytes | None,
+    fileobj: Any,
+    writable: bool,
+    create: bool,
 ):
     """yields a FileThing
 

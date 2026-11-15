@@ -157,7 +157,9 @@ class MusepackInfo(StreamInfo):
             check_frame_key(frame_type)
 
         if mandatory_packets:
-            raise MusepackHeaderError("Missing mandatory packets: {}.".format(", ".join(map(repr, mandatory_packets))))
+            raise MusepackHeaderError(
+                "Missing mandatory packets: {}.".format(
+                    ", ".join(map(repr, mandatory_packets))))
 
         self.length = float(self.samples) / self.sample_rate
         self.bitrate = 0

@@ -537,7 +537,10 @@ class MultiSpec(Spec):
                 return [self.specs[0].validate(frame, v) for v in value]
             else:
                 return [
-                    [s.validate(frame, v) for (v, s) in zip(val, self.specs, strict=False)]
+                    [
+                        s.validate(frame, v)
+                        for (v, s) in zip(val, self.specs, strict=False)
+                    ]
                     for val in value]
         raise ValueError(f'Invalid MultiSpec data: {value!r}')
 

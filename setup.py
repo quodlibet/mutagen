@@ -31,7 +31,11 @@ class clean(distutils_clean):
         distutils_clean.run(self)
 
         def should_remove(filename: str):
-            return bool(filename.lower()[-4:] in [".pyc", ".pyo"] or filename.endswith("~") or filename.startswith("#") and filename.endswith("#"))
+            return bool(
+                filename.lower()[-4:] in [".pyc", ".pyo"]
+                or filename.endswith("~")
+                or filename.startswith("#") and filename.endswith("#")
+            )
         for pathname, _dirs, files in os.walk(os.path.dirname(__file__)):
             for filename in filter(should_remove, files):
                 try:

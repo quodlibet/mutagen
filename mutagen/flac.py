@@ -538,8 +538,11 @@ class CueSheet(MetadataBlock):
         return f.getvalue()
 
     def __repr__(self):
-        return (f"<{type(self).__name__} media_catalog_number={self.media_catalog_number!r}, lead_in={self.lead_in_samples!r}, compact_disc={self.compact_disc!r}, "
-                 f"tracks={self.tracks!r}>")
+        return (
+            f"<{type(self).__name__} media_catalog_number="
+            f"{self.media_catalog_number!r}, lead_in={self.lead_in_samples!r}, "
+            f"compact_disc={self.compact_disc!r}, tracks={self.tracks!r}>"
+        )
 
 
 class Picture(MetadataBlock):
