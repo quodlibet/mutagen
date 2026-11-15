@@ -1,5 +1,7 @@
 
 import os
+import struct
+from io import BytesIO
 
 from tests import TestCase, DATA_DIR, get_temp_copy, get_temp_empty
 
@@ -35,6 +37,29 @@ class TAPEInvalidItemCount(TestCase):
         x = mutagen.apev2.APEv2(
             os.path.join(DATA_DIR, "145-invalid-item-count.apev2"))
         self.failUnlessEqual(len(x.keys()), 17)
+
+
+class TAPEItemKey(TestCase):
+
+    def _load(self, key, value=b""):
+        item = struct.pack("<II", len(value), 0) + key + value
+        footer = b"APETAGEX" + struct.pack(
+            "<IIII", 2000, len(item) + 32, 1, 0) + b"\x00" * 8
+        return APEv2(BytesIO(item + footer))
+
+    def test_max_length(self):
+        tag = self._load(b"A" * 255 + b"\x00", b"foo")
+        self.assertEqual(tag["A" * 255], "foo")
+
+    def test_too_long(self):
+        self.assertRaises(
+            APEBadItemError, self._load, b"A" * 256 + b"\x00", b"foo")
+
+    def test_too_long_unterminated(self):
+        # this used to take minutes, the key was read one byte at a time
+        # until the end of the tag
+        self.assertRaises(
+            APEBadItemError, self._load, b"A" * (4 * 1024 * 1024))
 
 
 class TAPEWriter(TestCase):
