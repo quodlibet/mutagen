@@ -12,8 +12,7 @@ import sys
 
 import mutagen.ogg
 
-from ._util import SignalHandler, OptionParser
-
+from ._util import OptionParser, SignalHandler
 
 _sig = SignalHandler()
 
@@ -23,7 +22,7 @@ def main(argv):
     parser = OptionParser(
         usage="%prog [options] filename.ogg ...",
         description="Split Ogg logical streams using Mutagen.",
-        version="Mutagen %s" % ".".join(map(str, mutagen.version))
+        version="Mutagen {}".format(".".join(map(str, mutagen.version)))
     )
 
     parser.add_option(

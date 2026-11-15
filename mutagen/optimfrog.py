@@ -21,10 +21,10 @@ __all__ = ["OptimFROG", "Open", "delete"]
 
 import struct
 
-from ._util import convert_error, endswith
 from mutagen import StreamInfo
-from mutagen.apev2 import APEv2File, error, delete
+from mutagen.apev2 import APEv2File, delete, error
 
+from ._util import convert_error, endswith
 
 SAMPLE_TYPE_BITS = {
     0: 8,
@@ -78,13 +78,12 @@ class OptimFROGInfo(StreamInfo):
         if data_size >= 15:
             encoder_id = struct.unpack("<H", header[20:22])[0]
             version = str((encoder_id >> 4) + 4500)
-            self.encoder_info = "%s.%s" % (version[0], version[1:])
+            self.encoder_info = f"{version[0]}.{version[1:]}"
         else:
             self.encoder_info = ""
 
     def pprint(self):
-        return u"OptimFROG, %.2f seconds, %d Hz" % (self.length,
-                                                    self.sample_rate)
+        return f"OptimFROG, {self.length:.2f} seconds, {self.sample_rate} Hz"
 
 
 class OptimFROG(APEv2File):

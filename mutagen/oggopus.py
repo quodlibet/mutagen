@@ -19,10 +19,11 @@ import struct
 from io import BytesIO
 
 from mutagen import StreamInfo
-from mutagen._util import get_size, loadfile, convert_error
 from mutagen._tags import PaddingInfo
+from mutagen._util import convert_error, get_size, loadfile
 from mutagen._vorbis import VCommentDict
-from mutagen.ogg import OggPage, OggFileType, error as OggError
+from mutagen.ogg import OggFileType, OggPage
+from mutagen.ogg import error as OggError
 
 
 class error(OggError):
@@ -67,7 +68,7 @@ class OggOpusInfo(StreamInfo):
         # only the higher 4 bits change on incombatible changes
         major = version >> 4
         if major != 0:
-            raise OggOpusHeaderError("version %r unsupported" % major)
+            raise OggOpusHeaderError(f"version {major!r} unsupported")
 
     def _post_tags(self, fileobj):
         audio_size = get_size(fileobj) - fileobj.tell()
@@ -83,7 +84,7 @@ class OggOpusInfo(StreamInfo):
             self.bitrate = 0
 
     def pprint(self):
-        return u"Ogg Opus, %.2f seconds, %d bps" % (self.length, self.bitrate)
+        return "Ogg Opus, %.2f seconds, %d bps" % (self.length, self.bitrate)
 
 
 class OggOpusVComment(VCommentDict):
@@ -110,7 +111,7 @@ class OggOpusVComment(VCommentDict):
         pages = self.__get_comment_pages(fileobj, info)
         data = OggPage.to_packets(pages)[0][8:]  # Strip OpusTags
         fileobj = BytesIO(data)
-        super(OggOpusVComment, self).__init__(fileobj, framing=False)
+        super().__init__(fileobj, framing=False)
         self._padding = len(data) - self._size
 
         # in case the LSB of the first byte after v-comment is 1, preserve the

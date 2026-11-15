@@ -5,10 +5,11 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
+import contextlib
 import warnings
-from typing import List
+from collections.abc import Sequence
 
-from mutagen._util import DictMixin, loadfile
+from mutagen._util import DictMixin, FileThing, loadfile
 
 
 class FileType(DictMixin):
@@ -138,7 +139,7 @@ class FileType(DictMixin):
         """
 
         assert self.info is not None
-        stream = "%s (%s)" % (self.info.pprint(), self.mime[0])
+        stream = f"{self.info.pprint()} ({self.mime[0]})"
         try:
             tags = self.tags.pprint()
         except AttributeError:
@@ -157,7 +158,7 @@ class FileType(DictMixin):
         raise NotImplementedError
 
     @property
-    def mime(self) -> List[str]:
+    def mime(self) -> list[str]:
         """A list of mime types (:class:`mutagen.text`)"""
 
         mimes = []
@@ -186,7 +187,7 @@ class FileType(DictMixin):
         raise NotImplementedError
 
 
-class StreamInfo(object):
+class StreamInfo:
     """Abstract stream information object.
 
     Provides attributes for length, bitrate, sample rate etc.
@@ -206,7 +207,11 @@ class StreamInfo(object):
 
 
 @loadfile(method=False)
-def File(filething, options=None, easy=False):
+def File(
+    filething: FileThing,
+    options: Sequence[type[FileType]] | None = None,
+    easy: bool = False,
+):
     """File(filething, options=None, easy=False)
 
     Guess the type of the file and try to open it.
@@ -234,41 +239,41 @@ def File(filething, options=None, easy=False):
     """
 
     if options is None:
-        from mutagen.asf import ASF
         from mutagen.apev2 import APEv2File
+        from mutagen.asf import ASF
         from mutagen.flac import FLAC
         if easy:
             from mutagen.easyid3 import EasyID3FileType as ID3FileType
         else:
-            from mutagen.id3 import ID3FileType
+            from mutagen.id3 import ID3FileType  # type: ignore[assignment]
         if easy:
             from mutagen.mp3 import EasyMP3 as MP3
         else:
-            from mutagen.mp3 import MP3
+            from mutagen.mp3 import MP3  # type: ignore[assignment]
         from mutagen.oggflac import OggFLAC
+        from mutagen.oggopus import OggOpus
         from mutagen.oggspeex import OggSpeex
         from mutagen.oggtheora import OggTheora
         from mutagen.oggvorbis import OggVorbis
-        from mutagen.oggopus import OggOpus
         if easy:
             from mutagen.trueaudio import EasyTrueAudio as TrueAudio
         else:
-            from mutagen.trueaudio import TrueAudio
+            from mutagen.trueaudio import TrueAudio  # type: ignore[assignment]
         from mutagen.wavpack import WavPack
         if easy:
             from mutagen.easymp4 import EasyMP4 as MP4
         else:
-            from mutagen.mp4 import MP4
-        from mutagen.musepack import Musepack
-        from mutagen.monkeysaudio import MonkeysAudio
-        from mutagen.optimfrog import OptimFROG
-        from mutagen.aiff import AIFF
+            from mutagen.mp4 import MP4  # type: ignore[assignment]
         from mutagen.aac import AAC
         from mutagen.ac3 import AC3
+        from mutagen.aiff import AIFF
+        from mutagen.dsdiff import DSDIFF
+        from mutagen.dsf import DSF
+        from mutagen.monkeysaudio import MonkeysAudio
+        from mutagen.musepack import Musepack
+        from mutagen.optimfrog import OptimFROG
         from mutagen.smf import SMF
         from mutagen.tak import TAK
-        from mutagen.dsf import DSF
-        from mutagen.dsdiff import DSDIFF
         from mutagen.wave import WAVE
         options = [MP3, TrueAudio, OggTheora, OggSpeex, OggVorbis, OggFLAC,
                    FLAC, AIFF, APEv2File, MP4, ID3FileType, WavPack,
@@ -282,7 +287,7 @@ def File(filething, options=None, easy=False):
 
     try:
         header = fileobj.read(128)
-    except IOError:
+    except OSError:
         header = b""
 
     # Sort by name after score. Otherwise import order affects
@@ -291,14 +296,11 @@ def File(filething, options=None, easy=False):
     results = [(Kind.score(filething.name, fileobj, header), Kind.__name__)
                for Kind in options]
 
-    results = list(zip(results, options))
-    results.sort()
-    (score, name), Kind = results[-1]
+    sorted_results = sorted(zip(results, options, strict=False))
+    (score, name), Kind = sorted_results[-1]
     if score > 0:
-        try:
+        with contextlib.suppress(OSError):
             fileobj.seek(0, 0)
-        except IOError:
-            pass
         return Kind(fileobj, filename=filething.filename)
     else:
         return None

@@ -18,14 +18,14 @@ from mutagen._util import (
     BitReaderError,
     MutagenError,
     convert_error,
+    endswith,
     enum,
     loadfile,
-    endswith,
 )
 
 
 @enum
-class ChannelMode(object):
+class ChannelMode:
     DUALMONO = 0
     MONO = 1
     STEREO = 2
@@ -58,7 +58,7 @@ AC3_BITRATES = [
 
 
 @enum
-class EAC3FrameType(object):
+class EAC3FrameType:
     INDEPENDENT = 0
     DEPENDENT = 1
     AC3_CONVERT = 2
@@ -265,10 +265,9 @@ class AC3Info(StreamInfo):
                 r.skip(1)  # sourcefscod
         if frame_type == EAC3FrameType.INDEPENDENT and numblocks_code == 3:
             r.skip(1)  # convsync
-        if frame_type == EAC3FrameType.AC3_CONVERT:
-            if numblocks_code != 3:
-                if r.bits(1):  # blkid
-                    r.skip(6)  # frmsizecod
+        if frame_type == EAC3FrameType.AC3_CONVERT and numblocks_code != 3:
+            if r.bits(1):  # blkid
+                r.skip(6)  # frmsizecod
         if r.bits(1):  # Additional Bit Stream Information Exists
             addbsil = r.bits(6)  # Additional Bit Stream Information Length
             r.skip((addbsil + 1) * 8)
@@ -290,7 +289,7 @@ class AC3Info(StreamInfo):
         return 8.0 * length / self.bitrate
 
     def pprint(self):
-        return u"%s, %d Hz, %.2f seconds, %d channel(s), %d bps" % (
+        return "%s, %d Hz, %.2f seconds, %d channel(s), %d bps" % (
             self.codec, self.sample_rate, self.length, self.channels,
             self.bitrate)
 

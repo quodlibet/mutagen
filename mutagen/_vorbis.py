@@ -15,11 +15,12 @@ multiple values.
 The specification is at http://www.xiph.org/vorbis/doc/v-comment.html.
 """
 
+import contextlib
 import sys
 from io import BytesIO
 
 import mutagen
-from mutagen._util import DictMixin, cdata, MutagenError, reraise
+from mutagen._util import DictMixin, MutagenError, cdata, reraise
 
 
 def is_valid_key(key: str) -> bool:
@@ -70,7 +71,7 @@ class VComment(mutagen.Tags, list):
         vendor (text): the stream 'vendor' (i.e. writer); default 'Mutagen'
     """
 
-    vendor = u"Mutagen " + mutagen.version_string
+    vendor = "Mutagen " + mutagen.version_string
 
     def __init__(self, data=None, *args, **kwargs):
         self._size = 0
@@ -115,13 +116,13 @@ class VComment(mutagen.Tags, list):
                     if errors == "ignore":
                         continue
                     elif errors == "replace":
-                        tag, value = u"unknown%d" % i, string
+                        tag, value = "unknown%d" % i, string
                     else:
                         reraise(VorbisEncodingError, err, sys.exc_info()[2])
                 try:
                     tag = tag.encode('ascii', errors)
                 except UnicodeEncodeError:
-                    raise VorbisEncodingError("invalid tag name %r" % tag)
+                    raise VorbisEncodingError(f"invalid tag name {tag!r}")
                 else:
                     tag = tag.decode("ascii")
                     if is_valid_key(tag):
@@ -150,12 +151,12 @@ class VComment(mutagen.Tags, list):
         for key, value in self:
             try:
                 if not is_valid_key(key):
-                    raise ValueError("%r is not a valid key" % key)
+                    raise ValueError(f"{key!r} is not a valid key")
             except TypeError:
-                raise ValueError("%r is not a valid key" % key)
+                raise ValueError(f"{key!r} is not a valid key")
 
             if not isinstance(value, str):
-                err = "%r needs to be str for key %r" % (value, key)
+                err = f"{value!r} needs to be str for key {key!r}"
                 raise ValueError(err)
 
         return True
@@ -205,8 +206,8 @@ class VComment(mutagen.Tags, list):
                 return value.decode('utf-8', 'replace')
             return value
 
-        tags = [u"%s=%s" % (_decode(k), _decode(v)) for k, v in self]
-        return u"\n".join(tags)
+        tags = [f"{_decode(k)}={_decode(v)}" for k, v in self]
+        return "\n".join(tags)
 
 
 class VCommentDict(VComment, DictMixin):  # type: ignore
@@ -268,11 +269,7 @@ class VCommentDict(VComment, DictMixin):  # type: ignore
             raise ValueError
 
         key = key.lower()
-        for k, value in self:
-            if k.lower() == key:
-                return True
-        else:
-            return False
+        return any(k.lower() == key for k, value in self)
 
     def __setitem__(self, key, values):
         """Set a key's value or values.
@@ -290,10 +287,8 @@ class VCommentDict(VComment, DictMixin):  # type: ignore
 
         if not isinstance(values, list):
             values = [values]
-        try:
+        with contextlib.suppress(KeyError):
             del self[key]
-        except KeyError:
-            pass
 
         for value in values:
             self.append((key, value))
@@ -301,9 +296,9 @@ class VCommentDict(VComment, DictMixin):  # type: ignore
     def keys(self):
         """Return all keys in the comment."""
 
-        return list(set([k.lower() for k, v in self]))
+        return list({k.lower() for k, v in self})
 
     def as_dict(self):
         """Return a copy of the comment data in a real dict."""
 
-        return dict([(key, self[key]) for key in self.keys()])
+        return {key: self[key] for key in self.keys()}

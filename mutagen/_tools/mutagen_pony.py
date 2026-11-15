@@ -12,7 +12,7 @@ import traceback
 from ._util import SignalHandler
 
 
-class Report(object):
+class Report:
     def __init__(self, pathname):
         self.name = pathname
         self.files = 0
@@ -41,7 +41,7 @@ class Report(object):
             self.unsync += 1
 
     def __str__(self):
-        strings = ["-- Report for %s --" % self.name]
+        strings = [f"-- Report for {self.name} --"]
         if self.files == 0:
             return strings[0] + "\n" + "No MP3 files found.\n"
 
@@ -67,7 +67,7 @@ class Report(object):
         if self.errors:
             strings.append("\nERRORS:\n")
             for filename, Ex, value, trace in self.errors:
-                strings.append("\nReading %s:" % filename)
+                strings.append(f"\nReading {filename}:")
                 strings.append(
                     "".join(traceback.format_exception(Ex, value, trace)[1:]))
         else:
@@ -80,7 +80,7 @@ def check_dir(path):
     from mutagen.mp3 import MP3
 
     rep = Report(path)
-    print(u"Scanning", path)
+    print("Scanning", path)
     for path, dirs, files in os.walk(path):
         files.sort()
         for fn in files:
@@ -102,7 +102,7 @@ def check_dir(path):
 
 def main(argv):
     if len(argv) == 1:
-        print(u"Usage:", argv[0], u"directory ...")
+        print("Usage:", argv[0], "directory ...")
     else:
         for path in argv[1:]:
             check_dir(path)

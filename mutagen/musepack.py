@@ -19,9 +19,9 @@ __all__ = ["Musepack", "Open", "delete"]
 import struct
 
 from mutagen import StreamInfo
-from mutagen.apev2 import APEv2File, error, delete
+from mutagen._util import cdata, convert_error, endswith, intround
+from mutagen.apev2 import APEv2File, delete, error
 from mutagen.id3._util import BitPaddedInt
-from mutagen._util import cdata, convert_error, intround, endswith
 
 
 class MusepackHeaderError(error):
@@ -157,8 +157,9 @@ class MusepackInfo(StreamInfo):
             check_frame_key(frame_type)
 
         if mandatory_packets:
-            raise MusepackHeaderError("Missing mandatory packets: %s." %
-                                      ", ".join(map(repr, mandatory_packets)))
+            raise MusepackHeaderError(
+                "Missing mandatory packets: {}.".format(
+                    ", ".join(map(repr, mandatory_packets))))
 
         self.length = float(self.samples) / self.sample_rate
         self.bitrate = 0
@@ -259,12 +260,12 @@ class MusepackInfo(StreamInfo):
     def pprint(self):
         rg_data = []
         if hasattr(self, "title_gain"):
-            rg_data.append(u"%+0.2f (title)" % self.title_gain)
+            rg_data.append(f"{self.title_gain:+0.2f} (title)")
         if hasattr(self, "album_gain"):
-            rg_data.append(u"%+0.2f (album)" % self.album_gain)
+            rg_data.append(f"{self.album_gain:+0.2f} (album)")
         rg_data = (rg_data and ", Gain: " + ", ".join(rg_data)) or ""
 
-        return u"Musepack SV%d, %.2f seconds, %d Hz, %d bps%s" % (
+        return "Musepack SV%d, %.2f seconds, %d Hz, %d bps%s" % (
             self.version, self.length, self.sample_rate, self.bitrate, rg_data)
 
 

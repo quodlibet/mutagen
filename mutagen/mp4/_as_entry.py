@@ -5,19 +5,21 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
+import contextlib
 from io import BytesIO
 
-from mutagen.aac import ProgramConfigElement
 from mutagen._util import BitReader, BitReaderError, cdata
-from ._util import parse_full_atom
+from mutagen.aac import ProgramConfigElement
+
 from ._atom import Atom, AtomError
+from ._util import parse_full_atom
 
 
 class ASEntryError(Exception):
     pass
 
 
-class AudioSampleEntry(object):
+class AudioSampleEntry:
     """Parses an AudioSampleEntry atom.
 
     Private API.
@@ -44,7 +46,7 @@ class AudioSampleEntry(object):
     def __init__(self, atom, fileobj):
         ok, data = atom.read(fileobj)
         if not ok:
-            raise ASEntryError("too short %r atom" % atom.name)
+            raise ASEntryError(f"too short {atom.name!r} atom")
 
         fileobj = BytesIO(data)
         r = BitReader(fileobj)
@@ -91,7 +93,7 @@ class AudioSampleEntry(object):
 
         ok, data = atom.read(fileobj)
         if not ok:
-            raise ASEntryError("truncated %s atom" % atom.name)
+            raise ASEntryError(f"truncated {atom.name} atom")
         fileobj = BytesIO(data)
         r = BitReader(fileobj)
 
@@ -108,12 +110,10 @@ class AudioSampleEntry(object):
 
         self.channels = [2, 1, 2, 3, 3, 4, 4, 5][acmod] + lfeon
 
-        try:
+        with contextlib.suppress(IndexError):
             self.bitrate = [
                 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192,
                 224, 256, 320, 384, 448, 512, 576, 640][bit_rate_code] * 1000
-        except IndexError:
-            pass
 
     def _parse_alac(self, atom, fileobj):
         # https://alac.macosforge.org/trac/browser/trunk/
@@ -123,7 +123,7 @@ class AudioSampleEntry(object):
 
         ok, data = atom.read(fileobj)
         if not ok:
-            raise ASEntryError("truncated %s atom" % atom.name)
+            raise ASEntryError(f"truncated {atom.name} atom")
 
         try:
             version, flags, data = parse_full_atom(data)
@@ -157,7 +157,7 @@ class AudioSampleEntry(object):
 
         ok, data = esds.read(fileobj)
         if not ok:
-            raise ASEntryError("truncated %s atom" % esds.name)
+            raise ASEntryError(f"truncated {esds.name} atom")
 
         try:
             version, flags, data = parse_full_atom(data)
@@ -201,7 +201,7 @@ class DescriptorError(Exception):
     pass
 
 
-class BaseDescriptor(object):
+class BaseDescriptor:
 
     TAG: int
 
@@ -210,7 +210,7 @@ class BaseDescriptor(object):
         """May raise ValueError"""
 
         value = 0
-        for i in range(4):
+        for _i in range(4):
             try:
                 b = cdata.uint8(fileobj.read(1))
             except cdata.error as e:
@@ -321,10 +321,10 @@ class DecoderConfigDescriptor(BaseDescriptor):
     def codec_param(self):
         """string"""
 
-        param = u".%X" % self.objectTypeIndication
+        param = f".{self.objectTypeIndication:X}"
         info = self.decSpecificInfo
         if info is not None:
-            param += u".%d" % info.audioObjectType
+            param += ".%d" % info.audioObjectType
         return param
 
     @property
@@ -364,10 +364,8 @@ class DecoderSpecificInfo(BaseDescriptor):
         """string or None if unknown"""
 
         name = None
-        try:
+        with contextlib.suppress(IndexError):
             name = self._TYPE_NAMES[self.audioObjectType]
-        except IndexError:
-            pass
         if name is None:
             return
         if self.sbrPresentFlag == 1:

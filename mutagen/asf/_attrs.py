@@ -6,21 +6,20 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
-import sys
 import struct
-from typing import Dict, Type
+import sys
 
-from mutagen._util import total_ordering, reraise
+from mutagen._util import reraise, total_ordering
 
 from ._util import ASFError
 
 
-class ASFBaseAttribute(object):
+class ASFBaseAttribute:
     """Generic attribute."""
 
     TYPE: int
 
-    _TYPES: "Dict[int, Type[ASFBaseAttribute]]" = {}
+    _TYPES: "dict[int, type[ASFBaseAttribute]]" = {}
 
     value = None
     """The Python value of this attribute (type depends on the class)"""
@@ -67,7 +66,7 @@ class ASFBaseAttribute(object):
         raise NotImplementedError
 
     def __repr__(self):
-        name = "%s(%r" % (type(self).__name__, self.value)
+        name = f"{type(self).__name__}({self.value!r}"
         if self.language:
             name += ", language=%d" % self.language
         if self.stream:
@@ -121,7 +120,7 @@ class ASFUnicodeAttribute(ASFBaseAttribute):
 
     def _validate(self, value):
         if not isinstance(value, str):
-            raise TypeError("%r not str" % value)
+            raise TypeError(f"{value!r} not str")
         return value
 
     def _render(self):
@@ -166,7 +165,7 @@ class ASFByteArrayAttribute(ASFBaseAttribute):
 
     def _validate(self, value):
         if not isinstance(value, bytes):
-            raise TypeError("must be bytes/str: %r" % value)
+            raise TypeError(f"must be bytes/str: {value!r}")
         return value
 
     def data_size(self):
@@ -387,7 +386,7 @@ class ASFGUIDAttribute(ASFBaseAttribute):
 
     def _validate(self, value):
         if not isinstance(value, bytes):
-            raise TypeError("must be bytes/str: %r" % value)
+            raise TypeError(f"must be bytes/str: {value!r}")
         return value
 
     def data_size(self):
@@ -423,6 +422,6 @@ def ASFValue(value, kind, **kwargs):
     try:
         attr_type = ASFBaseAttribute._get_type(kind)
     except KeyError:
-        raise ValueError("Unknown value type %r" % kind)
+        raise ValueError(f"Unknown value type {kind!r}")
     else:
         return attr_type(value=value, **kwargs)

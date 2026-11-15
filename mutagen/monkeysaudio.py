@@ -18,8 +18,8 @@ __all__ = ["MonkeysAudio", "Open", "delete"]
 import struct
 
 from mutagen import StreamInfo
-from mutagen.apev2 import APEv2File, error, delete
 from mutagen._util import cdata, convert_error, endswith
+from mutagen.apev2 import APEv2File, delete, error
 
 
 class MonkeysAudioHeaderError(error):
@@ -75,7 +75,7 @@ class MonkeysAudioInfo(StreamInfo):
             self.length = float(total_blocks) / self.sample_rate
 
     def pprint(self):
-        return u"Monkey's Audio %.2f, %.2f seconds, %d Hz" % (
+        return "Monkey's Audio %.2f, %.2f seconds, %d Hz" % (
             self.version, self.length, self.sample_rate)
 
 

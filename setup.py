@@ -6,13 +6,14 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
+import contextlib
 import os
 import shutil
-import sys
 import subprocess
+import sys
 import tarfile
 
-from setuptools import setup, Command, Distribution
+from setuptools import Command, Distribution, setup
 
 
 def get_command_class(name):
@@ -29,24 +30,21 @@ class clean(distutils_clean):
         # and pyo and backup files from the source tree.
         distutils_clean.run(self)
 
-        def should_remove(filename):
-            if (filename.lower()[-4:] in [".pyc", ".pyo"] or
-                    filename.endswith("~") or
-                    (filename.startswith("#") and filename.endswith("#"))):
-                return True
-            else:
-                return False
-        for pathname, dirs, files in os.walk(os.path.dirname(__file__)):
+        def should_remove(filename: str):
+            return bool(
+                filename.lower()[-4:] in [".pyc", ".pyo"]
+                or filename.endswith("~")
+                or filename.startswith("#") and filename.endswith("#")
+            )
+        for pathname, _dirs, files in os.walk(os.path.dirname(__file__)):
             for filename in filter(should_remove, files):
                 try:
                     os.unlink(os.path.join(pathname, filename))
-                except EnvironmentError as err:
+                except OSError as err:
                     print(str(err))
 
-        try:
+        with contextlib.suppress(OSError):
             os.unlink("MANIFEST")
-        except OSError:
-            pass
 
         for base in ["coverage", "build", "dist"]:
             path = os.path.join(os.path.dirname(__file__), base)
@@ -146,8 +144,6 @@ class build_sphinx(Command):
 
 
 if __name__ == "__main__":
-    if sys.version_info[0] < 3:
-        raise Exception("Python 2 no longer supported")
 
     # required for PEP 517
     sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))

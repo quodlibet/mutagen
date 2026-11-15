@@ -11,12 +11,19 @@
 * See ISO/IEC 13818-7 / 14496-03
 """
 
+import contextlib
+
 from mutagen import StreamInfo
 from mutagen._file import FileType
-from mutagen._util import BitReader, BitReaderError, MutagenError, loadfile, \
-    convert_error, endswith
+from mutagen._util import (
+    BitReader,
+    BitReaderError,
+    MutagenError,
+    convert_error,
+    endswith,
+    loadfile,
+)
 from mutagen.id3._util import BitPaddedInt
-
 
 _FREQS = [
     96000, 88200, 64000, 48000,
@@ -26,7 +33,7 @@ _FREQS = [
 ]
 
 
-class _ADTSStream(object):
+class _ADTSStream:
     """Represents a series of frames belonging to the same stream"""
 
     parsed_frames = 0
@@ -205,7 +212,7 @@ class _ADTSStream(object):
         return True
 
 
-class ProgramConfigElement(object):
+class ProgramConfigElement:
 
     element_instance_tag = None
     object_type = None
@@ -314,10 +321,8 @@ class AACInfo(StreamInfo):
                 r.skip(20)  # adif_buffer_fullness
 
             pce = ProgramConfigElement(r)
-            try:
+            with contextlib.suppress(IndexError):
                 self.sample_rate = _FREQS[pce.sampling_frequency_index]
-            except IndexError:
-                pass
             self.channels = pce.channels
 
             # other pces..
@@ -379,7 +384,7 @@ class AACInfo(StreamInfo):
                 float(s.samples * stream_size) / (s.size * s.frequency)
 
     def pprint(self):
-        return u"AAC (%s), %d Hz, %.2f seconds, %d channel(s), %d bps" % (
+        return "AAC (%s), %d Hz, %.2f seconds, %d channel(s), %d bps" % (
             self._type, self.sample_rate, self.length, self.channels,
             self.bitrate)
 
