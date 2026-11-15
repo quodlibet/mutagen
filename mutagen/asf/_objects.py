@@ -168,11 +168,9 @@ class HeaderObject(BaseObject):
         data += padding_obj.render(asf)
         num_objects += 1
 
-        data = (HeaderObject.GUID +
+        return (HeaderObject.GUID +
                 struct.pack("<QL", len(data) + 30, num_objects) +
                 b"\x01\x02" + data)
-
-        return data
 
     def parse(self, asf, data):
         raise NotImplementedError

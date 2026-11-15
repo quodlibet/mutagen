@@ -244,11 +244,11 @@ def File(
         if easy:
             from mutagen.easyid3 import EasyID3FileType as ID3FileType
         else:
-            from mutagen.id3 import ID3FileType
+            from mutagen.id3 import ID3FileType  # type: ignore[assignment]
         if easy:
             from mutagen.mp3 import EasyMP3 as MP3
         else:
-            from mutagen.mp3 import MP3
+            from mutagen.mp3 import MP3  # type: ignore[assignment]
         from mutagen.oggflac import OggFLAC
         from mutagen.oggopus import OggOpus
         from mutagen.oggspeex import OggSpeex
@@ -257,12 +257,12 @@ def File(
         if easy:
             from mutagen.trueaudio import EasyTrueAudio as TrueAudio
         else:
-            from mutagen.trueaudio import TrueAudio
+            from mutagen.trueaudio import TrueAudio  # type: ignore[assignment]
         from mutagen.wavpack import WavPack
         if easy:
             from mutagen.easymp4 import EasyMP4 as MP4
         else:
-            from mutagen.mp4 import MP4
+            from mutagen.mp4 import MP4  # type: ignore[assignment]
         from mutagen.aac import AAC
         from mutagen.ac3 import AC3
         from mutagen.aiff import AIFF
@@ -295,9 +295,8 @@ def File(
     results = [(Kind.score(filething.name, fileobj, header), Kind.__name__)
                for Kind in options]
 
-    results = list(zip(results, options))
-    results.sort()
-    (score, name), Kind = results[-1]
+    sorted_results = sorted(zip(results, options))
+    (score, name), Kind = sorted_results[-1]
     if score > 0:
         try:
             fileobj.seek(0, 0)

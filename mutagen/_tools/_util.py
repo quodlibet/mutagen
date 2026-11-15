@@ -42,7 +42,7 @@ def split_escape(
     for char in iter_(string):
         if escaped:
             if char != escape_char and char != sep:
-                current += escape_char
+                current += escape_char  # type: ignore[operator]
             current += char
             escaped = False
         else:

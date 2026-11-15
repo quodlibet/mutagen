@@ -3,8 +3,8 @@ import pickle
 
 from mutagen import MutagenError
 from mutagen.easyid3 import EasyID3
-from mutagen.easyid3 import error as ID3Error
 from mutagen.id3 import CHAP, CTOC, ID3, RVA2, TDRC, TSO2, TXXX, ID3FileType
+from mutagen.id3 import error as ID3Error
 from tests import DATA_DIR, TestCase, get_temp_copy
 
 
