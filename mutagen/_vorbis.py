@@ -129,7 +129,9 @@ class VComment(mutagen.Tags, list):
 
             if framing and not bytearray(fileobj.read(1))[0] & 0x01:
                 raise VorbisUnsetFrameError("framing bit was unset")
-        except (cdata.error, TypeError):
+        except (cdata.error, TypeError, IndexError):
+            # IndexError: truncated right before the framing byte, so
+            # bytearray(fileobj.read(1))[0] indexes an empty bytearray.
             raise error("file is not a valid Vorbis comment")
 
     def validate(self):

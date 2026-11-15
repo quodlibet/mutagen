@@ -1,4 +1,7 @@
 import os
+from io import BytesIO
+
+import mutagen
 
 from mutagen._iff import InvalidChunk
 from mutagen.wave import WAVE
@@ -6,6 +9,25 @@ from tests import DATA_DIR, TestCase, get_temp_copy
 
 
 class TWave(TestCase):
+    def test_score_requires_wave_form(self):
+        for form, filename in [(b"WEBP", "cover.webp"), (b"AVI ", "video.avi")]:
+            header = b"RIFF\x08\x00\x00\x00" + form
+            with self.subTest(form=form):
+                self.assertEqual(WAVE.score(filename, BytesIO(header), header), 0)
+                self.assertIsNone(mutagen.File(BytesIO(header)))
+
+    def test_score_wave_header_and_extensions(self):
+        header = b"RIFF\x08\x00\x00\x00WAVE"
+        self.assertEqual(WAVE.score("audio", BytesIO(header), header), 2)
+        for filename in ("audio.wav", "audio.WAVE"):
+            with self.subTest(filename=filename):
+                self.assertEqual(WAVE.score(filename, BytesIO(header), header), 3)
+                self.assertEqual(WAVE.score(filename, BytesIO(), b""), 1)
+        for header in (b"", b"RIFF", b"RIFF\x08\x00\x00\x00WA",
+                       b"xxxx\x00\x00\x00\x00WAVE"):
+            with self.subTest(header=header):
+                self.assertEqual(WAVE.score("audio", BytesIO(header), header), 0)
+
     def setUp(self):
         fn_wav_pcm_2s_16000_08_id3v23 = \
             os.path.join(DATA_DIR, "silence-2s-PCM-16000-08-ID3v23.wav")
