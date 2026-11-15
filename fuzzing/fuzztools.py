@@ -1,3 +1,4 @@
+import contextlib
 from io import BytesIO
 
 from mutagen import File, Metadata, MutagenError
@@ -39,7 +40,7 @@ OPENERS = [
 # OPENERS = [AAC]
 
 
-def run(opener, f):
+def run(opener, f: BytesIO):
     try:
         res = opener(f)
     except MutagenError:
@@ -53,19 +54,15 @@ def run(opener, f):
     # to rewrite the file
 
     f.seek(0)
-    try:
+    with contextlib.suppress(MutagenError):
         res.save(f)
-    except MutagenError:
-        pass
 
     f.seek(0)
     res = opener(f)
 
     f.seek(0)
-    try:
+    with contextlib.suppress(MutagenError):
         res.delete(f)
-    except MutagenError:
-        pass
 
     # These can also save to empty files
     if isinstance(res, Metadata):

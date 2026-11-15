@@ -117,8 +117,8 @@ class TOggVorbis(TestCase, TOggFileTypeMixin):
             return
         vfc = ogg.vorbis.VorbisFile(self.filename).comment()
         self.assertEqual(self.audio["foobar"], vfc["foobar"])
-        self.assertTrue("FOOBAR" in vfc.keys())
-        self.assertTrue("VENDOR" in vfc.keys())
+        self.assertTrue("FOOBAR" in vfc)
+        self.assertTrue("VENDOR" in vfc)
 
     def test_huge_tag(self):
         vorbis = self.Kind(

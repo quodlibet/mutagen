@@ -22,7 +22,7 @@ def main(argv):
     parser = OptionParser(
         usage="%prog [options] filename.ogg ...",
         description="Split Ogg logical streams using Mutagen.",
-        version="Mutagen %s" % ".".join(map(str, mutagen.version))
+        version="Mutagen {}".format(".".join(map(str, mutagen.version)))
     )
 
     parser.add_option(

@@ -101,20 +101,20 @@ class OggPage:
              self.position, self.serial, self.sequence,
              crc, segments) = struct.unpack("<4sBBqIIiB", header)
         except struct.error:
-            raise error("unable to read full header; got %r" % header)
+            raise error(f"unable to read full header; got {header!r}")
 
         if oggs != b"OggS":
             raise error("read {!r}, expected {!r}, at 0x{:x}".format(
                 oggs, b"OggS", fileobj.tell() - 27))
 
         if self.version != 0:
-            raise error("version %r unsupported" % self.version)
+            raise error(f"version {self.version!r} unsupported")
 
         total = 0
         lacings = []
         lacing_bytes = fileobj.read(segments)
         if len(lacing_bytes) != segments:
-            raise error("unable to read %r lacing bytes" % segments)
+            raise error(f"unable to read {segments!r} lacing bytes")
         for c in bytearray(lacing_bytes):
             total += c
             if c < 255:
@@ -276,9 +276,9 @@ class OggPage:
 
         for page in pages:
             if serial != page.serial:
-                raise ValueError("invalid serial number in %r" % page)
+                raise ValueError(f"invalid serial number in {page!r}")
             elif sequence != page.sequence:
-                raise ValueError("bad sequence number in %r" % page)
+                raise ValueError(f"bad sequence number in {page!r}")
             else:
                 sequence += 1
 
@@ -404,7 +404,7 @@ class OggPage:
         # Number the new pages starting from the first old page.
         first = old_pages[0].sequence
         for page, seq in zip(new_pages,
-                             range(first, first + len(new_pages))):
+                             range(first, first + len(new_pages)), strict=False):
             page.sequence = seq
             page.serial = old_pages[0].serial
 
@@ -432,7 +432,7 @@ class OggPage:
         offset_adjust = 0
         new_data_end = None
         assert len(old_pages) == len(new_data)
-        for old_page, data in zip(old_pages, new_data):
+        for old_page, data in zip(old_pages, new_data, strict=False):
             offset = old_page.offset + offset_adjust
             data_size = len(data)
             resize_bytes(fileobj, old_page.size, data_size, offset)

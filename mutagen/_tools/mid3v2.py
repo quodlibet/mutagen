@@ -90,7 +90,7 @@ def delete_frames(deletes, filenames):
     for filename in filenames:
         with _sig.block():
             if verbose:
-                print("deleting %s from" % deletes, filename,
+                print(f"deleting {deletes} from", filename,
                       file=sys.stderr)
             try:
                 id3 = mutagen.id3.ID3(filename)
@@ -228,16 +228,13 @@ def write_files(edits, filenames, escape):
                         # encoding since we have already decoded at that point
                         fn = values[0]
 
-                        if len(values) >= 2:
-                            desc = values[1]
-                        else:
-                            desc = "cover"
+                        desc = values[1] if len(values) >= 2 else "cover"
 
                         if len(values) >= 3:
                             try:
                                 picture_type = int(values[2])
                             except ValueError:
-                                error("Invalid picture type: %r" % values[1])
+                                error(f"Invalid picture type: {values[1]!r}")
                         else:
                             picture_type = PictureType.COVER_FRONT
 
@@ -291,7 +288,7 @@ def write_files(edits, filenames, escape):
                     for value in vlist:
                         values = string_split(value, ":")
                         if len(values) != 2:
-                            error("Invalid value: %r" % values)
+                            error(f"Invalid value: {values!r}")
                         owner = values[0]
                         data = values[1].encode("utf-8")
                         frame = mutagen.id3.UFID(owner=owner, data=data)

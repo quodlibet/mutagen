@@ -140,11 +140,11 @@ class TASFMixin:
         self.audio = ASF(self.audio.filename)
         self.assertTrue(key in self.audio)
         self.assertTrue(key in self.audio.tags)
-        self.assertTrue(key in self.audio.tags.keys())
-        self.assertTrue(key in self.audio.tags.as_dict().keys())
+        self.assertTrue(key in self.audio.tags)
+        self.assertTrue(key in self.audio.tags.as_dict())
         newvalue = self.audio[key]
         if isinstance(newvalue, list):
-            for a, b in zip(sorted(newvalue), sorted(result or value)):
+            for a, b in zip(sorted(newvalue), sorted(result or value), strict=False):
                 self.assertEqual(a, b)
         else:
             self.assertEqual(self.audio[key], result or value)
@@ -608,7 +608,7 @@ class TASFSave(TestCase):
         self.audio.save()
 
         audio = ASF(self.filename)
-        for tag in audio.keys():
+        for tag in audio:
             del audio[tag]
             audio.save()
 

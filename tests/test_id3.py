@@ -1,3 +1,4 @@
+import contextlib
 import os
 from io import BytesIO
 
@@ -897,10 +898,8 @@ class TID3Write(TestCase):
             os.path.join(DATA_DIR, 'silence-44-s.mp3'))
 
     def tearDown(self):
-        try:
+        with contextlib.suppress(OSError):
             os.unlink(self.filename)
-        except OSError:
-            pass
 
     def test_corrupt_header_too_small(self):
         with open(self.filename, "r+b") as h:

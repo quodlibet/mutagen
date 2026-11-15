@@ -176,7 +176,7 @@ class SMFInfo(StreamInfo):
         self.length = _read_midi_length(fileobj)
 
     def pprint(self):
-        return "SMF, %.2f seconds" % self.length
+        return f"SMF, {self.length:.2f} seconds"
 
 
 class SMF(FileType):

@@ -28,12 +28,12 @@ mutagen-pony = "mutagen._tools.mutagen_pony:entry_point"
 
 [dependency-groups]
 dev = [
-    "pytest>=8.2,<10",
-    "hypothesis>=6.148.8,<7",
+    "pytest>=9.0.3,<10",
+    "hypothesis>=6.156.4,<7",
     "flake8>=7.1.0,<8",
     "mypy==1.18.2",
-    "coverage>=7.2.5,<8",
-    "setuptools>=77.0.0,<84",
+    "coverage>=7.15.0,<8",
+    "setuptools>=83.0.0",
 ]
 fuzzing = [
     "python-afl>=0.7.3,<0.8 ; platform_system != 'Windows'", # AFL is not supported on Windows

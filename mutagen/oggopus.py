@@ -68,7 +68,7 @@ class OggOpusInfo(StreamInfo):
         # only the higher 4 bits change on incombatible changes
         major = version >> 4
         if major != 0:
-            raise OggOpusHeaderError("version %r unsupported" % major)
+            raise OggOpusHeaderError(f"version {major!r} unsupported")
 
     def _post_tags(self, fileobj):
         audio_size = get_size(fileobj) - fileobj.tell()

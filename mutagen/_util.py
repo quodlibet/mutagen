@@ -84,20 +84,20 @@ def verify_fileobj(fileobj, writable=False):
         data = fileobj.read(0)
     except Exception:
         if not hasattr(fileobj, "read"):
-            raise ValueError("%r not a valid file object" % fileobj)
-        raise ValueError("Can't read from file object %r" % fileobj)
+            raise ValueError(f"{fileobj!r} not a valid file object")
+        raise ValueError(f"Can't read from file object {fileobj!r}")
 
     if not isinstance(data, bytes):
         raise ValueError(
-            "file object %r not opened in binary mode" % fileobj)
+            f"file object {fileobj!r} not opened in binary mode")
 
     if writable:
         try:
             fileobj.write(b"")
         except Exception:
             if not hasattr(fileobj, "write"):
-                raise ValueError("%r not a valid file object" % fileobj)
-            raise ValueError("Can't write to file object %r" % fileobj)
+                raise ValueError(f"{fileobj!r} not a valid file object")
+            raise ValueError(f"Can't write to file object {fileobj!r}")
 
 
 def verify_filename(filename):
@@ -108,7 +108,7 @@ def verify_filename(filename):
     """
 
     if is_fileobj(filename):
-        raise ValueError("%r not a filename" % filename)
+        raise ValueError(f"{filename!r} not a filename")
 
 
 def fileobj_name(fileobj):
@@ -199,7 +199,7 @@ can be used for file type detection
 
 @contextmanager
 def _openfile(
-    instance, filething, filename: str | None,
+    instance: FileThing | None, filething: FileThing | str | bytes | None, filename: str | None,
     fileobj: BytesIO, writable: bool, create: bool,
 ):
     """yields a FileThing
@@ -463,7 +463,7 @@ class DictMixin:
         return [self[k] for k in self.keys()]
 
     def items(self):
-        return list(zip(self.keys(), self.values()))
+        return list(zip(self.keys(), self.values(), strict=False))
 
     def clear(self):
         for key in list(self.keys()):

@@ -5,10 +5,11 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
-from collections.abc import Sequence
+import contextlib
 import warnings
+from collections.abc import Sequence
 
-from mutagen._util import DictMixin, loadfile
+from mutagen._util import DictMixin, FileThing, loadfile
 
 
 class FileType(DictMixin):
@@ -207,9 +208,9 @@ class StreamInfo:
 
 @loadfile(method=False)
 def File(
-    filething,
+    filething: FileThing,
     options: Sequence[type[FileType]] | None = None,
-    easy=False,
+    easy: bool = False,
 ):
     """File(filething, options=None, easy=False)
 
@@ -295,13 +296,11 @@ def File(
     results = [(Kind.score(filething.name, fileobj, header), Kind.__name__)
                for Kind in options]
 
-    sorted_results = sorted(zip(results, options))
+    sorted_results = sorted(zip(results, options, strict=False))
     (score, name), Kind = sorted_results[-1]
     if score > 0:
-        try:
+        with contextlib.suppress(OSError):
             fileobj.seek(0, 0)
-        except OSError:
-            pass
         return Kind(fileobj, filename=filething.filename)
     else:
         return None

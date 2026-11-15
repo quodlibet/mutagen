@@ -1,3 +1,4 @@
+import contextlib
 import os
 import struct
 import subprocess
@@ -574,11 +575,9 @@ class TMP4Mixin:
             self.faad()
 
     def test_unicode(self):
-        try:
+        with contextlib.suppress(TypeError):
             self.set_key('\xa9nam', [b'\xe3\x82\x8a\xe3\x81\x8b'],
                          result=['\u308a\u304b'])
-        except TypeError:
-            pass
 
     def test_preserve_freeform(self):
         self.set_key('----:net.sacredchao.Mutagen:test key',
@@ -780,7 +779,7 @@ class TMP4Mixin:
         self.audio["\xa9nam"] = "wheeeeeeee"
         self.audio.save()
         bb = self.__read_offsets(self.filename)
-        for a, b in zip(aa, bb):
+        for a, b in zip(aa, bb, strict=False):
             self.assertEqual(a, b)
 
     def test_mime(self):

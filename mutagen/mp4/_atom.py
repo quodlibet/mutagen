@@ -113,12 +113,12 @@ class Atom:
         if not remaining:
             return self
         elif self.children is None:
-            raise KeyError("%r is not a container" % self.name)
+            raise KeyError(f"{self.name!r} is not a container")
         for child in self.children:
             if child.name == remaining[0]:
                 return child[remaining[1:]]
         else:
-            raise KeyError("%r not found" % remaining[0])
+            raise KeyError(f"{remaining[0]!r} not found")
 
     def __repr__(self):
         cls = self.__class__.__name__
@@ -188,7 +188,7 @@ class Atoms:
             if child.name == names[0]:
                 return child[names[1:]]
         else:
-            raise KeyError("%r not found" % names[0])
+            raise KeyError(f"{names[0]!r} not found")
 
     def __repr__(self):
         return "\n".join([repr(child) for child in self.atoms])

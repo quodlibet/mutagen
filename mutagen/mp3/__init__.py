@@ -207,7 +207,7 @@ class MPEGFrame:
                     samples = 0
                 self.length = float(samples) / self.sample_rate
             if xing.lame_version_desc:
-                self.encoder_info = "LAME %s" % xing.lame_version_desc
+                self.encoder_info = f"LAME {xing.lame_version_desc}"
             if lame is not None:
                 self.track_gain = lame.track_gain_adjustment
                 self.track_peak = lame.track_peak
@@ -424,9 +424,9 @@ class MPEGInfo(StreamInfo):
         if self.bitrate_mode == BitrateMode.UNKNOWN:
             info = "CBR?"
         if self.encoder_info:
-            info += ", %s" % self.encoder_info
+            info += f", {self.encoder_info}"
         if self.encoder_settings:
-            info += ", %s" % self.encoder_settings
+            info += f", {self.encoder_settings}"
         s = "MPEG %s layer %d, %d bps (%s), %s Hz, %d chn, %.2f seconds" % (
             self.version, self.layer, self.bitrate, info,
             self.sample_rate, self.channels, self.length)

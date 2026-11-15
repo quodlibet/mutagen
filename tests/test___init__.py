@@ -1,3 +1,4 @@
+import contextlib
 import os
 import shutil
 import sys
@@ -212,9 +213,8 @@ class _TestFileObj:
 
     def _check_fail(self):
         self.operations += 1
-        if self._fail_after != -1:
-            if self.operations > self._fail_after:
-                raise OSError("fail")
+        if self._fail_after != -1 and self.operations > self._fail_after:
+            raise OSError("fail")
 
     def tell(self):
         self._check_fail()
@@ -303,10 +303,8 @@ class TAbstractFileType:
         self.audio = self.KIND(self.filename)
 
     def tearDown(self):
-        try:
+        with contextlib.suppress(OSError):
             os.remove(self.filename)
-        except OSError:
-            pass
 
     def test_fileobj_load(self):
         with open(self.filename, "rb") as h:
@@ -342,10 +340,8 @@ class TAbstractFileType:
 
             @given(generate_test_file_objects(h, self.KIND))
             def run(t):
-                try:
+                with contextlib.suppress(MutagenError):
                     self.KIND(t)
-                except MutagenError:
-                    pass
 
             run()
 
@@ -355,10 +351,8 @@ class TAbstractFileType:
 
             @given(generate_test_file_objects(h, lambda t: o.save(fileobj=t)))
             def run(t):
-                try:
+                with contextlib.suppress(MutagenError):
                     o.save(fileobj=t)
-                except MutagenError:
-                    pass
 
             run()
 
@@ -369,10 +363,8 @@ class TAbstractFileType:
             @given(generate_test_file_objects(
                 h, lambda t: o.delete(fileobj=t)))
             def run(t):
-                try:
+                with contextlib.suppress(MutagenError):
                     o.delete(fileobj=t)
-                except MutagenError:
-                    pass
 
             run()
 
@@ -424,20 +416,16 @@ class TAbstractFileType:
                 self.audio.save()
 
         os.remove(self.filename)
-        try:
+        with contextlib.suppress(MutagenError):
             self.audio.delete()
-        except MutagenError:
-            pass
 
     def test_save_nonexisting(self):
         os.remove(self.filename)
         tags = self.audio.tags
         # Metadata creates a new file
         if not isinstance(tags, Metadata):
-            try:
+            with contextlib.suppress(MutagenError):
                 self.audio.save()
-            except MutagenError:
-                pass
 
     def test_save(self):
         self.audio.save(self.filename)
@@ -573,14 +561,14 @@ class TFile(TestCase):
 
     @property
     def filenames(self):
-        for kind, paths in _FILETYPES.items():
+        for _kind, paths in _FILETYPES.items():
             yield from paths
 
     def test_bad(self):
         try:
             self.assertTrue(File(devnull) is None)
         except OSError:
-            print("WARNING: Unable to open %s." % devnull)
+            print(f"WARNING: Unable to open {devnull}.")
         self.assertTrue(File(__file__) is None)
 
     def test_empty(self):
@@ -613,10 +601,8 @@ class TFile(TestCase):
 
                 @given(generate_test_file_objects(h, File))
                 def run(t):
-                    try:
+                    with contextlib.suppress(MutagenError):
                         File(t)
-                    except MutagenError:
-                        pass
 
                 run()
 

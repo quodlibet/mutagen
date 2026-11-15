@@ -82,7 +82,7 @@ def copy(src, dst, merge, write_v1=True, excluded_tags=None, verbose=False):
     try:
         id3.save(dst, v1=(2 if write_v1 else 0), v2_version=v2_version)
     except Exception as err:
-        print("Error saving", dst, ":\n%s" % str(err),
+        print("Error saving", dst, f":\n{str(err)}",
               file=sys.stderr)
         return 1
     else:

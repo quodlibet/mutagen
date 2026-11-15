@@ -120,7 +120,7 @@ class ASFUnicodeAttribute(ASFBaseAttribute):
 
     def _validate(self, value):
         if not isinstance(value, str):
-            raise TypeError("%r not str" % value)
+            raise TypeError(f"{value!r} not str")
         return value
 
     def _render(self):
@@ -165,7 +165,7 @@ class ASFByteArrayAttribute(ASFBaseAttribute):
 
     def _validate(self, value):
         if not isinstance(value, bytes):
-            raise TypeError("must be bytes/str: %r" % value)
+            raise TypeError(f"must be bytes/str: {value!r}")
         return value
 
     def data_size(self):
@@ -386,7 +386,7 @@ class ASFGUIDAttribute(ASFBaseAttribute):
 
     def _validate(self, value):
         if not isinstance(value, bytes):
-            raise TypeError("must be bytes/str: %r" % value)
+            raise TypeError(f"must be bytes/str: {value!r}")
         return value
 
     def data_size(self):
@@ -422,6 +422,6 @@ def ASFValue(value, kind, **kwargs):
     try:
         attr_type = ASFBaseAttribute._get_type(kind)
     except KeyError:
-        raise ValueError("Unknown value type %r" % kind)
+        raise ValueError(f"Unknown value type {kind!r}")
     else:
         return attr_type(value=value, **kwargs)

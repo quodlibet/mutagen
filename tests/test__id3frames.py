@@ -576,7 +576,7 @@ class TVariousFrames(TestCase):
                 if not isinstance(value, list):
                     value = [value]
                     t = [t]
-                for value, t in zip(value, iter(t)):
+                for value, t in zip(value, iter(t), strict=False):
                     if isinstance(value, float):
                         self.assertAlmostEqual(value, getattr(t, attr), 5)
                     else:
@@ -1288,7 +1288,7 @@ class TTPE1(TestCase):
         data = save_frame(tpe1)
         datalen_size = data[4 + 4 + 2:4 + 4 + 2 + 4]
         self.assertFalse(
-            max(datalen_size) >= b'\x80'[0], "data is not syncsafe: %r" % data)
+            max(datalen_size) >= b'\x80'[0], f"data is not syncsafe: {data!r}")
 
     def test_ql_0_12_missing_uncompressed_size(self):
         tag = TPE1._fromData(
@@ -1459,7 +1459,7 @@ class TFrameTest:
     FRAME = None
 
     def test_has_doc(self):
-        self.assertTrue(self.FRAME.__doc__, "%s has no docstring" % self.FRAME)
+        self.assertTrue(self.FRAME.__doc__, f"{self.FRAME} has no docstring")
 
     def test_fake_zlib(self):
         header = ID3Header()

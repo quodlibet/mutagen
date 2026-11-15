@@ -157,8 +157,7 @@ class MusepackInfo(StreamInfo):
             check_frame_key(frame_type)
 
         if mandatory_packets:
-            raise MusepackHeaderError("Missing mandatory packets: %s." %
-                                      ", ".join(map(repr, mandatory_packets)))
+            raise MusepackHeaderError("Missing mandatory packets: {}.".format(", ".join(map(repr, mandatory_packets))))
 
         self.length = float(self.samples) / self.sample_rate
         self.bitrate = 0
@@ -259,9 +258,9 @@ class MusepackInfo(StreamInfo):
     def pprint(self):
         rg_data = []
         if hasattr(self, "title_gain"):
-            rg_data.append("%+0.2f (title)" % self.title_gain)
+            rg_data.append(f"{self.title_gain:+0.2f} (title)")
         if hasattr(self, "album_gain"):
-            rg_data.append("%+0.2f (album)" % self.album_gain)
+            rg_data.append(f"{self.album_gain:+0.2f} (album)")
         rg_data = (rg_data and ", Gain: " + ", ".join(rg_data)) or ""
 
         return "Musepack SV%d, %.2f seconds, %d Hz, %d bps%s" % (

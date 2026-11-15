@@ -538,10 +538,8 @@ class CueSheet(MetadataBlock):
         return f.getvalue()
 
     def __repr__(self):
-        return (("<%s media_catalog_number=%r, lead_in=%r, compact_disc=%r, "
-                 "tracks=%r>") %
-                (type(self).__name__, self.media_catalog_number,
-                 self.lead_in_samples, self.compact_disc, self.tracks))
+        return (f"<{type(self).__name__} media_catalog_number={self.media_catalog_number!r}, lead_in={self.lead_in_samples!r}, compact_disc={self.compact_disc!r}, "
+                 f"tracks={self.tracks!r}>")
 
 
 class Picture(MetadataBlock):
@@ -935,7 +933,7 @@ class FLAC(mutagen.FileType):
                     size = None
         if size is None:
             raise FLACNoHeaderError(
-                "%r is not a valid FLAC file" % name)
+                f"{name!r} is not a valid FLAC file")
         return size
 
 

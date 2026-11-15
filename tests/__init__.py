@@ -104,7 +104,9 @@ class TestCase(BaseTestCase):
         self.assertTrue(b != a)
 
 
-def unit(run=[], exitfirst=False):
+def unit(run=None, exitfirst=False):
+    if run is None:
+        run = []
     args = []
 
     if run:

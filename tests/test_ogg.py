@@ -699,13 +699,13 @@ class TOggFileTypeMixin:
         self.scan_file()
         if have_ogginfo:
             self.assertEqual(call_ogginfo(filename), 0,
-                             msg="ogginfo failed on %s" % filename)
+                             msg=f"ogginfo failed on {filename}")
 
         if have_oggz_validate:
             if filename.endswith(".opus") and not have_oggz_validate_opus:
                 return
             self.assertEqual(call_oggz_validate(filename), 0,
-                             msg="oggz-validate failed on %s" % filename)
+                             msg=f"oggz-validate failed on {filename}")
 
     def test_ogg_reference_simple_save(self):
         self.audio.save()

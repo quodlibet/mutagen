@@ -70,7 +70,7 @@ class OggSpeexInfo(StreamInfo):
         self.length = page.position / float(self.sample_rate)
 
     def pprint(self):
-        return "Ogg Speex, %.2f seconds" % self.length
+        return f"Ogg Speex, {self.length:.2f} seconds"
 
 
 class OggSpeexVComment(VCommentDict):

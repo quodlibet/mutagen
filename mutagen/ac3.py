@@ -265,10 +265,9 @@ class AC3Info(StreamInfo):
                 r.skip(1)  # sourcefscod
         if frame_type == EAC3FrameType.INDEPENDENT and numblocks_code == 3:
             r.skip(1)  # convsync
-        if frame_type == EAC3FrameType.AC3_CONVERT:
-            if numblocks_code != 3:
-                if r.bits(1):  # blkid
-                    r.skip(6)  # frmsizecod
+        if frame_type == EAC3FrameType.AC3_CONVERT and numblocks_code != 3:
+            if r.bits(1):  # blkid
+                r.skip(6)  # frmsizecod
         if r.bits(1):  # Additional Bit Stream Information Exists
             addbsil = r.bits(6)  # Additional Bit Stream Information Length
             r.skip((addbsil + 1) * 8)

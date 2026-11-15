@@ -8,6 +8,7 @@
 
 """Microsoft WAVE/RIFF audio file/stream information and tags."""
 
+import contextlib
 import struct
 import sys
 
@@ -152,10 +153,8 @@ class _WaveID3(ID3):
 def delete(filething):
     """Completely removes the ID3 chunk from the RIFF/WAVE file"""
 
-    try:
+    with contextlib.suppress(KeyError):
         _WaveFile(filething.fileobj).delete_chunk('id3')
-    except KeyError:
-        pass
 
 
 class WAVE(FileType):

@@ -446,7 +446,7 @@ class TLAMEHeader(TestCase):
         def skey(major, minor, args):
             keys = ["vbr_quality", "quality", "vbr_method", "lowpass_filter",
                     "ath_type"]
-            return s(major, minor, **dict(zip(keys, args)))
+            return s(major, minor, **dict(zip(keys, args, strict=False)))
 
         assert skey(3, 91, (1, 2, 4, 19500, 3)) == "--preset r3mix"
         assert skey(3, 91, (2, 2, 3, 19000, 4)) == "--alt-preset standard"

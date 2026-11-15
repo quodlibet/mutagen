@@ -15,6 +15,7 @@ multiple values.
 The specification is at http://www.xiph.org/vorbis/doc/v-comment.html.
 """
 
+import contextlib
 import sys
 from io import BytesIO
 
@@ -121,7 +122,7 @@ class VComment(mutagen.Tags, list):
                 try:
                     tag = tag.encode('ascii', errors)
                 except UnicodeEncodeError:
-                    raise VorbisEncodingError("invalid tag name %r" % tag)
+                    raise VorbisEncodingError(f"invalid tag name {tag!r}")
                 else:
                     tag = tag.decode("ascii")
                     if is_valid_key(tag):
@@ -150,9 +151,9 @@ class VComment(mutagen.Tags, list):
         for key, value in self:
             try:
                 if not is_valid_key(key):
-                    raise ValueError("%r is not a valid key" % key)
+                    raise ValueError(f"{key!r} is not a valid key")
             except TypeError:
-                raise ValueError("%r is not a valid key" % key)
+                raise ValueError(f"{key!r} is not a valid key")
 
             if not isinstance(value, str):
                 err = f"{value!r} needs to be str for key {key!r}"
@@ -268,11 +269,7 @@ class VCommentDict(VComment, DictMixin):  # type: ignore
             raise ValueError
 
         key = key.lower()
-        for k, value in self:
-            if k.lower() == key:
-                return True
-        else:
-            return False
+        return any(k.lower() == key for k, value in self)
 
     def __setitem__(self, key, values):
         """Set a key's value or values.
@@ -290,10 +287,8 @@ class VCommentDict(VComment, DictMixin):  # type: ignore
 
         if not isinstance(values, list):
             values = [values]
-        try:
+        with contextlib.suppress(KeyError):
             del self[key]
-        except KeyError:
-            pass
 
         for value in values:
             self.append((key, value))

@@ -223,9 +223,9 @@ class LAMEHeader:
                 return "--alt-preset extreme"
 
             if self.vbr_method == 3:
-                return "-V %s" % self.vbr_quality
+                return f"-V {self.vbr_quality}"
             elif self.vbr_method in (4, 5):
-                return "-V %s --vbr-new" % self.vbr_quality
+                return f"-V {self.vbr_quality} --vbr-new"
         elif version in ((3, 93), (3, 94), (3, 95), (3, 96), (3, 97)):
             if self.preset_used == 1001:
                 return "--preset standard"
@@ -241,17 +241,17 @@ class LAMEHeader:
                 return "--preset fast medium"
 
             if self.vbr_method == 3:
-                return "-V %s" % self.vbr_quality
+                return f"-V {self.vbr_quality}"
             elif self.vbr_method in (4, 5):
-                return "-V %s --vbr-new" % self.vbr_quality
+                return f"-V {self.vbr_quality} --vbr-new"
         elif version == (3, 98):
             if self.vbr_method == 3:
-                return "-V %s --vbr-old" % self.vbr_quality
+                return f"-V {self.vbr_quality} --vbr-old"
             elif self.vbr_method in (4, 5):
-                return "-V %s" % self.vbr_quality
+                return f"-V {self.vbr_quality}"
         elif version >= (3, 99):
             if self.vbr_method == 3:
-                return "-V %s --vbr-old" % self.vbr_quality
+                return f"-V {self.vbr_quality} --vbr-old"
             elif self.vbr_method in (4, 5):
                 p = self.vbr_quality
                 adjust_key = (p, self.bitrate, self.lowpass_filter)
@@ -261,7 +261,7 @@ class LAMEHeader:
                     (5, 8, 0): 8,
                     (6, 8, 0): 9,
                 }.get(adjust_key, p)
-                return "-V %s" % p
+                return f"-V {p}"
 
         return ""
 
@@ -323,10 +323,7 @@ class LAMEHeader:
         elif flag == b"r":
             patch = ".1+"
         elif flag == b" ":
-            if (major, minor) > (3, 96):
-                patch = ".0"
-            else:
-                patch = ".0+"
+            patch = ".0" if (major, minor) > (3, 96) else ".0+"
         elif flag == b"" or flag == b".":
             patch = ".0+"
         else:
@@ -493,7 +490,7 @@ class VBRIHeader:
         self.version, offset = cdata.uint16_be_from(data, offset)
         if self.version != 1:
             raise VBRIHeaderError(
-                "Unsupported header version: %r" % self.version)
+                f"Unsupported header version: {self.version!r}")
 
         offset += 2  # float16.. can't do
         self.quality, offset = cdata.uint16_be_from(data, offset)

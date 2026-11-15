@@ -7,6 +7,7 @@
 
 """DSDIFF audio stream information and tags."""
 
+import contextlib
 import struct
 
 from mutagen import StreamInfo
@@ -74,7 +75,7 @@ class DSDIFFListChunk(DSDIFFChunk, IffContainerChunkMixin):
 
     def __init__(self, fileobj, id, data_size, parent_chunk):
         if id not in self.LIST_CHUNK_IDS:
-            raise InvalidChunk('Not a list chunk: %s' % id)
+            raise InvalidChunk(f'Not a list chunk: {id}')
 
         DSDIFFChunk.__init__(self, fileobj, id, data_size, parent_chunk)
         self.init_container()
@@ -89,7 +90,7 @@ class DSTChunk(DSDIFFChunk, IffContainerChunkMixin):
 
     def __init__(self, fileobj, id, data_size, parent_chunk):
         if id != 'DST':
-            raise InvalidChunk('Not a DST chunk: %s' % id)
+            raise InvalidChunk(f'Not a DST chunk: {id}')
 
         DSDIFFChunk.__init__(self, fileobj, id, data_size, parent_chunk)
         self.init_container(name_size=0)
@@ -102,8 +103,7 @@ class DSDIFFFile(IffFile):
         super().__init__(DSDIFFChunk, fileobj)
 
         if self.root.id != 'FRM8':
-            raise InvalidChunk("Root chunk must be a FRM8 chunk, got %r"
-                               % self.root)
+            raise InvalidChunk(f"Root chunk must be a FRM8 chunk, got {self.root!r}")
 
 
 class DSDIFFInfo(StreamInfo):
@@ -213,10 +213,8 @@ class _DSDIFFID3(IffID3):
 def delete(filething):
     """Completely removes the ID3 chunk from the DSDIFF file"""
 
-    try:
+    with contextlib.suppress(KeyError):
         del DSDIFFFile(filething.fileobj)['ID3']
-    except KeyError:
-        pass
 
 
 class DSDIFF(FileType):

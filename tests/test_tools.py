@@ -7,7 +7,7 @@ from tests import TestCase
 
 def get_var(tool_name, entry="main"):
     mod = importlib.import_module(
-        "mutagen._tools.%s" % tool_name.replace("-", "_"))
+        "mutagen._tools.{}".format(tool_name.replace("-", "_")))
     return getattr(mod, entry)
 
 

@@ -212,7 +212,7 @@ class EasyID3(DictMixin, Metadata):
         if func is not None:
             return func(self.__id3, key)
         else:
-            raise EasyID3KeyError("%r is not a valid key" % key)
+            raise EasyID3KeyError(f"{key!r} is not a valid key")
 
     def __setitem__(self, key, value):
         if isinstance(value, str):
@@ -221,14 +221,14 @@ class EasyID3(DictMixin, Metadata):
         if func is not None:
             return func(self.__id3, key, value)
         else:
-            raise EasyID3KeyError("%r is not a valid key" % key)
+            raise EasyID3KeyError(f"{key!r} is not a valid key")
 
     def __delitem__(self, key):
         func = dict_match(self.Delete, key.lower(), self.DeleteFallback)
         if func is not None:
             return func(self.__id3, key)
         else:
-            raise EasyID3KeyError("%r is not a valid key" % key)
+            raise EasyID3KeyError(f"{key!r} is not a valid key")
 
     def keys(self):
         keys = []
@@ -395,7 +395,7 @@ def gain_get(id3, key):
     except KeyError:
         raise EasyID3KeyError(key)
     else:
-        return ["%+f dB" % frame.gain]
+        return [f"{frame.gain:+f} dB"]
 
 
 def gain_set(id3, key, value):
@@ -429,7 +429,7 @@ def peak_get(id3, key):
     except KeyError:
         raise EasyID3KeyError(key)
     else:
-        return ["%f" % frame.peak]
+        return [f"{frame.peak:f}"]
 
 
 def peak_set(id3, key, value):
@@ -462,8 +462,8 @@ def peak_delete(id3, key):
 def peakgain_list(id3, key):
     keys = []
     for frame in id3.getall("RVA2"):
-        keys.append("replaygain_%s_gain" % frame.desc)
-        keys.append("replaygain_%s_peak" % frame.desc)
+        keys.append(f"replaygain_{frame.desc}_gain")
+        keys.append(f"replaygain_{frame.desc}_peak")
     return keys
 
 for frameid, key in {

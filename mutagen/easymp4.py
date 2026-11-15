@@ -167,7 +167,7 @@ class EasyMP4Tags(DictMixin, Tags):
             encoded = []
             for v in value:
                 if not isinstance(v, str):
-                    raise TypeError("%r not str" % v)
+                    raise TypeError(f"{v!r} not str")
                 encoded.append(v.encode("utf-8"))
             tags[atomid] = encoded
 
@@ -182,7 +182,7 @@ class EasyMP4Tags(DictMixin, Tags):
         if func is not None:
             return func(self.__mp4, key)
         else:
-            raise EasyMP4KeyError("%r is not a valid key" % key)
+            raise EasyMP4KeyError(f"{key!r} is not a valid key")
 
     def __setitem__(self, key, value):
         key = key.lower()
@@ -194,7 +194,7 @@ class EasyMP4Tags(DictMixin, Tags):
         if func is not None:
             return func(self.__mp4, key, value)
         else:
-            raise EasyMP4KeyError("%r is not a valid key" % key)
+            raise EasyMP4KeyError(f"{key!r} is not a valid key")
 
     def __delitem__(self, key):
         key = key.lower()
@@ -202,11 +202,11 @@ class EasyMP4Tags(DictMixin, Tags):
         if func is not None:
             return func(self.__mp4, key)
         else:
-            raise EasyMP4KeyError("%r is not a valid key" % key)
+            raise EasyMP4KeyError(f"{key!r} is not a valid key")
 
     def keys(self):
         keys = []
-        for key in self.Get.keys():
+        for key in self.Get:
             if key in self.List:
                 keys.extend(self.List[key](self.__mp4, key))
             elif key in self:

@@ -257,7 +257,7 @@ def _item_sort_key(key, value):
              "\xa9gen", "gnre", "trkn", "disk",
              "\xa9day", "cpil", "pgap", "pcst", "tmpo",
              "\xa9too", "----", "covr", "\xa9lyr"]
-    order = dict(zip(order, range(len(order))))
+    order = dict(zip(order, range(len(order)), strict=False))
     last = len(order)
     # If there's no key-based way to distinguish, order by length.
     # If there's still no way, go by string comparison on the
@@ -539,7 +539,7 @@ class MP4Tags(DictProxy, Tags):
             fileobj.seek(atom.offset + 16)
             fileobj.write(struct.pack(fmt, *offsets))
         except struct.error:
-            raise MP4MetadataError("wrong offset inside %r" % atom.name)
+            raise MP4MetadataError(f"wrong offset inside {atom.name!r}")
 
     def __update_tfhd(self, fileobj, atom, delta, offset):
         if atom.offset > offset:
@@ -578,7 +578,7 @@ class MP4Tags(DictProxy, Tags):
             length, name = struct.unpack(">I4s", head[:8])
             if length < 1:
                 raise MP4MetadataError(
-                    "atom %r has a length of zero" % atom.name)
+                    f"atom {atom.name!r} has a length of zero")
             version = ord(head[8:9])
             flags = struct.unpack(">I", b"\x00" + head[9:12])[0]
             if name != b"data":
@@ -620,7 +620,7 @@ class MP4Tags(DictProxy, Tags):
                     f"unexpected atom {atom_name!r} inside {atom.name!r}")
             if length < 1:
                 raise MP4MetadataError(
-                    "atom %r has a length of zero" % atom.name)
+                    f"atom {atom.name!r} has a length of zero")
             version = ord(data[pos + 8:pos + 8 + 1])
             flags = struct.unpack(">I", b"\x00" + data[pos + 9:pos + 12])[0]
             value.append(MP4FreeForm(data[pos + 16:pos + length],
@@ -746,7 +746,7 @@ class MP4Tags(DictProxy, Tags):
                     data = cdata.to_int64_be(v)
                 else:
                     raise MP4MetadataValueError(
-                        "value out of range: %r" % value)
+                        f"value out of range: {value!r}")
                 data_list.append(data)
 
         except (TypeError, ValueError, cdata.error) as e:
@@ -778,10 +778,10 @@ class MP4Tags(DictProxy, Tags):
                     pos += length
                     continue
                 raise MP4MetadataError(
-                    "unexpected atom %r inside 'covr'" % name)
+                    f"unexpected atom {name!r} inside 'covr'")
             if length < 1:
                 raise MP4MetadataError(
-                    "atom %r has a length of zero" % atom.name)
+                    f"atom {atom.name!r} has a length of zero")
             if imageformat not in (MP4Cover.FORMAT_JPEG, MP4Cover.FORMAT_PNG):
                 # Sometimes AtomDataType.IMPLICIT or simply wrong.
                 # In all cases it was jpeg, so default to it
@@ -808,7 +808,7 @@ class MP4Tags(DictProxy, Tags):
         # implicit = False, for parsing unknown atoms only take utf8 ones.
         # For known ones we can assume the implicit are utf8 too.
         values = []
-        for version, flags, atom_data in self.__parse_data(atom, data):
+        for _version, flags, atom_data in self.__parse_data(atom, data):
             if implicit:
                 if flags not in (AtomDataType.IMPLICIT, AtomDataType.UTF8):
                     raise MP4MetadataError(
@@ -816,7 +816,7 @@ class MP4Tags(DictProxy, Tags):
             else:
                 if flags != AtomDataType.UTF8:
                     raise MP4MetadataError(
-                        "%r is not text, ignore" % atom.name)
+                        f"{atom.name!r} is not text, ignore")
 
             try:
                 text = atom_data.decode("utf-8")
@@ -835,7 +835,7 @@ class MP4Tags(DictProxy, Tags):
         encoded = []
         for v in value:
             if not isinstance(v, str):
-                raise TypeError("%r not str" % v)
+                raise TypeError(f"{v!r} not str")
 
             encoded.append(v.encode("utf-8"))
 
@@ -1022,7 +1022,7 @@ class MP4Chapters(Sequence):
     def pprint(self):
         chapters = [f"{timedelta(seconds=chapter.start)} {chapter.title}"
                     for chapter in self._chapters]
-        return "chapters=%s" % '\n  '.join(chapters)
+        return "chapters={}".format('\n  '.join(chapters))
 
 
 class MP4Info(StreamInfo):

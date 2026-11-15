@@ -164,7 +164,7 @@ class TEasyID3(TestCase):
         self.id3["date"] = "2004"
         self.assertEqual(self.id3["date"], ["2004"])
         del self.id3["date"]
-        self.assertFalse("date" in self.id3.keys())
+        self.assertFalse("date" in self.id3)
 
     def test_write_date_double(self):
         self.id3["date"] = ["2004", "2005"]
@@ -192,7 +192,7 @@ class TEasyID3(TestCase):
         self.id3["originaldate"] = "2004"
         self.assertEqual(self.id3["originaldate"], ["2004"])
         del self.id3["originaldate"]
-        self.assertFalse("originaldate" in self.id3.keys())
+        self.assertFalse("originaldate" in self.id3)
 
     def test_write_original_date_double(self):
         self.id3["originaldate"] = ["2004", "2005"]
@@ -242,20 +242,20 @@ class TEasyID3(TestCase):
         self.id3["asin"] = ""
 
     def test_txxx_set_get(self):
-        self.assertFalse("asin" in self.id3.keys())
+        self.assertFalse("asin" in self.id3)
         self.id3["asin"] = "Hello"
-        self.assertTrue("asin" in self.id3.keys())
+        self.assertTrue("asin" in self.id3)
         self.assertEqual(self.id3["asin"], ["Hello"])
         self.assertTrue("TXXX:ASIN" in self.realid3)
 
     def test_txxx_del_set_del(self):
-        self.assertFalse("asin" in self.id3.keys())
+        self.assertFalse("asin" in self.id3)
         self.assertRaises(KeyError, self.id3.__delitem__, "asin")
         self.id3["asin"] = "Hello"
-        self.assertTrue("asin" in self.id3.keys())
+        self.assertTrue("asin" in self.id3)
         self.assertEqual(self.id3["asin"], ["Hello"])
         del self.id3["asin"]
-        self.assertFalse("asin" in self.id3.keys())
+        self.assertFalse("asin" in self.id3)
         self.assertRaises(KeyError, self.id3.__delitem__, "asin")
 
     def test_txxx_save(self):
@@ -328,27 +328,27 @@ class TEasyID3(TestCase):
         self.id3["replaygain_bar_peak"] = "0.5"
         del self.id3["replaygain_bar_gain"]
         del self.id3["replaygain_foo_peak"]
-        self.assertTrue("replaygain_foo_gain" in self.id3.keys())
-        self.assertTrue("replaygain_bar_gain" in self.id3.keys())
+        self.assertTrue("replaygain_foo_gain" in self.id3)
+        self.assertTrue("replaygain_bar_gain" in self.id3)
 
         del self.id3["replaygain_foo_gain"]
         del self.id3["replaygain_bar_peak"]
-        self.assertFalse("replaygain_foo_gain" in self.id3.keys())
-        self.assertFalse("replaygain_bar_gain" in self.id3.keys())
+        self.assertFalse("replaygain_foo_gain" in self.id3)
+        self.assertFalse("replaygain_bar_gain" in self.id3)
 
         del self.id3["replaygain_foo_gain"]
         del self.id3["replaygain_bar_peak"]
-        self.assertFalse("replaygain_foo_gain" in self.id3.keys())
-        self.assertFalse("replaygain_bar_gain" in self.id3.keys())
+        self.assertFalse("replaygain_foo_gain" in self.id3)
+        self.assertFalse("replaygain_bar_gain" in self.id3)
 
     def test_gain_peak_capitalization(self):
         frame = RVA2(desc="Foo", gain=1.0, peak=1.0, channel=0)
         self.assertFalse(len(self.realid3))
         self.realid3.add(frame)
         self.assertTrue("replaygain_Foo_peak" in self.id3)
-        self.assertTrue("replaygain_Foo_peak" in self.id3.keys())
+        self.assertTrue("replaygain_Foo_peak" in self.id3)
         self.assertTrue("replaygain_Foo_gain" in self.id3)
-        self.assertTrue("replaygain_Foo_gain" in self.id3.keys())
+        self.assertTrue("replaygain_Foo_gain" in self.id3)
 
         self.id3["replaygain_Foo_gain"] = ["0.5"]
         self.id3["replaygain_Foo_peak"] = ["0.25"]

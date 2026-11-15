@@ -11,4 +11,4 @@ class TMutagenPony(_TTools):
         base = os.path.join('tests', 'data')
         res, out = self.call(base)
         self.assertFalse(res)
-        self.assertTrue("Report for %s" % base in out)
+        self.assertTrue(f"Report for {base}" in out)

@@ -9,6 +9,7 @@
 
 """AIFF audio stream information and tags."""
 
+import contextlib
 import struct
 from struct import pack
 
@@ -91,7 +92,7 @@ class AIFFFormChunk(AIFFChunk, IffContainerChunkMixin):
 
     def __init__(self, fileobj, id, data_size, parent_chunk):
         if id != 'FORM':
-            raise InvalidChunk('Expected FORM chunk, got %s' % id)
+            raise InvalidChunk(f'Expected FORM chunk, got {id}')
 
         AIFFChunk.__init__(self, fileobj, id, data_size, parent_chunk)
         self.init_container()
@@ -106,8 +107,7 @@ class AIFFFile(IffFile):
         super().__init__(AIFFChunk, fileobj)
 
         if self.root.id != 'FORM':
-            raise InvalidChunk("Root chunk must be a FORM chunk, got %s"
-                               % self.root.id)
+            raise InvalidChunk(f"Root chunk must be a FORM chunk, got {self.root.id}")
 
     def __contains__(self, id_):
         if id_ == 'FORM':  # For backwards compatibility
@@ -188,10 +188,8 @@ class _IFFID3(IffID3):
 def delete(filething):
     """Completely removes the ID3 chunk from the AIFF file"""
 
-    try:
+    with contextlib.suppress(KeyError):
         del AIFFFile(filething.fileobj)['ID3']
-    except KeyError:
-        pass
 
 
 class AIFF(FileType):

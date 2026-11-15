@@ -109,7 +109,7 @@ class IffChunk:
             raise InvalidChunk(e)
 
         if not is_valid_chunk_id(id):
-            raise InvalidChunk('Invalid chunk ID %r' % id)
+            raise InvalidChunk(f'Invalid chunk ID {id!r}')
 
         return cls.get_class(id)(fileobj, id, data_size, parent_chunk)
 
@@ -300,7 +300,7 @@ class IffContainerChunkMixin:
                 found_chunk = chunk
                 break
         else:
-            raise KeyError("No %r chunk found" % id_)
+            raise KeyError(f"No {id_!r} chunk found")
         return found_chunk
 
     def __delitem__(self, id_):

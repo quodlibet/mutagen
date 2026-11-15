@@ -167,8 +167,8 @@ class TVCommentDict(TestCase):
         self.assertEqual(len(self.c), 3)
 
     def test_keys(self):
-        self.assertTrue("artist" in self.c.keys())
-        self.assertTrue("title" in self.c.keys())
+        self.assertTrue("artist" in self.c)
+        self.assertTrue("title" in self.c)
 
     def test_values(self):
         self.assertTrue(["mu", "piman"] in self.c.values())

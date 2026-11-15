@@ -129,8 +129,8 @@ class TAPEWriter(TestCase):
         tag["FoObaR"] = "Quux"
         tag.save()
         tag = mutagen.apev2.APEv2(self.sample_new)
-        self.assertTrue("FoObaR" in tag.keys())
-        self.assertFalse("foobar" in tag.keys())
+        self.assertTrue("FoObaR" in tag)
+        self.assertFalse("foobar" in tag)
 
     def test_unicode_key(self):
         # https://github.com/quodlibet/mutagen/issues/123
@@ -223,12 +223,12 @@ class TAPEv2(TestCase):
         self.assertTrue("artisT" in self.audio)
 
     def test_keys(self):
-        self.assertTrue("Track" in self.audio.keys())
+        self.assertTrue("Track" in self.audio)
         self.assertTrue("AnArtist" in self.audio.values())
 
         self.assertEqual(
             self.audio.items(),
-            list(zip(self.audio.keys(), self.audio.values())))
+            list(zip(self.audio.keys(), self.audio.values(), strict=False)))
 
     def test_key_type(self):
         key = self.audio.keys()[0]

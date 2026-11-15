@@ -10,6 +10,8 @@
 
 __all__ = ["ASF", "Open"]
 
+import contextlib
+
 from mutagen import FileType, StreamInfo, Tags
 from mutagen._util import DictMixin, convert_error, loadfile, resize_bytes
 
@@ -123,11 +125,7 @@ class ASFTags(list, DictMixin, Tags):  # type: ignore
 
     def __contains__(self, key):
         """Return true if the key has any values."""
-        for k, value in self:
-            if k == key:
-                return True
-        else:
-            return False
+        return any(k == key for k, value in self)
 
     def __setitem__(self, key, values):
         """Set a key's value or values.
@@ -155,20 +153,18 @@ class ASFTags(list, DictMixin, Tags):  # type: ignore
                 elif isinstance(value, int):
                     value = ASFDWordAttribute(value)
                 else:
-                    raise TypeError("Invalid type %r" % type(value))
+                    raise TypeError(f"Invalid type {type(value)!r}")
             to_append.append((key, value))
 
-        try:
+        with contextlib.suppress(KeyError):
             del self[key]
-        except KeyError:
-            pass
 
         self.extend(to_append)
 
     def keys(self):
         """Return a sequence of all keys in the comment."""
 
-        return self and set(next(zip(*self)))
+        return self and set(next(zip(*self, strict=False)))
 
     def as_dict(self):
         """Return a copy of the comment data in a real dict."""

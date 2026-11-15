@@ -306,7 +306,7 @@ class APEv2(_CIDictProxy, Metadata):
 
         fileobj = BytesIO(tag)
 
-        for i in range(count):
+        for _i in range(count):
             tag_data = fileobj.read(8)
             # someone writes wrong item counts
             if not tag_data:
@@ -339,7 +339,7 @@ class APEv2(_CIDictProxy, Metadata):
                 reraise(APEBadItemError, err, sys.exc_info()[2])
 
             if not is_valid_apev2_key(key):
-                raise APEBadItemError("%r is not a valid APEv2 key" % key)
+                raise APEBadItemError(f"{key!r} is not a valid APEv2 key")
 
             value = fileobj.read(size)
             if len(value) != size:
@@ -351,13 +351,13 @@ class APEv2(_CIDictProxy, Metadata):
 
     def __getitem__(self, key):
         if not is_valid_apev2_key(key):
-            raise KeyError("%r is not a valid APEv2 key" % key)
+            raise KeyError(f"{key!r} is not a valid APEv2 key")
 
         return super().__getitem__(key)
 
     def __delitem__(self, key):
         if not is_valid_apev2_key(key):
-            raise KeyError("%r is not a valid APEv2 key" % key)
+            raise KeyError(f"{key!r} is not a valid APEv2 key")
 
         super().__delitem__(key)
 
@@ -383,7 +383,7 @@ class APEv2(_CIDictProxy, Metadata):
         """
 
         if not is_valid_apev2_key(key):
-            raise KeyError("%r is not a valid APEv2 key" % key)
+            raise KeyError(f"{key!r} is not a valid APEv2 key")
 
         if not isinstance(value, _APEValue):
             # let's guess at the content if we're not already a value...
@@ -511,7 +511,7 @@ def _get_value_type(kind):
         return APEBinaryValue
     elif kind == EXTERNAL:
         return APEExtValue
-    raise ValueError("unknown kind %r" % kind)
+    raise ValueError(f"unknown kind {kind!r}")
 
 
 def APEValue(value, kind):
@@ -685,7 +685,7 @@ class APEExtValue(_APEUtf8Value):
     kind = EXTERNAL
 
     def pprint(self):
-        return "[External] %s" % self.value
+        return f"[External] {self.value}"
 
 
 class _UnknownInfo(StreamInfo):

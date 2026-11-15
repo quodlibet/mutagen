@@ -87,7 +87,7 @@ class Frame:
             # ask the sub class to fill in our data
             other._to_other(self)
         else:
-            for checker, val in zip(self._framespec, args):
+            for checker, val in zip(self._framespec, args, strict=False):
                 setattr(self, checker.name, val)
             for checker in self._framespec[len(args):]:
                 setattr(self, checker.name,
@@ -304,7 +304,7 @@ class Frame:
         elif header.version >= header._V23:
             if tflags & Frame.FLAG23_COMPRESS:
                 if len(data) < 4:
-                    raise ID3JunkFrameError('frame too small: %r' % data)
+                    raise ID3JunkFrameError(f'frame too small: {data!r}')
                 usize, = unpack('>L', data[:4])
                 data = data[4:]
             if tflags & Frame.FLAG23_ENCRYPT:
@@ -1564,11 +1564,11 @@ class UFID(Frame):
     def HashKey(self):
         return f'{self.FrameID}:{self.owner}'
 
-    def __eq__(s, o):
+    def __eq__(self, o):
         if isinstance(o, UFI):
-            return s.owner == o.owner and s.data == o.data
+            return self.owner == o.owner and self.data == o.data
         else:
-            return s.data == o
+            return self.data == o
 
     __hash__ = Frame.__hash__
 

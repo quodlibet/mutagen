@@ -38,11 +38,11 @@ def print_frames(frames, sort_mro=False):
         sort_func = lambda x: x
 
     for name, cls in sorted(frames.items(), key=sort_func):
-        print("""
-.. autoclass:: mutagen.id3.%s
+        print(f"""
+.. autoclass:: mutagen.id3.{repr(cls())}
     :show-inheritance:
     :members:
-""" % repr(cls()))
+""")
 
 
 if __name__ == "__main__":

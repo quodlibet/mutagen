@@ -55,7 +55,7 @@ class _WavPackHeader:
 
         header = fileobj.read(32)
         if len(header) != 32 or not header.startswith(b"wvpk"):
-            raise WavPackHeaderError("not a WavPack header: %r" % header)
+            raise WavPackHeaderError(f"not a WavPack header: {header!r}")
 
         block_size = cdata.uint_le(header[4:8])
         version = cdata.ushort_le(header[8:10])

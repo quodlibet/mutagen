@@ -206,7 +206,7 @@ class ContentDescriptionObject(BaseObject):
                 texts.append(None)
             pos = end
 
-        for key, value in zip(self.NAMES, texts):
+        for key, value in zip(self.NAMES, texts, strict=False):
             if value is not None:
                 value = ASFUnicodeAttribute(value=value)
                 asf._tags.setdefault(self.GUID, []).append((key, value))

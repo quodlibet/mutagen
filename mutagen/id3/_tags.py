@@ -6,6 +6,7 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
+import contextlib
 import re
 import struct
 from itertools import zip_longest
@@ -76,7 +77,7 @@ class ID3Header:
         fn = getattr(fileobj, "name", "<unknown>")
         data = fileobj.read(10)
         if len(data) != 10:
-            raise ID3NoHeaderError("%s: too small" % fn)
+            raise ID3NoHeaderError(f"{fn}: too small")
 
         id3, vmaj, vrev, flags, size = struct.unpack('>3sBBB4s', data)
         self._flags = flags
@@ -84,7 +85,7 @@ class ID3Header:
         self.version = (2, vmaj, vrev)
 
         if id3 != b'ID3':
-            raise ID3NoHeaderError("%r doesn't start with an ID3 tag" % fn)
+            raise ID3NoHeaderError(f"{fn!r} doesn't start with an ID3 tag")
 
         if vmaj not in [2, 3, 4]:
             raise ID3UnsupportedVersionError("%r ID3v2.%d not supported"
@@ -324,7 +325,7 @@ class ID3Tags(DictProxy, Tags):
         """
 
         if not isinstance(frame, Frame):
-            raise TypeError("%r not a Frame instance" % frame)
+            raise TypeError(f"{frame!r} not a Frame instance")
 
         orig_frame = frame
         frame = frame._upgrade_frame()
@@ -332,7 +333,7 @@ class ID3Tags(DictProxy, Tags):
             if not strict:
                 return
             raise TypeError(
-                "Can't upgrade %r frame" % type(orig_frame).__name__)
+                f"Can't upgrade {type(orig_frame).__name__!r} frame")
 
         hash_key = frame.HashKey
         if strict or hash_key not in self:
@@ -371,7 +372,7 @@ class ID3Tags(DictProxy, Tags):
 
     def __setitem__(self, key, tag):
         if not isinstance(tag, Frame):
-            raise TypeError("%r not a Frame instance" % tag)
+            raise TypeError(f"{tag!r} not a Frame instance")
         super().__setitem__(key, tag)
 
     def __update_common(self):
@@ -409,13 +410,13 @@ class ID3Tags(DictProxy, Tags):
             timestamp = ""
             if ym:
                 (year, month_day) = ym.groups()
-                timestamp += "%s" % year
+                timestamp += f"{year}"
                 if dm:
-                    month_day = "-%s-%s" % dm.groups()[::-1]
+                    month_day = "-{}-{}".format(*dm.groups()[::-1])
                 if month_day:
                     timestamp += month_day
                     if tm:
-                        timestamp += "T%s:%s:00" % tm.groups()
+                        timestamp += "T{}:{}:00".format(*tm.groups())
             if timestamp:
                 timestamps.append(timestamp)
         if timestamps and "TDRC" not in self:
@@ -425,10 +426,8 @@ class ID3Tags(DictProxy, Tags):
         if "TORY" in self:
             f = self.pop("TORY")
             if "TDOR" not in self:
-                try:
+                with contextlib.suppress(UnicodeDecodeError):
                     self.add(TDOR(encoding=0, text=str(f)))
-                except UnicodeDecodeError:
-                    pass
 
         # IPLS is now TIPL.
         if "IPLS" in self:
@@ -537,9 +536,8 @@ def save_frame(frame, name=None, config=None):
         config = ID3SaveConfig()
 
     flags = 0
-    if isinstance(frame, TextFrame):
-        if len(str(frame)) == 0:
-            return b''
+    if isinstance(frame, TextFrame) and len(str(frame)) == 0:
+        return b''
 
     framedata = frame._writeData(config)
 
@@ -581,16 +579,11 @@ def read_frames(id3, data, frames):
     unsupported_frames = []
 
     if id3.version < ID3Header._V24 and id3.f_unsynch:
-        try:
+        with contextlib.suppress(ValueError):
             data = unsynch.decode(data)
-        except ValueError:
-            pass
 
     if id3.version >= ID3Header._V23:
-        if id3.version < ID3Header._V24:
-            bpi = int
-        else:
-            bpi = determine_bpi(data, frames)
+        bpi = int if id3.version < ID3Header._V24 else determine_bpi(data, frames)
 
         while data:
             header = data[:10]

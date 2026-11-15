@@ -11,6 +11,8 @@
 * See ISO/IEC 13818-7 / 14496-03
 """
 
+import contextlib
+
 from mutagen import StreamInfo
 from mutagen._file import FileType
 from mutagen._util import (
@@ -319,10 +321,8 @@ class AACInfo(StreamInfo):
                 r.skip(20)  # adif_buffer_fullness
 
             pce = ProgramConfigElement(r)
-            try:
+            with contextlib.suppress(IndexError):
                 self.sample_rate = _FREQS[pce.sampling_frequency_index]
-            except IndexError:
-                pass
             self.channels = pce.channels
 
             # other pces..

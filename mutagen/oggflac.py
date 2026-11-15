@@ -58,7 +58,7 @@ class OggFLACStreamInfo(StreamInfo):
         major, minor, self.packets, flac = struct.unpack(
             ">BBH4s", page.packets[0][5:13])
         if flac != b"fLaC":
-            raise OggFLACHeaderError("invalid FLAC marker (%r)" % flac)
+            raise OggFLACHeaderError(f"invalid FLAC marker ({flac!r})")
         elif (major, minor) != (1, 0):
             raise OggFLACHeaderError(
                 "unknown mapping version: %d.%d" % (major, minor))

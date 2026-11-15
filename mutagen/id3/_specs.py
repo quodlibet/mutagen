@@ -260,7 +260,7 @@ class EncodingSpec(ByteSpec):
         enc, data = super().read(header, frame, data)
         if enc not in (Encoding.LATIN1, Encoding.UTF16, Encoding.UTF16BE,
                        Encoding.UTF8):
-            raise SpecError('Invalid Encoding: %r' % enc)
+            raise SpecError(f'Invalid Encoding: {enc!r}')
         return Encoding(enc), data
 
     def validate(self, frame, value):
@@ -268,7 +268,7 @@ class EncodingSpec(ByteSpec):
             raise TypeError
         if value not in (Encoding.LATIN1, Encoding.UTF16, Encoding.UTF16BE,
                          Encoding.UTF8):
-            raise ValueError('Invalid Encoding: %r' % value)
+            raise ValueError(f'Invalid Encoding: {value!r}')
         return Encoding(value)
 
     def _validate23(self, frame, value, **kwargs):
@@ -287,8 +287,8 @@ class StringSpec(Spec):
         super().__init__(name, default)
         self.len = length
 
-    def read(s, header, frame, data):
-        chunk = data[:s.len]
+    def read(self, header, frame, data):
+        chunk = data[:self.len]
         try:
             ascii = chunk.decode("ascii")
         except UnicodeDecodeError:
@@ -296,7 +296,7 @@ class StringSpec(Spec):
         else:
             chunk = ascii
 
-        return chunk, data[s.len:]
+        return chunk, data[self.len:]
 
     def write(self, config, frame, value):
 
@@ -308,7 +308,7 @@ class StringSpec(Spec):
             raise TypeError
 
         if not isinstance(value, str):
-            raise TypeError("%s has to be str" % self.name)
+            raise TypeError(f"{self.name} has to be str")
         value.encode("ascii")
 
         if len(value) == self.len:
@@ -319,8 +319,10 @@ class StringSpec(Spec):
 
 class RVASpec(Spec):
 
-    def __init__(self, name, stereo_only, default=[0, 0]):
+    def __init__(self, name, stereo_only, default=None):
         # two_chan: RVA has only 2 channels, while RVAD has 6 channels
+        if default is None:
+            default = [0, 0]
         super().__init__(name, default)
         self._max_values = 4 if stereo_only else 12
 
@@ -434,7 +436,7 @@ class BinaryDataSpec(Spec):
         if isinstance(value, bytes):
             return value
         else:
-            raise TypeError("%s has to be bytes" % self.name)
+            raise TypeError(f"{self.name} has to be bytes")
 
         value = str(value).encode("ascii")
         return value
@@ -523,7 +525,7 @@ class MultiSpec(Spec):
                 data.append(self.specs[0].write(config, frame, v))
         else:
             for record in value:
-                for v, s in zip(record, self.specs):
+                for v, s in zip(record, self.specs, strict=False):
                     data.append(s.write(config, frame, v))
         return b''.join(data)
 
@@ -535,14 +537,14 @@ class MultiSpec(Spec):
                 return [self.specs[0].validate(frame, v) for v in value]
             else:
                 return [
-                    [s.validate(frame, v) for (v, s) in zip(val, self.specs)]
+                    [s.validate(frame, v) for (v, s) in zip(val, self.specs, strict=False)]
                     for val in value]
-        raise ValueError('Invalid MultiSpec data: %r' % value)
+        raise ValueError(f'Invalid MultiSpec data: {value!r}')
 
     def _validate23(self, frame, value, **kwargs):
         if len(self.specs) != 1:
             return [[s._validate23(frame, v, **kwargs)
-                     for (v, s) in zip(val, self.specs)]
+                     for (v, s) in zip(val, self.specs, strict=False)]
                     for val in value]
 
         spec = self.specs[0]
@@ -590,7 +592,9 @@ class ID3FramesSpec(Spec):
 
     handle_nodata = True
 
-    def __init__(self, name, default=[]):
+    def __init__(self, name, default=None):
+        if default is None:
+            default = []
         super().__init__(name, default)
 
     def read(self, header, frame, data):
@@ -625,7 +629,9 @@ class ID3FramesSpec(Spec):
 
 class Latin1TextListSpec(Spec):
 
-    def __init__(self, name, default=[]):
+    def __init__(self, name, default=None):
+        if default is None:
+            default = []
         super().__init__(name, default)
         self._bspec = ByteSpec("entry_count", default=0)
         self._lspec = Latin1TextSpec("child_element_id")
@@ -633,7 +639,7 @@ class Latin1TextListSpec(Spec):
     def read(self, header, frame, data):
         count, data = self._bspec.read(header, frame, data)
         entries = []
-        for i in range(count):
+        for _i in range(count):
             entry, data = self._lspec.read(header, frame, data)
             entries.append(entry)
         return entries, data
@@ -729,7 +735,7 @@ class TimeStampSpec(EncodedTextSpec):
         try:
             return ID3TimeStamp(value)
         except TypeError:
-            raise ValueError("Invalid ID3TimeStamp: %r" % value)
+            raise ValueError(f"Invalid ID3TimeStamp: {value!r}")
 
 
 class ChannelSpec(ByteSpec):

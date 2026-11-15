@@ -129,8 +129,7 @@ def main(argv):
     parser.add_option(
         "-e", "--encoding", metavar="ENCODING", action="store",
         type="string", dest="encoding",
-        help=("Specify original tag encoding (default is %s)" % (
-              getpreferredencoding())))
+        help=(f"Specify original tag encoding (default is {getpreferredencoding()})"))
     parser.add_option(
         "-p", "--dry-run", action="store_true", dest="noupdate",
         help="Do not actually modify files")

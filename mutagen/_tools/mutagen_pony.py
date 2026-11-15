@@ -41,7 +41,7 @@ class Report:
             self.unsync += 1
 
     def __str__(self):
-        strings = ["-- Report for %s --" % self.name]
+        strings = [f"-- Report for {self.name} --"]
         if self.files == 0:
             return strings[0] + "\n" + "No MP3 files found.\n"
 
@@ -67,7 +67,7 @@ class Report:
         if self.errors:
             strings.append("\nERRORS:\n")
             for filename, Ex, value, trace in self.errors:
-                strings.append("\nReading %s:" % filename)
+                strings.append(f"\nReading {filename}:")
                 strings.append(
                     "".join(traceback.format_exception(Ex, value, trace)[1:]))
         else:
