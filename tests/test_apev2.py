@@ -129,8 +129,8 @@ class TAPEWriter(TestCase):
         tag["FoObaR"] = "Quux"
         tag.save()
         tag = mutagen.apev2.APEv2(self.sample_new)
-        self.assertTrue("FoObaR" in tag)
-        self.assertFalse("foobar" in tag)
+        self.assertTrue("FoObaR" in tag.keys())
+        self.assertFalse("foobar" in tag.keys())
 
     def test_unicode_key(self):
         # https://github.com/quodlibet/mutagen/issues/123

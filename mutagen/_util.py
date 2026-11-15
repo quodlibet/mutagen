@@ -199,10 +199,10 @@ can be used for file type detection
 
 @contextmanager
 def _openfile(
-    instance: Any,
+    instance: FileThing | None,
     filething: FileThing | str | bytes | None,
-    filename: str | bytes | None,
-    fileobj: Any,
+    filename: str | None,
+    fileobj: BytesIO,
     writable: bool,
     create: bool,
 ):
@@ -230,18 +230,18 @@ def _openfile(
 
     if filething is not None:
         if is_fileobj(filething):
-            fileobj = filething
+            fileobj = filething  # type: ignore[assignment]
         elif hasattr(filething, "__fspath__"):
             filename = filething.__fspath__()
             if not isinstance(filename, (bytes, str)):
                 raise TypeError("expected __fspath__() to return a filename")
         else:
-            filename = filething
+            filename = filething  # type: ignore[assignment]
 
     if instance is not None:
         # XXX: take "not writable" as loading the file..
         if not writable:
-            instance.filename = filename
+            instance.filename = filename  # type: ignore[misc]
         elif filename is None:
             filename = getattr(instance, "filename", None)
 
