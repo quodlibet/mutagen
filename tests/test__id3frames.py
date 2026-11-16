@@ -863,6 +863,14 @@ class TGEOB(TestCase):
         self.assertEquals(GEOB(data=b"1").HashKey, GEOB(data=b"2").HashKey)
         self.assertNotEquals(GEOB(desc="a").HashKey, GEOB(desc="b").HashKey)
 
+    def test_salt(self):
+        f1 = GEOB(desc="test", data=b"1")
+        f2 = GEOB(desc="test", data=b"2")
+        self.assertEqual(f1.HashKey, "GEOB:test")
+        f1._merge_frame(f2)
+        self.assertEqual(f2.salt, " ")
+        self.assertEqual(f2.HashKey, "GEOB:test ")
+
 
 class TPOPM(TestCase):
 
@@ -1563,6 +1571,18 @@ class TRVA2(TestCase):
     def test_bad_number_of_bits(self):
         data = b'\x00\x00\x01\xe6\xfc\x10{\xd7'
         self.assertRaises(ID3JunkFrameError, RVA2._fromData, _24, 0x00, data)
+
+    def test_channelless_rva2(self):
+        frame = RVA2._fromData(_24, 0x00, b"SeratoGain\x00")
+        self.assertEqual(frame.desc, "SeratoGain")
+        self.assertIsNone(frame.channel)
+        self.assertIsNone(frame.gain)
+        self.assertIsNone(frame.peak)
+        self.assertEqual(frame.HashKey, "RVA2:SeratoGain")
+        self.assertEqual(str(frame), "SeratoGain")
+        self.assertEqual(frame, frame)
+        config = ID3SaveConfig(v2_version=4)
+        self.assertEqual(frame._writeData(config), b"SeratoGain\x00")
 
 
 class TCTOC(TestCase):

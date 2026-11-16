@@ -1165,17 +1165,52 @@ class RVA2(Frame):
         try:
             return ((str(self) == other) or
                     (self.desc == other.desc and
-                     self.channel == other.channel and
-                     self.gain == other.gain and
-                     self.peak == other.peak))
+                     getattr(self, 'channel', None) ==
+                     getattr(other, 'channel', None) and
+                     getattr(self, 'gain', None) ==
+                     getattr(other, 'gain', None) and
+                     getattr(self, 'peak', None) ==
+                     getattr(other, 'peak', None)))
         except AttributeError:
             return False
 
     __hash__ = Frame.__hash__
 
     def __str__(self):
+        if getattr(self, "channel", None) is None:
+            return self.desc
         return "%s: %+0.4f dB/%0.4f" % (
             self._channels[self.channel], self.gain, self.peak)
+
+    def _readData(self, id3, data):
+        reader = self._framespec[0]
+        self.desc, data = reader.read(id3, self, data)
+        if not data:
+            if not self.desc or not self.desc.isprintable() or any(
+                    ord(c) < 32 for c in self.desc):
+                raise ID3JunkFrameError("no data left")
+            self.channel = None
+            self.gain = None
+            self.peak = None
+            return data
+        for reader in self._framespec[1:]:
+            if len(data) or reader.handle_nodata:
+                try:
+                    value, data = reader.read(id3, self, data)
+                except SpecError as e:
+                    raise ID3JunkFrameError(e)
+            else:
+                raise ID3JunkFrameError("no data left")
+            self._setattr(reader.name, value)
+        return data
+
+    def _writeData(self, config=None):
+        if getattr(self, "channel", None) is None:
+            if config is None:
+                config = ID3SaveConfig()
+            reader = self._framespec[0]
+            return reader.write(config, self, self.desc)
+        return super(RVA2, self)._writeData(config)
 
 
 class EQU2(Frame):
@@ -1384,6 +1419,8 @@ class GEOB(Frame):
     * filename -- suggested filename if extracted
     * desc -- text description of the data
     * data -- raw data, as a byte string
+    * salt -- will be added to the `HashKey`; this allows for
+      multiple `GEOB` frames with the same description
     """
 
     _framespec = [
@@ -1394,9 +1431,15 @@ class GEOB(Frame):
         BinaryDataSpec('data'),
     ]
 
+    salt = u''
+
     @property
     def HashKey(self):
-        return '%s:%s' % (self.FrameID, self.desc)
+        return '%s:%s%s' % (self.FrameID, self.desc, self.salt)
+
+    def _merge_frame(self, other):
+        other.salt += u' '
+        return other
 
     def __eq__(self, other):
         return self.data == other
