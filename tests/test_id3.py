@@ -1345,6 +1345,94 @@ class TID3Misc(TestCase):
         self.assertTrue(determine_bpi(d, Frames) is BitPaddedInt)
 
 
+class Issue754_DuplicateGEOBAndChannelLessRVA2(TestCase):
+
+    def _build_test_tag(self):
+        def syncsafe(n):
+            return bytes(((n >> 21) & 0x7F, (n >> 14) & 0x7F,
+                          (n >> 7) & 0x7F, n & 0x7F))
+
+        def frame(fid, body):
+            return fid + syncsafe(len(body)) + b"\x00\x00" + body
+
+        def geob(mime, desc, data):
+            return frame(b"GEOB", b"\x00" + mime + b"\x00\x00" + desc +
+                         b"\x00" + data)
+
+        frames = [
+            frame(b"TIT2", b"\x00Title"),
+            frame(b"RVA2", b"SeratoGain\x00"),
+            geob(b"application/octet-stream", b"Serato Markers_",
+                 b"\x02\x05serato data"),
+            geob(b"application/json", b"Serato Markers_",
+                 b"\x02\x05second copy"),
+        ]
+        body = b"".join(frames)
+        return b"ID3\x04\x00\x00" + syncsafe(len(body)) + body
+
+    def test_load_duplicate_geob_and_channelless_rva2(self):
+        import io
+        raw = self._build_test_tag()
+        tags = ID3(io.BytesIO(raw))
+
+        geobs = tags.getall("GEOB")
+        self.assertEqual(len(geobs), 2)
+        self.assertEqual(geobs[0].desc, "Serato Markers_")
+        self.assertEqual(geobs[0].mime, "application/octet-stream")
+        self.assertEqual(geobs[0].data, b"\x02\x05serato data")
+        self.assertEqual(geobs[0].salt, "")
+        self.assertEqual(geobs[1].desc, "Serato Markers_")
+        self.assertEqual(geobs[1].mime, "application/json")
+        self.assertEqual(geobs[1].data, b"\x02\x05second copy")
+        self.assertEqual(geobs[1].salt, " ")
+
+        # Direct HashKey access returns the first frame
+        self.assertEqual(tags["GEOB:Serato Markers_"].mime,
+                         "application/octet-stream")
+
+        rva2s = tags.getall("RVA2")
+        self.assertEqual(len(rva2s), 1)
+        self.assertEqual(rva2s[0].desc, "SeratoGain")
+        self.assertIsNone(rva2s[0].channel)
+        self.assertIsNone(rva2s[0].gain)
+        self.assertIsNone(rva2s[0].peak)
+
+        # Save and reload v2.4
+        out = io.BytesIO()
+        tags.save(out, v2_version=4)
+        out.seek(0)
+        saved_tags = ID3(out)
+
+        saved_geobs = saved_tags.getall("GEOB")
+        self.assertEqual(len(saved_geobs), 2)
+        self.assertEqual([g.mime for g in saved_geobs],
+                         ["application/octet-stream", "application/json"])
+        self.assertEqual([g.data for g in saved_geobs],
+                         [b"\x02\x05serato data", b"\x02\x05second copy"])
+
+        saved_rva2s = saved_tags.getall("RVA2")
+        self.assertEqual(len(saved_rva2s), 1)
+        self.assertEqual(saved_rva2s[0].desc, "SeratoGain")
+        self.assertIsNone(saved_rva2s[0].channel)
+
+    def test_save_v23_preserves_geob_duplicates(self):
+        import io
+        raw = self._build_test_tag()
+        tags = ID3(io.BytesIO(raw))
+
+        out = io.BytesIO()
+        tags.save(out, v2_version=3)
+        out.seek(0)
+        saved_tags = ID3(out)
+
+        saved_geobs = saved_tags.getall("GEOB")
+        self.assertEqual(len(saved_geobs), 2)
+        self.assertEqual([g.mime for g in saved_geobs],
+                         ["application/octet-stream", "application/json"])
+        self.assertEqual([g.data for g in saved_geobs],
+                         [b"\x02\x05serato data", b"\x02\x05second copy"])
+
+
 try:
     import eyeD3
 except ImportError:

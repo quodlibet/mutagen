@@ -204,10 +204,9 @@ class ID3Tags(DictProxy, Tags):
         def sort_key(items):
             i, (frame, data) = items
 
-            if frame.FrameID == "APIC":
-                # The order among APIC frames is preserved, as their order
-                # can influence, say, what image is chosen as cover image
-                # in many players.
+            if frame.FrameID in ("APIC", "GEOB"):
+                # The order among APIC and GEOB frames is preserved, as their
+                # order can influence which frame is chosen by players.
                 secondary_key = i
             else:
                 secondary_key = len(data)
