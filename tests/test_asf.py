@@ -1,5 +1,7 @@
 
 import os
+import struct
+from tempfile import TemporaryFile
 import warnings
 from io import BytesIO
 
@@ -436,6 +438,65 @@ class TASFIssue29(TestCase):
 class TASFObjects(TestCase):
 
     filename = os.path.join(DATA_DIR, "silence-1.wma")
+
+    @staticmethod
+    def _header_with_object(size, payload=b""):
+        object_data = bytes(16) + struct.pack("<Q", size) + payload
+        return (HeaderObject.GUID + struct.pack("<QL", 30 + len(object_data), 1)
+                + b"\x01\x02" + object_data)
+
+    def test_undersized_object_rejected_before_read(self):
+        class RecordingIO(BytesIO):
+            def __init__(self, data):
+                super().__init__(data)
+                self.read_sizes = []
+
+            def read(self, size=-1):
+                self.read_sizes.append(size)
+                return super().read(size)
+
+        for size in range(24):
+            with self.subTest(size=size):
+                fileobj = RecordingIO(self._header_with_object(size, bytes(64)))
+                with self.assertRaisesRegex(ASFHeaderError, "invalid object size"):
+                    HeaderObject.parse_full(None, fileobj)
+                self.assertEqual(fileobj.read_sizes, [30, 24])
+                self.assertEqual(fileobj.tell(), 54)
+
+    def test_undersized_object_in_file(self):
+        for size in range(24):
+            with self.subTest(size=size), TemporaryFile() as fileobj:
+                fileobj.write(self._header_with_object(size, bytes(64)))
+                fileobj.seek(0)
+                with self.assertRaisesRegex(ASFHeaderError, "invalid object size"):
+                    ASF(fileobj)
+                self.assertEqual(fileobj.tell(), 54)
+
+    def test_unknown_object_size_boundary(self):
+        for payload in (b"", b"hello"):
+            with self.subTest(payload=payload):
+                fileobj = BytesIO(self._header_with_object(24 + len(payload), payload))
+                header = HeaderObject.parse_full(None, fileobj)
+                self.assertEqual(len(header.objects), 1)
+                self.assertEqual(header.objects[0].data, payload)
+                self.assertEqual(fileobj.tell(), 54 + len(payload))
+
+    def test_object_exceeds_header(self):
+        for size in (25, 2 ** 64 - 1):
+            with self.subTest(size=size):
+                fileobj = BytesIO(self._header_with_object(size))
+                with self.assertRaisesRegex(ASFHeaderError, "invalid object size"):
+                    HeaderObject.parse_full(None, fileobj)
+                self.assertEqual(fileobj.tell(), 54)
+
+    def test_undersized_second_object(self):
+        data = self._header_with_object(24)
+        data = data[:16] + struct.pack("<QL", 78, 2) + data[28:]
+        data += bytes(16) + struct.pack("<Q", 23)
+        fileobj = BytesIO(data)
+        with self.assertRaisesRegex(ASFHeaderError, "invalid object size"):
+            HeaderObject.parse_full(None, fileobj)
+        self.assertEqual(fileobj.tell(), 78)
 
     def test_invalid_header(self):
         with warnings.catch_warnings():
