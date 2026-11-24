@@ -101,7 +101,7 @@ class HeaderObject(BaseObject):
             obj = BaseObject._get_object(guid)
 
             payload_size = size - obj_header_size
-            if remaining_header < payload_size:
+            if payload_size < 0 or remaining_header < payload_size:
                 raise ASFHeaderError("invalid object size")
             remaining_header -= payload_size
 
