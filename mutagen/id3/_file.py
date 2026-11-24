@@ -158,6 +158,7 @@ class ID3(ID3Tags, mutagen.Metadata):
             if frames is None:
                 raise
 
+            self.clear()
             self.version = ID3Header._V11
             for v in frames.values():
                 if len(self.getall(v.HashKey)) == 0:
@@ -171,6 +172,7 @@ class ID3(ID3Tags, mutagen.Metadata):
             if self.f_extended:
                 size -= 4 + len(self._header._extdata)
             data = read_full(fileobj, size)
+            self.clear()
             remaining_data = self._read(self._header, data)
             self._padding = len(remaining_data)
 

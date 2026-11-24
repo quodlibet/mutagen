@@ -267,6 +267,59 @@ class TID3Read(TestCase):
         id3.load(self.silence, known_frames={})
         self.assertEquals(9, len(id3.unknown_frames))
 
+    def test_reload_same_file(self):
+        tags = ID3(self.silence)
+        expected = tags.pprint()
+        tags["TIT2"].text = ["edited title"]
+        tags.add(id3.TXXX(desc="temporary", text=["discard"]))
+
+        tags.load(self.silence)
+
+        self.assertEqual(tags.pprint(), expected)
+
+    def test_reload_other_file(self):
+        for filename in (self.v22, self.silence_v1, self.v1v2_combined):
+            with self.subTest(filename=filename):
+                tags = ID3(self.silence)
+                tags.add(id3.TXXX(desc="temporary", text=["discard"]))
+
+                tags.load(filename)
+
+                self.assertEqual(tags.pprint(), ID3(filename).pprint())
+
+    def test_reload_empty_tag(self):
+        data = BytesIO()
+        ID3().save(data)
+        data.seek(0)
+        tags = ID3(self.silence)
+
+        tags.load(data)
+
+        self.assertFalse(tags)
+
+    def test_reload_known_frames(self):
+        tags = ID3(self.silence)
+        expected = tags.pprint()
+
+        tags.load(self.silence, known_frames={})
+        self.assertFalse(tags)
+        self.assertEqual(len(tags.unknown_frames), 9)
+
+        tags.load(self.silence)
+        self.assertEqual(tags.pprint(), expected)
+        self.assertEqual(tags.unknown_frames, [])
+
+    def test_failed_reload_keeps_frames(self):
+        for data in (b"", b"ID3\x04\x00\x00\x00\x00\x00\x01"):
+            with self.subTest(data=data):
+                tags = ID3(self.silence)
+                expected = tags.pprint()
+
+                with self.assertRaises(ID3Error):
+                    tags.load(BytesIO(data))
+
+                self.assertEqual(tags.pprint(), expected)
+
     def test_23_multiframe_hack(self):
 
         # loaded_frame is no longer used in mutagen, but this makes
