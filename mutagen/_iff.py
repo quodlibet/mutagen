@@ -129,8 +129,12 @@ class IffChunk(object):
     def read(self) -> bytes:
         """Read the chunks data"""
 
+        # A damaged size field can claim far more data than the file holds,
+        # and a buffered read() allocates the requested size up front.
+        self._fileobj.seek(0, 2)
+        available = max(0, self._fileobj.tell() - self.data_offset)
         self._fileobj.seek(self.data_offset)
-        return self._fileobj.read(self.data_size)
+        return self._fileobj.read(min(self.data_size, available))
 
     def write(self, data: bytes) -> None:
         """Write the chunk data"""
