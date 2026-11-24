@@ -964,6 +964,16 @@ class TMP4ALAC(TestCase):
     def test_bitrate(self):
         self.assertEqual(self.audio.info.bitrate, 2764)
 
+    def test_bitrate_from_sample_sizes(self):
+        audio = MP4(os.path.join(DATA_DIR, "alac-no-bitrate.m4a"))
+        # 19 and 2104 encoded bytes in 8192 PCM samples at 16 kHz.
+        self.assertEqual(audio.info.bitrate, 33171)
+
+    def test_bitrate_from_fixed_sample_size(self):
+        audio = MP4(os.path.join(DATA_DIR, "alac-fixed-samples.mp4"))
+        # The first track is video. Both audio packets are 19 bytes.
+        self.assertEqual(audio.info.bitrate, 593)
+
     def test_kind(self):
         self.assertEqual(self.audio.info.codec, u'alac')
 

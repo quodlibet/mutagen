@@ -1084,9 +1084,11 @@ class MP4Info(StreamInfo):
         if version == 0:
             offset = 8
             fmt = ">2I"
+            unknown_duration = 0xffffffff
         elif version == 1:
             offset = 16
             fmt = ">IQ"
+            unknown_duration = 0xffffffffffffffff
         else:
             raise MP4StreamInfoError("Unknown mdhd version %d" % version)
 
@@ -1098,11 +1100,50 @@ class MP4Info(StreamInfo):
             self.length = 0
 
         try:
-            atom = trak[b"mdia", b"minf", b"stbl", b"stsd"]
+            stbl = trak[b"mdia", b"minf", b"stbl"]
+            stsd = stbl[b"stsd",]
         except KeyError:
-            pass
-        else:
-            self._parse_stsd(atom, fileobj)
+            return
+        self._parse_stsd(stsd, fileobj)
+
+        # Some ALAC encoders leave the average bitrate unset. In fragmented
+        # files the sample table need not describe the entire track.
+        if (self.codec == "alac" and not self.bitrate and self.length
+                and length != unknown_duration and b"moov.mvex" not in atoms):
+            try:
+                stsz = stbl[b"stsz",]
+            except KeyError:
+                return
+            size = self._sample_bytes(stsz, fileobj)
+            self.bitrate = size * 8 * unit // length
+
+    @staticmethod
+    def _sample_bytes(stsz, fileobj):
+        """Return the total sample bytes in a version 0 stsz, or 0 if unknown."""
+
+        if stsz.datalength < 12:
+            return 0
+        fileobj.seek(stsz._dataoffset)
+        header = fileobj.read(12)
+        if len(header) != 12:
+            return 0
+        version_flags, sample_size, count = struct.unpack(">3I", header)
+        if version_flags:
+            return 0
+        if sample_size:
+            return sample_size * count
+
+        if stsz.datalength != 12 + count * 4:
+            return 0
+        total = 0
+        while count:
+            entries = min(count, 4096)
+            data = fileobj.read(entries * 4)
+            if len(data) != entries * 4:
+                return 0
+            total += sum(struct.unpack(">%dI" % entries, data))
+            count -= entries
+        return total
 
     def _parse_stsd(self, atom, fileobj):
         """Sets channels, bits_per_sample, sample_rate and optionally bitrate.
