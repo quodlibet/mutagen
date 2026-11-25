@@ -88,6 +88,14 @@ class TWave(TestCase):
         self.failUnlessAlmostEqual(self.wav_pcm_2s_44100_16_ID3v23.info.length,
                                    2.0, 2)
 
+    def test_adpcm_length(self):
+        # Both files contain 1000 sample frames at 8 kHz. The final
+        # compressed block includes padding that does not count as audio.
+        for name in ("silence-ima-adpcm.wav", "silence-ms-adpcm.wav"):
+            with self.subTest(name=name):
+                info = WAVE(os.path.join(DATA_DIR, name)).info
+                self.assertEqual(info.length, 0.125)
+
     def test_not_my_file(self):
         self.failUnlessRaises(
             InvalidChunk, WAVE, os.path.join(DATA_DIR, "empty.ogg"))

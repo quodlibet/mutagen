@@ -50,7 +50,7 @@ class WaveStreamInfo(StreamInfo):
 
     Microsoft WAVE file information.
 
-    Information is parsed from the 'fmt' & 'data'chunk of the RIFF/WAVE file
+    Information is parsed from the 'fmt', 'data' and 'fact' chunks.
 
     Attributes:
         length (`float`): audio length, in seconds
@@ -98,6 +98,18 @@ class WaveStreamInfo(StreamInfo):
                 self._number_of_samples = data_chunk.data_size / block_align
             except KeyError:
                 pass
+
+        # For MS and IMA ADPCM, block_align describes a compressed block.
+        # The fact chunk counts decoded sample frames and excludes padding.
+        if (self._number_of_samples and self.audio_format in (0x0002, 0x0011)
+                and u'fact' in wave_file):
+            fact = wave_file[u'fact']
+            fileobj.seek(fact.data_offset)
+            count = fileobj.read(min(4, fact.data_size))
+            if len(count) == 4:
+                frames, = struct.unpack('<I', count)
+                if frames not in (0, 0xffffffff):
+                    self._number_of_samples = frames
 
         if self.sample_rate > 0:
             self.length = self._number_of_samples / self.sample_rate
