@@ -1,5 +1,6 @@
 
 import os
+import struct
 from io import BytesIO
 
 import mutagen
@@ -28,6 +29,26 @@ class TWave(TestCase):
                        b"xxxx\x00\x00\x00\x00WAVE"):
             with self.subTest(header=header):
                 self.assertEqual(WAVE.score("audio", BytesIO(header), header), 0)
+
+    def test_oversized_chunk_size_is_not_read_whole(self):
+        # The fmt chunk claims 2 GiB, the file holds 16 bytes of it.
+        fmt = struct.pack("<HHIIHH", 1, 1, 8000, 16000, 2, 16)
+        body = (b"WAVE" + b"fmt " + struct.pack("<I", 0x7FFFFFF0) + fmt +
+                b"data" + struct.pack("<I", 4) + bytes(4))
+        data = b"RIFF" + struct.pack("<I", len(body)) + body
+
+        class RecordingIO(BytesIO):
+            largest_read = 0
+
+            def read(self, size=-1):
+                self.largest_read = max(self.largest_read, size)
+                return super().read(size)
+
+        fileobj = RecordingIO(data)
+        info = WAVE(fileobj).info
+        self.assertEqual(info.channels, 1)
+        self.assertEqual(info.sample_rate, 8000)
+        self.assertLessEqual(fileobj.largest_read, len(data))
 
     def setUp(self):
         fn_wav_pcm_2s_16000_08_id3v23 = \
