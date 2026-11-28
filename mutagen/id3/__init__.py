@@ -23,7 +23,8 @@ always accept null separators to generate multi-valued text frames.
 
 Because ID3 frame structure differs between frame types, each frame is
 implemented as a different class (e.g. TIT2 as mutagen.id3.TIT2). Each
-frame's documentation contains a list of its attributes.
+frame's documentation contains a list of its attributes. The module exports
+these frame classes and their base classes through ``__all__``.
 
 Since this file's documentation is a little unwieldy, you are probably
 interested in the :class:`ID3` class to start with.
@@ -92,4 +93,26 @@ EncodedTextSpec = MultiSpec = _DummySpecForPicard
 BitPaddedInt = _BitPaddedIntForPicard
 
 
-__all__ = ['ID3', 'ID3FileType', 'Frames', 'Open', 'delete']
+__all__ = [
+    'ID3', 'ID3FileType', 'Frames', 'Open', 'delete',
+    'Frame', 'BinaryFrame', 'NumericPartTextFrame', 'NumericTextFrame',
+    'PairedTextFrame', 'TextFrame', 'TimeStampTextFrame', 'UrlFrame', 'UrlFrameU',
+    'AENC', 'APIC', 'ASPI', 'BUF', 'CHAP', 'CNT', 'COM', 'COMM', 'COMR', 'CRA',
+    'CRM', 'CTOC', 'ENCR', 'EQU2', 'ETC', 'ETCO', 'GEO', 'GEOB', 'GP1', 'GRID',
+    'GRP1', 'IPL', 'IPLS', 'LINK', 'LNK', 'MCDI', 'MCI', 'MLL', 'MLLT', 'MVI',
+    'MVIN', 'MVN', 'MVNM', 'OWNE', 'PCNT', 'PCST', 'PIC', 'POP', 'POPM', 'POSS',
+    'PRIV', 'RBUF', 'REV', 'RVA', 'RVA2', 'RVAD', 'RVRB', 'SEEK', 'SIGN', 'SLT',
+    'STC', 'SYLT', 'SYTC', 'TAL', 'TALB', 'TBP', 'TBPM', 'TCAT', 'TCM', 'TCMP',
+    'TCO', 'TCOM', 'TCON', 'TCOP', 'TCP', 'TCR', 'TDA', 'TDAT', 'TDEN', 'TDES',
+    'TDLY', 'TDOR', 'TDRC', 'TDRL', 'TDTG', 'TDY', 'TEN', 'TENC', 'TEXT', 'TFLT',
+    'TFT', 'TGID', 'TIM', 'TIME', 'TIPL', 'TIT1', 'TIT2', 'TIT3', 'TKE', 'TKEY',
+    'TKWD', 'TLA', 'TLAN', 'TLE', 'TLEN', 'TMCL', 'TMED', 'TMOO', 'TMT', 'TOA',
+    'TOAL', 'TOF', 'TOFN', 'TOL', 'TOLY', 'TOPE', 'TOR', 'TORY', 'TOT', 'TOWN',
+    'TP1', 'TP2', 'TP3', 'TP4', 'TPA', 'TPB', 'TPE1', 'TPE2', 'TPE3', 'TPE4', 'TPOS',
+    'TPRO', 'TPUB', 'TRC', 'TRCK', 'TRD', 'TRDA', 'TRK', 'TRSN', 'TRSO', 'TS2',
+    'TSA', 'TSC', 'TSI', 'TSIZ', 'TSO2', 'TSOA', 'TSOC', 'TSOP', 'TSOT', 'TSP',
+    'TSRC', 'TSS', 'TSSE', 'TSST', 'TST', 'TT1', 'TT2', 'TT3', 'TXT', 'TXX', 'TXXX',
+    'TYE', 'TYER', 'UFI', 'UFID', 'ULT', 'USER', 'USLT', 'WAF', 'WAR', 'WAS', 'WCM',
+    'WCOM', 'WCOP', 'WCP', 'WFED', 'WOAF', 'WOAR', 'WOAS', 'WORS', 'WPAY', 'WPB',
+    'WPUB', 'WXX', 'WXXX',
+]

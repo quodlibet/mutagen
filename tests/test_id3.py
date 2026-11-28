@@ -18,6 +18,12 @@ from tests import TestCase, DATA_DIR, get_temp_copy, get_temp_empty
 
 
 def test_id3_module_exports_all_frames():
+    frame_names = {
+        name for name, value in vars(id3).items()
+        if not name.startswith("_") and isinstance(value, type) and
+        issubclass(value, id3.Frame)
+    }
+    assert frame_names <= set(id3.__all__)
     for key in Frames:
         assert getattr(id3, key) is Frames[key]
     for key in Frames_2_2:
